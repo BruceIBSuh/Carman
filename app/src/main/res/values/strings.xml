@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Carman2</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+    <string name="tab_gas">gas</string>
+    <string name="tab_service">service</string>
+    <string name="tab_stat">stat</string>
+    <string name="tab_setting">setting</string>
+    <string name="toolbar_mycar">my car</string>
+    <string name="toolbar_board">board</string>
+    <string name="toolbar_login">login</string>
+</resources>

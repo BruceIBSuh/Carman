@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_mycar"
+        android:icon="@drawable/ic_garage"
+        android:title="@string/toolbar_mycar"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/action_board"
+        android:icon="@drawable/ic_board_white"
+        android:title="@string/toolbar_board"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/action_setting"
+        android:title="@string/tab_setting"
+        android:icon="@drawable/ic_setting"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_login"
+        android:title="@string/toolbar_login"
+        app:showAsAction="never" />
+
+</menu>
