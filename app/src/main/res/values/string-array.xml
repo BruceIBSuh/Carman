@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="spinner_fuel_name">
+        <item>@string/general_spinner_gasoline</item>
+        <item>@string/general_spinner_diesel</item>
+        <item>@string/general_spinner_lpg</item>
+        <item>@string/general_spinner_premium</item>
+    </string-array>
+
+    <string-array name="spinner_fuel_code">
+        <item>B027</item>
+        <item>D047</item>
+        <item>K015</item>
+        <item>B034</item>
+    </string-array>
+
+</resources>

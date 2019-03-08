@@ -7,7 +7,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.MenuItemCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,8 +16,11 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.FrameLayout;
 
+import com.silverback.carman2.fragments.BoardFragment;
 import com.silverback.carman2.fragments.GasFragment;
+import com.silverback.carman2.fragments.MainFragment;
 import com.silverback.carman2.fragments.ServiceFragment;
 import com.silverback.carman2.fragments.SettingFragment;
 import com.silverback.carman2.fragments.StatFragment;
@@ -29,7 +32,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     // Constants
     private static final String LOG_TAG = "MainActivity";
 
-
     // Objects
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
     private Toolbar toolbar;
@@ -37,6 +39,10 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     private ViewPager viewPager;
     private FragmentPagerAdapter pagerAdapter;
     private Fragment[] mFragments;
+    private Fragment generalFragment, boardFragment;
+    private FragmentTransaction fragmentTransaction;
+
+    private FrameLayout frameLayout;
 
     // Fields
     private boolean isTabLayoutVisible = false;
@@ -47,21 +53,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        toolbar = findViewById(R.id.toolbar);
-        viewPager = findViewById(R.id.viewPager);
-        tabLayout = findViewById(R.id.tabLayout);
-
-        // Sets the toolbar used as ActionBar
-        setSupportActionBar(toolbar);
-
-        // Instantiates FragmentPagerAdapter to have the fragments linked to the viewpager.
-        pagerAdapter = new CustomFragmentPagerAdapter(getSupportFragmentManager());
-
-        // ViewPager and ViewPager.OnPageChageListener attached
-        viewPager.setAdapter(pagerAdapter);
-        viewPager.addOnPageChangeListener(this);
-        tabLayout.setupWithViewPager(viewPager);
 
         final String[] fragmentTitles = new String[] {
                 getString(R.string.tab_gas),
@@ -77,18 +68,44 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
                 getDrawable(R.drawable.ic_setting)
         };
 
-        toolbarHeight = getActionbarHeight();
-        Log.i(LOG_TAG, "toolbar height: "  + toolbarHeight);
+        toolbar = findViewById(R.id.toolbar);
+        tabLayout = findViewById(R.id.tabLayout);
+        frameLayout = findViewById(R.id.frameLayout);
+
+        // Sets the toolbar used as ActionBar
+        setSupportActionBar(toolbar);
+
+        //viewPager = findViewById(R.id.viewPager);
+        viewPager = new ViewPager(this);
+        viewPager.setId(View.generateViewId());
+
+        // Instantiates FragmentPagerAdapter to have the fragments linked to the viewpager.
+        pagerAdapter = new CustomFragmentPagerAdapter(getSupportFragmentManager());
+
+        // ViewPager and ViewPager.OnPageChageListener attached
+        viewPager.setAdapter(pagerAdapter);
+        viewPager.addOnPageChangeListener(this);
+        tabLayout.setupWithViewPager(viewPager);
+
+        // Instantiate FragmentManger and FragmentTransaction to add, replace, or remove a fragment
+        generalFragment = new MainFragment();
+        boardFragment = new BoardFragment();
+        fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.frameLayout, generalFragment).commit();
 
         // Custom method to set TabLayout title and icon, which MUST be invoked after
         // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
         addTabIconAndTitle(tabLayout, fragmentTitles, fragmentIcons);
 
+        // Calculate the toolbar height which is a baseline to slide up and down the TabLayout
+        // and ViewPager.
+        toolbarHeight = getActionbarHeight();
+        Log.i(LOG_TAG, "toolbar height: "  + toolbarHeight);
+
         // Custom method to animate the tab layout sliding up and down when clicking the buttons
-        // on the toolbar(action bar)
-        animSlideTabLayout();
-
-
+        // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
+        // and the ViewPager does so by translating "Y".
+        //animSlideTabLayout();
     }
 
     // Callbacks invoked by Toolbar
@@ -96,32 +113,6 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
-        /*
-        // Define the listener
-        MenuItemCompat.OnActionExpandListener expandListener = new MenuItemCompat.OnActionExpandListener() {
-            @Override
-            public boolean onMenuItemActionCollapse(MenuItem item) {
-                // Do something when action item collapses
-                return true;  // Return true to collapse action view
-            }
-
-            @Override
-            public boolean onMenuItemActionExpand(MenuItem item) {
-                // Do something when expanded
-                return true;  // Return true to expand action view
-            }
-        };
-
-        // Get the MenuItem for the action item
-        //MenuItem actionMenuItem = menu.findItem(R.id.);
-
-        // Assign the listener to that action item
-        //MenuItemCompat.setOnActionExpandListener(actionMenuItem, expandListener);
-
-        // Any other things you have to do when creating the options menu...
-
-        return true;
-        */
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -129,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
             case R.id.action_board:
                 return true;
 
-            case R.id.action_mycar:
+            case R.id.action_garage:
                 animSlideTabLayout();
                 return true;
 
@@ -160,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         //Log.i(LOG_TAG, "ViewPager Listeenr");
     }
 
+    // Define the custom FragmentPagerAdapter
     private final class CustomFragmentPagerAdapter extends FragmentPagerAdapter {
 
         CustomFragmentPagerAdapter(FragmentManager fm) {
@@ -197,12 +189,21 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
-        float tabEndValue = (!isTabLayoutVisible)? 0 : toolbarHeight;
+        float tabEndValue = (!isTabLayoutVisible)? toolbarHeight : 0;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(viewPager, "translationY", tabEndValue);
+        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
         slideTab.setDuration(500);
         slideViewPager.setDuration(500);
+
+        if(!isTabLayoutVisible) {
+            getSupportFragmentManager().beginTransaction().remove(generalFragment).commit();
+            frameLayout.addView(viewPager);
+        } else {
+            frameLayout.removeView(viewPager);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.frameLayout, generalFragment).addToBackStack(null).commit();
+        }
 
         isTabLayoutVisible = !isTabLayoutVisible;
 
@@ -210,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         slideViewPager.start();
 
     }
+
 
     // Measures the size of an android attribute based on ?attr/actionBarSize
     private float getActionbarHeight() {

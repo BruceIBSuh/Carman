@@ -12,4 +12,24 @@
     <string name="toolbar_mycar">my car</string>
     <string name="toolbar_board">board</string>
     <string name="toolbar_login">login</string>
+
+
+    <!--MainFragment-->
+    <string name="general_title_date">Today</string>
+    <string name="general_title_recent_expense">Recent Expenses</string>
+    <string name="general_title_stations">Near Stations</string>
+    <string name="general_spinner_gasoline">Gasoline</string>
+    <string name="general_spinner_diesel">Diesel</string>
+    <string name="general_spinner_lpg">LPG</string>
+    <string name="general_spinner_premium">Premium</string>
+    <string name="general_title_national_price">Nationwide Price</string>
+    <string name="general_title_region">Region of Interest</string>
+
+    <!--Opinet Custom Views-->
+    <string name="customAvgPrice">National Price</string>
+
+
+
+    <!--Miscellany-->
+    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
 </resources>

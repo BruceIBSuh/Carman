@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="AvgPriceView">
+        <attr name="avgPriceTextSize" format="dimension" />
+        <attr name="avgPriceUpColor" format="color" />
+        <attr name="avgPriceDownColor" format="color" />
+        <attr name="avgTitle" format="string" />
+    </declare-styleable>
+
+
+
+
+</resources>
