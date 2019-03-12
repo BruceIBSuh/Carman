@@ -2,13 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom = "http://schemas.android.com/apk/com.silverback.carman2"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/tv_custom_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        custom:avgTitle="@string/customAvgPrice"/>
+        custom:avgTitle="@string/general_opinet_subtitle_avgPrice"/>
 
     <TextView
         android:id="@+id/tv_custom_price"

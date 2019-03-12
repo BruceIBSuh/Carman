@@ -9,6 +9,7 @@ import com.silverback.carman2.BuildConfig;
  */
 
 public final class LoggingHelperFactory {
+
     // Apply Logs only in Debugging according to counting on BuildConfig.DEBUG, which is reported to
     // be exactly done as it is supposed to do, though.
     public static LoggingHelper create(Class cls) {
@@ -18,4 +19,5 @@ public final class LoggingHelperFactory {
             return new NopLoggingHelper();
         }
     }
+
 }

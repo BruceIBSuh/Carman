@@ -12,34 +12,44 @@ import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.opinet.AvgPriceView;
+import com.silverback.carman2.threads.OpinetPriceTask;
+import com.silverback.carman2.threads.ThreadManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
+import static com.silverback.carman2.BaseActivity.formatMilliseconds;
+
 /**
  * A simple {@link Fragment} subclass.
  */
-public class MainFragment extends Fragment {
+public class GeneralFragment extends Fragment {
 
     // Constants
 
     // Objects
+    private OpinetPriceTask priceTask;
 
     // UI's
     private Spinner fuelSpinner;
-    private FrameLayout frameAvgPrice, frameSidoPrice, frameSigunPrice;
+    private FrameLayout frameAvgPrice;
 
+    // Fields
+    private String[] defaultParams;
+    private String jsonString;
 
-    public MainFragment() {
+    public GeneralFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        String[] district = getResources().getStringArray(R.array.default_district);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -47,16 +57,13 @@ public class MainFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View childView = inflater.inflate(R.layout.fragment_main, container, false);
+        View childView = inflater.inflate(R.layout.fragment_general, container, false);
 
         // UI's
-        frameAvgPrice = childView.findViewById(R.id.frame_price_avg);
-        frameSidoPrice = childView.findViewById(R.id.frame_price_sido);
-        frameSigunPrice = childView.findViewById(R.id.frame_price_sigun);
+        frameAvgPrice = childView.findViewById(R.id.fl_opinet_avg);
 
         TextView tvDate = childView.findViewById(R.id.tv_date);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
-
 
         String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
@@ -69,33 +76,21 @@ public class MainFragment extends Fragment {
 
         // Set the spinner to the default value that's fetched from SharedPreferences
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
-        /*
+        String[] defaultParams = getArguments().getStringArray("defaults");
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaultParams[0])){
-                spinner.setSelection(i);
+                fuelSpinner.setSelection(i);
                 break;
             }
         }
-        */
+
         // Attach the listener to the spinner
         //fuelSpinner.setOnItemSelectedListener(this);
-
-        // Adds the Custom View of AvgPriceView to the FrameLayout of frameAvgPrice
-        //AvgPriceView avg = new AvgPriceView(getContext());
-        //frameAvgPrice.addView(avg);
 
         // Inflate the layout for this fragment
         return childView;
     }
 
-    // Formats date and time with milliseconds
-    public static String formatMilliseconds(String format, long milliseconds) {
-        //Date date = new Date(milliseconds);
-        Calendar calendar = Calendar.getInstance(Locale.getDefault());
-        calendar.setTimeInMillis(milliseconds);
-        SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
-        return sdf.format(calendar.getTime());
 
-    }
 
 }

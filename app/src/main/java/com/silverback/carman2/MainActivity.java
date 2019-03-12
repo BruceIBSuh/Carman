@@ -20,14 +20,14 @@ import android.widget.FrameLayout;
 
 import com.silverback.carman2.fragments.BoardFragment;
 import com.silverback.carman2.fragments.GasFragment;
-import com.silverback.carman2.fragments.MainFragment;
+import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.fragments.ServiceFragment;
 import com.silverback.carman2.fragments.SettingFragment;
 import com.silverback.carman2.fragments.StatFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class MainActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
+public class MainActivity extends BaseActivity implements ViewPager.OnPageChangeListener {
 
     // Constants
     private static final String LOG_TAG = "MainActivity";
@@ -87,9 +87,17 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
         viewPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(viewPager);
 
+        // Get Defaults from BaseActivity and pass them to the fragments
+        String[] defaults = getDefaultParams();
+        Bundle bundle = new Bundle();
+        bundle.putStringArray("defaults", defaults);
+
         // Instantiate FragmentManger and FragmentTransaction to add, replace, or remove a fragment
-        generalFragment = new MainFragment();
+        generalFragment = new GeneralFragment();
         boardFragment = new BoardFragment();
+
+        // Attach the Fragment of GeneralFragment with the defaults attached.
+        generalFragment.setArguments(bundle);
         fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.add(R.id.frameLayout, generalFragment).commit();
 

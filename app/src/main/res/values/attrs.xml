@@ -6,6 +6,7 @@
         <attr name="avgPriceUpColor" format="color" />
         <attr name="avgPriceDownColor" format="color" />
         <attr name="avgTitle" format="string" />
+        <attr name="avgPrice" format="string" />
     </declare-styleable>
 
 

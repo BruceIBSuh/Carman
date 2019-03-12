@@ -15,4 +15,36 @@
         <item>B034</item>
     </string-array>
 
+    <string-array name = "default_district">
+        <item>@string/general_def_sido</item>
+        <item>@string/general_def_sigun</item>
+        <item>@string/general_def_code</item>
+    </string-array>
+
+    <string-array name="sido_name">
+        <item>@string/pref_spinner_sido_seoul</item>
+        <item>@string/pref_spinner_sido_gyunggi</item>
+        <item>@string/pref_spinner_sido_gwangwon</item>
+        <item>@string/pref_spinner_sido_choongbook</item>
+        <item>@string/pref_spinner_sido_choongnam</item>
+        <item>@string/pref_spinner_sido_jeonbook</item>
+        <item>@string/pref_spinner_sido_jeonnam</item>
+        <item>@string/pref_spinner_sido_gyungbook</item>
+        <item>@string/pref_spinner_sido_gyungnam</item>
+        <item>@string/pref_spinner_sido_busan</item>
+        <item>@string/pref_spinner_sido_jeju</item>
+        <item>@string/pref_spinner_sido_daegu</item>
+        <item>@string/pref_spinner_sido_incheon</item>
+        <item>@string/pref_spinner_sido_gwangju</item>
+        <item>@string/pref_spinner_sido_daejeon</item>
+        <item>@string/pref_spinner_sido_ulsan</item>
+        <item>@string/pref_spinner_sido_sejong</item>
+    </string-array>
+
+    <string-array name="sido_code">
+        <item>01</item><item>02</item><item>03</item><item>04</item><item>05</item><item>06</item>
+        <item>07</item><item>08</item><item>09</item><item>10</item><item>11</item>
+        <item>14</item><item>15</item><item>16</item><item>17</item><item>18</item><item>19</item>
+    </string-array>
+
 </resources>

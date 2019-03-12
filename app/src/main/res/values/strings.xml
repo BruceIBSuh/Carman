@@ -14,19 +14,41 @@
     <string name="toolbar_login">login</string>
 
 
-    <!--MainFragment-->
-    <string name="general_title_date">Today</string>
-    <string name="general_title_recent_expense">Recent Expenses</string>
-    <string name="general_title_stations">Near Stations</string>
+    <!--GeneralFragment-->
+    <string name="general_subtitle_today">Today</string>
+    <string name="general_subtitle_expense">Recent Expenses</string>
+    <string name="general_subtitle_stations">Near Stations</string>
     <string name="general_spinner_gasoline">Gasoline</string>
     <string name="general_spinner_diesel">Diesel</string>
     <string name="general_spinner_lpg">LPG</string>
     <string name="general_spinner_premium">Premium</string>
-    <string name="general_title_national_price">Nationwide Price</string>
-    <string name="general_title_region">Region of Interest</string>
+    <string name="general_subtitle_region">Region of Interest</string>
+    <string name="general_title_expense">Recent Expenses</string>
+    <!--GneralFragment$Opinet Custom Views-->
+    <string name="general_opinet_subtitle_avgPrice">전국평균유가</string>
+    <string name="general_opinet_avgPrice">Gasoline 1400</string>
+    <string name="general_def_sido">서울</string>
+    <string name="general_def_sigun">종로구</string>
+    <string name="general_def_code">0101</string>
 
-    <!--Opinet Custom Views-->
-    <string name="customAvgPrice">National Price</string>
+
+    <string name="pref_spinner_sido_seoul">서울시</string>
+    <string name="pref_spinner_sido_gyunggi">경기도</string>
+    <string name="pref_spinner_sido_gwangwon">강원도</string>
+    <string name="pref_spinner_sido_choongbook">충청북도</string>
+    <string name="pref_spinner_sido_choongnam">충청남도</string>
+    <string name="pref_spinner_sido_jeonbook">전라북도</string>
+    <string name="pref_spinner_sido_jeonnam">전라남도</string>
+    <string name="pref_spinner_sido_gyungbook">경상북도</string>
+    <string name="pref_spinner_sido_gyungnam">경상남도</string>
+    <string name="pref_spinner_sido_busan">부산시</string>
+    <string name="pref_spinner_sido_jeju">제주도</string>
+    <string name="pref_spinner_sido_daegu">대구시</string>
+    <string name="pref_spinner_sido_incheon">인천시</string>
+    <string name="pref_spinner_sido_gwangju">광주시</string>
+    <string name="pref_spinner_sido_daejeon">대전시</string>
+    <string name="pref_spinner_sido_ulsan">울산시</string>
+    <string name="pref_spinner_sido_sejong">세종시</string>
 
 
 
