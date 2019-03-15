@@ -29,11 +29,10 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 public class MainActivity extends BaseActivity implements ViewPager.OnPageChangeListener {
 
-    // Constants
-    private static final String LOG_TAG = "MainActivity";
+    // Logging
+    private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
-    private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
     private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -50,7 +49,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -91,7 +90,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         String[] defaults = getDefaultParams();
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", defaults);
-
+        log.i("Default Params: %s, %s, %s", defaults[0], defaults[1], defaults[2]);
         // Instantiate FragmentManger and FragmentTransaction to add, replace, or remove a fragment
         generalFragment = new GeneralFragment();
         boardFragment = new BoardFragment();
@@ -108,7 +107,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         // Calculate the toolbar height which is a baseline to slide up and down the TabLayout
         // and ViewPager.
         toolbarHeight = getActionbarHeight();
-        Log.i(LOG_TAG, "toolbar height: "  + toolbarHeight);
+        log.i("toolbar height: %s",  toolbarHeight);
 
         // Custom method to animate the tab layout sliding up and down when clicking the buttons
         // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
@@ -122,6 +121,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
@@ -148,7 +148,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     // Callbacks invoked by ViewPager.OnPageChangeListener
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        log.i(LOG_TAG, "ViewPager Listener");
+        log.i("ViewPager Listener");
     }
     @Override
     public void onPageSelected(int position) {

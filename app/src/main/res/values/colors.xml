@@ -4,4 +4,9 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="white">#F3F3F3</color>
+
+    <color name="border">#1EA4FF</color>
+
+    <color name="priceUp">#FF0000</color>
+    <color name="priceDown">#0080FF</color>
 </resources>

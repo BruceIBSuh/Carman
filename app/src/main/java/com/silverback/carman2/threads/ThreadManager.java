@@ -67,9 +67,9 @@ public class ThreadManager {
     private final Queue<ThreadTask> mThreadTaskWorkQueue;
     //private final Queue<StationListTask> mStationTaskWorkQueue;
     //private final Queue<StationCurrentTask> mCurStnTaskWorkQueue;
-    private final Queue<LoadPriceListTask> mLoadPriceListTaskQueue;
+    //private final Queue<LoadPriceListTask> mLoadPriceListTaskQueue;
     //private final Queue<ServiceListTask> mServiceListTaskQueue;
-    //private final Queue<LocationTask> mLocationTaskQueue;
+    private final Queue<LocationTask> mLocationTaskQueue;
 
     // A managed pool of background download threads
     //private final ThreadPoolExecutor mDownloadThreadPool, mLoadThreadPool;
@@ -100,9 +100,8 @@ public class ThreadManager {
         mThreadTaskWorkQueue = new LinkedBlockingQueue<>();
         //mStationTaskWorkQueue = new LinkedBlockingQueue<>();
         //mCurStnTaskWorkQueue = new LinkedBlockingQueue<>();
-        mLoadPriceListTaskQueue = new LinkedBlockingQueue<>();
         //mServiceListTaskQueue = new LinkedBlockingQueue<>();
-        //mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mLocationTaskQueue = new LinkedBlockingQueue<>();
 
 
         // Instantiates ThreadPoolExecutor
@@ -131,8 +130,8 @@ public class ThreadManager {
 
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
 
-                //LocationTask locationTask;
-                LoadPriceListTask loadPriceTask;
+                LocationTask locationTask;
+                //LoadPriceListTask loadPriceTask;
                 //StationListTask stationTask;
                 //StationCurrentTask curStnTask;
                 OpinetDistCodeTask distCodeTask;
@@ -488,6 +487,7 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
+
     public static OpinetPriceTask startOpinetPriceTask(Activity activity, String distCode, int sort) {
 
         log.i("OpinetPriceTask: %s, %s, %d", activity, distCode, sort);
@@ -502,8 +502,6 @@ public class ThreadManager {
 
         return priceTask;
     }
-
-
 
     /*
 
@@ -590,6 +588,9 @@ public class ThreadManager {
         return stationListTask;
     }
 
+    */
+
+
     public static LocationTask fetchLocationTask(Context context){
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
@@ -606,6 +607,7 @@ public class ThreadManager {
     }
 
 
+    /*
     public static void startBitmapTask(Context context, Uri imageUri, int width, int height) {
 
         CoverImageDecodeTask decodeTask = (CoverImageDecodeTask)sInstance.mThreadTaskWorkQueue.poll();

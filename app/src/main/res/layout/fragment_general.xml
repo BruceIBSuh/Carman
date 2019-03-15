@@ -40,36 +40,87 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_date"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <FrameLayout
-        android:id="@+id/fl_opinet_avg"
-        android:layout_width="150dp"
-        android:layout_height="92dp"
+
+    <com.silverback.carman2.views.AvgPriceView
+        android:id="@+id/avgPriceView"
+        android:layout_width="wrap_content"
+        android:layout_height="70dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/bg_colored_border"
-        android:padding="3dp"
+        android:padding="5dp"
+        app:avgPriceDown="@color/priceDown"
+        app:avgPriceUp="@color/priceUp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date">
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
 
-
-        <com.silverback.carman2.views.AvgPriceView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </FrameLayout>
-
-    <FrameLayout
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="0dp"
-        android:layout_height="92dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:background="@drawable/bg_colored_border"
-        app:layout_constraintBottom_toBottomOf="@+id/fl_opinet_avg"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/fl_opinet_avg">
+        app:layout_constraintStart_toEndOf="@+id/avgPriceView"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date">
 
-    </FrameLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="3dp"
+            android:text="[관심 지역 / 주유소]"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="3dp"
+            android:background="@color/border" />
+
+    </LinearLayout>
+
+
+    <com.silverback.carman2.views.SidoPriceView
+        android:id="@+id/sidoPriceView"
+        android:layout_width="85dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/sigunPriceView"
+        app:layout_constraintEnd_toStartOf="@+id/sigunPriceView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintStart_toEndOf="@+id/avgPriceView"
+        app:sidoPriceDown="@color/priceDown"
+        app:sidoPriceUp="@color/priceUp" />
+
+    <com.silverback.carman2.views.SigunPriceView
+        android:id="@+id/sigunPriceView"
+        android:layout_width="85dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="3dp"
+        app:layout_constraintBottom_toBottomOf="@+id/stationPriceView"
+        app:layout_constraintEnd_toStartOf="@+id/stationPriceView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/sidoPriceView"
+        app:sigunPriceDown="@color/priceDown"
+        app:sigunPriceUp="@color/priceUp" />
+
+    <com.silverback.carman2.views.StationPriceView
+        android:id="@+id/stationPriceView"
+        android:layout_width="85dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="3dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/bg_colored_border"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/sigunPriceView"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
     <TextView
         android:id="@+id/tv_title_expense"
@@ -79,9 +130,45 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/bg_colored_border"
+        android:padding="5dp"
+        android:text="@string/general_title_expense"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/fl_opinet_avg"
-        android:text="@string/general_title_expense"/>
+        app:layout_constraintTop_toBottomOf="@+id/avgPriceView" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="90dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_title_expense" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="0dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/bg_colored_border"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView_stations"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
 </android.support.constraint.ConstraintLayout>

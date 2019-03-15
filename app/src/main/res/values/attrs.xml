@@ -2,14 +2,23 @@
 <resources>
 
     <declare-styleable name="AvgPriceView">
-        <attr name="avgPriceTextSize" format="dimension" />
-        <attr name="avgPriceUpColor" format="color" />
-        <attr name="avgPriceDownColor" format="color" />
-        <attr name="avgTitle" format="string" />
-        <attr name="avgPrice" format="string" />
+        <attr name="avgPriceUp" format="color|reference" />
+        <attr name="avgPriceDown" format="color|reference" />
     </declare-styleable>
 
+    <declare-styleable name="SidoPriceView">
+        <attr name="sidoPriceUp" format="color|reference" />
+        <attr name="sidoPriceDown" format="color|reference" />
+    </declare-styleable>
 
+    <declare-styleable name="SigunPriceView">
+        <attr name="sigunPriceUp" format="color|reference" />
+        <attr name="sigunPriceDown" format="color|reference" />
+    </declare-styleable>
 
+    <declare-styleable name="StationPriceView">
+        <attr name="stationPriceUp" format="color|reference" />
+        <attr name="stationPriceDown" format="color|reference" />
+    </declare-styleable>
 
 </resources>

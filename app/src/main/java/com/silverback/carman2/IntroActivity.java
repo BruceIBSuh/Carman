@@ -36,7 +36,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Hide the action bar
@@ -48,7 +48,6 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
         // android:screenOrientation is not allowed with Android O_MR1 +
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        mSettings = getSharedPreferenceInstance(this);
 
         // UI's and event handlers
         mProgBar = findViewById(R.id.progbar);

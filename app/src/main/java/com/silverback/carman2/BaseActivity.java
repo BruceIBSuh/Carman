@@ -2,6 +2,7 @@ package com.silverback.carman2;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 
@@ -20,10 +21,19 @@ public class BaseActivity extends AppCompatActivity {
     protected static SharedPreferences mSettings;
     // Fields
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(mSettings == null) {
+            mSettings = PreferenceManager
+                    .getDefaultSharedPreferences(getApplicationContext());
+        }
+    }
 
     //Create Singleton SharedPreferences for initial default variables.
     //Be mindful not to be confused with another SharedPreferences that is for setting variables using
     //PreferenceMaanger.getDefaultPreferences().
+    /*
     public static SharedPreferences getSharedPreferenceInstance(Context context) {
         if(mSettings == null) {
             mSettings = PreferenceManager
@@ -31,12 +41,12 @@ public class BaseActivity extends AppCompatActivity {
         }
         return mSettings;
     }
+    */
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
     protected final String[] getDefaultParams() {
 
-        SharedPreferences mSettings = getSharedPreferenceInstance(this);
-
+        //SharedPreferences mSettings = getSharedPreferenceInstance(this);
         String[] defaultParams = new String[3];
         defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
         defaultParams[1] = mSettings.getString(Constants.RADIUS, "2500");
