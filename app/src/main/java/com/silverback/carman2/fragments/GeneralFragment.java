@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -31,8 +32,7 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GeneralFragment extends Fragment implements
-        AdapterView.OnItemSelectedListener {
+public class GeneralFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -45,6 +45,7 @@ public class GeneralFragment extends Fragment implements
     private StationPriceView stationPriceView;
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
+
     private LocationTask locationTask;
 
     // UI's
@@ -62,11 +63,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         String[] district = getResources().getStringArray(R.array.default_district);
-
-        // Retrieve the current location
-        locationTask = ThreadManager.fetchLocationTask(getActivity());
 
     }
 
@@ -98,9 +95,8 @@ public class GeneralFragment extends Fragment implements
         // Set the spinner to the default value that's fetched from SharedPreferences
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
         defaults = getArguments().getStringArray("defaults");
-
         log.i("Default fuel: %s", defaults[0]);
-
+        // Set the initial spinner value with the default from SharedPreferences
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])){
                 fuelSpinner.setSelection(i);
@@ -108,13 +104,11 @@ public class GeneralFragment extends Fragment implements
             }
         }
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
+        // RecyclerView
         recyclerView.setHasFixedSize(true);
-
-        // use a linear layout manager
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
+        locationTask = ThreadManager.fetchLocationTask(recyclerView);
 
         return childView;
     }

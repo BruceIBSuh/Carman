@@ -109,6 +109,9 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         toolbarHeight = getActionbarHeight();
         log.i("toolbar height: %s",  toolbarHeight);
 
+        // Permission Check
+        checkPermissions();
+
         // Custom method to animate the tab layout sliding up and down when clicking the buttons
         // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
         // and the ViewPager does so by translating "Y".

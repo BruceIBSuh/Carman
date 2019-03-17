@@ -14,6 +14,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -35,6 +36,8 @@ public class LocationRunnable implements Runnable,
     private Context context;
     private static CarmanLocationHelper mLocationHelper;
     private LocationMethods mLocationTask;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private LocationRequest locationRequest; //store the Location setting params
 
     static {
         mLocationHelper = CarmanLocationHelper.getLocationInstance();
@@ -51,29 +54,26 @@ public class LocationRunnable implements Runnable,
     LocationRunnable(Context context, LocationMethods task) {
         mLocationTask = task;
         this.context = context;
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+        locationRequest = mLocationHelper.setLocationRequest();
     }
 
 
     @Override
     public void run() {
-
-        log.i("LocationRunnable");
-
         mLocationTask.setDownloadThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        // Flag to tell whether the location updates are permitted.
-        FusedLocationProviderClient mFusedLocationClient =
-                LocationServices.getFusedLocationProviderClient(context);
-
-        // Set the Location environment variables and check if it is appropriatte, implementing
-        // OnSuccessListener and OnFailureLister, the methods of which are defined in the bottom.
-        LocationRequest locationRequest = mLocationHelper.setLocationRequest();
+        // Check if the location setting is successful. If successful, fetch the last known location
+        // using FusedLocationProviderClient in onSuccess method.
         mLocationHelper.checkLocationSetting(context)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this);
+    }
 
-
+    @Override
+    public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+        log.i("LocationCallback invoked");
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
         LocationCallback locationCallback = mLocationHelper.initLocationCallback();
@@ -92,33 +92,26 @@ public class LocationRunnable implements Runnable,
                         mLocationTask.handleLocationTask(CURRENT_LOCATION_COMPLETE);
 
                     } else {
+                        log.i("no location fetched");
                         mLocationTask.handleLocationTask(CURRENT_LOCATION_FAIL);
                     }
                 }
             });
-
-
         } catch (SecurityException e) {
             e.printStackTrace();
-
         } finally {
             mFusedLocationClient.removeLocationUpdates(locationCallback);
         }
-    }
 
-    @Override
-    public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-
-        //LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         /*
+        LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         if(locationStates.isGpsUsable()) {
-            //Log.d(LOG_TAG, "GPS is working");
+            log.d("GPS is working");
         }
         if(locationStates.isNetworkLocationUsable()) {
-            //Log.d(LOG_TAG, "Network location is working");
+            log.d("Network location is working");
         }
         */
-
     }
 
     @Override

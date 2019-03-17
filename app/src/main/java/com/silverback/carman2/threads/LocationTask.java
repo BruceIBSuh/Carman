@@ -3,6 +3,7 @@ package com.silverback.carman2.threads;
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
+import android.view.View;
 
 import com.google.android.gms.location.LocationCallback;
 
@@ -13,31 +14,33 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     // Constants
     //private static final String TAG = "LocationTask";
 
-    private WeakReference<Context> mWeakContext;
+    private WeakReference<View> mWeakView;
+    private Context context;
     private Runnable mLocationRunnable;
     private LocationCallback mLocationCallback;
     private Location mLocation;
 
     // Constructor
-    LocationTask(Context context) {
+    LocationTask(View view) {
         super();
+        this.context = view.getContext();
         mLocationRunnable = new LocationRunnable(context, this);
     }
 
-    void initLocationTask(ThreadManager threadManager, Context context) {
+    void initLocationTask(ThreadManager threadManager, View view) {
 
         sThreadManager = threadManager;
-        mWeakContext = new WeakReference<>(context);
+        mWeakView = new WeakReference<>(view);
     }
 
     Runnable getLocationRunnable() {
         return mLocationRunnable;
     }
 
-    public void recycle() {
-        if(mWeakContext != null) {
-            mWeakContext.clear();
-            mWeakContext = null;
+    void recycle() {
+        if(mWeakView != null) {
+            mWeakView.clear();
+            mWeakView = null;
         }
 
         if(mLocationCallback != null) mLocationCallback = null;
@@ -75,11 +78,8 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         return mLocation;
     }
 
-    Activity getParentActivity() {
-        if(mWeakContext != null) return (Activity)mWeakContext.get();
+    View getParentView() {
+        if(mWeakView != null) return mWeakView.get();
         return null;
-
     }
-
-
 }

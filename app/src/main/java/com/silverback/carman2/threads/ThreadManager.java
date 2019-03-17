@@ -2,10 +2,15 @@ package com.silverback.carman2.threads;
 
 import android.app.Activity;
 import android.content.Context;
+import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
 
+import com.silverback.carman2.MainActivity;
+import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -20,9 +25,7 @@ public class ThreadManager {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager.class);
 
-    //private static final String LOG_TAG = "ThreadManager";
-
-
+    // Constants
     static final int DOWNLOAD_PRICE_COMPLETED = 100;
     static final int LOAD_PRICE_AVG_COMPLETED = 101;
     static final int LOAD_PRICE_SIDO_COMPLETED = 102;
@@ -65,7 +68,7 @@ public class ThreadManager {
 
     // A queue of tasks. Tasks are handed to a ThreadPool.
     private final Queue<ThreadTask> mThreadTaskWorkQueue;
-    //private final Queue<StationListTask> mStationTaskWorkQueue;
+    private final Queue<StationListTask> mStationTaskWorkQueue;
     //private final Queue<StationCurrentTask> mCurStnTaskWorkQueue;
     //private final Queue<LoadPriceListTask> mLoadPriceListTaskQueue;
     //private final Queue<ServiceListTask> mServiceListTaskQueue;
@@ -88,6 +91,10 @@ public class ThreadManager {
         sInstance = new ThreadManager();
     }
 
+    public interface OnClientListener {
+        void setLocationFromThread(Location location);
+    }
+
     // Private constructor for Singleton instance of this ThreadManager class.
     private ThreadManager() {
         // Counts the cpu cores of an device
@@ -98,7 +105,7 @@ public class ThreadManager {
         //mDecodeWorkQueue = new LinkedBlockingQueue<>();
 
         mThreadTaskWorkQueue = new LinkedBlockingQueue<>();
-        //mStationTaskWorkQueue = new LinkedBlockingQueue<>();
+        mStationTaskWorkQueue = new LinkedBlockingQueue<>();
         //mCurStnTaskWorkQueue = new LinkedBlockingQueue<>();
         //mServiceListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
@@ -113,6 +120,7 @@ public class ThreadManager {
         mDecodeThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, NUMBER_OF_CORES,
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDecodeWorkQueue);
         */
+
 
         /*
          * Instantiates a new anonymous Handler object and defines its
@@ -143,17 +151,24 @@ public class ThreadManager {
                         distCodeTask.recycle();
                         break;
 
-                    /*
                     case FETCH_LOCATION_COMPLETED:
                         locationTask = (LocationTask)msg.obj;
                         Location location = locationTask.getLocationUpdated();
-                        Activity act = locationTask.getParentActivity();
+                        log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
 
-                        if(act instanceof MainActivity) {
-                            ((MainActivity) act).updateCurrentLocation(location);
-                            StationListView listView = ((MainActivity)act).findViewById(R.id.station_list_view);
-                            if(listView != null) listView.updateCurrentLocation(location);
+                        View view = locationTask.getParentView();
 
+
+                        if(view instanceof RecyclerView) {
+                            /*
+                            (RecyclerView)view.updateCurrentLocation(location);
+                            StationListView listView = ((MainActivity) act).findViewById(R.id.station_list_view);
+                            if (listView != null) listView.updateCurrentLocation(location);
+                            */
+                            log.i("RecyclerView");
+
+                        }
+                        /*
                         } else if(act instanceof GasManagerActivity) {
                             ((GasManagerActivity)act).updateCurrentLocation(location);
 
@@ -163,6 +178,7 @@ public class ThreadManager {
 
                             fm.updateCurrentLocation(location);
                         }
+                        */
 
                         break;
 
@@ -171,7 +187,7 @@ public class ThreadManager {
                         locationTask.recycle();
                         mLocationTaskQueue.offer(locationTask);
                         break;
-                    */
+
 
                     /*
                     case DOWNLOAD_PRICE_COMPLETED:
@@ -320,26 +336,17 @@ public class ThreadManager {
 
         if(task instanceof OpinetDistCodeTask) {
             switch(state) {
-                case DOWNLOAD_DISTCODE_COMPLTETED:
-                    msg.sendToTarget();
-                    break;
-                case DOWNLOAD_DISTCODE_FAILED:
-                    msg.sendToTarget();
-                    break;
+                case DOWNLOAD_DISTCODE_COMPLTETED: msg.sendToTarget(); break;
+                case DOWNLOAD_DISTCODE_FAILED: msg.sendToTarget(); break;
+            }
+        } else if(task instanceof LocationTask) {
+            switch (state) {
+                case FETCH_LOCATION_COMPLETED: msg.sendToTarget(); break;
+                case FETCH_LOCATION_FAILED: msg.sendToTarget(); break;
             }
         }
 
         /*
-        if(task instanceof LocationTask) {
-            switch(state) {
-                case FETCH_LOCATION_COMPLETED:
-                    msg.sendToTarget();
-                    break;
-                case FETCH_LOCATION_FAILED:
-                    msg.sendToTarget();
-                    break;
-            }
-
         } else if(task instanceof OpinetPriceTask) {
 
             switch(state) {
@@ -555,24 +562,25 @@ public class ThreadManager {
         return task;
     }
 
-
+    */
     // Download stations around the current location from Opinet
     // given Location and defaut params transferred from OpinetStationListFragment
     public static StationListTask startNearStationListTask(
-            OpinetStationListFragment fm, StationListView listView, String[] params, Location location) {
+            RecyclerView recyclerView, String[] params, Location location) {
 
         StationListTask stationListTask = sInstance.mStationTaskWorkQueue.poll();
 
         if(stationListTask == null) {
-            stationListTask = new StationListTask(fm.getContext());
+            //stationListTask = new StationListTask(fm.getContext());
         }
 
-        stationListTask.initDownloadTask(ThreadManager.sInstance, fm, listView, params, location);
+        stationListTask.initDownloadTask(ThreadManager.sInstance, recyclerView, params, location);
         sInstance.mDownloadThreadPool.execute(stationListTask.getStationDownloadRunnable());
 
         return stationListTask;
     }
 
+    /*
     public static StationListTask sortNearStationsTask(
             OpinetStationListFragment fm, StationListView view, List<Opinet.GasStnParcelable> stationList) {
 
@@ -591,15 +599,15 @@ public class ThreadManager {
     */
 
 
-    public static LocationTask fetchLocationTask(Context context){
+    public static LocationTask fetchLocationTask(View view){
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
 
         if(locationTask == null) {
-            locationTask = new LocationTask(context);
+            locationTask = new LocationTask(view);
         }
 
-        locationTask.initLocationTask(ThreadManager.sInstance, context);
+        locationTask.initLocationTask(ThreadManager.sInstance, view);
         sInstance.mDownloadThreadPool.execute(locationTask.getLocationRunnable());
 
         return locationTask;

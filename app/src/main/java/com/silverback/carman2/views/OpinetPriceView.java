@@ -11,6 +11,9 @@ import android.widget.TextView;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+/**
+ * Abstract class subclassed by Avg, Sido, Sigun, Station PriceView
+ */
 public abstract class OpinetPriceView extends LinearLayout {
 
     // Logging
@@ -38,6 +41,7 @@ public abstract class OpinetPriceView extends LinearLayout {
     protected abstract void getAttributes(Context context, AttributeSet attrs);
     public abstract void addPriceView(String fuelCode);
 
+    // Methods to switch the text color according to whether the price gets higher or lower.
     protected void setColoredTextView(TextView textView, float price, float diff) {
         int colorDiff = (diff > 0)? priceUpColor : priceDownColor;
         log.i("colorDiff: %s", colorDiff);

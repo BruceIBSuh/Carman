@@ -74,12 +74,12 @@ public class CarmanLocationHelper implements
 
                 if(locationResult == null) return;
 
-                //for(Location location : locationResult.getLocations()) {}
-                //Log.i(LOG_TAG, "Locations updated: " + location + ", " + System.currentTimeMillis());
+                for(Location location : locationResult.getLocations())
+                    log.i("Locations updated: $s, %s", location, System.currentTimeMillis());
 
 
                 mLocation = locationResult.getLastLocation();
-                //Log.i(LOG_TAG, "Location in Callback: " + mLocation.getLatitude() + "," + mLocation.getLongitude());
+                log.i("Location in Callback: %s, %s", mLocation.getLatitude(), mLocation.getLongitude());
             }
 
         };
