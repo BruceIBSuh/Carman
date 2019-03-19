@@ -247,6 +247,7 @@ public class Opinet  {
     }
 
 
+
     public static class GasStnParcelable implements Parcelable, Serializable {
 
         private String stnId;
@@ -278,8 +279,7 @@ public class Opinet  {
 
         }
 
-        static final Parcelable.Creator<GasStnParcelable> CREATOR
-                = new Parcelable.Creator<GasStnParcelable>() {
+        static final Parcelable.Creator<GasStnParcelable> CREATOR = new Parcelable.Creator<GasStnParcelable>() {
 
             @Override
             public GasStnParcelable createFromParcel(Parcel parcel) {

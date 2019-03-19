@@ -17,22 +17,29 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.OpinetPriceTask;
+import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
 import com.silverback.carman2.views.SidoPriceView;
 import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 
+import java.util.List;
+
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GeneralFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+public class GeneralFragment extends Fragment implements
+        AdapterView.OnItemSelectedListener,
+        ThreadManager.OnDataCallbackListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -47,6 +54,7 @@ public class GeneralFragment extends Fragment implements AdapterView.OnItemSelec
     private RecyclerView.LayoutManager layoutManager;
 
     private LocationTask locationTask;
+    private StationListTask stationTask;
 
     // UI's
     private Spinner fuelSpinner;
@@ -108,7 +116,8 @@ public class GeneralFragment extends Fragment implements AdapterView.OnItemSelec
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
-        locationTask = ThreadManager.fetchLocationTask(recyclerView);
+        locationTask = ThreadManager.fetchLocationTask(this, recyclerView);
+
 
         return childView;
     }
@@ -139,5 +148,21 @@ public class GeneralFragment extends Fragment implements AdapterView.OnItemSelec
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
+
+    // ThreadManager.OnDataCallbackListener invokes the following callback methods
+    // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
+    // then, initializes another thread to download a station list based upon the location.
+    @Override
+    public void callbackLocation(Location result){
+        stationTask = ThreadManager.startNearStationListTask(GeneralFragment.this, defaults, result);
+    }
+
+    @Override
+    public void callbackStations(List<Opinet.GasStnParcelable> stnList) {
+        log.i("Stations: %s", stnList.size());
+        StationListAdapter adapter = new StationListAdapter(stnList);
+        recyclerView.setAdapter(adapter);
+    }
+
 
 }

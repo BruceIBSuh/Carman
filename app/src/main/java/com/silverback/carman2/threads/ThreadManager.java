@@ -6,14 +6,18 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -50,6 +54,12 @@ public class ThreadManager {
     static final int FETCH_LOCATION_FAILED = -8;
     static final int SERVICE_ITEM_LIST_FAILED = -9;
 
+    public interface OnDataCallbackListener {
+        void callbackLocation(Location result);
+        void callbackStations(List<Opinet.GasStnParcelable> result);
+    }
+
+
     // Determine the threadpool parameters.
     // Sets the amount of time an idle thread will wait for a task before terminating
     private static final int KEEP_ALIVE_TIME = 1;
@@ -60,6 +70,8 @@ public class ThreadManager {
     // Sets the maximum threadpool size to 4
     //private static final int MAXIMUM_POOL_SIZE = 4;
     private static int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+
+    private OnDataCallbackListener mCallbackListener;
 
     // A queue of Runnables
     //private final BlockingQueue<Runnable> mOpinetDownloadWorkQueue, mLoadPriceWorkQueue;
@@ -91,10 +103,6 @@ public class ThreadManager {
         sInstance = new ThreadManager();
     }
 
-    public interface OnClientListener {
-        void setLocationFromThread(Location location);
-    }
-
     // Private constructor for Singleton instance of this ThreadManager class.
     private ThreadManager() {
         // Counts the cpu cores of an device
@@ -121,7 +129,6 @@ public class ThreadManager {
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDecodeWorkQueue);
         */
 
-
         /*
          * Instantiates a new anonymous Handler object and defines its
          * handleMessage() method. The Handler *must* run on the UI thread, because it moves photo
@@ -132,7 +139,7 @@ public class ThreadManager {
          * does the constructor and the Handler.
          */
         mMainHandler = new Handler(Looper.getMainLooper()) {
-
+            @SuppressWarnings("unchecked")
             @Override
             public void handleMessage(Message msg) {
 
@@ -140,7 +147,7 @@ public class ThreadManager {
 
                 LocationTask locationTask;
                 //LoadPriceListTask loadPriceTask;
-                //StationListTask stationTask;
+                StationListTask stationTask;
                 //StationCurrentTask curStnTask;
                 OpinetDistCodeTask distCodeTask;
 
@@ -155,19 +162,8 @@ public class ThreadManager {
                         locationTask = (LocationTask)msg.obj;
                         Location location = locationTask.getLocationUpdated();
                         log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
+                        mCallbackListener.callbackLocation(location);
 
-                        View view = locationTask.getParentView();
-
-
-                        if(view instanceof RecyclerView) {
-                            /*
-                            (RecyclerView)view.updateCurrentLocation(location);
-                            StationListView listView = ((MainActivity) act).findViewById(R.id.station_list_view);
-                            if (listView != null) listView.updateCurrentLocation(location);
-                            */
-                            log.i("RecyclerView");
-
-                        }
                         /*
                         } else if(act instanceof GasManagerActivity) {
                             ((GasManagerActivity)act).updateCurrentLocation(location);
@@ -260,11 +256,15 @@ public class ThreadManager {
                         curStnTask.getGasManagerActivity().addStationInfo(id, addrs, code);
 
                         break;
-
+                    */
                     case DOWNLOAD_NEAR_STATIONS_COMPLETED:
-                        //Log.i(LOG_TAG, "DOWNLOAD_NEAR_STATION_COMPLETED");
+                        log.i("DOWNLOAD_NEAR_STATION_COMPLETED");
+                        stationTask = (StationListTask)msg.obj;
+                        List<Opinet.GasStnParcelable> stations = stationTask.getStationList();
+                        mCallbackListener.callbackStations(stations);
                         break;
 
+                    /*
                     case DOWNLOAD_NO_STATION_COMPLETED: // No sation available within a given radius
                         //Log.i(LOG_TAG, "DOWNLOAD NO STATION WITHIN RADIUS");
                         stationTask = (StationListTask)msg.obj;
@@ -329,6 +329,8 @@ public class ThreadManager {
         return sInstance;
     }
 
+
+
     // Handles state messages for a particular task object
     void handleState(ThreadTask task, int state) {
 
@@ -339,12 +341,41 @@ public class ThreadManager {
                 case DOWNLOAD_DISTCODE_COMPLTETED: msg.sendToTarget(); break;
                 case DOWNLOAD_DISTCODE_FAILED: msg.sendToTarget(); break;
             }
+
         } else if(task instanceof LocationTask) {
             switch (state) {
                 case FETCH_LOCATION_COMPLETED: msg.sendToTarget(); break;
                 case FETCH_LOCATION_FAILED: msg.sendToTarget(); break;
             }
+
+        } else if(task instanceof StationListTask) {
+
+            switch (state) {
+
+                case DOWNLOAD_NEAR_STATIONS_COMPLETED:
+                    //mDownloadThreadPool.execute(((StationListTask) task).getStationListRunnable());
+                    msg.sendToTarget();
+                    break;
+
+                case DOWNLOAD_NO_STATION_COMPLETED:
+                    msg.sendToTarget();
+                    break;
+
+                case DOWNLOAD_NEAR_STATIONS_FAILED:
+                    msg.sendToTarget();
+                    break;
+
+                case POPULATE_STATION_LIST_COMPLETED:
+                    msg.sendToTarget();
+                    break;
+
+                case POPULATE_STATION_LIST_FAILED:
+                    //mDownloadThreadPool.execute(((StationListTask) task).getStationListRunnable());
+                    msg.sendToTarget();
+                    break;
+            }
         }
+
 
         /*
         } else if(task instanceof OpinetPriceTask) {
@@ -475,6 +506,10 @@ public class ThreadManager {
         //}
     }
 
+    public void setDataCallbackListener(OnDataCallbackListener listener) {
+        mCallbackListener = listener;
+    }
+
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
@@ -565,16 +600,24 @@ public class ThreadManager {
     */
     // Download stations around the current location from Opinet
     // given Location and defaut params transferred from OpinetStationListFragment
-    public static StationListTask startNearStationListTask(
-            RecyclerView recyclerView, String[] params, Location location) {
+    public static StationListTask startNearStationListTask(Fragment fm, String[] params, Location location) {
 
         StationListTask stationListTask = sInstance.mStationTaskWorkQueue.poll();
 
         if(stationListTask == null) {
-            //stationListTask = new StationListTask(fm.getContext());
+            stationListTask = new StationListTask(fm.getContext());
         }
 
-        stationListTask.initDownloadTask(ThreadManager.sInstance, recyclerView, params, location);
+        // Attach OnDataCallbackListener
+        if(sInstance.mCallbackListener == null) {
+            try {
+                sInstance.mCallbackListener = (OnDataCallbackListener) fm;
+            } catch (ClassCastException e) {
+                throw new ClassCastException(fm.toString() + " must implement OnDataCallbackListener");
+            }
+        }
+
+        stationListTask.initDownloadTask(ThreadManager.sInstance, fm, params, location);
         sInstance.mDownloadThreadPool.execute(stationListTask.getStationDownloadRunnable());
 
         return stationListTask;
@@ -598,10 +641,17 @@ public class ThreadManager {
 
     */
 
-
-    public static LocationTask fetchLocationTask(View view){
+    @SuppressWarnings("unchecked")
+    public static LocationTask fetchLocationTask(Fragment fm, View view){
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
+
+        // Attach OnDataCallbackListener
+        try {
+            sInstance.mCallbackListener = (OnDataCallbackListener)fm;
+        } catch(ClassCastException e) {
+            throw new ClassCastException(fm.toString() + " must implement OnDataCallbackListener");
+        }
 
         if(locationTask == null) {
             locationTask = new LocationTask(view);

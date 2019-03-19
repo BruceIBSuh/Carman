@@ -34,7 +34,7 @@ public class XmlPullParserHandler {
     private List<Opinet.GasStnParcelable> gasStnParcelableList;
     private Opinet.GasStnParcelable gasStnParcelable;
 
-    //private List<Opinet.GasStationInfo> gasStationInfoList;
+    private List<Opinet.GasStationInfo> gasStationInfoList;
     private Opinet.GasStationInfo gasStationInfo;
 
     private String text;
@@ -47,8 +47,8 @@ public class XmlPullParserHandler {
         sidoPriceList = new ArrayList<>();
         sigunPriceList = new ArrayList<>();
         distCodeList = new ArrayList<>();
-        //gasStnParcelableList = new ArrayList<>();
-        //gasStationInfoList = new ArrayList<>();
+        gasStnParcelableList = new ArrayList<>();
+        gasStationInfoList = new ArrayList<>();
     }
 
     public List<Opinet.DistrictCode> parseDistrictCode(InputStream is) {

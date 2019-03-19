@@ -1,21 +1,23 @@
 package com.silverback.carman2.threads;
 
+
 import android.content.Context;
 import android.location.Location;
-import android.support.v7.widget.RecyclerView;
+import android.support.v4.app.Fragment;
 
 import com.silverback.carman2.adapters.StationListAdapter;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class StationListTask extends ThreadTask {//implements
-        //StationDownloadRunnable.StationsDownloadMethod,
-        //StationListRunnable.StationListMethod {
+public class StationListTask extends ThreadTask implements
+        StationDownloadRunnable.StationsDownloadMethod,
+        StationListRunnable.StationListMethod {
 
-    // Constants
-    //private static final String TAG = "StationListTask";
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
 
     // Objects
     //private WeakReference<OpinetStationListFragment> mWeakFragment;
@@ -25,7 +27,7 @@ public class StationListTask extends ThreadTask {//implements
     private Runnable mDownloadRunnable;
     private Runnable mListRunnable;
     //private Runnable mInfoRunnable;
-    private StationListAdapter mAdapter;
+    //private StationListAdapter mAdapter;
     private List<Opinet.GasStnParcelable> mStationList;
     private Location mLocation;
     private String[] defaultParams;
@@ -34,17 +36,13 @@ public class StationListTask extends ThreadTask {//implements
 
     // Constructor
     StationListTask(Context context) {
-
         super();
-
-        //mDownloadRunnable = new StationDownloadRunnable(context, this);
-        //mListRunnable = new StationListRunnable(this);
+        mDownloadRunnable = new StationDownloadRunnable(context, this);
+        mListRunnable = new StationListRunnable(this);
         //mAdapter = new StationListAdapter(context);
     }
 
-    public void initDownloadTask(ThreadManager threadManager,
-                                 RecyclerView recyclerView,
-                                 String[] params, Location location) {
+    void initDownloadTask(ThreadManager threadManager, Fragment fm, String[] params, Location location) {
 
         sThreadManager = threadManager;
         //mWeakListView = new WeakReference<>(recyclerView);
@@ -67,11 +65,12 @@ public class StationListTask extends ThreadTask {//implements
     */
 
     // Get Runnables to be called in ThreadPool.executor()
-    public Runnable getStationDownloadRunnable() {
+    Runnable getStationDownloadRunnable() {
         return mDownloadRunnable;
     }
 
-    public Runnable getStationListRunnable() {
+
+    Runnable getStationInfoRunnable() {
         return mListRunnable;
     }
 
@@ -95,8 +94,9 @@ public class StationListTask extends ThreadTask {//implements
 
     }
 
-    /*
+
     // StationListRunnable.StationListMethods invokes
+
     @Override
     public void setStationListThread(Thread currentThread) {
         setCurrentThread(currentThread);
@@ -107,16 +107,19 @@ public class StationListTask extends ThreadTask {//implements
         return mStationList;
     }
 
+
     @Override
     public StationListAdapter getStationListAdapter() {
-        return mAdapter;
+        return null;//mAdapter;
     }
 
+
     // StationDownloadRunnable.StationsLoadMethod
+
     @Override
     public void setDownloadThread(Thread thread) {
         setCurrentThread(thread);
-        //Log.i(TAG, "Download Thread: " + thread);
+        log.i("Download Thread: %s", thread);
     }
 
     @Override
@@ -133,6 +136,7 @@ public class StationListTask extends ThreadTask {//implements
     public void setStationList(List<Opinet.GasStnParcelable> list) {
         mStationList = list;
     }
+
 
     @Override
     public void handleDownloadTaskState(int state) {
@@ -156,6 +160,7 @@ public class StationListTask extends ThreadTask {//implements
         sThreadManager.handleState(this, outState);
     }
 
+
     @Override
     public void handleListTaskState(int state) {
 
@@ -177,6 +182,7 @@ public class StationListTask extends ThreadTask {//implements
 
 
     // Return references to OpinetStationListFragment, StationListView.
+    /*
     public OpinetStationListFragment getStationListFragment() {
 
         if (mWeakFragment != null) {

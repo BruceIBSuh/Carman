@@ -17,7 +17,7 @@
     <!--GeneralFragment-->
     <string name="general_subtitle_today">Today</string>
     <string name="general_subtitle_expense">Recent Expenses</string>
-    <string name="general_subtitle_stations">Near Stations</string>
+    <string name="general_subtitle_stations">주변 주유소</string>
     <string name="general_spinner_gasoline">Gasoline</string>
     <string name="general_spinner_diesel">Diesel</string>
     <string name="general_spinner_lpg">LPG</string>
@@ -30,6 +30,10 @@
     <string name="general_def_sido">서울</string>
     <string name="general_def_sigun">종로구</string>
     <string name="general_def_code">0101</string>
+    <!--GeneralFragment$StatonList-->
+    <string name="general_station_price">가격</string>
+    <string name="general_station_distance">거리</string>
+    <string name="general_carwash">세차</string>
 
 
     <string name="pref_spinner_sido_seoul">서울시</string>

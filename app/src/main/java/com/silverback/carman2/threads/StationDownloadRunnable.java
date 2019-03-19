@@ -7,6 +7,8 @@ import android.os.Process;
 
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
@@ -24,8 +26,10 @@ import java.util.List;
 
 public class StationDownloadRunnable implements Runnable{
 
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationDownloadRunnable.class);
+
     // Constants
-    //private static final String TAG = "StationDownloadRunnable";
     private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
     static final int DOWNLOAD_STATION_LIST_COMPLETE = 1;
@@ -51,7 +55,7 @@ public class StationDownloadRunnable implements Runnable{
 
     // Constructor
     StationDownloadRunnable(Context context, StationsDownloadMethod task) {
-        //Log.i(TAG, "StationsDowloadRunnable starts");
+        log.i("StationsDowloadRunnable starts");
         mStationList = null;
         this.context = context;
         mTask = task;
@@ -72,11 +76,10 @@ public class StationDownloadRunnable implements Runnable{
         String radius = defaultParams[1];
         String sort = defaultParams[2];
 
-        //Log.i(TAG, "Default Params: " + fuelCode + ", " + radius + ", " + sort);
+        log.i("Default Params: %s, %s, %s", fuelCode, radius, sort);
 
         // Convert longitute and latitude-based location to TM(Transverse Mercator), then again to
         // Katec location using convertgeocoords which is distributed over internet^^ tnx.
-
         GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
         GeoPoint tm_pt = GeoTrans.convert(GeoTrans.GEO, GeoTrans.TM, in_pt);
         GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
@@ -130,12 +133,12 @@ public class StationDownloadRunnable implements Runnable{
             if(mStationList.size() > 0) {
 
                 if(radius.matches(Constants.MIN_RADIUS)) {
-                    //Log.i(TAG, "Current Station: " + mStationList.get(0).getStnName());
+                    log.i("Current Station: %s", mStationList.get(0).getStnName());
                     mTask.setStationList(mStationList);
                     mTask.handleDownloadTaskState(DOWNLOAD_CURRENT_STATION_COMPLETE);
 
                 } else {
-                    //Log.i(TAG, "StationList: " + mStationList.size());
+                    log.i("StationList: %s", mStationList.size());
                     Uri uri = saveNearStationInfo(mStationList);
                     if (uri != null) {
                         mTask.setStationList(mStationList);
@@ -149,15 +152,15 @@ public class StationDownloadRunnable implements Runnable{
             }
 
         } catch (MalformedURLException e) {
-            //Log.e(TAG, "MalformedURLException: " + e.getMessage());
+            log.e("MalformedURLException: %s", e.getMessage());
             mTask.handleDownloadTaskState(DONWLOAD_STATION_LIST_FAIL);
 
         } catch (IOException e) {
-            //Log.e(TAG, "IOException: " + e.getMessage());
+            log.e("IOException: %s", e.getMessage());
             mTask.handleDownloadTaskState(DONWLOAD_STATION_LIST_FAIL);
 
         } catch (InterruptedException e) {
-            //Log.e(TAG, "InterruptedException: " + e.getMessage());
+            log.e("InterruptedException: %s", e.getMessage());
             mTask.handleDownloadTaskState(DONWLOAD_STATION_LIST_FAIL);
 
         } finally {
@@ -174,31 +177,18 @@ public class StationDownloadRunnable implements Runnable{
     private Uri saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
 
         //File file = new File(getApplicationContext().getFilesDir(), "tmpStationListUri");
-        File file = new File(
-                context.getApplicationContext().getCacheDir(), Constants.FILE_CACHED_STATION_AROUND);
+        File file = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_AROUND);
 
-        FileOutputStream fos = null;
-        ObjectOutputStream oos = null;
-
-        try {
-            fos = new FileOutputStream(file);
-            oos = new ObjectOutputStream(fos);
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(list);
 
         } catch (FileNotFoundException e) {
-            //Log.e(TAG, "FileNotFoundException: " + e.getMessage());
+            log.e("FileNotFoundException: %s", e.getMessage());
 
         } catch (IOException e) {
-            //Log.e(TAG, "IOException: " + e.getMessage());
+            log.e("IOException: %s", e.getMessage());
 
-        }
-
-        try {
-            if (oos != null) oos.close();
-            if (fos != null) fos.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return Uri.fromFile(file);
