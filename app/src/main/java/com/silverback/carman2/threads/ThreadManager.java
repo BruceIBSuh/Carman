@@ -7,12 +7,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import com.silverback.carman2.MainActivity;
-import com.silverback.carman2.R;
-import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -54,10 +50,7 @@ public class ThreadManager {
     static final int FETCH_LOCATION_FAILED = -8;
     static final int SERVICE_ITEM_LIST_FAILED = -9;
 
-    public interface OnDataCallbackListener {
-        void callbackLocation(Location result);
-        void callbackStations(List<Opinet.GasStnParcelable> result);
-    }
+
 
 
     // Determine the threadpool parameters.
@@ -66,54 +59,63 @@ public class ThreadManager {
     // Sets the Time Unit to seconds
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT;
     // Sets the initial threadpool size to 4
-    //private static final int CORE_POOL_SIZE = 2;
+    private static final int CORE_POOL_SIZE = 2;
     // Sets the maximum threadpool size to 4
     //private static final int MAXIMUM_POOL_SIZE = 4;
-    private static int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+    private static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
 
-    private OnDataCallbackListener mCallbackListener;
+
+    // Interface to communicate w/
+    public interface OnCompleteTaskListener {
+        void callbackLocation(Location result);
+        void callbackStationList(List<Opinet.GasStnParcelable> result);
+    }
+
+    // Objects
+    private OnCompleteTaskListener mTaskListener;
 
     // A queue of Runnables
     //private final BlockingQueue<Runnable> mOpinetDownloadWorkQueue, mLoadPriceWorkQueue;
     private final BlockingQueue<Runnable> mDownloadWorkQueue;
-    //private final BlockingQueue<Runnable> mDecodeWorkQueue;
+    private final BlockingQueue<Runnable> mDecodeWorkQueue;
 
     // A queue of tasks. Tasks are handed to a ThreadPool.
-    private final Queue<ThreadTask> mThreadTaskWorkQueue;
-    private final Queue<StationListTask> mStationTaskWorkQueue;
+    //private final Queue<ThreadTask> mThreadTaskWorkQueue;
+
+    private final Queue<StationListTask> mStationListTaskQueue;
+    private final Queue<StationInfoTask> mStationInfoTaskQueue;
     //private final Queue<StationCurrentTask> mCurStnTaskWorkQueue;
     //private final Queue<LoadPriceListTask> mLoadPriceListTaskQueue;
     //private final Queue<ServiceListTask> mServiceListTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
 
     // A managed pool of background download threads
-    //private final ThreadPoolExecutor mDownloadThreadPool, mLoadThreadPool;
     private final ThreadPoolExecutor mDownloadThreadPool;
-    //private final ThreadPoolExecutor mDecodeThreadPool;
+    private final ThreadPoolExecutor mDecodeThreadPool;
 
     // An object that manages Messages in a Thread
     private Handler mMainHandler;
+
     // ThreadManager instance as a singleton
     private static ThreadManager sInstance;
+
+
     // A static block that sets class fields
     static {
-        // The time unit for "keep alive" is in seconds
-        KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;
-        // Creates a single static instance of PhotoManager
-        sInstance = new ThreadManager();
+        KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS; //The time unit for "keep alive" is in seconds
+        sInstance = new ThreadManager();//Creates a single static instance of ThreadManager
     }
 
     // Private constructor for Singleton instance of this ThreadManager class.
     private ThreadManager() {
-        // Counts the cpu cores of an device
-        //Log.d(LOG_TAG, "Number of cores: " + NUMBER_OF_CORES);
 
-        // Runnable(Task) work queue
+        // Runnable work queue
         mDownloadWorkQueue = new LinkedBlockingQueue<>();
-        //mDecodeWorkQueue = new LinkedBlockingQueue<>();
+        mDecodeWorkQueue = new LinkedBlockingQueue<>();
 
-        mThreadTaskWorkQueue = new LinkedBlockingQueue<>();
-        mStationTaskWorkQueue = new LinkedBlockingQueue<>();
+        // Queues of tasks, which is handed to ThreadPool.
+        mStationListTaskQueue = new LinkedBlockingQueue<>();
+        mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         //mCurStnTaskWorkQueue = new LinkedBlockingQueue<>();
         //mServiceListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
@@ -124,10 +126,10 @@ public class ThreadManager {
         mDownloadThreadPool = new ThreadPoolExecutor(NUMBER_OF_CORES, NUMBER_OF_CORES,
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDownloadWorkQueue);
 
-        /*
+
         mDecodeThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, NUMBER_OF_CORES,
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDecodeWorkQueue);
-        */
+
 
         /*
          * Instantiates a new anonymous Handler object and defines its
@@ -162,7 +164,7 @@ public class ThreadManager {
                         locationTask = (LocationTask)msg.obj;
                         Location location = locationTask.getLocationUpdated();
                         log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
-                        mCallbackListener.callbackLocation(location);
+                        mTaskListener.callbackLocation(location);
 
                         /*
                         } else if(act instanceof GasManagerActivity) {
@@ -260,8 +262,13 @@ public class ThreadManager {
                     case DOWNLOAD_NEAR_STATIONS_COMPLETED:
                         log.i("DOWNLOAD_NEAR_STATION_COMPLETED");
                         stationTask = (StationListTask)msg.obj;
-                        List<Opinet.GasStnParcelable> stations = stationTask.getStationList();
-                        mCallbackListener.callbackStations(stations);
+                        List<Opinet.GasStnParcelable> stnList = stationTask.getStationList();
+
+                        for(int i = 0; i < stnList.size(); i++) {
+                            log.i("Station ID: %s", stnList.get(i).getStnId());
+                            startStationInfoTask(stnList.get(i));
+                        }
+                        //mTaskListener.callbackStationList(stations);
                         break;
 
                     /*
@@ -272,7 +279,7 @@ public class ThreadManager {
                         stationTask.getStationListFragment().setStationList(null);
 
                         stationTask.recycle();
-                        mStationTaskWorkQueue.offer(stationTask);
+                        mStationListTaskQueue.offer(stationTask);
                         break;
 
                     case DOWNLOAD_NEAR_STATIONS_FAILED:
@@ -282,7 +289,7 @@ public class ThreadManager {
                         stationTask.getStationListFragment().setStationList(null);
 
                         stationTask.recycle();
-                        mStationTaskWorkQueue.offer(stationTask);
+                        mStationListTaskQueue.offer(stationTask);
                         break;
 
                     case POPULATE_STATION_LIST_COMPLETED:
@@ -304,7 +311,7 @@ public class ThreadManager {
                         //Log.i(LOG_TAG, "POPULATE_STATION_LIST_FAILED");
                         stationTask = (StationListTask)msg.obj;
                         stationTask.recycle();
-                        mStationTaskWorkQueue.offer(stationTask);
+                        mStationListTaskQueue.offer(stationTask);
                         break;
 
                     case DOWNLOAD_DISTCODE_COMPLTETED:
@@ -313,10 +320,6 @@ public class ThreadManager {
                         distCodeTask.recycle();
                         break;
                     */
-                    default:
-                        //Log.d(LOG_TAG, "msg.what: " + msg.what);
-                        super.handleMessage(msg);
-                        break;
                 }
 
             }
@@ -353,7 +356,15 @@ public class ThreadManager {
             switch (state) {
 
                 case DOWNLOAD_NEAR_STATIONS_COMPLETED:
-                    //mDownloadThreadPool.execute(((StationListTask) task).getStationListRunnable());
+                    /*
+                    List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
+                    log.i("DOWNLOAD_NEAR_STATIONS_COMPLETED: %s", stnList.size());
+
+                    for(int i = 0; i < stnList.size(); i++) {
+                        ((StationListTask) task).setStationId(stnList.get(i).getStnId());
+                        //mDownloadThreadPool.execute(((StationListTask) task).getStationInfoRunnable());
+                    }
+                    */
                     msg.sendToTarget();
                     break;
 
@@ -362,15 +373,6 @@ public class ThreadManager {
                     break;
 
                 case DOWNLOAD_NEAR_STATIONS_FAILED:
-                    msg.sendToTarget();
-                    break;
-
-                case POPULATE_STATION_LIST_COMPLETED:
-                    msg.sendToTarget();
-                    break;
-
-                case POPULATE_STATION_LIST_FAILED:
-                    //mDownloadThreadPool.execute(((StationListTask) task).getStationListRunnable());
                     msg.sendToTarget();
                     break;
             }
@@ -506,16 +508,12 @@ public class ThreadManager {
         //}
     }
 
-    public void setDataCallbackListener(OnDataCallbackListener listener) {
-        mCallbackListener = listener;
-    }
-
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
     public static OpinetDistCodeTask startOpinetDistCodeTask (Context context) {
 
-        OpinetDistCodeTask task = (OpinetDistCodeTask)sInstance.mThreadTaskWorkQueue.poll();
+        OpinetDistCodeTask task = (OpinetDistCodeTask)sInstance.mDownloadWorkQueue.poll();
 
         if(task == null) {
             task = new OpinetDistCodeTask(context);
@@ -533,7 +531,7 @@ public class ThreadManager {
     public static OpinetPriceTask startOpinetPriceTask(Activity activity, String distCode, int sort) {
 
         log.i("OpinetPriceTask: %s, %s, %d", activity, distCode, sort);
-        OpinetPriceTask priceTask = (OpinetPriceTask)sInstance.mThreadTaskWorkQueue.poll();
+        OpinetPriceTask priceTask = (OpinetPriceTask)sInstance.mDownloadWorkQueue.poll();
 
         if(priceTask == null) {
             priceTask = new OpinetPriceTask(activity);
@@ -600,34 +598,47 @@ public class ThreadManager {
     */
     // Download stations around the current location from Opinet
     // given Location and defaut params transferred from OpinetStationListFragment
-    public static StationListTask startNearStationListTask(Fragment fm, String[] params, Location location) {
+    public static StationListTask startStationListTask(Context context, String[] params, Location location) {
 
-        StationListTask stationListTask = sInstance.mStationTaskWorkQueue.poll();
-
-        if(stationListTask == null) {
-            stationListTask = new StationListTask(fm.getContext());
+        StationListTask stationTask = sInstance.mStationListTaskQueue.poll();
+        if(stationTask == null) {
+            stationTask = new StationListTask(context);
         }
 
-        // Attach OnDataCallbackListener
-        if(sInstance.mCallbackListener == null) {
+        // Attach OnCompleteTaskListener
+        if(sInstance.mTaskListener == null) {
             try {
-                sInstance.mCallbackListener = (OnDataCallbackListener) fm;
+                sInstance.mTaskListener = (OnCompleteTaskListener) context;
             } catch (ClassCastException e) {
-                throw new ClassCastException(fm.toString() + " must implement OnDataCallbackListener");
+                throw new ClassCastException(context.toString() + " must implement OnCompleteTaskListener");
             }
         }
 
-        stationListTask.initDownloadTask(ThreadManager.sInstance, fm, params, location);
-        sInstance.mDownloadThreadPool.execute(stationListTask.getStationDownloadRunnable());
+        stationTask.initDownloadListTask(ThreadManager.sInstance, params, location);
+        sInstance.mDownloadThreadPool.execute(stationTask.getStationListRunnable());
 
-        return stationListTask;
+        return stationTask;
+    }
+
+    public static StationInfoTask startStationInfoTask(Opinet.GasStnParcelable station) {
+
+        StationInfoTask stationInfoTask = sInstance.mStationInfoTaskQueue.poll();
+
+        if(stationInfoTask == null) {
+            stationInfoTask = new StationInfoTask();
+        }
+
+        stationInfoTask.initDownloadInfoTask(ThreadManager.sInstance, station);
+        sInstance.mDecodeThreadPool.execute(stationInfoTask.getStationInfoRunnable());
+
+        return stationInfoTask;
     }
 
     /*
     public static StationListTask sortNearStationsTask(
             OpinetStationListFragment fm, StationListView view, List<Opinet.GasStnParcelable> stationList) {
 
-        StationListTask stationListTask = sInstance.mStationTaskWorkQueue.poll();
+        StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
 
         if(stationListTask == null) {
             stationListTask = new StationListTask(view.getContext());
@@ -646,11 +657,11 @@ public class ThreadManager {
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
 
-        // Attach OnDataCallbackListener
+        // Attach OnCompleteTaskListener
         try {
-            sInstance.mCallbackListener = (OnDataCallbackListener)fm;
+            sInstance.mTaskListener = (OnCompleteTaskListener)fm;
         } catch(ClassCastException e) {
-            throw new ClassCastException(fm.toString() + " must implement OnDataCallbackListener");
+            throw new ClassCastException(fm.toString() + " must implement OnCompleteTaskListener");
         }
 
         if(locationTask == null) {

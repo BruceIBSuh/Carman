@@ -23,6 +23,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.OpinetPriceTask;
+import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
@@ -39,7 +40,7 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
  */
 public class GeneralFragment extends Fragment implements
         AdapterView.OnItemSelectedListener,
-        ThreadManager.OnDataCallbackListener {
+        ThreadManager.OnCompleteTaskListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -54,7 +55,8 @@ public class GeneralFragment extends Fragment implements
     private RecyclerView.LayoutManager layoutManager;
 
     private LocationTask locationTask;
-    private StationListTask stationTask;
+    private StationListTask stationListTask;
+    private StationInfoTask stationInfoTask;
 
     // UI's
     private Spinner fuelSpinner;
@@ -149,18 +151,24 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-    // ThreadManager.OnDataCallbackListener invokes the following callback methods
+    // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
     @Override
     public void callbackLocation(Location result){
-        stationTask = ThreadManager.startNearStationListTask(GeneralFragment.this, defaults, result);
+        stationListTask = ThreadManager.startStationListTask(getContext(), defaults, result);
     }
 
     @Override
-    public void callbackStations(List<Opinet.GasStnParcelable> stnList) {
+    public void callbackStationList(List<Opinet.GasStnParcelable> stnList) {
         log.i("Stations: %s", stnList.size());
         StationListAdapter adapter = new StationListAdapter(stnList);
+
+        for(int i = 0; i < stnList.size(); i++) {
+            log.i("Station ID: %s", stnList.get(i).getStnId());
+            stationInfoTask = ThreadManager.startStationInfoTask(stnList.get(i));
+        }
+
         recyclerView.setAdapter(adapter);
     }
 

@@ -253,10 +253,12 @@ public class Opinet  {
         private String stnId;
         private String stnCode;
         private String stnName;
+        private String isCarWash; // fetched in StationInfoTask
         private float stnPrice;
         private float distance;
         private float xCoord;
         private float yCoord;
+
 
         GasStnParcelable() {
             // default
@@ -272,6 +274,7 @@ public class Opinet  {
             out.writeString(stnId);
             out.writeString(stnCode);
             out.writeString(stnName);
+            out.writeString(isCarWash);
             out.writeFloat(stnPrice);
             out.writeFloat(distance);
             out.writeFloat(xCoord);
@@ -296,6 +299,7 @@ public class Opinet  {
             stnId = in.readString();
             stnCode = in.readString();
             stnName = in.readString();
+            isCarWash = in.readString();
             stnPrice = in.readFloat();
             distance = in.readFloat();
             xCoord = in.readFloat();
@@ -347,6 +351,14 @@ public class Opinet  {
         }
         void setLatitude(float y) {
             this.yCoord = y;
+        }
+
+        public String getIsCarWash() {
+            return isCarWash;
+        }
+
+        public void setIsCarWash(String isCarWash) {
+            this.isCarWash = isCarWash;
         }
     }
 
