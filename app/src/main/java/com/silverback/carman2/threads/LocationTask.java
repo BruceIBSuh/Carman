@@ -21,16 +21,16 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     private Location mLocation;
 
     // Constructor
-    LocationTask(View view) {
+    LocationTask(Context context) {
         super();
-        this.context = view.getContext();
+        this.context = context;
         mLocationRunnable = new LocationRunnable(context, this);
     }
 
-    void initLocationTask(ThreadManager threadManager, View view) {
+    void initLocationTask(ThreadManager threadManager) {
 
         sThreadManager = threadManager;
-        mWeakView = new WeakReference<>(view);
+        //mWeakView = new WeakReference<>(view);
     }
 
     Runnable getLocationRunnable() {
@@ -76,10 +76,5 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     Location getLocationUpdated() {
         return mLocation;
-    }
-
-    View getParentView() {
-        if(mWeakView != null) return mWeakView.get();
-        return null;
     }
 }

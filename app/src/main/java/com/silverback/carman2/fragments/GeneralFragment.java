@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -13,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -20,17 +22,22 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.OpinetPriceTask;
-import com.silverback.carman2.threads.StationInfoTask;
-import com.silverback.carman2.threads.StationListTask;
+import com.silverback.carman2.threads.StationTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
 import com.silverback.carman2.views.SidoPriceView;
 import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.List;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
@@ -39,6 +46,7 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
  * A simple {@link Fragment} subclass.
  */
 public class GeneralFragment extends Fragment implements
+        View.OnClickListener,
         AdapterView.OnItemSelectedListener,
         ThreadManager.OnCompleteTaskListener {
 
@@ -53,18 +61,22 @@ public class GeneralFragment extends Fragment implements
     private StationPriceView stationPriceView;
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
+    private StationListAdapter mAdapter;
 
     private LocationTask locationTask;
-    private StationListTask stationListTask;
-    private StationInfoTask stationInfoTask;
+    private StationTask stationTask;
+
+    private Uri uriStationList;
 
     // UI's
+    private TextView tvStationsOrder;
     private Spinner fuelSpinner;
     private FrameLayout frameAvgPrice;
 
     // Fields
     private String[] defaults;
     private String jsonString;
+    private boolean bStationsOrder;
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -73,7 +85,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String[] district = getResources().getStringArray(R.array.default_district);
+        //String[] district = getResources().getStringArray(R.array.default_district);
 
     }
 
@@ -85,12 +97,16 @@ public class GeneralFragment extends Fragment implements
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
 
         TextView tvDate = childView.findViewById(R.id.tv_date);
+        tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         avgPriceView = childView.findViewById(R.id.avgPriceView);
         sidoPriceView = childView.findViewById(R.id.sidoPriceView);
         sigunPriceView = childView.findViewById(R.id.sigunPriceView);
         stationPriceView = childView.findViewById(R.id.stationPriceView);
         recyclerView = childView.findViewById(R.id.recyclerView_stations);
+
+        //ImageButton btnExpense = childView.findViewById(R.id.imgbtn_expense);
+        //ImageButton btnStation = childView.findViewById(R.id.imgbtn_stations);
 
         String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
@@ -118,10 +134,32 @@ public class GeneralFragment extends Fragment implements
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
-        locationTask = ThreadManager.fetchLocationTask(this, recyclerView);
-
+        locationTask = ThreadManager.fetchLocationTask(this);
 
         return childView;
+    }
+
+
+    @Override
+    public void onClick(View view) {
+        switch(view.getId()) {
+            /*
+            case R.id.imgbtn_expense:
+                break;
+
+            case R.id.imgbtn_stations:
+                if(uriStationList == null) return;
+                bStationsOrder = !bStationsOrder;
+                String strOrder = (bStationsOrder)? getString(R.string.general_stations_distance):
+                        getString(R.string.general_stations_price);
+                tvStationsOrder.setText(strOrder);
+
+                mAdapter.sortStationList(bStationsOrder);
+                mAdapter.notifyDataSetChanged();
+
+                break;
+           */
+        }
     }
 
     // Abstract methods of AdapterView.OnItemSelectedListener for Spinner,
@@ -146,31 +184,58 @@ public class GeneralFragment extends Fragment implements
         sidoPriceView.invalidate();
         sigunPriceView.invalidate();
         stationPriceView.invalidate();
+
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
+
     // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
     @Override
-    public void callbackLocation(Location result){
-        stationListTask = ThreadManager.startStationListTask(getContext(), defaults, result);
+    public void callbackLocation(Location location){
+        log.i("Location: %s, %s", location.getLongitude(), location.getLatitude());
+        stationTask = ThreadManager.startStationListTask(getContext(), defaults, location);
     }
 
     @Override
     public void callbackStationList(List<Opinet.GasStnParcelable> stnList) {
         log.i("Stations: %s", stnList.size());
         StationListAdapter adapter = new StationListAdapter(stnList);
-
-        for(int i = 0; i < stnList.size(); i++) {
-            log.i("Station ID: %s", stnList.get(i).getStnId());
-            stationInfoTask = ThreadManager.startStationInfoTask(stnList.get(i));
-        }
-
+        //saveNearStationInfo(stnList);
         recyclerView.setAdapter(adapter);
     }
+
+    @Override
+    public void onTaskFailure() {
+        log.i("onTaskFailure");
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
+        File file = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_AROUND);
+        if(!file.exists()) {
+            log.e("File doesn't exist");
+            return;
+        }
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(list);
+
+        } catch (FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e.getMessage());
+
+        } catch (IOException e) {
+            log.e("IOException: %s", e.getMessage());
+
+        }
+
+        uriStationList = Uri.fromFile(file);
+    }
+
+
 
 
 }

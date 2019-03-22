@@ -200,6 +200,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
+
         float tabEndValue = (!isTabLayoutVisible)? toolbarHeight : 0;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);

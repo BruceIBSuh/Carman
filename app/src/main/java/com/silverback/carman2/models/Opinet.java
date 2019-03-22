@@ -353,9 +353,7 @@ public class Opinet  {
             this.yCoord = y;
         }
 
-        public String getIsCarWash() {
-            return isCarWash;
-        }
+        public String getIsCarWash() { return isCarWash; }
 
         public void setIsCarWash(String isCarWash) {
             this.isCarWash = isCarWash;

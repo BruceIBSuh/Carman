@@ -92,10 +92,8 @@ public class XmlPullParserHandler {
             }
 
         } catch (XmlPullParserException e) {
-            //Log.w(TAG, e.getMessage());
             log.w("XmlPullParserException: %s", e);
         } catch (IOException e) {
-            //Log.w(TAG, e.getMessage());
             log.w("IOException: %s", e);
         }
 
@@ -300,7 +298,7 @@ public class XmlPullParserHandler {
     public List<Opinet.GasStnParcelable> parseStationListParcelable(InputStream is) {
 
         try {
-
+            log.i("parseStationListParcelable");
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             XmlPullParser parser = factory.newPullParser();
             parser.setInput(is, "utf-8");

@@ -21,4 +21,8 @@
         <attr name="stationPriceDown" format="color|reference" />
     </declare-styleable>
 
+    <declare-styleable name="StationRecyclerView">
+        <attr name="progressbar" format="reference" />
+    </declare-styleable>
+
 </resources>

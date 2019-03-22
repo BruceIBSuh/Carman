@@ -45,7 +45,7 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
         tvName.setText(data.getStnName());
         tvPrice.setText(String.format(Locale.getDefault(),"%s:%5d%2s", price, (int)data.getStnPrice(), "원"));
         tvDistance.setText(String.format(Locale.getDefault(),"%s:%5d%2s", distance, (int)data.getDist(), "m"));
-        tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, "있음"));
+        tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
     }
 
     private static int getGasStationImage(String name) {

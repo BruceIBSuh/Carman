@@ -11,8 +11,8 @@ import com.silverback.carman2.models.XmlPullParserHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 public class StationInfoRunnable implements Runnable {
 
@@ -21,21 +21,24 @@ public class StationInfoRunnable implements Runnable {
 
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
-    static final int DOWNLOAD_STN_INFO_COMPLTED = 1;
-    static final int DOWNLOAD_STN_INFO_FAILED = -1;
+    static final int STATION_INFO_COMPLETE = 3;
+    static final int STATION_INFO_FAIL = -3;
 
     // Objects
     private Context context;
+    Opinet.GasStnParcelable parcelable;
     private StationInfoMethod mTask;
     private XmlPullParserHandler xmlHandler;
+    private HttpURLConnection conn;
+    private InputStream is;
 
     // Interface
     public interface StationInfoMethod {
-        String getStationId();
-        int getIndex();
-        void setTaskThread(Thread thread);
-        void setStationInfo(Opinet.GasStationInfo stnInfo);
-        void handleTaskState(int state);
+
+        void setStationTaskThread(Thread thread);
+        void handleStationTaskState(int state);
+        void addGasStationInfo(Opinet.GasStnParcelable parcelable);
+        List<Opinet.GasStnParcelable> getStationList();
     }
 
     // Constructor
@@ -48,56 +51,57 @@ public class StationInfoRunnable implements Runnable {
     @Override
     public void run() {
 
-        mTask.setTaskThread(Thread.currentThread());
+        mTask.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        String stnId = mTask.getStationId();
-        final int index = mTask.getIndex();
-        final String OPINET_INFO = OPINET + "&id=" + stnId;
+        //List<Opinet.GasStnParcelable> stationList = mTask.getStationList();
+        Opinet.GasStationInfo info;
 
-        HttpURLConnection conn;
-        InputStream is = null;
+        for (Opinet.GasStnParcelable station : mTask.getStationList()) {
 
-        try {
-
-            if (Thread.interrupted()) throw new InterruptedException();
-
-            final URL url = new URL(OPINET_INFO);
-            conn = (HttpURLConnection)url.openConnection();
-            conn.setRequestProperty("Connection", "close");
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
-            conn.connect();
-            is = conn.getInputStream();
-
-            Opinet.GasStationInfo info = xmlHandler.parseGasStationInfo(is);
-            mTask.setStationInfo(info);
-
-            log.i("Thread and Parameters: %s, %s, %s", Thread.currentThread(), stnId, index);
-            log.i("GasStationInfo: %s, %s", info.getIsCarWash(), info.getTelNo());
-
-            mTask.handleTaskState(DOWNLOAD_STN_INFO_COMPLTED);
-
-        } catch (MalformedURLException e) {
-            log.e("MalformedURLException: %s", e);
-            mTask.handleTaskState(DOWNLOAD_STN_INFO_FAILED);
-        } catch (IOException e) {
-            log.e("IOException: %s", e);
-            mTask.handleTaskState(DOWNLOAD_STN_INFO_FAILED);
-
-        } catch (InterruptedException e) {
-            log.e("InteruptedException: %s", e);
-            mTask.handleTaskState(DOWNLOAD_STN_INFO_FAILED);
-        } finally {
+            String OPINET_INFO = OPINET + "&id=" + station.getStnId();
             try {
-                if(is != null) is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                if (Thread.interrupted()) throw new InterruptedException();
+                info = addStationInfo(OPINET_INFO);
+                station.setIsCarWash(info.getIsCarWash()); // add an additional info to the fecthed stations.
+                mTask.addGasStationInfo(station);
 
-            //if(conn != null) conn.disconnect();
+                //
+
+            } catch (IOException e) {
+                log.e("IOException: %s", e);
+                //mTask.handleStationTaskState(STATION_INFO_FAIL);
+
+            } catch (InterruptedException e) {
+                log.e("InteruptedException: %s", e);
+                //mTask.handleStationTaskState(STATION_INFO_FAIL);
+            } finally {
+                try {
+                    if (is != null) is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                //if(conn != null) conn.disconnect();
+            }
         }
+
+        // Notifies StationTask of having the task done.
+        mTask.handleStationTaskState(STATION_INFO_COMPLETE);
+
+
     }
 
+    private synchronized Opinet.GasStationInfo addStationInfo(final String opinet) throws IOException {
 
+        URL url = new URL(opinet);
+        conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("Connection", "close");
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(5000);
+        conn.connect();
+        is = conn.getInputStream();
+
+        return xmlHandler.parseGasStationInfo(is);
+    }
 }

@@ -32,10 +32,10 @@ public class StationListRunnable implements Runnable{
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
-    static final int DOWNLOAD_STATION_LIST_COMPLETE = 1;
-    static final int DOWNLOAD_CURRENT_STATION_COMPLETE = 2;
-    static final int DONWLOAD_STATION_LIST_FAIL = -1;
-    static final int DOWNLOAD_NO_NEAR_STATION = -2;
+    static final int STATION_LIST_COMPLETE = 1;
+    static final int STATION_CURRENT_COMPLETE = 2;
+    static final int STATION_LIST_FAIL = -1;
+    static final int STATION_CURRENT_FAIL = -2;
     //static final int DOWNLOAD_NO_CURRENT_STATION = -3;
 
     // Objects
@@ -56,7 +56,6 @@ public class StationListRunnable implements Runnable{
 
     // Constructor
     StationListRunnable(Context context, StationListMethod task) {
-        log.i("StationsDowloadRunnable starts");
         mStationList = null;
         this.context = context;
         mTask = task;
@@ -67,7 +66,6 @@ public class StationListRunnable implements Runnable{
 
         mTask.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        //Log.d(TAG, "Thread: " + Thread.currentThread());
 
         String[] defaultParams = mTask.getDefaultParam();
         Location location = mTask.getStationLocation();
@@ -99,70 +97,70 @@ public class StationListRunnable implements Runnable{
 
         XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
 
-        HttpURLConnection conn = null;
+        HttpURLConnection conn;
         InputStream is = null;
-        //BufferedInputStream bis = null;
 
         try {
-            if(Thread.interrupted()) {
-                throw new InterruptedException();
-            }
+
+            if(Thread.interrupted()) throw new InterruptedException();
 
             // Option: url.openStream()
             /*
             final URL url = new URL(OPINET_AROUND);
-            //url.openConnection().setConnectTimeout(5000);
-            //url.openConnection().setReadTimeout(5000);
+            url.openConnection().setConnectTimeout(5000);
+            url.openConnection().setReadTimeout(5000);
             is = url.openStream();
             */
 
             // Option: HttpURLConnection.getInputStream()
-
             final URL url = new URL(OPINET_AROUND);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.connect();
+
             //bis = new BufferedInputStream(conn.getInputStream());
             is = conn.getInputStream();
+            log.i("InputStream: %s", is);
 
             mStationList = xmlHandler.parseStationListParcelable(is);
+            log.i("StationListRunnable:%s", mStationList.size());
 
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
             if(mStationList.size() > 0) {
-
+                log.i("StationListRunnable");
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
                     mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(DOWNLOAD_CURRENT_STATION_COMPLETE);
+                    //mTask.handleStationTaskState(STATION_CURRENT_COMPLETE);
 
                 } else {
                     log.i("StationList: %s", mStationList.size());
                     Uri uri = saveNearStationInfo(mStationList);
                     if (uri != null) {
                         mTask.setStationList(mStationList);
-                        mTask.handleStationTaskState(DOWNLOAD_STATION_LIST_COMPLETE);
+                        mTask.handleStationTaskState(STATION_LIST_COMPLETE);
                     }
                 }
 
             } else {
-                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(DONWLOAD_STATION_LIST_FAIL);
-                else mTask.handleStationTaskState(DOWNLOAD_NO_NEAR_STATION);
+                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(STATION_LIST_FAIL);
+                else mTask.handleStationTaskState(STATION_CURRENT_FAIL);
             }
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
-            mTask.handleStationTaskState(DONWLOAD_STATION_LIST_FAIL);
+            mTask.handleStationTaskState(STATION_LIST_FAIL);
 
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
-            mTask.handleStationTaskState(DONWLOAD_STATION_LIST_FAIL);
+            mTask.handleStationTaskState(STATION_LIST_FAIL);
 
         } catch (InterruptedException e) {
             log.e("InterruptedException: %s", e.getMessage());
-            mTask.handleStationTaskState(DONWLOAD_STATION_LIST_FAIL);
+            mTask.handleStationTaskState(STATION_LIST_FAIL);
 
         } finally {
             try {
@@ -170,7 +168,6 @@ public class StationListRunnable implements Runnable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             //if(conn != null) conn.disconnect();
         }
     }

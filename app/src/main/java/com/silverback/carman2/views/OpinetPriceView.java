@@ -23,7 +23,6 @@ public abstract class OpinetPriceView extends LinearLayout {
     protected int priceUpColor, priceDownColor;
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
-
     public OpinetPriceView(Context context) {
         super(context);
     }
