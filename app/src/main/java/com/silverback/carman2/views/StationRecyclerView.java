@@ -2,11 +2,10 @@ package com.silverback.carman2.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -14,23 +13,20 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.lang.ref.WeakReference;
 
-public class StationRecyclerView extends LinearLayout {
+public class StationRecyclerView extends RecyclerView {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(AvgPriceView.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerView.class);
 
     // UI's
-    private LinearLayout linearLayout;
     private WeakReference<View> mThisView;
-    private TextView tvWarning;
-
-    // Fields
     private int mHideShowResId = -1;
 
     // Default constructors
     public StationRecyclerView(Context context) {
         super(context);
     }
+
     public StationRecyclerView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
@@ -40,17 +36,12 @@ public class StationRecyclerView extends LinearLayout {
         getAttributes(context, attrs);
     }
 
-    @SuppressWarnings("ConstantConditions")
     protected void getAttributes(Context context, AttributeSet attrs) {
-
-        //LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        //linearLayout = (LinearLayout)inflater.inflate(R.layout.view_recycler_stations, this, true);
-        LayoutInflater.from(context).inflate(R.layout.view_recycler_stations, this, false);
-        tvWarning = findViewById(R.id.tv_no_station);
-        tvWarning.setText(R.string.general_no_station);
+        setHasFixedSize(true);
+        LayoutManager layoutManager = new LinearLayoutManager(getContext());
+        setLayoutManager(layoutManager);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.StationRecyclerView);
-
         try {
             mHideShowResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
         } finally {
@@ -63,13 +54,12 @@ public class StationRecyclerView extends LinearLayout {
     protected void onAttachedToWindow() {
         // Always call the supermethod first
         super.onAttachedToWindow();
-
-        if (mHideShowResId != -1) {
+        if (mHideShowResId != -1 && getParent() instanceof View) {
             // Gets a handle to the sibling View
-            View localView = ((View) getParent()).findViewById(mHideShowResId);
+            View progBar = findViewById(mHideShowResId);
             // If the sibling View contains something, make it the weak reference for this View
-            if (localView != null) {
-                mThisView = new WeakReference<>(localView);
+            if (progBar != null) {
+                mThisView = new WeakReference<>(progBar);
                 log.d("mThisView: %s", this.mThisView);
             }
         }
@@ -92,6 +82,17 @@ public class StationRecyclerView extends LinearLayout {
 
         // Always call the super method last
         super.onDetachedFromWindow();
+    }
+
+
+    public void showStationListRecyclerView() {
+        mThisView = new WeakReference<View>(this);
+        View localView = mThisView.get();
+
+        if(localView != null) {
+            ((View)getParent()).findViewById(mHideShowResId).setVisibility(View.GONE);
+            localView.setVisibility(View.VISIBLE);
+        }
     }
 
 }

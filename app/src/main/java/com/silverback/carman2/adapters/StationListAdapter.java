@@ -36,15 +36,13 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
 
     // Objects
     private Context context;
-    private Uri uriStationList;
     private List<Opinet.GasStnParcelable> stationList;
     private String[] defaultParams;
 
     // Constructor
-
     public StationListAdapter(List<Opinet.GasStnParcelable> list) {
+        super();
         stationList = list;
-
     }
 
 
@@ -70,29 +68,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     }
 
 
-    @SuppressWarnings("ConstantConditions")
-    private void saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
-        File file = new File(context.getApplicationContext().getCacheDir(), Constants.FILE_CACHED_STATION_AROUND);
-        if(!file.exists()) {
-            log.e("File doesn't exist");
-            return;
-        }
 
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-
-            oos.writeObject(list);
-
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-
-        }
-
-        uriStationList = Uri.fromFile(file);
-    }
 
     /*
      * Sorts the already saved station list  from the Opinet by price and distance
@@ -100,15 +76,17 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
      * @param sort : true - price order, false - distance order
      */
     @SuppressWarnings("unchecked")
-    public void sortStationList(boolean sort) {
+    public void sortStationList(Uri uri, boolean sort) {
 
-        try(InputStream is = context.getContentResolver().openInputStream(uriStationList);
+        try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
             stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
 
             if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
             else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
+
+            notifyDataSetChanged();
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

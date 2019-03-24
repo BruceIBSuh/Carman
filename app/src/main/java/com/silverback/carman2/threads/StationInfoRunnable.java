@@ -66,8 +66,6 @@ public class StationInfoRunnable implements Runnable {
                 station.setIsCarWash(info.getIsCarWash()); // add an additional info to the fecthed stations.
                 mTask.addGasStationInfo(station);
 
-                //
-
             } catch (IOException e) {
                 log.e("IOException: %s", e);
                 //mTask.handleStationTaskState(STATION_INFO_FAIL);
@@ -86,6 +84,7 @@ public class StationInfoRunnable implements Runnable {
             }
         }
 
+
         // Notifies StationTask of having the task done.
         mTask.handleStationTaskState(STATION_INFO_COMPLETE);
 
@@ -101,7 +100,6 @@ public class StationInfoRunnable implements Runnable {
         conn.setReadTimeout(5000);
         conn.connect();
         is = conn.getInputStream();
-
         return xmlHandler.parseGasStationInfo(is);
     }
 }

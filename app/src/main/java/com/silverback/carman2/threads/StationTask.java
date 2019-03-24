@@ -3,11 +3,18 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
+import android.net.Uri;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,17 +25,11 @@ public class StationTask extends ThreadTask implements
     private static final LoggingHelper log = LoggingHelperFactory.create(StationTask.class);
 
     // Objects
-    private Context context;
-    //private WeakReference<OpinetStationListFragment> mWeakFragment;
-    //private WeakReference<StationListView> mWeakListView;
-    //private WeakReference<GasManagerActivity> mWeakActivity;
-    //private WeakReference<OpinetStationListFragment> mWeakFragment;
     private Runnable mStationListRunnable;
     private Runnable mStationInfoRunnable;
     private List<Opinet.GasStnParcelable> mStationList, mInformedStationList;
     private Location mLocation;
     private String[] defaultParams;
-    private String stationId;
 
     // Constructor
     StationTask(Context context) {
@@ -42,7 +43,6 @@ public class StationTask extends ThreadTask implements
         defaultParams = params;
         mLocation = location;
         mInformedStationList = new ArrayList<>();
-
     }
 
     /*
@@ -125,9 +125,7 @@ public class StationTask extends ThreadTask implements
 
     @Override
     public void handleStationTaskState(int state) {
-        log.i("handlestate");
         int outState = -1;
-
         switch (state) {
             case StationListRunnable.STATION_LIST_COMPLETE:
                 outState = ThreadManager.STATIONTASK_LIST_COMPLETED;
@@ -135,7 +133,6 @@ public class StationTask extends ThreadTask implements
 
             case StationInfoRunnable.STATION_INFO_COMPLETE:
                 log.i("Opinet.GasStationParcelable:");
-
                 outState= ThreadManager.STATIONTASK_INFO_COMPLETE;
                 break;
 
@@ -153,6 +150,7 @@ public class StationTask extends ThreadTask implements
 
         sThreadManager.handleState(this, outState);
     }
+
 
     List<Opinet.GasStnParcelable> getInformedStationList() {
         return mInformedStationList;

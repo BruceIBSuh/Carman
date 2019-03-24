@@ -19,7 +19,6 @@ android {
     }
 
     //Repositories have been changed from JCenter to google since AS3.0 and up.
-    /*
     buildscript {
         repositories {
             google()
@@ -28,12 +27,12 @@ android {
 
     sourceSets { main { java.srcDirs = ['src/main/java', 'src/main/java/com.silverback.carman2'] } }
     productFlavors {}
-    */
+
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(path: ':geocoder')
+    implementation project(':convertgeocoords')
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'com.android.support:recyclerview-v7:27.1.1'

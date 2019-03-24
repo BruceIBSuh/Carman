@@ -3,6 +3,7 @@ package com.silverback.carman2.fragments;
 
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
@@ -32,12 +33,17 @@ import com.silverback.carman2.views.AvgPriceView;
 import com.silverback.carman2.views.SidoPriceView;
 import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
+import com.silverback.carman2.views.StationRecyclerView;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
@@ -59,12 +65,12 @@ public class GeneralFragment extends Fragment implements
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
     private StationPriceView stationPriceView;
-    private RecyclerView recyclerView;
+
+    private StationRecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
     private StationListAdapter mAdapter;
 
-    private LocationTask locationTask;
-    private StationTask stationTask;
+    private List<Opinet.GasStnParcelable> mStationList;
 
     private Uri uriStationList;
 
@@ -103,10 +109,10 @@ public class GeneralFragment extends Fragment implements
         sidoPriceView = childView.findViewById(R.id.sidoPriceView);
         sigunPriceView = childView.findViewById(R.id.sigunPriceView);
         stationPriceView = childView.findViewById(R.id.stationPriceView);
-        recyclerView = childView.findViewById(R.id.recyclerView_stations);
+        recyclerView = childView.findViewById(R.id.stationRecyclerView);
 
-        //ImageButton btnExpense = childView.findViewById(R.id.imgbtn_expense);
-        //ImageButton btnStation = childView.findViewById(R.id.imgbtn_stations);
+        childView.findViewById(R.id.imgbtn_expense).setOnClickListener(this);
+        childView.findViewById(R.id.imgbtn_stations).setOnClickListener(this);
 
         String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
@@ -130,11 +136,8 @@ public class GeneralFragment extends Fragment implements
             }
         }
 
-        // RecyclerView
-        recyclerView.setHasFixedSize(true);
-        layoutManager = new LinearLayoutManager(getContext());
-        recyclerView.setLayoutManager(layoutManager);
-        locationTask = ThreadManager.fetchLocationTask(this);
+        // Fetch the current location by using FusedLocationProviderClient on a work thread
+        LocationTask locationTask = ThreadManager.fetchLocationTask(this);
 
         return childView;
     }
@@ -143,22 +146,15 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onClick(View view) {
         switch(view.getId()) {
-            /*
+
             case R.id.imgbtn_expense:
                 break;
 
             case R.id.imgbtn_stations:
-                if(uriStationList == null) return;
+                mAdapter.sortStationList(uriStationList, bStationsOrder);
                 bStationsOrder = !bStationsOrder;
-                String strOrder = (bStationsOrder)? getString(R.string.general_stations_distance):
-                        getString(R.string.general_stations_price);
-                tvStationsOrder.setText(strOrder);
-
-                mAdapter.sortStationList(bStationsOrder);
-                mAdapter.notifyDataSetChanged();
-
                 break;
-           */
+
         }
     }
 
@@ -197,17 +193,15 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void callbackLocation(Location location){
         log.i("Location: %s, %s", location.getLongitude(), location.getLatitude());
-        stationTask = ThreadManager.startStationListTask(getContext(), defaults, location);
+        StationTask stationTask = ThreadManager.startStationListTask(getContext(), defaults, location);
     }
-
     @Override
     public void callbackStationList(List<Opinet.GasStnParcelable> stnList) {
-        log.i("Stations: %s", stnList.size());
-        StationListAdapter adapter = new StationListAdapter(stnList);
-        //saveNearStationInfo(stnList);
-        recyclerView.setAdapter(adapter);
+        saveNearStationInfo(stnList);
+        mAdapter = new StationListAdapter(stnList);
+        recyclerView.showStationListRecyclerView();
+        recyclerView.setAdapter(mAdapter);
     }
-
     @Override
     public void onTaskFailure() {
         log.i("onTaskFailure");
@@ -215,13 +209,16 @@ public class GeneralFragment extends Fragment implements
 
     @SuppressWarnings("ConstantConditions")
     private void saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
+
         File file = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_AROUND);
         if(!file.exists()) {
             log.e("File doesn't exist");
             return;
         }
+
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+
             oos.writeObject(list);
 
         } catch (FileNotFoundException e) {
@@ -234,8 +231,6 @@ public class GeneralFragment extends Fragment implements
 
         uriStationList = Uri.fromFile(file);
     }
-
-
 
 
 }

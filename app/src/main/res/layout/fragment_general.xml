@@ -156,7 +156,7 @@
             app:layout_constraintStart_toEndOf="@+id/tv_subtitle_expense"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!--
+
         <ImageButton
             android:id="@+id/imgbtn_expense"
             android:layout_width="25dp"
@@ -169,7 +169,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        -->
+
     </android.support.constraint.ConstraintLayout>
 
     <TextView
@@ -220,7 +220,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/tv_subtitle_stations"
             app:layout_constraintTop_toTopOf="parent" />
-        <!--
+
         <ImageButton
             android:id="@+id/imgbtn_stations"
             android:layout_width="25dp"
@@ -233,20 +233,28 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        -->
+
     </android.support.constraint.ConstraintLayout>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recyclerView_stations"
+    <FrameLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="3dp"
-        android:layout_marginEnd="3dp"
-        android:scrollbars="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout" >
+
+        <ProgressBar
+            android:id="@+id/listProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <com.silverback.carman2.views.StationRecyclerView
+            android:id="@+id/stationRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:progressbar="@id/listProgress" />
+
+    </FrameLayout>
 
 </android.support.constraint.ConstraintLayout>
