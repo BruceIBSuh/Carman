@@ -20,13 +20,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-public class OpinetPriceRunnable implements Runnable {
+public class PriceRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(OpinetPriceRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PriceRunnable.class);
 
     //Constants
-    //private static final String TAG = "OpinetPriceRunnable";
+    //private static final String TAG = "PriceRunnable";
 
     private static final String API_KEY = "F186170711";
     private static final String OPINET = "http://www.opinet.co.kr/api/";
@@ -35,49 +35,55 @@ public class OpinetPriceRunnable implements Runnable {
     private static final String URLsigun = OPINET + "avgSigunPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String SigunCode = "&sigun=";
 
-    private static final int AVG = 0;
-    private static final int SIDO = 1;
-    private static final int SIGUN = 2;
+    static final int AVG = 0;
+    static final int SIDO = 1;
+    static final int SIGUN = 2;
 
     static final int DOWNLOAD_PRICE_COMPLETE = 1;
-    static final int DOWNLOAD_PRICE_FAIL = -1;
+    //static final int DOWNLOAD_SIDO_PRICE_COMPLETE = 2;
+    //static final int DOWNLOAD_SIGUN_PRICE_COMPLETE = 3;
+
+    static final int DOWNLOAD_PRICE_FAILED = -1;
 
     // Objects
     private Context context;
     private XmlPullParserHandler xmlHandler;
-    private OpinetPriceListMethods opinetTask;
+    private OpinetPriceListMethods task;
+
+    // Fields
+    private int category;
 
     /*
      * An interface that defines methods that ThreadTask implements. An instance of
-     * ThreadTask passes itself to an OpinetPriceRunnable instance through the
-     * OpinetPriceRunnable constructor, after which the two instances can access each other's
+     * ThreadTask passes itself to an PriceRunnable instance through the
+     * PriceRunnable constructor, after which the two instances can access each other's
      * variables.
      */
     public interface OpinetPriceListMethods {
         void setPriceDownloadThread(Thread currentThread);
-        String getDistrictCode();
-        int getDistrictSort();
         void handlePriceTaskState(int state);
+        void addCount();
+        int getCount();
+        String getDistrictCode();
     }
 
     // Constructor
-    OpinetPriceRunnable(Context context, OpinetPriceListMethods task) {
+    PriceRunnable(Context context, OpinetPriceListMethods task, int category) {
         this.context = context;
-        opinetTask = task;
+        this.category = category;
+        this.task = task;
         xmlHandler = new XmlPullParserHandler();
-        //mBroadcaster = new BroadcastNotifier(context.getApplicationContext());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
 
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         log.i("Thread: %s", Thread.currentThread());
 
-        String sigunCode = opinetTask.getDistrictCode();
+        String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
-        int district = opinetTask.getDistrictSort();
-        log.i("District Code: %s, %s", sigunCode, sidoCode);
 
         URL url;
         InputStream in = null;
@@ -87,10 +93,11 @@ public class OpinetPriceRunnable implements Runnable {
 
             if(Thread.interrupted()) throw new InterruptedException();
 
-            switch(district) {
+            switch(category) {
 
                 case AVG: // Average oil price
-                    opinetTask.setPriceDownloadThread(Thread.currentThread());
+                    log.i("avgPrice thread: %s", Thread.currentThread());
+                    task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLavg);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
@@ -102,6 +109,8 @@ public class OpinetPriceRunnable implements Runnable {
                     List<Opinet.OilPrice> avgList = xmlHandler.parseOilPrice(in);
                     if(!avgList.isEmpty()) {
                         avgList.remove(avgList.get(3)); // Exclude Kerotene
+                        //task.handlePriceTaskState(DOWNLOAD_AVG_PRICE_COMPLETE);
+                        task.addCount();
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
                         log.i("avgList: %d", avgList.size());
 
@@ -110,7 +119,8 @@ public class OpinetPriceRunnable implements Runnable {
                     break;
 
                 case SIDO: // Sido price
-                    opinetTask.setPriceDownloadThread(Thread.currentThread());
+                    log.i("sidoPrice thread: %s", Thread.currentThread());
+                    task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLsido + sidoCode);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
@@ -121,15 +131,17 @@ public class OpinetPriceRunnable implements Runnable {
 
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
+                        //task.handlePriceTaskState(DOWNLOAD_SIDO_PRICE_COMPLETE);
+                        task.addCount();
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                         log.i("sidoList: %d", sidoList.size());
-
                     }
 
                     break;
 
                 case SIGUN: // Sigun price
-                    opinetTask.setPriceDownloadThread(Thread.currentThread());
+                    log.i("sigunPrice thread: %s", Thread.currentThread());
+                    task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLsigun + sidoCode + SigunCode + sigunCode);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
@@ -140,27 +152,34 @@ public class OpinetPriceRunnable implements Runnable {
 
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
+                        //task.handlePriceTaskState(DOWNLOAD_SIGUN_PRICE_COMPLETE);
+                        task.addCount();
                         savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
                         log.i("sigunList.get(0): %s", sigunList.get(0).getPrice());
-
                     }
-                    opinetTask.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
+
                     break;
             }
 
+
         } catch (MalformedURLException e) {
-            //Log.e(TAG, "Exception: " + e.getMessage());
-            opinetTask.handlePriceTaskState(DOWNLOAD_PRICE_FAIL);
+            log.e("MalformedURLException: %s", e.getMessage());
+            task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
         } catch (IOException e) {
-            //Log.e(TAG, "Exception: " + e.getMessage());
-            opinetTask.handlePriceTaskState(DOWNLOAD_PRICE_FAIL);
+            log.e("IOException: %s", e.getMessage());
+            task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            opinetTask.handlePriceTaskState(DOWNLOAD_PRICE_FAIL);
+            log.e("InterruptedException: %s", e.getMessage());
+            task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
         } finally {
+
+            if(task.getCount() == 3) {
+                log.i("Runnable count: %s", task.getCount());
+                task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
+            }
 
             if(in != null) {
                 try {
@@ -171,8 +190,9 @@ public class OpinetPriceRunnable implements Runnable {
             }
 
             if(conn != null) conn.disconnect();
-
         }
+
+
 
     }
 

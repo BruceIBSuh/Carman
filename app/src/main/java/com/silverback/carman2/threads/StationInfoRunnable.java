@@ -5,11 +5,17 @@ import android.os.Process;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -21,73 +27,104 @@ public class StationInfoRunnable implements Runnable {
 
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
-    static final int STATION_INFO_COMPLETE = 3;
-    static final int STATION_INFO_FAIL = -3;
+    static final int DOWNLOAD_STATION_INFO_COMPLETE = 3;
+    static final int DOWNLOAD_STATION_INFO_FAILED = -3;
 
     // Objects
     private Context context;
-    Opinet.GasStnParcelable parcelable;
-    private StationInfoMethod mTask;
+    private List<Opinet.GasStnParcelable> stationList;
+    private Opinet.GasStationInfo stnInfo;
+    private StationInfoMethod task;
     private XmlPullParserHandler xmlHandler;
-    private HttpURLConnection conn;
-    private InputStream is;
+    private HttpURLConnection conn = null;
+    private InputStream is = null;
+    private String stationId;
 
     // Interface
     public interface StationInfoMethod {
 
         void setStationTaskThread(Thread thread);
         void handleStationTaskState(int state);
-        void addGasStationInfo(Opinet.GasStnParcelable parcelable);
+        //void setStationList(List<Opinet.GasStnParcelable> list);
+        //void addCount();
+        void addStationInfo(Opinet.GasStnParcelable station);
         List<Opinet.GasStnParcelable> getStationList();
+        //int getStationIndex();
+        //Opinet.GasStnParcelable getStation();
     }
 
     // Constructor
-    StationInfoRunnable(StationInfoMethod task) {
-        mTask = task;
+    StationInfoRunnable(Context context, StationInfoMethod task) {
+        this.context = context;
+        this.task = task;
         xmlHandler = new XmlPullParserHandler();
+        //stationList = new ArrayList<>();
     }
 
 
     @Override
     public void run() {
-
-        mTask.setStationTaskThread(Thread.currentThread());
+        //synchronized (this) {
+        task.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        //List<Opinet.GasStnParcelable> stationList = mTask.getStationList();
-        Opinet.GasStationInfo info;
+        //int index = task.getStationIndex();
+        //station = task.getStationList().get(index);
+        //String stationId = task.getStationId();
+        //Opinet.GasStnParcelable station = task.getStation();
 
-        for (Opinet.GasStnParcelable station : mTask.getStationList()) {
+        //stationList = task.getStationList();
+        //Opinet.GasStationInfo item = stationList.get(index);
 
+        for (Opinet.GasStnParcelable station : task.getStationList()) {
             String OPINET_INFO = OPINET + "&id=" + station.getStnId();
+            log.i("OPINET_INFO: %s", OPINET_INFO);
+
             try {
                 if (Thread.interrupted()) throw new InterruptedException();
-                info = addStationInfo(OPINET_INFO);
-                station.setIsCarWash(info.getIsCarWash()); // add an additional info to the fecthed stations.
-                mTask.addGasStationInfo(station);
+                // Adds more items of information to alreeady downloaded stations.
+                Opinet.GasStationInfo stnInfo = addStationInfo(OPINET_INFO);
+                station.setIsCarWash(stnInfo.getIsCarWash());
+                task.addStationInfo(station);
 
             } catch (IOException e) {
                 log.e("IOException: %s", e);
-                //mTask.handleStationTaskState(STATION_INFO_FAIL);
+                task.handleStationTaskState(DOWNLOAD_STATION_INFO_FAILED);
 
             } catch (InterruptedException e) {
                 log.e("InteruptedException: %s", e);
-                //mTask.handleStationTaskState(STATION_INFO_FAIL);
+                task.handleStationTaskState(DOWNLOAD_STATION_INFO_FAILED);
             } finally {
+
+                //task.addCount(); //increases the count for checking when to finish.
+                /*
+                if (task.getStationIndex() == (task.getStationList().size())) {
+                    log.i("Adds Info to StationList complete: %s", index);
+                    // Notifies StationTask of having the task done.
+                    boolean isSaved = saveNearStationInfo(task.getStationList());
+
+                    if (isSaved) {
+                        //task.setStationList(task.getStationList());
+                        task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
+                    } else {
+                        task.handleStationTaskState(DOWNLOAD_STATION_INFO_FAILED);
+                    }
+                }
+                */
                 try {
                     if (is != null) is.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.e("IOException: %s", e);
                 }
 
-                //if(conn != null) conn.disconnect();
+                if (conn != null) conn.disconnect();
             }
         }
 
+        boolean isSaved = saveNearStationInfo(task.getStationList());
 
-        // Notifies StationTask of having the task done.
-        mTask.handleStationTaskState(STATION_INFO_COMPLETE);
-
+        if (isSaved) task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
+        else task.handleStationTaskState(DOWNLOAD_STATION_INFO_FAILED);
 
     }
 
@@ -99,7 +136,33 @@ public class StationInfoRunnable implements Runnable {
         conn.setConnectTimeout(5000);
         conn.setReadTimeout(5000);
         conn.connect();
-        is = conn.getInputStream();
+        is = new BufferedInputStream(conn.getInputStream());
+
         return xmlHandler.parseGasStationInfo(is);
     }
+
+    // Save the downloaded near station list in the designated file location.
+
+    private boolean saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
+
+        File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(list);
+
+            return true;
+
+        } catch (FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e.getMessage());
+
+        } catch (IOException e) {
+            log.e("IOException: %s", e.getMessage());
+
+        }
+
+        //return Uri.fromFile(file);
+        return false;
+    }
+
 }

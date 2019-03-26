@@ -36,9 +36,9 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if(mSettings == null) {
-            mSettings = PreferenceManager
-                    .getDefaultSharedPreferences(getApplicationContext());
+            mSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         }
     }
 
@@ -129,7 +129,7 @@ public class BaseActivity extends AppCompatActivity {
                     // shouldShowRequestPermissionRationale returns false.
                     if(!ActivityCompat.shouldShowRequestPermissionRationale(this,
                             Manifest.permission.ACCESS_FINE_LOCATION)) {
-                        //Log.i(TAG, "Never Ask Again");
+                        log.i("Never Ask Again");
                     }
                 }
 

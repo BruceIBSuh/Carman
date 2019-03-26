@@ -2,25 +2,35 @@ package com.silverback.carman2.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.location.Location;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.TextView;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.threads.StationTask;
+import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 
 public class StationRecyclerView extends RecyclerView {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerView.class);
 
-    // UI's
+
+    // Objects
     private WeakReference<View> mThisView;
+    private StationTask stationTask;
     private int mHideShowResId = -1;
+    private int mTextViewResId = -2;
 
     // Default constructors
     public StationRecyclerView(Context context) {
@@ -37,6 +47,7 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     protected void getAttributes(Context context, AttributeSet attrs) {
+
         setHasFixedSize(true);
         LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(layoutManager);
@@ -44,9 +55,15 @@ public class StationRecyclerView extends RecyclerView {
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.StationRecyclerView);
         try {
             mHideShowResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
+            mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
+
         } finally {
             typedArray.recycle();
         }
+    }
+
+    public void initView(Context context, String[] defaults, Location location) {
+        stationTask = ThreadManager.startStationListTask(context, defaults, location);
     }
 
 
@@ -54,16 +71,19 @@ public class StationRecyclerView extends RecyclerView {
     protected void onAttachedToWindow() {
         // Always call the supermethod first
         super.onAttachedToWindow();
-        if (mHideShowResId != -1 && getParent() instanceof View) {
+        if (mHideShowResId != -1 && (getParent() instanceof View)) {
             // Gets a handle to the sibling View
-            View progBar = findViewById(mHideShowResId);
+            View localView = ((View)getParent()).findViewById(mHideShowResId);
             // If the sibling View contains something, make it the weak reference for this View
-            if (progBar != null) {
-                mThisView = new WeakReference<>(progBar);
+            if (localView != null) {
+                mThisView = new WeakReference<>(localView);
                 log.d("mThisView: %s", this.mThisView);
             }
         }
     }
+
+    @Override
+    public void onDraw(Canvas canvas) {}
 
     /*
      * This callback is invoked when the ImageView is removed from a Window. It "unsets" variables
@@ -78,7 +98,7 @@ public class StationRecyclerView extends RecyclerView {
             mThisView = null;
         }
 
-        //if(stationListTask != null) stationListTask = null;
+        if(stationTask != null) stationTask = null;
 
         // Always call the super method last
         super.onDetachedFromWindow();
@@ -86,13 +106,31 @@ public class StationRecyclerView extends RecyclerView {
 
 
     public void showStationListRecyclerView() {
+
         mThisView = new WeakReference<View>(this);
         View localView = mThisView.get();
 
         if(localView != null) {
             ((View)getParent()).findViewById(mHideShowResId).setVisibility(View.GONE);
+            ((View)getParent()).findViewById(mTextViewResId).setVisibility(View.GONE);
+
             localView.setVisibility(View.VISIBLE);
         }
+    }
+
+    public void showTextView(String message){
+
+        if((mTextViewResId != -2) && (getParent() instanceof View)) {
+
+            View localView = ((View)getParent()).findViewById(mTextViewResId);
+            // If the sibling View contains something, make it the weak reference for this View
+            if (localView != null) {
+                ((View)getParent()).findViewById(mHideShowResId).setVisibility(View.GONE);
+                mThisView = new WeakReference<>(localView);
+                ((TextView)mThisView.get()).setText(message);
+            }
+        }
+
     }
 
 }

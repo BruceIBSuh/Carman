@@ -8,24 +8,24 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.lang.ref.WeakReference;
 
-public class OpinetDistCodeTask extends ThreadTask
-        implements OpinetDistCodeRunnable.OpinetDistCodeMethods {
+public class DistCodeTask extends ThreadTask
+        implements DistCodeRunnable.OpinetDistCodeMethods {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(OpinetDistCodeTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeTask.class);
 
     // Objects
     private WeakReference<Activity> mWeakActivity;
     private Runnable opinetDistCodeRunnable;
 
     // Constructor
-    OpinetDistCodeTask(Context context) {
+    DistCodeTask(Context context) {
         super(); // ThreadTask
         mWeakActivity = new WeakReference<>((Activity)context);
-        opinetDistCodeRunnable = new OpinetDistCodeRunnable(context, this);
+        opinetDistCodeRunnable = new DistCodeRunnable(context, this);
     }
 
-    // Getter for the Runnable invoked by startOpinetPriceTask() in ThreadManager
+    // Getter for the Runnable invoked by startPriceTask() in ThreadManager
     Runnable getOpinetDistCodeRunnable() {
         return opinetDistCodeRunnable;
     }
@@ -49,11 +49,11 @@ public class OpinetDistCodeTask extends ThreadTask
         int outstate = -1;
 
         switch(state) {
-            case OpinetDistCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
+            case DistCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLTETED;
                 break;
 
-            case OpinetDistCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
+            case DistCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_FAILED;
                 break;
         }

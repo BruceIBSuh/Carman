@@ -18,7 +18,7 @@ public class ThreadTask {
      * Thread object reference is stored in the Thread object itself, and that object can be
      * changed by processes outside of this app.
      */
-    public synchronized Thread getCurrentThread() {
+    public Thread getCurrentThread() {
         //synchronized(sThreadManager) {
         //Log.d(LOG_TAG, "ThreadTask current Thread: " + mCurrentThread);
         return mCurrentThread;
@@ -28,7 +28,7 @@ public class ThreadTask {
      * Sets the identifier for the current Thread. This must be a synchronized operation; see the
      * notes for getCurrentThread()
      */
-    synchronized void setCurrentThread(Thread thread) {
+    void setCurrentThread(Thread thread) {
         //synchronized(sThreadManager) {
         //Log.d(LOG_TAG, "ThreadTask current Thread: " + mCurrentThread);
         mCurrentThread = thread;

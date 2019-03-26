@@ -76,8 +76,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
      * @param sort : true - price order, false - distance order
      */
     @SuppressWarnings("unchecked")
-    public void sortStationList(Uri uri, boolean sort) {
+    public void sortStationList(boolean sort) {
 
+        /*
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
@@ -95,6 +96,15 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        */
+
+        //stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
+
+        if(stationList.size() <= 0) return;
+
+        if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
+        else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
+
     }
 
     // Class for sorting the list by ascending price or descending distance, implementing Comparator<T>

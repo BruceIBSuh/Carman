@@ -23,6 +23,7 @@
 
     <declare-styleable name="StationRecyclerView">
         <attr name="progressbar" format="reference" />
+        <attr name="textview" format="reference" />
     </declare-styleable>
 
 </resources>

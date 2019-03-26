@@ -2,7 +2,6 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Process;
 
 import com.ibnco.carman.convertgeocoords.GeoPoint;
@@ -13,12 +12,8 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,11 +27,11 @@ public class StationListRunnable implements Runnable{
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
-    static final int STATION_LIST_COMPLETE = 1;
-    static final int STATION_CURRENT_COMPLETE = 2;
-    static final int STATION_LIST_FAIL = -1;
-    static final int STATION_CURRENT_FAIL = -2;
-    //static final int DOWNLOAD_NO_CURRENT_STATION = -3;
+    static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
+    static final int DOWNLAOD_CURRENT_STATION_COMPLETE = 2;
+    static final int DOWNLOAD_NEAR_STATIONS_FAILED = -1;
+    static final int DOWNLOAD_CURRENT_STATION_FAILED = -2;
+    static final int DOWNLOAD_NO_STATION = -3;
 
     // Objects
     private Context context;
@@ -97,7 +92,7 @@ public class StationListRunnable implements Runnable{
 
         XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
 
-        HttpURLConnection conn;
+        HttpURLConnection conn = null;
         InputStream is = null;
 
         try {
@@ -111,7 +106,6 @@ public class StationListRunnable implements Runnable{
             url.openConnection().setReadTimeout(5000);
             is = url.openStream();
             */
-
             // Option: HttpURLConnection.getInputStream()
             final URL url = new URL(OPINET_AROUND);
             conn = (HttpURLConnection) url.openConnection();
@@ -134,61 +128,44 @@ public class StationListRunnable implements Runnable{
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
                     mTask.setStationList(mStationList);
-                    //mTask.handleStationTaskState(STATION_CURRENT_COMPLETE);
+                    //mTask.handleStationTaskState(DOWNLAOD_CURRENT_STATION_COMPLETE);
 
                 } else {
                     log.i("StationList: %s", mStationList.size());
-                    Uri uri = saveNearStationInfo(mStationList);
-                    if (uri != null) {
+                    //Uri uri = saveNearStationInfo(mStationList);
+                    //if (uri != null) {
                         mTask.setStationList(mStationList);
-                        mTask.handleStationTaskState(STATION_LIST_COMPLETE);
-                    }
+                        mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                    //}
                 }
 
             } else {
-                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(STATION_LIST_FAIL);
-                else mTask.handleStationTaskState(STATION_CURRENT_FAIL);
+                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(DOWNLOAD_CURRENT_STATION_FAILED);
+                else mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
             }
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
-            mTask.handleStationTaskState(STATION_LIST_FAIL);
+            mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
 
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
-            mTask.handleStationTaskState(STATION_LIST_FAIL);
+            mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
 
         } catch (InterruptedException e) {
             log.e("InterruptedException: %s", e.getMessage());
-            mTask.handleStationTaskState(STATION_LIST_FAIL);
+            mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
 
         } finally {
+
             try {
                 if(is != null) is.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //if(conn != null) conn.disconnect();
+
+            if(conn != null) conn.disconnect();
         }
     }
-    // Save the downloaded near station list in the designated file location.
-    private Uri saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
 
-        //File file = new File(getApplicationContext().getFilesDir(), "tmpStationListUri");
-        File file = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_AROUND);
-
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(list);
-
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-
-        }
-
-        return Uri.fromFile(file);
-    }
 }

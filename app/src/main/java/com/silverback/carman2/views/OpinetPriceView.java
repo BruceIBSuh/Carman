@@ -5,6 +5,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -39,6 +40,7 @@ public abstract class OpinetPriceView extends LinearLayout {
     // Abstract Methods
     protected abstract void getAttributes(Context context, AttributeSet attrs);
     public abstract void addPriceView(String fuelCode);
+    //public abstract void showView();
 
     // Methods to switch the text color according to whether the price gets higher or lower.
     protected void setColoredTextView(TextView textView, float price, float diff) {

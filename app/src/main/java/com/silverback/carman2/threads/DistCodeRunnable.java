@@ -20,10 +20,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
-public class OpinetDistCodeRunnable implements Runnable {
+public class DistCodeRunnable implements Runnable {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(OpinetDistCodeTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeTask.class);
 
     // Constants
     private static final String API_KEY = "F186170711";
@@ -46,7 +46,7 @@ public class OpinetDistCodeRunnable implements Runnable {
     }
 
     // Constructor
-    OpinetDistCodeRunnable(Context context, OpinetDistCodeMethods task) {
+    DistCodeRunnable(Context context, OpinetDistCodeMethods task) {
         mTask = task;
         this.context = context;
         sido = context.getResources().getStringArray(R.array.sido_code);
@@ -88,7 +88,7 @@ public class OpinetDistCodeRunnable implements Runnable {
             if(saveDistCode(distCodeList)){
                 log.d("Sigun Numbers: %d", distCodeList.size());
 
-                // Notify OpinetDistCodeTask of getting the district code finished downloading
+                // Notify DistCodeTask of getting the district code finished downloading
                 mTask.handleDistCodeTask(DOWNLOAD_DISTCODE_SUCCEED);
             }
 

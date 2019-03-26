@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.TextView;
 
 import com.silverback.carman2.R;
@@ -19,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class AvgPriceView extends OpinetPriceView {
@@ -27,13 +29,13 @@ public class AvgPriceView extends OpinetPriceView {
     private static final LoggingHelper log = LoggingHelperFactory.create(AvgPriceView.class);
 
     // Objects
+    private WeakReference<View> mThisView;
     private TextView tvAvgPrice;
 
     // Fields
     //private int priceUpColor, priceDownColor;
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
-
     public AvgPriceView(Context context) {
         super(context);
     }
@@ -71,6 +73,16 @@ public class AvgPriceView extends OpinetPriceView {
         tvAvgTitle.setText(getResources().getString(R.string.general_opinet_subtitle_avgPrice));
     }
 
+    public void showAvgView() {
+
+        mThisView = new WeakReference<View>(this);
+        View localView = mThisView.get();
+
+        if(localView != null) {
+            localView.setVisibility(View.VISIBLE);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode){
 
@@ -106,5 +118,13 @@ public class AvgPriceView extends OpinetPriceView {
         super.onDraw(canvas);
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        if(mThisView != null) {
+            mThisView.clear();
+            mThisView = null;
+        }
 
+        super.onDetachedFromWindow();
+    }
 }

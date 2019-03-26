@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.Fragment;
 
+import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -25,13 +26,10 @@ public class ThreadManager {
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager.class);
 
     // Constants
-    static final int DOWNLOAD_PRICE_COMPLETED = 100;
-    static final int LOAD_PRICE_AVG_COMPLETED = 101;
-    static final int LOAD_PRICE_SIDO_COMPLETED = 102;
-    static final int LOAD_PRICE_SIGUN_COMPLETED = 103;
-    static final int STATIONTASK_LIST_COMPLETED = 104;
-    static final int DOWNLOAD_NO_STATION_COMPLETED = 105;
-    static final int STATIONTASK_INFO_COMPLETE = 106;
+    static final int DOWNLOAD_PRICE_COMPLETE = 100;
+    static final int DOWNLOAD_STATION_LIST_COMPLETE = 104;
+    static final int DOWNLOAD_NO_STATION_COMPLETE = 105;
+    static final int DOWNLOAD_STATION_INFO_COMPLETE = 106;
     static final int POPULATE_STATION_LIST_COMPLETED = 106;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 107;
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 108;
@@ -40,7 +38,10 @@ public class ThreadManager {
     //static final int FETCH_ADDRESS_COMPLETED = 111;
     static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
 
-    static final int DOWNLOAD_PRICE_FAILED = -1;
+    static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
+    static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
+    static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
+    static final int DOWNLOAD_PRICE_FAILED = -200;
     static final int DOWNLOAD_NEAR_STATIONS_FAILED = -2;
     static final int POPULATE_STATION_LIST_FAILED = -3;
     static final int DOWNLOAD_CURRENT_STATION_FAILED = -4;
@@ -64,8 +65,8 @@ public class ThreadManager {
 
     // Interface to communicate w/
     public interface OnCompleteTaskListener {
-        void callbackLocation(Location result);
-        void callbackStationList(List<Opinet.GasStnParcelable> result);
+        void onLocationFetched(Location result);
+        void onStationInfoList(List<Opinet.GasStnParcelable> result);
         void onTaskFailure();
     }
 
@@ -95,6 +96,8 @@ public class ThreadManager {
 
     // ThreadManager instance as a singleton
     private static ThreadManager sInstance;
+
+    private int count = 0;
 
 
     // A static block that sets class fields
@@ -136,31 +139,40 @@ public class ThreadManager {
          * happens when the View invokes startDownload. Since the View runs on the UI Thread, so
          * does the constructor and the Handler.
          */
+
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @SuppressWarnings("unchecked")
             @Override
             public void handleMessage(Message msg) {
 
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
-
+                PriceTask priceTask;
                 LocationTask locationTask;
                 //LoadPriceListTask loadPriceTask;
                 StationTask stationTask;
                 //StationCurrentTask curStnTask;
-                OpinetDistCodeTask distCodeTask;
+                DistCodeTask distCodeTask;
+
+
 
                 switch(msg.what) {
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        distCodeTask = (OpinetDistCodeTask)msg.obj;
+                        distCodeTask = (DistCodeTask)msg.obj;
                         distCodeTask.recycle();
+                        break;
+
+                    case DOWNLOAD_PRICE_COMPLETE:
+                        priceTask = (PriceTask)msg.obj;
+                        // Notifies the caller(IntroActivity) of the 3 prices retrieved.
+                        ((IntroActivity)priceTask.getParentActivity()).onPriceComplete();
                         break;
 
                     case FETCH_LOCATION_COMPLETED:
                         locationTask = (LocationTask)msg.obj;
                         Location location = locationTask.getLocationUpdated();
                         log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
-                        mTaskListener.callbackLocation(location);
+                        mTaskListener.onLocationFetched(location);
 
                         /*
                         } else if(act instanceof GasManagerActivity) {
@@ -184,13 +196,6 @@ public class ThreadManager {
 
 
                     /*
-                    case DOWNLOAD_PRICE_COMPLETED:
-                        //Log.i(LOG_TAG, "Download Price List Completed");
-                        OpinetPriceTask downoadPriceTask = (OpinetPriceTask)msg.obj;
-                        ((IntroActivity)downoadPriceTask.getParentActivity()).finishDownloadPriceList();
-
-                        break;
-
                     case LOAD_PRICE_AVG_COMPLETED:
                         loadPriceTask = (LoadPriceListTask) msg.obj;
                         AvgPriceView avgView = loadPriceTask.getAvgPriceView();
@@ -242,8 +247,8 @@ public class ThreadManager {
                         break;
 
 
-                    case DOWNLOAD_STATION_INFO_COMPLETED:
-                        //Log.i(LOG_TAG, "DOWNLOAD_STATION_INFO_COMPLETED");
+                    case DOWNLOAD_STATION_INFO_COMPLETE:
+                        //Log.i(LOG_TAG, "DOWNLOAD_STATION_INFO_COMPLETE");
 
                         curStnTask = (StationCurrentTask)msg.obj;
 
@@ -251,32 +256,32 @@ public class ThreadManager {
                         String id = curStnTask.getStationId();
                         String code = curStnTask.getStationCode();
 
-                        curStnTask.getGasManagerActivity().addStationInfo(id, addrs, code);
+                        curStnTask.getGasManagerActivity().initStationInfo(id, addrs, code);
 
                         break;
                     */
-                    case STATIONTASK_LIST_COMPLETED:
+                    case DOWNLOAD_STATION_LIST_COMPLETE:
                         log.i("DOWNLOAD_NEAR_STATION_COMPLETED");
                         /*
                         stationTask = (StationTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationTask.getStationList();
-                        //mTaskListener.callbackStationList(stations);
+                        //mTaskListener.onStationInfoList(stations);
                         */
                         break;
 
-                    case DOWNLOAD_NO_STATION_COMPLETED:
+                    case DOWNLOAD_NO_STATION_COMPLETE:
                         mTaskListener.onTaskFailure();
                         break;
 
-                    case STATIONTASK_INFO_COMPLETE:
-                        log.i("STATION_INFO_COMPLETE");
+                    case DOWNLOAD_STATION_INFO_COMPLETE:
+                        log.i("DOWNLOAD_STATION_INFO_COMPLETE");
                         stationTask = (StationTask)msg.obj;
-                        List<Opinet.GasStnParcelable> stnList = stationTask.getInformedStationList();
-                        mTaskListener.callbackStationList(stnList);
+                        List<Opinet.GasStnParcelable> stnList = stationTask.getStationInfoList();
+                        mTaskListener.onStationInfoList(stnList);
                         break;
 
                     /*
-                    case DOWNLOAD_NO_STATION_COMPLETED: // No sation available within a given radius
+                    case DOWNLOAD_NO_STATION_COMPLETE: // No sation available within a given radius
                         //Log.i(LOG_TAG, "DOWNLOAD NO STATION WITHIN RADIUS");
                         stationTask = (StationTask)msg.obj;
                         stationTask.getStationListView().showStationListView(View.VISIBLE);
@@ -320,7 +325,7 @@ public class ThreadManager {
 
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        distCodeTask = (OpinetDistCodeTask)msg.obj;
+                        distCodeTask = (DistCodeTask)msg.obj;
                         distCodeTask.recycle();
                         break;
                     */
@@ -343,10 +348,23 @@ public class ThreadManager {
 
         Message msg = mMainHandler.obtainMessage(state, task);
 
-        if(task instanceof OpinetDistCodeTask) {
+        if(task instanceof DistCodeTask) {
+            switch (state) {
+                case DOWNLOAD_DISTCODE_COMPLTETED:
+                    msg.sendToTarget();
+                    break;
+                case DOWNLOAD_DISTCODE_FAILED:
+                    msg.sendToTarget();
+                    break;
+            }
+
+        } else if(task instanceof PriceTask) {
             switch(state) {
-                case DOWNLOAD_DISTCODE_COMPLTETED: msg.sendToTarget(); break;
-                case DOWNLOAD_DISTCODE_FAILED: msg.sendToTarget(); break;
+                case DOWNLOAD_PRICE_COMPLETE:
+                    msg.sendToTarget();
+                    break;
+                case DOWNLOAD_PRICE_FAILED:
+                    break;
             }
 
         } else if(task instanceof LocationTask) {
@@ -359,17 +377,24 @@ public class ThreadManager {
 
             switch (state) {
 
-                case STATIONTASK_LIST_COMPLETED:
-                    log.i("STATIONTASK_LIST_COMPLETED");
+                case DOWNLOAD_STATION_LIST_COMPLETE:
+                    log.i("DOWNLOAD_STATION_LIST_COMPLETE");
+                    /*
+                    List<Opinet.GasStnParcelable> stationList = ((StationTask) task).getStationList();
+                    for(Opinet.GasStnParcelable station : stationList) {
+                        ((StationTask) task).initStationInfo(station);
+                        mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
+                    }
+                    */
                     mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
                     break;
 
-                case STATIONTASK_INFO_COMPLETE:
+                case DOWNLOAD_STATION_INFO_COMPLETE:
                     msg.sendToTarget();
                     break;
 
-                case DOWNLOAD_NO_STATION_COMPLETED:
-                    log.i("DOWNLOAD_NO_STATION_COMPLETED");
+                case DOWNLOAD_NO_STATION_COMPLETE:
+                    log.i("DOWNLOAD_NO_STATION_COMPLETE");
                     msg.sendToTarget();
                     break;
 
@@ -382,10 +407,10 @@ public class ThreadManager {
         }
 
         /*
-        } else if(task instanceof OpinetPriceTask) {
+        } else if(task instanceof PriceTask) {
 
             switch(state) {
-                case DOWNLOAD_PRICE_COMPLETED:
+                case DOWNLOAD_PRICE_COMPLETE:
                     msg.sendToTarget();
                     break;
 
@@ -422,12 +447,12 @@ public class ThreadManager {
 
             switch (state) {
 
-                case STATIONTASK_LIST_COMPLETED:
+                case DOWNLOAD_STATION_LIST_COMPLETE:
                     mDownloadThreadPool.execute(((StationTask) task).getStationListRunnable());
                     msg.sendToTarget(); //pass the downloaded list back to OpinetStationListFragment
                     break;
 
-                case DOWNLOAD_NO_STATION_COMPLETED:
+                case DOWNLOAD_NO_STATION_COMPLETE:
                     msg.sendToTarget();
                     break;
 
@@ -453,7 +478,7 @@ public class ThreadManager {
                     msg.sendToTarget();
                     break;
 
-                case DOWNLOAD_NO_STATION_COMPLETED:
+                case DOWNLOAD_NO_STATION_COMPLETE:
                     msg.sendToTarget();
                     break;
 
@@ -461,12 +486,12 @@ public class ThreadManager {
                     msg.sendToTarget();
                     break;
 
-                case DOWNLOAD_STATION_INFO_COMPLETED:
+                case DOWNLOAD_STATION_INFO_COMPLETE:
                     msg.sendToTarget();
                     break;
             }
 
-        } else if(task instanceof OpinetDistCodeTask) {
+        } else if(task instanceof DistCodeTask) {
 
             switch(state) {
                 case DOWNLOAD_DISTCODE_COMPLTETED:
@@ -513,12 +538,12 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static OpinetDistCodeTask startOpinetDistCodeTask (Context context) {
+    public static DistCodeTask startOpinetDistCodeTask (Context context) {
 
-        OpinetDistCodeTask task = (OpinetDistCodeTask)sInstance.mDownloadWorkQueue.poll();
+        DistCodeTask task = (DistCodeTask)sInstance.mDownloadWorkQueue.poll();
 
         if(task == null) {
-            task = new OpinetDistCodeTask(context);
+            task = new DistCodeTask(context);
         }
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
@@ -530,17 +555,19 @@ public class ThreadManager {
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
 
-    public static OpinetPriceTask startOpinetPriceTask(Activity activity, String distCode, int sort) {
+    public static PriceTask startPriceTask(Activity activity, String distCode) {
 
-        log.i("OpinetPriceTask: %s, %s, %d", activity, distCode, sort);
-        OpinetPriceTask priceTask = (OpinetPriceTask)sInstance.mDownloadWorkQueue.poll();
+        PriceTask priceTask = (PriceTask)sInstance.mDownloadWorkQueue.poll();
 
         if(priceTask == null) {
-            priceTask = new OpinetPriceTask(activity);
+            log.i("PriceTask: " + priceTask);
+            priceTask = new PriceTask(activity);
         }
 
-        priceTask.initOpinetPriceTask(ThreadManager.sInstance, activity, distCode, sort);
-        sInstance.mDownloadThreadPool.execute(priceTask.getOpinetPriceListRunnable());
+        priceTask.initPriceTask(ThreadManager.sInstance, activity, distCode);
+        sInstance.mDownloadThreadPool.execute(priceTask.getAvgPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceTask.getSidoPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceTask.getSigunPriceRunnable());
 
         return priceTask;
     }

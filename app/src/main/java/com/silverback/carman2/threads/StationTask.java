@@ -3,18 +3,11 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
-import android.net.Uri;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,36 +20,42 @@ public class StationTask extends ThreadTask implements
     // Objects
     private Runnable mStationListRunnable;
     private Runnable mStationInfoRunnable;
-    private List<Opinet.GasStnParcelable> mStationList, mInformedStationList;
+    private List<Opinet.GasStnParcelable> stationList;
+
+
+
+    private List<Opinet.GasStnParcelable> mStationInfoList;
     private Location mLocation;
     private String[] defaultParams;
+    private Opinet.GasStnParcelable station;
+
+    // Fields
+    private int count;
 
     // Constructor
     StationTask(Context context) {
         super();
+        mStationInfoList = new ArrayList<>();
         mStationListRunnable = new StationListRunnable(context, this);
-        mStationInfoRunnable = new StationInfoRunnable(this);
+        mStationInfoRunnable = new StationInfoRunnable(context, this);
     }
 
     void initStationTask(ThreadManager threadManager, String[] params, Location location) {
         sThreadManager = threadManager;
         defaultParams = params;
         mLocation = location;
-        mInformedStationList = new ArrayList<>();
+        //mInformedStationList = new ArrayList<>();
     }
 
     /*
-    public void initSortTask(ThreadManager threadManager,
-                             //OpinetStationListFragment fm,
-                             StationListView listView,
-                             List<Opinet.GasStnParcelable> list) {
+    //Long monitor contention with owner pool-1-thread-2 (15944)
+    //at void com.silverback.carman2.threads.StationInfoRunnable.run()(StationInfoRunnable.java:-1)
 
-        sThreadManager = threadManager;
-        mWeakFragment = new WeakReference<>(fm);
-        mWeakListView = new WeakReference<>(listView);
-        mStationList = list;
+    void initStationInfo(Opinet.GasStnParcelable station) {
+        this.station = station;
     }
     */
+
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
@@ -78,9 +77,8 @@ public class StationTask extends ThreadTask implements
         }
         */
 
-        mStationList = null;
-        mInformedStationList = null;
-        defaultParams = null;
+        //mStationList = null;
+        //defaultParams = null;
 
     }
 
@@ -104,44 +102,81 @@ public class StationTask extends ThreadTask implements
         return mLocation;
     }
 
+
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
-        mStationList = list;
+        stationList = list;
     }
 
-    // Call back by StationInfoRunnable to add additional station information.
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {
-        return mStationList;
+        return stationList;
     }
+
+    @Override
+    public void addStationInfo(Opinet.GasStnParcelable station) {
+        mStationInfoList.add(station);
+    }
+
+
+
+    // Check if all the StationInfoRunnables are complete compared with the count that is equal to
+    // the size of the StationList.
+
+    /*
+    @Override
+    public void addCount() {
+        count++;
+    }
+
+    @Override
+    public int getStationIndex() {
+        return count;
+    }
+
+
+    @Override
+    public Opinet.GasStnParcelable getStation() {
+        return station;
+    }
+
+
+    */
+
+
+
 
     // Callback by StationInfoRunnable to get back Opinet.GasStnParcelable modified with
     // adding additional information(e.g. Car wahs here), then add it to a new List.
+    /*
     @Override
-    public void addGasStationInfo(Opinet.GasStnParcelable parcelable) {
-        log.i("GasStnParcelable with Car Wash: %s, %s", parcelable.getIsCarWash(), parcelable.getStnName());
+    public void initStationInfo(Opinet.GasStnParcelable parcelable) {
         mInformedStationList.add(parcelable);
     }
+    */
 
     @Override
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch (state) {
-            case StationListRunnable.STATION_LIST_COMPLETE:
-                outState = ThreadManager.STATIONTASK_LIST_COMPLETED;
+            case StationListRunnable.DOWNLOAD_NEAR_STATIONS_COMPLETE:
+                outState = ThreadManager.DOWNLOAD_STATION_LIST_COMPLETE;
                 break;
 
-            case StationInfoRunnable.STATION_INFO_COMPLETE:
+            case StationInfoRunnable.DOWNLOAD_STATION_INFO_COMPLETE:
                 log.i("Opinet.GasStationParcelable:");
-                outState= ThreadManager.STATIONTASK_INFO_COMPLETE;
+                outState= ThreadManager.DOWNLOAD_STATION_INFO_COMPLETE;
                 break;
 
-            case StationListRunnable.STATION_CURRENT_FAIL:
-                outState = ThreadManager.DOWNLOAD_NO_STATION_COMPLETED;
+            case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:
+                outState = ThreadManager.DOWNLOAD_NO_STATION_COMPLETE;
                 break;
 
-            case StationListRunnable.STATION_LIST_FAIL:
+            case StationListRunnable.DOWNLOAD_NEAR_STATIONS_FAILED:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
+                break;
+
+            case StationInfoRunnable.DOWNLOAD_STATION_INFO_FAILED:
                 break;
 
             default:
@@ -152,7 +187,9 @@ public class StationTask extends ThreadTask implements
     }
 
 
-    List<Opinet.GasStnParcelable> getInformedStationList() {
-        return mInformedStationList;
+
+    List<Opinet.GasStnParcelable> getStationInfoList() {
+        //return mInformedStationList;
+        return mStationInfoList;
     }
 }
