@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">ConvertGeoCoords</string>
+
+    <!-- MainActivity -->
+    <string name="main_title_date">오늘의 유가 정보</string>
+    <string name="main_title_stationaround">주변 주유소 현황</string>
+
+
+    <!-- OpinetInfoFragment -->
+    <string name="opinet_header_product">[전국평균]\n고급휘발유\n경 유\n휘발유\nLGP</string>
+
+
+</resources>

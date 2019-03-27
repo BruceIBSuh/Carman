@@ -2,6 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Process;
 
 import com.ibnco.carman.convertgeocoords.GeoPoint;
@@ -11,9 +12,14 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
+import com.silverback.carman2.views.StationRecyclerView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -44,15 +50,15 @@ public class StationListRunnable implements Runnable{
     public interface StationListMethod {
         String[] getDefaultParam();
         Location getStationLocation();
-        void setStationList(List<Opinet.GasStnParcelable> list);
         void setStationTaskThread(Thread thread);
+        void setStationList(List<Opinet.GasStnParcelable> list);
         void handleStationTaskState(int state);
     }
 
     // Constructor
-    StationListRunnable(Context context, StationListMethod task) {
+    StationListRunnable(StationListMethod task) {
         mStationList = null;
-        this.context = context;
+        //context = view.getContext();
         mTask = task;
     }
 
@@ -128,7 +134,7 @@ public class StationListRunnable implements Runnable{
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
                     mTask.setStationList(mStationList);
-                    //mTask.handleStationTaskState(DOWNLAOD_CURRENT_STATION_COMPLETE);
+                    mTask.handleStationTaskState(DOWNLAOD_CURRENT_STATION_COMPLETE);
 
                 } else {
                     log.i("StationList: %s", mStationList.size());
@@ -167,5 +173,7 @@ public class StationListRunnable implements Runnable{
             if(conn != null) conn.disconnect();
         }
     }
+
+
 
 }

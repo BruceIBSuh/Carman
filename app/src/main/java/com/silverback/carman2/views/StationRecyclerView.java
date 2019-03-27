@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -28,9 +29,12 @@ public class StationRecyclerView extends RecyclerView {
 
     // Objects
     private WeakReference<View> mThisView;
+    private StationListAdapter mAdapter;
     private StationTask stationTask;
+    private List<Opinet.GasStnParcelable> mStationList;
     private int mHideShowResId = -1;
     private int mTextViewResId = -2;
+
 
     // Default constructors
     public StationRecyclerView(Context context) {
@@ -62,8 +66,9 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
-    public void initView(Context context, String[] defaults, Location location) {
-        stationTask = ThreadManager.startStationListTask(context, defaults, location);
+    public void initView(String[] defaults, Location location) {
+
+        stationTask = ThreadManager.startStationListTask(this, defaults, location);
     }
 
 
@@ -100,10 +105,18 @@ public class StationRecyclerView extends RecyclerView {
 
         if(stationTask != null) stationTask = null;
 
+
         // Always call the super method last
         super.onDetachedFromWindow();
     }
 
+    public void setNearStationList(List<Opinet.GasStnParcelable> stationList) {
+        log.i("Download Station list: %s", stationList.size());
+        mStationList = stationList;
+        mAdapter = new StationListAdapter(mStationList);
+        showStationListRecyclerView();
+        setAdapter(mAdapter);
+    }
 
     public void showStationListRecyclerView() {
 

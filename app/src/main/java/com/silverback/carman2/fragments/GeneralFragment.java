@@ -108,11 +108,13 @@ public class GeneralFragment extends Fragment implements
         tvDate.setText(date);
 
         // Set the spinner_stat default value if it is saved in SharedPreference.Otherwise, sets it to 0.
+        fuelSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(getContext(),
                 R.array.spinner_fuel_name, android.R.layout.simple_spinner_item);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
         fuelSpinner.setAdapter(spinnerAdapter);
-        fuelSpinner.setOnItemSelectedListener(this);
+        //fuelSpinner.setSelection(0);
+
 
         // Set the spinner to the default value that's fetched from SharedPreferences
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
@@ -121,7 +123,7 @@ public class GeneralFragment extends Fragment implements
         // Set the initial spinner value with the default from SharedPreferences
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])){
-                fuelSpinner.setSelection(i);
+                //fuelSpinner.setSelection(i);
                 break;
             }
         }
@@ -178,11 +180,10 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
-
         if(stationTask != null) {
             log.i("stationTask: %s", stationTask);
             //stationTask = ThreadManager.startStationListTask(getContext(), defaults, mLocation);
-            stationRecyclerView.initView(getContext(), defaults,mLocation);
+            stationRecyclerView.initView(defaults, mLocation);
             stationRecyclerView.invalidate();
         }
     }
@@ -197,15 +198,15 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onLocationFetched(Location location){
         mLocation = location;
-        stationRecyclerView.initView(getContext(), defaults, mLocation);
+        stationRecyclerView.initView(defaults, location);
     }
 
     @Override
     public void onStationInfoList(List<Opinet.GasStnParcelable> stnList) {
         log.i("StationInfoList: %s", stnList.size());
-        mAdapter = new StationListAdapter(stnList);
-        stationRecyclerView.showStationListRecyclerView();
-        stationRecyclerView.setAdapter(mAdapter);
+        //mAdapter = new StationListAdapter(stnList);
+        //stationRecyclerView.showStationListRecyclerView();
+        //stationRecyclerView.setAdapter(mAdapter);
     }
     @Override
     public void onTaskFailure() {

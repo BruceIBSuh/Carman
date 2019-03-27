@@ -16,125 +16,136 @@
         android:text="@string/general_subtitle_today"
         android:textAlignment="gravity"
         android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/tv_date"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tv_date"
-        android:layout_width="0dp"
+        android:layout_width="250dp"
         android:layout_height="34dp"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
         android:gravity="center_vertical"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
         app:layout_constraintEnd_toStartOf="@+id/spinner_fuel"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_date" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
     <Spinner
         android:id="@+id/spinner_fuel"
-        android:layout_width="100dp"
+        android:layout_width="0dp"
         android:layout_height="35dp"
+        android:layout_marginStart="16dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="center_vertical"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_date"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tv_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_date" />
 
 
-    <com.silverback.carman2.views.AvgPriceView
-        android:id="@+id/avgPriceView"
-        android:layout_width="wrap_content"
-        android:layout_height="70dp"
+    <FrameLayout
+        android:id="@+id/frame_rotate"
+        android:layout_width="135dp"
+        android:layout_height="95dp"
         android:layout_marginStart="3dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/bg_colored_border"
-        android:padding="5dp"
-        app:avgPriceDown="@color/priceDown"
-        app:avgPriceUp="@color/priceUp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
-
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="3dp"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/avgPriceView"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_date">
 
-        <TextView
+        <com.silverback.carman2.views.AvgPriceView
+            android:id="@+id/avgPriceView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="5dp"
+            app:avgPriceDown="@color/priceDown"
+            app:avgPriceUp="@color/priceUp"/>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tv_subtitle_region"
+        android:layout_width="wrap_content"
+        android:layout_height="27dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:text="@string/general_subtitle_region"
+        android:textAlignment="viewStart"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/frame_rotate"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginEnd="3dp"
+        android:background="@color/border"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tv_subtitle_region"
+        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_region" />
+
+
+    <HorizontalScrollView
+        android:layout_width="0dp"
+        android:layout_height="61dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="3dp"
+        app:layout_constraintBottom_toBottomOf="@+id/frame_rotate"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/frame_rotate">
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="3dp"
-            android:text="[관심 지역 / 주유소]"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal" >
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="3dp"
-            android:background="@color/border" />
+            <com.silverback.carman2.views.SidoPriceView
+                android:id="@+id/sidoPriceView"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                app:sidoPriceDown="@color/priceDown"
+                app:sidoPriceUp="@color/priceUp"/>
 
-    </LinearLayout>
+            <com.silverback.carman2.views.SigunPriceView
+                android:id="@+id/sigunPriceView"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                app:sigunPriceDown="@color/priceDown"
+                app:sigunPriceUp="@color/priceUp" />
 
 
-    <com.silverback.carman2.views.SidoPriceView
-        android:id="@+id/sidoPriceView"
-        android:layout_width="85dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/sigunPriceView"
-        app:layout_constraintEnd_toStartOf="@+id/sigunPriceView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_chainStyle="spread_inside"
-        app:layout_constraintStart_toEndOf="@+id/avgPriceView"
-        app:sidoPriceDown="@color/priceDown"
-        app:sidoPriceUp="@color/priceUp" />
+            <com.silverback.carman2.views.StationPriceView
+                android:id="@+id/stationPriceView"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:layout_margin="5dp"
+                app:stationPriceDown="@color/priceDown"
+                app:stationPriceUp="@color/priceUp" />
 
-    <com.silverback.carman2.views.SigunPriceView
-        android:id="@+id/sigunPriceView"
-        android:layout_width="85dp"
-        android:layout_height="40dp"
-        app:layout_constraintBottom_toBottomOf="@+id/stationPriceView"
-        app:layout_constraintEnd_toStartOf="@+id/stationPriceView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/sidoPriceView"
-        app:sigunPriceDown="@color/priceDown"
-        app:sigunPriceUp="@color/priceUp" />
-
-    <com.silverback.carman2.views.StationPriceView
-        android:id="@+id/stationPriceView"
-        android:layout_width="85dp"
-        android:layout_height="40dp"
-        android:layout_marginTop="3dp"
-        android:layout_marginEnd="3dp"
-        android:background="@drawable/bg_colored_border"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/sigunPriceView"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout2"
-        android:layout_width="405dp"
-        android:layout_height="35dp"
+        android:layout_width="0dp"
+        android:layout_height="32dp"
         android:layout_marginStart="3dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/avgPriceView">
+        app:layout_constraintTop_toBottomOf="@+id/frame_rotate">
 
         <TextView
-            android:id="@+id/tv_subtitle_expense"
+            android:id="@+id/textView4"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginStart="5dp"
@@ -145,43 +156,29 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/tv_expense_use"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginStart="16dp"
-            android:gravity="center_vertical"
-            android:text="@string/general_expense_gas"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tv_subtitle_expense"
-            app:layout_constraintTop_toTopOf="parent" />
-
-
         <ImageButton
             android:id="@+id/imgbtn_expense"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:layout_marginEnd="8dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/state_btn_rotate"
-            android:scaleType="fitXY"
             android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/state_btn_rotate"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
     </android.support.constraint.ConstraintLayout>
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="0dp"
-        android:layout_height="90dp"
+        android:layout_width="405dp"
+        android:layout_height="100dp"
         android:layout_marginStart="3dp"
-        android:layout_marginTop="3dp"
         android:layout_marginEnd="3dp"
-        android:text="TextView"
+        android:text="@string/textview"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout2" />
 
@@ -190,10 +187,11 @@
         android:layout_width="0dp"
         android:layout_height="35dp"
         android:layout_marginStart="3dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView">
 
@@ -227,9 +225,9 @@
             android:layout_height="25dp"
             android:layout_marginEnd="8dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/state_btn_rotate"
-            android:scaleType="fitXY"
             android:contentDescription="@null"
+            android:scaleType="fitXY"
+            android:src="@drawable/state_btn_rotate"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -240,10 +238,12 @@
         android:id="@+id/frame_recyclerview"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginStart="3dp"
+        android:layout_marginEnd="3dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout" >
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
 
         <TextView
             android:id="@+id/tv_no_stations"
@@ -261,7 +261,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:progressbar="@id/listProgress"
-            app:textview="@id/tv_no_stations"/>
+            app:textview="@id/tv_no_stations" />
 
     </FrameLayout>
 

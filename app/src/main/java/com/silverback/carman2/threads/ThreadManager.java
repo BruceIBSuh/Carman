@@ -7,11 +7,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.RecyclerView;
 
 import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.List;
 import java.util.Queue;
@@ -262,11 +264,15 @@ public class ThreadManager {
                     */
                     case DOWNLOAD_STATION_LIST_COMPLETE:
                         log.i("DOWNLOAD_NEAR_STATION_COMPLETED");
-                        /*
+
                         stationTask = (StationTask)msg.obj;
+                        StationRecyclerView localView = stationTask.getRecyclerView();
+
+
                         List<Opinet.GasStnParcelable> stnList = stationTask.getStationList();
+                        localView.setNearStationList(stnList);
                         //mTaskListener.onStationInfoList(stations);
-                        */
+
                         break;
 
                     case DOWNLOAD_NO_STATION_COMPLETE:
@@ -275,9 +281,11 @@ public class ThreadManager {
 
                     case DOWNLOAD_STATION_INFO_COMPLETE:
                         log.i("DOWNLOAD_STATION_INFO_COMPLETE");
+                        /*
                         stationTask = (StationTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationTask.getStationInfoList();
                         mTaskListener.onStationInfoList(stnList);
+                        */
                         break;
 
                     /*
@@ -386,7 +394,8 @@ public class ThreadManager {
                         mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
                     }
                     */
-                    mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
+                    //mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
+                    msg.sendToTarget();
                     break;
 
                 case DOWNLOAD_STATION_INFO_COMPLETE:
@@ -627,23 +636,24 @@ public class ThreadManager {
     */
     // Download stations around the current location from Opinet
     // given Location and defaut params transferred from OpinetStationListFragment
-    public static StationTask startStationListTask(Context context, String[] params, Location location) {
+    public static StationTask startStationListTask(
+            StationRecyclerView view, String[] params, Location location) {
 
         StationTask stationTask = sInstance.mStationTaskQueue.poll();
         if(stationTask == null) {
-            stationTask = new StationTask(context);
+            stationTask = new StationTask();
         }
 
         // Attach OnCompleteTaskListener
         if(sInstance.mTaskListener == null) {
             try {
-                sInstance.mTaskListener = (OnCompleteTaskListener) context;
+                sInstance.mTaskListener = (OnCompleteTaskListener) view;
             } catch (ClassCastException e) {
-                throw new ClassCastException(context.toString() + " must implement OnCompleteTaskListener");
+                throw new ClassCastException(view.toString() + " must implement OnCompleteTaskListener");
             }
         }
 
-        stationTask.initStationTask(ThreadManager.sInstance, params, location);
+        stationTask.initStationTask(ThreadManager.sInstance, view, params, location);
         sInstance.mDownloadThreadPool.execute(stationTask.getStationListRunnable());
 
         return stationTask;
