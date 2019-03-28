@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -47,75 +47,78 @@
 
     <FrameLayout
         android:id="@+id/frame_rotate"
-        android:layout_width="135dp"
-        android:layout_height="95dp"
+        android:layout_width="0dp"
+        android:layout_height="80dp"
+        android:minWidth="130dp"
         android:layout_marginStart="3dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date">
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" >
 
         <com.silverback.carman2.views.AvgPriceView
             android:id="@+id/avgPriceView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="5dp"
+            android:gravity="center"
             app:avgPriceDown="@color/priceDown"
             app:avgPriceUp="@color/priceUp"/>
+
     </FrameLayout>
 
     <TextView
         android:id="@+id/tv_subtitle_region"
-        android:layout_width="wrap_content"
-        android:layout_height="27dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="171dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="16dp"
         android:gravity="center_vertical"
         android:text="@string/general_subtitle_region"
-        android:textAlignment="viewStart"
+        android:textSize="@dimen/subtitle"
         android:textStyle="bold"
         app:layout_constraintStart_toEndOf="@+id/frame_rotate"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
+        app:layout_constraintTop_toTopOf="@+id/frame_rotate" />
 
     <View
         android:id="@+id/view"
         android:layout_width="0dp"
-        android:layout_height="1dp"
+        android:layout_height="2dp"
+        android:layout_marginStart="16dp"
         android:layout_marginEnd="3dp"
         android:background="@color/border"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/tv_subtitle_region"
+        app:layout_constraintStart_toEndOf="@+id/frame_rotate"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_region" />
 
 
     <HorizontalScrollView
+        android:id="@+id/horizontalScrollView"
         android:layout_width="0dp"
-        android:layout_height="61dp"
-        android:layout_marginStart="8dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         app:layout_constraintBottom_toBottomOf="@+id/frame_rotate"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/frame_rotate">
+        app:layout_constraintStart_toStartOf="@+id/view"
+        app:layout_constraintTop_toBottomOf="@+id/view">
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:padding="3dp" >
 
             <com.silverback.carman2.views.SidoPriceView
                 android:id="@+id/sidoPriceView"
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
                 app:sidoPriceDown="@color/priceDown"
-                app:sidoPriceUp="@color/priceUp"/>
+                app:sidoPriceUp="@color/priceUp" />
 
             <com.silverback.carman2.views.SigunPriceView
                 android:id="@+id/sigunPriceView"
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
                 app:sigunPriceDown="@color/priceDown"
                 app:sigunPriceUp="@color/priceUp" />
 
@@ -124,7 +127,6 @@
                 android:id="@+id/stationPriceView"
                 android:layout_width="100dp"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
                 app:stationPriceDown="@color/priceDown"
                 app:stationPriceUp="@color/priceUp" />
 
@@ -133,16 +135,15 @@
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/constraintLayout2"
-        android:layout_width="0dp"
+        android:layout_width="405dp"
         android:layout_height="32dp"
         android:layout_marginStart="3dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/frame_rotate">
+        app:layout_constraintTop_toBottomOf="@+id/horizontalScrollView">
 
         <TextView
             android:id="@+id/textView4"

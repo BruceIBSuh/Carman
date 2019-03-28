@@ -13,17 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-        tools:ignore="GoogleAppIndexingWarning" >
-
-        <provider
-            android:name="android.support.v4.content.FileProvider"
-            android:authorities="com.silverback.carman2.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true" >
-            <meta-data
-            android:name="android.support.FILE_PROVIDER_PATHS"
-            android:resource="@xml/file_paths" />
-        </provider>
+        tools:ignore="GoogleAppIndexingWarning">
 
 
         <activity android:name=".IntroActivity">
@@ -32,9 +22,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity android:name=".BaseActivity" />
         <activity android:name=".MainActivity" />
+
+        <activity android:name=".GeneralSettingActivity"
+            android:label="@string/setting_label"
+            android:parentActivityName="com.silverback.carman2.MainActivity" >
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.silverback.carman2.MainActivity" />
+        </activity>
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.silverback.carman2.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
 
     </application>
 

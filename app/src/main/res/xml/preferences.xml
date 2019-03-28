@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/pref_category_basic_info"
+        android:key="pref_basic_info" >
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="@string/pref_category_location"
+        android:key="pref_location">
+
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_station"
+        android:key="pref_station" >
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="@string/pref_category_service"
+        android:key="pref_service" >
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_app_setting"
+        android:key="pref_app_setting" >
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

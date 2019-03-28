@@ -1,6 +1,7 @@
 package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -140,7 +141,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
                 return true;
 
             case R.id.action_setting:
-
+                startActivity(new Intent(MainActivity.this, GeneralSettingActivity.class));
                 return true;
 
             default:

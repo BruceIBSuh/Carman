@@ -39,6 +39,14 @@
     <string name="general_station_distance">거리</string>
     <string name="general_carwash">세차</string>
 
+    <!--GeneralSettingActivity-->
+    <string name="setting_label">차량정보 입력 / 앱 설정</string>
+    <string name="pref_category_basic_info">차량 정보</string>
+    <string name="pref_category_location">위치 설정</string>
+    <string name="pref_category_station">주유소 설정</string>
+    <string name="pref_category_service">차량정비 설정</string>
+    <string name="pref_category_app_setting">앱 설정</string>
+
 
     <string name="pref_spinner_sido_seoul">서울시</string>
     <string name="pref_spinner_sido_gyunggi">경기도</string>
@@ -57,7 +65,6 @@
     <string name="pref_spinner_sido_daejeon">대전시</string>
     <string name="pref_spinner_sido_ulsan">울산시</string>
     <string name="pref_spinner_sido_sejong">세종시</string>
-
 
 
     <!--Miscellany-->
