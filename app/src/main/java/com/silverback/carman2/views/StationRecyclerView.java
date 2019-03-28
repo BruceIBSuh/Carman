@@ -4,8 +4,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.location.Location;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
@@ -20,6 +18,9 @@ import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class StationRecyclerView extends RecyclerView {
 
@@ -53,7 +54,7 @@ public class StationRecyclerView extends RecyclerView {
     protected void getAttributes(Context context, AttributeSet attrs) {
 
         setHasFixedSize(true);
-        LayoutManager layoutManager = new LinearLayoutManager(getContext());
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(layoutManager);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.StationRecyclerView);

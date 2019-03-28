@@ -4,21 +4,14 @@ import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import com.google.android.material.tabs.TabLayout;
+import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.fragments.BoardFragment;
 import com.silverback.carman2.fragments.GasFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
@@ -28,13 +21,19 @@ import com.silverback.carman2.fragments.StatFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.viewpager.widget.ViewPager;
+
 public class MainActivity extends BaseActivity implements ViewPager.OnPageChangeListener {
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
-    private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private FragmentPagerAdapter pagerAdapter;
@@ -68,7 +67,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
                 getDrawable(R.drawable.ic_setting)
         };
 
-        toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         tabLayout = findViewById(R.id.tabLayout);
         frameLayout = findViewById(R.id.frameLayout);
 
@@ -80,7 +79,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         viewPager.setId(View.generateViewId());
 
         // Instantiates FragmentPagerAdapter to have the fragments linked to the viewpager.
-        pagerAdapter = new CustomFragmentPagerAdapter(getSupportFragmentManager());
+        pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
 
         // ViewPager and ViewPager.OnPageChageListener attached
         viewPager.setAdapter(pagerAdapter);
@@ -161,32 +160,6 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     @Override
     public void onPageScrollStateChanged(int state) {
         //Log.i(LOG_TAG, "ViewPager Listeenr");
-    }
-
-    // Define the custom FragmentPagerAdapter
-    private final class CustomFragmentPagerAdapter extends FragmentPagerAdapter {
-
-        CustomFragmentPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        private final Fragment[] fragments = new Fragment[] {
-                new GasFragment(),
-                new ServiceFragment(),
-                new StatFragment(),
-                new SettingFragment()
-        };
-
-        @Override
-        public int getCount(){
-            return fragments.length;
-        }
-
-        @Override
-        public Fragment getItem(int pos){
-            return fragments[pos];
-        }
-
     }
 
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after

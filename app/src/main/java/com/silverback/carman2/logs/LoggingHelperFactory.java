@@ -1,7 +1,5 @@
 package com.silverback.carman2.logs;
 
-import android.support.annotation.NonNull;
-
 import com.silverback.carman2.BuildConfig;
 
 /**

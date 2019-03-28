@@ -6,7 +6,6 @@ import android.content.IntentSender;
 import android.location.Location;
 import android.os.Looper;
 import android.os.Process;
-import android.support.annotation.NonNull;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -14,12 +13,13 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.CarmanLocationHelper;
+
+import androidx.annotation.NonNull;
 
 public class LocationRunnable implements Runnable,
         OnFailureListener, OnSuccessListener<LocationSettingsResponse> {

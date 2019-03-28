@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <PreferenceCategory
         android:title="@string/pref_category_basic_info"
         android:key="pref_basic_info" >
@@ -10,6 +12,9 @@
         android:title="@string/pref_category_location"
         android:key="pref_location">
 
+        <com.silverback.carman2.views.DistrictDialogPreference
+            android:title="@string/pref_dialog_district"
+            android:key="pref_dialog_district" />
 
 
     </PreferenceCategory>
@@ -30,6 +35,10 @@
         android:title="@string/pref_category_app_setting"
         android:key="pref_app_setting" >
 
+        <SwitchPreferenceCompat
+            app:key="notification"
+            app:title="Enable message notification" />
+
     </PreferenceCategory>
 
-</PreferenceScreen>
+</androidx.preference.PreferenceScreen>

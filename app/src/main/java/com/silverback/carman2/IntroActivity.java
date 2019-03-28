@@ -42,7 +42,6 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         // Hide the action bar
         //getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         //getSupportActionBar().hide();
-
         setContentView(R.layout.activity_intro);
 
         // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml

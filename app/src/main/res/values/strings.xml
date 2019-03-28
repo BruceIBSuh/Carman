@@ -41,11 +41,15 @@
 
     <!--GeneralSettingActivity-->
     <string name="setting_label">차량정보 입력 / 앱 설정</string>
+
+    <!--GeneralSettingActivity$GeneralSettingFragment$preferences.xml-->
     <string name="pref_category_basic_info">차량 정보</string>
     <string name="pref_category_location">위치 설정</string>
     <string name="pref_category_station">주유소 설정</string>
     <string name="pref_category_service">차량정비 설정</string>
     <string name="pref_category_app_setting">앱 설정</string>
+    <string name="pref_dialog_district">관심 지역</string>
+
 
 
     <string name="pref_spinner_sido_seoul">서울시</string>

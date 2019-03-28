@@ -3,9 +3,6 @@ package com.silverback.carman2.fragments;
 
 import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +28,10 @@ import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
@@ -180,11 +181,10 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
-        if(stationTask != null) {
+        if(mLocation != null) {
             log.i("stationTask: %s", stationTask);
             //stationTask = ThreadManager.startStationListTask(getContext(), defaults, mLocation);
             stationRecyclerView.initView(defaults, mLocation);
-            stationRecyclerView.invalidate();
         }
     }
 

@@ -2,7 +2,7 @@ package com.silverback.carman2.models;
 
 import android.content.Context;
 import android.location.Location;
-import android.support.annotation.NonNull;
+
 
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -16,6 +16,8 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+
+import androidx.annotation.NonNull;
 
 public class CarmanLocationHelper implements
         OnSuccessListener<LocationSettingsResponse>, OnFailureListener {

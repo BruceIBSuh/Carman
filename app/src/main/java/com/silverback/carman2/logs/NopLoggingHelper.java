@@ -1,6 +1,6 @@
 package com.silverback.carman2.logs;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * No-operation implementation of the {@link LoggingHelper} interface

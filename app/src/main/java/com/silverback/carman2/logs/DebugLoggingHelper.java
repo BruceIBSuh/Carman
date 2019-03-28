@@ -2,12 +2,13 @@ package com.silverback.carman2.logs;
 
 
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.v4.util.ArrayMap;
 import android.util.Log;
 
 import java.util.Locale;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+import androidx.collection.ArrayMap;
 
 /**
  * Uses {@link android.util.Log} to implement the {@link LoggingHelper} interface

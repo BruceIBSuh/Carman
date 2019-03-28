@@ -1,33 +1,23 @@
 package com.silverback.carman2.adapters;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.threads.StationTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.viewholders.StationsViewHolder;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder> {
 

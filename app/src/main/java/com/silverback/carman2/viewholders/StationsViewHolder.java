@@ -1,7 +1,5 @@
 package com.silverback.carman2.viewholders;
 
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.RecyclerView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -9,9 +7,11 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.threads.ThreadManager;
 
 import java.util.Locale;
+
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class StationsViewHolder extends RecyclerView.ViewHolder {
 

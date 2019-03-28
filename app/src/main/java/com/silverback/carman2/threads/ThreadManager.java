@@ -6,8 +6,6 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.RecyclerView;
 
 import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -21,6 +19,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import androidx.fragment.app.Fragment;
 
 public class ThreadManager {
 
@@ -649,7 +649,7 @@ public class ThreadManager {
             try {
                 sInstance.mTaskListener = (OnCompleteTaskListener) view;
             } catch (ClassCastException e) {
-                throw new ClassCastException(view.toString() + " must implement OnCompleteTaskListener");
+                throw new ClassCastException(String.valueOf(view) + " must implement OnCompleteTaskListener");
             }
         }
 
