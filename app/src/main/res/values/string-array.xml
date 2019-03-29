@@ -21,6 +21,20 @@
         <item>@string/general_def_code</item>
     </string-array>
 
+    <string-array name="list_station_radius_name">
+        <item>@string/pref_radius_500</item>
+        <item>@string/pref_radius_1000</item>
+        <item>@string/pref_radius_2500</item>
+        <item>@string/pref_radius_5000</item>
+    </string-array>
+
+    <string-array name="list_station_radius_value">
+        <item>500</item>
+        <item>1000</item>
+        <item>2500</item>
+        <item>5000</item>
+    </string-array>
+
     <string-array name="sido_name">
         <item>@string/pref_spinner_sido_seoul</item>
         <item>@string/pref_spinner_sido_gyunggi</item>

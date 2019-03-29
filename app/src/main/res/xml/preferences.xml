@@ -1,43 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        android:title="@string/pref_category_basic_info"
-        android:key="pref_basic_info" >
+        app:title="@string/pref_category_basic_info"
+        app:key="pref_basic_info" >
+
+        <Preference
+            app:title="관리차량"
+            app:key="pref_select_car" />
+
+        <EditTextPreference
+            app:title="차량 모델"
+            app:key="pref_model" />
+
+        <ListPreference
+            app:title="연료"
+            app:key="pref_fuel"
+            app:entries="@array/spinner_fuel_name"
+            app:entryValues="@array/spinner_fuel_code"
+            app:defaultValue="B027" />
+
+        <Preference
+            app:title="누적 주행거리(Ordometer)"
+            app:key="pref_ordometer" />
+        <Preference
+            app:title="연간 평균 주행거리(Mileage)"
+            app:key="pref_mileage" />
+
     </PreferenceCategory>
 
 
     <PreferenceCategory
-        android:title="@string/pref_category_location"
-        android:key="pref_location">
+        app:title="@string/pref_category_location"
+        app:key="pref_location">
 
-        <com.silverback.carman2.views.DistrictDialogPreference
-            android:title="@string/pref_dialog_district"
-            android:key="pref_dialog_district" />
+        <com.silverback.carman2.views.SpinnerDialogPreference
+            app:title="@string/pref_dialog_district"
+            app:key="pref_dialog_district"
+            app:dialogMessage="Hello World"
+            app:dialogTitle="Hello Dialog"
+            app:positiveButtonText="Clear Quests"
+            app:negativeButtonText="Cancel"/>
+
+        <ListPreference
+            app:title="@string/pref_location_radius"
+            app:key="pref_location_radius"
+            app:entries="@array/list_station_radius_name"
+            app:entryValues="@array/list_station_radius_value"
+            app:defaultValue="2500"/>
 
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="@string/pref_category_station"
-        android:key="pref_station" >
+        app:title="@string/pref_category_favorites"
+        app:key="pref_favorites" >
+
+        <Preference
+            app:title="@string/pref_favorite_station"
+            app:key="pref_favorite_station" />
+
+        <Preference
+            app:title="@string/pref_favorite_carcenter"
+            app:key="pref_favorite_carcenter" />
+
     </PreferenceCategory>
 
 
     <PreferenceCategory
-        android:title="@string/pref_category_service"
-        android:key="pref_service" >
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:title="@string/pref_category_app_setting"
-        android:key="pref_app_setting" >
+        app:title="@string/pref_category_app_setting"
+        app:key="pref_app_setting" >
 
         <SwitchPreferenceCompat
             app:key="notification"
-            app:title="Enable message notification" />
+            app:title="알림 정보 수신" />
 
     </PreferenceCategory>
 
