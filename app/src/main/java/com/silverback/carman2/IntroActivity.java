@@ -72,22 +72,22 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         //mProgBar.setVisibility(View.VISIBLE);
 
         if(checkUpdateOpinet()) {
-            try {
-                String jsonString = mSettings.getString(Constants.DISTRICT, "");
-                JSONArray jsonArray = new JSONArray(jsonString);
+            //try {
+                String distCode = mSettings.getString(Constants.DISTRICT, "0101");
+                //JSONArray jsonArray = new JSONArray(jsonString);
 
-                String sigunCode = jsonArray.get(2).toString();
-                log.i("Sigun Code: %s", sigunCode);
+                //String sigunCode = jsonArray.get(2).toString();
+                log.i("Sigun Code: %s", distCode);
 
                 // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
                 // Consider whether the threads should be interrupted or not.
-                priceTask = ThreadManager.startPriceTask(IntroActivity.this, sigunCode);
+                priceTask = ThreadManager.startPriceTask(IntroActivity.this, distCode);
 
                 // Save the last update time in the default SharedPreferences
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-            } catch (JSONException e) {
-                log.e("JSONException: %s", e);
-            }
+            //} catch (JSONException e) {
+                //log.e("JSONException: %s", e);
+            //}
         } else {
             startActivity(new Intent(this, MainActivity.class));
             finish();

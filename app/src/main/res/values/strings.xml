@@ -51,6 +51,7 @@
     <string name="pref_favorite_carcenter">자주 찾는 카센터</string>
     <string name="pref_category_app_setting">앱 설정</string>
     <string name="pref_dialog_district">관심 지역</string>
+    <string name="pref_dialog_district_title">관심지역 설정 </string>
     <string name="pref_radius_500">500미터</string>
     <string name="pref_radius_1000">1000미터</string>
     <string name="pref_radius_2500">2500미터</string>

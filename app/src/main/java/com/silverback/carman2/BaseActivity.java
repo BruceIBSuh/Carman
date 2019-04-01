@@ -40,7 +40,7 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         if(mSettings == null) {
-            mSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         }
     }
 

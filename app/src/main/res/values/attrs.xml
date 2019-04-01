@@ -26,4 +26,9 @@
         <attr name="textview" format="reference" />
     </declare-styleable>
 
+    <declare-styleable name="SpinnerDialogPreference">
+        <attr name="siguncode" format="string" />
+        <attr name="sidoSpinner" format="reference" />
+    </declare-styleable>
+
 </resources>

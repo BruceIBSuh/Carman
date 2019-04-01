@@ -38,9 +38,10 @@
             app:title="@string/pref_dialog_district"
             app:key="pref_dialog_district"
             app:dialogMessage="Hello World"
-            app:dialogTitle="Hello Dialog"
-            app:positiveButtonText="Clear Quests"
-            app:negativeButtonText="Cancel"/>
+            app:dialogTitle="@string/pref_dialog_district_title"
+            app:positiveButtonText="Confirm"
+            app:negativeButtonText="Cancel"
+            app:siguncode="0101" />
 
         <ListPreference
             app:title="@string/pref_location_radius"

@@ -11,6 +11,7 @@ import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.views.SpinnerDialogPreference;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.List;
@@ -39,6 +40,8 @@ public class ThreadManager {
     static final int FETCH_LOCATION_COMPLETED = 110;
     //static final int FETCH_ADDRESS_COMPLETED = 111;
     static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
+    static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
+    static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
 
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
@@ -146,7 +149,6 @@ public class ThreadManager {
             @SuppressWarnings("unchecked")
             @Override
             public void handleMessage(Message msg) {
-
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
                 PriceTask priceTask;
                 LocationTask locationTask;
@@ -154,6 +156,7 @@ public class ThreadManager {
                 StationTask stationTask;
                 //StationCurrentTask curStnTask;
                 DistCodeTask distCodeTask;
+                SpinnerDistCodeTask spinnerDistCodeTask;
 
 
 
@@ -194,6 +197,15 @@ public class ThreadManager {
                         locationTask = (LocationTask)msg.obj;
                         locationTask.recycle();
                         mLocationTaskQueue.offer(locationTask);
+                        break;
+
+                    case LOAD_SPINNER_DIST_CODE_COMPLETE:
+                        spinnerDistCodeTask = (SpinnerDistCodeTask)msg.obj;
+
+                        SpinnerDialogPreference pref = spinnerDistCodeTask.getDialogPreference();
+                        pref.getSigunAdapter().notifyDataSetChanged();
+                        spinnerDistCodeTask.recycle();
+
                         break;
 
 
@@ -413,6 +425,8 @@ public class ThreadManager {
                     break;
             }
 
+        } else {
+            msg.sendToTarget();
         }
 
         /*
@@ -557,6 +571,17 @@ public class ThreadManager {
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
 
+        return task;
+    }
+
+    // Retrieves Sigun list with a sido code given in GeneralSettingActivity
+    public static SpinnerDistCodeTask startSpinnerDistCodeTask(SpinnerDialogPreference pref, int code) {
+
+        SpinnerDistCodeTask task = (SpinnerDistCodeTask)sInstance.mDownloadWorkQueue.poll();
+        if(task == null) task = new SpinnerDistCodeTask(pref.getContext());
+
+        task.initSpinnerDistCodeTask(ThreadManager.sInstance, pref, code);
+        sInstance.mDecodeThreadPool.execute(task.getSpinnerDistCodeRunnable());
         return task;
     }
 

@@ -1,15 +1,19 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.threads.SpinnerDistCodeTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import androidx.fragment.app.DialogFragment;
-import androidx.preference.DialogPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -23,12 +27,21 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralSettingFragment.class);
 
     // Objects
+    private SharedPreferences sharedPreferences;
+    private SpinnerDistCodeTask mTask;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
         setPreferencesFromResource(R.xml.preferences, rootKey);
-        //findPreference("pref_fuel").setOnPreferenceClickListener(this);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(mTask != null) mTask = null;
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -36,7 +49,9 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     public void onDisplayPreferenceDialog(Preference pref) {
 
         if(pref instanceof SpinnerDialogPreference) {
-            log.i("onDisplayPreferenceDialog: %s", pref.getKey());
+            //String code = sharedPreferences.getString(Constants.DISTRICT, "0101");
+            //mTask = ThreadManager.startSpinnerDistCodeTask((SpinnerDialogPreference)pref, code);
+
             DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey());
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), "spinner");
@@ -45,8 +60,6 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
             super.onDisplayPreferenceDialog(pref);
         }
     }
-
-
 
     @Override
     public boolean onPreferenceClick(Preference preference) {
