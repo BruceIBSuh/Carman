@@ -204,6 +204,8 @@ public class ThreadManager {
 
                         SpinnerDialogPreference pref = spinnerDistCodeTask.getDialogPreference();
                         pref.getSigunAdapter().notifyDataSetChanged();
+                        pref.setDistCodeList(spinnerDistCodeTask.getSigunList());
+
                         spinnerDistCodeTask.recycle();
 
                         break;

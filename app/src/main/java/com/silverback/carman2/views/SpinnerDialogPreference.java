@@ -6,8 +6,11 @@ import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
@@ -18,9 +21,12 @@ import com.silverback.carman2.models.Opinet;
 
 import java.util.List;
 
+import androidx.core.content.ContextCompat;
 import androidx.preference.DialogPreference;
+import androidx.preference.Preference;
 
-public class SpinnerDialogPreference extends DialogPreference {
+public class SpinnerDialogPreference extends DialogPreference implements
+        Preference.OnPreferenceChangeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerDialogPreference.class);
@@ -28,11 +34,12 @@ public class SpinnerDialogPreference extends DialogPreference {
     // Constants
     private final int mDialogLayoutResId = R.layout.dialogpref_spinner;
 
-
     // Objects
     private ArrayAdapter sidoAdapter;
     private DistrictSpinnerAdapter sigunAdapter;
+    private List<Opinet.DistrictCode> distCodeList;
 
+    // Constructors
     public SpinnerDialogPreference(Context context) {
         super(context);
     }
@@ -54,18 +61,10 @@ public class SpinnerDialogPreference extends DialogPreference {
 
     private void getAttributes(Context context, AttributeSet attrs) {
 
-        setDialogLayoutResource(mDialogLayoutResId);
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String distCode = null;
-
-
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
         try {
             String defaultCode = typedArray.getString(R.styleable.SpinnerDialogPreference_siguncode);
             log.i("Default Value: %s", defaultCode);
-            distCode = sharedPreferences.getString(Constants.DISTRICT, defaultCode);
-
         } finally {
             typedArray.recycle();
         }
@@ -82,22 +81,40 @@ public class SpinnerDialogPreference extends DialogPreference {
 
     }
 
-
-    public void onDialogClosed(boolean positiveResult) { }
-
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+        log.i("onPreferenceChange: %s, %s", preference, newValue);
+        return false;
+    }
 
     @Override
     public int getDialogLayoutResource() {
         return mDialogLayoutResId;
     }
 
+    // Abstrct method which PreferenceDialogFragmentCompat overrides
+    public void onDialogClosed(boolean positiveResult){
+        log.i("onDialogClosed: %s", positiveResult);
+    }
+
 
     public ArrayAdapter getSidoAdapter() {
         return sidoAdapter;
     }
-
     public DistrictSpinnerAdapter getSigunAdapter() {
         return sigunAdapter;
+    }
+
+    // Setter and Getter for ThreadManager and SpinnerPrefDlgFragment
+    public void setDistCodeList(List<Opinet.DistrictCode> list) {
+        distCodeList = list;
+    }
+    public List<Opinet.DistrictCode> getDistCodeList() {
+        return distCodeList;
+    }
+
+    public void persistDistCode(String json) {
+        persistString(json);
     }
 
 }

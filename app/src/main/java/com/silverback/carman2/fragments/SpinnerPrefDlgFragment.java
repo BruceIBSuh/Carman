@@ -19,6 +19,10 @@ import com.silverback.carman2.threads.SpinnerDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
+import org.json.JSONArray;
+
+import java.util.Arrays;
+
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
@@ -34,8 +38,13 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     // Objects
     private SpinnerDistCodeTask spinnerTask;
     private SpinnerDialogPreference spinnerPref;
-    //private DistrictSpinnerAdapter sigunAdapter;
-    private Spinner sidoSpinner;
+    private Spinner sidoSpinner, sigunSpinner;
+    private DistrictSpinnerAdapter sigunAdapter;
+
+    // Fields
+    private String sidoName, sigunName, distCode;
+
+
 
     public SpinnerPrefDlgFragment() {
         // Required empty public constructor
@@ -61,19 +70,22 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
                 PreferenceManager.getDefaultSharedPreferences(getContext());
 
         String sidoCode = sharedPreferences.getString(Constants.DISTRICT, "0101").substring(0, 2);
+        spinnerPref= (SpinnerDialogPreference) getPreference();
 
+        // Sets sidoSpinner and sidoAdapter.
         sidoSpinner = view.findViewById(R.id.spinner_sido);
         sidoSpinner.setSelection(Integer.valueOf(sidoCode) - 1);//Integer.valueOf("01") translates into 1;
         sidoSpinner.setOnItemSelectedListener(this);
-
-        Spinner sigunSpinner = view.findViewById(R.id.spinner_sigun);
-        spinnerPref= (SpinnerDialogPreference) getPreference();
-
         ArrayAdapter sidoAdapter = spinnerPref.getSidoAdapter();
         sidoSpinner.setAdapter(sidoAdapter);
 
-        DistrictSpinnerAdapter sigunAdapter = spinnerPref.getSigunAdapter();
+        // Sets sigunAdapter and sigunAdapter(DistrictSpinnerAdapter)
+        sigunSpinner = view.findViewById(R.id.spinner_sigun);
+        sigunSpinner.setOnItemSelectedListener(this);
+        sigunAdapter = spinnerPref.getSigunAdapter();
         sigunSpinner.setAdapter(sigunAdapter);
+
+
 
     }
 
@@ -86,9 +98,12 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     // Should override onDialogClosed() defined in SpinnerDialogPreference to be invoked
     @Override
     public void onDialogClosed(boolean positiveResult) {
+
+        //spinnerPref.onDialogClosed(positiveResult);
         if(positiveResult) {
-            spinnerPref.onDialogClosed(positiveResult);
-            log.i("onDialogClosed");
+            String[] district = { sidoName, sigunName, distCode };
+            JSONArray jsonArray = new JSONArray(Arrays.asList(district));
+            spinnerPref.persistDistCode(jsonArray.toString());
         }
     }
 
@@ -96,8 +111,17 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         if(parent == sidoSpinner) {
-            log.i("Spinner position: %s", position);
+            log.i("Spinner position: %s, %s", position, sidoSpinner.getItemAtPosition(position));
             spinnerTask = ThreadManager.startSpinnerDistCodeTask(spinnerPref, position);
+
+            sidoName = (String)sidoSpinner.getItemAtPosition(position);
+
+        } else {
+            log.i("sigunSpinner: %s, %s", position, sigunSpinner.getItemAtPosition(position));
+            sigunName = (String)sigunSpinner.getItemAtPosition(position);
+            distCode = spinnerPref.getDistCodeList().get(position).getDistrictCode();
+
+            log.i("Code and Name: %s, %s", sigunName, distCode);
         }
     }
 

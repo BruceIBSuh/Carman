@@ -49,8 +49,6 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     public void onDisplayPreferenceDialog(Preference pref) {
 
         if(pref instanceof SpinnerDialogPreference) {
-            //String code = sharedPreferences.getString(Constants.DISTRICT, "0101");
-            //mTask = ThreadManager.startSpinnerDistCodeTask((SpinnerDialogPreference)pref, code);
 
             DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey());
             dlgFragment.setTargetFragment(this, 0);
@@ -59,6 +57,7 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
         } else {
             super.onDisplayPreferenceDialog(pref);
         }
+
     }
 
     @Override

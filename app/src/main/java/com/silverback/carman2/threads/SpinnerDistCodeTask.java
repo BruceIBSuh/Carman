@@ -24,7 +24,7 @@ public class SpinnerDistCodeTask extends ThreadTask implements
     private WeakReference<DistrictSpinnerAdapter> mWeakSpinnerAdapter;
     private SpinnerDistCodeRunnable spinnerDistCodeRunnable;
     private int sidoCode;
-    private List<Opinet.DistrictCode> sigunList;
+    private List<Opinet.DistrictCode> distCodeList;
 
 
     // Constructor
@@ -63,9 +63,14 @@ public class SpinnerDistCodeTask extends ThreadTask implements
         setCurrentThread(currentThread);
     }
 
+    @Override
+    public void setDistCodeList(List<Opinet.DistrictCode> distCodeList) {
+        this.distCodeList = distCodeList;
+    }
+
     /*
     @Override
-    public void setSigunList(List<Opinet.DistrictCode> sigunList) {
+    public void setDistCodeList(List<Opinet.DistrictCode> sigunList) {
         this.sigunList = sigunList;
     }
     */
@@ -98,7 +103,7 @@ public class SpinnerDistCodeTask extends ThreadTask implements
     }
 
     public List<Opinet.DistrictCode> getSigunList() {
-        return sigunList;
+        return distCodeList;
     }
 
     public SpinnerDialogPreference getDialogPreference() {
