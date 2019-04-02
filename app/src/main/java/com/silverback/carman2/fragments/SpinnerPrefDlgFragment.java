@@ -1,8 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -39,10 +37,11 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     private SpinnerDistCodeTask spinnerTask;
     private SpinnerDialogPreference spinnerPref;
     private Spinner sidoSpinner, sigunSpinner;
+    private ArrayAdapter sidoAdapter;
     private DistrictSpinnerAdapter sigunAdapter;
-
     // Fields
     private String sidoName, sigunName, distCode;
+    private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
 
 
 
@@ -51,14 +50,15 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     }
 
     // Method for singleton instance
-    static SpinnerPrefDlgFragment newInstance(String key) {
+    static SpinnerPrefDlgFragment newInstance(String key, String districtCode) {
 
-        log.i("SpinnerPrefDlgFragment: %s", key);
         final SpinnerPrefDlgFragment fm = new SpinnerPrefDlgFragment();
-        final Bundle bundle = new Bundle(1);
-        bundle.putString(ARG_KEY, key);
-        fm.setArguments(bundle);
+        final Bundle args = new Bundle(1);
+        args.putString(ARG_KEY, key);
+        args.putString("code", districtCode);
+        fm.setArguments(args);
         return fm;
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -66,26 +66,32 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     protected void onBindDialogView(View view) {
         super.onBindDialogView(view);
 
-        SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(getContext());
-
-        String sidoCode = sharedPreferences.getString(Constants.DISTRICT, "0101").substring(0, 2);
+        String districtCode = getArguments().getString("code");
         spinnerPref= (SpinnerDialogPreference) getPreference();
+        spinnerPref.setPersistent(true);
+
+        //sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String sidoCode = districtCode.substring(0, 2);
+        String sigunCode = districtCode.substring(2,4);
+
+        mSidoItemPos = Integer.valueOf(sidoCode) - 1; //Integer.valueOf("01") translates into 1
+        mSigunItemPos = Integer.valueOf(sigunCode) - 1;
 
         // Sets sidoSpinner and sidoAdapter.
         sidoSpinner = view.findViewById(R.id.spinner_sido);
-        sidoSpinner.setSelection(Integer.valueOf(sidoCode) - 1);//Integer.valueOf("01") translates into 1;
         sidoSpinner.setOnItemSelectedListener(this);
-        ArrayAdapter sidoAdapter = spinnerPref.getSidoAdapter();
+
+        sidoAdapter = ArrayAdapter.createFromResource(getContext(),
+                R.array.sido_name, android.R.layout.simple_spinner_item);
+        sidoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sidoSpinner.setAdapter(sidoAdapter);
+        sidoSpinner.setSelection(mSidoItemPos);
 
         // Sets sigunAdapter and sigunAdapter(DistrictSpinnerAdapter)
         sigunSpinner = view.findViewById(R.id.spinner_sigun);
         sigunSpinner.setOnItemSelectedListener(this);
-        sigunAdapter = spinnerPref.getSigunAdapter();
-        sigunSpinner.setAdapter(sigunAdapter);
-
-
+        sigunSpinner.setSelection(Integer.valueOf(sigunCode) -1);
+        sigunAdapter = new DistrictSpinnerAdapter(getContext());
 
     }
 
@@ -99,32 +105,53 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     @Override
     public void onDialogClosed(boolean positiveResult) {
 
-        //spinnerPref.onDialogClosed(positiveResult);
+        spinnerPref.onDialogClosed(positiveResult);
+
         if(positiveResult) {
+
+            mSidoItemPos = tmpSidoPos;
+            mSigunItemPos = tmpSigunPos;
+
+            String sidoName = (String)sidoAdapter.getItem(mSidoItemPos);
+            String sigunName = sigunAdapter.getItem(mSigunItemPos).getDistrictName();
+            String distCode = sigunAdapter.getItem(mSigunItemPos).getDistrictCode();
+
             String[] district = { sidoName, sigunName, distCode };
             JSONArray jsonArray = new JSONArray(Arrays.asList(district));
-            spinnerPref.persistDistCode(jsonArray.toString());
+
+            // Save values in SharedPreferences
+            PreferenceManager.getDefaultSharedPreferences(getContext()).edit().
+                    putString(Constants.DISTRICT, jsonArray.toString()).apply();
         }
+
+
     }
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         if(parent == sidoSpinner) {
-            log.i("Spinner position: %s, %s", position, sidoSpinner.getItemAtPosition(position));
-            spinnerTask = ThreadManager.startSpinnerDistCodeTask(spinnerPref, position);
+            spinnerTask = ThreadManager.startSpinnerDistCodeTask(this, position);
+            tmpSidoPos = position;
 
-            sidoName = (String)sidoSpinner.getItemAtPosition(position);
+            // Set sigunSpinner positin to 0 only if mSidoItemPos changes.
+            if(position != mSidoItemPos) mSigunItemPos = 0;
 
         } else {
-            log.i("sigunSpinner: %s, %s", position, sigunSpinner.getItemAtPosition(position));
-            sigunName = (String)sigunSpinner.getItemAtPosition(position);
-            distCode = spinnerPref.getDistCodeList().get(position).getDistrictCode();
-
-            log.i("Code and Name: %s, %s", sigunName, distCode);
+            tmpSigunPos = position;
         }
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
+
+
+    public DistrictSpinnerAdapter getSigunAdapter() {
+        return sigunAdapter;
+    }
+
+    public void onDistrictTaskComplete() {
+        sigunSpinner.setAdapter(sigunAdapter);
+        sigunSpinner.setSelection(mSigunItemPos);
+    }
 }

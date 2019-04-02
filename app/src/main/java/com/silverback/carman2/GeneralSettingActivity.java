@@ -4,6 +4,11 @@ import android.os.Bundle;
 import com.silverback.carman2.fragments.GeneralSettingFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.preference.Preference;
@@ -29,8 +34,16 @@ public class GeneralSettingActivity extends BaseActivity implements
         // Enable the Up button
         ab.setDisplayHomeAsUpEnabled(true);
 
+        // Passes the District Code to GeneralSettingFragment(PreferenceFragmentCompat) to
+        // display the custom DialogPreference.
+        String districtCode = getDistrictCodeFromJSON();
+        GeneralSettingFragment settingFragment = new GeneralSettingFragment();
+        Bundle args = new Bundle();
+        args.putString("districtCode", districtCode);
+        settingFragment.setArguments(args);
+
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_setting, new GeneralSettingFragment())
+                .replace(R.id.frame_setting, settingFragment)
                 .commit();
 
     }
@@ -40,6 +53,19 @@ public class GeneralSettingActivity extends BaseActivity implements
     // fragment when a linked preference is clicked
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        log.i("onPreferenceStartFragment");
         return false;
+    }
+
+    private String getDistrictCodeFromJSON() {
+
+        try {
+            JSONArray json = new JSONArray(mSettings.getString(Constants.DISTRICT, null));
+            return json.getString(2);
+        } catch(JSONException e) {
+            log.i("JSONException: %s", e.getMessage());
+        }
+
+        return null;
     }
 }

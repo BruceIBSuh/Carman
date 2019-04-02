@@ -1,9 +1,9 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
-import android.widget.ArrayAdapter;
 
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
+import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -20,7 +20,7 @@ public class SpinnerDistCodeTask extends ThreadTask implements
 
     // Objects
     private Context context;
-    private WeakReference<SpinnerDialogPreference> mWeakSpinnerDialogPref;
+    private WeakReference<SpinnerPrefDlgFragment> mWeakSpinnerDialogFragment;
     private WeakReference<DistrictSpinnerAdapter> mWeakSpinnerAdapter;
     private SpinnerDistCodeRunnable spinnerDistCodeRunnable;
     private int sidoCode;
@@ -33,11 +33,11 @@ public class SpinnerDistCodeTask extends ThreadTask implements
         spinnerDistCodeRunnable = new SpinnerDistCodeRunnable(context, this);
     }
 
-    void initSpinnerDistCodeTask(ThreadManager threadManager, SpinnerDialogPreference pref, int code) {
+    void initSpinnerDistCodeTask(ThreadManager threadManager, SpinnerPrefDlgFragment fm, int code) {
         sThreadManager = threadManager;
         sidoCode = code;
-        mWeakSpinnerDialogPref = new WeakReference<>(pref);
-        mWeakSpinnerAdapter = new WeakReference<>(pref.getSigunAdapter());
+        mWeakSpinnerDialogFragment = new WeakReference<>(fm);
+        mWeakSpinnerAdapter = new WeakReference<>(fm.getSigunAdapter());
     }
 
     Runnable getSpinnerDistCodeRunnable() {
@@ -45,9 +45,9 @@ public class SpinnerDistCodeTask extends ThreadTask implements
     }
 
     public void recycle() {
-        if(mWeakSpinnerDialogPref != null) {
-            mWeakSpinnerDialogPref.clear();
-            mWeakSpinnerDialogPref = null;
+        if(mWeakSpinnerDialogFragment != null) {
+            mWeakSpinnerDialogFragment.clear();
+            mWeakSpinnerDialogFragment = null;
         }
 
         if(mWeakSpinnerAdapter != null) {
@@ -62,18 +62,6 @@ public class SpinnerDistCodeTask extends ThreadTask implements
         // Inheritedd from the parent class of ThreadTask
         setCurrentThread(currentThread);
     }
-
-    @Override
-    public void setDistCodeList(List<Opinet.DistrictCode> distCodeList) {
-        this.distCodeList = distCodeList;
-    }
-
-    /*
-    @Override
-    public void setDistCodeList(List<Opinet.DistrictCode> sigunList) {
-        this.sigunList = sigunList;
-    }
-    */
 
     @Override
     public void handleSpinnerDistCodeTask(int state) {
@@ -106,8 +94,8 @@ public class SpinnerDistCodeTask extends ThreadTask implements
         return distCodeList;
     }
 
-    public SpinnerDialogPreference getDialogPreference() {
-        if(mWeakSpinnerDialogPref != null) return mWeakSpinnerDialogPref.get();
+    public SpinnerPrefDlgFragment getPrefDlgFragment() {
+        if(mWeakSpinnerDialogFragment != null) return mWeakSpinnerDialogFragment.get();
         return null;
     }
 }

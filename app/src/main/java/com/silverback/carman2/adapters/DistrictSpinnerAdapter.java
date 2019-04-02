@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,26 +21,27 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(DistrictSpinnerAdapter.class);
 
     // Object references
-    private List<String> distList;
+    private List<Opinet.DistrictCode> mDistrictCodeList;
     private LayoutInflater inflater;
     private SpinnerViewHolder viewHolder;
 
     // Constructor
 
     public DistrictSpinnerAdapter(Context context){
-        distList = new ArrayList<>();
+        mDistrictCodeList = new ArrayList<>();
+
         inflater = LayoutInflater.from(context);
     }
 
 
     @Override
     public int getCount() {
-        return distList.size();
+        return mDistrictCodeList.size();
     }
 
     @Override
-    public String getItem(int position) {
-        return distList.get(position) ;
+    public Opinet.DistrictCode getItem(int position) {
+        return mDistrictCodeList.get(position) ;
     }
 
     @Override
@@ -59,7 +61,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
         } else viewHolder = (SpinnerViewHolder) convertView.getTag();
 
         //Some bugs are alive around here due to index out of range!!!!!
-        viewHolder.distName.setText(distList.get(position));
+        viewHolder.distName.setText(mDistrictCodeList.get(position).getDistrictName());
 
         return convertView;
     }
@@ -74,7 +76,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
             dropdownView.setTag(viewHolder);
         } else viewHolder = (SpinnerViewHolder)dropdownView.getTag();
 
-        viewHolder.distName.setText(distList.get(position));
+        viewHolder.distName.setText(mDistrictCodeList.get(position).getDistrictName());
 
         return dropdownView;
     }
@@ -83,13 +85,13 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
         TextView distName;
     }
 
-    public void addItem(String item) {
-        distList.add(item);
+    public void addItem(Opinet.DistrictCode obj) {
+        mDistrictCodeList.add(obj);
     }
 
     // Invoked by postExecute() of SigunListTask to clear the currently populated items.
     public void removeAll() {
-        distList.clear();
+        mDistrictCodeList.clear();
     }
 
 }

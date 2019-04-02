@@ -33,7 +33,7 @@ public class AvgPriceView extends OpinetPriceView {
     private TextView tvAvgPrice;
 
     // Fields
-    //private int priceUpColor, priceDownColor;
+    //private int priceUpColor, priceDownColor; //Inherited from OpinetPriceView
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
     public AvgPriceView(Context context) {

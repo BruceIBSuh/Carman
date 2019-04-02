@@ -33,7 +33,6 @@ public class SpinnerDistCodeRunnable implements Runnable {
         int getSidoCode();
         DistrictSpinnerAdapter getSpinnerAdapter();
         void setSpinnerDistCodeThread(Thread currentThread);
-        void setDistCodeList(List<Opinet.DistrictCode> sigunList);
         void handleSpinnerDistCodeTask(int state);
     }
 
@@ -55,9 +54,9 @@ public class SpinnerDistCodeRunnable implements Runnable {
         String sidoCode = convertCode(code);
         log.i("SidoCode: %s", sidoCode);
 
-        List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
+        //List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
         DistrictSpinnerAdapter adapter = task.getSpinnerAdapter();
-        adapter.removeAll();
+        if(adapter.getCount() > 0) adapter.removeAll();
 
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
         Uri uri = Uri.fromFile(file);
@@ -67,12 +66,12 @@ public class SpinnerDistCodeRunnable implements Runnable {
 
             for(Opinet.DistrictCode obj : (List<Opinet.DistrictCode>)ois.readObject()) {
                 if(obj.getDistrictCode().substring(0, 2).equals(sidoCode)) {
-                    distCodeList.add(obj);
-                    adapter.addItem(obj.getDistrictName());
+                    //distCodeList.add(obj);
+                    //adapter.addItem(obj.getDistrictName());
+                    adapter.addItem(obj);
                 }
             }
 
-            task.setDistCodeList(distCodeList);
             task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_COMPLETE);
 
         } catch (IOException e) {

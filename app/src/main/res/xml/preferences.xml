@@ -40,8 +40,7 @@
             app:dialogMessage="Hello World"
             app:dialogTitle="@string/pref_dialog_district_title"
             app:positiveButtonText="Confirm"
-            app:negativeButtonText="Cancel"
-            app:siguncode="0101" />
+            app:negativeButtonText="Cancel" />
 
         <ListPreference
             app:title="@string/pref_location_radius"

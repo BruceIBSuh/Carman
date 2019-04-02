@@ -29,18 +29,26 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     // Objects
     private SharedPreferences sharedPreferences;
     private SpinnerDistCodeTask mTask;
+    private String districtCode;
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
         setPreferencesFromResource(R.xml.preferences, rootKey);
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        districtCode = getArguments().getString("districtCode");
+        log.i("District Code in PreferenceFragmentCompat: %s", districtCode);
 
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void onResume(){
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
         if(mTask != null) mTask = null;
     }
 
@@ -49,8 +57,10 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     public void onDisplayPreferenceDialog(Preference pref) {
 
         if(pref instanceof SpinnerDialogPreference) {
+            //String code = sharedPreferences.getString(Constants.DISTRICT, "");
+            //log.i("District Code: %s", code);
 
-            DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey());
+            DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), districtCode);
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), "spinner");
 

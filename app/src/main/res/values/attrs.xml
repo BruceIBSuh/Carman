@@ -29,6 +29,7 @@
     <declare-styleable name="SpinnerDialogPreference">
         <attr name="siguncode" format="string" />
         <attr name="sidoSpinner" format="reference" />
+        <attr name="sigunSpinner" format="reference" />
     </declare-styleable>
 
 </resources>

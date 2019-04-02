@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.silverback.carman2.IntroActivity;
+import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -202,9 +203,9 @@ public class ThreadManager {
                     case LOAD_SPINNER_DIST_CODE_COMPLETE:
                         spinnerDistCodeTask = (SpinnerDistCodeTask)msg.obj;
 
-                        SpinnerDialogPreference pref = spinnerDistCodeTask.getDialogPreference();
-                        pref.getSigunAdapter().notifyDataSetChanged();
-                        pref.setDistCodeList(spinnerDistCodeTask.getSigunList());
+                        SpinnerPrefDlgFragment fm = spinnerDistCodeTask.getPrefDlgFragment();
+                        fm.getSigunAdapter().notifyDataSetChanged();
+                        fm.onDistrictTaskComplete(); // callback to notify the task finished.
 
                         spinnerDistCodeTask.recycle();
 
@@ -577,12 +578,12 @@ public class ThreadManager {
     }
 
     // Retrieves Sigun list with a sido code given in GeneralSettingActivity
-    public static SpinnerDistCodeTask startSpinnerDistCodeTask(SpinnerDialogPreference pref, int code) {
+    public static SpinnerDistCodeTask startSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
 
         SpinnerDistCodeTask task = (SpinnerDistCodeTask)sInstance.mDownloadWorkQueue.poll();
-        if(task == null) task = new SpinnerDistCodeTask(pref.getContext());
+        if(task == null) task = new SpinnerDistCodeTask(fm.getContext());
 
-        task.initSpinnerDistCodeTask(ThreadManager.sInstance, pref, code);
+        task.initSpinnerDistCodeTask(ThreadManager.sInstance, fm, code);
         sInstance.mDecodeThreadPool.execute(task.getSpinnerDistCodeRunnable());
         return task;
     }
