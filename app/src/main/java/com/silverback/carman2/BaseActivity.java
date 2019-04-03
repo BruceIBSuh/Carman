@@ -3,6 +3,7 @@ package com.silverback.carman2;
 import android.Manifest;
 
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,11 +40,18 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
 
+        // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
+        // android:screenOrientation is not allowed with Android O_MR1 +
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        // SharedPreferences
         if(mSettings == null) {
             mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         }
+
     }
 
     //Create Singleton SharedPreferences for initial default variables.

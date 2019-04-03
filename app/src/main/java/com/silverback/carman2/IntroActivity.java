@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
 import android.widget.ProgressBar;
 
 import com.silverback.carman2.logs.LoggingHelper;
@@ -44,10 +45,6 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         //getSupportActionBar().hide();
         setContentView(R.layout.activity_intro);
 
-        // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
-        // android:screenOrientation is not allowed with Android O_MR1 +
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
         // Permission Check
         checkPermissions();
 
@@ -74,20 +71,22 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         if(checkUpdateOpinet()) {
             try {
                 String distCode = mSettings.getString(Constants.DISTRICT, "0101");
-                JSONArray jsonArray = new JSONArray(jsonString);
+                JSONArray jsonArray = new JSONArray(distCode);
 
-                //String sigunCode = jsonArray.get(2).toString();
-                log.i("Sigun Code: %s", distCode);
+                String sigunCode = jsonArray.get(2).toString();
+                log.i("Sigun Code: %s", "0101");
 
                 // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
                 // Consider whether the threads should be interrupted or not.
-                priceTask = ThreadManager.startPriceTask(IntroActivity.this, distCode);
+                priceTask = ThreadManager.startPriceTask(IntroActivity.this, sigunCode);
 
-                // Save the last update time in the default SharedPreferences
+                // Save the last update time in SharedPreferences
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+
             } catch (JSONException e) {
-                //log.e("JSONException: %s", e);
+                log.e("JSONException: %s", e);
             }
+
         } else {
             startActivity(new Intent(this, MainActivity.class));
             finish();

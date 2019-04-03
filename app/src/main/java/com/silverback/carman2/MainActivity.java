@@ -28,6 +28,9 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
+    // Constants
+
+
     // Objects
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -48,6 +51,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Titles and icons of the fragment ViewPager contains.
         final String[] fragmentTitles = new String[] {
                 getString(R.string.tab_gas),
                 getString(R.string.tab_service),
@@ -86,6 +90,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", defaults);
         log.i("Default Params: %s, %s, %s", defaults[0], defaults[1], defaults[2]);
+
         // Instantiate FragmentManger and FragmentTransaction to add, replace, or remove a fragment
         generalFragment = new GeneralFragment();
         boardFragment = new BoardFragment();

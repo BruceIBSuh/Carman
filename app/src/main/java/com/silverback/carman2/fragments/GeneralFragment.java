@@ -70,8 +70,7 @@ public class GeneralFragment extends Fragment implements
     private FrameLayout frameAvgPrice;
 
     // Fields
-    private String[] defaults;
-    private String jsonString;
+    private String[] defaults; // defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
 
     public GeneralFragment() {
@@ -114,8 +113,6 @@ public class GeneralFragment extends Fragment implements
                 R.array.spinner_fuel_name, android.R.layout.simple_spinner_item);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
         fuelSpinner.setAdapter(spinnerAdapter);
-        //fuelSpinner.setSelection(0);
-
 
         // Set the spinner to the default value that's fetched from SharedPreferences
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
@@ -124,7 +121,7 @@ public class GeneralFragment extends Fragment implements
         // Set the initial spinner value with the default from SharedPreferences
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])){
-                //fuelSpinner.setSelection(i);
+                fuelSpinner.setSelection(i);
                 break;
             }
         }
@@ -176,11 +173,14 @@ public class GeneralFragment extends Fragment implements
             default: break;
         }
 
+        // Retrives the data respectively saved in the cache directory with a fuel selected by the
+        // spinner.
         avgPriceView.addPriceView(defaults[0]);
         sidoPriceView.addPriceView(defaults[0]);
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
+        //
         if(mLocation != null) {
             log.i("stationTask: %s", stationTask);
             stationTask = ThreadManager.startStationListTask(stationRecyclerView, defaults, mLocation);
