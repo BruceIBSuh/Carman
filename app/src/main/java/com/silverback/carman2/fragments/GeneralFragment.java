@@ -183,8 +183,8 @@ public class GeneralFragment extends Fragment implements
 
         if(mLocation != null) {
             log.i("stationTask: %s", stationTask);
-            //stationTask = ThreadManager.startStationListTask(getContext(), defaults, mLocation);
-            //stationRecyclerView.initView(defaults, mLocation);
+            stationTask = ThreadManager.startStationListTask(stationRecyclerView, defaults, mLocation);
+            stationRecyclerView.initView(defaults, mLocation);
         }
     }
 
@@ -198,7 +198,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onLocationFetched(Location location){
         mLocation = location;
-        //stationRecyclerView.initView(defaults, location);
+        stationRecyclerView.initView(defaults, location);
     }
 
     @Override

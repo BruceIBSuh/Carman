@@ -13,17 +13,12 @@ import android.widget.FrameLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.fragments.BoardFragment;
-import com.silverback.carman2.fragments.GasFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
-import com.silverback.carman2.fragments.ServiceFragment;
-import com.silverback.carman2.fragments.SettingFragment;
-import com.silverback.carman2.fragments.StatFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;

@@ -29,7 +29,6 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
 
     public DistrictSpinnerAdapter(Context context){
         mDistrictCodeList = new ArrayList<>();
-
         inflater = LayoutInflater.from(context);
     }
 

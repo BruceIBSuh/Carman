@@ -3,15 +3,16 @@ package com.silverback.carman2.fragments;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.threads.SpinnerDistCodeTask;
-import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.views.SpinnerDialogPreference;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.Preference;
@@ -28,22 +29,29 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
 
     // Objects
     private SharedPreferences sharedPreferences;
-    private SpinnerDistCodeTask mTask;
-    private String districtCode;
+    private SpinnerDialogPreference spinnerPref;
+    private LoadDistCodeTask mTask;
+    private String sidoName, sigunName, sigunCode;
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
         setPreferencesFromResource(R.xml.preferences, rootKey);
-        districtCode = getArguments().getString("districtCode");
-        log.i("District Code in PreferenceFragmentCompat: %s", districtCode);
 
-    }
+        // Retrvie the district info saved in SharedPreferences from the parent activity as a type
+        // of JSONArray
+        try {
+            JSONArray jsonArray = new JSONArray(getArguments().getString(Constants.CODE));
+            sidoName = jsonArray.get(0).toString();
+            sigunName = jsonArray.get(1).toString();
+            sigunCode = jsonArray.get(2).toString();
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
 
-    @Override
-    public void onResume(){
-        super.onResume();
+        spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
+        spinnerPref.setSummary(String.format("%s %s", sidoName, sigunName));
     }
 
     @Override
@@ -60,7 +68,7 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
             //String code = sharedPreferences.getString(Constants.DISTRICT, "");
             //log.i("District Code: %s", code);
 
-            DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), districtCode);
+            DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), sigunCode);
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), "spinner");
 

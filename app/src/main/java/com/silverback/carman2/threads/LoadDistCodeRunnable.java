@@ -13,13 +13,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
 import java.util.List;
 
-public class SpinnerDistCodeRunnable implements Runnable {
+public class LoadDistCodeRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerDistCodeRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(LoadDistCodeRunnable.class);
 
     // Constants
     static final int SPINNER_DIST_CODE_COMPLETE = 1;
@@ -36,7 +35,7 @@ public class SpinnerDistCodeRunnable implements Runnable {
         void handleSpinnerDistCodeTask(int state);
     }
 
-    SpinnerDistCodeRunnable(Context context, DistCodeMethods task) {
+    LoadDistCodeRunnable(Context context, DistCodeMethods task) {
         this.context = context;
         this.task = task;
     }

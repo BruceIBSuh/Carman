@@ -8,21 +8,21 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.lang.ref.WeakReference;
 
-public class DistCodeTask extends ThreadTask
-        implements DistCodeRunnable.OpinetDistCodeMethods {
+public class SaveDistCodeTask extends ThreadTask
+        implements SaveDistCodeRunnable.OpinetDistCodeMethods {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(SaveDistCodeTask.class);
 
     // Objects
     private WeakReference<Activity> mWeakActivity;
     private Runnable opinetDistCodeRunnable;
 
     // Constructor
-    DistCodeTask(Context context) {
+    SaveDistCodeTask(Context context) {
         super(); // ThreadTask
         mWeakActivity = new WeakReference<>((Activity)context);
-        opinetDistCodeRunnable = new DistCodeRunnable(context, this);
+        opinetDistCodeRunnable = new SaveDistCodeRunnable(context, this);
     }
 
     // Getter for the Runnable invoked by startPriceTask() in ThreadManager
@@ -49,11 +49,11 @@ public class DistCodeTask extends ThreadTask
         int outstate = -1;
 
         switch(state) {
-            case DistCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
+            case SaveDistCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLTETED;
                 break;
 
-            case DistCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
+            case SaveDistCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_FAILED;
                 break;
         }

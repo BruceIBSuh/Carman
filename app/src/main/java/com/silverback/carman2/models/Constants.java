@@ -47,6 +47,7 @@ public class Constants {
     public static final String GUIDE = "carman_pref_intro_guide";
     public static final String CoverImageWidth = "com.ibnco.carman.coverimage.width";
     public static final String CoverImageHeight = "com.ibnco.carman.coverimage.height";
+    public static final String CODE = "carman_pref_district_code";
 
     // Notification Channel ID
     public static final String CHANNEL_ID = "com.ibnco.carman";

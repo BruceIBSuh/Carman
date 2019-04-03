@@ -21,19 +21,21 @@ public class SpinnerDialogPreference extends DialogPreference {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerDialogPreference.class);
 
-    // Constants
-    private final int mDialogLayoutResId = R.layout.dialogpref_spinner;
-
     // Objects
-    private ArrayAdapter sidoAdapter;
-    private DistrictSpinnerAdapter sigunAdapter;
-    private List<Opinet.DistrictCode> distCodeList;
-    private String jsonDistCode;
+    private String districtCode;
+
+    /*
+     *When you replace the 0 in the second constructor with R.attr.dialogPreferenceStyle
+     * (For a DialogPreference) or R.attr.preferenceStyle (For any other preference) you
+     * won’t face any design issues later. Thanks Ivan Soriano
+     */
 
     // Constructors
+
     public SpinnerDialogPreference(Context context) {
         super(context);
     }
+
 
     public SpinnerDialogPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -50,10 +52,12 @@ public class SpinnerDialogPreference extends DialogPreference {
         getAttributes(context, attrs);
     }
 
+
     private void getAttributes(Context context, AttributeSet attrs) {
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
+        setDialogLayoutResource(R.layout.dialogpref_spinner);
 
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
         try {
 
         } finally {
@@ -64,18 +68,7 @@ public class SpinnerDialogPreference extends DialogPreference {
 
     @Override
     public int getDialogLayoutResource() {
-        return mDialogLayoutResId;
+        return R.layout.dialogpref_spinner;
     }
-
-    // Abstrct method which PreferenceDialogFragmentCompat overrides
-    public void onDialogClosed(boolean positiveResult){
-        log.i("onDialogClosed: %s", positiveResult);
-        if(positiveResult) persistString(jsonDistCode);
-    }
-
-    public void setJsonDistCode(String jsonString) {
-        jsonDistCode = jsonString;
-    }
-
 
 }

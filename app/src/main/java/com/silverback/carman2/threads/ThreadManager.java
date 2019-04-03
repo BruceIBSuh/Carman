@@ -12,7 +12,6 @@ import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.views.SpinnerDialogPreference;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.List;
@@ -156,22 +155,25 @@ public class ThreadManager {
                 //LoadPriceListTask loadPriceTask;
                 StationTask stationTask;
                 //StationCurrentTask curStnTask;
-                DistCodeTask distCodeTask;
-                SpinnerDistCodeTask spinnerDistCodeTask;
+                SaveDistCodeTask saveDistCodeTask;
+                LoadDistCodeTask loadDistCodeTask;
 
 
 
                 switch(msg.what) {
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        distCodeTask = (DistCodeTask)msg.obj;
-                        distCodeTask.recycle();
+                        saveDistCodeTask = (SaveDistCodeTask)msg.obj;
+                        saveDistCodeTask.recycle();
                         break;
 
                     case DOWNLOAD_PRICE_COMPLETE:
                         priceTask = (PriceTask)msg.obj;
-                        // Notifies the caller(IntroActivity) of the 3 prices retrieved.
-                        ((IntroActivity)priceTask.getParentActivity()).onPriceComplete();
+                        if(priceTask.getParentActivity() instanceof IntroActivity) {
+                            // Notifies the caller(IntroActivity) of the 3 prices retrieved.
+                            ((IntroActivity)priceTask.getParentActivity()).onPriceComplete();
+                        }
+
                         break;
 
                     case FETCH_LOCATION_COMPLETED:
@@ -201,13 +203,13 @@ public class ThreadManager {
                         break;
 
                     case LOAD_SPINNER_DIST_CODE_COMPLETE:
-                        spinnerDistCodeTask = (SpinnerDistCodeTask)msg.obj;
+                        loadDistCodeTask = (LoadDistCodeTask)msg.obj;
 
-                        SpinnerPrefDlgFragment fm = spinnerDistCodeTask.getPrefDlgFragment();
+                        SpinnerPrefDlgFragment fm = loadDistCodeTask.getPrefDlgFragment();
                         fm.getSigunAdapter().notifyDataSetChanged();
                         fm.onDistrictTaskComplete(); // callback to notify the task finished.
 
-                        spinnerDistCodeTask.recycle();
+                        loadDistCodeTask.recycle();
 
                         break;
 
@@ -348,8 +350,8 @@ public class ThreadManager {
 
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        distCodeTask = (DistCodeTask)msg.obj;
-                        distCodeTask.recycle();
+                        saveDistCodeTask = (SaveDistCodeTask)msg.obj;
+                        saveDistCodeTask.recycle();
                         break;
                     */
                 }
@@ -371,7 +373,7 @@ public class ThreadManager {
 
         Message msg = mMainHandler.obtainMessage(state, task);
 
-        if(task instanceof DistCodeTask) {
+        if(task instanceof SaveDistCodeTask) {
             switch (state) {
                 case DOWNLOAD_DISTCODE_COMPLTETED:
                     msg.sendToTarget();
@@ -517,7 +519,7 @@ public class ThreadManager {
                     break;
             }
 
-        } else if(task instanceof DistCodeTask) {
+        } else if(task instanceof SaveDistCodeTask) {
 
             switch(state) {
                 case DOWNLOAD_DISTCODE_COMPLTETED:
@@ -564,12 +566,12 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static DistCodeTask startOpinetDistCodeTask (Context context) {
+    public static SaveDistCodeTask downloadOpinetDistCodeTask(Context context) {
 
-        DistCodeTask task = (DistCodeTask)sInstance.mDownloadWorkQueue.poll();
+        SaveDistCodeTask task = (SaveDistCodeTask)sInstance.mDownloadWorkQueue.poll();
 
         if(task == null) {
-            task = new DistCodeTask(context);
+            task = new SaveDistCodeTask(context);
         }
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
@@ -578,13 +580,13 @@ public class ThreadManager {
     }
 
     // Retrieves Sigun list with a sido code given in GeneralSettingActivity
-    public static SpinnerDistCodeTask startSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
+    public static LoadDistCodeTask loadSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
 
-        SpinnerDistCodeTask task = (SpinnerDistCodeTask)sInstance.mDownloadWorkQueue.poll();
-        if(task == null) task = new SpinnerDistCodeTask(fm.getContext());
+        LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mDecodeWorkQueue.poll();
+        if(task == null) task = new LoadDistCodeTask(fm.getContext());
 
         task.initSpinnerDistCodeTask(ThreadManager.sInstance, fm, code);
-        sInstance.mDecodeThreadPool.execute(task.getSpinnerDistCodeRunnable());
+        sInstance.mDecodeThreadPool.execute(task.getLoadDistCodeRunnable());
         return task;
     }
 

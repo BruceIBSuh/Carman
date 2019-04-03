@@ -7,30 +7,29 @@ import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class SpinnerDistCodeTask extends ThreadTask implements
-        SpinnerDistCodeRunnable.DistCodeMethods {
+public class LoadDistCodeTask extends ThreadTask implements
+        LoadDistCodeRunnable.DistCodeMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerDistCodeTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(LoadDistCodeTask.class);
 
     // Objects
     private Context context;
     private WeakReference<SpinnerPrefDlgFragment> mWeakSpinnerDialogFragment;
     private WeakReference<DistrictSpinnerAdapter> mWeakSpinnerAdapter;
-    private SpinnerDistCodeRunnable spinnerDistCodeRunnable;
+    private LoadDistCodeRunnable loadDistCodeRunnable;
     private int sidoCode;
     private List<Opinet.DistrictCode> distCodeList;
 
 
     // Constructor
-    SpinnerDistCodeTask(Context context) {
+    LoadDistCodeTask(Context context) {
         this.context = context;
-        spinnerDistCodeRunnable = new SpinnerDistCodeRunnable(context, this);
+        loadDistCodeRunnable = new LoadDistCodeRunnable(context, this);
     }
 
     void initSpinnerDistCodeTask(ThreadManager threadManager, SpinnerPrefDlgFragment fm, int code) {
@@ -40,8 +39,8 @@ public class SpinnerDistCodeTask extends ThreadTask implements
         mWeakSpinnerAdapter = new WeakReference<>(fm.getSigunAdapter());
     }
 
-    Runnable getSpinnerDistCodeRunnable() {
-        return spinnerDistCodeRunnable;
+    Runnable getLoadDistCodeRunnable() {
+        return loadDistCodeRunnable;
     }
 
     public void recycle() {
@@ -67,11 +66,11 @@ public class SpinnerDistCodeTask extends ThreadTask implements
     public void handleSpinnerDistCodeTask(int state) {
         int outState = -1;
         switch(state) {
-            case SpinnerDistCodeRunnable.SPINNER_DIST_CODE_COMPLETE:
+            case LoadDistCodeRunnable.SPINNER_DIST_CODE_COMPLETE:
                 outState = ThreadManager.LOAD_SPINNER_DIST_CODE_COMPLETE;
                 break;
 
-            case SpinnerDistCodeRunnable.SPINNER_DIST_CODE_FAIL:
+            case LoadDistCodeRunnable.SPINNER_DIST_CODE_FAIL:
                 outState = ThreadManager.LOAD_SPINNER_DIST_CODE_FAILED;
                 break;
         }

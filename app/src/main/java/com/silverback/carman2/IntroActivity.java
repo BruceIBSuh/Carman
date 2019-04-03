@@ -9,7 +9,7 @@ import android.widget.ProgressBar;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.threads.DistCodeTask;
+import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 
@@ -26,7 +26,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     // Objects
     private PriceTask priceTask;
-    private DistCodeTask distCodeTask;
+    private SaveDistCodeTask saveDistCodeTask;
 
     // UI's
     private ProgressBar mProgBar;
@@ -62,19 +62,19 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     @Override
     public void onPause() {
         super.onPause();
-        if(distCodeTask != null) distCodeTask = null;
+        if(saveDistCodeTask != null) saveDistCodeTask = null;
         if(priceTask != null) priceTask = null;
     }
 
     @Override
     public void onClick(View view) {
 
-        //mProgBar.setVisibility(View.VISIBLE);
+        mProgBar.setVisibility(View.VISIBLE);
 
         if(checkUpdateOpinet()) {
-            //try {
+            try {
                 String distCode = mSettings.getString(Constants.DISTRICT, "0101");
-                //JSONArray jsonArray = new JSONArray(jsonString);
+                JSONArray jsonArray = new JSONArray(jsonString);
 
                 //String sigunCode = jsonArray.get(2).toString();
                 log.i("Sigun Code: %s", distCode);
@@ -85,9 +85,9 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
                 // Save the last update time in the default SharedPreferences
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-            //} catch (JSONException e) {
+            } catch (JSONException e) {
                 //log.e("JSONException: %s", e);
-            //}
+            }
         } else {
             startActivity(new Intent(this, MainActivity.class));
             finish();
@@ -101,7 +101,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         // Unless the district code has been saved, download again the sigun code list and save it.
         File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
-        if(!distCode.exists()) distCodeTask = ThreadManager.startOpinetDistCodeTask(this);
+        if(!distCode.exists()) saveDistCodeTask = ThreadManager.downloadOpinetDistCodeTask(this);
 
         // Initial District
         String[] district = getResources().getStringArray(R.array.default_district);
@@ -114,7 +114,8 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     // on working threads.
     public void onPriceComplete() {
         if(priceTask != null) priceTask = null;
-        startActivity(new Intent(this, MainActivity.class));
+        mProgBar.setVisibility(View.GONE);
+        startActivity(new Intent(IntroActivity.this, MainActivity.class));
         finish();
     }
 

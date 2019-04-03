@@ -12,6 +12,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 
+import org.json.JSONArray;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
