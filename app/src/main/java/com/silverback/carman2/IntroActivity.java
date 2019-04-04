@@ -12,11 +12,11 @@ import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 
+import org.json.JSONArray;
+
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 public class IntroActivity extends BaseActivity implements View.OnClickListener {
@@ -30,9 +30,6 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     // UI's
     private ProgressBar mProgBar;
-
-    // Fields
-    private String distCode;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -70,17 +67,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         mProgBar.setVisibility(View.VISIBLE);
 
         if(checkUpdateOpinet()) {
-
-            log.i("checkUpdateOpinet is true");
-            //String distCode = mSettings.getString(Constants.DISTRICT_CODE, "0101");
-            /*
-            Set<String> distSet = mSettings.getStringSet(Constants.DISTRICT_CODE, null);
-            if(distSet != null) {
-                List<String> distList = new ArrayList<>(distSet);
-                distCode = distList.get(0);
-            }
-            */
-            distCode = convHashSetToList(Constants.DISTRICT_CODE).get(0);
+            String distCode = convJSONArrayToList().get(2);
             log.i("DistCode from HashSet: %s", distCode);
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
@@ -89,27 +76,6 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-
-            /*
-            try {
-                log.i("checkUpdateOpinet is true");
-                String distCode = mSettings.getString(Constants.DISTRICT_CODE, "0101");
-                //JSONArray jsonArray = new JSONArray(distCode);
-
-                //String sigunCode = jsonArray.get(2).toString();
-                //log.i("Sigun Code: %s", "0101");
-
-                // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
-                // Consider whether the threads should be interrupted or not.
-                priceTask = ThreadManager.startPriceTask(IntroActivity.this, distCode);
-
-                // Save the last update time in SharedPreferences
-                mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-
-            } catch (JSONException e) {
-                log.e("JSONException: %s", e);
-            }
-            */
 
         } else {
             startActivity(new Intent(this, MainActivity.class));
@@ -126,17 +92,9 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
         if(!distCode.exists()) saveDistCodeTask = ThreadManager.downloadOpinetDistCodeTask(this);
 
-        if(mSettings.getStringSet(Constants.DISTRICT_CODE, null) == null) {
-            Set<String> districtSet = new LinkedHashSet<>(Arrays.asList("0101", "서울시", "종로구"));
-            mSettings.edit().putStringSet(Constants.DISTRICT_CODE, districtSet).apply();
-        }
-
-        // Initial District
-        /*
-        String[] district = getResources().getStringArray(R.array.default_district);
-        jsonString = new JSONArray(Arrays.asList(district)).toString();
-        mSettings.edit().putString(Constants.DISTRICT_CODE, jsonString).apply();
-        */
+        JSONArray jsonArray = new JSONArray(Arrays.asList(
+                getResources().getStringArray(R.array.default_district)));
+        mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
     }
 
     // Invoked by ThreadManager when the average, sido, and sigun oil prices have been retrieved

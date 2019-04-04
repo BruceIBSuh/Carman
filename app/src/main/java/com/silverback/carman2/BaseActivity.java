@@ -14,10 +14,12 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -81,11 +83,20 @@ public class BaseActivity extends AppCompatActivity {
         return defaultParams;
     }
 
-    protected List<String> convHashSetToList(String key) {
-        Set<String> set = mSettings.getStringSet(key, null);
-        if(set != null) {
-            return new ArrayList<>(set);
+    protected List<String> convJSONArrayToList() {
+        String jsonString = mSettings.getString(Constants.DISTRICT, null);
+        List<String> distCodeList = new ArrayList<>();
+
+        if(jsonString == null) return null;
+
+        try {
+            JSONArray jsonArray = new JSONArray(jsonString);
+            for(int i = 0; i < jsonArray.length(); i++) distCodeList.add(jsonArray.get(i).toString());
+            return distCodeList;
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
         }
+
         return null;
     }
 

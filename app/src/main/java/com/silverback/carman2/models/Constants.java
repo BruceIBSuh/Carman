@@ -36,7 +36,7 @@ public class Constants {
     public static final String ODOMETER = "carman_pref_odometer";
     public static final String AVERAGE = "carman_pref_et_average";
     public static final String FUEL = "carman_pref_ls_fuel";
-    public static final String DISTRICT_CODE = "carman_pref_dialog_district";
+    public static final String DISTRICT = "carman_pref_dialog_district";
     public static final String DISTRICT_NAME = "carman_pref_dialog_district_name";
     public static final String RADIUS = "carman_pref_ls_station_radius";
     public static final String ORDER = "carman_pref_ls_station_order";

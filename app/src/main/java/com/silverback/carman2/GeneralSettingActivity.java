@@ -45,26 +45,14 @@ public class GeneralSettingActivity extends BaseActivity implements
         // Passes the District Code to GeneralSettingFragment(PreferenceFragmentCompat) to
         // display the custom DialogPreference.
         settingFragment = new GeneralSettingFragment();
-        //districtCode = mSettings.getString(Constants.DISTRICT_CODE, null);
-        districtCode = convHashSetToList(Constants.DISTRICT_CODE).get(0);
+        //districtCode = mSettings.getString(Constants.DISTRICT, null);
+        districtCode = convJSONArrayToList().get(2);
         log.i("GeneralSettingActivity District Code: %s", districtCode);
 
 
         Bundle args = new Bundle();
-        args.putString("district_code", districtCode);
+        args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
         settingFragment.setArguments(args);
-        /*
-        try {
-            String district = new JSONArray(mSettings.getString(Constants.DISTRICT_CODE, null)).toString();
-            Bundle args = new Bundle();
-            args.putString(Constants.CODE, district);
-            settingFragment.setArguments(args);
-
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-        */
-
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
                 .commit();
@@ -97,32 +85,15 @@ public class GeneralSettingActivity extends BaseActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
-        if(key.equals(Constants.DISTRICT_CODE)) {
-            //districtCode = mSettings.getString(Constants.DISTRICT_CODE, null);
-            districtCode = convHashSetToList(Constants.DISTRICT_CODE).get(0);
+        if(key.equals(Constants.DISTRICT)) {
+            //districtCode = mSettings.getString(Constants.DISTRICT, null);
+            districtCode = convJSONArrayToList().get(2);
             priceTask = ThreadManager.startPriceTask(this, districtCode);
-
-
-            //mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-            /*
-            try {
-                JSONArray json = new JSONArray(mSettings.getString(Constants.DISTRICT_CODE, null));
-                settingFragment.findPreference("pref_dialog_district")
-                        .setSummary(String.format("%s %s", json.get(0), json.get(1)));
-
-                priceTask = ThreadManager.startPriceTask(GeneralSettingActivity.this, json.get(2).toString());
-                mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-
-            } catch(JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
-            }
-            */
         }
     }
 
     // Callback by ThreadManager.startPriceTask when the task has the price info completed.
     public void onPriceTaskComplete() {
-
         mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
     }
 }

@@ -17,6 +17,8 @@ import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
+import org.json.JSONArray;
+
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -70,13 +72,6 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
         String districtCode = getArguments().getString("district_code");
         spinnerPref= (SpinnerDialogPreference) getPreference();
         log.i("SigunCode: %s", districtCode);
-
-        /*
-        Set<String> distcodeSet = spinnerPref.getPersistedStringSet(new LinkedHashSet<String>());
-        for(String district : distcodeSet) {
-            log.i("distcodeSet: %s", district);
-        }
-        */
 
         //sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         String sidoCode = districtCode.substring(0, 2);
@@ -143,14 +138,11 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
             String distCode = sigunAdapter.getItem(mSigunItemPos).getDistrictCode();
             log.i("District info: %s %s %s", sidoName, sigunName, distCode);
 
-            //Set<String> districtSet = Arrays.asList(district).stream().collect(Collectors.toSet());
-            Set<String> districtSet = new LinkedHashSet<>(Arrays.asList(distCode, sidoName, sigunName));
-            spinnerPref.callChangeListener(districtSet);
-
-            //JSONArray jsonArray = new JSONArray(Arrays.asList(sidoName, sigunName, distCode));
+            JSONArray jsonArray = new JSONArray(Arrays.asList(sidoName, sigunName, distCode));
+            spinnerPref.callChangeListener(jsonArray);
             // Save values in SharedPreferences
             PreferenceManager.getDefaultSharedPreferences(getContext()).edit()
-                    .putStringSet(Constants.DISTRICT_CODE, districtSet).apply();
+                    .putString(Constants.DISTRICT, jsonArray.toString()).apply();
         }
     }
 

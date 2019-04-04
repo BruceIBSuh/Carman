@@ -14,6 +14,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -86,10 +89,16 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         log.i("onPreferenceChange");
 
+        /*
         LinkedHashSet<String> districtSet = (LinkedHashSet<String>) newValue;
         List<String> list = new ArrayList<>(districtSet);
-
-        setSummary(String.format("%s %s", list.get(1), list.get(2)));
+        */
+        JSONArray json = (JSONArray)newValue;
+        try {
+            setSummary(String.format("%s %s", json.get(0).toString(), json.get(1).toString()));
+        } catch(JSONException e) {
+            log.e("JSONException");
+        }
         return false;
     }
 }

@@ -41,20 +41,12 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
-        /*
-        try {
-            JSONArray jsonArray = new JSONArray(getArguments().getString(Constants.CODE));
-            sidoName = jsonArray.get(0).toString();
-            sigunName = jsonArray.get(1).toString();
-            sigunCode = jsonArray.get(2).toString();
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-        */
-        sigunCode = getArguments().getString("district_code");
+        String[] district = getArguments().getStringArray("district");
+        sigunCode = district[2];
         log.i("sigun code in GeneralSettingFragment: %s", sigunCode);
-        //spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
-        //spinnerPref.setSummary(sigunCode);
+
+        spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
+        spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
     }
 
     @Override
@@ -68,9 +60,6 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     public void onDisplayPreferenceDialog(Preference pref) {
 
         if(pref instanceof SpinnerDialogPreference) {
-            //String code = sharedPreferences.getString(Constants.DISTRICT_CODE, "");
-            //log.i("District Code: %s", code);
-
             DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), sigunCode);
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), "spinner");
