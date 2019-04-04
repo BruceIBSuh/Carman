@@ -34,11 +34,9 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     // Objects
     private TabLayout tabLayout;
     private ViewPager viewPager;
-    private FragmentPagerAdapter pagerAdapter;
-    private Fragment[] mFragments;
+    //private FragmentPagerAdapter pagerAdapter;
+    //private Fragment[] mFragments;
     private Fragment generalFragment, boardFragment;
-    private FragmentTransaction fragmentTransaction;
-
     private FrameLayout frameLayout;
 
     // Fields
@@ -51,71 +49,49 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Titles and icons of the fragment ViewPager contains.
-        final String[] fragmentTitles = new String[] {
-                getString(R.string.tab_gas),
-                getString(R.string.tab_service),
-                getString(R.string.tab_stat),
-                getString(R.string.tab_setting)
-        };
-
-        final Drawable[] fragmentIcons = new Drawable[] {
-                getDrawable(R.drawable.ic_gas),
-                getDrawable(R.drawable.ic_service),
-                getDrawable(R.drawable.ic_stats),
-                getDrawable(R.drawable.ic_setting)
-        };
-
         Toolbar toolbar = findViewById(R.id.toolbar);
-        tabLayout = findViewById(R.id.tabLayout);
         frameLayout = findViewById(R.id.frameLayout);
+        tabLayout = findViewById(R.id.tabLayout);
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
 
-        //viewPager = findViewById(R.id.viewPager);
+        // Creates ViewPager programmatically and sets FragmentPagerAdapter to it, then interworks
+        // with TabLayout
         viewPager = new ViewPager(this);
         viewPager.setId(View.generateViewId());
-
-        // Instantiates FragmentPagerAdapter to have the fragments linked to the viewpager.
-        pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
-
-        // ViewPager and ViewPager.OnPageChageListener attached
+        FragmentPagerAdapter pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
         viewPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(viewPager);
 
-        // Get Defaults from BaseActivity and pass them to the fragments
+        // Custom method to set TabLayout title and icon, which MUST be invoked after
+        // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
+        addTabIconAndTitle(tabLayout);
+
+        // Get Defaults from BaseActivity and sets it bundled for passing to GeneralFragment
         String[] defaults = getDefaultParams();
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", defaults);
         log.i("Default Params: %s, %s, %s", defaults[0], defaults[1], defaults[2]);
 
-        // Instantiate FragmentManger and FragmentTransaction to add, replace, or remove a fragment
+        // Instantiates Fragments which FrameLayout adds, replaces or removes a Fragment by selecting
+        // a toolbar menu.
         generalFragment = new GeneralFragment();
         boardFragment = new BoardFragment();
 
-        // Attach the Fragment of GeneralFragment with the defaults attached.
+        // Attaches GeneralFragment as a default display at first or returning from the fragments
+        // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
-        fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.frameLayout, generalFragment).commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.frameLayout, generalFragment).commit();
 
-        // Custom method to set TabLayout title and icon, which MUST be invoked after
-        // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
-        addTabIconAndTitle(tabLayout, fragmentTitles, fragmentIcons);
-
-        // Calculate the toolbar height which is a baseline to slide up and down the TabLayout
-        // and ViewPager.
+        // Calculates Toolbar height which is referred to as a baseline for TabLayout and ViewPager
+        // to slide up and down.
         toolbarHeight = getActionbarHeight();
         log.i("toolbar height: %s",  toolbarHeight);
 
         // Permission Check
         checkPermissions();
-
-        // Custom method to animate the tab layout sliding up and down when clicking the buttons
-        // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
-        // and the ViewPager does so by translating "Y".
-        //animSlideTabLayout();
     }
 
     // Callbacks invoked by Toolbar
@@ -129,9 +105,13 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_board:
+                animSlideTabLayout();
                 return true;
 
             case R.id.action_garage:
+                // Custom method to animate the tab layout sliding up and down when clicking the buttons
+                // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
+                // and the ViewPager does so by translating "Y".
                 animSlideTabLayout();
                 return true;
 
@@ -144,6 +124,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
                 return true;
 
             default:
+
                 return super.onOptionsItemSelected(item);
         }
     }
@@ -151,24 +132,35 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
     // Callbacks invoked by ViewPager.OnPageChangeListener
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        log.i("ViewPager Listener");
+        log.d("ViewPager Listener_onPageScrolled");
     }
     @Override
     public void onPageSelected(int position) {
-        //Log.i(LOG_TAG, "ViewPager Listeenr");
+        log.d("ViewPager Listeenr_onPageSelected");
     }
     @Override
     public void onPageScrollStateChanged(int state) {
-        //Log.i(LOG_TAG, "ViewPager Listeenr");
+        log.d("ViewPager Listeenr_onPageScrollStateChanged");
     }
 
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
+
     @SuppressWarnings("ConstantConditions")
-    private void addTabIconAndTitle(TabLayout tabLayout, String[] title, Drawable[] icons) {
+    private void addTabIconAndTitle(TabLayout tabLayout){ //, String[] title, Drawable[] icons) {
+
+        final String[] titles = getResources().getStringArray(R.array.tap_title);
+        final Drawable[] icons = new Drawable[] {
+                getDrawable(R.drawable.ic_gas),
+                getDrawable(R.drawable.ic_service),
+                getDrawable(R.drawable.ic_stats),
+                getDrawable(R.drawable.ic_setting)
+        };
+
+
         for(int i = 0; i < tabLayout.getTabCount(); i++) {
             tabLayout.getTabAt(i).setIcon(icons[i]);
-            tabLayout.getTabAt(i).setText(title[i]);
+            tabLayout.getTabAt(i).setText(titles[i]);
         }
     }
 

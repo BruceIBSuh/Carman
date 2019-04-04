@@ -11,7 +11,7 @@ public class Constants {
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
     //public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
 
-    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60; //Interval for downloading gas prices from Opinet
+    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60; //Interval for downloading gas prices from Opinet
     public static final float OPINET_UPDATE_DISTANCE = 50f; //Distance difference to update near stations
     static final int INTERVAL = 1000 * 10; //Location update interval set by the app
     static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.
@@ -36,7 +36,8 @@ public class Constants {
     public static final String ODOMETER = "carman_pref_odometer";
     public static final String AVERAGE = "carman_pref_et_average";
     public static final String FUEL = "carman_pref_ls_fuel";
-    public static final String DISTRICT = "carman_pref_dialog_district";
+    public static final String DISTRICT_CODE = "carman_pref_dialog_district";
+    public static final String DISTRICT_NAME = "carman_pref_dialog_district_name";
     public static final String RADIUS = "carman_pref_ls_station_radius";
     public static final String ORDER = "carman_pref_ls_station_order";
     public static final String LOCATION_UPDATE = "carman_pref_cb_location_update";

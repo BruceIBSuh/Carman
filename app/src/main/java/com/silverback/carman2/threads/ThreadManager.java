@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import com.silverback.carman2.GeneralSettingActivity;
 import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -169,9 +170,11 @@ public class ThreadManager {
 
                     case DOWNLOAD_PRICE_COMPLETE:
                         priceTask = (PriceTask)msg.obj;
+                        // Each callback method according to the caller activity.
                         if(priceTask.getParentActivity() instanceof IntroActivity) {
-                            // Notifies the caller(IntroActivity) of the 3 prices retrieved.
-                            ((IntroActivity)priceTask.getParentActivity()).onPriceComplete();
+                            ((IntroActivity)priceTask.getParentActivity()).onPriceTaskComplete();
+                        } else if(priceTask.getParentActivity() instanceof GeneralSettingActivity) {
+                            ((GeneralSettingActivity) priceTask.getParentActivity()).onPriceTaskComplete();
                         }
 
                         break;

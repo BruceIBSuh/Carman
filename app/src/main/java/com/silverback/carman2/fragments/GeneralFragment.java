@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -47,6 +48,7 @@ public class GeneralFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
     // Objects
+    private LocationTask locationTask;
     private PriceTask priceTask;
     private StationTask stationTask;
     private AvgPriceView avgPriceView;
@@ -70,6 +72,7 @@ public class GeneralFragment extends Fragment implements
     private FrameLayout frameAvgPrice;
 
     // Fields
+    private boolean isLocationFetched;
     private String[] defaults; // defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
 
@@ -80,6 +83,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        isLocationFetched = false;
         //String[] district = getResources().getStringArray(R.array.default_district);
 
     }
@@ -107,7 +111,7 @@ public class GeneralFragment extends Fragment implements
         String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
 
-        // Set the spinner_stat default value if it is saved in SharedPreference.Otherwise, sets it to 0.
+        // Sets the spinner_stat default value if it is saved in SharedPreference.Otherwise, sets it to 0.
         fuelSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(getContext(),
                 R.array.spinner_fuel_name, android.R.layout.simple_spinner_item);
@@ -127,14 +131,21 @@ public class GeneralFragment extends Fragment implements
         }
 
         // Fetch the current location by using FusedLocationProviderClient on a work thread
-        LocationTask locationTask = ThreadManager.fetchLocationTask(this);
+        locationTask = ThreadManager.fetchLocationTask(this);
 
         return childView;
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
     public void onPause() {
         super.onPause();
+        if(locationTask != null) locationTask = null;
     }
 
 
@@ -163,6 +174,7 @@ public class GeneralFragment extends Fragment implements
     // which intially invokes at
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
         log.i("onItemSelected");
         switch(position){
             case 0: defaults[0] = "B027"; break; // gasoline
@@ -180,7 +192,6 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
-        //
         if(mLocation != null) {
             log.i("stationTask: %s", stationTask);
             stationTask = ThreadManager.startStationListTask(stationRecyclerView, defaults, mLocation);

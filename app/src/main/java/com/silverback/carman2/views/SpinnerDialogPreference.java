@@ -13,16 +13,23 @@ import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import java.util.List;
-import androidx.preference.DialogPreference;
 
-public class SpinnerDialogPreference extends DialogPreference {
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import androidx.preference.DialogPreference;
+import androidx.preference.Preference;
+
+public class SpinnerDialogPreference extends DialogPreference implements Preference.OnPreferenceChangeListener{
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerDialogPreference.class);
 
     // Objects
-    private String districtCode;
+    private String districtName;
 
     /*
      *When you replace the 0 in the second constructor with R.attr.dialogPreferenceStyle
@@ -56,6 +63,9 @@ public class SpinnerDialogPreference extends DialogPreference {
     private void getAttributes(Context context, AttributeSet attrs) {
 
         setDialogLayoutResource(R.layout.dialogpref_spinner);
+        setOnPreferenceChangeListener(this);
+
+
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
         try {
@@ -71,4 +81,15 @@ public class SpinnerDialogPreference extends DialogPreference {
         return R.layout.dialogpref_spinner;
     }
 
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+        log.i("onPreferenceChange");
+
+        LinkedHashSet<String> districtSet = (LinkedHashSet<String>) newValue;
+        List<String> list = new ArrayList<>(districtSet);
+
+        setSummary(String.format("%s %s", list.get(1), list.get(2)));
+        return false;
+    }
 }

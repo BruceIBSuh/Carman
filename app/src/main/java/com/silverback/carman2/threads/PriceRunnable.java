@@ -25,9 +25,7 @@ public class PriceRunnable implements Runnable {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(PriceRunnable.class);
 
-    //Constants
-    //private static final String TAG = "PriceRunnable";
-
+    // constants
     private static final String API_KEY = "F186170711";
     private static final String OPINET = "http://www.opinet.co.kr/api/";
     private static final String URLavg = OPINET + "avgAllPrice.do?out=xml&code=" + API_KEY;
@@ -40,9 +38,6 @@ public class PriceRunnable implements Runnable {
     static final int SIGUN = 2;
 
     static final int DOWNLOAD_PRICE_COMPLETE = 1;
-    //static final int DOWNLOAD_SIDO_PRICE_COMPLETE = 2;
-    //static final int DOWNLOAD_SIGUN_PRICE_COMPLETE = 3;
-
     static final int DOWNLOAD_PRICE_FAILED = -1;
 
     // Objects

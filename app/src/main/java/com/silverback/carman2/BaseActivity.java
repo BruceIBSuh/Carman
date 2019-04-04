@@ -16,8 +16,11 @@ import com.silverback.carman2.models.Constants;
 import org.json.JSONArray;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -70,7 +73,6 @@ public class BaseActivity extends AppCompatActivity {
     // DefaultParams: fuelCode, radius to locate, sorting radius
     protected final String[] getDefaultParams() {
 
-        //SharedPreferences mSettings = getSharedPreferenceInstance(this);
         String[] defaultParams = new String[3];
         defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
         defaultParams[1] = mSettings.getString(Constants.RADIUS, "2500");
@@ -78,6 +80,15 @@ public class BaseActivity extends AppCompatActivity {
 
         return defaultParams;
     }
+
+    protected List<String> convHashSetToList(String key) {
+        Set<String> set = mSettings.getStringSet(key, null);
+        if(set != null) {
+            return new ArrayList<>(set);
+        }
+        return null;
+    }
+
 
     // Formats date and time with milliseconds
     public static String formatMilliseconds(String format, long milliseconds) {

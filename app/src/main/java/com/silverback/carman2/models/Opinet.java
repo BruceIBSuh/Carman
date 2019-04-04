@@ -5,6 +5,8 @@ import android.os.Parcelable;
 
 import java.io.Serializable;
 
+import androidx.annotation.NonNull;
+
 public class Opinet  {
 
     public static class OilPrice implements Serializable {
@@ -106,6 +108,7 @@ public class Opinet  {
             this.diff = diff;
         }
 
+        @NonNull
         @Override
         public String toString(){
             return "시도코드: " + getSidoCode()
