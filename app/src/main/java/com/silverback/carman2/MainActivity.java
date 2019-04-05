@@ -16,6 +16,7 @@ import com.silverback.carman2.fragments.BoardFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -27,9 +28,6 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
-
-    // Constants
-
 
     // Objects
     private TabLayout tabLayout;
@@ -55,6 +53,9 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
+        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
+        if(title != null) getSupportActionBar().setTitle(title);
+
 
         // Creates ViewPager programmatically and sets FragmentPagerAdapter to it, then interworks
         // with TabLayout
@@ -103,6 +104,7 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         switch(item.getItemId()) {
             case R.id.action_board:
                 animSlideTabLayout();

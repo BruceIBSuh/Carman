@@ -57,10 +57,10 @@ public class StationTask extends ThreadTask implements
     //private int count;
 
     // Constructor
-    StationTask() {
+    StationTask(Context context) {
         super();
         //mStationInfoList = new ArrayList<>();
-        mStationListRunnable = new StationListRunnable(this);
+        mStationListRunnable = new StationListRunnable(context, this);
         //mStationInfoRunnable = new StationInfoRunnable(context, this);
     }
 
@@ -140,15 +140,8 @@ public class StationTask extends ThreadTask implements
         mStationList = list;
     }
 
-    // The following 2 methods are invoked by onHandleMessage() in ThreadManager to transfer
-    // a station list to StationRecyclerView
-    StationRecyclerView getRecyclerView() {
-        if (mWeakRecyclerView != null) {
-            return mWeakRecyclerView.get();
-        }
-        return null;
-    }
 
+    // Invoked by handleMessage in ThreadManager to retrieve a station list.
     List<Opinet.GasStnParcelable> getStationList() {
         return mStationList;
     }
@@ -228,11 +221,12 @@ public class StationTask extends ThreadTask implements
     }
 
 
-
+    /*
     List<Opinet.GasStnParcelable> getStationInfoList() {
         //return mInformedStationList;
         return mStationInfoList;
     }
+    */
 
     // Save the downloaded near station list in the designated file location.
     /*

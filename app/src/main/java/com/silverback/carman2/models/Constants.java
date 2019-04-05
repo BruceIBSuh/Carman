@@ -31,6 +31,8 @@ public class Constants {
 
     // SharedPreferences key name, which is the key name of each preference.xml
     public static final String VEHICLE = "carman_pref_cb_default";
+    public static final String VEHICLE_NAME = "pref_nickname";
+    public static final String VHEICLE_MODEL = "pref_model";
     public static final String NUMBER = "carman_pref_cb_number";
     public static final String MODEL = "carman_pref_et_model";
     public static final String ODOMETER = "carman_pref_odometer";

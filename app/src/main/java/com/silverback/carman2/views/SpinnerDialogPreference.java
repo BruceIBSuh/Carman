@@ -88,11 +88,6 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         log.i("onPreferenceChange");
-
-        /*
-        LinkedHashSet<String> districtSet = (LinkedHashSet<String>) newValue;
-        List<String> list = new ArrayList<>(districtSet);
-        */
         JSONArray json = (JSONArray)newValue;
         try {
             setSummary(String.format("%s %s", json.get(0).toString(), json.get(1).toString()));

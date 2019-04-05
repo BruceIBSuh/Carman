@@ -5,13 +5,13 @@
         app:title="@string/pref_category_basic_info"
         app:key="pref_basic_info" >
 
-        <Preference
-            app:title="관리차량"
-            app:key="pref_select_car" />
+        <EditTextPreference
+            app:key="pref_nickname"
+            app:title="@string/setting_nickname" />
 
         <EditTextPreference
-            app:title="차량 모델"
-            app:key="pref_model" />
+            app:key="pref_model"
+            app:title="@string/setting_model" />
 
         <ListPreference
             app:title="연료"

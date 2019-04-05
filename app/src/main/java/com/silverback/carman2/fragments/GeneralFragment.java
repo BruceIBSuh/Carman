@@ -157,8 +157,6 @@ public class GeneralFragment extends Fragment implements
                 break;
 
             case R.id.imgbtn_stations:
-                if(mAdapter == null) return;
-
                 mAdapter.sortStationList(bStationsOrder);
                 String sort = (bStationsOrder)?getString(R.string.general_stations_price):
                         getString(R.string.general_stations_distance);
@@ -194,7 +192,6 @@ public class GeneralFragment extends Fragment implements
 
         if(mLocation != null) {
             log.i("stationTask: %s", stationTask);
-            stationTask = ThreadManager.startStationListTask(stationRecyclerView, defaults, mLocation);
             stationRecyclerView.initView(defaults, mLocation);
         }
     }
@@ -212,13 +209,19 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.initView(defaults, location);
     }
 
+
+    // The following 2 callback methods are invoked by ThreadManager.OnCompleteTaskListener
+    // on having StationTask completed or failed.
     @Override
-    public void onStationInfoList(List<Opinet.GasStnParcelable> stnList) {
+    public void onStationTaskComplete(List<Opinet.GasStnParcelable> stnList) {
         log.i("StationInfoList: %s", stnList.size());
-        //mAdapter = new StationListAdapter(stnList);
-        //stationRecyclerView.showStationListRecyclerView();
-        //stationRecyclerView.setAdapter(mAdapter);
+        mAdapter = new StationListAdapter(stnList);
+        stationRecyclerView.showStationListRecyclerView();
+        stationRecyclerView.setAdapter(mAdapter);
+
     }
+
+
     @Override
     public void onTaskFailure() {
         log.i("onTaskFailure");

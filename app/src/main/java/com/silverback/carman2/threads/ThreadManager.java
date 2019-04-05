@@ -72,7 +72,7 @@ public class ThreadManager {
     // Interface to communicate w/
     public interface OnCompleteTaskListener {
         void onLocationFetched(Location result);
-        void onStationInfoList(List<Opinet.GasStnParcelable> result);
+        void onStationTaskComplete(List<Opinet.GasStnParcelable> result);
         void onTaskFailure();
     }
 
@@ -286,12 +286,13 @@ public class ThreadManager {
                         log.i("DOWNLOAD_NEAR_STATION_COMPLETED");
 
                         stationTask = (StationTask)msg.obj;
-                        StationRecyclerView localView = stationTask.getRecyclerView();
-
+                        //StationRecyclerView localView = stationTask.getRecyclerView();
 
                         List<Opinet.GasStnParcelable> stnList = stationTask.getStationList();
-                        localView.setNearStationList(stnList);
-                        //mTaskListener.onStationInfoList(stations);
+                        //localView.setNearStationList(stnList);
+                        mTaskListener.onStationTaskComplete(stnList);
+
+                        stationTask.recycle();
 
                         break;
 
@@ -304,7 +305,7 @@ public class ThreadManager {
                         /*
                         stationTask = (StationTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationTask.getStationInfoList();
-                        mTaskListener.onStationInfoList(stnList);
+                        mTaskListener.onStationTaskComplete(stnList);
                         */
                         break;
 
@@ -674,7 +675,7 @@ public class ThreadManager {
 
         StationTask stationTask = sInstance.mStationTaskQueue.poll();
         if(stationTask == null) {
-            stationTask = new StationTask();
+            stationTask = new StationTask(view.getContext());
         }
 
         // Attach OnCompleteTaskListener

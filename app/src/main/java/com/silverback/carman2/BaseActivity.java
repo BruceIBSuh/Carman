@@ -83,6 +83,7 @@ public class BaseActivity extends AppCompatActivity {
         return defaultParams;
     }
 
+    // Sido name, sig
     protected List<String> convJSONArrayToList() {
         String jsonString = mSettings.getString(Constants.DISTRICT, null);
         List<String> distCodeList = new ArrayList<>();

@@ -29,6 +29,7 @@ public class StationRecyclerView extends RecyclerView {
 
 
     // Objects
+    private Context context;
     private WeakReference<View> mThisView;
     private StationListAdapter mAdapter;
     private StationTask stationTask;
@@ -53,6 +54,7 @@ public class StationRecyclerView extends RecyclerView {
 
     protected void getAttributes(Context context, AttributeSet attrs) {
 
+        this.context = context;
         setHasFixedSize(true);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(layoutManager);
@@ -111,14 +113,8 @@ public class StationRecyclerView extends RecyclerView {
         super.onDetachedFromWindow();
     }
 
-    public void setNearStationList(List<Opinet.GasStnParcelable> stationList) {
-        log.i("Download Station list: %s", stationList.size());
-        mStationList = stationList;
-        mAdapter = new StationListAdapter(mStationList);
-        showStationListRecyclerView();
-        setAdapter(mAdapter);
-    }
-
+    // Invoked from the parent GeneralFragment which is notified of successfully having a station
+    // list completed.
     public void showStationListRecyclerView() {
 
         mThisView = new WeakReference<View>(this);
@@ -132,6 +128,7 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
+    // Invoked from the parent GeneralFragment when StationTask failed to fetch a station.
     public void showTextView(String message){
 
         if((mTextViewResId != -2) && (getParent() instanceof View)) {
@@ -144,7 +141,6 @@ public class StationRecyclerView extends RecyclerView {
                 ((TextView)mThisView.get()).setText(message);
             }
         }
-
     }
 
 }

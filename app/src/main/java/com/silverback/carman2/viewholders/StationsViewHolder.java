@@ -1,5 +1,6 @@
 package com.silverback.carman2.viewholders;
 
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,6 +23,7 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
     private ImageView imgLogo;
     private TextView tvName, tvPrice, tvDistance, tvWash;
     private String price, distance;// carwash;
+    private String stnCode;
 
     // Constructor
     public StationsViewHolder(CardView cardView) {
@@ -37,9 +39,20 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
         distance = cardView.getResources().getString(R.string.general_station_distance);
         //carwash = cardView.getResources().getString(R.string.general_carwash);
 
+        cardView.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                log.i("Station ID: %s", stnCode);
+                // Should initiate StationInfoTask here with station id.
+                // Otherwise, consider to use SelectionTracker.Builder.
+            }
+        });
+
     }
 
-    public void bindToStation(Opinet.GasStnParcelable data) {
+    public void bindToStationList(Opinet.GasStnParcelable data) {
+        this.stnCode = data.getStnId(); // Pass Station ID when clicking a cardview item.
+
         int resLogo = getGasStationImage(data.getStnCode());
         imgLogo.setImageResource(resLogo);
         tvName.setText(data.getStnName());

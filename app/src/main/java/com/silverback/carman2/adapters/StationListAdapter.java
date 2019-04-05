@@ -1,6 +1,7 @@
 package com.silverback.carman2.adapters;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -8,9 +9,15 @@ import android.view.ViewGroup;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.viewholders.StationsViewHolder;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,7 +34,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     // Objects
     private Context context;
     private List<Opinet.GasStnParcelable> stationList;
-    private String[] defaultParams;
+    private CardView cardView;
 
     // Constructor
     public StationListAdapter(List<Opinet.GasStnParcelable> list) {
@@ -40,7 +47,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     @Override
     public StationsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        CardView cardView = (CardView)LayoutInflater.from(context)
+        cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.cardview_stations, parent, false);
 
         return new StationsViewHolder(cardView);
@@ -49,7 +56,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
 
     @Override
     public void onBindViewHolder(@NonNull StationsViewHolder holder, int position) {
-        holder.bindToStation(stationList.get(position));
+        holder.bindToStationList(stationList.get(position));
+
     }
 
     @Override
@@ -68,14 +76,16 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     @SuppressWarnings("unchecked")
     public void sortStationList(boolean sort) {
 
-        /*
+        File fStationList = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+        Uri uri = Uri.fromFile(fStationList);
+
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
             stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
 
-            if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
-            else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
+            //if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
+            //else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
 
             notifyDataSetChanged();
 
@@ -86,7 +96,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        */
+
 
         //stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
 
@@ -94,8 +104,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
 
         if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
         else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
-
     }
+
+
 
     // Class for sorting the list by ascending price or descending distance, implementing Comparator<T>
     private class PriceAscCompare implements Comparator<Opinet.GasStnParcelable> {

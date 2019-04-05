@@ -3,6 +3,7 @@ package com.silverback.carman2.fragments;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.EditText;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -15,6 +16,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import androidx.fragment.app.DialogFragment;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -45,8 +48,14 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
         sigunCode = district[2];
         log.i("sigun code in GeneralSettingFragment: %s", sigunCode);
 
-        spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
+        EditTextPreference etPref = (EditTextPreference)findPreference("pref_nickname");
+        etPref.setSummary(getArguments().getString("name"));
+
+
+        SpinnerDialogPreference spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
+
+
     }
 
     @Override

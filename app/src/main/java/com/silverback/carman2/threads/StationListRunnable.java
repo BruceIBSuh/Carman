@@ -56,9 +56,9 @@ public class StationListRunnable implements Runnable{
     }
 
     // Constructor
-    StationListRunnable(StationListMethod task) {
+    StationListRunnable(Context context, StationListMethod task) {
         mStationList = null;
-        //context = view.getContext();
+        this.context = context;
         mTask = task;
     }
 
@@ -97,7 +97,6 @@ public class StationListRunnable implements Runnable{
 
 
         XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
-
         HttpURLConnection conn = null;
         InputStream is = null;
 
@@ -138,11 +137,11 @@ public class StationListRunnable implements Runnable{
 
                 } else {
                     log.i("StationList: %s", mStationList.size());
-                    //Uri uri = saveNearStationInfo(mStationList);
-                    //if (uri != null) {
+                    Uri uri = saveNearStationInfo(mStationList);
+                    if (uri != null) {
                         mTask.setStationList(mStationList);
                         mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
-                    //}
+                    }
                 }
 
             } else {
@@ -174,6 +173,26 @@ public class StationListRunnable implements Runnable{
         }
     }
 
+    // Save the downloaded near station list in the designated file location.
+    private Uri saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
 
+        File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(list);
+
+            return Uri.fromFile(file);
+
+        } catch (FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e.getMessage());
+
+        } catch (IOException e) {
+            log.e("IOException: %s", e.getMessage());
+
+        }
+
+        return null;
+    }
 
 }
