@@ -39,6 +39,10 @@
     <string name="general_station_distance">거리</string>
     <string name="general_carwash">세차</string>
 
+    <!--StationMapActivity-->
+    <string name="map_toolbar_title">주유소 위치 및 정보</string>
+
+
     <!--GeneralSettingActivity-->
     <string name="setting_label">차량정보 입력 / 앱 설정</string>
 
@@ -77,6 +81,8 @@
     <string name="pref_spinner_sido_daejeon">대전시</string>
     <string name="pref_spinner_sido_ulsan">울산시</string>
     <string name="pref_spinner_sido_sejong">세종시</string>
+
+
 
 
     <!--Miscellany-->

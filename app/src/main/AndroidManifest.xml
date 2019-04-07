@@ -15,19 +15,30 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
 
-
         <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".BaseActivity" />
         <activity android:name=".MainActivity" />
-
-        <activity android:name=".GeneralSettingActivity"
+        <activity
+            android:name=".GeneralSettingActivity"
             android:label="@string/setting_label"
-            android:parentActivityName="com.silverback.carman2.MainActivity" >
+            android:parentActivityName=".MainActivity" >
+
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.silverback.carman2.MainActivity" />
+        </activity>
+
+        <activity
+            android:name=".StationMapActivity"
+            android:label="@string/map_toolbar_title"
+            android:parentActivityName=".MainActivity" >
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -43,8 +54,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
-
     </application>
 
 </manifest>

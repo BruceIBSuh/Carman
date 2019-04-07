@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
@@ -35,6 +36,12 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     private Context context;
     private List<Opinet.GasStnParcelable> stationList;
     private CardView cardView;
+    private RecyclerViewItemClickListener mListener;
+
+    // Interface to communicate w/ MainActivity when a RecyclerView item being clicked
+    public interface RecyclerViewItemClickListener {
+        void onCardViewItemClicked(String stnId);
+    }
 
     // Constructor
     public StationListAdapter(List<Opinet.GasStnParcelable> list) {
@@ -55,8 +62,15 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StationsViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final StationsViewHolder holder, final int position) {
         holder.bindToStationList(stationList.get(position));
+        cardView.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                log.i("CardView Clicked: %s,%s", position, holder.getStationCode());
+                mListener.onCardViewItemClicked(holder.getStationCode());
+            }
+        });
 
     }
 
@@ -65,7 +79,22 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         return stationList.size();
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        log.i("onAttachedToRecyclerView");
+        super.onAttachedToRecyclerView(recyclerView);
+        try {
+            mListener = (RecyclerViewItemClickListener)recyclerView.getContext();
+        } catch(ClassCastException e) {
+            log.i("ClassCastExcpetion: %s", e.getMessage());
+        }
+    }
 
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        if(mListener != null) mListener = null;
+        super.onDetachedFromRecyclerView(recyclerView);
+    }
 
 
     /*

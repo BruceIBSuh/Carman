@@ -12,6 +12,7 @@ import android.widget.FrameLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
+import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.fragments.BoardFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -24,7 +25,9 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;
 
-public class MainActivity extends BaseActivity implements ViewPager.OnPageChangeListener {
+public class MainActivity extends BaseActivity implements
+        StationListAdapter.RecyclerViewItemClickListener,
+        ViewPager.OnPageChangeListener {
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -55,7 +58,6 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         setSupportActionBar(toolbar);
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
-
 
         // Creates ViewPager programmatically and sets FragmentPagerAdapter to it, then interworks
         // with TabLayout
@@ -202,4 +204,10 @@ public class MainActivity extends BaseActivity implements ViewPager.OnPageChange
         return -1;
     }
 
+    // Callback invoked by StationListAdapter.RecyclerViewItemClickListener
+    @Override
+    public void onCardViewItemClicked(String stnId) {
+        log.i("RecyclerView Item clicked: %s", stnId);
+        startActivity(new Intent(this, StationMapActivity.class));
+    }
 }

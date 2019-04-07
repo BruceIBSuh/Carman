@@ -3,8 +3,6 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
-import android.net.Uri;
-import android.view.View;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -22,46 +20,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StationTask extends ThreadTask implements
-        StationListRunnable.StationListMethod {
-        //StationInfoRunnable.StationInfoMethod {
+        StationListRunnable.StationListMethod,
+        StationInfoRunnable.StationInfoMethod {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationTask.class);
 
     // Objects
-    /*
-     * Creates a weak reference to the ImageView in this object. The weak
-     * reference prevents memory leaks and crashes, because it automatically tracks the "state" of
-     * the variable it backs. If the reference becomes invalid, the weak reference is garbage-
-     * collected.
-     * This technique is important for referring to objects that are part of a component lifecycle.
-     * Using a hard reference may cause memory leaks as the value continues to change; even worse,
-     * it can cause crashes if the underlying component is destroyed. Using a weak reference to
-     * a View ensures that the reference is more transitory in nature.
-     */
+    private Context context;
     private WeakReference<StationRecyclerView> mWeakRecyclerView;
     private Runnable mStationListRunnable;
-    //private Runnable mStationInfoRunnable;
-    private List<Opinet.GasStnParcelable> mStationList;
+    private Runnable mStationInfoRunnable;
+    private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
 
-
-
-    private List<Opinet.GasStnParcelable> mStationInfoList;
+    private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     private Location mLocation;
     private String[] defaultParams;
-    private Opinet.GasStnParcelable station;
+    private int count = 0;
 
     private static ThreadManager sThreadManager;
-
-    // Fields
-    //private int count;
 
     // Constructor
     StationTask(Context context) {
         super();
-        //mStationInfoList = new ArrayList<>();
+        this.context = context;
         mStationListRunnable = new StationListRunnable(context, this);
-        //mStationInfoRunnable = new StationInfoRunnable(context, this);
+        mStationInfoRunnable = new StationInfoRunnable(this);
     }
 
     void initStationTask(
@@ -71,47 +55,19 @@ public class StationTask extends ThreadTask implements
         defaultParams = params;
         mLocation = location;
         mWeakRecyclerView = new WeakReference<>(view);
-        //mInformedStationList = new ArrayList<>();
+        mStationInfoList = new ArrayList<>();
     }
-
-    /*
-    //Long monitor contention with owner pool-1-thread-2 (15944)
-    //at void com.silverback.carman2.threads.StationInfoRunnable.run()(StationInfoRunnable.java:-1)
-
-    void initStationInfo(Opinet.GasStnParcelable station) {
-        this.station = station;
-    }
-    */
-
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    //Runnable getStationInfoRunnalbe() { return mStationInfoRunnable; }
-
+    Runnable getStationInfoRunnalbe() { return mStationInfoRunnable; }
 
     void recycle() {
-
         if(mWeakRecyclerView != null) {
             mWeakRecyclerView.clear();
             mWeakRecyclerView = null;
         }
-
-        /*
-        // Deletes the weak reference to the imageView
-        if (mWeakFragment != null) {
-            mWeakFragment.clear();
-            mWeakFragment = null;
-        }
-
-        if (mWeakListView != null) {
-            mWeakListView.clear();
-            mWeakListView = null;
-        }
-        */
-
         mStationList = null;
-        //defaultParams = null;
-
     }
 
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
@@ -140,54 +96,30 @@ public class StationTask extends ThreadTask implements
         mStationList = list;
     }
 
-
-    // Invoked by handleMessage in ThreadManager to retrieve a station list.
-    List<Opinet.GasStnParcelable> getStationList() {
+    /*
+     * The followng 3 methods override the methods defined in StationInfoRunnable.StationInfoMethods.
+     * getStationList(): pass the station list retrieved by StationListRunnable to StationInfoRunnable.
+     * getStationIndex():
+     * addStationInfo()
+     */
+    @Override
+    public List<Opinet.GasStnParcelable> getStationList() {
         return mStationList;
     }
 
-    /*
+    // Indicate an index of the station list fetched by StationListRunnable.
+    @Override
+    public int getStationIndex() {
+        return count ++;
+    }
+
+
     @Override
     public void addStationInfo(Opinet.GasStnParcelable station) {
         mStationInfoList.add(station);
     }
-    */
 
 
-    // Check if all the StationInfoRunnables are complete compared with the count that is equal to
-    // the size of the StationList.
-
-    /*
-    @Override
-    public void addCount() {
-        count++;
-    }
-
-    @Override
-    public int getStationIndex() {
-        return count;
-    }
-
-
-    @Override
-    public Opinet.GasStnParcelable getStation() {
-        return station;
-    }
-
-
-    */
-
-
-
-
-    // Callback by StationInfoRunnable to get back Opinet.GasStnParcelable modified with
-    // adding additional information(e.g. Car wahs here), then add it to a new List.
-    /*
-    @Override
-    public void initStationInfo(Opinet.GasStnParcelable parcelable) {
-        mInformedStationList.add(parcelable);
-    }
-    */
 
     @Override
     public void handleStationTaskState(int state) {
@@ -199,7 +131,8 @@ public class StationTask extends ThreadTask implements
 
             case StationInfoRunnable.DOWNLOAD_STATION_INFO_COMPLETE:
                 log.i("Opinet.GasStationParcelable:");
-                outState= ThreadManager.DOWNLOAD_STATION_INFO_COMPLETE;
+                if(saveNearStationInfo(mStationInfoList))
+                    outState= ThreadManager.DOWNLOAD_STATION_INFO_COMPLETE;
                 break;
 
             case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:
@@ -220,25 +153,16 @@ public class StationTask extends ThreadTask implements
         sThreadManager.handleState(this, outState);
     }
 
-
-    /*
-    List<Opinet.GasStnParcelable> getStationInfoList() {
-        //return mInformedStationList;
-        return mStationInfoList;
-    }
-    */
-
-    // Save the downloaded near station list in the designated file location.
-    /*
-    private Uri saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
+    // Save the station list fetched by StationListRunnable and added with car wash info by
+    // StationInfoRunnable.
+    private boolean saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
 
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
 
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(list);
-
-            return Uri.fromFile(file);
+            return true;
 
         } catch (FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e.getMessage());
@@ -248,7 +172,7 @@ public class StationTask extends ThreadTask implements
 
         }
 
-        return null;
+        return false;
     }
-    */
+
 }

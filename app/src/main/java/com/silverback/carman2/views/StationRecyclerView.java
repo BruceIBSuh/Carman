@@ -9,15 +9,12 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.StationTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
-import java.util.List;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,15 +24,13 @@ public class StationRecyclerView extends RecyclerView {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerView.class);
 
-
     // Objects
-    private Context context;
+    //private Context context;
     private WeakReference<View> mThisView;
-    private StationListAdapter mAdapter;
     private StationTask stationTask;
-    private List<Opinet.GasStnParcelable> mStationList;
     private int mHideShowResId = -1;
     private int mTextViewResId = -2;
+    private int mFabResId = -3;
 
 
     // Default constructors
@@ -54,7 +49,7 @@ public class StationRecyclerView extends RecyclerView {
 
     protected void getAttributes(Context context, AttributeSet attrs) {
 
-        this.context = context;
+        //this.context = context;
         setHasFixedSize(true);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setLayoutManager(layoutManager);
@@ -63,17 +58,15 @@ public class StationRecyclerView extends RecyclerView {
         try {
             mHideShowResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
             mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
-
+            mFabResId = typedArray.getResourceId(R.styleable.StationRecyclerView_fab, -3);
         } finally {
             typedArray.recycle();
         }
     }
 
     public void initView(String[] defaults, Location location) {
-
         stationTask = ThreadManager.startStationListTask(this, defaults, location);
     }
-
 
     @Override
     protected void onAttachedToWindow() {
@@ -123,6 +116,7 @@ public class StationRecyclerView extends RecyclerView {
         if(localView != null) {
             ((View)getParent()).findViewById(mHideShowResId).setVisibility(View.GONE);
             ((View)getParent()).findViewById(mTextViewResId).setVisibility(View.GONE);
+            ((View)getParent()).findViewById(mFabResId).setVisibility(View.VISIBLE);
 
             localView.setVisibility(View.VISIBLE);
         }

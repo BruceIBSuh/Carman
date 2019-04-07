@@ -269,25 +269,12 @@ public class ThreadManager {
                         break;
 
 
-                    case DOWNLOAD_STATION_INFO_COMPLETE:
-                        //Log.i(LOG_TAG, "DOWNLOAD_STATION_INFO_COMPLETE");
 
-                        curStnTask = (StationCurrentTask)msg.obj;
-
-                        String addrs = curStnTask.getStationAddrs();
-                        String id = curStnTask.getStationId();
-                        String code = curStnTask.getStationCode();
-
-                        curStnTask.getGasManagerActivity().initStationInfo(id, addrs, code);
-
-                        break;
                     */
-                    case DOWNLOAD_STATION_LIST_COMPLETE:
+
+                    case DOWNLOAD_STATION_INFO_COMPLETE:
                         log.i("DOWNLOAD_NEAR_STATION_COMPLETED");
-
                         stationTask = (StationTask)msg.obj;
-                        //StationRecyclerView localView = stationTask.getRecyclerView();
-
                         List<Opinet.GasStnParcelable> stnList = stationTask.getStationList();
                         //localView.setNearStationList(stnList);
                         mTaskListener.onStationTaskComplete(stnList);
@@ -298,15 +285,6 @@ public class ThreadManager {
 
                     case DOWNLOAD_NO_STATION_COMPLETE:
                         mTaskListener.onTaskFailure();
-                        break;
-
-                    case DOWNLOAD_STATION_INFO_COMPLETE:
-                        log.i("DOWNLOAD_STATION_INFO_COMPLETE");
-                        /*
-                        stationTask = (StationTask)msg.obj;
-                        List<Opinet.GasStnParcelable> stnList = stationTask.getStationInfoList();
-                        mTaskListener.onStationTaskComplete(stnList);
-                        */
                         break;
 
                     /*
@@ -329,34 +307,6 @@ public class ThreadManager {
                         stationTask.recycle();
                         mStationTaskQueue.offer(stationTask);
                         break;
-
-                    case POPULATE_STATION_LIST_COMPLETED:
-                        //Log.i(LOG_TAG, "POPULATE_STATION_LIST_COMPLETED");
-                        stationTask = (StationTask)msg.obj;
-
-                        OpinetStationListFragment fragment = stationTask.getStationListFragment();
-                        StationListView listView = stationTask.getStationListView();
-                        StationListAdapter adapter = stationTask.getStationListAdapter();
-
-                        fragment.setStationList(stationTask.getStationList());
-                        adapter.notifyDataSetChanged();
-                        listView.setAdapter(adapter);
-                        listView.showStationListView(View.VISIBLE);
-
-                        break;
-
-                    case POPULATE_STATION_LIST_FAILED:
-                        //Log.i(LOG_TAG, "POPULATE_STATION_LIST_FAILED");
-                        stationTask = (StationTask)msg.obj;
-                        stationTask.recycle();
-                        mStationTaskQueue.offer(stationTask);
-                        break;
-
-                    case DOWNLOAD_DISTCODE_COMPLTETED:
-                        //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        saveDistCodeTask = (SaveDistCodeTask)msg.obj;
-                        saveDistCodeTask.recycle();
-                        break;
                     */
                 }
 
@@ -369,8 +319,6 @@ public class ThreadManager {
     static ThreadManager getInstance() {
         return sInstance;
     }
-
-
 
     // Handles state messages for a particular task object
     void handleState(ThreadTask task, int state) {
@@ -408,15 +356,17 @@ public class ThreadManager {
 
                 case DOWNLOAD_STATION_LIST_COMPLETE:
                     log.i("DOWNLOAD_STATION_LIST_COMPLETE");
-                    /*
+
                     List<Opinet.GasStnParcelable> stationList = ((StationTask) task).getStationList();
                     for(Opinet.GasStnParcelable station : stationList) {
-                        ((StationTask) task).initStationInfo(station);
+                        log.i("Station ID: %s", station.getStnId());
+                        //((StationTask) task).initStationInfo(station);
                         mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
                     }
-                    */
+
+
                     //mDownloadThreadPool.execute(((StationTask) task).getStationInfoRunnalbe());
-                    msg.sendToTarget();
+                    //msg.sendToTarget();
                     break;
 
                 case DOWNLOAD_STATION_INFO_COMPLETE:

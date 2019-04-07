@@ -1,10 +1,10 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -13,6 +13,7 @@ import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -40,7 +41,7 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
  * A simple {@link Fragment} subclass.
  */
 public class GeneralFragment extends Fragment implements
-        View.OnClickListener,
+        View.OnClickListener, RecyclerView.OnItemTouchListener,
         AdapterView.OnItemSelectedListener,
         ThreadManager.OnCompleteTaskListener {
 
@@ -56,7 +57,7 @@ public class GeneralFragment extends Fragment implements
     private SigunPriceView sigunPriceView;
     private StationPriceView stationPriceView;
 
-    private FrameLayout frameRecycler;
+    //private FrameLayout frameRecycler;
     private StationRecyclerView stationRecyclerView;
     private RecyclerView.LayoutManager layoutManager;
     private StationListAdapter mAdapter;
@@ -70,6 +71,7 @@ public class GeneralFragment extends Fragment implements
     private TextView tvStationsOrder;
     private Spinner fuelSpinner;
     private FrameLayout frameAvgPrice;
+    private FloatingActionButton fab;
 
     // Fields
     private boolean isLocationFetched;
@@ -103,11 +105,14 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView = childView.findViewById(R.id.sigunPriceView);
         stationPriceView = childView.findViewById(R.id.stationPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
-        frameRecycler = childView.findViewById(R.id.frame_recyclerview);
+        fab = childView.findViewById(R.id.fab_reload);
 
+        // Attach event listeners
         childView.findViewById(R.id.imgbtn_expense).setOnClickListener(this);
         childView.findViewById(R.id.imgbtn_stations).setOnClickListener(this);
+        stationRecyclerView.addOnItemTouchListener(this);
 
+        // Indicate the current time. Refactor required to show the real time using a worker thread.
         String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
 
@@ -129,6 +134,23 @@ public class GeneralFragment extends Fragment implements
                 break;
             }
         }
+
+        // Set Floating Action Button
+        // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
+        // button when scolling/idling
+        fab.setSize(FloatingActionButton.SIZE_AUTO);
+        stationRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 0 || dy < 0 && fab.isShown()) fab.hide();
+            }
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) fab.show();
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+        });
+
 
         // Fetch the current location by using FusedLocationProviderClient on a work thread
         locationTask = ThreadManager.fetchLocationTask(this);
@@ -199,6 +221,23 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
+    // The following 3 methods are invoked by RecyclerView.OnItemTouchListener
+    @Override
+    public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+        log.i("onTouchEvent: %s", rv);
+    }
+
+    @Override
+    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+
+    }
+
+
 
     // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
@@ -227,5 +266,7 @@ public class GeneralFragment extends Fragment implements
         log.i("onTaskFailure");
         stationRecyclerView.showTextView("No Stations");
     }
+
+
 
 }
