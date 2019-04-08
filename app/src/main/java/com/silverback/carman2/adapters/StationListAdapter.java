@@ -40,7 +40,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
 
     // Interface to communicate w/ MainActivity when a RecyclerView item being clicked
     public interface RecyclerViewItemClickListener {
-        void onCardViewItemClicked(String stnId);
+        void onRecyclerViewItemClicked(String stnId);
     }
 
     // Constructor
@@ -62,13 +62,15 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     }
 
     @Override
-    public void onBindViewHolder(@NonNull final StationsViewHolder holder, final int position) {
-        holder.bindToStationList(stationList.get(position));
+    public void onBindViewHolder(@NonNull StationsViewHolder holder, int position) {
+
+        final Opinet.GasStnParcelable station = stationList.get(position);
+        holder.bindToStationList(station);
+
         cardView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                log.i("CardView Clicked: %s,%s", position, holder.getStationCode());
-                mListener.onCardViewItemClicked(holder.getStationCode());
+                mListener.onRecyclerViewItemClicked(station.getStnId());
             }
         });
 
@@ -78,6 +80,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     public int getItemCount() {
         return stationList.size();
     }
+
 
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
@@ -95,6 +98,25 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         if(mListener != null) mListener = null;
         super.onDetachedFromRecyclerView(recyclerView);
     }
+
+    /*
+    @Override
+    public void onViewAttachedToWindow(@NonNull StationsViewHolder holder) {
+        super.onViewAttachedToWindow(holder);
+        try {
+            mListener = (RecyclerViewItemClickListener)context;
+        } catch(ClassCastException e) {
+            log.i("ClassCastExcpetion: %s", e.getMessage());
+        }
+
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(@NonNull StationsViewHolder holder) {
+        if(mListener != null) mListener = null;
+        super.onViewDetachedFromWindow(holder);
+    }
+    */
 
 
     /*

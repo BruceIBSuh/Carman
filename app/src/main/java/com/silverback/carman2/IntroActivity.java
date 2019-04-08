@@ -66,7 +66,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         mProgBar.setVisibility(View.VISIBLE);
 
-        if(checkUpdateOpinet()) {
+        //if(checkUpdateOpinet()) {
             String distCode = convJSONArrayToList().get(2);
             log.i("DistCode from HashSet: %s", distCode);
 
@@ -77,10 +77,10 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
 
-        } else {
+        //} else {
             startActivity(new Intent(this, MainActivity.class));
             finish();
-        }
+        //}
 
     }
 
@@ -89,6 +89,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     private void firstInitProcess() {
 
         // Unless the district code has been saved, download again the sigun code list and save it.
+        log.i("firstInitProcess: download District Code");
         File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
         if(!distCode.exists()) saveDistCodeTask = ThreadManager.downloadOpinetDistCodeTask(this);
 

@@ -28,7 +28,7 @@ public class StationRecyclerView extends RecyclerView {
     //private Context context;
     private WeakReference<View> mThisView;
     private StationTask stationTask;
-    private int mHideShowResId = -1;
+    private int mPBResId = -1;
     private int mTextViewResId = -2;
     private int mFabResId = -3;
 
@@ -56,7 +56,7 @@ public class StationRecyclerView extends RecyclerView {
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.StationRecyclerView);
         try {
-            mHideShowResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
+            mPBResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
             mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
             mFabResId = typedArray.getResourceId(R.styleable.StationRecyclerView_fab, -3);
         } finally {
@@ -72,9 +72,9 @@ public class StationRecyclerView extends RecyclerView {
     protected void onAttachedToWindow() {
         // Always call the supermethod first
         super.onAttachedToWindow();
-        if (mHideShowResId != -1 && (getParent() instanceof View)) {
+        if (mPBResId != -1 && (getParent() instanceof View)) {
             // Gets a handle to the sibling View
-            View localView = ((View)getParent()).findViewById(mHideShowResId);
+            View localView = ((View)getParent()).findViewById(mPBResId);
             // If the sibling View contains something, make it the weak reference for this View
             if (localView != null) {
                 mThisView = new WeakReference<>(localView);
@@ -114,7 +114,7 @@ public class StationRecyclerView extends RecyclerView {
         View localView = mThisView.get();
 
         if(localView != null) {
-            ((View)getParent()).findViewById(mHideShowResId).setVisibility(View.GONE);
+            ((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
             ((View)getParent()).findViewById(mTextViewResId).setVisibility(View.GONE);
             ((View)getParent()).findViewById(mFabResId).setVisibility(View.VISIBLE);
 
@@ -130,7 +130,7 @@ public class StationRecyclerView extends RecyclerView {
             View localView = ((View)getParent()).findViewById(mTextViewResId);
             // If the sibling View contains something, make it the weak reference for this View
             if (localView != null) {
-                ((View)getParent()).findViewById(mHideShowResId).setVisibility(View.GONE);
+                ((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
                 mThisView = new WeakReference<>(localView);
                 ((TextView)mThisView.get()).setText(message);
             }

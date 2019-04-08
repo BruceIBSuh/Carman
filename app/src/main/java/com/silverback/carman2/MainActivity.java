@@ -14,19 +14,25 @@ import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.fragments.BoardFragment;
+import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.threads.StationMapInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
+
+import java.io.File;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends BaseActivity implements
         StationListAdapter.RecyclerViewItemClickListener,
+        FinishAppDialogFragment.NoticeDialogListener,
         ViewPager.OnPageChangeListener {
 
     // Logging
@@ -35,10 +41,10 @@ public class MainActivity extends BaseActivity implements
     // Objects
     private TabLayout tabLayout;
     private ViewPager viewPager;
-    //private FragmentPagerAdapter pagerAdapter;
-    //private Fragment[] mFragments;
     private Fragment generalFragment, boardFragment;
     private FrameLayout frameLayout;
+    private StationMapInfoTask mapInfoTask;
+    private FinishAppDialogFragment alertDialog;
 
     // Fields
     private boolean isTabLayoutVisible = false;
@@ -53,6 +59,7 @@ public class MainActivity extends BaseActivity implements
         Toolbar toolbar = findViewById(R.id.toolbar);
         frameLayout = findViewById(R.id.frameLayout);
         tabLayout = findViewById(R.id.tabLayout);
+        log.i("tabLahyout: %s", tabLayout.getTabCount());
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
@@ -128,9 +135,14 @@ public class MainActivity extends BaseActivity implements
                 return true;
 
             default:
-
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(mapInfoTask != null) mapInfoTask = null;
     }
 
     // Callbacks invoked by ViewPager.OnPageChangeListener
@@ -147,22 +159,54 @@ public class MainActivity extends BaseActivity implements
         log.d("ViewPager Listeenr_onPageScrollStateChanged");
     }
 
+
+    @Override
+    public void onBackPressed(){
+        // Pop up the dialog to confirm to leave the app.
+        alertDialog = new FinishAppDialogFragment();
+        alertDialog.show(getSupportFragmentManager(), "FinishAppDialogFragment");
+    }
+
+
+    // App closing process, in which cache-clearing code be required.
+    // FinishAppDialogFragment.NoticeDialogListener invokes
+    // to handle how the dialog buttons act according to positive and negative.
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Override
+    public void onDialogPositiveClick(DialogFragment dialog) {
+        boolean isDeleted = false;
+        File cacheDir = getCacheDir();
+        if(cacheDir != null && cacheDir.isDirectory()) {
+
+            File[] cacheFile = cacheDir.listFiles();
+            for(File file : cacheFile) {
+                log.i("File: %s", file);
+                isDeleted = file.delete();
+            }
+        }
+
+        if(isDeleted) this.finishAffinity();
+    }
+
+    @Override
+    public void onDialogNegativeClick(DialogFragment dialog) {}
+
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
-
     @SuppressWarnings("ConstantConditions")
-    private void addTabIconAndTitle(TabLayout tabLayout){ //, String[] title, Drawable[] icons) {
+    private void addTabIconAndTitle(TabLayout tabLayout) {
 
         final String[] titles = getResources().getStringArray(R.array.tap_title);
         final Drawable[] icons = new Drawable[] {
                 getDrawable(R.drawable.ic_gas),
                 getDrawable(R.drawable.ic_service),
-                getDrawable(R.drawable.ic_stats),
-                getDrawable(R.drawable.ic_setting)
+                getDrawable(R.drawable.ic_stats)
+                //getDrawable(R.drawable.ic_setting)
         };
 
 
         for(int i = 0; i < tabLayout.getTabCount(); i++) {
+            log.i("tab: %s", i);
             tabLayout.getTabAt(i).setIcon(icons[i]);
             tabLayout.getTabAt(i).setText(titles[i]);
         }
@@ -204,10 +248,13 @@ public class MainActivity extends BaseActivity implements
         return -1;
     }
 
-    // Callback invoked by StationListAdapter.RecyclerViewItemClickListener
+    // Callback invoked by StationListAdapter.RecyclerViewItemClickListener when clicking an list
+    // item, which starts StationDetailTask to pass detailed information as to a clicked station
+    // to StationMapActivity.
     @Override
-    public void onCardViewItemClicked(String stnId) {
+    public void onRecyclerViewItemClicked(String stnId) {
         log.i("RecyclerView Item clicked: %s", stnId);
-        startActivity(new Intent(this, StationMapActivity.class));
+        mapInfoTask = ThreadManager.startStationMapTask(this, stnId);
+        //startActivity(new Intent(this, StationMapActivity.class));
     }
 }
