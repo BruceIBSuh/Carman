@@ -89,6 +89,7 @@ public class StationInfoRunnable implements Runnable {
                 }
                 if(conn != null) conn.disconnect();
 
+                // Check if the iteration of all items has completed.
                 if(index == task.getStationList().size() -1)
                     task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
             }

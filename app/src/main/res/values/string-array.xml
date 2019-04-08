@@ -5,7 +5,7 @@
         <item>@string/tab_gas</item>
         <item>@string/tab_service</item>
         <item>@string/tab_stat</item>
-        <item>@string/tab_setting</item>
+        <!--<item>@string/tab_setting</item>-->
 
     </string-array>
 

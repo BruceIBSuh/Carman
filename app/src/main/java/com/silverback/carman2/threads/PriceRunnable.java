@@ -108,7 +108,6 @@ public class PriceRunnable implements Runnable {
                         task.addCount();
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
                         log.i("avgList: %d", avgList.size());
-
                     }
 
                     break;

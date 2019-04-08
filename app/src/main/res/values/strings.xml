@@ -82,7 +82,10 @@
     <string name="pref_spinner_sido_ulsan">울산시</string>
     <string name="pref_spinner_sido_sejong">세종시</string>
 
-
+    <!--DialogFragment-->
+    <string name="msg_finish_app">확인 버튼을 누르면 카르맨이 종료됩니다.</string>
+    <string name="btn_finish_confirm">확인</string>
+    <string name="btn_finish_cancel">취소</string>
 
 
     <!--Miscellany-->
