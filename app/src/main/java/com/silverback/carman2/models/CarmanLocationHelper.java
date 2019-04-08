@@ -79,7 +79,6 @@ public class CarmanLocationHelper implements
                 for(Location location : locationResult.getLocations())
                     log.i("Locations updated: $s, %s", location, System.currentTimeMillis());
 
-
                 mLocation = locationResult.getLastLocation();
                 log.i("Location in Callback: %s, %s", mLocation.getLatitude(), mLocation.getLongitude());
             }

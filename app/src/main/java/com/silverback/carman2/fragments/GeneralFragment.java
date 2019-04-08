@@ -20,6 +20,7 @@ import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
@@ -71,7 +72,7 @@ public class GeneralFragment extends Fragment implements
     private List<Opinet.GasStnParcelable> mStationList;
 
     //private Uri uriStationList;
-    private Location mLocation;
+    private Location mCurrentLocation;
 
     // UI's
     private TextView tvStationsOrder;
@@ -80,9 +81,9 @@ public class GeneralFragment extends Fragment implements
     private FloatingActionButton fab;
 
     // Fields
-    private boolean isLocationFetched;
     private String[] defaults; // defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
+    private boolean isLocationUpdated;
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -156,10 +157,6 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-
-        // Fetch the current location by using FusedLocationProviderClient on a work thread
-        locationTask = ThreadManager.fetchLocationTask(this);
-
         return childView;
     }
 
@@ -174,14 +171,15 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume");
-
+        // Fetch the current location by using FusedLocationProviderClient on a work thread
+        locationTask = ThreadManager.fetchLocationTask(this);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         if(locationTask != null) locationTask = null;
+        if(stationTask != null) stationTask = null;
     }
 
 
@@ -226,10 +224,13 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
-        if(mLocation != null) {
+        /*
+        if(mCurrentLocation != null) {
             log.i("stationTask: %s", stationTask);
-            //stationRecyclerView.initView(defaults, mLocation);
+            stationRecyclerView.initView(defaults, mCurrentLocation);
         }
+        */
+
     }
 
     @Override
@@ -259,9 +260,15 @@ public class GeneralFragment extends Fragment implements
     // then, initializes another thread to download a station list based upon the location.
     @Override
     public void onLocationFetched(Location location){
-        isLocationFetched = true;
-        mLocation = location;
-        //stationRecyclerView.initView(defaults, location);
+
+        if(mCurrentLocation == null) mCurrentLocation = location;
+        else if(mCurrentLocation.distanceTo(location) < Constants.OPINET_UPDATE_DISTANCE) {
+            log.i("Distance is too short to refresh");
+            return;
+        }
+
+        isLocationUpdated = !isLocationUpdated;
+        stationRecyclerView.initView(defaults, location);
     }
 
 
@@ -293,7 +300,7 @@ public class GeneralFragment extends Fragment implements
         log.i("MapInfo: %s, %s", mapInfo.getStationName(), mapInfo.getNewAddrs());
 
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putStringArrayListExtra("station_mapinfo", (ArrayList)mapInfoList);
+        //intent.putStringArrayListExtra("station_mapinfo", (ArrayList)mapInfoList);
         if(getActivity() != null) getActivity().startActivity(intent);
     }
 }

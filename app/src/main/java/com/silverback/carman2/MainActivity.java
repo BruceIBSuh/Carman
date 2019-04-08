@@ -93,7 +93,7 @@ public class MainActivity extends BaseActivity implements
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
-        getSupportFragmentManager().beginTransaction().add(R.id.frameLayout, generalFragment).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, generalFragment).commit();
 
         // Calculates Toolbar height which is referred to as a baseline for TabLayout and ViewPager
         // to slide up and down.
