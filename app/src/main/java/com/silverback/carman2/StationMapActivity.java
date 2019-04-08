@@ -23,8 +23,8 @@ public class StationMapActivity extends AppCompatActivity {
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
         CardView cardView = findViewById(R.id.cardview_map);
-        MapStationInfoView view = findViewById(R.id.custom_view);
-        view.initView();
+        //MapStationInfoView view = findViewById(R.id.custom_view);
+        //view.initView();
 
 
 
