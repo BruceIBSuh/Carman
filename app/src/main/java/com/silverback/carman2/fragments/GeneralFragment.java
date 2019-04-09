@@ -23,8 +23,8 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
-import com.silverback.carman2.threads.StationMapTask;
-import com.silverback.carman2.threads.StationTask;
+import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
 import com.silverback.carman2.views.SidoPriceView;
@@ -57,8 +57,8 @@ public class GeneralFragment extends Fragment implements
     // Objects
     private LocationTask locationTask;
     private PriceTask priceTask;
-    private StationTask stationTask;
-    private StationMapTask mapInfoTask;
+    private StationListTask stationListTask;
+    private StationInfoTask stationInfoTask;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -81,7 +81,7 @@ public class GeneralFragment extends Fragment implements
     private FloatingActionButton fab;
 
     // Fields
-    private boolean hasTaskFinished = false;//prevent StationTask from repaeating when adding the fragment.
+    private boolean hasTaskFinished = false;//prevent StationListTask from repaeating when adding the fragment.
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
     private int position;//RecyclerView item position from StationListAdapter.RecyclerViewItemClickListener.
@@ -93,9 +93,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -167,7 +164,7 @@ public class GeneralFragment extends Fragment implements
         /*
          * Initiates LocationTask to fetch the current location only when the flag, hasTaskFinished
          * is set to false, in case of which may be at the first time and when the fab is clicked.
-         * StationTask should be launched only if the current location is newly retrieved in the
+         * StationListTask should be launched only if the current location is newly retrieved in the
          * call back method, onLocationFetched().
          */
         if(!hasTaskFinished) {
@@ -203,9 +200,9 @@ public class GeneralFragment extends Fragment implements
     public void onStop(){
         super.onStop();
         if(locationTask != null) locationTask = null;
-        if(stationTask != null) stationTask = null;
+        if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
-        if(mapInfoTask != null) mapInfoTask = null;
+        if(stationInfoTask != null) stationInfoTask = null;
     }
 
 
@@ -250,9 +247,9 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
-        /* Initiates StationTask to retreive a new station list with a fuel set by Spinner.
+        /* Initiates StationListTask to retreive a new station list with a fuel set by Spinner.
         if(hasTaskFinished) {
-            log.i("stationTask: %s", stationTask);
+            log.i("stationListTask: %s", stationListTask);
             //stationRecyclerView.initView(defaults, mCurrentLocation);
         }
         */
@@ -283,16 +280,15 @@ public class GeneralFragment extends Fragment implements
     public void onRecyclerViewItemClicked(int position, String stnId) {
         log.i("RecyclerView Item clicked: %s", stnId);
         this.position = position;
-        mapInfoTask = ThreadManager.startStationMapTask(this.getContext(), stnId);
+        stationInfoTask = ThreadManager.startStationInfoTask(this.getContext(), stnId);
     }
-
 
     /**
      * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
      * onLocationFetched():
-     * onStationTaskComplete():
+     * onStationListTaskComplete():
      * onTaskFailure():
-     * onStationMapTaskComplete():
+     * onStationInfoTaskComplete():
      */
     // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
@@ -305,10 +301,10 @@ public class GeneralFragment extends Fragment implements
     }
 
     // The following callback methods are invoked by ThreadManager.OnCompleteTaskListener
-    // on having StationTask completed or failed.
+    // on having StationListTask completed or failed.
 
     @Override
-    public void onStationTaskComplete(List<Opinet.GasStnParcelable> stnList) {
+    public void onStationListTaskComplete(List<Opinet.GasStnParcelable> stnList) {
         log.i("StationInfoList: %s", stnList.size());
         mStationList = stnList;
         mAdapter = new StationListAdapter(stnList, this);
@@ -324,7 +320,7 @@ public class GeneralFragment extends Fragment implements
 
     // On fetching the detailed information of a specific station by picking it in RecyclerView.
     @Override
-    public void onStationMapTaskComplete(Opinet.GasStationInfo mapInfo) {
+    public void onStationInfoTaskComplete(Opinet.GasStationInfo mapInfo) {
 
         ArrayList<String> argList = new ArrayList<>();
         argList.add(mStationList.get(position).getStnName());

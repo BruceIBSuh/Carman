@@ -11,88 +11,73 @@ import com.silverback.carman2.models.XmlPullParserHandler;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 
 public class StationInfoRunnable implements Runnable {
 
     // Logging
-    static private final LoggingHelper log = LoggingHelperFactory.create(StationInfoRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationInfoRunnable.class);
 
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
-    static final int DOWNLOAD_STATION_INFO_COMPLETE = 3;
-    static final int DOWNLOAD_STATION_INFO_FAILED = -3;
+    static final int DOWNLOAD_STATION_INFO_COMPLETE = 1;
+    static final int DOWNLOAD_STATION_INFO_FAIL = -1;
 
     // Objects
-    private StationInfoMethod task;
+    private Context context;
+    private StationInfoMethods task;
     private XmlPullParserHandler xmlHandler;
-    private HttpURLConnection conn = null;
-    private InputStream is = null;
 
-    // Interface
-    public interface StationInfoMethod {
-
+    //Interface
+    interface StationInfoMethods {
         void setStationTaskThread(Thread thread);
         void handleStationTaskState(int state);
-        void addStationInfo(Opinet.GasStnParcelable station);
-        List<Opinet.GasStnParcelable> getStationList();
-        int getStationIndex();
+        void setStationInfo(Opinet.GasStationInfo info);
+        String getStnID();
     }
 
     // Constructor
-    StationInfoRunnable(StationInfoMethod task) {
+    StationInfoRunnable(WeakReference<Context> weakContext, StationInfoMethods task) {
+        this.context = weakContext.get();
         this.task = task;
         xmlHandler = new XmlPullParserHandler();
     }
-
 
     @Override
     public void run() {
         task.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        synchronized (this) {
-            int index = task.getStationIndex();
-            Opinet.GasStnParcelable station = task.getStationList().get(index);
-            String OPINET_INFO = OPINET + "&id=" + station.getStnId();
+        String OPINET_DETAIL = OPINET + "&id=" + task.getStnID();
+        HttpURLConnection conn = null;
+        InputStream is = null;
 
-            try {
-                URL url = new URL(OPINET_INFO);
-                conn = (HttpURLConnection) url.openConnection();
-                //conn.setRequestProperty("Connection", "close");
-                //conn.setConnectTimeout(5000);
-                //conn.setReadTimeout(5000);
-                //conn.connect();
-                is = new BufferedInputStream(conn.getInputStream());
-                //is = conn.getInputStream();
-                Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
-                log.i("StnInfo: %s, %s", stnInfo.getOldAddrs(), stnInfo.getIsCarWash());
+        try {
+            URL url = new URL(OPINET_DETAIL);
+            conn = (HttpURLConnection) url.openConnection();
+            is = new BufferedInputStream(conn.getInputStream());
+            Opinet.GasStationInfo info = xmlHandler.parseGasStationInfo(is);
+            task.setStationInfo(info);
+            task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
 
-                station.setIsCarWash(stnInfo.getIsCarWash());
-                task.addStationInfo(station);
-
-            } catch (MalformedURLException e) {
-                log.e("MalformedURLException: %s", e.getMessage());
-            } catch (IOException e) {
-                log.e("IOException: %s", e.getMessage());
-            } finally {
-
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+        } catch (MalformedURLException e) {
+            log.e("MalformedURLException: %s", e.getMessage());
+            task.handleStationTaskState(DOWNLOAD_STATION_INFO_FAIL);
+        } catch (IOException e) {
+            log.e("IOException: %s", e.getMessage());
+            task.handleStationTaskState(DOWNLOAD_STATION_INFO_FAIL);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                if(conn != null) conn.disconnect();
-
-                // Check if the iteration of all items has completed.
-                if(index == task.getStationList().size() -1)
-                    task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
             }
+            if (conn != null) conn.disconnect();
         }
     }
 }

@@ -19,18 +19,18 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StationTask extends ThreadTask implements
-        StationListRunnable.StationListMethod,
-        StationInfoRunnable.StationInfoMethod {
+public class StationListTask extends ThreadTask implements
+        StationListRunnable.StationListMethod {
+        //StationInfoRunnable.StationInfoMethod {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
 
     // Objects
     private Context context;
     private WeakReference<StationRecyclerView> mWeakRecyclerView;
     private Runnable mStationListRunnable;
-    private Runnable mStationInfoRunnable;
+    //private Runnable mStationInfoRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
 
     private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
@@ -41,11 +41,11 @@ public class StationTask extends ThreadTask implements
     private static ThreadManager sThreadManager;
 
     // Constructor
-    StationTask(Context context) {
+    StationListTask(Context context) {
         super();
         this.context = context;
         mStationListRunnable = new StationListRunnable(context, this);
-        mStationInfoRunnable = new StationInfoRunnable(this);
+        //mStationInfoRunnable = new StationInfoRunnable(this);
     }
 
     void initStationTask(
@@ -60,7 +60,7 @@ public class StationTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    Runnable getStationInfoRunnalbe() { return mStationInfoRunnable; }
+    //Runnable getStationInfoRunnalbe() { return mStationInfoRunnable; }
 
     void recycle() {
         if(mWeakRecyclerView != null) {
@@ -102,6 +102,7 @@ public class StationTask extends ThreadTask implements
      * getStationIndex():
      * addStationInfo()
      */
+    /*
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {
         return mStationList;
@@ -118,7 +119,7 @@ public class StationTask extends ThreadTask implements
     public void addStationInfo(Opinet.GasStnParcelable station) {
         mStationInfoList.add(station);
     }
-
+    */
 
 
     @Override
@@ -126,15 +127,19 @@ public class StationTask extends ThreadTask implements
         int outState = -1;
         switch (state) {
             case StationListRunnable.DOWNLOAD_NEAR_STATIONS_COMPLETE:
-                outState = ThreadManager.DOWNLOAD_STATION_LIST_COMPLETE;
+                log.i("DOWNLOAD_NEAR_STATIONS_COMPLETE");
+                outState = ThreadManager.DOWNLOAD_STATION_LIST_COMPLETED;
                 break;
 
+            case StationListRunnable.DOWNLAOD_CURRENT_STATION_COMPLETE:
+                break;
+            /*
             case StationInfoRunnable.DOWNLOAD_STATION_INFO_COMPLETE:
                 log.i("Opinet.GasStationParcelable:");
                 if(saveNearStationInfo(mStationInfoList))
                     outState= ThreadManager.DOWNLOAD_STATION_INFO_COMPLETE;
                 break;
-
+            */
             case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:
                 outState = ThreadManager.DOWNLOAD_NO_STATION_COMPLETE;
                 break;
@@ -142,10 +147,10 @@ public class StationTask extends ThreadTask implements
             case StationListRunnable.DOWNLOAD_NEAR_STATIONS_FAILED:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;
-
+            /*
             case StationInfoRunnable.DOWNLOAD_STATION_INFO_FAILED:
                 break;
-
+            */
             default:
                 break;
         }
@@ -153,9 +158,14 @@ public class StationTask extends ThreadTask implements
         sThreadManager.handleState(this, outState);
     }
 
+
+    List<Opinet.GasStnParcelable> getStationList() {
+        return mStationList;
+    }
+
     // Save the station list fetched by StationListRunnable and added with car wash info by
     // StationInfoRunnable.
-    @SuppressWarnings("UnusedReturnValue")
+    /*
     private boolean saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
 
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
@@ -181,5 +191,6 @@ public class StationTask extends ThreadTask implements
 
         return false;
     }
+    */
 
 }

@@ -18,7 +18,7 @@ import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.threads.StationMapTask;
+import com.silverback.carman2.threads.StationInfoTask;
 
 import java.io.File;
 
@@ -40,7 +40,7 @@ public class MainActivity extends BaseActivity implements
     private ViewPager viewPager;
     private Fragment generalFragment, boardFragment;
     private FrameLayout frameLayout;
-    private StationMapTask mapInfoTask;
+    private StationInfoTask mapInfoTask;
     private FinishAppDialogFragment alertDialog;
 
     // Fields

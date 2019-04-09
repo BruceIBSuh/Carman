@@ -12,7 +12,6 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
-import com.silverback.carman2.views.StationRecyclerView;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -137,7 +136,7 @@ public class StationListRunnable implements Runnable{
 
                 } else {
                     log.i("StationList: %s", mStationList.size());
-                    Uri uri = saveNearStationInfo(mStationList);
+                    Uri uri = saveNearStationList(mStationList);
                     if (uri != null) {
                         mTask.setStationList(mStationList);
                         mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
@@ -145,7 +144,8 @@ public class StationListRunnable implements Runnable{
                 }
 
             } else {
-                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(DOWNLOAD_CURRENT_STATION_FAILED);
+                if(radius.matches(Constants.MIN_RADIUS))
+                    mTask.handleStationTaskState(DOWNLOAD_CURRENT_STATION_FAILED);
                 else mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
             }
 
@@ -174,9 +174,15 @@ public class StationListRunnable implements Runnable{
     }
 
     // Save the downloaded near station list in the designated file location.
-    private Uri saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
+    private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
 
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+
+        // Delete the file before saving a new list.
+        if(file.exists()) {
+            boolean delete = file.delete();
+            if(delete) log.i("cache cleared");
+        }
 
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {

@@ -11,7 +11,7 @@ import android.widget.TextView;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.threads.StationTask;
+import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
@@ -27,7 +27,7 @@ public class StationRecyclerView extends RecyclerView {
     // Objects
     //private Context context;
     private WeakReference<View> mThisView;
-    private StationTask stationTask;
+    private StationListTask stationListTask;
     private int mPBResId = -1;
     private int mTextViewResId = -2;
     private int mFabResId = -3;
@@ -65,7 +65,7 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     public void initView(String[] defaults, Location location) {
-        stationTask = ThreadManager.startStationListTask(this, defaults, location);
+        stationListTask = ThreadManager.startStationListTask(this, defaults, location);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class StationRecyclerView extends RecyclerView {
             mThisView = null;
         }
 
-        if(stationTask != null) stationTask = null;
+        if(stationListTask != null) stationListTask = null;
 
 
         // Always call the super method last
@@ -122,7 +122,7 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
-    // Invoked from the parent GeneralFragment when StationTask failed to fetch a station.
+    // Invoked from the parent GeneralFragment when StationListTask failed to fetch a station.
     public void showTextView(String message){
 
         if((mTextViewResId != -2) && (getParent() instanceof View)) {

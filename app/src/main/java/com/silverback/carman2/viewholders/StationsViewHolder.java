@@ -21,7 +21,7 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
 
     // UI's
     private ImageView imgLogo;
-    private TextView tvName, tvPrice, tvDistance, tvWash;
+    private TextView tvName, tvPrice, tvDistance;
     private String price, distance, carwash;
     private String stnCode;
 
@@ -33,7 +33,7 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
         tvName = cardView.findViewById(R.id.tv_station_name);
         tvPrice = cardView.findViewById(R.id.tv_price);
         tvDistance = cardView.findViewById(R.id.tv_distance);
-        tvWash = cardView.findViewById(R.id.tv_carwash);
+        //tvWash = cardView.findViewById(R.id.tv_carwash);
 
         price = cardView.getResources().getString(R.string.general_station_price);
         distance = cardView.getResources().getString(R.string.general_station_distance);
@@ -48,7 +48,7 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
         tvName.setText(data.getStnName());
         tvPrice.setText(String.format(Locale.getDefault(),"%s:%5d%2s", price, (int)data.getStnPrice(), "원"));
         tvDistance.setText(String.format(Locale.getDefault(),"%s:%5d%2s", distance, (int)data.getDist(), "m"));
-        tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
+        //tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
     }
 
     public String getStationCode() {

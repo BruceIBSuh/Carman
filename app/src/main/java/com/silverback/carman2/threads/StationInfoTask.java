@@ -8,22 +8,22 @@ import com.silverback.carman2.models.Opinet;
 
 import java.lang.ref.WeakReference;
 
-public class StationMapTask extends ThreadTask implements StationMapRunnable.MapInfoMethods {
+public class StationInfoTask extends ThreadTask implements StationInfoRunnable.StationInfoMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationMapTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationInfoTask.class);
 
     // Objects
     private static ThreadManager sThreadManager;
-    private Runnable mStationMapInfoRunnable;
+    private Runnable mStationInfoRunnable;
     private WeakReference<Context> mWeakContext;
-    private Opinet.GasStationInfo mapInfo;
+    private Opinet.GasStationInfo stationInfo;
     private String stnId;
 
     // Constructor
-    StationMapTask(Context context) {
+    StationInfoTask(Context context) {
         mWeakContext = new WeakReference<>(context);
-        mStationMapInfoRunnable = new StationMapRunnable(mWeakContext, this);
+        mStationInfoRunnable = new StationInfoRunnable(mWeakContext, this);
     }
 
     void initStationTask(ThreadManager threadManager, String stationId) {
@@ -32,7 +32,7 @@ public class StationMapTask extends ThreadTask implements StationMapRunnable.Map
     }
 
     Runnable getStationMapInfoRunnable() {
-        return mStationMapInfoRunnable;
+        return mStationInfoRunnable;
     }
 
     @Override
@@ -41,19 +41,19 @@ public class StationMapTask extends ThreadTask implements StationMapRunnable.Map
     }
 
     @Override
-    public void setStationMapInfo(Opinet.GasStationInfo info) {
-        mapInfo = info;
+    public void setStationInfo(Opinet.GasStationInfo info) {
+        stationInfo = info;
     }
 
     @Override
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch(state) {
-            case StationMapRunnable.DOWNLOAD_STN_MAPINFO_COMPLETE:
-                outState = ThreadManager.DOWNLOAD_STN_MAPINFO_COMPLETED;
+            case StationInfoRunnable.DOWNLOAD_STATION_INFO_COMPLETE:
+                outState = ThreadManager.DOWNLOAD_STATION_INFO_COMPLETED;
                 break;
 
-            case StationMapRunnable.DOWNLOAD_STN_MAPINFO_FAIL:
+            case StationInfoRunnable.DOWNLOAD_STATION_INFO_FAIL:
                 outState = ThreadManager.DOWNLOAD_STN_MAPINFO_FAILED;
                 break;
         }
@@ -73,7 +73,7 @@ public class StationMapTask extends ThreadTask implements StationMapRunnable.Map
         }
     }
 
-    Opinet.GasStationInfo getOpinetMapInfo() {
-        return mapInfo;
+    Opinet.GasStationInfo getStationInfo() {
+        return stationInfo;
     }
 }
