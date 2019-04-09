@@ -20,6 +20,7 @@ import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 
 /**
  * A simple {@link PreferenceFragmentCompat} subclass.
@@ -55,6 +56,7 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
         SpinnerDialogPreference spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
+        SwitchPreferenceCompat switchPref = (SwitchPreferenceCompat)findPreference("pref_location_autoupdate");
 
     }
 

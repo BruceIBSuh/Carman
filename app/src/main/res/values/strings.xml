@@ -50,8 +50,10 @@
     <string name="pref_category_basic_info">차량 정보</string>
     <string name="setting_nickname">차량 이름</string>
     <string name="setting_model">차량 모델</string>
-    <string name="pref_category_location">위치 설정</string>
-    <string name="pref_location_radius">탐색 반경</string>
+    <string name="pref_category_location">위치 관련</string>
+    <string name="pref_location_radius">주유소 탐색 반경</string>
+    <string name="pref_title_autoupdate">위치 자동 업데이트</string>
+    <string name="pref_summary_autoupdate">배터리 소모량이 다소 증가할 수 있습니다</string>
     <string name="pref_category_favorites">주유소/카센터 설정</string>
     <string name="pref_favorite_station">자주 찾는 주유소</string>
     <string name="pref_favorite_carcenter">자주 찾는 카센터</string>
@@ -91,4 +93,6 @@
     <!--Miscellany-->
     <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
     <string name="textview">TextView</string>
+    <string name="title_activity_station_maps">Map</string>
+    <string name="title_activity_maps">Map</string>
 </resources>

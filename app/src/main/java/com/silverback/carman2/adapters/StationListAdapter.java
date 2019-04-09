@@ -38,15 +38,18 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     private CardView cardView;
     private RecyclerViewItemClickListener mListener;
 
-    // Interface to communicate w/ MainActivity when a RecyclerView item being clicked
+    // Interface to communicate w/ GeneralFragment when a RecyclerView item is clicked.
     public interface RecyclerViewItemClickListener {
-        void onRecyclerViewItemClicked(String stnId);
+        void onRecyclerViewItemClicked(int position, String stnId);
     }
 
     // Constructor
-    public StationListAdapter(List<Opinet.GasStnParcelable> list) {
+    public StationListAdapter(List<Opinet.GasStnParcelable> list,
+                              RecyclerViewItemClickListener listener) {
+
         super();
         stationList = list;
+        mListener = listener;
     }
 
 
@@ -62,7 +65,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StationsViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull StationsViewHolder holder, final int position) {
 
         final Opinet.GasStnParcelable station = stationList.get(position);
         holder.bindToStationList(station);
@@ -70,7 +73,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         cardView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                mListener.onRecyclerViewItemClicked(station.getStnId());
+                mListener.onRecyclerViewItemClicked(position, station.getStnId());
             }
         });
 
@@ -81,13 +84,13 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         return stationList.size();
     }
 
-
+    /*
     @Override
     public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
         log.i("onAttachedToRecyclerView");
         super.onAttachedToRecyclerView(recyclerView);
         try {
-            mListener = (RecyclerViewItemClickListener)recyclerView.getContext();
+            mListener = (RecyclerViewItemClickListener)context;
         } catch(ClassCastException e) {
             log.i("ClassCastExcpetion: %s", e.getMessage());
         }
@@ -99,7 +102,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         super.onDetachedFromRecyclerView(recyclerView);
     }
 
-    /*
+
     @Override
     public void onViewAttachedToWindow(@NonNull StationsViewHolder holder) {
         super.onViewAttachedToWindow(holder);
@@ -117,6 +120,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
         super.onViewDetachedFromWindow(holder);
     }
     */
+
 
 
     /*

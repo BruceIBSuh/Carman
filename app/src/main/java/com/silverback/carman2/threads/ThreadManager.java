@@ -75,7 +75,7 @@ public class ThreadManager {
     public interface OnCompleteTaskListener {
         void onLocationFetched(Location result);
         void onStationTaskComplete(List<Opinet.GasStnParcelable> result);
-        void onStatonMapInfoTaskComplete(Opinet.GasStationInfo mapInfo);
+        void onStationMapTaskComplete(Opinet.GasStationInfo mapInfo);
         void onTaskFailure();
     }
 
@@ -91,7 +91,7 @@ public class ThreadManager {
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
 
     private final Queue<StationTask> mStationTaskQueue;
-    private final Queue<StationMapInfoTask> mStationMapInfoTaskQueue;
+    private final Queue<StationMapTask> mStationMapTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
 
     // A managed pool of background download threads
@@ -122,7 +122,7 @@ public class ThreadManager {
 
         // Queues of tasks, which is handed to ThreadPool.
         mStationTaskQueue = new LinkedBlockingQueue<>();
-        mStationMapInfoTaskQueue = new LinkedBlockingQueue<>();
+        mStationMapTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
 
 
@@ -289,8 +289,8 @@ public class ThreadManager {
 
                     case DOWNLOAD_STN_MAPINFO_COMPLETED:
                         log.i("DOWNLOAD_STN_MAPINFO_COMPLETED");
-                        Opinet.GasStationInfo info = ((StationMapInfoTask)msg.obj).getOpinetMapInfo();
-                        mTaskListener.onStatonMapInfoTaskComplete(info);
+                        Opinet.GasStationInfo info = ((StationMapTask)msg.obj).getOpinetMapInfo();
+                        mTaskListener.onStationMapTaskComplete(info);
                         break;
                     case DOWNLOAD_STN_MAPINFO_FAILED:
                         break;
@@ -392,8 +392,8 @@ public class ThreadManager {
                     break;
             }
         /*
-        } else if(task instanceof StationMapInfoTask) {
-            log.i("StationMapInfoTask - should map task here");
+        } else if(task instanceof StationMapTask) {
+            log.i("StationMapTask - should map task here");
             msg.sendToTarget();
 
         */
@@ -657,10 +657,10 @@ public class ThreadManager {
         return stationTask;
     }
 
-    public static StationMapInfoTask startStationMapTask(Context context, String stnId) {
-        StationMapInfoTask stationTask = sInstance.mStationMapInfoTaskQueue.poll();
+    public static StationMapTask startStationMapTask(Context context, String stnId) {
+        StationMapTask stationTask = sInstance.mStationMapTaskQueue.poll();
 
-        if(stationTask == null) stationTask = new StationMapInfoTask(context);
+        if(stationTask == null) stationTask = new StationMapTask(context);
         stationTask.initStationTask(ThreadManager.sInstance, stnId);
         sInstance.mDownloadThreadPool.execute(stationTask.getStationMapInfoRunnable());
 
@@ -755,9 +755,9 @@ public class ThreadManager {
      */
     void recycleTask(ThreadTask task) {
 
-        if(task instanceof StationMapInfoTask) {
-            ((StationMapInfoTask)task).recycle();
-            mStationMapInfoTaskQueue.offer((StationMapInfoTask)task);
+        if(task instanceof StationMapTask) {
+            ((StationMapTask)task).recycle();
+            mStationMapTaskQueue.offer((StationMapTask)task);
         }
 
         if(mTaskListener != null) mTaskListener = null;

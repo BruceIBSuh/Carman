@@ -155,9 +155,16 @@ public class StationTask extends ThreadTask implements
 
     // Save the station list fetched by StationListRunnable and added with car wash info by
     // StationInfoRunnable.
+    @SuppressWarnings("UnusedReturnValue")
     private boolean saveNearStationInfo(List<Opinet.GasStnParcelable> list) {
 
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+
+        // Delete the file before saving a new list.
+        if(file.exists()) {
+            boolean delete = file.delete();
+            if(delete) log.i("cache cleared");
+        }
 
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {

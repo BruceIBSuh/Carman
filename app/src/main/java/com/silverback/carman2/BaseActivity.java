@@ -1,13 +1,11 @@
 package com.silverback.carman2;
 
 import android.Manifest;
-
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -19,10 +17,8 @@ import org.json.JSONException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -117,7 +113,7 @@ public class BaseActivity extends AppCompatActivity {
     // value passed from SettingsActivity that is true when the DistCode has changed,
     // then decide whether to newly update for the opinet price list or not
     // Big Bug here
-    protected boolean checkUpdateOpinet() {
+    protected boolean checkUpdateOilPrice() {
         long currentTime = System.currentTimeMillis();
         long lastUpdate = mSettings.getLong(Constants.OPINET_LAST_UPDATE, 0L);
         return(currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;

@@ -12,15 +12,13 @@ import android.widget.FrameLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
-import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.fragments.BoardFragment;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.threads.StationMapInfoTask;
-import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.StationMapTask;
 
 import java.io.File;
 
@@ -31,7 +29,6 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends BaseActivity implements
-        StationListAdapter.RecyclerViewItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
         ViewPager.OnPageChangeListener {
 
@@ -43,7 +40,7 @@ public class MainActivity extends BaseActivity implements
     private ViewPager viewPager;
     private Fragment generalFragment, boardFragment;
     private FrameLayout frameLayout;
-    private StationMapInfoTask mapInfoTask;
+    private StationMapTask mapInfoTask;
     private FinishAppDialogFragment alertDialog;
 
     // Fields
@@ -59,12 +56,10 @@ public class MainActivity extends BaseActivity implements
         Toolbar toolbar = findViewById(R.id.toolbar);
         frameLayout = findViewById(R.id.frameLayout);
         tabLayout = findViewById(R.id.tabLayout);
-        log.i("tabLahyout: %s", tabLayout.getTabCount());
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
-        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
-        if(title != null) getSupportActionBar().setTitle(title);
+
 
         // Creates ViewPager programmatically and sets FragmentPagerAdapter to it, then interworks
         // with TabLayout
@@ -93,7 +88,10 @@ public class MainActivity extends BaseActivity implements
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
-        getSupportFragmentManager().beginTransaction().add(R.id.frameLayout, generalFragment).commit();
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.frameLayout, generalFragment, "generalFragment")
+                .addToBackStack(null)
+                .commit();
 
         // Calculates Toolbar height which is referred to as a baseline for TabLayout and ViewPager
         // to slide up and down.
@@ -117,6 +115,7 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
             case R.id.action_board:
                 animSlideTabLayout();
+                if(isTabLayoutVisible) getSupportFragmentManager().popBackStack();
                 return true;
 
             case R.id.action_garage:
@@ -124,6 +123,7 @@ public class MainActivity extends BaseActivity implements
                 // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
                 // and the ViewPager does so by translating "Y".
                 animSlideTabLayout();
+                if(isTabLayoutVisible) getSupportFragmentManager().popBackStack();
                 return true;
 
             case R.id.action_login:
@@ -134,9 +134,17 @@ public class MainActivity extends BaseActivity implements
                 startActivity(new Intent(MainActivity.this, GeneralSettingActivity.class));
                 return true;
 
-            default:
-                return super.onOptionsItemSelected(item);
         }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onResume(){
+        super.onResume();
+        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
+        if(title != null) getSupportActionBar().setTitle(title);
     }
 
     @Override
@@ -174,18 +182,13 @@ public class MainActivity extends BaseActivity implements
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
-        boolean isDeleted = false;
+        //boolean isDeleted = false;
         File cacheDir = getCacheDir();
-        if(cacheDir != null && cacheDir.isDirectory()) {
-
-            File[] cacheFile = cacheDir.listFiles();
-            for(File file : cacheFile) {
-                log.i("File: %s", file);
-                isDeleted = file.delete();
-            }
+        if(cacheDir != null && checkUpdateOilPrice()) {
+            for (File file : cacheDir.listFiles()) file.delete();
         }
 
-        if(isDeleted) this.finishAffinity();
+        this.finishAffinity();
     }
 
     @Override
@@ -206,7 +209,6 @@ public class MainActivity extends BaseActivity implements
 
 
         for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            log.i("tab: %s", i);
             tabLayout.getTabAt(i).setIcon(icons[i]);
             tabLayout.getTabAt(i).setText(titles[i]);
         }
@@ -248,13 +250,5 @@ public class MainActivity extends BaseActivity implements
         return -1;
     }
 
-    // Callback invoked by StationListAdapter.RecyclerViewItemClickListener when clicking an list
-    // item, which starts StationDetailTask to pass detailed information as to a clicked station
-    // to StationMapActivity.
-    @Override
-    public void onRecyclerViewItemClicked(String stnId) {
-        log.i("RecyclerView Item clicked: %s", stnId);
-        mapInfoTask = ThreadManager.startStationMapTask(this, stnId);
-        //startActivity(new Intent(this, StationMapActivity.class));
-    }
+
 }

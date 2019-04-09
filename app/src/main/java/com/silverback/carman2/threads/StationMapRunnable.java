@@ -16,10 +16,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class StationMapInfoRunnable implements Runnable {
+public class StationMapRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationMapInfoRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationMapRunnable.class);
 
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
@@ -40,7 +40,7 @@ public class StationMapInfoRunnable implements Runnable {
     }
 
     // Constructor
-    StationMapInfoRunnable(WeakReference<Context> weakContext, MapInfoMethods task) {
+    StationMapRunnable(WeakReference<Context> weakContext, MapInfoMethods task) {
         this.context = weakContext.get();
         this.task = task;
         xmlHandler = new XmlPullParserHandler();

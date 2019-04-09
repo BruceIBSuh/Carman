@@ -8,16 +8,14 @@ import android.widget.ProgressBar;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.PriceTask;
+import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class IntroActivity extends BaseActivity implements View.OnClickListener {
 
@@ -57,6 +55,13 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     @Override
     public void onPause() {
         super.onPause();
+        //if(saveDistCodeTask != null) saveDistCodeTask = null;
+        //if(priceTask != null) priceTask = null;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
         if(saveDistCodeTask != null) saveDistCodeTask = null;
         if(priceTask != null) priceTask = null;
     }
@@ -66,9 +71,9 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         mProgBar.setVisibility(View.VISIBLE);
 
-        //if(checkUpdateOpinet()) {
+        if(checkUpdateOilPrice()) {
             String distCode = convJSONArrayToList().get(2);
-            log.i("DistCode from HashSet: %s", distCode);
+            log.i("DistCode: %s", distCode);
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
             // Consider whether the threads should be interrupted or not.
@@ -77,10 +82,10 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
 
-        //} else {
+        } else {
             startActivity(new Intent(this, MainActivity.class));
             finish();
-        //}
+        }
 
     }
 

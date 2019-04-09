@@ -3,6 +3,7 @@ package com.silverback.carman2;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.MenuItem;
 
 import com.silverback.carman2.fragments.GeneralSettingFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -10,13 +11,14 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NavUtils;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 
 
 public class GeneralSettingActivity extends BaseActivity implements
@@ -42,16 +44,16 @@ public class GeneralSettingActivity extends BaseActivity implements
         setSupportActionBar(settingToolbar);
         // Get a support ActionBar corresponding to this toolbar
         ActionBar ab = getSupportActionBar();
-        // Enable the Up button
+        // Enable the Up button which enables it as an action button such that when the user presses
+        // it, the parent activity receives a call to onOptionsItemSelected().
         ab.setDisplayHomeAsUpEnabled(true);
 
-        // Passes the District Code to GeneralSettingFragment(PreferenceFragmentCompat) to
-        // set the summary of SinnerDialogPreference
         settingFragment = new GeneralSettingFragment();
-
+        // Passes District Code(Sigun Code) and vehicle nickname to GeneralSettingFragment for
+        // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
+        // of the vehicle name.
         districtCode = convJSONArrayToList().get(2);
         String vehicleName = mSettings.getString(Constants.VEHICLE_NAME, null);
-
 
         Bundle args = new Bundle();
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
@@ -59,7 +61,7 @@ public class GeneralSettingActivity extends BaseActivity implements
 
         settingFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_setting, settingFragment)
+                .add(R.id.frame_setting, settingFragment)
                 .commit();
 
     }
@@ -76,6 +78,21 @@ public class GeneralSettingActivity extends BaseActivity implements
         super.onPause();
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
         if(priceTask != null) priceTask = null;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                log.i("onOptionsItemSelected in GeneralSettingActivity");
+                //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
+                //onBackPressed();
+                finish();
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 
@@ -103,6 +120,12 @@ public class GeneralSettingActivity extends BaseActivity implements
                     pref.setSummary(pref.getText());
                     mSettings.edit().putString(Constants.VEHICLE_NAME, pref.getText()).apply();
                 }
+                break;
+
+            case "pref_location_autoupdate":
+                SwitchPreferenceCompat switchPref = (SwitchPreferenceCompat)settingFragment.findPreference(key);
+                log.i("SwitchPreferenceCompat: %s", switchPref.isChecked());
+                mSettings.edit().putBoolean("pref_location_autoupdate", switchPref.isChecked()).apply();
                 break;
         }
 

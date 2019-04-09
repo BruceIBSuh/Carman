@@ -8,10 +8,10 @@ import com.silverback.carman2.models.Opinet;
 
 import java.lang.ref.WeakReference;
 
-public class StationMapInfoTask extends ThreadTask implements StationMapInfoRunnable.MapInfoMethods {
+public class StationMapTask extends ThreadTask implements StationMapRunnable.MapInfoMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationMapInfoTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationMapTask.class);
 
     // Objects
     private static ThreadManager sThreadManager;
@@ -21,9 +21,9 @@ public class StationMapInfoTask extends ThreadTask implements StationMapInfoRunn
     private String stnId;
 
     // Constructor
-    StationMapInfoTask(Context context) {
+    StationMapTask(Context context) {
         mWeakContext = new WeakReference<>(context);
-        mStationMapInfoRunnable = new StationMapInfoRunnable(mWeakContext, this);
+        mStationMapInfoRunnable = new StationMapRunnable(mWeakContext, this);
     }
 
     void initStationTask(ThreadManager threadManager, String stationId) {
@@ -49,11 +49,11 @@ public class StationMapInfoTask extends ThreadTask implements StationMapInfoRunn
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch(state) {
-            case StationMapInfoRunnable.DOWNLOAD_STN_MAPINFO_COMPLETE:
+            case StationMapRunnable.DOWNLOAD_STN_MAPINFO_COMPLETE:
                 outState = ThreadManager.DOWNLOAD_STN_MAPINFO_COMPLETED;
                 break;
 
-            case StationMapInfoRunnable.DOWNLOAD_STN_MAPINFO_FAIL:
+            case StationMapRunnable.DOWNLOAD_STN_MAPINFO_FAIL:
                 outState = ThreadManager.DOWNLOAD_STN_MAPINFO_FAILED;
                 break;
         }

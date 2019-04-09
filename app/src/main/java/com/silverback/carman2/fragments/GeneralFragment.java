@@ -23,7 +23,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
-import com.silverback.carman2.threads.StationMapInfoTask;
+import com.silverback.carman2.threads.StationMapTask;
 import com.silverback.carman2.threads.StationTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
@@ -33,7 +33,6 @@ import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -46,7 +45,9 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
  * A simple {@link Fragment} subclass.
  */
 public class GeneralFragment extends Fragment implements
-        View.OnClickListener, RecyclerView.OnItemTouchListener,
+        View.OnClickListener,
+        RecyclerView.OnItemTouchListener,
+        StationListAdapter.RecyclerViewItemClickListener,
         AdapterView.OnItemSelectedListener,
         ThreadManager.OnCompleteTaskListener {
 
@@ -57,7 +58,7 @@ public class GeneralFragment extends Fragment implements
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationTask stationTask;
-    private StationMapInfoTask mapInfoTask;
+    private StationMapTask mapInfoTask;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -71,7 +72,7 @@ public class GeneralFragment extends Fragment implements
     private List<Opinet.GasStnParcelable> mStationList;
 
     //private Uri uriStationList;
-    private Location mLocation;
+    private Location mCurrentLocation;
 
     // UI's
     private TextView tvStationsOrder;
@@ -80,9 +81,10 @@ public class GeneralFragment extends Fragment implements
     private FloatingActionButton fab;
 
     // Fields
-    private boolean isLocationFetched;
-    private String[] defaults; // defaults[0]:fuel defaults[1]:radius default[2]:sorting
+    private boolean hasTaskFinished = false;//prevent StationTask from repaeating when adding the fragment.
+    private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
+    private int position;//RecyclerView item position from StationListAdapter.RecyclerViewItemClickListener.
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -91,7 +93,8 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //String[] district = getResources().getStringArray(R.array.default_district);
+
+
 
     }
 
@@ -99,6 +102,11 @@ public class GeneralFragment extends Fragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        if(savedInstanceState != null) {
+            hasTaskFinished = savedInstanceState.getBoolean("hasTaskFinished");
+            log.i("SavedInstanceState: %s", hasTaskFinished);
+        }
 
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
 
@@ -156,20 +164,21 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-
-        // Fetch the current location by using FusedLocationProviderClient on a work thread
-        locationTask = ThreadManager.fetchLocationTask(this);
+        /*
+         * Initiates LocationTask to fetch the current location only when the flag, hasTaskFinished
+         * is set to false, in case of which may be at the first time and when the fab is clicked.
+         * StationTask should be launched only if the current location is newly retrieved in the
+         * call back method, onLocationFetched().
+         */
+        if(!hasTaskFinished) {
+            log.i("No location fetched");
+            locationTask = ThreadManager.fetchLocationTask(this);
+        } else {
+            stationRecyclerView.setAdapter(mAdapter);
+        }
 
         return childView;
     }
-
-    /*
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle state) {
-        super.onSaveInstanceState(state);
-        state.putBoolean("isLocated", isLocationFetched);
-    }
-    */
 
     @Override
     public void onResume() {
@@ -181,7 +190,22 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
+        log.i("onPause");
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("hasTaskFinished", hasTaskFinished);
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
         if(locationTask != null) locationTask = null;
+        if(stationTask != null) stationTask = null;
+        if(priceTask != null) priceTask = null;
+        if(mapInfoTask != null) mapInfoTask = null;
     }
 
 
@@ -204,7 +228,7 @@ public class GeneralFragment extends Fragment implements
         }
     }
 
-    // Abstract methods of AdapterView.OnItemSelectedListener for Spinner,
+    // The following 2 abstract methods are invoked by AdapterView.OnItemSelectedListener for Spinner,
     // which intially invokes at
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -226,12 +250,13 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView.addPriceView(defaults[0]);
         stationPriceView.addPriceView(defaults[0]);
 
-        if(mLocation != null) {
+        /* Initiates StationTask to retreive a new station list with a fuel set by Spinner.
+        if(hasTaskFinished) {
             log.i("stationTask: %s", stationTask);
-            //stationRecyclerView.initView(defaults, mLocation);
+            //stationRecyclerView.initView(defaults, mCurrentLocation);
         }
+        */
     }
-
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
@@ -241,39 +266,52 @@ public class GeneralFragment extends Fragment implements
         log.i("onInterceptTouchEvent");
         return false;
     }
-
     @Override
     public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
         log.i("onTouchEvent: %s", rv);
     }
-
     @Override
     public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
         log.i("onRequestDisallowInterceptTouchEvent");
     }
 
 
+    // Callback invoked by StationListAdapter.RecyclerViewItemClickListener when clicking an list
+    // item, which starts StationDetailTask to pass detailed information as to a clicked station
+    // to StationMapActivity.
+    @Override
+    public void onRecyclerViewItemClicked(int position, String stnId) {
+        log.i("RecyclerView Item clicked: %s", stnId);
+        this.position = position;
+        mapInfoTask = ThreadManager.startStationMapTask(this.getContext(), stnId);
+    }
 
+
+    /**
+     * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
+     * onLocationFetched():
+     * onStationTaskComplete():
+     * onTaskFailure():
+     * onStationMapTaskComplete():
+     */
     // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
     @Override
     public void onLocationFetched(Location location){
-        isLocationFetched = true;
-        mLocation = location;
-        //stationRecyclerView.initView(defaults, location);
+        hasTaskFinished = true;
+        mCurrentLocation = location;
+        stationRecyclerView.initView(defaults, location);
     }
 
-
-    /*
-     * The following callback methods are invoked by ThreadManager.OnCompleteTaskListener
-     * on having StationTask completed or failed.
-     */
+    // The following callback methods are invoked by ThreadManager.OnCompleteTaskListener
+    // on having StationTask completed or failed.
 
     @Override
     public void onStationTaskComplete(List<Opinet.GasStnParcelable> stnList) {
         log.i("StationInfoList: %s", stnList.size());
-        mAdapter = new StationListAdapter(stnList);
+        mStationList = stnList;
+        mAdapter = new StationListAdapter(stnList, this);
         stationRecyclerView.showStationListRecyclerView();
         stationRecyclerView.setAdapter(mAdapter);
     }
@@ -285,15 +323,21 @@ public class GeneralFragment extends Fragment implements
     }
 
     // On fetching the detailed information of a specific station by picking it in RecyclerView.
-    @SuppressWarnings("unchecked")
     @Override
-    public void onStatonMapInfoTaskComplete(Opinet.GasStationInfo mapInfo) {
+    public void onStationMapTaskComplete(Opinet.GasStationInfo mapInfo) {
 
-        List<String> mapInfoList = Arrays.asList(mapInfo.getStationName(), mapInfo.getNewAddrs());
-        log.i("MapInfo: %s, %s", mapInfo.getStationName(), mapInfo.getNewAddrs());
+        ArrayList<String> argList = new ArrayList<>();
+        argList.add(mStationList.get(position).getStnName());
+        argList.add(mStationList.get(position).getIsCarWash());
+        argList.add(mapInfo.getNewAddrs());
+        argList.add(mapInfo.getTelNo());
+        argList.add(mapInfo.getxCoord());
+        argList.add(mapInfo.getyCoords());
 
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putStringArrayListExtra("station_mapinfo", (ArrayList)mapInfoList);
+        intent.putStringArrayListExtra("station_mapinfo", argList);
         if(getActivity() != null) getActivity().startActivity(intent);
     }
+
+
 }

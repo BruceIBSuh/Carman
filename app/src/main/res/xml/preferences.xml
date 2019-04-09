@@ -49,6 +49,11 @@
             app:entryValues="@array/list_station_radius_value"
             app:defaultValue="2500"/>
 
+        <SwitchPreferenceCompat
+            app:key="pref_location_autoupdate"
+            app:title="@string/pref_title_autoupdate"
+            app:summary="@string/pref_summary_autoupdate" />
+
 
     </PreferenceCategory>
 
