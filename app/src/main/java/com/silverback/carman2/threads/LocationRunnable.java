@@ -35,7 +35,7 @@ public class LocationRunnable implements Runnable,
     // Objects and Fields
     private Context context;
     private static CarmanLocationHelper mLocationHelper;
-    private LocationMethods mLocationTask;
+    private LocationMethods task;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest; //store the Location setting params
 
@@ -52,7 +52,7 @@ public class LocationRunnable implements Runnable,
 
     // Constructor
     LocationRunnable(Context context, LocationMethods task) {
-        mLocationTask = task;
+        this.task = task;
         this.context = context;
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
         locationRequest = mLocationHelper.setLocationRequest();
@@ -61,7 +61,7 @@ public class LocationRunnable implements Runnable,
 
     @Override
     public void run() {
-        mLocationTask.setDownloadThread(Thread.currentThread());
+        task.setDownloadThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         // Check if the location setting is successful. If successful, fetch the last known location
@@ -88,12 +88,12 @@ public class LocationRunnable implements Runnable,
                 public void onSuccess(Location location) {
                     if(location != null) {
                         log.i("Location: %s, %s", location.getLongitude(), location.getLatitude());
-                        mLocationTask.setCurrentLocation(location);
-                        mLocationTask.handleLocationTask(CURRENT_LOCATION_COMPLETE);
+                        task.setCurrentLocation(location);
+                        task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
 
                     } else {
                         log.i("no location fetched");
-                        mLocationTask.handleLocationTask(CURRENT_LOCATION_FAIL);
+                        task.handleLocationTask(CURRENT_LOCATION_FAIL);
                     }
                 }
             });

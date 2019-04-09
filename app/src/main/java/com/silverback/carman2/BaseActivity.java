@@ -119,9 +119,8 @@ public class BaseActivity extends AppCompatActivity {
         return(currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;
     }
 
-    /**
+    /*
      * Permission Check: Location, Read External Storage
-     *
      * Location: ACCESS_FINE_LOCATION
      * External Storage: READ_EXTERNAL_STORAGE
      */
@@ -171,6 +170,9 @@ public class BaseActivity extends AppCompatActivity {
 
         }
     }
+
+    // Location-related methods
+
 
 
 }
