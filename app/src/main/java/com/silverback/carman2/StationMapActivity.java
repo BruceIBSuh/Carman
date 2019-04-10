@@ -4,6 +4,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -12,16 +15,21 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringJoiner;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
+    // Objects
     private GoogleMap mMap;
 
     @Override
@@ -37,18 +45,30 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         TextView tvName = findViewById(R.id.tv_name);
         TextView tvAddrs = findViewById(R.id.tv_address);
+        TextView tvPrice = findViewById(R.id.tv_price);
+        TextView tvCarwash = findViewById(R.id.tv_carwash);
+        TextView tvService = findViewById(R.id.tv_service);
+        TextView tvCVS = findViewById(R.id.tv_cvs);
+
+        Bundle info = getIntent().getExtras();
+        if(info == null) return;
+
+        float latitude = Float.valueOf(info.getString("xcoord"));
+        float longitude = Float.valueOf(info.getString("ycoord"));
+
+        tvName.setText(info.getString("name"));
+        tvAddrs.setText(String.format("%s %20s", info.getString("address"), info.getString("tel")));
+        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getString("carwash")));
+        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getString("service")));
+        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getString("cvs")));
 
 
-        ArrayList<String> infoList = getIntent().getStringArrayListExtra("station_mapinfo");
-        for(String info : infoList) {
-            log.i("Station Info: %s", info);
-        }
-        tvName.setText(infoList.get(0));
-        tvAddrs.setText(infoList.get(2));
-
-        float latitude = Float.valueOf(infoList.get(4));
-        float longitude = Float.valueOf(infoList.get(5));
         log.i("Location: %s, %s", latitude, longitude);
+
+
+
+
+
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.

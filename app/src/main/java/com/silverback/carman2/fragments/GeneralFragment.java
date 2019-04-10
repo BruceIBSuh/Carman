@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.Intent;
+import android.graphics.Point;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,7 +15,13 @@ import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -33,7 +40,9 @@ import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -63,6 +72,9 @@ public class GeneralFragment extends Fragment implements
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
     private StationPriceView stationPriceView;
+
+    // FirebaseFirestore
+    private FirebaseFirestore db;
 
     //private FrameLayout frameRecycler;
     private StationRecyclerView stationRecyclerView;
@@ -305,11 +317,34 @@ public class GeneralFragment extends Fragment implements
 
     @Override
     public void onStationListTaskComplete(List<Opinet.GasStnParcelable> stnList) {
-        log.i("StationInfoList: %s", stnList.size());
+        log.i("StationList: %s", stnList.size());
         mStationList = stnList;
         mAdapter = new StationListAdapter(stnList, this);
         stationRecyclerView.showStationListRecyclerView();
         stationRecyclerView.setAdapter(mAdapter);
+
+
+
+        db = FirebaseFirestore.getInstance();
+        WriteBatch batch = db.batch();
+
+        Map<String, Object> data = new HashMap<>();
+        for(Opinet.GasStnParcelable station : stnList) {
+            data.put("id", station.getStnId());
+            data.put("name", station.getStnName());
+            data.put("geocode", new Point((int)station.getLatitude(), (int)station.getLongitude()));
+
+            DocumentReference docRef = db.collection("stations").document(station.getStnId());
+            batch.set(docRef, data);
+        }
+
+        batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                log.i("Save the data in Firestore complete");
+            }
+        });
+
     }
 
     @Override
@@ -320,19 +355,42 @@ public class GeneralFragment extends Fragment implements
 
     // On fetching the detailed information of a specific station by picking it in RecyclerView.
     @Override
-    public void onStationInfoTaskComplete(Opinet.GasStationInfo mapInfo) {
+    public void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo) {
 
-        ArrayList<String> argList = new ArrayList<>();
-        argList.add(mStationList.get(position).getStnName());
-        argList.add(mStationList.get(position).getIsCarWash());
-        argList.add(mapInfo.getNewAddrs());
-        argList.add(mapInfo.getTelNo());
-        argList.add(mapInfo.getxCoord());
-        argList.add(mapInfo.getyCoords());
+        final DocumentReference docRef = db.collection("stations").document(stnInfo.getStationCode());
+        WriteBatch batch = db.batch();
+
+        batch.update(docRef, "addrs", stnInfo.getNewAddrs());
+        batch.update(docRef, "carwash", stnInfo.getIsCarWash());
+        batch.update(docRef, "cvs", stnInfo.getIsCVS());
+        batch.update(docRef, "service", stnInfo.getIsMaintenance());
+        batch.update(docRef, "tel", stnInfo.getTelNo());
+
+        batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                log.i("Update Firestore data complete");
+            }
+        });
+
+
+
+
+        Bundle bundle = new Bundle();
+        bundle.putString("name", mStationList.get(position).getStnName());
+        bundle.putString("address", stnInfo.getNewAddrs());
+        bundle.putString("tel", stnInfo.getTelNo());
+        bundle.putString("carwash", stnInfo.getIsCarWash());
+        bundle.putString("service", stnInfo.getIsMaintenance());
+        bundle.putString("cvs", stnInfo.getIsCVS());
+        //bundle.putString("price", stnInfo.getOilPrice());
+        bundle.putString("xcoord", stnInfo.getxCoord());
+        bundle.putString("ycoord", stnInfo.getyCoords());
 
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putStringArrayListExtra("station_mapinfo", argList);
+        intent.putExtras(bundle);
         if(getActivity() != null) getActivity().startActivity(intent);
+
     }
 
 

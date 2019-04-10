@@ -36,6 +36,7 @@ public class BaseActivity extends AppCompatActivity {
 
     // Objects
     protected static SharedPreferences mSettings;
+
     // Fields
     protected boolean hasLocationPermission;
 

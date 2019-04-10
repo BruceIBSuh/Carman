@@ -41,6 +41,9 @@
 
     <!--StationMapActivity-->
     <string name="map_toolbar_title">주유소 위치 및 정보</string>
+    <string name="map_cardview_cvs">편의점:</string>
+    <string name="map_cardview_service">정 비:</string>
+    <string name="map_cardview_wash">세 차:</string>
 
 
     <!--GeneralSettingActivity-->

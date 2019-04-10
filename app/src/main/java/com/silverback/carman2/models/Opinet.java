@@ -218,35 +218,60 @@ public class Opinet  {
         private String telNo;
         private String sigunCode;
         private String isCarWash;
+        private String isMaintenance;
+        private String isCVS;
+        private String oilPrice;
         private String xCoord;
         private String yCoords;
 
+        void setStationCode(String stationCode) { this.stationCode = stationCode; }
         public String getStationCode() { return stationCode; }
-        public void setStationCode(String stationCode) { this.stationCode = stationCode; }
 
+
+        void setStationName(String stationName) { this.stationName = stationName; }
         public String getStationName() { return stationName; }
-        public void setStationName(String stationName) { this.stationName = stationName; }
 
+        void setOldAddrs(String oldAddrs) { this.oldAddrs = oldAddrs; }
         public String getOldAddrs() { return oldAddrs; }
-        public void setOldAddrs(String oldAddrs) { this.oldAddrs = oldAddrs; }
 
         public String getNewAddrs() { return newAddrs; }
-        public void setNewAddrs(String newAddrs) { this.newAddrs = newAddrs; }
+        void setNewAddrs(String newAddrs) { this.newAddrs = newAddrs; }
 
+        void setTelNo(String telNo) { this.telNo = telNo; }
         public String getTelNo() { return telNo; }
-        public void setTelNo(String telNo) { this.telNo = telNo; }
 
+        void setSigunCode(String sigunCode) { this.sigunCode = sigunCode; }
         public String getSigunCode() { return sigunCode; }
-        public void setSigunCode(String sigunCode) { this.sigunCode = sigunCode; }
 
+        void setIsCarWash(String isCarWash) { this.isCarWash = isCarWash; }
         public String getIsCarWash() { return isCarWash; }
-        public void setIsCarWash(String isCarWash) { this.isCarWash = isCarWash; }
 
+        void setIsMaintenance(String isMaint) {
+            this.isMaintenance = isMaint;
+        }
+        public String getIsMaintenance() {
+            return isMaintenance;
+        }
+
+        void setIsCVS(String isCVS){
+            this.isCVS = isCVS;
+        }
+        public String getIsCVS() {
+            return isCVS;
+        }
+
+        void setOilPrice(String oilPrice) {
+            this.oilPrice = oilPrice;
+        }
+        public String getOilPrice() {
+            return oilPrice;
+        }
+
+        void setxCoord(String xCoord) { this.xCoord = xCoord; }
         public String getxCoord() { return xCoord; }
-        public void setxCoord(String xCoord) { this.xCoord = xCoord; }
 
+        void setyCoords(String yCoords) { this.yCoords = yCoords; }
         public String getyCoords() { return yCoords; }
-        public void setyCoords(String yCoords) { this.yCoords = yCoords; }
     }
 
 
@@ -256,7 +281,6 @@ public class Opinet  {
         private String stnId;
         private String stnCode;
         private String stnName;
-        private String isCarWash; // fetched in StationInfoTask
         private float stnPrice;
         private float distance;
         private float xCoord;
@@ -277,7 +301,6 @@ public class Opinet  {
             out.writeString(stnId);
             out.writeString(stnCode);
             out.writeString(stnName);
-            out.writeString(isCarWash);
             out.writeFloat(stnPrice);
             out.writeFloat(distance);
             out.writeFloat(xCoord);
@@ -302,7 +325,6 @@ public class Opinet  {
             stnId = in.readString();
             stnCode = in.readString();
             stnName = in.readString();
-            isCarWash = in.readString();
             stnPrice = in.readFloat();
             distance = in.readFloat();
             xCoord = in.readFloat();
@@ -354,12 +376,6 @@ public class Opinet  {
         }
         void setLatitude(float y) {
             this.yCoord = y;
-        }
-
-        public String getIsCarWash() { return isCarWash; }
-
-        public void setIsCarWash(String isCarWash) {
-            this.isCarWash = isCarWash;
         }
     }
 
