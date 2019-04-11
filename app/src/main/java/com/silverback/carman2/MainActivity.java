@@ -21,6 +21,9 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.StationInfoTask;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -35,8 +38,14 @@ public class MainActivity extends BaseActivity implements
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
+    // Constants
+    private static final int TAB_CARMAN = 1;
+    private static final int TAB_BOARD = 2;
+
     // Objects
     private TabLayout tabLayout;
+    private List<String> tabTitleList;
+    private List<Drawable> tabIconList;
     private ViewPager viewPager;
     private Fragment generalFragment, boardFragment;
     private FrameLayout frameLayout;
@@ -44,7 +53,8 @@ public class MainActivity extends BaseActivity implements
     private FinishAppDialogFragment alertDialog;
 
     // Fields
-    private boolean isTabLayoutVisible = false;
+    private boolean isTabVisible = false;
+    private int tabSelected;
     private float toolbarHeight;
 
     @SuppressWarnings("ConstantConditions")
@@ -56,7 +66,6 @@ public class MainActivity extends BaseActivity implements
         Toolbar toolbar = findViewById(R.id.toolbar);
         frameLayout = findViewById(R.id.frameLayout);
         tabLayout = findViewById(R.id.tabLayout);
-
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
 
@@ -72,7 +81,9 @@ public class MainActivity extends BaseActivity implements
 
         // Custom method to set TabLayout title and icon, which MUST be invoked after
         // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
-        addTabIconAndTitle(tabLayout);
+        tabTitleList = new ArrayList<>();
+        tabIconList = new ArrayList<>();
+        tabSelected = addTabIconAndTitle(TAB_CARMAN);
 
         // Get Defaults from BaseActivity and sets it bundled for passing to GeneralFragment
         String[] defaults = getDefaultParams();
@@ -111,19 +122,27 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch(item.getItemId()) {
-            case R.id.action_board:
+            case R.id.action_carman:
+                if(isTabVisible) {
+                    if(tabSelected != TAB_CARMAN) animSlideTabLayout();
+                    else getSupportFragmentManager().popBackStack();
+                }
+
+                tabSelected = addTabIconAndTitle(TAB_CARMAN);
                 animSlideTabLayout();
-                if(isTabLayoutVisible) getSupportFragmentManager().popBackStack();
+
                 return true;
 
-            case R.id.action_garage:
-                // Custom method to animate the tab layout sliding up and down when clicking the buttons
-                // on the toolbar(action bar). The TabLayout moves up and down by changing "Y" property
-                // and the ViewPager does so by translating "Y".
+            case R.id.action_board:
+                if(isTabVisible) {
+                    if(tabSelected != TAB_BOARD) animSlideTabLayout();
+                    else getSupportFragmentManager().popBackStack();
+                }
+
+                tabSelected = addTabIconAndTitle(TAB_BOARD);
                 animSlideTabLayout();
-                if(isTabLayoutVisible) getSupportFragmentManager().popBackStack();
+
                 return true;
 
             case R.id.action_login:
@@ -197,34 +216,56 @@ public class MainActivity extends BaseActivity implements
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
     @SuppressWarnings("ConstantConditions")
-    private void addTabIconAndTitle(TabLayout tabLayout) {
+    private int addTabIconAndTitle(int tab) {
 
-        final String[] titles = getResources().getStringArray(R.array.tap_title);
-        final Drawable[] icons = new Drawable[] {
-                getDrawable(R.drawable.ic_gas),
-                getDrawable(R.drawable.ic_service),
-                getDrawable(R.drawable.ic_stats)
-                //getDrawable(R.drawable.ic_setting)
-        };
+        //if(!tabTitleList.isEmpty()) tabTitleList.clear();
+        //if(!tabIconList.isEmpty()) tabIconList.clear();
 
+        switch(tab) {
+            case TAB_CARMAN:
+                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_carman_title));
+                Drawable[] icons = {
+                        getDrawable(R.drawable.ic_gas),
+                        getDrawable(R.drawable.ic_service),
+                        getDrawable(R.drawable.ic_stats)};
+
+                tabIconList = Arrays.asList(icons);
+
+
+                break;
+
+            case TAB_BOARD:
+                log.i("TAB_BOARD");
+                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_board_title));
+                icons = new Drawable[]{};
+                tabIconList = Arrays.asList(icons);
+                break;
+
+        }
 
         for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            tabLayout.getTabAt(i).setIcon(icons[i]);
-            tabLayout.getTabAt(i).setText(titles[i]);
+            log.i("Title: %s", tabTitleList.get(i));
+            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
+            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
         }
+
+        return tab;
+
+
+
     }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
 
-        float tabEndValue = (!isTabLayoutVisible)? toolbarHeight : 0;
+        float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
         slideTab.setDuration(500);
         slideViewPager.setDuration(500);
 
-        if(!isTabLayoutVisible) {
+        if(!isTabVisible) {
             getSupportFragmentManager().beginTransaction().remove(generalFragment).commit();
             frameLayout.addView(viewPager);
         } else {
@@ -233,7 +274,7 @@ public class MainActivity extends BaseActivity implements
                     .add(R.id.frameLayout, generalFragment).addToBackStack(null).commit();
         }
 
-        isTabLayoutVisible = !isTabLayoutVisible;
+        isTabVisible = !isTabVisible;
 
         slideTab.start();
         slideViewPager.start();

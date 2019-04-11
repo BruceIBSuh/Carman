@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string-array name="tap_title">
+    <string-array name="tap_carman_title">
         <item>@string/tab_gas</item>
         <item>@string/tab_service</item>
         <item>@string/tab_stat</item>
         <!--<item>@string/tab_setting</item>-->
 
+    </string-array>
+
+    <string-array name="tap_board_title">
+        <item>@string/tab_board_recent</item>
+        <item>@string/tab_board_popular</item>
+        <item>@string/tab_board_community</item>
     </string-array>
 
     <string-array name="spinner_fuel_name">

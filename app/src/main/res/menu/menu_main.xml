@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_garage"
+        android:id="@+id/action_carman"
         android:icon="@drawable/ic_garage"
         android:title="@string/toolbar_mycar"
         app:showAsAction="ifRoom|withText" />

@@ -12,6 +12,9 @@
     <string name="toolbar_mycar">my car</string>
     <string name="toolbar_board">board</string>
     <string name="toolbar_login">login</string>
+    <string name="tab_board_recent">최근글</string>
+    <string name="tab_board_popular">인기글</string>
+    <string name="tab_board_community">우리차고</string>
 
 
     <!--GeneralFragment-->
