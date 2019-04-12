@@ -3,10 +3,8 @@ package com.silverback.carman2;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
+import android.location.Location;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -15,14 +13,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.List;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -30,7 +27,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
+    private StationInfoTask stationInfoTask;
     private GoogleMap mMap;
+    private LatLng stnLocation;
+
+    // UIs
+    TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,16 +67,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         log.i("Location: %s, %s", latitude, longitude);
 
-
-
-
-
-
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.google_map);
         mapFragment.getMapAsync(this);
+
     }
 
 
@@ -96,4 +93,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
+
+
 }

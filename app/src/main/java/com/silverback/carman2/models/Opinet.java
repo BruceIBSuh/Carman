@@ -199,16 +199,9 @@ public class Opinet  {
         }
     }
 
-    /*
-    public static class RecentPrice {
-    }
-    public static class LastWeekPrice {
-    }
-    public static class LowTop10 {
-    }
-    */
-
-    // Get a Station info fetched by its station ID.
+    /**
+     * Retrieve data of a specific station with the station id given.
+     */
     public static class GasStationInfo {
 
         private String stationCode;
@@ -218,17 +211,18 @@ public class Opinet  {
         private String telNo;
         private String sigunCode;
         private String isCarWash;
-        private String isMaintenance;
+        private String isService;
         private String isCVS;
         private String oilPrice;
         private String xCoord;
-        private String yCoords;
+        private String yCoord;
 
+        // Setters and Getters by JavaBean format
         void setStationCode(String stationCode) { this.stationCode = stationCode; }
         public String getStationCode() { return stationCode; }
 
 
-        void setStationName(String stationName) { this.stationName = stationName; }
+        public void setStationName(String stationName) { this.stationName = stationName; }
         public String getStationName() { return stationName; }
 
         void setOldAddrs(String oldAddrs) { this.oldAddrs = oldAddrs; }
@@ -246,11 +240,11 @@ public class Opinet  {
         void setIsCarWash(String isCarWash) { this.isCarWash = isCarWash; }
         public String getIsCarWash() { return isCarWash; }
 
-        void setIsMaintenance(String isMaint) {
-            this.isMaintenance = isMaint;
+        void setIsService(String isMaint) {
+            this.isService = isMaint;
         }
-        public String getIsMaintenance() {
-            return isMaintenance;
+        public String getIsService() {
+            return isService;
         }
 
         void setIsCVS(String isCVS){
@@ -270,8 +264,8 @@ public class Opinet  {
         void setxCoord(String xCoord) { this.xCoord = xCoord; }
         public String getxCoord() { return xCoord; }
 
-        void setyCoords(String yCoords) { this.yCoords = yCoords; }
-        public String getyCoords() { return yCoords; }
+        void setyCoord(String yCoord) { this.yCoord = yCoord; }
+        public String getyCoord() { return yCoord; }
     }
 
 

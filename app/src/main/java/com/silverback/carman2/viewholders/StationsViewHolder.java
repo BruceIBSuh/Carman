@@ -51,10 +51,6 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
         //tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
     }
 
-    public String getStationCode() {
-        return stnCode;
-    }
-
     private static int getGasStationImage(String name) {
 
         int resId = -1;
