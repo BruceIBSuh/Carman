@@ -393,7 +393,7 @@ public class XmlPullParserHandler {
                         }else if(tagName.equalsIgnoreCase("CAR_WASH_YN")){
                             gasStationInfo.setIsCarWash(text);
                         }else if(tagName.equalsIgnoreCase("MAINT_YN")){
-                            gasStationInfo.setIsMaintenance(text);
+                            gasStationInfo.setIsService(text);
                         }else if(tagName.equalsIgnoreCase("CVS_YN")){
                             gasStationInfo.setIsCVS(text);
                         }else if(tagName.equalsIgnoreCase("GIS_X_COOR")){

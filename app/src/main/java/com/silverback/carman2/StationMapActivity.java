@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
@@ -15,6 +16,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -31,6 +35,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Objects
     private GoogleMap mMap;
+    private FirebaseFirestore db;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,8 +58,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         Bundle info = getIntent().getExtras();
         if(info == null) return;
 
-        float latitude = Float.valueOf(info.getString("xcoord"));
-        float longitude = Float.valueOf(info.getString("ycoord"));
+        float latitude = Float.valueOf(info.getString("xcoord", null));
+        float longitude = Float.valueOf(info.getString("ycoord", null));
 
         tvName.setText(info.getString("name"));
         tvAddrs.setText(String.format("%s %20s", info.getString("address"), info.getString("tel")));
@@ -65,7 +70,20 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         log.i("Location: %s, %s", latitude, longitude);
 
-
+        db = FirebaseFirestore.getInstance();
+        DocumentReference stnRef = db.collection("stations").document(info.getString("code", null));
+        Map<String, Object> data = new HashMap<>();
+        data.put("addrs", info.getString("address", null));
+        data.put("tel", info.getString("tel", null));
+        data.put("carwash", info.getString("carwash", null));
+        data.put("cvs", info.getString("cvs", null));
+        data.put("service", info.getString("service", null));
+        stnRef.update(data).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                log.i("Update complete");
+            }
+        });
 
 
 

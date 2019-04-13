@@ -246,10 +246,10 @@ public class Opinet  {
         void setIsCarWash(String isCarWash) { this.isCarWash = isCarWash; }
         public String getIsCarWash() { return isCarWash; }
 
-        void setIsMaintenance(String isMaint) {
+        void setIsService(String isMaint) {
             this.isMaintenance = isMaint;
         }
-        public String getIsMaintenance() {
+        public String getIsService() {
             return isMaintenance;
         }
 

@@ -16,15 +16,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
@@ -108,6 +105,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        db = FirebaseFirestore.getInstance();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -325,13 +323,8 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.showStationListRecyclerView();
         stationRecyclerView.setAdapter(mAdapter);
 
-
-
-        db = FirebaseFirestore.getInstance();
-        WriteBatch batch = db.batch();
-
-        Map<String, Object> data = new HashMap<>();
         for(Opinet.GasStnParcelable station : stnList) {
+            Map<String, Object> data = new HashMap<>();
             data.put("id", station.getStnId());
             data.put("name", station.getStnName());
             data.put("addrs", "");
@@ -343,15 +336,14 @@ public class GeneralFragment extends Fragment implements
 
             DocumentReference docRef = FirebaseFirestore.getInstance()
                     .collection("stations").document(station.getStnId());
-            batch.set(docRef, data);
-        }
 
-        batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                log.i("Save the data in Firestore complete");
-            }
-        });
+            docRef.set(data).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    log.i("Set data complete");
+                }
+            });
+        }
 
     }
 
@@ -363,65 +355,15 @@ public class GeneralFragment extends Fragment implements
 
     // On fetching the detailed information of a specific station by picking it in RecyclerView.
     @Override
-    public void onStationInfoTaskComplete(final Opinet.GasStationInfo stnInfo) {
-
-        final DocumentReference stnRef = FirebaseFirestore.getInstance()
-                .collection("stations").document(stnInfo.getStationCode());
-
-        stnRef.update("addrs", stnInfo.getNewAddrs()).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                log.i("Update addrs succeeded");
-            }
-        });
-        /*
-        db.runTransaction(new Transaction.Function<Void>() {
-            @Override
-            public Void apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
-                DocumentSnapshot snapshot = transaction.get(stnRef);
-                String addrs = snapshot.getString("addrs") + stnInfo.getNewAddrs();
-                transaction.update(stnRef, "addrs", addrs);
-
-                return null;
-            }
-        }).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void aVoid) {
-                log.i("Transaction succeeded");
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                log.i("Transaction failed");
-            }
-        });
-        */
-
-
-        WriteBatch batch = db.batch();
-        Map<String, Object> data = new HashMap<>();
-        data.put("addrs", stnInfo.getNewAddrs());
-        data.put("tel", stnInfo.getTelNo());
-
-        batch.set(stnRef, data);
-        batch.update(stnRef, "carwash", stnInfo.getIsCarWash());
-        batch.update(stnRef, "cvs", stnInfo.getIsCVS());
-        batch.update(stnRef, "service", stnInfo.getIsMaintenance());
-
-        batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                log.i("Update Firestore data complete");
-            }
-        });
-
+    public void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo) {
 
         Bundle bundle = new Bundle();
+        bundle.putString("code", stnInfo.getStationCode());
         bundle.putString("name", mStationList.get(position).getStnName());
         bundle.putString("address", stnInfo.getNewAddrs());
         bundle.putString("tel", stnInfo.getTelNo());
         bundle.putString("carwash", stnInfo.getIsCarWash());
-        bundle.putString("service", stnInfo.getIsMaintenance());
+        bundle.putString("service", stnInfo.getIsService());
         bundle.putString("cvs", stnInfo.getIsCVS());
         //bundle.putString("price", stnInfo.getOilPrice());
         bundle.putString("xcoord", stnInfo.getxCoord());
