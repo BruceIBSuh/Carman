@@ -70,7 +70,12 @@ public class ThreadManager {
     private static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
 
 
-    // Interface to communicate w/
+    /**
+     * Interfaces
+     * OnCompleteTaskListener:
+     * OnStationInfoTaskListener:
+     *
+     */
     public interface OnCompleteTaskListener {
         void onLocationFetched(Location result);
         void onStationListTaskComplete(List<Opinet.GasStnParcelable> result);
@@ -78,8 +83,10 @@ public class ThreadManager {
         void onTaskFailure();
     }
 
+
+
     // Objects
-    private OnCompleteTaskListener mTaskListener;
+    private OnCompleteTaskListener mStationTaskListener;
 
     // A queue of Runnables
     //private final BlockingQueue<Runnable> mOpinetDownloadWorkQueue, mLoadPriceWorkQueue;
@@ -151,6 +158,7 @@ public class ThreadManager {
                 LocationTask locationTask;
                 //LoadPriceListTask loadPriceTask;
                 StationListTask stationListTask;
+                StationInfoTask stationInfoTask;
                 //StationCurrentTask curStnTask;
                 SaveDistCodeTask saveDistCodeTask;
                 LoadDistCodeTask loadDistCodeTask;
@@ -179,19 +187,7 @@ public class ThreadManager {
                         locationTask = (LocationTask)msg.obj;
                         Location location = locationTask.getLocationUpdated();
                         log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
-                        mTaskListener.onLocationFetched(location);
-
-                        /*
-                        } else if(act instanceof GasManagerActivity) {
-                            ((GasManagerActivity)act).updateCurrentLocation(location);
-
-                        } else if(act instanceof ServiceManagerActivity) {
-                            AddFavoriteDialogFragment fm = (AddFavoriteDialogFragment)((ServiceManagerActivity) act)
-                                    .getSupportFragmentManager().findFragmentByTag("dialog");
-
-                            fm.updateCurrentLocation(location);
-                        }
-                        */
+                        mStationTaskListener.onLocationFetched(location);
 
                         break;
 
@@ -212,101 +208,29 @@ public class ThreadManager {
 
                         break;
 
-
-                    /*
-                    case LOAD_PRICE_AVG_COMPLETED:
-                        loadPriceTask = (LoadPriceListTask) msg.obj;
-                        AvgPriceView avgView = loadPriceTask.getAvgPriceView();
-                        String[] strAvg = loadPriceTask.getPriceInfo();
-                        if(avgView != null) avgView.loadAvgPrice(strAvg);
-
-                        break;
-
-                    case LOAD_PRICE_SIDO_COMPLETED:
-                        loadPriceTask = (LoadPriceListTask) msg.obj;
-                        SidoPriceView sidoView = loadPriceTask.getSidoPriceView();
-                        String[] strSido = loadPriceTask.getPriceInfo();
-                        if(sidoView != null) sidoView.loadSidoPrice(strSido);
-
-                        break;
-
-                    case LOAD_PRICE_SIGUN_COMPLETED:
-                        loadPriceTask = (LoadPriceListTask) msg.obj;
-                        SigunPriceView sigunView = loadPriceTask.getSigunPriceView();
-                        String[] strSigun = loadPriceTask.getPriceInfo();
-                        if(sigunView != null) sigunView.loadSigunPrice(strSigun);
-
-                        break;
-
-                    case SERVICE_ITEM_LIST_COMPLETED:
-                        ServiceListTask serviceTask = (ServiceListTask)msg.obj;
-
-                        if(serviceTask == null) return;
-                        serviceTask.getServiceListAdapter().notifyDataSetChanged();
-                        serviceTask.getServiceListView().showListView();
-
-                        break;
-
-                    case DOWNLOAD_CURRENT_STATION_COMPLETED:
-                        curStnTask = (StationCurrentTask)msg.obj;
-
-                        String name = curStnTask.getCurrentStation().getStnName();
-                        float price = curStnTask.getCurrentStation().getStnPrice();
-                        curStnTask.getGasManagerActivity().loadStationInfo(name, price);
-
-                        break;
-
-                    case DOWNLOAD_CURRENT_STATION_FAILED:
-                        curStnTask = (StationCurrentTask)msg.obj;
-                        curStnTask.getGasManagerActivity().inputStationInfo();
-
-                        curStnTask.recycle();
-                        mCurStnTaskWorkQueue.offer(curStnTask);
-                        break;
-
-
-
-                    */
                     case DOWNLOAD_STATION_LIST_COMPLETED:
                         log.i("DOWNLOAD_STATION_LIST_COMPLETED");
                         stationListTask = (StationListTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationListTask.getStationList();
-                        mTaskListener.onStationListTaskComplete(stnList);
+                        mStationTaskListener.onStationListTaskComplete(stnList);
                         break;
 
                     case DOWNLOAD_NO_STATION_COMPLETE:
-                        mTaskListener.onTaskFailure();
+                        mStationTaskListener.onTaskFailure();
                         break;
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
                         log.i("DOWNLOAD_STATION_INFO_COMPLETED");
-                        Opinet.GasStationInfo info = ((StationInfoTask)msg.obj).getStationInfo();
-                        mTaskListener.onStationInfoTaskComplete(info);
+                        stationInfoTask = (StationInfoTask)msg.obj;
+                        Opinet.GasStationInfo info = stationInfoTask.getStationInfo();
+                        mStationTaskListener.onStationInfoTaskComplete(info);
+                        log.i("info: %s %s", info.getStationName(), stationInfoTask.getStationName());
+                        stationInfoTask.recycle();
+                        mStationInfoTaskQueue.offer(stationInfoTask);
                         break;
                     case DOWNLOAD_STN_MAPINFO_FAILED:
                         break;
 
-                    /*
-                    case DOWNLOAD_NO_STATION_COMPLETE: // No sation available within a given radius
-                        //Log.i(LOG_TAG, "DOWNLOAD NO STATION WITHIN RADIUS");
-                        stationListTask = (StationListTask)msg.obj;
-                        stationListTask.getStationListView().showStationListView(View.VISIBLE);
-                        stationListTask.getStationListFragment().setStationList(null);
-
-                        stationListTask.recycle();
-                        mStationListTaskQueue.offer(stationListTask);
-                        break;
-
-                    case DOWNLOAD_NEAR_STATIONS_FAILED:
-                        //Log.i(LOG_TAG, "DOWNLOAD NEAR STATION FAILED");
-                        stationListTask = (StationListTask)msg.obj;
-                        stationListTask.getStationListView().showStationListView(View.VISIBLE);
-                        stationListTask.getStationListFragment().setStationList(null);
-
-                        stationListTask.recycle();
-                        mStationListTaskQueue.offer(stationListTask);
-                        break;
-                    */
                 }
 
             }
@@ -319,11 +243,29 @@ public class ThreadManager {
         return sInstance;
     }
 
+
     // Handles state messages for a particular task object
     void handleState(ThreadTask task, int state) {
 
         Message msg = mMainHandler.obtainMessage(state, task);
 
+        switch(state) {
+            case DOWNLOAD_STATION_LIST_COMPLETED:
+                //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
+                mDecodeThreadPool.execute(((StationListTask) task).getFireStoreRunnalbe());
+                msg.sendToTarget();
+                break;
+
+            case DOWNLOAD_STATION_INFO_COMPLETED:
+                mDecodeThreadPool.execute(((StationInfoTask)task).getFireStoreUpdateRunnable());
+                msg.sendToTarget();
+                break;
+
+            default:
+                msg.sendToTarget();
+        }
+
+        /*
         if(task instanceof SaveDistCodeTask) {
             switch (state) {
                 case DOWNLOAD_DISTCODE_COMPLTETED:
@@ -355,7 +297,7 @@ public class ThreadManager {
 
                 case DOWNLOAD_STATION_LIST_COMPLETED:
                     log.i("DOWNLOAD_STATION_LIST_COMPLETE");
-                    /*
+
                     List<Opinet.GasStnParcelable> stationList = ((StationListTask) task).getStationList();
                     for (Opinet.GasStnParcelable station : stationList) {
                         log.i("Station ID: %s", station.getStnId());
@@ -364,7 +306,7 @@ public class ThreadManager {
                     }
 
                     //mDownloadThreadPool.execute(((StationListTask) task).getStationInfoRunnalbe());
-                    */
+
                     msg.sendToTarget();
                     break;
 
@@ -378,18 +320,12 @@ public class ThreadManager {
                     msg.sendToTarget();
                     break;
             }
-        /*
+
         } else if(task instanceof StationInfoTask) {
             log.i("StationInfoTask - should map task here");
             msg.sendToTarget();
 
-        */
-        } else {
-            log.i("else");
-            msg.sendToTarget();
-        }
 
-        /*
         } else if(task instanceof PriceTask) {
 
             switch(state) {
@@ -630,9 +566,9 @@ public class ThreadManager {
         }
 
         // Attach OnCompleteTaskListener
-        if(sInstance.mTaskListener == null) {
+        if(sInstance.mStationTaskListener == null) {
             try {
-                sInstance.mTaskListener = (OnCompleteTaskListener) view;
+                sInstance.mStationTaskListener = (OnCompleteTaskListener) view;
             } catch (ClassCastException e) {
                 throw new ClassCastException(String.valueOf(view) + " must implement OnCompleteTaskListener");
             }
@@ -644,21 +580,21 @@ public class ThreadManager {
         return stationListTask;
     }
 
-    public static StationInfoTask startStationInfoTask(Context context, String stnId) {
+    public static StationInfoTask startStationInfoTask(Context context, String stnName, String stnId) {
 
         StationInfoTask stationTask = sInstance.mStationInfoTaskQueue.poll();
         if(stationTask == null) stationTask = new StationInfoTask(context);
 
         // Attach OnCompleteTaskListener
-        if(sInstance.mTaskListener == null) {
+        if(sInstance.mStationTaskListener == null) {
             try {
-                sInstance.mTaskListener = (OnCompleteTaskListener)context;
+                sInstance.mStationTaskListener = (OnCompleteTaskListener)context;
             } catch (ClassCastException e) {
-                throw new ClassCastException(String.valueOf(context) + " must implement OnCompleteTaskListener");
+                throw new ClassCastException(String.valueOf(context) + " must implement OnStationInfoTaskListener");
             }
         }
 
-        stationTask.initStationTask(ThreadManager.sInstance, stnId);
+        stationTask.initStationTask(ThreadManager.sInstance, stnName, stnId);
         sInstance.mDownloadThreadPool.execute(stationTask.getStationMapInfoRunnable());
 
         return stationTask;
@@ -705,7 +641,7 @@ public class ThreadManager {
 
         // Attach OnCompleteTaskListener
         try {
-            sInstance.mTaskListener = (OnCompleteTaskListener)fm;
+            sInstance.mStationTaskListener = (OnCompleteTaskListener)fm;
         } catch(ClassCastException e) {
             throw new ClassCastException(fm.toString() + " must implement OnCompleteTaskListener");
         }
@@ -748,7 +684,7 @@ public class ThreadManager {
             mStationInfoTaskQueue.offer((StationInfoTask)task);
         }
 
-        if(mTaskListener != null) mTaskListener = null;
+        if(mStationTaskListener != null) mStationTaskListener = null;
     }
 
 }

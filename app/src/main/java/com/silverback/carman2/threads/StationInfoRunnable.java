@@ -36,6 +36,7 @@ public class StationInfoRunnable implements Runnable {
         void setStationTaskThread(Thread thread);
         void handleStationTaskState(int state);
         void setStationInfo(Opinet.GasStationInfo info);
+        String getStationName();
         String getStnID();
     }
 
@@ -60,6 +61,7 @@ public class StationInfoRunnable implements Runnable {
             conn = (HttpURLConnection) url.openConnection();
             is = new BufferedInputStream(conn.getInputStream());
             Opinet.GasStationInfo info = xmlHandler.parseGasStationInfo(is);
+            info.setStationName(task.getStationName());
             task.setStationInfo(info);
             task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
 

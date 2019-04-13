@@ -1,13 +1,10 @@
 package com.silverback.carman2;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
+import android.location.Location;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
-import android.text.style.ForegroundColorSpan;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -16,17 +13,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.List;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -34,8 +27,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
+    private StationInfoTask stationInfoTask;
     private GoogleMap mMap;
-    private FirebaseFirestore db;
+    private LatLng stnLocation;
+
+    // UIs
+    TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,8 +55,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         Bundle info = getIntent().getExtras();
         if(info == null) return;
 
-        float latitude = Float.valueOf(info.getString("xcoord", null));
-        float longitude = Float.valueOf(info.getString("ycoord", null));
+        float latitude = Float.valueOf(info.getString("xcoord"));
+        float longitude = Float.valueOf(info.getString("ycoord"));
 
         tvName.setText(info.getString("name"));
         tvAddrs.setText(String.format("%s %20s", info.getString("address"), info.getString("tel")));
@@ -70,29 +67,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         log.i("Location: %s, %s", latitude, longitude);
 
-        db = FirebaseFirestore.getInstance();
-        DocumentReference stnRef = db.collection("stations").document(info.getString("code", null));
-        Map<String, Object> data = new HashMap<>();
-        data.put("addrs", info.getString("address", null));
-        data.put("tel", info.getString("tel", null));
-        data.put("carwash", info.getString("carwash", null));
-        data.put("cvs", info.getString("cvs", null));
-        data.put("service", info.getString("service", null));
-        stnRef.update(data).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                log.i("Update complete");
-            }
-        });
-
-
-
-
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.google_map);
         mapFragment.getMapAsync(this);
+
     }
 
 
@@ -114,4 +93,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
+
+
 }

@@ -14,16 +14,23 @@ import java.util.Locale;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationsViewHolder extends RecyclerView.ViewHolder {
+public class StationsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationsViewHolder.class);
 
     // UI's
+    private RecyclerViewItemClickListener mListener;
     private ImageView imgLogo;
     private TextView tvName, tvPrice, tvDistance;
     private String price, distance, carwash;
-    private String stnCode;
+    private String stnName, stnId;
+
+
+    // Interface to communicate w/ GeneralFragment when a RecyclerView item is clicked.
+    public interface RecyclerViewItemClickListener {
+        void onRecyclerViewItemClicked(String stnName, String stnId);
+    }
 
     // Constructor
     public StationsViewHolder(CardView cardView) {
@@ -38,21 +45,25 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
         price = cardView.getResources().getString(R.string.general_station_price);
         distance = cardView.getResources().getString(R.string.general_station_distance);
         carwash = cardView.getResources().getString(R.string.general_carwash);
+
+        cardView.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        log.i("ViewHolder clicked: %s", stnName);
+        //mListener.onRecyclerViewItemClicked(stnName, stnId);
     }
 
     public void bindToStationList(Opinet.GasStnParcelable data) {
-        this.stnCode = data.getStnId(); // Pass Station ID when clicking a cardview item.
-
+        this.stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
+        this.stnName = data.getStnName();
         int resLogo = getGasStationImage(data.getStnCode());
         imgLogo.setImageResource(resLogo);
         tvName.setText(data.getStnName());
         tvPrice.setText(String.format(Locale.getDefault(),"%s:%5d%2s", price, (int)data.getStnPrice(), "원"));
         tvDistance.setText(String.format(Locale.getDefault(),"%s:%5d%2s", distance, (int)data.getDist(), "m"));
         //tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
-    }
-
-    public String getStationCode() {
-        return stnCode;
     }
 
     private static int getGasStationImage(String name) {
@@ -74,5 +85,6 @@ public class StationsViewHolder extends RecyclerView.ViewHolder {
 
         return resId;
     }
+
 
 }

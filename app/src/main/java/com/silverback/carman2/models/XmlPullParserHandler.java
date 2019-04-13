@@ -399,7 +399,7 @@ public class XmlPullParserHandler {
                         }else if(tagName.equalsIgnoreCase("GIS_X_COOR")){
                             gasStationInfo.setxCoord(text);
                         }else if(tagName.equalsIgnoreCase("GIS_Y_COOR")){
-                            gasStationInfo.setyCoords(text);
+                            gasStationInfo.setyCoord(text);
                         }
 
                         break;

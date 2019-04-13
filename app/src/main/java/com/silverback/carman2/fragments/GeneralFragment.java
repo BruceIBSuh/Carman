@@ -2,7 +2,6 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.Intent;
-import android.graphics.Point;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -15,14 +14,8 @@ import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -40,9 +33,7 @@ import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -96,7 +87,6 @@ public class GeneralFragment extends Fragment implements
     private boolean hasTaskFinished = false;//prevent StationListTask from repaeating when adding the fragment.
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
-    private int position;//RecyclerView item position from StationListAdapter.RecyclerViewItemClickListener.
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -105,7 +95,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        db = FirebaseFirestore.getInstance();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -291,9 +280,9 @@ public class GeneralFragment extends Fragment implements
     // to StationMapActivity.
     @Override
     public void onRecyclerViewItemClicked(int position, String stnId) {
-        log.i("RecyclerView Item clicked: %s", stnId);
-        this.position = position;
-        stationInfoTask = ThreadManager.startStationInfoTask(this.getContext(), stnId);
+        log.i("RecyclerView Item clicked: %s %s %s", stnId, position, mStationList.get(position).getStnName());
+        stationInfoTask = ThreadManager.startStationInfoTask(
+                getContext(), mStationList.get(position).getStnName(), stnId);
     }
 
     /**
@@ -322,29 +311,6 @@ public class GeneralFragment extends Fragment implements
         mAdapter = new StationListAdapter(stnList, this);
         stationRecyclerView.showStationListRecyclerView();
         stationRecyclerView.setAdapter(mAdapter);
-
-        for(Opinet.GasStnParcelable station : stnList) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("id", station.getStnId());
-            data.put("name", station.getStnName());
-            data.put("addrs", "");
-            data.put("carwash", false);
-            data.put("cvs", false);
-            data.put("service", false);
-            data.put("tel", "");
-            data.put("geocode", new Point((int)station.getLatitude(), (int)station.getLongitude()));
-
-            DocumentReference docRef = FirebaseFirestore.getInstance()
-                    .collection("stations").document(station.getStnId());
-
-            docRef.set(data).addOnCompleteListener(new OnCompleteListener<Void>() {
-                @Override
-                public void onComplete(@NonNull Task<Void> task) {
-                    log.i("Set data complete");
-                }
-            });
-        }
-
     }
 
     @Override
@@ -354,12 +320,14 @@ public class GeneralFragment extends Fragment implements
     }
 
     // On fetching the detailed information of a specific station by picking it in RecyclerView.
+
     @Override
-    public void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo) {
+    public void onStationInfoTaskComplete(final Opinet.GasStationInfo stnInfo) {
+
+        log.i("GasStationInfo: %s %s", stnInfo.getStationName(), stnInfo.getStationCode());
 
         Bundle bundle = new Bundle();
-        bundle.putString("code", stnInfo.getStationCode());
-        bundle.putString("name", mStationList.get(position).getStnName());
+        bundle.putString("name", stnInfo.getStationName());
         bundle.putString("address", stnInfo.getNewAddrs());
         bundle.putString("tel", stnInfo.getTelNo());
         bundle.putString("carwash", stnInfo.getIsCarWash());
@@ -367,13 +335,12 @@ public class GeneralFragment extends Fragment implements
         bundle.putString("cvs", stnInfo.getIsCVS());
         //bundle.putString("price", stnInfo.getOilPrice());
         bundle.putString("xcoord", stnInfo.getxCoord());
-        bundle.putString("ycoord", stnInfo.getyCoords());
+        bundle.putString("ycoord", stnInfo.getyCoord());
 
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
         intent.putExtras(bundle);
         if(getActivity() != null) getActivity().startActivity(intent);
 
+
     }
-
-
 }
