@@ -124,21 +124,24 @@ public class MainActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_carman:
+                /*
                 if(isTabVisible) {
                     if(tabSelected != TAB_CARMAN) animSlideTabLayout();
                     else getSupportFragmentManager().popBackStack();
                 }
-
                 tabSelected = addTabIconAndTitle(TAB_CARMAN);
                 animSlideTabLayout();
-
+                */
+                animSlideTabLayout();
                 return true;
 
             case R.id.action_board:
+                /*
                 if(isTabVisible) {
                     if(tabSelected != TAB_BOARD) animSlideTabLayout();
                     else getSupportFragmentManager().popBackStack();
                 }
+                */
 
                 tabSelected = addTabIconAndTitle(TAB_BOARD);
                 animSlideTabLayout();
@@ -230,8 +233,6 @@ public class MainActivity extends BaseActivity implements
                         getDrawable(R.drawable.ic_stats)};
 
                 tabIconList = Arrays.asList(icons);
-
-
                 break;
 
             case TAB_BOARD:
@@ -259,26 +260,34 @@ public class MainActivity extends BaseActivity implements
     private void animSlideTabLayout() {
 
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
+        isTabVisible = !isTabVisible;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
-        slideTab.setDuration(500);
-        slideViewPager.setDuration(500);
-
-        if(!isTabVisible) {
-            getSupportFragmentManager().beginTransaction().remove(generalFragment).commit();
-            frameLayout.addView(viewPager);
-        } else {
-            frameLayout.removeView(viewPager);
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.frameLayout, generalFragment).addToBackStack(null).commit();
-        }
-
-        isTabVisible = !isTabVisible;
-
+        slideTab.setDuration(1000);
+        slideViewPager.setDuration(1500);
         slideTab.start();
         slideViewPager.start();
 
+
+        if(isTabVisible) {
+            getSupportFragmentManager().beginTransaction()
+                    //.setCustomAnimations(R.anim.slide_in_right, R.anim.sidle_out_left)
+                    .remove(generalFragment)
+                    .addToBackStack(null)
+                    .commit();
+
+            frameLayout.addView(viewPager);
+
+        } else {
+            log.i("Tab hidden and fragment visible");
+            frameLayout.removeView(viewPager);
+
+            getSupportFragmentManager().beginTransaction()
+                    //.setCustomAnimations(R.anim.slide_in_right, R.anim.sidle_out_left)
+                    .add(R.id.frameLayout, generalFragment).addToBackStack(null).commit();
+
+        }
     }
 
 

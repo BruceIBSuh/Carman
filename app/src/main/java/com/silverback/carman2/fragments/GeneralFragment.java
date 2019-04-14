@@ -24,7 +24,6 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
-import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
@@ -47,7 +46,6 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 public class GeneralFragment extends Fragment implements
         View.OnClickListener,
         RecyclerView.OnItemTouchListener,
-        StationListAdapter.RecyclerViewItemClickListener,
         AdapterView.OnItemSelectedListener,
         ThreadManager.OnCompleteTaskListener {
 
@@ -58,7 +56,6 @@ public class GeneralFragment extends Fragment implements
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
-    private StationInfoTask stationInfoTask;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -204,7 +201,6 @@ public class GeneralFragment extends Fragment implements
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
-        if(stationInfoTask != null) stationInfoTask = null;
     }
 
 
@@ -259,7 +255,9 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-    // The following 3 methods are invoked by RecyclerView.OnItemTouchListener
+    /**
+     * The following 3 methods are invoked by RecyclerView.OnItemTouchListener
+     */
     @Override
     public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
         log.i("onInterceptTouchEvent");
@@ -274,16 +272,6 @@ public class GeneralFragment extends Fragment implements
         log.i("onRequestDisallowInterceptTouchEvent");
     }
 
-
-    // Callback invoked by StationListAdapter.RecyclerViewItemClickListener when clicking an list
-    // item, which starts StationDetailTask to pass detailed information as to a clicked station
-    // to StationMapActivity.
-    @Override
-    public void onRecyclerViewItemClicked(int position, String stnId) {
-        log.i("RecyclerView Item clicked: %s %s %s", stnId, position, mStationList.get(position).getStnName());
-        stationInfoTask = ThreadManager.startStationInfoTask(
-                getContext(), mStationList.get(position).getStnName(), stnId);
-    }
 
     /**
      * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
@@ -308,7 +296,7 @@ public class GeneralFragment extends Fragment implements
     public void onStationListTaskComplete(List<Opinet.GasStnParcelable> stnList) {
         log.i("StationList: %s", stnList.size());
         mStationList = stnList;
-        mAdapter = new StationListAdapter(stnList, this);
+        mAdapter = new StationListAdapter(stnList);
         stationRecyclerView.showStationListRecyclerView();
         stationRecyclerView.setAdapter(mAdapter);
     }

@@ -8,34 +8,32 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.Locale;
 
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationsViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationsViewHolder.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerViewHolder.class);
 
     // UI's
-    private RecyclerViewItemClickListener mListener;
+    private CardView cardView;
     private ImageView imgLogo;
     private TextView tvName, tvPrice, tvDistance;
     private String price, distance, carwash;
     private String stnName, stnId;
 
-
-    // Interface to communicate w/ GeneralFragment when a RecyclerView item is clicked.
-    public interface RecyclerViewItemClickListener {
-        void onRecyclerViewItemClicked(String stnName, String stnId);
-    }
-
     // Constructor
-    public StationsViewHolder(CardView cardView) {
+    public StationRecyclerViewHolder(CardView cardView) {
         super(cardView);
 
+        this.cardView = cardView;
         imgLogo = cardView.findViewById(R.id.img_logo);
         tvName = cardView.findViewById(R.id.tv_station_name);
         tvPrice = cardView.findViewById(R.id.tv_price);
@@ -49,10 +47,14 @@ public class StationsViewHolder extends RecyclerView.ViewHolder implements View.
         cardView.setOnClickListener(this);
     }
 
+    @SuppressWarnings("")
     @Override
     public void onClick(View v) {
         log.i("ViewHolder clicked: %s", stnName);
-        //mListener.onRecyclerViewItemClicked(stnName, stnId);
+        log.i("Paent View: %s", cardView.getParent());
+
+        // Worker thread starts to get the info of a specific station with stnId given.
+        ThreadManager.startStationInfoTask((StationRecyclerView)cardView.getParent(), stnName, stnId);
     }
 
     public void bindToStationList(Opinet.GasStnParcelable data) {

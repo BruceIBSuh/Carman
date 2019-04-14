@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -31,6 +32,8 @@ public class StationRecyclerView extends RecyclerView {
     private int mPBResId = -1;
     private int mTextViewResId = -2;
     private int mFabResId = -3;
+    private String[] defaultParams;
+    private Location location;
 
 
     // Default constructors
@@ -65,9 +68,15 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     public void initView(String[] defaults, Location location) {
+        defaultParams = defaults;
+        this.location = location;
         stationListTask = ThreadManager.startStationListTask(this, defaults, location);
     }
 
+    /*
+     * This callback is invoke when the system attaches this view to a Window. This call back is
+     * invoked before onDraw(), but may be invoked after onMeasure().
+     */
     @Override
     protected void onAttachedToWindow() {
         // Always call the supermethod first

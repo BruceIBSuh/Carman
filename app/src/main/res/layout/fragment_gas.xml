@@ -1,32 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent" >
 
-    <LinearLayout
-        android:layout_width="307dp"
-        android:layout_height="116dp"
-        android:orientation="horizontal"
-        tools:layout_editor_absoluteX="52dp"
-        tools:layout_editor_absoluteY="265dp" />
-
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/viewPager"
-        android:layout_width="354dp"
-        android:layout_height="85dp"
-        app:layout_constraintEnd_toEndOf="parent"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="0dp" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:context="com.silverback.carman2.fragments.GasManagerFragment" >
 
-    <FrameLayout
-        android:layout_width="324dp"
-        android:layout_height="86dp"
-        tools:layout_editor_absoluteX="43dp"
-        tools:layout_editor_absoluteY="130dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    </FrameLayout>
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Recent Gas Expenses"
+                android:textStyle="bold"
+                app:layout_anchor="@id/tv_gas" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <androidx.viewpager.widget.ViewPager
+                android:id="@+id/viewPager"
+                android:layout_width="match_parent"
+                android:layout_height="144dp"
+                android:background="#c8c8c8"
+                app:layout_anchor="@id/tv_gas" />
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/tv_gas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#ff9000"
+                    android:text="Current Gas expense" />
+
+            </androidx.core.widget.NestedScrollView>
+
+        </LinearLayout>
+
+
+
+
+
+
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+
+</LinearLayout>
+

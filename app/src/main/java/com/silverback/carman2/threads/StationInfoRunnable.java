@@ -41,8 +41,8 @@ public class StationInfoRunnable implements Runnable {
     }
 
     // Constructor
-    StationInfoRunnable(WeakReference<Context> weakContext, StationInfoMethods task) {
-        this.context = weakContext.get();
+    StationInfoRunnable(Context context, StationInfoMethods task) {
+        this.context = context;
         this.task = task;
         xmlHandler = new XmlPullParserHandler();
     }

@@ -1,8 +1,7 @@
 package com.silverback.carman2.adapters;
 
-import com.silverback.carman2.fragments.GasFragment;
+import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceFragment;
-import com.silverback.carman2.fragments.SettingFragment;
 import com.silverback.carman2.fragments.StatFragment;
 
 import androidx.fragment.app.Fragment;
@@ -17,7 +16,7 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
     }
 
     private final Fragment[] fragments = new Fragment[] {
-            new GasFragment(),
+            new GasManagerFragment(),
             new ServiceFragment(),
             new StatFragment(),
             //new SettingFragment()

@@ -6,6 +6,7 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.view.View;
 
 import com.silverback.carman2.GeneralSettingActivity;
 import com.silverback.carman2.IntroActivity;
@@ -220,11 +221,10 @@ public class ThreadManager {
                         break;
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
-                        log.i("DOWNLOAD_STATION_INFO_COMPLETED");
                         stationInfoTask = (StationInfoTask)msg.obj;
                         Opinet.GasStationInfo info = stationInfoTask.getStationInfo();
                         mStationTaskListener.onStationInfoTaskComplete(info);
-                        log.i("info: %s %s", info.getStationName(), stationInfoTask.getStationName());
+
                         stationInfoTask.recycle();
                         mStationInfoTaskQueue.offer(stationInfoTask);
                         break;
@@ -580,17 +580,18 @@ public class ThreadManager {
         return stationListTask;
     }
 
-    public static StationInfoTask startStationInfoTask(Context context, String stnName, String stnId) {
+    public static StationInfoTask startStationInfoTask(View view, String stnName, String stnId) {
 
         StationInfoTask stationTask = sInstance.mStationInfoTaskQueue.poll();
-        if(stationTask == null) stationTask = new StationInfoTask(context);
+        if(stationTask == null) stationTask = new StationInfoTask(view);
 
         // Attach OnCompleteTaskListener
         if(sInstance.mStationTaskListener == null) {
             try {
-                sInstance.mStationTaskListener = (OnCompleteTaskListener)context;
+                sInstance.mStationTaskListener = (OnCompleteTaskListener)view.getParent();
             } catch (ClassCastException e) {
-                throw new ClassCastException(String.valueOf(context) + " must implement OnStationInfoTaskListener");
+                throw new ClassCastException(String.valueOf(view.getParent())
+                        + " must implement OnStationInfoTaskListener");
             }
         }
 

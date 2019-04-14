@@ -32,7 +32,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private LatLng stnLocation;
 
     // UIs
-    TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
+    //TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

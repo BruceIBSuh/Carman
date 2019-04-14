@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
@@ -12,7 +11,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.viewholders.StationsViewHolder;
+import com.silverback.carman2.viewholders.StationRecyclerViewHolder;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,7 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder> {
+public class StationListAdapter extends RecyclerView.Adapter<StationRecyclerViewHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
@@ -36,92 +35,47 @@ public class StationListAdapter extends RecyclerView.Adapter<StationsViewHolder>
     private Context context;
     private List<Opinet.GasStnParcelable> stationList;
     private CardView cardView;
-    private RecyclerViewItemClickListener mListener;
+    //private StationRecyclerViewHolder.RecyclerViewItemClickListener mListener;
 
     // Interface to communicate w/ GeneralFragment when a RecyclerView item is clicked.
+    /*
     public interface RecyclerViewItemClickListener {
         void onRecyclerViewItemClicked(int position, String stnId);
     }
+    */
 
     // Constructor
-    public StationListAdapter(List<Opinet.GasStnParcelable> list,
-                              RecyclerViewItemClickListener listener) {
+    public StationListAdapter(List<Opinet.GasStnParcelable> list){
+                              //StationRecyclerViewHolder.RecyclerViewItemClickListener listener) {
 
         super();
         stationList = list;
-        mListener = listener;
+        //mListener = listener;
     }
 
 
     @NonNull
     @Override
-    public StationsViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public StationRecyclerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.cardview_stations, parent, false);
 
-        return new StationsViewHolder(cardView);
+        return new StationRecyclerViewHolder(cardView);
 
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StationsViewHolder holder, final int position) {
-
+    public void onBindViewHolder(@NonNull StationRecyclerViewHolder holder, final int position) {
+        log.i("Binder position: %s", position);
         final Opinet.GasStnParcelable station = stationList.get(position);
         holder.bindToStationList(station);
-
-        cardView.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                mListener.onRecyclerViewItemClicked(position, station.getStnId());
-            }
-        });
-
     }
 
     @Override
     public int getItemCount() {
         return stationList.size();
     }
-
-    /*
-    @Override
-    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
-        log.i("onAttachedToRecyclerView");
-        super.onAttachedToRecyclerView(recyclerView);
-        try {
-            mListener = (RecyclerViewItemClickListener)context;
-        } catch(ClassCastException e) {
-            log.i("ClassCastExcpetion: %s", e.getMessage());
-        }
-    }
-
-    @Override
-    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
-        if(mListener != null) mListener = null;
-        super.onDetachedFromRecyclerView(recyclerView);
-    }
-
-
-    @Override
-    public void onViewAttachedToWindow(@NonNull StationsViewHolder holder) {
-        super.onViewAttachedToWindow(holder);
-        try {
-            mListener = (RecyclerViewItemClickListener)context;
-        } catch(ClassCastException e) {
-            log.i("ClassCastExcpetion: %s", e.getMessage());
-        }
-
-    }
-
-    @Override
-    public void onViewDetachedFromWindow(@NonNull StationsViewHolder holder) {
-        if(mListener != null) mListener = null;
-        super.onViewDetachedFromWindow(holder);
-    }
-    */
-
-
 
     /*
      * Sorts the already saved station list  from the Opinet by price and distance
