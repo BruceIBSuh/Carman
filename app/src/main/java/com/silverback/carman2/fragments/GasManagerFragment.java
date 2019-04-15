@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
+
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.R;
@@ -16,6 +16,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.NestedScrollingChild;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
@@ -23,9 +24,7 @@ import androidx.viewpager.widget.ViewPager;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GasManagerFragment extends Fragment implements
-        ViewPager.OnPageChangeListener,
-        NestedScrollView.OnScrollChangeListener, NestedScrollView.OnTouchListener {
+public class GasManagerFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
@@ -35,7 +34,6 @@ public class GasManagerFragment extends Fragment implements
 
     // Objects
     private TabLayout tabLayout;
-    private NestedScrollView nestedScrollView;
     private ExpenseViewPagerAdapter viewPagerAdapter;
     private CustomPagerIndicator indicator;
 
@@ -50,60 +48,31 @@ public class GasManagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        if(getActivity() != null) {
-            tabLayout = getActivity().findViewById(R.id.tabLayout);
-
-        }
         // Inflate the layout for this fragment
         View localView = inflater.inflate(R.layout.fragment_gas, container, false);
 
-        NestedScrollView nestedScrollView = localView.findViewById(R.id.nestedScrollView);
+        // Create ViewPager and the custom indicator for paging.
         ViewPager viewPager = localView.findViewById(R.id.viewPager);
         indicator = localView.findViewById(R.id.indicator);
-
-        nestedScrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener(){
-            @Override
-            public void onScrollChanged() {
-                log.i("Scroll Change");
-            }
-        });
-
+        NestedScrollView scroll = localView.findViewById(R.id.nestedScrollView);
         ExpenseViewPagerAdapter adapter = new ExpenseViewPagerAdapter(getFragmentManager(), NumOfPages);
         viewPager.setAdapter(adapter);
         viewPager.setCurrentItem(0);
-        viewPager.addOnPageChangeListener(this);
 
         indicator.createPanel(NumOfPages, R.drawable.dot_small, R.drawable.dot_large);
+
+        scroll.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(
+                    NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                log.d("OnScrollChange");
+
+            }
+        });
+
+
 
         return localView;
     }
 
-    @Override
-    public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-        log.i("NestedScrollView.OnScrollChangeListener");
-
-    }
-
-    @Override
-    public boolean onTouch(View v, MotionEvent event) {
-        log.i("onToucn");
-        return false;
-    }
-
-
-    // The following 3 overridingmethods are invoked by ViewPager.OnPageChangeListener
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-    }
-    @Override
-    public void onPageSelected(int position) {
-        log.i("position: %s", position);
-        indicator.selectDot(position);
-
-    }
-    @Override
-    public void onPageScrollStateChanged(int state) {
-
-    }
 }

@@ -26,9 +26,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager.widget.ViewPager;
 
 public class MainActivity extends BaseActivity implements
@@ -70,11 +72,11 @@ public class MainActivity extends BaseActivity implements
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
 
-
         // Creates ViewPager programmatically and sets FragmentPagerAdapter to it, then interworks
         // with TabLayout
         viewPager = new ViewPager(this);
         viewPager.setId(View.generateViewId());
+
         FragmentPagerAdapter pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
         viewPager.addOnPageChangeListener(this);
@@ -100,10 +102,10 @@ public class MainActivity extends BaseActivity implements
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
+
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.frameLayout, generalFragment, "generalFragment")
-                .addToBackStack(null)
-                .commit();
+                .add(R.id.frameLayout, generalFragment, "general").addToBackStack(null).commit();
+
 
         // Calculates Toolbar height which is referred to as a baseline for TabLayout and ViewPager
         // to slide up and down.
@@ -114,7 +116,9 @@ public class MainActivity extends BaseActivity implements
         checkPermissions();
     }
 
-    // Callbacks invoked by Toolbar
+    /**
+     * The following 2 overriding methods are invoked by Toolbar working as Appbar or ActionBar
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -123,28 +127,18 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         switch(item.getItemId()) {
+
             case R.id.action_carman:
-                /*
-                if(isTabVisible) {
-                    if(tabSelected != TAB_CARMAN) animSlideTabLayout();
-                    else getSupportFragmentManager().popBackStack();
-                }
-                tabSelected = addTabIconAndTitle(TAB_CARMAN);
-                animSlideTabLayout();
-                */
+                addTabIconAndTitle(TAB_CARMAN);
+                // Slide up and hide the tab when isTabVisible is set to false, at the time of which
+                // FrameLayout contains GeneralFragment, removing ViewPager if any.
                 animSlideTabLayout();
                 return true;
 
             case R.id.action_board:
-                /*
-                if(isTabVisible) {
-                    if(tabSelected != TAB_BOARD) animSlideTabLayout();
-                    else getSupportFragmentManager().popBackStack();
-                }
-                */
-
-                //tabSelected = addTabIconAndTitle(TAB_BOARD);
+                addTabIconAndTitle(TAB_BOARD);
                 animSlideTabLayout();
 
                 return true;
@@ -237,7 +231,6 @@ public class MainActivity extends BaseActivity implements
                 break;
 
             case TAB_BOARD:
-                log.i("TAB_BOARD");
                 tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_board_title));
                 icons = new Drawable[]{};
                 tabIconList = Arrays.asList(icons);
@@ -252,24 +245,21 @@ public class MainActivity extends BaseActivity implements
         }
 
         return tab;
-
-
-
     }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
 
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
-        isTabVisible = !isTabVisible;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
-        slideTab.setDuration(500);
-        slideViewPager.setDuration(500);
+        slideTab.setDuration(1000);
+        slideViewPager.setDuration(1000);
         slideTab.start();
         slideViewPager.start();
 
+        isTabVisible = !isTabVisible;
 
         if(isTabVisible) {
             getSupportFragmentManager().beginTransaction()
@@ -283,11 +273,12 @@ public class MainActivity extends BaseActivity implements
         } else {
             log.i("Tab hidden and fragment visible");
             frameLayout.removeView(viewPager);
-
+            getSupportFragmentManager().popBackStack();
+            /*
             getSupportFragmentManager().beginTransaction()
                     //.setCustomAnimations(R.anim.slide_in_right, R.anim.sidle_out_left)
                     .add(R.id.frameLayout, generalFragment).addToBackStack(null).commit();
-
+            */
         }
     }
 
@@ -300,6 +291,4 @@ public class MainActivity extends BaseActivity implements
         }
         return -1;
     }
-
-
 }
