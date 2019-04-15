@@ -1,63 +1,257 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout
+
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    tools:context="com.silverback.carman2.fragments.GasManagerFragment">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:context="com.silverback.carman2.fragments.GasManagerFragment" >
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true">
 
-        <LinearLayout
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:fitsSystemWindows="true"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:contentScrim="?attr/colorPrimary" >
 
-            <TextView
-                android:id="@+id/tv_title"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Recent Gas Expenses"
-                android:textStyle="bold"
-                app:layout_anchor="@id/tv_gas" />
-
-            <androidx.viewpager.widget.ViewPager
-                android:id="@+id/viewPager"
-                android:layout_width="match_parent"
-                android:layout_height="144dp"
-                android:background="#c8c8c8"
-                app:layout_anchor="@id/tv_gas" />
-
-            <androidx.core.widget.NestedScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
+                android:orientation="vertical"
+                android:background="#c8c8c8" >
 
                 <TextView
-                    android:id="@+id/tv_gas"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#ff9000"
-                    android:text="Current Gas expense" />
+                    android:text="Gas Management"/>
 
-            </androidx.core.widget.NestedScrollView>
+                <androidx.viewpager.widget.ViewPager
+                    android:id="@+id/viewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp" />
 
-        </LinearLayout>
+                <com.silverback.carman2.utils.CustomPagerIndicator
+                    android:id="@+id/indicator"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"/>
+
+
+            </LinearLayout>
 
 
 
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/tv_subtitle_gas_expense"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="3dp"
+                android:background="@drawable/bg_colored_border"
+                android:padding="5dp"
+                android:text="@string/gas_subtitle_expense"
+                android:textSize="@dimen/subtitle"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_subtitle_gas_expense"
+                android:minWidth="80dp"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_date"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_station"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_date"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_station"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_odometer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_station"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_odometer"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_expense_gas"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_odometer"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_expense_gas"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_expense_gas"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_amount"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
 
 
+            <TextView
+                android:id="@+id/tv_subtitle_extra_expense"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_amount"
+                android:layout_margin="3dp"
+                android:padding="5dp"
+                android:background="@drawable/bg_colored_border"
+                android:text="@string/gas_subtitle_extra_expense"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_expense_wash"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_subtitle_extra_expense"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_expense_wash"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_expense_misc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_expense_wash"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_expense_misc"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_subtitle_evaluation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_expense_misc"
+                android:layout_margin="3dp"
+                android:padding="5dp"
+                android:background="@drawable/bg_colored_border"
+                android:text="@string/gas_subtitle_evaluation"
+                android:textSize="@dimen/subtitle"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_label_evaluation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_subtitle_evaluation"
+                android:layout_margin="10dp"
+                android:text="@string/gas_label_evaluation"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <RatingBar style="?android:attr/ratingBarStyleSmall"
+                android:id="@+id/ratingBar2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/tv_subtitle_evaluation"
+                android:layout_toEndOf="@id/tv_label_evaluation"
+                android:layout_marginTop="10dp"
+                android:numStars="5"
+                android:rating="3"
+                android:stepSize="0.5"/>
+
+            <TextView
+                android:id="@+id/tv_label_comment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_evaluation"
+                android:layout_margin="10dp"
+                android:labelFor="@id/et_comment"
+                android:text="@string/gas_label_comment"
+                android:textSize="@dimen/largeText"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_comment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="100dp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/tv_label_comment"
+                android:layout_margin="3dp"
+                android:padding="5dp"
+                android:gravity="top|start"
+                android:background="@drawable/bg_colored_border"
+                android:scrollbars="vertical"
+                android:inputType="textMultiLine"
+                tools:ignore="Autofill"/>
+
+        </RelativeLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:layout_marginEnd="3dp"
+        app:layout_anchor="@id/tv_label_comment"
+        app:layout_anchorGravity="top|end" />
 
 
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-
-
-</LinearLayout>
-
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
