@@ -66,6 +66,7 @@ public class MainActivity extends BaseActivity implements
         Toolbar toolbar = findViewById(R.id.toolbar);
         frameLayout = findViewById(R.id.frameLayout);
         tabLayout = findViewById(R.id.tabLayout);
+
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
 
@@ -79,7 +80,7 @@ public class MainActivity extends BaseActivity implements
         viewPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(viewPager);
 
-        // Custom method to set TabLayout title and icon, which MUST be invoked after
+        // Custom method to set TabLayout title and icon, WHICH MUST BE INVOKED AFTER
         // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
         tabTitleList = new ArrayList<>();
         tabIconList = new ArrayList<>();
@@ -143,7 +144,7 @@ public class MainActivity extends BaseActivity implements
                 }
                 */
 
-                tabSelected = addTabIconAndTitle(TAB_BOARD);
+                //tabSelected = addTabIconAndTitle(TAB_BOARD);
                 animSlideTabLayout();
 
                 return true;
@@ -264,8 +265,8 @@ public class MainActivity extends BaseActivity implements
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(1500);
+        slideTab.setDuration(500);
+        slideViewPager.setDuration(500);
         slideTab.start();
         slideViewPager.start();
 

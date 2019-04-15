@@ -48,6 +48,20 @@
     <string name="map_cardview_service">정 비:</string>
     <string name="map_cardview_wash">세 차:</string>
 
+    <!--GasMangerFragment-->
+    <string name="gas_toolbar_title">최근 주유 지출</string>
+    <string name="gas_subtitle_expense">주유 지출</string>
+    <string name="gas_label_date">주유날짜</string>
+    <string name="gas_label_station">주유소</string>
+    <string name="gas_label_odometer">운행거리</string>
+    <string name="gas_label_expense_gas">주유비</string>
+    <string name="gas_label_amount">주유량</string>
+    <string name="gas_subtitle_extra_expense">세차 및 기타 지출</string>
+    <string name="gas_label_expense_wash">세차비</string>
+    <string name="gas_label_expense_misc">기타지출</string>
+    <string name="gas_subtitle_evaluation">주유소 평가하기</string>
+    <string name="gas_label_evaluation">주유소 평점</string>
+    <string name="gas_label_comment">평가한마디</string>
 
     <!--GeneralSettingActivity-->
     <string name="setting_label">차량정보 입력 / 앱 설정</string>
