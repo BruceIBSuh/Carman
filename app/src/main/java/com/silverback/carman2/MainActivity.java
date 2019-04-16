@@ -131,10 +131,12 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
 
             case R.id.action_carman:
-                addTabIconAndTitle(TAB_CARMAN);
+                //addTabIconAndTitle(TAB_CARMAN);
                 // Slide up and hide the tab when isTabVisible is set to false, at the time of which
                 // FrameLayout contains GeneralFragment, removing ViewPager if any.
-                animSlideTabLayout();
+                //animSlideTabLayout();
+                startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
+
                 return true;
 
             case R.id.action_board:

@@ -19,7 +19,6 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
             new GasManagerFragment(),
             new ServiceFragment(),
             new StatFragment(),
-            //new SettingFragment()
     };
 
     @Override

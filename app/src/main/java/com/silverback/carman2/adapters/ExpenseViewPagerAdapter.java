@@ -1,12 +1,17 @@
 package com.silverback.carman2.adapters;
 
 import com.silverback.carman2.fragments.RecentExpensePageFragment;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
 public class ExpenseViewPagerAdapter extends FragmentStatePagerAdapter {
+
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseViewPagerAdapter.class);
 
     //private static final String TAG = "ViewPagerAdapter";
     private int mPage;

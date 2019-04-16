@@ -7,4 +7,7 @@
     <color name="border">#1EA4FF</color>
     <color name="priceUp">#FF0000</color>
     <color name="priceDown">#0080FF</color>
+
+    <color name="etBorderColor">#A0A0A0</color>
+    <color name="etBorderColorFocused">#1EA4FF</color>
 </resources>

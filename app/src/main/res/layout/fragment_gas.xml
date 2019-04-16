@@ -236,6 +236,7 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -243,6 +244,6 @@
         android:layout_marginEnd="3dp"
         app:layout_anchor="@id/tv_label_comment"
         app:layout_anchorGravity="top|end" />
-
+   -->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

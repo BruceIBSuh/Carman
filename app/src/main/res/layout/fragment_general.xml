@@ -16,12 +16,12 @@
         android:text="@string/general_subtitle_today"
         android:textAlignment="gravity"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/tv_date"
+        app:layout_constraintEnd_toStartOf="@+id/tv_label_date"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_date"
+        android:id="@+id/tv_label_date"
         android:layout_width="250dp"
         android:layout_height="34dp"
         android:layout_marginStart="8dp"
@@ -41,8 +41,8 @@
         android:gravity="center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_date"
-        app:layout_constraintTop_toTopOf="@+id/tv_date" />
+        app:layout_constraintStart_toEndOf="@+id/tv_label_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
 
     <FrameLayout

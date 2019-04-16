@@ -106,7 +106,7 @@ public class GeneralFragment extends Fragment implements
 
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
 
-        TextView tvDate = childView.findViewById(R.id.tv_date);
+        TextView tvDate = childView.findViewById(R.id.tv_label_date);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         avgPriceView = childView.findViewById(R.id.avgPriceView);
