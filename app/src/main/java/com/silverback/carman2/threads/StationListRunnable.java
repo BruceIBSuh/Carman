@@ -5,6 +5,11 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Process;
 
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -24,6 +29,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 public class StationListRunnable implements Runnable{
 
     // Logging
@@ -40,6 +47,7 @@ public class StationListRunnable implements Runnable{
 
     // Objects
     private Context context;
+    private FirebaseFirestore mDB;
     private List<Opinet.GasStnParcelable> mStationList;
     private StationListMethod mTask;
     private URL url;
@@ -56,6 +64,7 @@ public class StationListRunnable implements Runnable{
 
     // Constructor
     StationListRunnable(Context context, StationListMethod task) {
+        mDB = FirebaseFirestore.getInstance();
         mStationList = null;
         this.context = context;
         mTask = task;
@@ -125,6 +134,10 @@ public class StationListRunnable implements Runnable{
             mStationList = xmlHandler.parseStationListParcelable(is);
             log.i("StationListRunnable:%s", mStationList.size());
 
+            // Addition info from FireStore database in which station data have been accumulated.
+            // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
+            //setStationInfoFromFireStore();
+
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
             if(mStationList.size() > 0) {
@@ -170,6 +183,32 @@ public class StationListRunnable implements Runnable{
             }
 
             if(conn != null) conn.disconnect();
+        }
+    }
+
+    /**
+     * This method is for the purpose of retrieving near station information from FireStore database
+     * which accumulates station data in Opinet. Until data complete to sync with Opinte server,
+     * it should be off.
+     */
+    @SuppressWarnings("Constant")
+    private void setStationInfoFromFireStore() {
+
+        for(final Opinet.GasStnParcelable station : mStationList) {
+            Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());
+            query.addSnapshotListener(new EventListener<QuerySnapshot>(){
+                @Override
+                public void onEvent(@Nullable QuerySnapshot snapshot,
+                                    @Nullable FirebaseFirestoreException e) {
+                    log.i("FireStore isWash retrieved");
+                    if(snapshot == null) return;
+                    if(!snapshot.isEmpty()) {
+                        String carwash = (String)snapshot.getDocuments().get(0).get("carwash");
+                        station.setIsWash(carwash);
+                    }
+
+                }
+            });
         }
     }
 
