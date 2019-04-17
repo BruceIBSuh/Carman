@@ -18,7 +18,7 @@
 
 
     <!--GeneralFragment-->
-    <string name="general_subtitle_today">Today</string>
+    <string name="general_label_today">Today</string>
     <string name="general_subtitle_stations">주변 주유소</string>
     <string name="general_subtitle_region">[관심 지역 / 주유소]</string>
     <string name="general_subtitle_expense">최근 지출 내역</string>
@@ -115,4 +115,9 @@
     <string name="textview">TextView</string>
     <string name="title_activity_station_maps">Map</string>
     <string name="title_activity_maps">Map</string>
+
+    <string name="unit_km">km</string>
+    <string name="unit_liter">리터</string>
+    <string name="unit_won">원</string>
+    <string name="liter_price">원/리터</string>
 </resources>

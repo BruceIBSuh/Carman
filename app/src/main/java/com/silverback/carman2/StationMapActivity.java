@@ -5,6 +5,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import android.location.Location;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -47,7 +48,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         TextView tvName = findViewById(R.id.tv_name);
         TextView tvAddrs = findViewById(R.id.tv_address);
-        TextView tvPrice = findViewById(R.id.tv_price);
+        TextView tvPrice = findViewById(R.id.tv_price_info);
         TextView tvCarwash = findViewById(R.id.tv_carwash);
         TextView tvService = findViewById(R.id.tv_service);
         TextView tvCVS = findViewById(R.id.tv_cvs);
@@ -59,7 +60,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         float longitude = Float.valueOf(info.getString("ycoord"));
 
         tvName.setText(info.getString("name"));
-        tvAddrs.setText(String.format("%s %20s", info.getString("address"), info.getString("tel")));
+        tvAddrs.setText(String.format("%s %15s", info.getString("address"), info.getString("tel")));
         tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getString("carwash")));
         tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getString("service")));
         tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getString("cvs")));
@@ -92,6 +93,21 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                log.i("onOptionsItemSelected in GeneralSettingActivity");
+                //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
+                //onBackPressed();
+                finish();
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 

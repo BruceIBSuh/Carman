@@ -3,11 +3,6 @@ package com.silverback.carman2.threads;
 import android.graphics.Point;
 import android.os.Process;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -26,28 +21,26 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import androidx.annotation.NonNull;
-
 public class FireStoreSetRunnable implements Runnable {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreSetRunnable.class);
 
     // Objects
-    private FireStoreMethods task;
+    private FireStoreSetMethods task;
     private FirebaseFirestore db;
     private List<Opinet.GasStnParcelable> stnList;
     private Map<String, Object> data;
     private WriteBatch batch;
 
     // Interface
-    public interface FireStoreMethods {
+    public interface FireStoreSetMethods {
         void setStationTaskThread(Thread thread);
         List<Opinet.GasStnParcelable> getStationList();
     }
 
     // Constructor
-    FireStoreSetRunnable(FireStoreMethods task) {
+    FireStoreSetRunnable(FireStoreSetMethods task) {
         this.task = task;
         db = FirebaseFirestore.getInstance();
     }

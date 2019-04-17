@@ -11,59 +11,54 @@
         android:layout_width="wrap_content"
         android:layout_height="35dp"
         android:layout_marginStart="3dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:gravity="center_vertical"
-        android:text="@string/general_subtitle_today"
-        android:textAlignment="gravity"
+        android:text="@string/general_label_today"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/tv_label_date"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_label_date"
-        android:layout_width="250dp"
-        android:layout_height="34dp"
+        android:id="@+id/tv_today"
+        android:layout_width="wrap_content"
+        android:layout_height="35dp"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
         android:gravity="center_vertical"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_fuel"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_label_date"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
         android:id="@+id/spinner_fuel"
-        android:layout_width="0dp"
+        android:layout_width="100dp"
         android:layout_height="35dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_date"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 
     <FrameLayout
         android:id="@+id/frame_rotate"
         android:layout_width="0dp"
         android:layout_height="80dp"
-        android:minWidth="130dp"
         android:layout_marginStart="3dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/bg_colored_border"
+        android:minWidth="130dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" >
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date">
 
         <com.silverback.carman2.views.AvgPriceView
             android:id="@+id/avgPriceView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="5dp"
             android:gravity="center"
+            android:padding="5dp"
             app:avgPriceDown="@color/priceDown"
-            app:avgPriceUp="@color/priceUp"/>
+            app:avgPriceUp="@color/priceUp" />
 
     </FrameLayout>
 
@@ -106,7 +101,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:padding="3dp" >
+            android:padding="3dp">
 
             <com.silverback.carman2.views.SidoPriceView
                 android:id="@+id/sidoPriceView"
@@ -266,20 +261,20 @@
             android:layout_margin="10dp"
             android:src="@android:drawable/ic_menu_mylocation"
             android:visibility="invisible"
-            app:layout_anchor="@id/stationRecyclerView"
-            app:layout_anchorGravity="right|bottom"
+            app:backgroundTint="@color/colorAccent"
             app:borderWidth="0dp"
             app:elevation="6dp"
-            app:backgroundTint="@color/colorAccent"
+            app:layout_anchor="@id/stationRecyclerView"
+            app:layout_anchorGravity="right|bottom"
             app:rippleColor="@color/colorPrimary" />
 
         <com.silverback.carman2.views.StationRecyclerView
             android:id="@+id/stationRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            app:fab="@id/fab_reload"
             app:progressbar="@id/listProgress"
-            app:textview="@id/tv_no_stations"
-            app:fab="@id/fab_reload" />
+            app:textview="@id/tv_no_stations" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

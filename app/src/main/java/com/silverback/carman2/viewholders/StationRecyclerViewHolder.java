@@ -8,7 +8,6 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.StationRecyclerView;
 
@@ -25,7 +24,7 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
     // UI's
     private CardView cardView;
     private ImageView imgLogo;
-    private TextView tvName, tvPrice, tvDistance;
+    private TextView tvName, tvPrice, tvDistance, tvCarwash;
     private String price, distance, carwash;
     private String stnName, stnId;
 
@@ -36,13 +35,9 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
         this.cardView = cardView;
         imgLogo = cardView.findViewById(R.id.img_logo);
         tvName = cardView.findViewById(R.id.tv_station_name);
-        tvPrice = cardView.findViewById(R.id.tv_price);
-        tvDistance = cardView.findViewById(R.id.tv_distance);
-        //tvWash = cardView.findViewById(R.id.tv_carwash);
-
-        price = cardView.getResources().getString(R.string.general_station_price);
-        distance = cardView.getResources().getString(R.string.general_station_distance);
-        carwash = cardView.getResources().getString(R.string.general_carwash);
+        tvPrice = cardView.findViewById(R.id.tv_value_price);
+        tvDistance = cardView.findViewById(R.id.tv_value_distance);
+        tvCarwash = cardView.findViewById(R.id.tv_value_carwash);
 
         cardView.setOnClickListener(this);
     }
@@ -63,8 +58,8 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
         int resLogo = getGasStationImage(data.getStnCode());
         imgLogo.setImageResource(resLogo);
         tvName.setText(data.getStnName());
-        tvPrice.setText(String.format(Locale.getDefault(),"%s:%5d%2s", price, (int)data.getStnPrice(), "원"));
-        tvDistance.setText(String.format(Locale.getDefault(),"%s:%5d%2s", distance, (int)data.getDist(), "m"));
+        tvPrice.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getStnPrice(), "원"));
+        tvDistance.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getDist(), "m"));
         //tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
     }
 

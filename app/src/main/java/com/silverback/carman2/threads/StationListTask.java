@@ -15,7 +15,7 @@ import java.util.List;
 
 public class StationListTask extends ThreadTask implements
         StationListRunnable.StationListMethod,
-        FireStoreSetRunnable.FireStoreMethods {
+        FireStoreSetRunnable.FireStoreSetMethods, FireStoreGetRunnable.FireStoreGetMethods {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
@@ -24,7 +24,8 @@ public class StationListTask extends ThreadTask implements
     private Context context;
     private WeakReference<StationRecyclerView> mWeakRecyclerView;
     private Runnable mStationListRunnable;
-    private Runnable mFireStoreRunnable;
+    private Runnable mFireStoreSetRunnable;
+    private Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
 
     private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
@@ -39,7 +40,8 @@ public class StationListTask extends ThreadTask implements
         super();
         this.context = context;
         mStationListRunnable = new StationListRunnable(context, this);
-        mFireStoreRunnable = new FireStoreSetRunnable(this);
+        mFireStoreSetRunnable = new FireStoreSetRunnable(this);
+        mFireStoreGetRunnable = new FireStoreGetRunnable(this);
     }
 
     void initStationTask(
@@ -54,7 +56,8 @@ public class StationListTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    Runnable getFireStoreRunnalbe() { return mFireStoreRunnable; }
+    Runnable getFireStoreSetRunnalbe() { return mFireStoreSetRunnable; }
+    Runnable getFireStoreGetRunnable() { return mFireStoreGetRunnable; }
 
     void recycle() {
         if(mWeakRecyclerView != null) {
@@ -68,7 +71,7 @@ public class StationListTask extends ThreadTask implements
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
     // thread of each Runnables.
     @Override
-    public void setStationTaskThread(Thread thread) {
+    public synchronized void setStationTaskThread(Thread thread) {
         setCurrentThread(thread);
         log.i("Download Thread: %s", thread);
     }

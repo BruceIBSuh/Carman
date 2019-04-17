@@ -8,15 +8,14 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
-public class ExpenseViewPagerAdapter extends FragmentStatePagerAdapter {
+public class ExpensePagerAdapter extends FragmentStatePagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseViewPagerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
 
-    //private static final String TAG = "ViewPagerAdapter";
     private int mPage;
 
-    public ExpenseViewPagerAdapter(FragmentManager fm, int page) {
+    public ExpensePagerAdapter(FragmentManager fm, int page) {
         super(fm);
         mPage = page;
     }

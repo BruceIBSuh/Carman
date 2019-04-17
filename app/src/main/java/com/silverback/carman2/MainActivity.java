@@ -67,26 +67,9 @@ public class MainActivity extends BaseActivity implements
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         frameLayout = findViewById(R.id.frameLayout);
-        tabLayout = findViewById(R.id.tabLayout);
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
-
-        // Creates ViewPager programmatically and sets FragmentPagerAdapter to it, then interworks
-        // with TabLayout
-        viewPager = new ViewPager(this);
-        viewPager.setId(View.generateViewId());
-
-        FragmentPagerAdapter pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
-        viewPager.setAdapter(pagerAdapter);
-        viewPager.addOnPageChangeListener(this);
-        tabLayout.setupWithViewPager(viewPager);
-
-        // Custom method to set TabLayout title and icon, WHICH MUST BE INVOKED AFTER
-        // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
-        tabTitleList = new ArrayList<>();
-        tabIconList = new ArrayList<>();
-        tabSelected = addTabIconAndTitle(TAB_CARMAN);
 
         // Get Defaults from BaseActivity and sets it bundled for passing to GeneralFragment
         String[] defaults = getDefaultParams();
@@ -106,14 +89,25 @@ public class MainActivity extends BaseActivity implements
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.frameLayout, generalFragment, "general").addToBackStack(null).commit();
 
-
-        // Calculates Toolbar height which is referred to as a baseline for TabLayout and ViewPager
-        // to slide up and down.
-        toolbarHeight = getActionbarHeight();
-        log.i("toolbar height: %s",  toolbarHeight);
-
         // Permission Check
         checkPermissions();
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onResume(){
+        log.i("onResume: pop");
+        super.onResume();
+        //getSupportFragmentManager().popBackStack();
+
+        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
+        if(title != null) getSupportActionBar().setTitle(title);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(mapInfoTask != null) mapInfoTask = null;
     }
 
     /**
@@ -131,22 +125,13 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
 
             case R.id.action_carman:
-                //addTabIconAndTitle(TAB_CARMAN);
-                // Slide up and hide the tab when isTabVisible is set to false, at the time of which
-                // FrameLayout contains GeneralFragment, removing ViewPager if any.
-                //animSlideTabLayout();
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
-
                 return true;
 
             case R.id.action_board:
-                addTabIconAndTitle(TAB_BOARD);
-                animSlideTabLayout();
-
                 return true;
 
             case R.id.action_login:
-
                 return true;
 
             case R.id.action_setting:
@@ -158,19 +143,7 @@ public class MainActivity extends BaseActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onResume(){
-        super.onResume();
-        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
-        if(title != null) getSupportActionBar().setTitle(title);
-    }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if(mapInfoTask != null) mapInfoTask = null;
-    }
 
     // Callbacks invoked by ViewPager.OnPageChangeListener
     @Override
@@ -213,84 +186,4 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
-    // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
-    // setupWithViewPager when it is linked to ViewPager.
-    @SuppressWarnings("ConstantConditions")
-    private int addTabIconAndTitle(int tab) {
-
-        //if(!tabTitleList.isEmpty()) tabTitleList.clear();
-        //if(!tabIconList.isEmpty()) tabIconList.clear();
-
-        switch(tab) {
-            case TAB_CARMAN:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_carman_title));
-                Drawable[] icons = {
-                        getDrawable(R.drawable.ic_gas),
-                        getDrawable(R.drawable.ic_service),
-                        getDrawable(R.drawable.ic_stats)};
-
-                tabIconList = Arrays.asList(icons);
-                break;
-
-            case TAB_BOARD:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_board_title));
-                icons = new Drawable[]{};
-                tabIconList = Arrays.asList(icons);
-                break;
-
-        }
-
-        for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            log.i("Title: %s", tabTitleList.get(i));
-            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
-            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
-        }
-
-        return tab;
-    }
-
-    // Slide up and down the TabLayout when clicking the buttons on the toolbar.
-    private void animSlideTabLayout() {
-
-        float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
-
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(1000);
-        slideTab.start();
-        slideViewPager.start();
-
-        isTabVisible = !isTabVisible;
-
-        if(isTabVisible) {
-            getSupportFragmentManager().beginTransaction()
-                    //.setCustomAnimations(R.anim.slide_in_right, R.anim.sidle_out_left)
-                    .remove(generalFragment)
-                    .addToBackStack(null)
-                    .commit();
-
-            frameLayout.addView(viewPager);
-
-        } else {
-            log.i("Tab hidden and fragment visible");
-            frameLayout.removeView(viewPager);
-            getSupportFragmentManager().popBackStack();
-            /*
-            getSupportFragmentManager().beginTransaction()
-                    //.setCustomAnimations(R.anim.slide_in_right, R.anim.sidle_out_left)
-                    .add(R.id.frameLayout, generalFragment).addToBackStack(null).commit();
-            */
-        }
-    }
-
-
-    // Measures the size of an android attribute based on ?attr/actionBarSize
-    private float getActionbarHeight() {
-        TypedValue typedValue = new TypedValue();
-        if(getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
-            return TypedValue.complexToDimension(typedValue.data, getResources().getDisplayMetrics());
-        }
-        return -1;
-    }
 }

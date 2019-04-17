@@ -21,6 +21,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:titleTextColor="#FFFFFF" />
 
+    <!--
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="0dp"
@@ -49,13 +50,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!--
+
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-        -->
+
 
     </com.google.android.material.tabs.TabLayout>
+    -->
 
     <FrameLayout
         android:id="@+id/frameLayout"
