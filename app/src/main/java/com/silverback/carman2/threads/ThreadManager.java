@@ -252,7 +252,7 @@ public class ThreadManager {
         switch(state) {
             case DOWNLOAD_STATION_LIST_COMPLETED:
                 //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
-                //mDownloadThreadPool.execute((StationListTask)task).getFireStoreGetRunnable();
+                mDownloadThreadPool.execute(((StationListTask)task).getFireStoreGetRunnable());
                 mDecodeThreadPool.execute(((StationListTask) task).getFireStoreSetRunnalbe());
                 msg.sendToTarget();
                 break;
