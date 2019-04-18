@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
@@ -35,22 +36,18 @@ public class StationListAdapter extends RecyclerView.Adapter<StationRecyclerView
     private Context context;
     private List<Opinet.GasStnParcelable> stationList;
     private CardView cardView;
-    //private StationRecyclerViewHolder.RecyclerViewItemClickListener mListener;
+    private OnRecyclerItemClickListener mListener;
 
-    // Interface to communicate w/ GeneralFragment when a RecyclerView item is clicked.
-    /*
-    public interface RecyclerViewItemClickListener {
-        void onRecyclerViewItemClicked(int position, String stnId);
+    // Interface
+    public interface OnRecyclerItemClickListener {
+        void onItemClicked(int pos);
     }
-    */
 
     // Constructor
-    public StationListAdapter(List<Opinet.GasStnParcelable> list){
-                              //StationRecyclerViewHolder.RecyclerViewItemClickListener listener) {
-
+    public StationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
         super();
         stationList = list;
-        //mListener = listener;
+        mListener = listener;
     }
 
 
@@ -70,7 +67,17 @@ public class StationListAdapter extends RecyclerView.Adapter<StationRecyclerView
         log.i("Binder position: %s", position);
         final Opinet.GasStnParcelable station = stationList.get(position);
         holder.bindToStationList(station);
+
+        holder.itemView.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                log.i("cardview position: %s, %s", position, mListener);
+                if(mListener != null) mListener.onItemClicked(position);
+            }
+        });
+
     }
+
 
     @Override
     public int getItemCount() {

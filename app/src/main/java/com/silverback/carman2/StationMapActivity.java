@@ -2,6 +2,8 @@ package com.silverback.carman2;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
+import androidx.core.widget.NestedScrollView;
 
 import android.location.Location;
 import android.os.Bundle;
@@ -14,15 +16,19 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.appbar.AppBarLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.util.List;
 
-public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
+public class StationMapActivity extends BaseActivity implements
+        OnMapReadyCallback,
+        ThreadManager.OnCompleteInfoTaskListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
@@ -31,9 +37,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private StationInfoTask stationInfoTask;
     private GoogleMap mMap;
     private LatLng stnLocation;
+    private CardView cardView;
+    private NestedScrollView nestedScrollView;
+    private float xCoord, yCoord;
 
     // UIs
-    //TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
+    TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,32 +55,77 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
-        TextView tvName = findViewById(R.id.tv_name);
-        TextView tvAddrs = findViewById(R.id.tv_address);
-        TextView tvPrice = findViewById(R.id.tv_price_info);
-        TextView tvCarwash = findViewById(R.id.tv_carwash);
-        TextView tvService = findViewById(R.id.tv_service);
-        TextView tvCVS = findViewById(R.id.tv_cvs);
+        nestedScrollView = findViewById(R.id.nestedScrollView);
+        cardView = findViewById(R.id.cardview_map);
+        tvName = findViewById(R.id.tv_name);
+        tvAddrs = findViewById(R.id.tv_address);
+        tvPrice = findViewById(R.id.tv_price_info);
+        tvCarwash = findViewById(R.id.tv_carwash);
+        tvService = findViewById(R.id.tv_service);
+        tvCVS = findViewById(R.id.tv_cvs);
 
+        String stnName = getIntent().getStringExtra("stationName");
+        String stnId = getIntent().getStringExtra("stationId");
+
+        xCoord = getIntent().getFloatExtra("xCoord", 0);
+        yCoord = getIntent().getFloatExtra("yCoord", 0);
+
+        if(stnId != null && stnName != null) {
+            stationInfoTask = ThreadManager.startStationInfoTask(this, stnName, stnId);
+        }
+
+
+        /*
         Bundle info = getIntent().getExtras();
         if(info == null) return;
 
         float latitude = Float.valueOf(info.getString("xcoord"));
         float longitude = Float.valueOf(info.getString("ycoord"));
 
-        tvName.setText(info.getString("name"));
-        tvAddrs.setText(String.format("%s %15s", info.getString("address"), info.getString("tel")));
-        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getString("carwash")));
-        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getString("service")));
-        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getString("cvs")));
+
 
 
         log.i("Location: %s, %s", latitude, longitude);
-
+        */
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.google_map);
         mapFragment.getMapAsync(this);
+
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onResume() {
+        super.onResume();
+        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
+        if(title != null) getSupportActionBar().setTitle(title);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //if(stationInfoTask != null) stationInfoTask = null;
+    }
+
+
+    // The following 2 overriding methods are invoked by ThreadManager.OnCompleteInfoTaskListener
+    // when the task completes to retrieve information of the station selected by clicking a
+    // RecyclerView item.
+    @Override
+    public void onStationInfoTaskComplete(final Opinet.GasStationInfo info) {
+        log.i("onStatonInfoTask: %s", info.getStationName());
+        tvName.setText(info.getStationName());
+        tvAddrs.setText(String.format("%s %15s", info.getNewAddrs(), info.getTelNo()));
+        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getIsCarWash()));
+        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getIsService()));
+        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getIsCVS()));
+
+        nestedScrollView.invalidate();
+    }
+
+    @Override
+    public void onTaskFailure() {
 
     }
 
@@ -90,7 +144,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
+        LatLng sydney = new LatLng(yCoord, xCoord);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }

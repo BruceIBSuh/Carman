@@ -3,6 +3,7 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.view.View;
 
+import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -20,14 +21,19 @@ public class StationInfoTask extends ThreadTask implements
     // Objects
     private static ThreadManager sThreadManager;
     private Runnable mStationInfoRunnable, mFireStoreUpdateRunnable;
-    private WeakReference<View> mWeakView;
+    private WeakReference<StationMapActivity> mWeakActivity;
     private Opinet.GasStationInfo stationInfo;
     private String stnName, stnId;
 
     // Constructor
-    StationInfoTask(View view) {
-        mWeakView = new WeakReference<>(view);
-        mStationInfoRunnable = new StationInfoRunnable(mWeakView.get().getContext(), this);
+    StationInfoTask(Context context) {
+        try {
+            mWeakActivity = new WeakReference<>((StationMapActivity)context);
+        } catch(ClassCastException e) {
+            log.e("ClassCastException: %s", e.getMessage());
+        }
+
+        mStationInfoRunnable = new StationInfoRunnable(mWeakActivity.get(), this);
         mFireStoreUpdateRunnable = new FireStoreUpdateRunnable(this);
     }
 
@@ -88,14 +94,11 @@ public class StationInfoTask extends ThreadTask implements
         sThreadManager.handleState(this, outState);
     }
 
-    StationRecyclerView getRecyclerView() {
-        return (StationRecyclerView)mWeakView.get();
-    }
 
     void recycle() {
-        if(mWeakView != null) {
-            mWeakView.clear();
-            mWeakView = null;
+        if(mWeakActivity != null) {
+            mWeakActivity.clear();
+            mWeakActivity = null;
         }
     }
 

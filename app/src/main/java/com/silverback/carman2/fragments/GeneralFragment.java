@@ -45,9 +45,9 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
  */
 public class GeneralFragment extends Fragment implements
         View.OnClickListener,
-        RecyclerView.OnItemTouchListener,
+        RecyclerView.OnItemTouchListener, StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener,
-        ThreadManager.OnCompleteTaskListener {
+        ThreadManager.OnCompleteListTaskListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -274,13 +274,13 @@ public class GeneralFragment extends Fragment implements
 
 
     /**
-     * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
+     * The following methods are callbacks invoked by ThreadManager.OnCompleteListTaskListener.
      * onLocationFetched():
      * onStationListTaskComplete():
      * onTaskFailure():
      * onStationInfoTaskComplete():
      */
-    // ThreadManager.OnCompleteTaskListener invokes the following callback methods
+    // ThreadManager.OnCompleteListTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
     @Override
@@ -290,13 +290,13 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.initView(defaults, location);
     }
 
-    // The following callback methods are invoked by ThreadManager.OnCompleteTaskListener
+    // The following 2 callback methods are invoked by ThreadManager.OnCompleteListTaskListener
     // on having StationListTask completed or failed.
     @Override
     public void onStationListTaskComplete(List<Opinet.GasStnParcelable> stnList) {
         log.i("StationList: %s", stnList.size());
         mStationList = stnList;
-        mAdapter = new StationListAdapter(stnList);
+        mAdapter = new StationListAdapter(stnList, this);
         stationRecyclerView.showStationListRecyclerView();
         stationRecyclerView.setAdapter(mAdapter);
     }
@@ -307,28 +307,16 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.showTextView("No Stations");
     }
 
-    // On fetching the detailed information of a specific station by picking it in RecyclerView.
-
+    // Overriding method invoked by StationListAdapter.OnRecyclerItemClickListener when clicking
+    // a cardview item, passing a position of the item.
     @Override
-    public void onStationInfoTaskComplete(final Opinet.GasStationInfo stnInfo) {
-
-        log.i("GasStationInfo: %s %s", stnInfo.getStationName(), stnInfo.getStationCode());
-
-        Bundle bundle = new Bundle();
-        bundle.putString("name", stnInfo.getStationName());
-        bundle.putString("address", stnInfo.getNewAddrs());
-        bundle.putString("tel", stnInfo.getTelNo());
-        bundle.putString("carwash", stnInfo.getIsCarWash());
-        bundle.putString("service", stnInfo.getIsService());
-        bundle.putString("cvs", stnInfo.getIsCVS());
-        //bundle.putString("price", stnInfo.getOilPrice());
-        bundle.putString("xcoord", stnInfo.getxCoord());
-        bundle.putString("ycoord", stnInfo.getyCoord());
-
+    public void onItemClicked(int position) {
+        log.i("onItemClicked: %s", position);
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putExtras(bundle);
+        intent.putExtra("stationName", mStationList.get(position).getStnName());
+        intent.putExtra("stationId", mStationList.get(position).getStnId());
+        intent.putExtra("xCoord", mStationList.get(position).getLongitude());
+        intent.putExtra("yCoord", mStationList.get(position).getLatitude());
         if(getActivity() != null) getActivity().startActivity(intent);
-
-
     }
 }
