@@ -280,6 +280,9 @@ public class Opinet  {
         private float xCoord;
         private float yCoord;
 
+        //private boolean isWash;
+        private String isWash;
+
 
         GasStnParcelable() {
             // default
@@ -299,6 +302,9 @@ public class Opinet  {
             out.writeFloat(distance);
             out.writeFloat(xCoord);
             out.writeFloat(yCoord);
+
+            //out.writeByte((byte)(isWash? 1 : 0));
+            out.writeString(isWash);
 
         }
 
@@ -323,6 +329,10 @@ public class Opinet  {
             distance = in.readFloat();
             xCoord = in.readFloat();
             yCoord = in.readFloat();
+
+            // Handle boolean with byte
+            //isWash = in.readByte() != 0;
+            isWash = in.readString();
         }
 
         public String getStnId() { return stnId; }
@@ -370,6 +380,14 @@ public class Opinet  {
         }
         void setLatitude(float y) {
             this.yCoord = y;
+        }
+
+        public String getIsWash() {
+            return isWash;
+        }
+
+        public void setIsWash(String isWash) {
+            this.isWash = isWash;
         }
     }
 

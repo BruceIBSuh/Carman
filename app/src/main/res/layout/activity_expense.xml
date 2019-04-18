@@ -26,9 +26,11 @@
             app:expandedTitleMarginStart="48dp"
             app:expandedTitleMarginTop="10dp"
             app:contentScrim="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:title="Hello World"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed" >
+            <!--
+            app:title="Hello World" >
             app:titleEnabled="false" >
+            -->
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
@@ -38,7 +40,6 @@
                 android:elevation="3dp"
                 android:fitsSystemWindows="true"
                 app:layout_collapseMode="pin"
-
                 app:titleTextColor="#fb9000" />
 
             <com.google.android.material.tabs.TabLayout

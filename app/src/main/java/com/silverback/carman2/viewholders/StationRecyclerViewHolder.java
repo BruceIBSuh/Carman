@@ -24,7 +24,7 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
     // UI's
     private CardView cardView;
     private ImageView imgLogo;
-    private TextView tvName, tvPrice, tvDistance, tvCarwash;
+    private TextView tvName, tvPrice, tvDistance, tvWashValue, tvWashLabel;
     private String price, distance, carwash;
     private String stnName, stnId;
 
@@ -37,7 +37,8 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
         tvName = cardView.findViewById(R.id.tv_station_name);
         tvPrice = cardView.findViewById(R.id.tv_value_price);
         tvDistance = cardView.findViewById(R.id.tv_value_distance);
-        tvCarwash = cardView.findViewById(R.id.tv_value_carwash);
+        tvWashLabel = cardView.findViewById(R.id.tv_label_carwash);
+        tvWashValue = cardView.findViewById(R.id.tv_value_carwash);
 
         cardView.setOnClickListener(this);
     }
@@ -60,7 +61,14 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
         tvName.setText(data.getStnName());
         tvPrice.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getStnPrice(), "원"));
         tvDistance.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getDist(), "m"));
-        //tvWash.setText(String.format(Locale.getDefault(), "%s:%5s", carwash, data.getIsCarWash()));
+
+        if(data.getIsWash() != null) {
+            tvWashLabel.setVisibility(View.VISIBLE);
+            tvWashValue.setText(data.getIsWash());
+            tvWashValue.setVisibility(View.VISIBLE);
+        }
+
+        log.i("price and distance: %s, %s", data.getStnPrice(), data.getDist());
     }
 
     private static int getGasStationImage(String name) {
