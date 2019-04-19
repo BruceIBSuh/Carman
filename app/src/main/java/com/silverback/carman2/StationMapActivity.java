@@ -4,10 +4,14 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.core.widget.NestedScrollView;
+import androidx.fragment.app.Fragment;
 
+import android.graphics.Canvas;
 import android.location.Location;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -24,11 +28,10 @@ import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class StationMapActivity extends BaseActivity implements
-        OnMapReadyCallback,
-        ThreadManager.OnCompleteInfoTaskListener {
+public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
@@ -55,8 +58,7 @@ public class StationMapActivity extends BaseActivity implements
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
-        nestedScrollView = findViewById(R.id.nestedScrollView);
-        cardView = findViewById(R.id.cardview_map);
+
         tvName = findViewById(R.id.tv_name);
         tvAddrs = findViewById(R.id.tv_address);
         tvPrice = findViewById(R.id.tv_price_info);
@@ -64,17 +66,19 @@ public class StationMapActivity extends BaseActivity implements
         tvService = findViewById(R.id.tv_service);
         tvCVS = findViewById(R.id.tv_cvs);
 
-        String stnName = getIntent().getStringExtra("stationName");
-        String stnId = getIntent().getStringExtra("stationId");
+        ArrayList<String> info = getIntent().getStringArrayListExtra("StationInfoList");
+
 
         xCoord = getIntent().getFloatExtra("xCoord", 0);
         yCoord = getIntent().getFloatExtra("yCoord", 0);
 
-        if(stnId != null && stnName != null) {
-            stationInfoTask = ThreadManager.startStationInfoTask(this, stnName, stnId);
-        }
+        tvName.setText(info.get(0));
+        tvAddrs.setText(String.format("%s %15s", info.get(1), info.get(2)));
+        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.get(3)));
+        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.get(4)));
+        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.get(5)));
 
-
+        stnLocation = new LatLng(Float.valueOf(info.get(7)), Float.valueOf(info.get(6)));
         /*
         Bundle info = getIntent().getExtras();
         if(info == null) return;
@@ -102,34 +106,6 @@ public class StationMapActivity extends BaseActivity implements
         if(title != null) getSupportActionBar().setTitle(title);
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        //if(stationInfoTask != null) stationInfoTask = null;
-    }
-
-
-    // The following 2 overriding methods are invoked by ThreadManager.OnCompleteInfoTaskListener
-    // when the task completes to retrieve information of the station selected by clicking a
-    // RecyclerView item.
-    @Override
-    public void onStationInfoTaskComplete(final Opinet.GasStationInfo info) {
-        log.i("onStatonInfoTask: %s", info.getStationName());
-        tvName.setText(info.getStationName());
-        tvAddrs.setText(String.format("%s %15s", info.getNewAddrs(), info.getTelNo()));
-        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getIsCarWash()));
-        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getIsService()));
-        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getIsCVS()));
-
-        nestedScrollView.invalidate();
-    }
-
-    @Override
-    public void onTaskFailure() {
-
-    }
-
-
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -144,9 +120,8 @@ public class StationMapActivity extends BaseActivity implements
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(yCoord, xCoord);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.addMarker(new MarkerOptions().position(stnLocation).title("Marker in Sydney"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(stnLocation));
     }
 
     @Override

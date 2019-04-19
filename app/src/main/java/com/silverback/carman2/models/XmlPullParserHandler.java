@@ -15,7 +15,6 @@ import java.util.List;
 public class XmlPullParserHandler {
 
     // Logging
-    //private static final String TAG = "XmlPullParserHandler";
     private static LoggingHelper log = LoggingHelperFactory.create(XmlPullParserHandler.class);
 
     private List<Opinet.OilPrice> oilPriceList;
@@ -363,11 +362,14 @@ public class XmlPullParserHandler {
             parser.setInput(is, "utf-8");
             int eventType = parser.getEventType();
 
+            int nestedEventType = parser.getEventType();
+
             while(eventType != XmlPullParser.END_DOCUMENT) {
 
                 String tagName = parser.getName();
-                switch(eventType){
+                String nestedTag = parser.getName();
 
+                switch(eventType){
                     case XmlPullParser.START_TAG:
                         if (tagName.equalsIgnoreCase("OIL")) {
                             gasStationInfo = new Opinet.GasStationInfo();
@@ -379,7 +381,6 @@ public class XmlPullParserHandler {
                         break;
 
                     case XmlPullParser.END_TAG:
-
                         if(tagName.equalsIgnoreCase("POLL_DIV_CO")){
                             gasStationInfo.setStationCode(text);
                         }else if(tagName.equalsIgnoreCase("OS_NAME")){
@@ -394,12 +395,38 @@ public class XmlPullParserHandler {
                             gasStationInfo.setIsCarWash(text);
                         }else if(tagName.equalsIgnoreCase("MAINT_YN")){
                             gasStationInfo.setIsService(text);
-                        }else if(tagName.equalsIgnoreCase("CVS_YN")){
+                        }else if(tagName.equalsIgnoreCase("CVS_YN")) {
                             gasStationInfo.setIsCVS(text);
                         }else if(tagName.equalsIgnoreCase("GIS_X_COOR")){
                             gasStationInfo.setxCoord(text);
                         }else if(tagName.equalsIgnoreCase("GIS_Y_COOR")){
                             gasStationInfo.setyCoord(text);
+                        }else if(tagName.equalsIgnoreCase("OIL_PRICE")) {
+
+                            while (nestedEventType != XmlPullParser.END_DOCUMENT) {
+
+                                switch (nestedEventType) {
+                                    case XmlPullParser.START_TAG:
+                                        break;
+                                    case XmlPullParser.TEXT:
+                                        text = parser.getText();
+                                        log.i("oil price: %s", text);
+                                        break;
+                                    case XmlPullParser.END_TAG:
+                                        /*
+                                        if(nestedTag.equalsIgnoreCase("PRICE")) {
+                                            log.i("PRICE: %s", text);
+                                        } else if (nestedTag.equalsIgnoreCase("PRODCD")){
+                                            log.i("PRODCD: %s", text);
+                                        }
+                                        */
+
+                                        break;
+                                }
+
+                                nestedEventType = parser.next();
+                            }
+
                         }
 
                         break;
@@ -412,10 +439,17 @@ public class XmlPullParserHandler {
                 eventType = parser.next();
             }
 
+
         } catch (XmlPullParserException e) {
             //Log.w(TAG, "XmlPullParserExceptin: " + e.getMessage());
         } catch (IOException e) {
             //Log.w(TAG, "IOException: " + e.getMessage());
+        } finally {
+            try {
+                is.close();
+            } catch(IOException e) {
+                log.e("IOException");
+            }
         }
 
         return gasStationInfo;

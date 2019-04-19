@@ -24,6 +24,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
+import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
@@ -32,6 +33,7 @@ import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -47,7 +49,7 @@ public class GeneralFragment extends Fragment implements
         View.OnClickListener,
         RecyclerView.OnItemTouchListener, StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener,
-        ThreadManager.OnCompleteListTaskListener {
+        ThreadManager.OnCompleteTaskListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -56,6 +58,7 @@ public class GeneralFragment extends Fragment implements
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
+    private StationInfoTask stationInfoTask;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -81,6 +84,7 @@ public class GeneralFragment extends Fragment implements
     private FloatingActionButton fab;
 
     // Fields
+    private String tmpStationName;
     private boolean hasTaskFinished = false;//prevent StationListTask from repaeating when adding the fragment.
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
@@ -272,15 +276,33 @@ public class GeneralFragment extends Fragment implements
         log.i("onRequestDisallowInterceptTouchEvent");
     }
 
+    // StationListAdapter.OnRecyclerItemClickListener invokes this when clicking
+    // a cardview item, passing a position of the item.
+    @Override
+    public void onItemClicked(int position) {
+        /*
+        log.i("onItemClicked: %s", position);
+        Intent intent = new Intent(getActivity(), StationMapActivity.class);
+        intent.putExtra("stationName", mStationList.get(position).getStnName());
+        intent.putExtra("stationId", mStationList.get(position).getStnId());
+        intent.putExtra("xCoord", mStationList.get(position).getLongitude());
+        intent.putExtra("yCoord", mStationList.get(position).getLatitude());
+        if(getActivity() != null) getActivity().startActivity(intent);
+        */
+        tmpStationName = mStationList.get(position).getStnName();
+        stationInfoTask = ThreadManager.startStationInfoTask(getContext(),
+                mStationList.get(position).getStnName(), mStationList.get(position).getStnId());
+    }
+
 
     /**
-     * The following methods are callbacks invoked by ThreadManager.OnCompleteListTaskListener.
+     * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
      * onLocationFetched():
      * onStationListTaskComplete():
      * onTaskFailure():
      * onStationInfoTaskComplete():
      */
-    // ThreadManager.OnCompleteListTaskListener invokes the following callback methods
+    // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
     @Override
@@ -290,7 +312,7 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.initView(defaults, location);
     }
 
-    // The following 2 callback methods are invoked by ThreadManager.OnCompleteListTaskListener
+    // The following 2 callback methods are invoked by ThreadManager.OnCompleteTaskListener
     // on having StationListTask completed or failed.
     @Override
     public void onStationListTaskComplete(List<Opinet.GasStnParcelable> stnList) {
@@ -302,21 +324,28 @@ public class GeneralFragment extends Fragment implements
     }
 
     @Override
+    public void onStationInfoTaskComplete(Opinet.GasStationInfo info) {
+        log.i("GasStationInfo: %s", info.getStationName());
+        ArrayList<String> infoList = new ArrayList<>();
+        infoList.add(tmpStationName);
+        infoList.add(info.getNewAddrs());
+        infoList.add(info.getTelNo());
+        infoList.add(info.getIsCarWash());
+        infoList.add(info.getIsService());
+        infoList.add(info.getIsCVS());
+        infoList.add(info.getXcoord());
+        infoList.add(info.getYcoord());
+
+        Intent intent = new Intent(getActivity(), StationMapActivity.class);
+        intent.putStringArrayListExtra("StationInfoList", infoList);
+        startActivity(intent);
+    }
+
+    @Override
     public void onTaskFailure() {
         log.i("onTaskFailure");
         stationRecyclerView.showTextView("No Stations");
     }
 
-    // Overriding method invoked by StationListAdapter.OnRecyclerItemClickListener when clicking
-    // a cardview item, passing a position of the item.
-    @Override
-    public void onItemClicked(int position) {
-        log.i("onItemClicked: %s", position);
-        Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putExtra("stationName", mStationList.get(position).getStnName());
-        intent.putExtra("stationId", mStationList.get(position).getStnId());
-        intent.putExtra("xCoord", mStationList.get(position).getLongitude());
-        intent.putExtra("yCoord", mStationList.get(position).getLatitude());
-        if(getActivity() != null) getActivity().startActivity(intent);
-    }
+
 }

@@ -72,27 +72,19 @@ public class ThreadManager {
 
     /**
      * Interfaces
-     * OnCompleteListTaskListener:
+     * OnCompleteTaskListener:
      * OnStationInfoTaskListener:
      *
      */
-    public interface OnCompleteListTaskListener {
+    public interface OnCompleteTaskListener {
         void onLocationFetched(Location result);
         void onStationListTaskComplete(List<Opinet.GasStnParcelable> result);
-
-        void onTaskFailure();
-    }
-
-    public interface OnCompleteInfoTaskListener {
         void onStationInfoTaskComplete(Opinet.GasStationInfo mapInfo);
         void onTaskFailure();
     }
 
-
-
     // Objects
-    private OnCompleteListTaskListener mStationListTaskListener;
-    private OnCompleteInfoTaskListener mStationInfoTaskListener;
+    private OnCompleteTaskListener mStationTaskListener;
 
     // A queue of Runnables
     //private final BlockingQueue<Runnable> mOpinetDownloadWorkQueue, mLoadPriceWorkQueue;
@@ -193,7 +185,7 @@ public class ThreadManager {
                         locationTask = (LocationTask)msg.obj;
                         Location location = locationTask.getLocationUpdated();
                         log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
-                        mStationListTaskListener.onLocationFetched(location);
+                        mStationTaskListener.onLocationFetched(location);
 
                         break;
 
@@ -218,18 +210,17 @@ public class ThreadManager {
                         log.i("DOWNLOAD_STATION_LIST_COMPLETED");
                         stationListTask = (StationListTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationListTask.getStationList();
-                        mStationListTaskListener.onStationListTaskComplete(stnList);
+                        mStationTaskListener.onStationListTaskComplete(stnList);
                         break;
 
                     case DOWNLOAD_NO_STATION_COMPLETE:
-                        mStationListTaskListener.onTaskFailure();
+                        mStationTaskListener.onTaskFailure();
                         break;
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
                         stationInfoTask = (StationInfoTask)msg.obj;
                         Opinet.GasStationInfo info = stationInfoTask.getStationInfo();
-                        mStationInfoTaskListener.onStationInfoTaskComplete(info);
-                        stationInfoTask.recycle();
+                        mStationTaskListener.onStationInfoTaskComplete(info);
                         mStationInfoTaskQueue.offer(stationInfoTask);
                         break;
                     case DOWNLOAD_STN_MAPINFO_FAILED:
@@ -570,12 +561,12 @@ public class ThreadManager {
             stationListTask = new StationListTask(view.getContext());
         }
 
-        // Attach OnCompleteListTaskListener
-        if(sInstance.mStationListTaskListener == null) {
+        // Attach OnCompleteTaskListener
+        if(sInstance.mStationTaskListener == null) {
             try {
-                sInstance.mStationListTaskListener = (OnCompleteListTaskListener) view;
+                sInstance.mStationTaskListener = (OnCompleteTaskListener) view;
             } catch (ClassCastException e) {
-                throw new ClassCastException(String.valueOf(view) + " must implement OnCompleteListTaskListener");
+                throw new ClassCastException(String.valueOf(view) + " must implement OnCompleteTaskListener");
             }
         }
 
@@ -591,9 +582,9 @@ public class ThreadManager {
         if(stationTask == null) stationTask = new StationInfoTask(context);
 
         // Attach OnCompleteInfoTaskListener
-        if(sInstance.mStationInfoTaskListener == null) {
+        if(sInstance.mStationTaskListener == null) {
             try {
-                sInstance.mStationInfoTaskListener = (OnCompleteInfoTaskListener)context;
+                sInstance.mStationTaskListener = (OnCompleteTaskListener)context;
             } catch (ClassCastException e) {
                 throw new ClassCastException(String.valueOf(context)
                         + " must implement OnStationInfoTaskListener");
@@ -646,11 +637,11 @@ public class ThreadManager {
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
 
-        // Attach OnCompleteListTaskListener
+        // Attach OnCompleteTaskListener
         try {
-            sInstance.mStationListTaskListener = (OnCompleteListTaskListener)fm;
+            sInstance.mStationTaskListener = (OnCompleteTaskListener)fm;
         } catch(ClassCastException e) {
-            throw new ClassCastException(fm.toString() + " must implement OnCompleteListTaskListener");
+            throw new ClassCastException(fm.toString() + " must implement OnCompleteTaskListener");
         }
 
         if(locationTask == null) {
@@ -687,11 +678,11 @@ public class ThreadManager {
     void recycleTask(ThreadTask task) {
 
         if(task instanceof StationInfoTask) {
-            ((StationInfoTask)task).recycle();
+            //((StationInfoTask)task).recycle();
             mStationInfoTaskQueue.offer((StationInfoTask)task);
         }
 
-        if(mStationListTaskListener != null) mStationListTaskListener = null;
+        if(mStationTaskListener != null) mStationTaskListener = null;
     }
 
 }

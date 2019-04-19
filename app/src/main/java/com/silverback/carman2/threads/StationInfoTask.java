@@ -21,19 +21,22 @@ public class StationInfoTask extends ThreadTask implements
     // Objects
     private static ThreadManager sThreadManager;
     private Runnable mStationInfoRunnable, mFireStoreUpdateRunnable;
-    private WeakReference<StationMapActivity> mWeakActivity;
+    //private WeakReference<StationMapActivity> mWeakActivity;
     private Opinet.GasStationInfo stationInfo;
     private String stnName, stnId;
 
     // Constructor
     StationInfoTask(Context context) {
+
+        /*
         try {
             mWeakActivity = new WeakReference<>((StationMapActivity)context);
         } catch(ClassCastException e) {
             log.e("ClassCastException: %s", e.getMessage());
         }
+        */
 
-        mStationInfoRunnable = new StationInfoRunnable(mWeakActivity.get(), this);
+        mStationInfoRunnable = new StationInfoRunnable(context, this);
         mFireStoreUpdateRunnable = new FireStoreUpdateRunnable(this);
     }
 
@@ -93,14 +96,4 @@ public class StationInfoTask extends ThreadTask implements
 
         sThreadManager.handleState(this, outState);
     }
-
-
-    void recycle() {
-        if(mWeakActivity != null) {
-            mWeakActivity.clear();
-            mWeakActivity = null;
-        }
-    }
-
-
 }

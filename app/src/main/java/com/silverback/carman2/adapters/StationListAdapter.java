@@ -56,7 +56,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationRecyclerView
     public StationRecyclerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         cardView = (CardView)LayoutInflater.from(context)
-                .inflate(R.layout.view_cardview_station, parent, false);
+                .inflate(R.layout.cardview_station_list, parent, false);
 
         return new StationRecyclerViewHolder(cardView);
 

@@ -262,10 +262,10 @@ public class Opinet  {
         }
 
         void setxCoord(String xCoord) { this.xCoord = xCoord; }
-        public String getxCoord() { return xCoord; }
+        public String getXcoord() { return xCoord; }
 
         void setyCoord(String yCoord) { this.yCoord = yCoord; }
-        public String getyCoord() { return yCoord; }
+        public String getYcoord() { return yCoord; }
     }
 
 
