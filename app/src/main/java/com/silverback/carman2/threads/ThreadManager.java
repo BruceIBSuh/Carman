@@ -248,11 +248,13 @@ public class ThreadManager {
             case DOWNLOAD_STATION_LIST_COMPLETED:
                 //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
                 mDownloadThreadPool.execute(((StationListTask)task).getFireStoreGetRunnable());
+                // Save basic information of stations in FireStore
                 mDecodeThreadPool.execute(((StationListTask) task).getFireStoreSetRunnalbe());
                 msg.sendToTarget();
                 break;
 
             case DOWNLOAD_STATION_INFO_COMPLETED:
+                // Save additional information of a selected station in FireStore
                 mDecodeThreadPool.execute(((StationInfoTask)task).getFireStoreUpdateRunnable());
                 msg.sendToTarget();
                 break;

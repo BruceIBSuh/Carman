@@ -2,7 +2,8 @@
 <resources>
     <dimen name="borderWidth">2dp</dimen>
     <dimen name="title">18sp</dimen>
-    <dimen name="subtitle">15sp</dimen>
+    <dimen name="subtitle">16sp</dimen>
+    <dimen name="extraLargeText">15sp</dimen>
     <dimen name="largeText">14sp</dimen>
     <dimen name="boxlineWidth">1dp</dimen>
     <dimen name="underlineWidth">1dp</dimen>

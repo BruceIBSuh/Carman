@@ -12,7 +12,7 @@ public class Constants {
     //public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
 
     public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60 * 6;//Interval for downloading gas prices from Opinet (6 hrs)
-    public static final float OPINET_UPDATE_DISTANCE = 50f; //Distance difference to update near stations
+    public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
     static final int INTERVAL = 1000 * 10; //Location update interval set by the app
     static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.
     static final int MAX_WAIT = 1000 * 30; //Mas latency to receive location info.

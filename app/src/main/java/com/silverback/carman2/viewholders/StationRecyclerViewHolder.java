@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+public class StationRecyclerViewHolder extends RecyclerView.ViewHolder {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerViewHolder.class);
@@ -46,17 +46,6 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder implement
         tvDistance = cardView.findViewById(R.id.tv_value_distance);
         tvWashLabel = cardView.findViewById(R.id.tv_label_carwash);
         tvWashValue = cardView.findViewById(R.id.tv_value_carwash);
-
-        cardView.setOnClickListener(this);
-    }
-
-    @Override
-    public void onClick(View v) {
-        log.i("ViewHolder clicked: %s", stnName);
-        log.i("Paent View: %s", cardView.getParent());
-
-        // Worker thread starts to get the info of a specific station with stnId given.
-        //ThreadManager.startStationInfoTask((StationRecyclerView)cardView.getParent(), stnName, stnId);
     }
 
     public void bindToStationList(Opinet.GasStnParcelable data) {

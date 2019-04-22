@@ -15,12 +15,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
@@ -33,10 +35,11 @@ import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -63,6 +66,7 @@ public class GeneralFragment extends Fragment implements
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
     private StationPriceView stationPriceView;
+    private ConstraintLayout rootLayout;
 
     // FirebaseFirestore
     private FirebaseFirestore db;
@@ -75,17 +79,17 @@ public class GeneralFragment extends Fragment implements
     private List<Opinet.GasStnParcelable> mStationList;
 
     //private Uri uriStationList;
-    private Location mCurrentLocation;
+    private Location mCurrentLocation, mPrevLocation;
 
     // UI's
     private TextView tvStationsOrder;
     private Spinner fuelSpinner;
     private FrameLayout frameAvgPrice;
-    private FloatingActionButton fab;
+    private FloatingActionButton fabLocation;
 
     // Fields
-    private String tmpStationName;
-    private boolean hasTaskFinished = false;//prevent StationListTask from repaeating when adding the fragment.
+    //private String tmpStationName;
+    private boolean isLocationFetched = false;//prevent StationListTask from repaeating when adding the fragment.
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
 
@@ -104,8 +108,8 @@ public class GeneralFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         if(savedInstanceState != null) {
-            hasTaskFinished = savedInstanceState.getBoolean("hasTaskFinished");
-            log.i("SavedInstanceState: %s", hasTaskFinished);
+            isLocationFetched = savedInstanceState.getBoolean("isLocationFetched");
+            log.i("SavedInstanceState: %s", isLocationFetched);
         }
 
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
@@ -118,7 +122,7 @@ public class GeneralFragment extends Fragment implements
         sigunPriceView = childView.findViewById(R.id.sigunPriceView);
         stationPriceView = childView.findViewById(R.id.stationPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
-        fab = childView.findViewById(R.id.fab_reload);
+        fabLocation = childView.findViewById(R.id.fab_relocation);
 
         // Attach event listeners
         childView.findViewById(R.id.imgbtn_expense).setOnClickListener(this);
@@ -151,26 +155,28 @@ public class GeneralFragment extends Fragment implements
         // Set Floating Action Button
         // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
         // button when scolling/idling
-        fab.setSize(FloatingActionButton.SIZE_AUTO);
+        fabLocation.setSize(FloatingActionButton.SIZE_AUTO);
         stationRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                if (dy > 0 || dy < 0 && fab.isShown()) fab.hide();
+                if (dy > 0 || dy < 0 && fabLocation.isShown()) fabLocation.hide();
             }
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) fab.show();
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) fabLocation.show();
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
 
+        fabLocation.setOnClickListener(this);
+
         /*
-         * Initiates LocationTask to fetch the current location only when the flag, hasTaskFinished
+         * Initiates LocationTask to fetch the current location only when the flag, isLocationFetched
          * is set to false, in case of which may be at the first time and when the fab is clicked.
          * StationListTask should be launched only if the current location is newly retrieved in the
          * call back method, onLocationFetched().
          */
-        if(!hasTaskFinished) {
+        if(!isLocationFetched) {
             log.i("No location fetched");
             locationTask = ThreadManager.fetchLocationTask(this);
         } else {
@@ -196,7 +202,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("hasTaskFinished", hasTaskFinished);
+        outState.putBoolean("isLocationFetched", isLocationFetched);
     }
 
     @Override
@@ -205,6 +211,7 @@ public class GeneralFragment extends Fragment implements
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
+        if(stationInfoTask != null) stationInfoTask = null;
     }
 
 
@@ -222,6 +229,12 @@ public class GeneralFragment extends Fragment implements
                 tvStationsOrder.setText(sort);
                 bStationsOrder = !bStationsOrder;
                 mAdapter.notifyDataSetChanged();
+                break;
+
+            case R.id.fab_relocation:
+                isLocationFetched = true;
+                locationTask = ThreadManager.fetchLocationTask(GeneralFragment.this);
+
                 break;
 
         }
@@ -250,7 +263,7 @@ public class GeneralFragment extends Fragment implements
         stationPriceView.addPriceView(defaults[0]);
 
         /* Initiates StationListTask to retreive a new station list with a fuel set by Spinner.
-        if(hasTaskFinished) {
+        if(isLocationFetched) {
             log.i("stationListTask: %s", stationListTask);
             //stationRecyclerView.initView(defaults, mCurrentLocation);
         }
@@ -276,24 +289,15 @@ public class GeneralFragment extends Fragment implements
         log.i("onRequestDisallowInterceptTouchEvent");
     }
 
+
     // StationListAdapter.OnRecyclerItemClickListener invokes this when clicking
     // a cardview item, passing a position of the item.
     @Override
     public void onItemClicked(int position) {
-        /*
-        log.i("onItemClicked: %s", position);
-        Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putExtra("stationName", mStationList.get(position).getStnName());
-        intent.putExtra("stationId", mStationList.get(position).getStnId());
-        intent.putExtra("xCoord", mStationList.get(position).getLongitude());
-        intent.putExtra("yCoord", mStationList.get(position).getLatitude());
-        if(getActivity() != null) getActivity().startActivity(intent);
-        */
-        tmpStationName = mStationList.get(position).getStnName();
+        //tmpStationName = mStationList.get(position).getStnName();
         stationInfoTask = ThreadManager.startStationInfoTask(getContext(),
                 mStationList.get(position).getStnName(), mStationList.get(position).getStnId());
     }
-
 
     /**
      * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
@@ -305,11 +309,30 @@ public class GeneralFragment extends Fragment implements
     // ThreadManager.OnCompleteTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onLocationFetched(Location location){
-        hasTaskFinished = true;
+        //isLocationFetched = true;
         mCurrentLocation = location;
         stationRecyclerView.initView(defaults, location);
+
+        // On clicking the FAB, check if the current location outbounds the distance set in
+        // Constants.UPDATE_DISTANC compared with the previous location.
+        // If so, retrieve a new near station list and invalidate StationRecyclerView with new data.
+        if(!isLocationFetched || mCurrentLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
+            mCurrentLocation = location;
+            stationRecyclerView.initView(defaults, mCurrentLocation);
+
+        // Show Snackbar if it is within the UPDATE_DISTANCE
+        } else {
+            log.i("Inbounds");
+            CoordinatorLayout layout = getActivity().findViewById(R.id.vg_main);
+            Snackbar snackbar = Snackbar.make(
+                    layout, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT);
+            snackbar.setAction("Action", null);
+            snackbar.show();
+
+        }
     }
 
     // The following 2 callback methods are invoked by ThreadManager.OnCompleteTaskListener
@@ -323,21 +346,23 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.setAdapter(mAdapter);
     }
 
+    // Invoked when StationInfoRunnable has retrieved Opinet.GasStationInfo, which initiated
+    // clicking a cardview item of StationRecyclerView set with StationListAdapter.
     @Override
     public void onStationInfoTaskComplete(Opinet.GasStationInfo info) {
-        log.i("GasStationInfo: %s", info.getStationName());
-        ArrayList<String> infoList = new ArrayList<>();
-        infoList.add(tmpStationName);
-        infoList.add(info.getNewAddrs());
-        infoList.add(info.getTelNo());
-        infoList.add(info.getIsCarWash());
-        infoList.add(info.getIsService());
-        infoList.add(info.getIsCVS());
-        infoList.add(info.getXcoord());
-        infoList.add(info.getYcoord());
+
+        Bundle bundle = new Bundle();
+        bundle.putString("stationName", info.getStationName());
+        bundle.putString("stationAddrs", info.getNewAddrs());
+        bundle.putString("stationTel", info.getTelNo());
+        bundle.putString("isCarWash", info.getIsCarWash());
+        bundle.putString("isService", info.getIsService());
+        bundle.putString("isCVS", info.getIsCVS());
+        bundle.putString("xCoord", info.getXcoord());
+        bundle.putString("yCoord", info.getYcoord());
 
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putStringArrayListExtra("StationInfoList", infoList);
+        intent.putExtras(bundle);
         startActivity(intent);
     }
 

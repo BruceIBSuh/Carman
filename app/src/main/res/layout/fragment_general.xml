@@ -255,7 +255,7 @@
             android:layout_height="wrap_content" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_reload"
+            android:id="@+id/fab_relocation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
@@ -272,7 +272,7 @@
             android:id="@+id/stationRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:fab="@id/fab_reload"
+            app:fab="@id/fab_relocation"
             app:progressbar="@id/listProgress"
             app:textview="@id/tv_no_stations" />
 

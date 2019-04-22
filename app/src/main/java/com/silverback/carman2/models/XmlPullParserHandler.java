@@ -362,13 +362,8 @@ public class XmlPullParserHandler {
             parser.setInput(is, "utf-8");
             int eventType = parser.getEventType();
 
-            int nestedEventType = parser.getEventType();
-
             while(eventType != XmlPullParser.END_DOCUMENT) {
-
                 String tagName = parser.getName();
-                String nestedTag = parser.getName();
-
                 switch(eventType){
                     case XmlPullParser.START_TAG:
                         if (tagName.equalsIgnoreCase("OIL")) {
@@ -402,25 +397,25 @@ public class XmlPullParserHandler {
                         }else if(tagName.equalsIgnoreCase("GIS_Y_COOR")){
                             gasStationInfo.setyCoord(text);
                         }else if(tagName.equalsIgnoreCase("OIL_PRICE")) {
+                            // Read nested tags in <OIL_PRICE>
+                            // Looks like that Informaion of all fuels is not provided.
+                            parser.next();
+                            int nestedEventType = parser.getEventType();
 
                             while (nestedEventType != XmlPullParser.END_DOCUMENT) {
-
+                                String nestedTag = parser.getName();
                                 switch (nestedEventType) {
                                     case XmlPullParser.START_TAG:
                                         break;
                                     case XmlPullParser.TEXT:
                                         text = parser.getText();
-                                        log.i("oil price: %s", text);
                                         break;
                                     case XmlPullParser.END_TAG:
-                                        /*
                                         if(nestedTag.equalsIgnoreCase("PRICE")) {
                                             log.i("PRICE: %s", text);
                                         } else if (nestedTag.equalsIgnoreCase("PRODCD")){
                                             log.i("PRODCD: %s", text);
                                         }
-                                        */
-
                                         break;
                                 }
 

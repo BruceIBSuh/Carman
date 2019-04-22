@@ -11,22 +11,30 @@ import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.ibnco.carman.convertgeocoords.GeoPoint;
+import com.ibnco.carman.convertgeocoords.GeoTrans;
+import com.kakao.kakaonavi.KakaoNaviService;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.KakaoNaviWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +46,14 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Objects
     private StationInfoTask stationInfoTask;
-    private GoogleMap mMap;
-    private LatLng stnLocation;
-    private CardView cardView;
-    private NestedScrollView nestedScrollView;
-    private float xCoord, yCoord;
+    private double xCoord, yCoord;
+    private double longitude, latitude;
 
     // UIs
     TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
+
+    // Fields
+    private String stnName;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,7 +66,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
-
+        // UIs
         tvName = findViewById(R.id.tv_name);
         tvAddrs = findViewById(R.id.tv_address);
         tvPrice = findViewById(R.id.tv_price_info);
@@ -66,35 +74,46 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         tvService = findViewById(R.id.tv_service);
         tvCVS = findViewById(R.id.tv_cvs);
 
-        ArrayList<String> info = getIntent().getStringArrayListExtra("StationInfoList");
+        // Get intent and extras
+        stnName = getIntent().getStringExtra("stationName");
+        String stnAddrs = getIntent().getStringExtra("stationAddrs");
+        String stnTel = getIntent().getStringExtra("stationTel");
+        String carWash = getIntent().getStringExtra("isCarWash");
+        String service = getIntent().getStringExtra("isService");
+        String cvs = getIntent().getStringExtra("isCVS");
+        xCoord = Double.valueOf(getIntent().getStringExtra("xCoord")); //KATEC
+        yCoord = Double.valueOf(getIntent().getStringExtra("yCoord"));
+
+        // Convert KATEC to longitude and latitude
+        GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
+        GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
+        longitude = in_pt.getX();
+        latitude = in_pt.getY();
+
+        log.i("GeoCode: %s %s,%s %s", xCoord, yCoord, longitude, latitude);
 
 
-        xCoord = getIntent().getFloatExtra("xCoord", 0);
-        yCoord = getIntent().getFloatExtra("yCoord", 0);
+        tvName.setText(stnName);
+        tvAddrs.setText(String.format("%s %15s", stnAddrs, stnTel));
+        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), carWash));
+        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), service));
+        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), cvs));
 
-        tvName.setText(info.get(0));
-        tvAddrs.setText(String.format("%s %15s", info.get(1), info.get(2)));
-        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.get(3)));
-        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.get(4)));
-        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.get(5)));
-
-        stnLocation = new LatLng(Float.valueOf(info.get(7)), Float.valueOf(info.get(6)));
-        /*
-        Bundle info = getIntent().getExtras();
-        if(info == null) return;
-
-        float latitude = Float.valueOf(info.getString("xcoord"));
-        float longitude = Float.valueOf(info.getString("ycoord"));
-
-
-
-
-        log.i("Location: %s, %s", latitude, longitude);
-        */
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.google_map);
-        mapFragment.getMapAsync(this);
+
+        if(mapFragment != null) mapFragment.getMapAsync(this);
+
+        // Floating Action Button for initiating Kakao Navi, which is temporarily suspended.
+        FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
+        fabNavi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                KakaoNaviWrapper kakao = new KakaoNaviWrapper(stnName, longitude, latitude);
+                kakao.initKakoNavi(StationMapActivity.this);
+            }
+        });
 
     }
 
@@ -104,6 +123,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         super.onResume();
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(stationInfoTask != null) stationInfoTask = null;
     }
 
     /**
@@ -117,27 +142,35 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+
+        LatLng dest = new LatLng(latitude, longitude);
 
         // Add a marker in Sydney and move the camera
-        mMap.addMarker(new MarkerOptions().position(stnLocation).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(stnLocation));
+        googleMap.addMarker(new MarkerOptions().position(dest).title(stnName));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(dest));
+
+        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
+        try {
+            googleMap.setMyLocationEnabled(true);
+            MapsInitializer.initialize(this);
+        } catch(SecurityException e) {
+            //Log.e(LOG_TAG, "SecurityException: " + e.getMessage());
+        }
+
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(dest, 15);
+        //googleMap.moveCamera(cameraUpdate);
+        googleMap.animateCamera(cameraUpdate);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            // Respond to the action bar's Up/Home button
-            case android.R.id.home:
-                log.i("onOptionsItemSelected in GeneralSettingActivity");
-                //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
-                //onBackPressed();
-                finish();
-                return true;
+        if(item.getItemId() == android.R.id.home) {
+            log.i("onOptionsItemSelected in GeneralSettingActivity");
+            finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
-
 
 }

@@ -3,9 +3,12 @@ package com.silverback.carman2;
 import android.Manifest;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Base64;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -14,6 +17,8 @@ import com.silverback.carman2.models.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -172,8 +177,27 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    // Location-related methods
 
+    // Reference method to get a debug Hashkey for Kakao
+    // or by using Terminal,
+    // keytool -exportcert -alias androiddebugkey -keystore <debug_keystore_path>
+    // -storepass android -keypass android | openssl sha1 -binary | openssl base64
+    /*
+    protected void getHashKey() {
+        try {
+            PackageInfo info = getPackageManager()
+                    .getPackageInfo("com.silverback.carman2", PackageManager.GET_SIGNATURES);
 
-
+            for (Signature signature : info.signatures) {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                md.update(signature.toByteArray());
+                log.i("KeyHash: %s", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+    */
 }

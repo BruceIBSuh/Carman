@@ -52,6 +52,8 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.firebase:firebase-firestore:18.2.0'
 
+    // Kakao api
+    implementation group: 'com.kakao.sdk', name: 'kakaonavi', version: '1.17.0'
 
 }
 
