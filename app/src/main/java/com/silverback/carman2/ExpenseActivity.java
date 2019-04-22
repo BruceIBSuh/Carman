@@ -75,7 +75,6 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
 
-
         // Custom method to set TabLayout title and icon, WHICH MUST BE INVOKED AFTER
         // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
         tabTitleList = new ArrayList<>();

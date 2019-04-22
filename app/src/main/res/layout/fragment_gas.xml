@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -72,30 +73,31 @@
 
     <EditText
         android:id="@+id/et_station"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
         android:background="@drawable/state_view_focus"
-        android:ems="10"
         android:inputType="textPersonName"
-        tools:ignore="AutoFill"
+        app:layout_constraintEnd_toStartOf="@+id/et_unit_price"
         app:layout_constraintStart_toEndOf="@+id/tv_label_station"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date"
+        tools:ignore="AutoFill" />
 
     <EditText
         android:id="@+id/et_unit_price"
-        android:layout_width="67dp"
+        android:layout_width="65dp"
         android:layout_height="28dp"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/state_view_focus"
-        android:ems="10"
-        android:inputType="number"
+        android:gravity="center"
         android:hint="@string/liter_price"
+        android:inputType="number"
+        android:textSize="13sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/et_station"
-        app:layout_constraintTop_toTopOf="@+id/et_station" />
+        app:layout_constraintTop_toTopOf="@+id/et_station"
+        tools:ignore="Autofill" />
 
     <TextView
         android:id="@+id/tv_label_odometer"
@@ -104,7 +106,6 @@
         android:layout_marginTop="16dp"
         android:minWidth="80dp"
         android:labelFor="@id/et_mileage"
-
         android:text="@string/gas_label_odometer"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -216,7 +217,7 @@
         android:background="@drawable/bg_colored_border"
         android:padding="5dp"
         android:text="@string/gas_subtitle_extra_expense"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/subtitle"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -353,9 +354,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:minHeight="100dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:ems="10"
+        android:layout_margin="8dp"
+        android:padding="5dp"
+        android:gravity="start|top"
         android:inputType="textMultiLine"
         android:background="@drawable/state_view_focus"
         tools:ignore="AutoFill"
