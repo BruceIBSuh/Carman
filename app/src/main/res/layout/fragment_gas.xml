@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:minWidth="100dp"
     tools:context="com.silverback.carman2.fragments.GasManagerFragment">
 
 
@@ -52,7 +50,7 @@
         android:id="@+id/button2"
         android:layout_width="30dp"
         android:layout_height="19dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:padding="0dp"
         app:layout_constraintStart_toEndOf="@+id/tv_date_time"
@@ -79,7 +77,6 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/state_view_focus"
-        android:inputType="textPersonName"
         app:layout_constraintEnd_toStartOf="@+id/et_unit_price"
         app:layout_constraintStart_toEndOf="@+id/tv_label_station"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_date"
@@ -87,17 +84,15 @@
 
     <EditText
         android:id="@+id/et_unit_price"
-        android:layout_width="65dp"
-        android:layout_height="28dp"
+        android:layout_width="67dp"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="3dp"
         android:background="@drawable/state_view_focus"
-        android:gravity="center"
+        android:ems="10"
         android:hint="@string/liter_price"
         android:inputType="number"
-        android:textSize="13sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/et_station"
-        tools:ignore="Autofill" />
+        app:layout_constraintTop_toTopOf="@+id/et_station" />
 
     <TextView
         android:id="@+id/tv_label_odometer"
@@ -106,6 +101,7 @@
         android:layout_marginTop="16dp"
         android:minWidth="80dp"
         android:labelFor="@id/et_mileage"
+
         android:text="@string/gas_label_odometer"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -217,7 +213,7 @@
         android:background="@drawable/bg_colored_border"
         android:padding="5dp"
         android:text="@string/gas_subtitle_extra_expense"
-        android:textSize="@dimen/subtitle"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -354,9 +350,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:minHeight="100dp"
-        android:layout_margin="8dp"
-        android:padding="5dp"
-        android:gravity="start|top"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:ems="10"
         android:inputType="textMultiLine"
         android:background="@drawable/state_view_focus"
         tools:ignore="AutoFill"

@@ -12,7 +12,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.viewholders.StationRecyclerViewHolder;
+import com.silverback.carman2.viewholders.StationItemHolder;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,7 +27,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationListAdapter extends RecyclerView.Adapter<StationRecyclerViewHolder> {
+public class StationListAdapter extends RecyclerView.Adapter<StationItemHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
@@ -53,17 +53,17 @@ public class StationListAdapter extends RecyclerView.Adapter<StationRecyclerView
 
     @NonNull
     @Override
-    public StationRecyclerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public StationItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.view_card_stationlist, parent, false);
 
-        return new StationRecyclerViewHolder(cardView);
+        return new StationItemHolder(cardView);
 
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StationRecyclerViewHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull StationItemHolder holder, final int position) {
         log.i("Binder position: %s", position);
         final Opinet.GasStnParcelable station = stationList.get(position);
         holder.bindToStationList(station);

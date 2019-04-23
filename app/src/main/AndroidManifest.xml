@@ -57,8 +57,9 @@
         <activity android:name=".BaseActivity" />
         <activity android:name=".MainActivity" />
 
-        <activity android:name=".ExpenseActivity"
-            android:label="@string/gas_toolbar_title"
+        <activity
+            android:name=".ExpenseActivity"
+            android:label="@string/setting_label"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustPan" >
 

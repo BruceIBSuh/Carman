@@ -51,10 +51,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.firebase:firebase-firestore:18.2.0'
-
     // Kakao api
-    implementation group: 'com.kakao.sdk', name: 'kakaonavi', version: '1.17.0'
-
+    implementation 'com.kakao.sdk:kakaonavi:1.17.0'
+    implementation files('libs/com.skt.Tmap_1.60.jar')
 }
 
 apply plugin: 'com.google.gms.google-services'

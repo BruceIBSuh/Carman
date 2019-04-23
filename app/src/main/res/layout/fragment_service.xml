@@ -1,14 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.ServiceFragment">
+    tools:context="com.silverback.carman2.fragments.GasManagerFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraint"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        android:background="@drawable/bg_service_basic_form"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-</FrameLayout>
+        <TextView
+            android:id="@+id/tv_label_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:minWidth="80dp"
+            android:text="@string/service_label_date"
+            android:textSize="@dimen/largeText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_service_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tv_label_date"
+            app:layout_constraintStart_toEndOf="@+id/tv_label_date" />
+
+        <Button
+            android:id="@+id/btn_date"
+            android:layout_width="30dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="40dp"
+            app:layout_constraintBaseline_toBaselineOf="@+id/tv_service_date"
+            app:layout_constraintStart_toEndOf="@+id/tv_service_date" />
+
+        <TextView
+            android:id="@+id/tv_label_provider"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:labelFor="@id/et_provider"
+            android:text="@string/service_label_provider"
+            android:textSize="@dimen/largeText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
+
+        <ImageButton
+            android:id="@+id/imageButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="3dp"
+            android:contentDescription="@null"
+            android:src="@drawable/btn_favorite"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_provider"
+            app:layout_constraintStart_toEndOf="@+id/tv_label_provider"
+            app:layout_constraintTop_toTopOf="@+id/tv_label_provider" />
+
+        <EditText
+            android:id="@+id/et_provider"
+            android:layout_width="wrap_content"
+            android:layout_height="25dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/state_view_focus"
+            android:inputType="text"
+            android:minWidth="200dp"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@+id/imageButton"
+            app:layout_constraintTop_toBottomOf="@+id/tv_service_date"
+            tools:ignore="Autofill" />
+
+        <TextView
+            android:id="@+id/tv_label_mileage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:labelFor="@id/et_mileage"
+            android:minWidth="80dp"
+            android:text="@string/service_label_mileage"
+            android:textSize="@dimen/largeText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_label_provider" />
+
+        <EditText
+            android:id="@+id/et_mileage"
+            android:layout_width="100dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/state_view_focus"
+            android:ems="10"
+            android:inputType="numberDecimal"
+            app:layout_constraintStart_toEndOf="@+id/tv_label_mileage"
+            app:layout_constraintTop_toBottomOf="@+id/et_provider"
+            tools:ignore="Autofill" />
+
+        <TextView
+            android:id="@+id/tv_label_payment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:labelFor="@id/et_payment"
+            android:minWidth="80dp"
+            android:text="@string/service_label_payment"
+            android:textSize="@dimen/largeText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
+
+
+        <EditText
+            android:id="@+id/et_payment"
+            android:layout_width="100dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/state_view_focus"
+            android:ems="10"
+            android:inputType="numberDecimal"
+            app:layout_constraintStart_toEndOf="@+id/tv_label_payment"
+            app:layout_constraintTop_toBottomOf="@+id/et_mileage"
+            tools:ignore="Autofill" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/tv_subtitle_stmts"
+        android:layout_width="0dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="3dp"
+        android:padding="5dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_service_subtitle"
+        android:text="@string/service_subtitle_stmts"
+        android:textSize="@dimen/subtitle"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraint" />
+
+
+    <com.silverback.carman2.views.ServiceRecyclerView
+        android:id="@+id/recycler_service"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="3dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_stmts"/>
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

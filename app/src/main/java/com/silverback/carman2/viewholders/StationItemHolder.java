@@ -1,30 +1,23 @@
 package com.silverback.carman2.viewholders;
 
-import android.content.Intent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.StationMapActivity;
-import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.Locale;
 
-import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationRecyclerViewHolder extends RecyclerView.ViewHolder {
+public class StationItemHolder extends RecyclerView.ViewHolder {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerViewHolder.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationItemHolder.class);
 
     // UI's
     private CardView cardView;
@@ -36,7 +29,7 @@ public class StationRecyclerViewHolder extends RecyclerView.ViewHolder {
 
 
     // Constructor
-    public StationRecyclerViewHolder(CardView cardView) {
+    public StationItemHolder(CardView cardView) {
         super(cardView);
 
         this.cardView = cardView;

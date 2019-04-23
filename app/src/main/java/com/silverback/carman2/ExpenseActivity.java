@@ -23,6 +23,8 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 
+import org.json.JSONArray;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +72,15 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         tabPager.setId(View.generateViewId());
         frameViewPager.addView(tabPager);
 
-        FragmentPagerAdapter pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
+        // TEMPORARY CODING for ServiceList items which should be saved in SharedPreferences
+        // as a Json-fomatted string.
+        String[] serviceItems = getResources().getStringArray(R.array.service_item_list);
+        JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
+        String json = jsonArray.toString();
+
+
+        FragmentPagerAdapter pagerAdapter =
+                new CarmanFragmentPagerAdapter(getSupportFragmentManager(), json);
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
@@ -115,14 +125,10 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            // Respond to the action bar's Up/Home button
-            case android.R.id.home:
-                log.i("onOptionsItemSelected in GeneralSettingActivity");
-                //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
-                //onBackPressed();
-                finish();
-                return true;
+        if(item.getItemId() == android.R.id.home) {
+            log.i("onOptionsItemSelected in GeneralSettingActivity");
+            finish();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);
@@ -168,15 +174,15 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
+        log.i("onPageScrolled: %s", position);
     }
     @Override
     public void onPageSelected(int position) {
-
+        log.i("onPageSelected");
     }
     @Override
     public void onPageScrollStateChanged(int state) {
-
+        log.i("onPageScrollStateChanged");
     }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.

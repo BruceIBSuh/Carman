@@ -7,7 +7,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.ServiceListAdapter;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.views.ServiceRecyclerView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 /**
@@ -15,17 +20,31 @@ import androidx.fragment.app.Fragment;
  */
 public class ServiceFragment extends Fragment {
 
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceFragment.class);
+
+    // Objects
+    private ServiceListAdapter mAdapter;
+    private ServiceRecyclerView serviceRecyclerView;
 
     public ServiceFragment() {
         // Required empty public constructor
     }
 
-
+    @SuppressWarnings("ConstantConditions")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        View localView = inflater.inflate(R.layout.fragment_service, container, false);
+        serviceRecyclerView = localView.findViewById(R.id.recycler_service);
+
+
+        String jsonItems = getArguments().getString("serviceItems");
+        mAdapter = new ServiceListAdapter(jsonItems);
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_service, container, false);
+        return localView;
     }
 
 }

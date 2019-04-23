@@ -2,17 +2,10 @@ package com.silverback.carman2;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
-import androidx.cardview.widget.CardView;
-import androidx.core.widget.NestedScrollView;
-import androidx.fragment.app.Fragment;
 
-import android.graphics.Canvas;
-import android.location.Location;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -23,21 +16,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
-import com.kakao.kakaonavi.KakaoNaviService;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.StationInfoTask;
-import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.utils.KakaoNaviWrapper;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.silverback.carman2.utils.ConnectNaviHelper;
+import com.skt.Tmap.TMapTapi;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -46,6 +33,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Objects
     private StationInfoTask stationInfoTask;
+    private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
     private double longitude, latitude;
 
@@ -107,11 +95,13 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         // Floating Action Button for initiating Kakao Navi, which is temporarily suspended.
         FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
+
+        // When the fab is clicked, connect to a navigation which is opted between Tmap and
+        // KakaoNavi as an installed app is first applied.
         fabNavi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                KakaoNaviWrapper kakao = new KakaoNaviWrapper(stnName, longitude, latitude);
-                kakao.initKakoNavi(StationMapActivity.this);
+                naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude);
             }
         });
 
@@ -121,14 +111,20 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     @Override
     public void onResume() {
         super.onResume();
+
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
+
+        // When returning from the navigation, the navigation instance should be killed and garbage
+        // collected.
+        if(naviHelper != null) naviHelper = null;
     }
 
     @Override
     public void onPause() {
         super.onPause();
         if(stationInfoTask != null) stationInfoTask = null;
+
     }
 
     /**
