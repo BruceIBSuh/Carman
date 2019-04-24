@@ -33,11 +33,8 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
     // Objects
     private String json;
 
-    public CarmanFragmentPagerAdapter(FragmentManager fm, String json) {
+    public CarmanFragmentPagerAdapter(FragmentManager fm) {
         super(fm);
-        fm.beginTransaction().addToBackStack(null);
-        this.json = json;
-
     }
 
     private final Fragment[] fragments = new Fragment[] {
@@ -54,24 +51,6 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int pos){
-        switch(pos) {
-            case GAS:
-                log.i("Fragment: %s", pos);
-                break;
-
-            case SERVICE:
-                log.i("Fragment: %s", pos);
-                Bundle bundle = new Bundle();
-                bundle.putString("serviceItems", json);
-                fragments[pos].setArguments(bundle);
-                break;
-
-            case STAT:
-                log.i("Fragment: %s", pos);
-                break;
-
-        }
-
         return fragments[pos];
     }
 

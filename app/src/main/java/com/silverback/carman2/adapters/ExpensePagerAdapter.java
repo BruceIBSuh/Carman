@@ -22,7 +22,7 @@ public class ExpensePagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public Fragment getItem(int position) {
-        //Log.d(TAG, "position: " + position);
+        log.i("position: %s", position);
         return RecentExpensePageFragment.create(position);
     }
 

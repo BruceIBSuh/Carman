@@ -1,6 +1,5 @@
 package com.silverback.carman2;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -11,9 +10,9 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
@@ -22,6 +21,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.utils.CustomPagerIndicator;
+import com.silverback.carman2.views.RecentExpensePagerView;
 
 import org.json.JSONArray;
 
@@ -42,10 +42,12 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     // Objects
     private GasManagerFragment gasFragment;
     private TabLayout tabLayout;
+    private FrameLayout frameTop;
     private List<String> tabTitleList;
     private List<Drawable> tabIconList;
-    private ViewPager tabPager, expensePager;
+    private ViewPager tabPager;
     private CustomPagerIndicator indicator;
+
 
     // Fields
     private boolean isTabVisible = false;
@@ -59,9 +61,10 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         // UIs
         Toolbar toolbar = findViewById(R.id.toolbar);
         tabLayout = findViewById(R.id.tabLayout);
-        indicator = findViewById(R.id.indicator);
-        expensePager = findViewById(R.id.viewPager_expense);
-        FrameLayout frameViewPager = findViewById(R.id.frameLayout_viewPager);
+        //indicator = findViewById(R.id.indicator);
+        //expensePager = findViewById(R.id.viewPager_expense);
+        FrameLayout frameFragments = findViewById(R.id.frame_fragments);
+        frameTop = findViewById(R.id.frame_top);
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -70,7 +73,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         //tabViewPager = findViewById(R.id.viewPager_tap);
         tabPager = new ViewPager(this);
         tabPager.setId(View.generateViewId());
-        frameViewPager.addView(tabPager);
+        frameFragments.addView(tabPager);
 
         // TEMPORARY CODING for ServiceList items which should be saved in SharedPreferences
         // as a Json-fomatted string.
@@ -80,7 +83,12 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
 
         FragmentPagerAdapter pagerAdapter =
-                new CarmanFragmentPagerAdapter(getSupportFragmentManager(), json);
+                new CarmanFragmentPagerAdapter(getSupportFragmentManager());
+
+        Bundle args = new Bundle();
+        args.putString("serviceItems", json);
+        pagerAdapter.getItem(1).setArguments(args);
+
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
@@ -93,24 +101,13 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         addTabIconAndTitle(TAB_CARMAN);
         animSlideTabLayout();
 
-        // ViewPager to display receent 5 expenses on top of the screen.
-        ExpensePagerAdapter expensePagerAdapter =
-                new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
-        expensePager.setAdapter(expensePagerAdapter);
-        expensePager.setCurrentItem(0);
-        indicator.createPanel(NumOfPages, R.drawable.dot_small, R.drawable.dot_large);
 
-        /*
-        expensePager = new ViewPager(this);
-        expensePager.setId(View.generateViewId());
-        ExpensePagerAdapter expenseAdapter = new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
-        expensePager.setAdapter(expenseAdapter);
-        expensePager.setCurrentItem(0);
-        CustomPagerIndicator indicator = new CustomPagerIndicator(this);
-        indicator.createPanel(NumOfPages, R.drawable.dot_small, R.drawable.dot_large);
-        frameRecentExp.addView(expensePager);
-        frameRecentExp.addView(indicator);
-        */
+        // ViewPager to display receent 5 expenses on top of the screen.
+        RecentExpensePagerView pagerView = new RecentExpensePagerView(this);
+        pagerView.setId(View.generateViewId());
+        ExpensePagerAdapter adapter = new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
+        pagerView.showExpensePagerView(adapter);
+        frameTop.addView(pagerView);
 
     }
 
@@ -119,6 +116,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     @Override
     public void onResume(){
         super.onResume();
+
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
     }
@@ -191,11 +189,11 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
-        //ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameLayout, "translationY", tabEndValue);
+        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
         slideTab.setDuration(1000);
-        //slideViewPager.setDuration(1000);
+        slideViewPager.setDuration(1000);
         slideTab.start();
-        //slideViewPager.start();
+        slideViewPager.start();
 
         isTabVisible = !isTabVisible;
 

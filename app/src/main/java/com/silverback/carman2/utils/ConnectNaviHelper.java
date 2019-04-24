@@ -25,9 +25,8 @@ public class ConnectNaviHelper {
     private KakaoNaviParams.Builder builder;
 
     public ConnectNaviHelper(Activity activity, String destName, final double x, final double y) {
-        log.i("Dest coord: %s, %s", x, y);
-
         tMap = new TMapTapi(activity);
+        log.i("tMap.isTmapApplicationInstalled(): %s", tMap.isTmapApplicationInstalled());
 
         // Check if TMap is installed at first. Otherwise, secondly connect to KakaoNavi.
         if(tMap.isTmapApplicationInstalled()) {

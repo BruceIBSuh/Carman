@@ -125,7 +125,7 @@ public class RecentExpensePageFragment extends Fragment {
         //ViewGroup rootView = (ViewGroup)inflater.inflate(R.layout.fragment_viewpager, container, false);
         View localView = inflater.inflate(R.layout.fragment_viewpager, container, false);
         TextView tvLastInfo = localView.findViewById(R.id.tv_last_info);
-        tvLastInfo.setText(lastInfo);
+        tvLastInfo.setText("Hello Fragment");
 
         return localView;
     }

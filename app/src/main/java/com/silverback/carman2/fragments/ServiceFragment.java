@@ -15,6 +15,9 @@ import com.silverback.carman2.views.ServiceRecyclerView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -38,10 +41,9 @@ public class ServiceFragment extends Fragment {
 
         View localView = inflater.inflate(R.layout.fragment_service, container, false);
         serviceRecyclerView = localView.findViewById(R.id.recycler_service);
-
-
         String jsonItems = getArguments().getString("serviceItems");
         mAdapter = new ServiceListAdapter(jsonItems);
+        serviceRecyclerView.setAdapter(mAdapter);
 
         // Inflate the layout for this fragment
         return localView;
