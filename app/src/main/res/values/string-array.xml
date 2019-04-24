@@ -78,19 +78,19 @@
     <!-- Default Service Item List -->
     <!-- Service item In ServiceManagerActivityvity -->
     <string-array name="service_item_list">
-        <item>@string/service_chklist_engine_oll</item>
-        <item>@string/service_chklist_aircleaner</item>
-        <item>@string/service_chklist_aircon_filter</item>
-        <item>@string/service_chklist_aircon_gas</item>
-        <item>@string/service_chklist_coolant</item>
-        <item>@string/service_chklist_tire_alignment</item>
-        <item>@string/service_chklist_tire_switching</item>
-        <item>@string/service_chklist_tire_replacement</item>
-        <item>@string/service_chklist_brake_pad</item>
-        <item>@string/service_chklist_brake_lining</item>
-        <item>@string/service_chklist_battery</item>
-        <item>@string/service_chklist_mission_oil</item>
-        <item>@string/service_chklist_timingbelt</item>
+        <item>@string/service_item_engine_oll</item>
+        <item>@string/service_item_aircleaner</item>
+        <item>@string/service_item_aircon_filter</item>
+        <item>@string/service_item_aircon_gas</item>
+        <item>@string/service_item_coolant</item>
+        <item>@string/service_item_tire_alignment</item>
+        <item>@string/service_item_tire_switching</item>
+        <item>@string/service_item_tire_replacement</item>
+        <item>@string/service_item_brake_pad</item>
+        <item>@string/service_item_brake_lining</item>
+        <item>@string/service_item_battery</item>
+        <item>@string/service_item_mission_oil</item>
+        <item>@string/service_item_timingbelt</item>
     </string-array>
 
 </resources>

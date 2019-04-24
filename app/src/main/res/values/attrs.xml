@@ -27,7 +27,7 @@
         <attr name="fab" format="reference" />
     </declare-styleable>
 
-    <declare-styleable name="RecentExpensePagerView">
+    <declare-styleable name="ExpensePagerView">
         <attr name="pagerAdapter" format="reference" />
     </declare-styleable>
 

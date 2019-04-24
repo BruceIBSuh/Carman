@@ -134,20 +134,20 @@
     <string name="liter_price">원/리터</string>
 
     <!-- Default Service Item List shared in ServiceRecyclerView and SettingActivity -->
-    <string name="service_chklist_engine_oll">엔진오일 및 오일필터</string>
-    <string name="service_chklist_aircleaner">에어클리너</string>
-    <string name="service_chklist_aircon_filter">에어컨 필터</string>
-    <string name="service_chklist_aircon_gas">에어컨 가스</string>
-    <string name="service_chklist_coolant">냉각수</string>
-    <string name="service_chklist_tire_alignment">얼라인먼트</string>
-    <string name="service_chklist_tire_switching">타이어 위치 교환</string>
-    <string name="service_chklist_tire_replacement">타이어 교체</string>
-    <string name="service_chklist_brake_pad">브레이크 패드</string>
-    <string name="service_chklist_brake_lining">브레이크 라이닝</string>
-    <string name="service_chklist_battery">배터리 교체</string>
-    <string name="service_chklist_mission_oil">트랜스미션오일 교체</string>
-    <string name="service_chklist_timingbelt">타이밍벨트 교체</string>
-    <string name="service_chklist_progressbar_header">교체 시기</string>
-    <string name="service_chklist_price_header">소요 비용</string>
-    <string name="service_chklist_memo">추가정보</string>
+    <string name="service_item_engine_oll">엔진오일 및 오일필터</string>
+    <string name="service_item_aircleaner">에어클리너</string>
+    <string name="service_item_aircon_filter">에어컨 필터</string>
+    <string name="service_item_aircon_gas">에어컨 가스</string>
+    <string name="service_item_coolant">냉각수</string>
+    <string name="service_item_tire_alignment">얼라인먼트</string>
+    <string name="service_item_tire_switching">타이어 위치 교환</string>
+    <string name="service_item_tire_replacement">타이어 교체</string>
+    <string name="service_item_brake_pad">브레이크 패드</string>
+    <string name="service_item_brake_lining">브레이크 라이닝</string>
+    <string name="service_item_battery">배터리 교체</string>
+    <string name="service_item_mission_oil">트랜스미션오일 교체</string>
+    <string name="service_item_timingbelt">타이밍벨트 교체</string>
+    <string name="service_item_progressbar_header">교체 시기</string>
+    <string name="service_item_price_header">소요 비용</string>
+    <string name="service_item_memo">추가정보</string>
 </resources>

@@ -3,11 +3,14 @@ package com.silverback.carman2.utils;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import com.silverback.carman2.R;
 
 public class CustomPagerIndicator extends LinearLayout {
 
@@ -25,9 +28,7 @@ public class CustomPagerIndicator extends LinearLayout {
     public void setAnimDuration(int animDuration) {
         this.animDuration = animDuration;
     }
-    */
 
-    /*
     public void setItemMargin(int itemMargin) {
         this.itemMargin = itemMargin;
     }
@@ -60,8 +61,8 @@ public class CustomPagerIndicator extends LinearLayout {
 
             imageDot[i] = new ImageView(mContext);
 
-            LayoutParams params = new LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            LayoutParams params = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+
             params.topMargin = itemMargin;
             params.bottomMargin = itemMargin;
             params.leftMargin = itemMargin;
@@ -100,6 +101,7 @@ public class CustomPagerIndicator extends LinearLayout {
                 startScale, endScale,
                 Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
+
         anim.setFillAfter(true);
         anim.setDuration(animDuration);
         view.startAnimation(anim);
@@ -112,6 +114,7 @@ public class CustomPagerIndicator extends LinearLayout {
                 startScale, endScale,
                 Animation.RELATIVE_TO_SELF, 0.5f,
                 Animation.RELATIVE_TO_SELF, 0.5f);
+
         anim.setFillAfter(true);
         anim.setDuration(animDuration);
         view.startAnimation(anim);

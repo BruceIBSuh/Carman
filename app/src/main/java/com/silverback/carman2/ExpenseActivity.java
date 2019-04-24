@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import com.google.android.material.tabs.TabLayout;
@@ -21,7 +20,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.utils.CustomPagerIndicator;
-import com.silverback.carman2.views.RecentExpensePagerView;
+import com.silverback.carman2.views.ExpensePagerView;
 
 import org.json.JSONArray;
 
@@ -103,7 +102,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
 
         // ViewPager to display receent 5 expenses on top of the screen.
-        RecentExpensePagerView pagerView = new RecentExpensePagerView(this);
+        ExpensePagerView pagerView = new ExpensePagerView(this);
         pagerView.setId(View.generateViewId());
         ExpensePagerAdapter adapter = new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
         pagerView.showExpensePagerView(adapter);
