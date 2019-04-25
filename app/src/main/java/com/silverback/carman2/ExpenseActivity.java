@@ -1,16 +1,21 @@
 package com.silverback.carman2;
 
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.Constraints;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import android.animation.ObjectAnimator;
+import android.app.ActionBar;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
@@ -21,6 +26,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.views.ExpensePagerView;
+import com.silverback.carman2.views.StatGraphView;
 
 import org.json.JSONArray;
 
@@ -45,6 +51,8 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     private List<String> tabTitleList;
     private List<Drawable> tabIconList;
     private ViewPager tabPager;
+    private ExpensePagerView pagerView;
+    private StatGraphView statGraphView;
     private CustomPagerIndicator indicator;
 
 
@@ -102,11 +110,14 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
 
         // ViewPager to display receent 5 expenses on top of the screen.
-        ExpensePagerView pagerView = new ExpensePagerView(this);
+        pagerView = new ExpensePagerView(this);
         pagerView.setId(View.generateViewId());
         ExpensePagerAdapter adapter = new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
         pagerView.showExpensePagerView(adapter);
         frameTop.addView(pagerView);
+
+        statGraphView = new StatGraphView(this);
+
 
     }
 
@@ -139,7 +150,6 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
         //if(!tabTitleList.isEmpty()) tabTitleList.clear();
         //if(!tabIconList.isEmpty()) tabIconList.clear();
-
         switch(tab) {
             case TAB_CARMAN:
                 tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_carman_title));
@@ -176,6 +186,12 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected");
+        if(position == 0 || position == 1) {
+            frameTop.removeAllViews();
+            frameTop.addView(pagerView);
+        } else if(position == 2) {
+            frameTop.removeView(pagerView);
+        }
     }
     @Override
     public void onPageScrollStateChanged(int state) {

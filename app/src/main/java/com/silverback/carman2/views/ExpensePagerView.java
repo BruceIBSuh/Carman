@@ -10,12 +10,14 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 
 public class ExpensePagerView extends LinearLayout {
 
     // Logging
-
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerView.class);
     // Constants
     private static final int NumPages = 5;
 
@@ -44,8 +46,28 @@ public class ExpensePagerView extends LinearLayout {
 
         LayoutInflater.from(context).inflate(R.layout.view_pager_expense, this, true);
         pager = findViewById(R.id.viewPager_expense);
-        CustomPagerIndicator indicator = findViewById(R.id.indicator);
+        final CustomPagerIndicator indicator = findViewById(R.id.indicator);
         indicator.createPanel(NumPages, R.drawable.dot_small, R.drawable.dot_large);
+
+        // ViewPager.OnPageChangeListener for animating the dots according to its state using
+        // CustomPagerIndicator instance.
+        pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                log.i("onPageScrolled");
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                log.i("onPageSelected");
+                indicator.selectDot(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                log.i("onPageScrollStateChanged");
+            }
+        });
     }
 
     public void showExpensePagerView(ExpensePagerAdapter adapter) {

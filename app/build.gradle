@@ -54,6 +54,7 @@ dependencies {
     // Kakao api
     implementation 'com.kakao.sdk:kakaonavi:1.17.0'
     implementation files('libs/com.skt.Tmap_1.60.jar')
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

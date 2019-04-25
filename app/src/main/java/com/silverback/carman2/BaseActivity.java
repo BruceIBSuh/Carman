@@ -19,6 +19,8 @@ import org.json.JSONException;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -41,6 +43,7 @@ public class BaseActivity extends AppCompatActivity {
 
     // Objects
     protected static SharedPreferences mSettings;
+    protected static DecimalFormat df;
 
     // Fields
     protected boolean hasLocationPermission;
@@ -200,4 +203,15 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
     */
+
+
+    public static DecimalFormat getDecimalFormatInstance() {
+        if(df == null) {
+            df = (DecimalFormat) NumberFormat.getInstance(Locale.KOREAN);
+            df.applyPattern("#,###");
+            df.setDecimalSeparatorAlwaysShown(false);
+        }
+        return df;
+    }
+
 }

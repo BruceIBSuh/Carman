@@ -75,6 +75,15 @@
     <string name="service_label_cost">소요 비용</string>
     <string name="service_label_info">추가 정보</string>
 
+    <!--StatFragment-->
+    <string name="graph_x_axis_month">월</string>
+    <string name="graph_y_axis_unit">천원</string>
+    <string name="stat_subtitle">지출 내역</string>
+    <string name="stat_header_date">날짜</string>
+    <string name="stat_header_milegae">누적거리(km)</string>
+    <string name="stat_header_payment">금액(원)</string>
+    <string name="stat_header_provider">장 소</string>
+
     <!--GeneralSettingActivity-->
     <string name="setting_label">차량정보 입력 / 앱 설정</string>
 
