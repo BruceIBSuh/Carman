@@ -3,8 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="190dp"
-    android:layout_marginBottom="5dp"
+    android:minHeight="200dp"
     android:orientation="vertical">
 
     <androidx.viewpager.widget.ViewPager
@@ -15,7 +14,7 @@
     <com.silverback.carman2.utils.CustomPagerIndicator
         android:id="@+id/indicator"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="20dp"
         android:layout_gravity="center" />
 
 </LinearLayout>

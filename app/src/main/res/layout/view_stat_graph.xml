@@ -1,14 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginTop="50dp" >
+    android:layout_height="wrap_content"
+    android:minHeight="280dp"
+    tools:context=".views.StatGraphView">
 
+
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graphView"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_margin="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_arrow_left"
+        android:layout_width="30dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="16dp"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@+id/tv_year"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/graphView" />
+
+    <TextView
+        android:id="@+id/tv_year"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_marginStart="24dp"
+        android:text="YEAR"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_arrow_left"
+        app:layout_constraintEnd_toStartOf="@+id/btn_arrow_right"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btn_arrow_left"
+        app:layout_constraintTop_toTopOf="@+id/btn_arrow_left" />
+
+    <Button
+        android:id="@+id/btn_arrow_right"
+        android:layout_width="30dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="24dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_year"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tv_year"
+        app:layout_constraintTop_toTopOf="@+id/tv_year" />
+    <!--
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World" />
-
-</LinearLayout>
+        android:text="Hello World"
+        android:textSize="32sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    -->
+</androidx.constraintlayout.widget.ConstraintLayout>

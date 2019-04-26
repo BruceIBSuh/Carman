@@ -1,26 +1,22 @@
 package com.silverback.carman2;
 
-import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.Constraints;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import android.animation.ObjectAnimator;
-import android.app.ActionBar;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
+import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -52,9 +48,14 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     private List<Drawable> tabIconList;
     private ViewPager tabPager;
     private ExpensePagerView pagerView;
+    private StatGraphFragment statGraphFragment;
     private StatGraphView statGraphView;
     private CustomPagerIndicator indicator;
 
+    /**
+     * TEST CODE
+     */
+    private StatGraphView customView;
 
     // Fields
     private boolean isTabVisible = false;
@@ -117,7 +118,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         frameTop.addView(pagerView);
 
         statGraphView = new StatGraphView(this);
-
+        statGraphView.setId(View.generateViewId());
 
     }
 
@@ -186,11 +187,14 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected");
+        frameTop.removeAllViews();
+
+        // When displaying the recent expense viewpager, FrameLayout(frameTop) holds the custom
+        // view which consists of ViewPager and Indicator.
         if(position == 0 || position == 1) {
-            frameTop.removeAllViews();
             frameTop.addView(pagerView);
         } else if(position == 2) {
-            frameTop.removeView(pagerView);
+            frameTop.addView(statGraphView);
         }
     }
     @Override
@@ -205,8 +209,8 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(1000);
+        slideTab.setDuration(500);
+        slideViewPager.setDuration(500);
         slideTab.start();
         slideViewPager.start();
 

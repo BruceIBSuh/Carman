@@ -27,7 +27,8 @@ public class ExpensePagerView extends LinearLayout {
 
     public ExpensePagerView(Context context) {
         super(context);
-        getAttributes(context, null);
+        init(context);
+        //getAttributes(context, null);
     }
 
     public ExpensePagerView(Context context, AttributeSet attrs) {
@@ -41,8 +42,7 @@ public class ExpensePagerView extends LinearLayout {
         getAttributes(context, attrs);
     }
 
-
-    private void getAttributes(Context context, AttributeSet attrs) {
+    private void init(Context context) {
 
         LayoutInflater.from(context).inflate(R.layout.view_pager_expense, this, true);
         pager = findViewById(R.id.viewPager_expense);
@@ -68,6 +68,12 @@ public class ExpensePagerView extends LinearLayout {
                 log.i("onPageScrollStateChanged");
             }
         });
+    }
+
+
+    private void getAttributes(Context context, AttributeSet attrs) {
+
+
     }
 
     public void showExpensePagerView(ExpensePagerAdapter adapter) {

@@ -18,7 +18,7 @@
     <color name="etBorderColor">#A0A0A0</color>
     <color name="etBorderColorFocused">#1EA4FF</color>
 
-    <!-- StatFragment$StatGraphView -->
+    <!-- StatStmtsFragment$StatGraphView -->
     <!--StatActivity$BarGraphView-->
     <color name="graphBarColor">@color/statThemeColor</color>
     <color name="graphLabelColor">#202020</color>
