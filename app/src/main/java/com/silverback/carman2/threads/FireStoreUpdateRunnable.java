@@ -48,6 +48,15 @@ public class FireStoreUpdateRunnable implements Runnable {
         final Opinet.GasStationInfo stnInfo = task.getStationInfo();
         final DocumentReference docRef = db.collection("stations").document(stationId);
 
+
+        // TEST CODING to convert String "Y" to boolean true or false as to carwash, service, CVS.
+        final boolean isCarwash = stnInfo.getIsCarWash().equalsIgnoreCase("Y");
+        final boolean isService = stnInfo.getIsService().equalsIgnoreCase("Y");
+        final boolean isCVS = stnInfo.getIsCVS().equalsIgnoreCase("Y");
+
+        log.i("Facilities: %s %s %s: ", isCarwash, isService, isCVS);
+
+
         // Update a document only if a document contains the address field as empty, which works
         // as a flag for whether it has been updated.
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {

@@ -60,10 +60,8 @@
 
         <activity
             android:name=".ExpenseActivity"
-            android:label="@string/setting_label"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustPan" >
-
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

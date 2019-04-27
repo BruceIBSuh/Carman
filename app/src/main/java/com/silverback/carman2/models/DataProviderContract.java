@@ -66,6 +66,6 @@ public final class DataProviderContract {
 
 
     // Define DB name and version
-    static final String DATABASE_NAME = "carman.sqlite";
-    static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "carman.sqlite";
+    public static final int DATABASE_VERSION = 1;
 }

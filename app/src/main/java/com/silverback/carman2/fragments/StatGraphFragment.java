@@ -16,12 +16,15 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.CarmanSQLiteOpenHelper;
 import com.silverback.carman2.models.DataProviderContract;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
+import com.silverback.carman2.views.StatGraphView;
 
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
@@ -30,6 +33,10 @@ import java.util.Locale;
 
 public class StatGraphFragment extends Fragment implements View.OnClickListener {
 
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(StatGraphFragment.class);
+
+    // Constants
     private static final String gasData = "SELECT " + DataProviderContract.GAS_ID + ", "
             + DataProviderContract.DATE_TIME_COLUMN + ", "
             + DataProviderContract.GAS_PAYMENT_COLUMN + " "
@@ -51,9 +58,10 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     private int currentYear;
 
     // GraphView
-    private static GraphView graph;
+    private static StatGraphView graph;
     private static BarGraphSeries<DataPoint> series;
     private static DataPoint[] dataPoint;
+    private static int[] monthlyTotalExpense;
 
     // UI's
     private TextView tvYear;
@@ -77,25 +85,19 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
 
         super.onCreate(bundle);
         mDB = CarmanSQLiteOpenHelper.getInstance(getActivity()).getReadableDatabase();
-
         currentYear = calendar.get(Calendar.YEAR);
-
-        // Creates an instance of AsyncTaskk with this year given as params for doInBackground.
-        new GraphTask(getActivity()).execute(calendar.get(Calendar.YEAR));
-
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.view_stat_graph, container, false);
+        View view = inflater.inflate(R.layout.fragment_stat_graph, container, false);
 
         // GraphView
-        /*
         graph = view.findViewById(R.id.graphView);
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMaxX(12);
+        //graph.getViewport().setXAxisBoundsManual(true);
+        //graph.getViewport().setMaxX(12);
         //series.setDrawValuesOnTop(true);
 
         // UI's
@@ -107,7 +109,10 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         Button rightArrow = view.findViewById(R.id.btn_arrow_right);
         leftArrow.setOnClickListener(this);
         rightArrow.setOnClickListener(this);
-        */
+
+        // Creates an instance of AsyncTaskk with this year given as params for doInBackground.
+        new StatGraphViewTask(graph, calendar).execute(calendar.get(Calendar.YEAR));
+
         return view;
     }
 
@@ -116,11 +121,11 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     public void onClick(View view) {
 
         switch(view.getId()) {
-            /*
+
             case R.id.btn_arrow_left:
                 calendar.add(Calendar.YEAR, -1);
                 tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
-                new GraphTask(getActivity()).execute(calendar.get(Calendar.YEAR));
+                new StatGraphViewTask(graph, calendar).execute(calendar.get(Calendar.YEAR));
 
                 break;
 
@@ -128,68 +133,81 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
                 if(calendar.get(Calendar.YEAR) < currentYear) {
                     calendar.add(Calendar.YEAR, 1);
                     tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
-                    new GraphTask(getActivity()).execute(calendar.get(Calendar.YEAR));
+                    new StatGraphViewTask(graph, calendar).execute(calendar.get(Calendar.YEAR));
                 }
                 break;
-           */
+
         }
     }
 
 
-    private static class GraphTask extends AsyncTask<Integer, Void, DataPoint[]> {
+    private static class StatGraphViewTask extends AsyncTask<Integer, Void, Cursor> {
 
-        WeakReference<Activity> weakActivityRef;
-        int[] months;
-
-
+        // Create WeakReference to prevent the outer class reference from memory leaking.
+        //WeakReference<Activity> weakActivity;
+        WeakReference<StatGraphView> weakGraphView;
+        Calendar calendar;
 
         // Constructor
-        GraphTask(Activity activity) {
-            weakActivityRef = new WeakReference<>(activity);
-            months = new int[12];
+        StatGraphViewTask(StatGraphView graphView, Calendar calendar) {
+
+            //weakActivity = new WeakReference<>(activity);
+            weakGraphView = new WeakReference<>(graphView);
+            this.calendar = calendar;
+            monthlyTotalExpense = new int[12];
         }
 
         @Override
-        protected DataPoint[] doInBackground(Integer... params) {
+        protected Cursor doInBackground(Integer... params) {
 
             // Array to set conditions to ?(wildcard) of WHERE condition clause to fetch the expense
             // data in each year.
             String[] conds = new String[4];
 
-            calendar.set(params[0], 0, 1, 0, 0, 0);
-            conds[0] = String.valueOf(calendar.getTimeInMillis()); // First date of year to gasTable
-            conds[2] = String.valueOf(calendar.getTimeInMillis()); // First date of year to serviceTable
+            // Set the Calendar to the Frist day of a given year(passed from param), then convert it
+            // to Miliiseconds to fetch data from the tables to match the column type(long milliseconds)
+            calendar.set(params[0], 0, 1, 0, 0, 0); //set(year, month, date, hourOfDay, minute)
+            //Log.d(TAG, "Calendar: "+ calendar);
+            conds[0] = String.valueOf(calendar.getTimeInMillis()); //First date of year for gasTable
+            conds[2] = String.valueOf(calendar.getTimeInMillis()); //First date of year for serviceTable
 
+            // Set the Calendar tO the last day of a given year.
             calendar.set(params[0], 11, 31, 23, 59, 59);
-            conds[1] = String.valueOf(calendar.getTimeInMillis()); // Last date of year to gasTable
-            conds[3] = String.valueOf(calendar.getTimeInMillis()); // Last date of year to serviceTable
+            conds[1] = String.valueOf(calendar.getTimeInMillis()); //Last date of year to gasTable
+            conds[3] = String.valueOf(calendar.getTimeInMillis()); //Last date of year to serviceTable
 
             String graphDataSql = gasData + " UNION " + serviceData
                     + " ORDER BY " + DataProviderContract.DATE_TIME_COLUMN + " DESC ";
 
             // conds: First day and last day of each year represented by milliseconds to fetch the
             // expenses during the year.
-            Cursor cursor = mDB.rawQuery(graphDataSql, conds);
-            return calculateMonthlyExpense(months, cursor);
+            return mDB.rawQuery(graphDataSql, conds);
 
         }
 
         @Override
-        protected void onPostExecute(DataPoint[] data) {
+        protected void onPostExecute(Cursor cursor) {
 
-            series.resetData(data);
-            graph.addSeries(series);
+            monthlyTotalExpense = calculateMonthlyExpense(cursor);
+            weakGraphView.get().setGraphData(monthlyTotalExpense);
 
-            if(weakActivityRef != null) {
-                weakActivityRef.clear();
-                weakActivityRef = null;
+            /*
+            if(weakActivity != null) {
+                weakActivity.clear();
+                weakActivity = null;
+            }
+            */
+
+            if(weakGraphView != null) {
+                weakGraphView.clear();
+                weakGraphView = null;
             }
 
         }
 
     }
 
-    private static DataPoint[] calculateMonthlyExpense(int[] months, Cursor cursor) throws SQLiteException {
+    private static int[] calculateMonthlyExpense(Cursor cursor) throws SQLiteException {
 
         try {
 
@@ -202,18 +220,18 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
                     int month = Integer.valueOf(sdf.format(cursor.getLong(1)));
 
                     switch(month) {
-                        case 1: months[0] += cursor.getInt(2); break;
-                        case 2: months[1] += cursor.getInt(2); break;
-                        case 3: months[2] += cursor.getInt(2); break;
-                        case 4: months[3] += cursor.getInt(2); break;
-                        case 5: months[4] += cursor.getInt(2); break;
-                        case 6: months[5] += cursor.getInt(2); break;
-                        case 7: months[6] += cursor.getInt(2); break;
-                        case 8: months[7] += cursor.getInt(2); break;
-                        case 9: months[8] += cursor.getInt(2); break;
-                        case 10: months[9] += cursor.getInt(2); break;
-                        case 11: months[10] += cursor.getInt(2); break;
-                        case 12: months[11] += cursor.getInt(2); break;
+                        case 1: monthlyTotalExpense[0] += cursor.getInt(2); break;
+                        case 2: monthlyTotalExpense[1] += cursor.getInt(2); break;
+                        case 3: monthlyTotalExpense[2] += cursor.getInt(2); break;
+                        case 4: monthlyTotalExpense[3] += cursor.getInt(2); break;
+                        case 5: monthlyTotalExpense[4] += cursor.getInt(2); break;
+                        case 6: monthlyTotalExpense[5] += cursor.getInt(2); break;
+                        case 7: monthlyTotalExpense[6] += cursor.getInt(2); break;
+                        case 8: monthlyTotalExpense[7] += cursor.getInt(2); break;
+                        case 9: monthlyTotalExpense[8] += cursor.getInt(2); break;
+                        case 10: monthlyTotalExpense[9] += cursor.getInt(2); break;
+                        case 11: monthlyTotalExpense[10] += cursor.getInt(2); break;
+                        case 12: monthlyTotalExpense[11] += cursor.getInt(2); break;
                         default: break;
                     }
 
@@ -226,12 +244,14 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
 
         // Creates DataPoint for each month with month and total expenses in that month and inserts
         // it int DataPoint[] array to pass it to Series class for graph display.
+        /*
         for(int i = 0; i < months.length; i++){
             DataPoint v = new DataPoint(i, months[i]);
             dataPoint[i] = v;
         }
+        */
 
-        return dataPoint;
+        return monthlyTotalExpense;
 
     }
 }

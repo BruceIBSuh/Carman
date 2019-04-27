@@ -49,6 +49,8 @@
     <string name="map_cardview_service">정 비:</string>
     <string name="map_cardview_wash">세 차:</string>
 
+    <!-- ExpenseActivity -->
+    <string name="exp_toolbar_title">My Garage</string>
     <!--GasMangerFragment-->
     <string name="gas_toolbar_title">주유 및 세차 지출</string>
     <string name="gas_subtitle_expense">주유 지출</string>

@@ -6,7 +6,7 @@
     <dimen name="extraLargeText">15sp</dimen>
     <dimen name="largeText">14sp</dimen>
     <dimen name="mediumText">13sp</dimen>
-    <dimen name="smallTextSize">12sp</dimen>
+    <dimen name="smallText">12sp</dimen>
     <dimen name="boxlineWidth">1dp</dimen>
     <dimen name="underlineWidth">1dp</dimen>
 </resources>

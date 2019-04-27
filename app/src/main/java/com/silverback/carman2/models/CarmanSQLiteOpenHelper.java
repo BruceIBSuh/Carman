@@ -6,9 +6,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
+
 public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
 
-    //private static final String TAG = "SQLiteOpenHelper";
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(CarmanSQLiteOpenHelper.class);
 
     // Objects
     //private Context context;
@@ -38,7 +42,6 @@ public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
         return sInstance;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(SQLiteDatabase db) {
 

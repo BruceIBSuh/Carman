@@ -1,9 +1,5 @@
 package com.silverback.carman2;
 
-import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
-
 import android.animation.ObjectAnimator;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -12,16 +8,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
-import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
+import com.silverback.carman2.fragments.RecentExpFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.utils.CustomPagerIndicator;
-import com.silverback.carman2.views.ExpensePagerView;
 import com.silverback.carman2.views.StatGraphView;
 
 import org.json.JSONArray;
@@ -42,12 +41,13 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
     // Objects
     private GasManagerFragment gasFragment;
+    private RecentExpFragment expFragment;
+    private StatGraphFragment graphFragment;
     private TabLayout tabLayout;
     private FrameLayout frameTop;
     private List<String> tabTitleList;
     private List<Drawable> tabIconList;
     private ViewPager tabPager;
-    private ExpensePagerView pagerView;
     private StatGraphFragment statGraphFragment;
     private StatGraphView statGraphView;
     private CustomPagerIndicator indicator;
@@ -75,6 +75,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         frameTop = findViewById(R.id.frame_top);
 
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // ViewPager and Indicator
@@ -111,6 +112,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
 
         // ViewPager to display receent 5 expenses on top of the screen.
+        /*
         pagerView = new ExpensePagerView(this);
         pagerView.setId(View.generateViewId());
         ExpensePagerAdapter adapter = new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
@@ -119,7 +121,14 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
         statGraphView = new StatGraphView(this);
         statGraphView.setId(View.generateViewId());
+        */
+        expFragment = new RecentExpFragment();
+        graphFragment = new StatGraphFragment();
 
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.frame_top, expFragment, "expFragment")
+                .addToBackStack(null)
+                .commit();
     }
 
 
@@ -187,14 +196,17 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected");
-        frameTop.removeAllViews();
-
         // When displaying the recent expense viewpager, FrameLayout(frameTop) holds the custom
         // view which consists of ViewPager and Indicator.
         if(position == 0 || position == 1) {
-            frameTop.addView(pagerView);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.frame_top, expFragment)
+                    .commit();
+
         } else if(position == 2) {
-            frameTop.addView(statGraphView);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.frame_top, graphFragment)
+                    .commit();
         }
     }
     @Override
@@ -209,8 +221,8 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
-        slideTab.setDuration(500);
-        slideViewPager.setDuration(500);
+        slideTab.setDuration(2000);
+        slideViewPager.setDuration(2000);
         slideTab.start();
         slideViewPager.start();
 
