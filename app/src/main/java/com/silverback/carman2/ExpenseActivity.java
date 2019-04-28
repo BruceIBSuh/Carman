@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
@@ -29,7 +30,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageChangeListener {
+public class ExpenseActivity extends BaseActivity implements
+        ViewPager.OnPageChangeListener,
+        AppBarLayout.OnOffsetChangedListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
@@ -43,6 +46,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     private GasManagerFragment gasFragment;
     private RecentExpFragment expFragment;
     private StatGraphFragment graphFragment;
+    private AppBarLayout appBar;
     private TabLayout tabLayout;
     private FrameLayout frameTop;
     private List<String> tabTitleList;
@@ -52,13 +56,10 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
     private StatGraphView statGraphView;
     private CustomPagerIndicator indicator;
 
-    /**
-     * TEST CODE
-     */
-    private StatGraphView customView;
 
     // Fields
     private boolean isTabVisible = false;
+    private String pageTitle;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -67,16 +68,20 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         setContentView(R.layout.activity_expense);
 
         // UIs
+        appBar = findViewById(R.id.appBar);
+        appBar.addOnOffsetChangedListener(this);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         tabLayout = findViewById(R.id.tabLayout);
-        //indicator = findViewById(R.id.indicator);
-        //expensePager = findViewById(R.id.viewPager_expense);
-        FrameLayout frameFragments = findViewById(R.id.frame_fragments);
+
         frameTop = findViewById(R.id.frame_top);
+        FrameLayout frameFragments = findViewById(R.id.frame_fragments);
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        //TEST CODING
+        pageTitle = "GasManager";
 
         // ViewPager and Indicator
         //tabViewPager = findViewById(R.id.viewPager_tap);
@@ -152,6 +157,67 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         return super.onOptionsItemSelected(item);
     }
 
+    // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+        log.i("onPageScrolled: %s", position);
+    }
+    @Override
+    public void onPageSelected(int position) {
+
+        // When displaying the recent expense viewpager, FrameLayout(frameTop) holds the custom
+        // view which consists of ViewPager and Indicator.
+        switch(position) {
+            case 0:
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top, expFragment)
+                        .commit();
+                // TEST CODING
+                pageTitle = "GasManager";
+                break;
+            case 1:
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top, expFragment)
+                        .commit();
+                // TEST CODING
+                pageTitle = "ServiceManager";
+                break;
+            case 2:
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top, graphFragment)
+                        .commit();
+                // TEST CODING
+                pageTitle = "Statistics";
+                break;
+        }
+        /*
+
+        if(position == 0 || position == 1) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.frame_top, expFragment)
+                    .commit();
+
+        } else if(position == 2) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.frame_top, graphFragment)
+                    .commit();
+        }
+        */
+    }
+    @Override
+    public void onPageScrollStateChanged(int state) {
+        log.i("onPageScrollStateChanged");
+    }
+
+    // Invoked by AppBarLayout.OnOffsetChangeListener to be informed whether the scroll is located
+    @Override
+    public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
+        log.i("AppBar scrolling state: %s", i);
+        log.i("AppBar Total Scroll Range: %s", appBar.getTotalScrollRange());
+        if(Math.abs(i) == appBar.getTotalScrollRange())
+            getSupportActionBar().setTitle(pageTitle);
+    }
+
 
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
@@ -188,31 +254,7 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         return tab;
     }
 
-    // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        log.i("onPageScrolled: %s", position);
-    }
-    @Override
-    public void onPageSelected(int position) {
-        log.i("onPageSelected");
-        // When displaying the recent expense viewpager, FrameLayout(frameTop) holds the custom
-        // view which consists of ViewPager and Indicator.
-        if(position == 0 || position == 1) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frame_top, expFragment)
-                    .commit();
 
-        } else if(position == 2) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frame_top, graphFragment)
-                    .commit();
-        }
-    }
-    @Override
-    public void onPageScrollStateChanged(int state) {
-        log.i("onPageScrollStateChanged");
-    }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
@@ -239,4 +281,6 @@ public class ExpenseActivity extends BaseActivity implements ViewPager.OnPageCha
         }
         return -1;
     }
+
+
 }

@@ -14,11 +14,9 @@ public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(CarmanSQLiteOpenHelper.class);
 
-    // Objects
-    //private Context context;
-
+    // Singleton SqliteOpenHelper constructor
     @SuppressLint("StaticFieldLeak")
-    private static CarmanSQLiteOpenHelper sInstance = null; // Singleton SqliteOpenHelper
+    private static CarmanSQLiteOpenHelper sInstance = null;
 
     // Constructor(private). Accessible by getInstance()
     private CarmanSQLiteOpenHelper(Context context) {
@@ -31,7 +29,7 @@ public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
     }
 
     // static method to get Singleton SQLiteOpenHelper instance
-    public static synchronized CarmanSQLiteOpenHelper getInstance(Context context) {
+    public static CarmanSQLiteOpenHelper getInstance(Context context) {
         // Use the <application context> to prevent this from accedentally leaking an reference to
         // Activity or Fragment when the long-running handler/loader/task will hold it, which leads
         // to fail GC.

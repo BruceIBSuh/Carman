@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
@@ -70,5 +71,4 @@ public class GasManagerFragment extends Fragment {
 
         return localView;
     }
-
 }
