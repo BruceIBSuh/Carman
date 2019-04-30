@@ -40,6 +40,8 @@ public class ServiceFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.fragment_service, container, false);
+        View boxview = localView.findViewById(R.id.view);
+        log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
         serviceRecyclerView = localView.findViewById(R.id.recycler_service);
         String jsonItems = getArguments().getString("serviceItems");
         mAdapter = new ServiceListAdapter(jsonItems);

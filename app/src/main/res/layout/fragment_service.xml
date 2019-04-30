@@ -1,63 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.silverback.carman2.fragments.GasManagerFragment">
+    tools:context="com.silverback.carman2.fragments.ServiceFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraint"
+        android:id="@+id/constraintBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="3dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true" >
+
+        <View
+            android:id="@+id/view"
+            android:layout_width="0dp"
+            android:layout_height="152dp"
+            android:layout_margin="3dp"
+            android:background="@drawable/bg_service_boxing"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_label_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginTop="13dp"
             android:minWidth="80dp"
             android:text="@string/service_label_date"
             android:textSize="@dimen/largeText"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintStart_toStartOf="@+id/view"
+            app:layout_constraintTop_toTopOf="@+id/view" />
 
         <TextView
             android:id="@+id/tv_service_date"
-            android:layout_width="wrap_content"
+            android:layout_width="33dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
-            app:layout_constraintBaseline_toBaselineOf="@+id/tv_label_date"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_date" />
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
+            app:layout_constraintStart_toEndOf="@+id/tv_label_date"
+            app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
         <Button
             android:id="@+id/btn_date"
             android:layout_width="30dp"
             android:layout_height="25dp"
-            android:layout_marginStart="40dp"
-            app:layout_constraintBaseline_toBaselineOf="@+id/tv_service_date"
-            app:layout_constraintStart_toEndOf="@+id/tv_service_date" />
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="10dp"
+            app:layout_constraintStart_toEndOf="@+id/tv_service_date"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_label_provider"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="80dp"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:labelFor="@id/et_provider"
             android:text="@string/service_label_provider"
             android:textSize="@dimen/largeText"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
 
-        <!--
         <ImageButton
             android:id="@+id/imageButton"
             android:layout_width="25dp"
@@ -68,18 +76,19 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_provider"
             app:layout_constraintStart_toEndOf="@+id/tv_label_provider"
             app:layout_constraintTop_toTopOf="@+id/tv_label_provider" />
-        -->
+
         <EditText
             android:id="@+id/et_provider"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="25dp"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/state_view_focus"
             android:inputType="text"
             android:minWidth="200dp"
             android:textSize="14sp"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_provider"
+            app:layout_constraintEnd_toEndOf="@+id/view"
+            app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_service_date"
             tools:ignore="Autofill" />
 
@@ -87,25 +96,23 @@
             android:id="@+id/tv_label_mileage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:labelFor="@id/et_mileage"
             android:minWidth="80dp"
             android:text="@string/service_label_mileage"
             android:textSize="@dimen/largeText"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tv_label_provider"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_provider" />
 
         <EditText
             android:id="@+id/et_mileage"
             android:layout_width="100dp"
             android:layout_height="25dp"
-            android:layout_marginStart="24dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/state_view_focus"
             android:ems="10"
             android:inputType="numberDecimal"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_mileage"
+            app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toBottomOf="@+id/et_provider"
             tools:ignore="Autofill" />
 
@@ -113,32 +120,40 @@
             android:id="@+id/tv_label_payment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
             android:labelFor="@id/et_payment"
             android:minWidth="80dp"
             android:text="@string/service_label_payment"
             android:textSize="@dimen/largeText"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
-
 
         <EditText
             android:id="@+id/et_payment"
             android:layout_width="100dp"
             android:layout_height="25dp"
-            android:layout_marginStart="24dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/state_view_focus"
             android:ems="10"
             android:inputType="numberDecimal"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_payment"
+            app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toBottomOf="@+id/et_mileage"
             tools:ignore="Autofill" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!--Issue of RecyclerView Item Cutoff
+    In the layout structure which contains AppBarLayout, CollapsingToolbarLayout, NestedScrollView
+    and Fragment via FrameLayout, it happnes that last item(s) of RecyclerView located in Fragment
+    is cut off. This might be caused by the reason that RecyclerView computes the top scrolling
+    position and the top position of the view height in a different manner. It is the case that some
+    other layoouts exist before RecyclerView in NestedScrollView,  which makes difference b/w those
+    two values, as much as which last few items of RecyclerView will hide.
+
+    To avoid this calculation difference, RecyclerView layout position should be moved up to the
+    bottom of NestedScrollView and compensates height as much as those layouts by setting
+    layout_marginTop value.
+    -->
 
     <TextView
         android:id="@+id/tv_subtitle_stmts"
@@ -147,24 +162,30 @@
         android:layout_marginStart="3dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
+        android:layout_marginBottom="8dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/constraintBox"
+        android:elevation="2dp"
         android:padding="5dp"
         android:gravity="center_vertical"
         android:background="@drawable/bg_service_subtitle"
         android:text="@string/service_subtitle_stmts"
         android:textSize="@dimen/subtitle"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraint" />
-
+        android:textStyle="bold" />
 
     <com.silverback.carman2.views.ServiceRecyclerView
         android:id="@+id/recycler_service"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="3dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_stmts"/>
+        android:layout_marginStart="3dp"
+        android:layout_marginEnd="3dp"
+        android:layout_marginTop="50dp"
+        android:elevation="1dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/constraintBox"/>
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+</RelativeLayout>

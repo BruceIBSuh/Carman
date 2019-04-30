@@ -22,10 +22,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fitsSystemWindows="true"
-            app:expandedTitleGravity="top|end"
-            app:expandedTitleMarginEnd="0dp"
-            app:expandedTitleMarginStart="48dp"
-            app:expandedTitleMarginTop="10dp"
             app:contentScrim="?attr/colorPrimary"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:titleEnabled="false" >
@@ -36,7 +32,6 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="@android:color/holo_blue_dark"
                 android:elevation="3dp"
-                android:fitsSystemWindows="true"
                 app:layout_collapseMode="pin"
                 app:titleTextColor="#fb9000" />
 

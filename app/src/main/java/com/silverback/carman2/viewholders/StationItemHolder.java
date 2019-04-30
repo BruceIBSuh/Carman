@@ -50,9 +50,9 @@ public class StationItemHolder extends RecyclerView.ViewHolder {
         tvPrice.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getStnPrice(), "원"));
         tvDistance.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getDist(), "m"));
 
-        if(data.getIsWash() != null) {
+        if(data.getIsWash()) {
             tvWashLabel.setVisibility(View.VISIBLE);
-            tvWashValue.setText(data.getIsWash());
+            tvWashValue.setText(String.valueOf(data.getIsWash()));
             tvWashValue.setVisibility(View.VISIBLE);
         }
 

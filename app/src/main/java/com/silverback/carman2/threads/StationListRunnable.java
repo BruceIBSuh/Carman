@@ -134,9 +134,7 @@ public class StationListRunnable implements Runnable{
             mStationList = xmlHandler.parseStationListParcelable(is);
             log.i("StationListRunnable:%s", mStationList.size());
 
-            // Addition info from FireStore database in which station data have been accumulated.
-            // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
-            //setStationInfoFromFireStore();
+
 
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
@@ -151,8 +149,13 @@ public class StationListRunnable implements Runnable{
                     log.i("StationList: %s", mStationList.size());
                     Uri uri = saveNearStationList(mStationList);
                     if (uri != null) {
-                        mTask.setStationList(mStationList);
-                        mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
+
+                        // Addition info from FireStore database in which station data have been accumulated.
+                        // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
+                        setStationInfoFromFireStore();
+
+                        //mTask.setStationList(mStationList);
+                        //mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
                     }
                 }
 
@@ -193,8 +196,10 @@ public class StationListRunnable implements Runnable{
      */
     @SuppressWarnings("Constant")
     private void setStationInfoFromFireStore() {
+        if(mDB == null) return;
 
         for(final Opinet.GasStnParcelable station : mStationList) {
+
             Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());
             query.addSnapshotListener(new EventListener<QuerySnapshot>(){
                 @Override
@@ -203,13 +208,20 @@ public class StationListRunnable implements Runnable{
                     log.i("FireStore isWash retrieved");
                     if(snapshot == null) return;
                     if(!snapshot.isEmpty()) {
-                        String carwash = (String)snapshot.getDocuments().get(0).get("carwash");
-                        station.setIsWash(carwash);
+                        boolean isCarwash = (boolean)snapshot.getDocuments().get(0).get("carwash");
+                        //String carwash = (isCarwash)?"Y":"N";
+                        station.setIsWash(isCarwash);
                     }
+
+                    // TEST CODING REQUIRED TO BE ELLABORATED!!!
+                    mTask.setStationList(mStationList);
+                    mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
 
                 }
             });
         }
+
+
     }
 
     // Save the downloaded near station list in the designated file location.

@@ -263,8 +263,8 @@ public class ExpenseActivity extends BaseActivity implements
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
-        slideTab.setDuration(2000);
-        slideViewPager.setDuration(2000);
+        slideTab.setDuration(1000);
+        slideViewPager.setDuration(1000);
         slideTab.start();
         slideViewPager.start();
 

@@ -70,9 +70,12 @@ public class FireStoreUpdateRunnable implements Runnable {
                         Map<String, Object> updates = new HashMap<>();
                         updates.put("addrs", stnInfo.getNewAddrs());
                         updates.put("tel", stnInfo.getTelNo());
-                        updates.put("carwash", stnInfo.getIsCarWash());
-                        updates.put("cvs", stnInfo.getIsCVS());
-                        updates.put("service", stnInfo.getIsService());
+                        //updates.put("carwash", stnInfo.getIsCarWash());
+                        updates.put("carwash", isCarwash);
+                        //updates.put("cvs", stnInfo.getIsCVS());
+                        updates.put("cvs", isCVS);
+                        //updates.put("service", stnInfo.getIsService());
+                        updates.put("service", isService);
 
                         docRef.update(updates).addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override

@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="1dp"
-    cardview:cardElevation="5dp"
-    cardview:cardCornerRadius="2dp">
+    android:layout_margin="3dp"
+    cardview:cardElevation="1dp"
+    cardview:cardCornerRadius="2dp" >
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +17,7 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
 
             <TextView
                 android:id="@+id/tv_name"
@@ -40,28 +41,29 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraint_stmts"
+            android:visibility="gone"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="visible">
+            android:layout_height="132dp"
+            android:padding="8dp">
+
 
             <TextView
                 android:id="@+id/tv_label_period"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:text="@string/service_label_period"
-                cardview:layout_constraintStart_toStartOf="parent"
+                cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
                 cardview:layout_constraintTop_toTopOf="parent" />
 
             <ProgressBar
                 android:id="@+id/progressBar"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="0dp"
-                android:layout_height="15dp"
+                android:layout_height="20dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="3dp"
+                android:layout_marginTop="8dp"
                 cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_period"
                 cardview:layout_constraintTop_toTopOf="parent" />
@@ -70,11 +72,10 @@
                 android:id="@+id/tv_label_cost"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="16dp"
                 android:labelFor="@id/et_cost"
                 android:text="@string/service_label_cost"
-                cardview:layout_constraintStart_toStartOf="parent"
+                cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
                 cardview:layout_constraintTop_toBottomOf="@+id/tv_label_period" />
 
             <EditText
@@ -82,37 +83,38 @@
                 android:layout_width="100dp"
                 android:layout_height="25dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
+                android:padding="0dp"
                 android:ems="10"
                 android:inputType="numberDecimal"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_cost"
-                cardview:layout_constraintTop_toBottomOf="@+id/tv_label_period"
-                tools:ignore="Autofill" />
+                cardview:layout_constraintTop_toBottomOf="@+id/progressBar"
+                tools:ignore="Autofill"/>
 
             <TextView
                 android:id="@+id/tv_label_info"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="16dp"
                 android:labelFor="@id/et_info"
                 android:text="@string/service_label_info"
-                cardview:layout_constraintStart_toStartOf="parent"
+                cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
                 cardview:layout_constraintTop_toBottomOf="@+id/tv_label_cost" />
 
             <EditText
                 android:id="@+id/et_info"
-                android:layout_width="0dp"
+                android:layout_width="324dp"
                 android:layout_height="25dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="3dp"
+                android:layout_marginTop="12dp"
                 android:ems="10"
                 android:inputType="textPersonName"
-                cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_info"
-                cardview:layout_constraintTop_toBottomOf="@+id/tv_label_cost"
+                cardview:layout_constraintTop_toBottomOf="@+id/et_cost"
                 tools:ignore="Autofill" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
+
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

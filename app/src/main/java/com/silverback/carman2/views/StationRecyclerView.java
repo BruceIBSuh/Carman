@@ -131,7 +131,8 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
-    // Invoked from the parent GeneralFragment when StationListTask failed to fetch a station.
+    // Invoked from the parent GeneralFragment when StationListTask failed to fetch any station
+    // within a givene radius.
     public void showTextView(String message){
 
         if((mTextViewResId != -2) && (getParent() instanceof View)) {

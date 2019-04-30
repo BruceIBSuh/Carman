@@ -237,11 +237,14 @@ public class Opinet  {
         void setSigunCode(String sigunCode) { this.sigunCode = sigunCode; }
         public String getSigunCode() { return sigunCode; }
 
-        void setIsCarWash(String isCarWash) { this.isCarWash = isCarWash; }
+        void setIsCarWash(String isCarWash) {
+            this.isCarWash = isCarWash;
+        }
+
         public String getIsCarWash() { return isCarWash; }
 
-        void setIsService(String isMaint) {
-            this.isService = isMaint;
+        void setIsService(String isService) {
+            this.isService = isService;
         }
         public String getIsService() {
             return isService;
@@ -280,8 +283,8 @@ public class Opinet  {
         private float xCoord;
         private float yCoord;
 
-        //private boolean isWash;
-        private String isWash;
+        private boolean isWash;
+        private byte byteWash;
 
 
         GasStnParcelable() {
@@ -303,9 +306,7 @@ public class Opinet  {
             out.writeFloat(xCoord);
             out.writeFloat(yCoord);
 
-            //out.writeByte((byte)(isWash? 1 : 0));
-            out.writeString(isWash);
-
+            out.writeByte((byte)(isWash? 1 : 0));
         }
 
         static final Parcelable.Creator<GasStnParcelable> CREATOR = new Parcelable.Creator<GasStnParcelable>() {
@@ -331,8 +332,7 @@ public class Opinet  {
             yCoord = in.readFloat();
 
             // Handle boolean with byte
-            //isWash = in.readByte() != 0;
-            isWash = in.readString();
+            isWash = in.readByte() != 0;
         }
 
         public String getStnId() { return stnId; }
@@ -382,11 +382,10 @@ public class Opinet  {
             this.yCoord = y;
         }
 
-        public String getIsWash() {
+        public boolean getIsWash() {
             return isWash;
         }
-
-        public void setIsWash(String isWash) {
+        public void setIsWash(boolean isWash) {
             this.isWash = isWash;
         }
     }
