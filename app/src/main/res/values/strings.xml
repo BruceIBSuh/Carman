@@ -18,7 +18,7 @@
 
 
     <!--GeneralFragment-->
-    <string name="general_label_today">Today</string>
+    <string name="general_label_today">TODAY: </string>
     <string name="general_subtitle_stations">주변 주유소</string>
     <string name="general_subtitle_region">[관심 지역 / 주유소]</string>
     <string name="general_subtitle_expense">최근 지출 내역</string>
@@ -134,7 +134,7 @@
 
 
     <!--Miscellany-->
-    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
+    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분 ss초</string>
     <string name="textview">TextView</string>
     <string name="title_activity_station_maps">Map</string>
     <string name="title_activity_maps">Map</string>

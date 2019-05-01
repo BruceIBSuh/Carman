@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string-array name="tap_carman_title">
+    <string-array name="tab_carman_title">
         <item>@string/tab_gas</item>
         <item>@string/tab_service</item>
         <item>@string/tab_stat</item>
         <!--<item>@string/tab_setting</item>-->
+    </string-array>
 
+    <string-array name="tab_billboard_title">
+        <item>Recent</item>
+        <item>Popular</item>
+        <item>Info n Tips</item>
     </string-array>
 
     <string-array name="tap_board_title">

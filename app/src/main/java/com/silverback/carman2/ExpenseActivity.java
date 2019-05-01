@@ -91,13 +91,12 @@ public class ExpenseActivity extends BaseActivity implements
 
         // TEMPORARY CODING for ServiceList items which should be saved in SharedPreferences
         // as a Json-fomatted string.
+        FragmentPagerAdapter pagerAdapter =
+                new CarmanFragmentPagerAdapter(getSupportFragmentManager());
+
         String[] serviceItems = getResources().getStringArray(R.array.service_item_list);
         JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
         String json = jsonArray.toString();
-
-
-        FragmentPagerAdapter pagerAdapter =
-                new CarmanFragmentPagerAdapter(getSupportFragmentManager());
 
         Bundle args = new Bundle();
         args.putString("serviceItems", json);
@@ -109,12 +108,11 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Custom method to set TabLayout title and icon, WHICH MUST BE INVOKED AFTER
         // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
-        tabTitleList = new ArrayList<>();
-        tabIconList = new ArrayList<>();
+        //tabTitleList = new ArrayList<>();
+        //tabIconList = new ArrayList<>();
 
-        addTabIconAndTitle(TAB_CARMAN);
+        addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
-
 
         // ViewPager to display receent 5 expenses on top of the screen.
         /*
@@ -218,7 +216,7 @@ public class ExpenseActivity extends BaseActivity implements
             getSupportActionBar().setTitle(pageTitle);
     }
 
-
+    /*
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
     @SuppressWarnings("ConstantConditions")
@@ -228,7 +226,7 @@ public class ExpenseActivity extends BaseActivity implements
         //if(!tabIconList.isEmpty()) tabIconList.clear();
         switch(tab) {
             case TAB_CARMAN:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_carman_title));
+                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
                 Drawable[] icons = {
                         getDrawable(R.drawable.ic_gas),
                         getDrawable(R.drawable.ic_service),
@@ -253,6 +251,7 @@ public class ExpenseActivity extends BaseActivity implements
 
         return tab;
     }
+    */
 
 
 
@@ -274,6 +273,7 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     // Measures the size of an android attribute based on ?attr/actionBarSize
+    /*
     private float getActionbarHeight() {
         TypedValue typedValue = new TypedValue();
         if(getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
@@ -281,6 +281,7 @@ public class ExpenseActivity extends BaseActivity implements
         }
         return -1;
     }
+    */
 
 
 }

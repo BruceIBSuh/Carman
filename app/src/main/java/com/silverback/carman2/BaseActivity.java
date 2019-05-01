@@ -1,15 +1,25 @@
 package com.silverback.carman2;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Base64;
+import android.util.TypedValue;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
+import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -23,6 +33,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +42,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
 public class BaseActivity extends AppCompatActivity {
@@ -212,6 +224,134 @@ public class BaseActivity extends AppCompatActivity {
             df.setDecimalSeparatorAlwaysShown(false);
         }
         return df;
+    }
+
+    /*
+    public static Thread runCurrentTime(final Fragment fragment, String format, final TextView view){
+
+        final Calendar calendar = Calendar.getInstance(Locale.getDefault());
+        final SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
+
+        Thread timeThread = new Thread(){
+            @Override
+            public void run() {
+                while (!isInterrupted()) {
+                    fragment.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            calendar.setTimeInMillis(System.currentTimeMillis());
+                            view.setText(sdf.format(calendar.getTime()));
+
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                log.e("InterruptedException: %s", e.getMessage());
+                            }
+                        }
+                    });
+
+                }
+            }
+        };
+
+        return timeThread;
+
+    }
+    */
+
+    // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
+    // setupWithViewPager when it is linked to ViewPager.
+    @SuppressWarnings("ConstantConditions")
+    protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
+
+        //if(!tabTitleList.isEmpty()) tabTitleList.clear();
+        //if(!tabIconList.isEmpty()) tabIconList.clear();
+        /*
+        switch(tab) {
+            case TAB_CARMAN:
+                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_carman_title));
+                Drawable[] icons = {
+                        getDrawable(R.drawable.ic_gas),
+                        getDrawable(R.drawable.ic_service),
+                        getDrawable(R.drawable.ic_stats)};
+
+                tabIconList = Arrays.asList(icons);
+                break;
+
+            case TAB_BOARD:
+                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_board_title));
+                icons = new Drawable[]{};
+                tabIconList = Arrays.asList(icons);
+                break;
+
+        }
+
+        for(int i = 0; i < tabLayout.getTabCount(); i++) {
+            log.i("Title: %s", tabTitleList.get(i));
+            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
+            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
+        }
+        */
+        List<String> tabTitleList = null;
+        List<Drawable> tabIconList = null;
+
+        if(context instanceof ExpenseActivity) {
+            log.i("context: %s", context);
+            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
+
+            Drawable[] icons = {
+                    getDrawable(R.drawable.ic_gas),
+                    getDrawable(R.drawable.ic_service),
+                    getDrawable(R.drawable.ic_stats)};
+
+            tabIconList = Arrays.asList(icons);
+
+        } else if(context instanceof BillboardActivity) {
+            log.i("context: %s", context);
+            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_billboard_title));
+            Drawable[] icons = {
+                    getDrawable(R.drawable.ic_gas),
+                    getDrawable(R.drawable.ic_service),
+                    getDrawable(R.drawable.ic_stats)};
+
+            tabIconList = Arrays.asList(icons);
+        }
+
+        for(int i = 0; i < tabLayout.getTabCount(); i++) {
+            log.i("Tab Title: %s", tabTitleList.get(i));
+            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
+            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
+        }
+
+
+    }
+
+    // Slide up and down the TabLayout when clicking the buttons on the toolbar.
+    /*
+    protected boolean animSlideTabLayout(FrameLayout frame, TabLayout tabLayout, boolean isTabVisible) {
+        float toolbarHeight = getActionbarHeight();
+        float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
+
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
+        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frame, "translationY", tabEndValue);
+        slideTab.setDuration(1000);
+        slideViewPager.setDuration(1000);
+        slideTab.start();
+        slideViewPager.start();
+
+        return !isTabVisible;
+
+    }
+    */
+
+
+    // Measures the size of an android attribute based on ?attr/actionBarSize
+    protected float getActionbarHeight() {
+        TypedValue typedValue = new TypedValue();
+        if(getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
+            return TypedValue.complexToDimension(typedValue.data, getResources().getDisplayMetrics());
+        }
+        return -1;
     }
 
 }

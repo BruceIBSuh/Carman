@@ -4,6 +4,8 @@ package com.silverback.carman2.fragments;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,6 +19,7 @@ import android.widget.TextView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -24,6 +27,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.threads.ClockTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.StationInfoTask;
@@ -43,6 +47,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import static android.content.Context.POWER_SERVICE;
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
 /**
@@ -58,10 +63,13 @@ public class GeneralFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
     // Objects
+    private Handler clockHandler;
+    private ClockTask clockTask;
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
     private StationInfoTask stationInfoTask;
+    private Thread timeThread;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -82,13 +90,14 @@ public class GeneralFragment extends Fragment implements
     private Location mCurrentLocation, mPrevLocation;
 
     // UI's
-    private TextView tvStationsOrder;
+    private TextView tvDate, tvStationsOrder;
     private Spinner fuelSpinner;
     private FrameLayout frameAvgPrice;
     private FloatingActionButton fabLocation;
 
     // Fields
     //private String tmpStationName;
+    private String today;
     private boolean isLocationFetched = false;//prevent StationListTask from repaeating when adding the fragment.
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
@@ -114,7 +123,7 @@ public class GeneralFragment extends Fragment implements
 
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
 
-        TextView tvDate = childView.findViewById(R.id.tv_today);
+        tvDate = childView.findViewById(R.id.tv_today);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         avgPriceView = childView.findViewById(R.id.avgPriceView);
@@ -129,7 +138,7 @@ public class GeneralFragment extends Fragment implements
         childView.findViewById(R.id.imgbtn_stations).setOnClickListener(this);
         stationRecyclerView.addOnItemTouchListener(this);
 
-        // Indicate the current time. Refactor required to show the real time using a worker thread.
+        // Display the current time. Refactor required to show the real time using a worker thread.
         String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
 
@@ -191,27 +200,34 @@ public class GeneralFragment extends Fragment implements
         super.onResume();
         log.i("onResume");
 
+        // Update the current time using worker thread every 1 minute.
+        clockTask = ThreadManager.startClockTask(getContext(), tvDate);
+        //tvDate.invalidate();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        log.i("onPause");
+
+        // Refactor required as to how to finish worker threads.
+        if(clockTask != null) clockTask = null;
+        if(locationTask != null) locationTask = null;
+        if(stationListTask != null) stationListTask = null;
+        if(priceTask != null) priceTask = null;
+        if(stationInfoTask != null) stationInfoTask = null;
+    }
+
+
+
+    @Override
+    public void onStop(){
+        super.onStop();
     }
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean("isLocationFetched", isLocationFetched);
-    }
-
-    @Override
-    public void onStop(){
-        super.onStop();
-        if(locationTask != null) locationTask = null;
-        if(stationListTask != null) stationListTask = null;
-        if(priceTask != null) priceTask = null;
-        if(stationInfoTask != null) stationInfoTask = null;
     }
 
 

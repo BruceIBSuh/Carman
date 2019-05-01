@@ -6,6 +6,8 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.view.View;
+import android.widget.TextView;
 
 import com.silverback.carman2.GeneralSettingActivity;
 import com.silverback.carman2.IntroActivity;
@@ -43,6 +45,7 @@ public class ThreadManager {
     //static final int FETCH_ADDRESS_COMPLETED = 111;
     static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
     static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
+    static final int UPDATE_CLOCK = 114;
     static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
 
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
@@ -97,6 +100,7 @@ public class ThreadManager {
     private final Queue<StationListTask> mStationListTaskQueue;
     private final Queue<StationInfoTask> mStationInfoTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
+    private final Queue<ClockTask> mClockTaskQueue;
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -125,6 +129,7 @@ public class ThreadManager {
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mClockTaskQueue = new LinkedBlockingQueue<>();
 
 
         // Instantiates ThreadPoolExecutor
@@ -152,6 +157,7 @@ public class ThreadManager {
             @Override
             public void handleMessage(Message msg) {
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
+                ClockTask clockTask;
                 PriceTask priceTask;
                 LocationTask locationTask;
                 //LoadPriceListTask loadPriceTask;
@@ -161,9 +167,13 @@ public class ThreadManager {
                 SaveDistCodeTask saveDistCodeTask;
                 LoadDistCodeTask loadDistCodeTask;
 
-
-
                 switch(msg.what) {
+                    case UPDATE_CLOCK:
+                        clockTask = (ClockTask)msg.obj;
+                        TextView tvDate = (TextView)clockTask.getClockView();
+                        tvDate.setText(clockTask.getCurrentTime());
+                        //clockTask.recycle();
+                        break;
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
                         saveDistCodeTask = (SaveDistCodeTask)msg.obj;
@@ -655,6 +665,16 @@ public class ThreadManager {
 
         return locationTask;
 
+    }
+
+    public static ClockTask startClockTask(Context context, View view) {
+        ClockTask clockTask = sInstance.mClockTaskQueue.poll();
+        if(clockTask == null) clockTask = new ClockTask(context);
+        clockTask.initClockTask(ThreadManager.sInstance, view);
+        sInstance.mDecodeThreadPool.execute(clockTask.getClockRunnable());
+
+
+        return clockTask;
     }
 
 
