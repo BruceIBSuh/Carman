@@ -1,13 +1,13 @@
 package com.silverback.carman2;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.viewpager.widget.ViewPager;
-
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+
+import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
@@ -35,7 +35,8 @@ public class BillboardActivity extends BaseActivity implements
         setContentView(R.layout.activity_billboard);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-        FrameLayout framePager = findViewById(R.id.frame_boardPager);
+        //FrameLayout framePager = findViewById(R.id.frame_pager_board);
+        ViewPager boardPager = findViewById(R.id.viewpager_board);
         appBar = findViewById(R.id.appBar);
         tabLayout = findViewById(R.id.tabLayout);
 
@@ -47,18 +48,30 @@ public class BillboardActivity extends BaseActivity implements
         getSupportActionBar().setTitle("Hello Billboard");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        boardPager = new ViewPager(this);
-        boardPager.setId(View.generateViewId());
-        framePager.addView(boardPager);
+        //boardPager = new ViewPager(this);
+        //boardPager.setId(View.generateViewId());
+        //framePager.addView(boardPager);
 
         BillboardPagerAdapter pagerAdapter = new BillboardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);
         boardPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(boardPager);
 
+
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == android.R.id.home) {
+            log.i("onOptionsItemSelected in GeneralSettingActivity");
+            finish();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     // AppBarLayout.OnOffsetChangedListener invokes this.
@@ -74,7 +87,16 @@ public class BillboardActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
+        switch(position) {
+            case 0:
+                break;
 
+            case 1:
+                break;
+
+            case 2:
+                break;
+        }
     }
     @Override
     public void onPageScrollStateChanged(int state) {

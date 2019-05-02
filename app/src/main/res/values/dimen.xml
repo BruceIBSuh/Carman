@@ -3,10 +3,13 @@
     <dimen name="borderWidth">2dp</dimen>
     <dimen name="title">18sp</dimen>
     <dimen name="subtitle">16sp</dimen>
+
+    <!-- Text Size -->
     <dimen name="extraLargeText">16sp</dimen>
     <dimen name="largeText">15sp</dimen>
     <dimen name="mediumText">14sp</dimen>
     <dimen name="smallText">13sp</dimen>
+    <dimen name="extraSmallText">12sp</dimen>
     <dimen name="boxlineWidth">1dp</dimen>
     <dimen name="underlineWidth">1dp</dimen>
 </resources>

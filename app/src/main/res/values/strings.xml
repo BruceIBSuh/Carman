@@ -65,6 +65,7 @@
     <string name="gas_subtitle_evaluation">주유소 평가하기</string>
     <string name="gas_label_evaluation">주유소 평점</string>
     <string name="gas_label_comment">평가한마디</string>
+    <string name="gas_btn_change">수정</string>
 
     <!--ServiceFragment-->
     <string name="service_toolbar_title">정비 점검 관리</string>

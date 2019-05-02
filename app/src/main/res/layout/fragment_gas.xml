@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -12,8 +11,8 @@
         android:layout_width="0dp"
         android:layout_height="35dp"
         android:layout_marginStart="3dp"
-        android:layout_marginEnd="3dp"
         android:layout_marginTop="3dp"
+        android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="start|center"
         android:padding="5dp"
@@ -43,45 +42,63 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:minWidth="100dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
         app:layout_constraintStart_toEndOf="@+id/tv_label_date"
-        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_gas_expense" />
+        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
     <Button
         android:id="@+id/button2"
-        android:layout_width="30dp"
-        android:layout_height="24dp"
+        android:layout_width="40dp"
+        android:layout_height="30dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:padding="0dp"
+        android:text="@string/gas_btn_change"
+        android:textSize="@dimen/extraSmallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_date_time"
         app:layout_constraintStart_toEndOf="@+id/tv_date_time"
-        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_gas_expense" />
+        app:layout_constraintTop_toTopOf="@+id/tv_date_time" />
 
     <TextView
         android:id="@+id/tv_label_station"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/et_station"
+        android:minWidth="80dp"
         android:text="@string/gas_label_station"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_date"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
 
+    <ImageButton
+        android:id="@+id/imageButton2"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="8dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/btn_favorite"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_station"
+        app:layout_constraintEnd_toEndOf="@+id/tv_label_station"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_station" />
+
     <EditText
         android:id="@+id/et_station"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/state_view_focus"
         android:inputType="textMultiLine"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_station"
         app:layout_constraintEnd_toStartOf="@+id/et_unit_price"
         app:layout_constraintStart_toEndOf="@+id/tv_label_station"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_station"
         tools:ignore="AutoFill" />
 
     <EditText
@@ -92,9 +109,10 @@
         android:background="@drawable/state_view_focus"
         android:hint="@string/liter_price"
         android:inputType="number"
-        android:padding="3dp"
+        android:padding="5dp"
         android:textAlignment="viewEnd"
-        android:textSize="13sp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/et_station"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/et_station"
         tools:ignore="Autofill" />
@@ -104,8 +122,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/et_mileage"
+        android:minWidth="80dp"
         android:text="@string/gas_label_odometer"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -114,15 +132,16 @@
 
     <EditText
         android:id="@+id/et_mileage"
-        android:layout_width="100dp"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:background="@drawable/state_view_focus"
-        android:ems="10"
         android:inputType="number"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_odometer"
         app:layout_constraintStart_toEndOf="@+id/tv_label_odometer"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_station"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_odometer"
         tools:ignore="AutoFill" />
 
     <TextView
@@ -135,13 +154,23 @@
         app:layout_constraintStart_toEndOf="@+id/et_mileage"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_station" />
 
+    <com.silverback.carman2.views.InputButtonPadView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="3dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_unit_km"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_unit_km"
+        app:layout_constraintTop_toTopOf="@+id/tv_unit_km" />
+
     <TextView
         android:id="@+id/tv_label_payment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/et_payment"
+        android:minWidth="80dp"
         android:text="@string/gas_label_expense_gas"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -150,15 +179,16 @@
 
     <EditText
         android:id="@+id/et_payment"
-        android:layout_width="100dp"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:background="@drawable/state_view_focus"
-        android:ems="10"
         android:inputType="number"
+        android:padding="5dp"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_payment"
         app:layout_constraintStart_toEndOf="@+id/tv_label_payment"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_odometer"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_payment"
         tools:ignore="AutoFill" />
 
     <TextView
@@ -166,18 +196,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="@string/unit_won"
+        app:layout_constraintBottom_toBottomOf="@+id/et_payment"
         app:layout_constraintStart_toEndOf="@+id/et_payment"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_odometer" />
+        app:layout_constraintTop_toTopOf="@+id/et_payment" />
 
     <TextView
         android:id="@+id/tv_label_amount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/et_amount"
+        android:minWidth="80dp"
         android:text="@string/gas_label_amount"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -186,15 +217,16 @@
 
     <EditText
         android:id="@+id/et_amount"
-        android:layout_width="100dp"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:background="@drawable/state_view_focus"
-        android:ems="10"
         android:inputType="number"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_amount"
         app:layout_constraintStart_toEndOf="@+id/tv_label_amount"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_payment"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_amount"
         tools:ignore="AutoFill" />
 
     <TextView
@@ -202,10 +234,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:text="@string/unit_liter"
+        app:layout_constraintBottom_toBottomOf="@+id/et_amount"
         app:layout_constraintStart_toEndOf="@+id/et_amount"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_payment" />
+        app:layout_constraintTop_toTopOf="@+id/et_amount" />
 
     <TextView
         android:id="@+id/tv_subtitle_extra"
@@ -215,6 +247,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
+        android:gravity="start|center_vertical"
         android:padding="5dp"
         android:text="@string/gas_subtitle_extra_expense"
         android:textSize="@dimen/subtitle"
@@ -229,8 +262,8 @@
         android:layout_height="21dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/et_wash"
+        android:minWidth="80dp"
         android:text="@string/gas_label_expense_wash"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -240,13 +273,15 @@
     <EditText
         android:id="@+id/et_wash"
         android:layout_width="100dp"
-        android:layout_height="30dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:inputType="number"
         android:background="@drawable/state_view_focus"
+        android:inputType="number"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_wash"
         app:layout_constraintStart_toEndOf="@+id/tv_wash"
-        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_extra"
+        app:layout_constraintTop_toTopOf="@+id/tv_wash"
         tools:ignore="AutoFill" />
 
     <TextView
@@ -254,11 +289,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:text="@string/unit_won"
+        app:layout_constraintBottom_toBottomOf="@+id/et_wash"
         app:layout_constraintStart_toEndOf="@+id/et_wash"
-        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_extra"
-        tools:text="@string/unit_won" />
+        app:layout_constraintTop_toTopOf="@+id/et_wash" />
 
 
     <TextView
@@ -266,8 +300,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/et_extra"
+        android:minWidth="80dp"
         android:text="@string/gas_label_expense_misc"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -277,15 +311,16 @@
     <EditText
         android:id="@+id/et_extra"
         android:layout_width="100dp"
-        android:layout_height="30dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:ems="10"
-        android:inputType="number"
         android:background="@drawable/state_view_focus"
-        tools:ignore="AutoFill"
+        android:inputType="number"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_extra"
         app:layout_constraintStart_toEndOf="@+id/tv_label_extra"
-        app:layout_constraintTop_toBottomOf="@+id/tv_wash" />
+        app:layout_constraintTop_toTopOf="@+id/tv_label_extra"
+        tools:ignore="AutoFill" />
 
 
     <TextView
@@ -293,10 +328,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
         android:text="@string/unit_won"
+        app:layout_constraintBottom_toBottomOf="@+id/et_extra"
         app:layout_constraintStart_toEndOf="@+id/et_extra"
-        app:layout_constraintTop_toBottomOf="@+id/tv_wash"
+        app:layout_constraintTop_toTopOf="@+id/et_extra"
         tools:text="@string/unit_won" />
 
     <TextView
@@ -328,7 +363,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView22" />
 
-    <RatingBar
+    <RatingBar style="@style/CarmanRatingBar"
         android:id="@+id/ratingBar"
         android:layout_width="wrap_content"
         android:layout_height="49dp"
@@ -341,6 +376,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
         android:labelFor="@id/et_comment"
         android:text="@string/gas_label_comment"
         android:textSize="@dimen/largeText"
@@ -352,13 +388,14 @@
         android:id="@+id/et_comment"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:minHeight="100dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:padding="5dp"
+        android:background="@drawable/state_view_focus"
         android:gravity="start|top"
         android:inputType="textMultiLine"
-        android:background="@drawable/state_view_focus"
+        android:minHeight="100dp"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_comment"

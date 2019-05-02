@@ -15,5 +15,9 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="CarmanRatingBar" parent="android:style/Widget.Material.RatingBar.Small" >
+
+    </style>
+
 
 </resources>

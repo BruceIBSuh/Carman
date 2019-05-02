@@ -27,6 +27,7 @@ import com.silverback.carman2.models.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
@@ -135,9 +136,10 @@ public class BaseActivity extends AppCompatActivity {
     // then decide whether to newly update for the opinet price list or not
     // Big Bug here
     protected boolean checkUpdateOilPrice() {
+
         long currentTime = System.currentTimeMillis();
         long lastUpdate = mSettings.getLong(Constants.OPINET_LAST_UPDATE, 0L);
-        return(currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;
+        return (currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;
     }
 
     /*
@@ -307,20 +309,18 @@ public class BaseActivity extends AppCompatActivity {
             tabIconList = Arrays.asList(icons);
 
         } else if(context instanceof BillboardActivity) {
+
             log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_billboard_title));
-            Drawable[] icons = {
-                    getDrawable(R.drawable.ic_gas),
-                    getDrawable(R.drawable.ic_service),
-                    getDrawable(R.drawable.ic_stats)};
+            //Drawable[] icons = {};
 
-            tabIconList = Arrays.asList(icons);
+            //tabIconList = Arrays.asList(icons);
         }
 
         for(int i = 0; i < tabLayout.getTabCount(); i++) {
             log.i("Tab Title: %s", tabTitleList.get(i));
             tabLayout.getTabAt(i).setText(tabTitleList.get(i));
-            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
+            if(tabIconList != null) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
         }
 
 

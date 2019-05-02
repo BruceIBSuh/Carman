@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 
@@ -42,6 +43,10 @@ public class GasManagerFragment extends Fragment {
     private Calendar calendar;
     private SimpleDateFormat sdf;
 
+    // UIs
+    private TextView tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
+    private EditText etStnName, etUnitPrice, etExtraPxpense;
+
     // Fields
 
     public GasManagerFragment() {
@@ -57,8 +62,6 @@ public class GasManagerFragment extends Fragment {
         View localView = inflater.inflate(R.layout.fragment_gas, container, false);
 
         TextView tvDate = localView.findViewById(R.id.tv_date_time);
-
-
 
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());

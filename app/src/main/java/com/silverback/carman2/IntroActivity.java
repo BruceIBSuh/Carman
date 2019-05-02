@@ -70,8 +70,9 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     public void onClick(View view) {
 
         mProgBar.setVisibility(View.VISIBLE);
+        File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
 
-        if(checkUpdateOilPrice()) {
+        if(checkUpdateOilPrice() || !file.exists()) {
             String distCode = convJSONArrayToList().get(2);
             log.i("DistCode: %s", distCode);
 

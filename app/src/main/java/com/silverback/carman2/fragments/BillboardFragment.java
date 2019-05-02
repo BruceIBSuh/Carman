@@ -7,14 +7,24 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.BillboardRecyclerAdapter;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class BillboardFragment extends Fragment {
 
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(BillboardFragment.class);
+
+    // Objects
+    private BillboardRecyclerAdapter mAdapter;
+    private RecyclerView recyclerView;
 
     public BillboardFragment() {
         // Required empty public constructor
@@ -25,7 +35,13 @@ public class BillboardFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_billboard, container, false);
+        View localView = inflater.inflate(R.layout.fragment_billboard, container, false);
+        recyclerView = localView.findViewById(R.id.recycler_billboard);
+
+        mAdapter = new BillboardRecyclerAdapter();
+        recyclerView.setAdapter(mAdapter);
+
+        return localView;
     }
 
 }

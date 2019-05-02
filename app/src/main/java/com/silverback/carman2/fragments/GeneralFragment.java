@@ -202,7 +202,7 @@ public class GeneralFragment extends Fragment implements
 
         // Update the current time using worker thread every 1 minute.
         clockTask = ThreadManager.startClockTask(getContext(), tvDate);
-        //tvDate.invalidate();
+
     }
 
     @Override
@@ -216,8 +216,6 @@ public class GeneralFragment extends Fragment implements
         if(priceTask != null) priceTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
     }
-
-
 
     @Override
     public void onStop(){
