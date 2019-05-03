@@ -42,4 +42,11 @@
         <attr name="sigunSpinner" format="reference" />
     </declare-styleable>
 
+    <declare-styleable name="InputBtnPadView">
+        <attr name="btn1" format="string|reference" />
+        <attr name="btn2" format="string|reference" />
+        <attr name="btn3" format="string|reference" />
+        <attr name="btn4" format="string|reference" />
+    </declare-styleable>
+
 </resources>

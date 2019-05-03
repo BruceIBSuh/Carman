@@ -97,7 +97,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:labelFor="@id/et_mileage"
+            android:labelFor="@id/tv_mileage"
             android:minWidth="80dp"
             android:text="@string/service_label_mileage"
             android:textSize="@dimen/largeText"
@@ -105,7 +105,7 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_label_provider" />
 
         <EditText
-            android:id="@+id/et_mileage"
+            android:id="@+id/tv_mileage"
             android:layout_width="100dp"
             android:layout_height="25dp"
             android:layout_marginTop="10dp"
@@ -121,7 +121,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:labelFor="@id/et_payment"
+            android:labelFor="@id/tv_payment"
             android:minWidth="80dp"
             android:text="@string/service_label_payment"
             android:textSize="@dimen/largeText"
@@ -129,7 +129,7 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
 
         <EditText
-            android:id="@+id/et_payment"
+            android:id="@+id/tv_payment"
             android:layout_width="100dp"
             android:layout_height="25dp"
             android:layout_marginTop="10dp"
@@ -137,7 +137,7 @@
             android:ems="10"
             android:inputType="numberDecimal"
             app:layout_constraintStart_toStartOf="@+id/tv_service_date"
-            app:layout_constraintTop_toBottomOf="@+id/et_mileage"
+            app:layout_constraintTop_toBottomOf="@+id/tv_mileage"
             tools:ignore="Autofill" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

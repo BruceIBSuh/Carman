@@ -119,6 +119,16 @@ public class BaseActivity extends AppCompatActivity {
         return null;
     }
 
+    // DecimalFormat method
+    public static DecimalFormat getDecimalformatInstance() {
+        if(df == null) {
+            df = (DecimalFormat)NumberFormat.getInstance();
+            df.applyPattern("#,###");
+            df.setDecimalSeparatorAlwaysShown(false);
+        }
+        return df;
+    }
+
 
     // Formats date and time with milliseconds
     public static String formatMilliseconds(String format, long milliseconds) {

@@ -1,5 +1,8 @@
 package com.silverback.carman2.adapters;
 
+import android.app.Activity;
+import android.content.Context;
+
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceFragment;
 import com.silverback.carman2.fragments.StatStmtsFragment;
@@ -24,6 +27,7 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
 
     // Objects
     private String json;
+    private Context context;
 
     public CarmanFragmentPagerAdapter(FragmentManager fm) {
         super(fm);

@@ -201,7 +201,7 @@ public class GeneralFragment extends Fragment implements
         log.i("onResume");
 
         // Update the current time using worker thread every 1 minute.
-        clockTask = ThreadManager.startClockTask(getContext(), tvDate);
+        //clockTask = ThreadManager.startClockTask(getContext(), tvDate);
 
     }
 
@@ -210,7 +210,7 @@ public class GeneralFragment extends Fragment implements
         super.onPause();
 
         // Refactor required as to how to finish worker threads.
-        if(clockTask != null) clockTask = null;
+        //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;

@@ -135,7 +135,7 @@
 
 
     <!--Miscellany-->
-    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분 ss초</string>
+    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
     <string name="textview">TextView</string>
     <string name="title_activity_station_maps">Map</string>
     <string name="title_activity_maps">Map</string>
