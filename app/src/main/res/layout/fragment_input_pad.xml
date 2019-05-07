@@ -1,25 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     tools:context=".fragments.InputPadFragment">
 
     <!-- TODO: Update blank fragment layout -->
 
     <TextView
         android:id="@+id/defaultValue"
-        android:layout_width="120dp"
+        android:layout_width="100dp"
         android:layout_height="30dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginStart="16dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="center_vertical|end"
         android:paddingEnd="5dp"
-        android:text="TextView"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,13 +33,81 @@
         app:layout_constraintStart_toEndOf="@+id/defaultValue"
         app:layout_constraintTop_toTopOf="@+id/defaultValue" />
 
+    <Button
+        android:id="@+id/btn_sign"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="16dp"
+        android:background="@android:color/holo_green_light"
+        android:gravity="center|center_horizontal"
+        android:padding="0dp"
+        android:textSize="13sp"
+        android:text="+"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/unit"
+        app:layout_constraintStart_toEndOf="@+id/unit"
+        app:layout_constraintTop_toTopOf="@+id/unit" />
 
+    <Button
+        android:id="@+id/padButton1"
+        android:layout_width="30dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="16dp"
+        android:background="@android:color/holo_green_light"
+        android:gravity="center|center_horizontal"
+        android:padding="0dp"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_sign"
+        app:layout_constraintStart_toEndOf="@+id/btn_sign"
+        app:layout_constraintTop_toTopOf="@+id/btn_sign" />
+
+    <Button
+        android:id="@+id/padButton2"
+        android:layout_width="30dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/holo_green_light"
+        android:gravity="center|center_horizontal"
+        android:padding="0dp"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="@+id/padButton1"
+        app:layout_constraintStart_toEndOf="@+id/padButton1"
+        app:layout_constraintTop_toTopOf="@+id/padButton1" />
+
+    <Button
+        android:id="@+id/padButton3"
+        android:layout_width="30dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/holo_green_light"
+        android:gravity="center|center_horizontal"
+        android:padding="0dp"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="@+id/padButton2"
+        app:layout_constraintStart_toEndOf="@+id/padButton2"
+        app:layout_constraintTop_toTopOf="@+id/padButton2" />
+
+    <Button
+        android:id="@+id/padButton4"
+        android:layout_width="30dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/holo_green_light"
+        android:gravity="center|center_horizontal"
+        android:padding="0dp"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="@+id/padButton3"
+        app:layout_constraintStart_toEndOf="@+id/padButton3"
+        app:layout_constraintTop_toTopOf="@+id/padButton3" />
+
+    <!--
     <com.silverback.carman2.views.InputBtnPadView
+        android:id="@+id/btnPad"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/unit"
         app:layout_constraintStart_toEndOf="@+id/unit"
         app:layout_constraintTop_toTopOf="@+id/unit" />
-
+    -->
 </androidx.constraintlayout.widget.ConstraintLayout>

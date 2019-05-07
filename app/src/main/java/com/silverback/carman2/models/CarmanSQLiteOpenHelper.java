@@ -15,7 +15,7 @@ public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
     private static final LoggingHelper log = LoggingHelperFactory.create(CarmanSQLiteOpenHelper.class);
 
     // Singleton SqliteOpenHelper constructor
-    @SuppressLint("StaticFieldLeak")
+    //@SuppressLint("StaticFieldLeak")
     private static CarmanSQLiteOpenHelper sInstance = null;
 
     // Constructor(private). Accessible by getInstance()
