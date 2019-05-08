@@ -99,6 +99,7 @@ public class StationListTask extends ThreadTask implements
         return mStationList;
     }
 
+
     @Override
     public void handleStationTaskState(int state) {
         int outState = -1;
@@ -109,6 +110,11 @@ public class StationListTask extends ThreadTask implements
                 break;
 
             case StationListRunnable.DOWNLAOD_CURRENT_STATION_COMPLETE:
+                break;
+
+            case FireStoreGetRunnable.FIRESTORE_GET_COMPLETE:
+                log.i("FireStore_Set_Complete");
+                outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
 
             case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:

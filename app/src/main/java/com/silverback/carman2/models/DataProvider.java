@@ -13,11 +13,15 @@ import android.util.SparseArray;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
+
 public class DataProvider extends ContentProvider {
 
-    // Constants
-    //private static final String TAG = "DataProvider";
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(DataProvider.class);
 
+    // Constants
     public static final int GAS_TABLE_QUERY = 1;
     public static final int SERVICE_TABLE_QUERY = 2;
     public static final int FAVORITE_TABLE_QUERY = 3;

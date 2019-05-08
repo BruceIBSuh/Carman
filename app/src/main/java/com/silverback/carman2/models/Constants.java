@@ -35,8 +35,9 @@ public class Constants {
     public static final String VHEICLE_MODEL = "pref_model";
     public static final String NUMBER = "carman_pref_cb_number";
     public static final String MODEL = "carman_pref_et_model";
-    public static final String ODOMETER = "carman_pref_odometer";
-    public static final String AVERAGE = "carman_pref_et_average";
+    public static final String ODOMETER = "pref_odometer";
+    public static final String AVERAGE = "pref_et_avg";
+    public static final String PAYMENT = "carman_pref_payment";
     public static final String FUEL = "carman_pref_ls_fuel";
     public static final String DISTRICT = "carman_pref_dialog_district";
     public static final String DISTRICT_NAME = "carman_pref_dialog_district_name";

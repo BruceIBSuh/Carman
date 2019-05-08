@@ -55,7 +55,7 @@ public class BaseActivity extends AppCompatActivity {
     protected static final int REQUEST_PERMISSION_ACCESS_FINE_LOCATION = 1000;
 
     // Objects
-    protected static SharedPreferences mSettings;
+    public static SharedPreferences mSettings;
     protected static DecimalFormat df;
 
     // Fields
@@ -77,18 +77,6 @@ public class BaseActivity extends AppCompatActivity {
 
     }
 
-    //Create Singleton SharedPreferences for initial default variables.
-    //Be mindful not to be confused with another SharedPreferences that is for setting variables using
-    //PreferenceMaanger.getDefaultPreferences().
-    /*
-    public static SharedPreferences getSharedPreferenceInstance(Context context) {
-        if(mSettings == null) {
-            mSettings = PreferenceManager
-                    .getDefaultSharedPreferences(context.getApplicationContext());
-        }
-        return mSettings;
-    }
-    */
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
     protected final String[] getDefaultParams() {
@@ -117,6 +105,15 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         return null;
+    }
+
+    public static SharedPreferences getSharedPreferenceInstance(Context context) {
+        // SharedPreferences
+        if(mSettings == null) {
+            mSettings = PreferenceManager.getDefaultSharedPreferences(context);
+        }
+
+        return mSettings;
     }
 
     // DecimalFormat method

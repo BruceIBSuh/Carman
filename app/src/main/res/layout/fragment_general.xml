@@ -44,7 +44,7 @@
 
     <FrameLayout
         android:id="@+id/frame_rotate_contents"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="80dp"
         android:minWidth="110dp"
         android:layout_marginStart="3dp"

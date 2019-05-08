@@ -46,7 +46,9 @@ public class StationItemHolder extends RecyclerView.ViewHolder {
         this.stnName = data.getStnName();
         int resLogo = getGasStationImage(data.getStnCode());
         imgLogo.setImageResource(resLogo);
-        tvName.setText(data.getStnName());
+
+        // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
+        tvName.setText(String.format("%s%8s%5s", data.getStnName(), "-----", data.getHasVisited()));
         tvPrice.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getStnPrice(), "원"));
         tvDistance.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getDist(), "m"));
 

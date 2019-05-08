@@ -3,8 +3,14 @@ package com.silverback.carman2.fragments;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.EditText;
 
+import androidx.fragment.app.DialogFragment;
+import androidx.preference.EditTextPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
+
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -12,15 +18,7 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import androidx.fragment.app.DialogFragment;
-import androidx.preference.EditTextPreference;
-import androidx.preference.ListPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SwitchPreferenceCompat;
+import java.text.DecimalFormat;
 
 /**
  * A simple {@link PreferenceFragmentCompat} subclass.
@@ -32,7 +30,7 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralSettingFragment.class);
 
     // Objects
-    private SharedPreferences sharedPreferences;
+    private DecimalFormat df;
     private SpinnerDialogPreference spinnerPref;
     private LoadDistCodeTask mTask;
     private String sidoName, sigunName, sigunCode;
@@ -43,20 +41,33 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
 
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
+        df = BaseActivity.getDecimalFormatInstance();
+
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
-        log.i("sigun code in GeneralSettingFragment: %s", sigunCode);
 
-        EditTextPreference etPref = (EditTextPreference)findPreference("pref_nickname");
-        etPref.setSummary(getArguments().getString("name"));
+        // Custom SummaryProvider with Lambda expression for making numbers decimal-formatted.
+        // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
+        // and ListPreference.
+        EditTextPreference etMileage = findPreference(Constants.ODOMETER);
+        etMileage.setSummaryProvider((Preference preference) -> {
+            int mileage = Integer.valueOf(((EditTextPreference)preference).getText());
+            return String.format("%s%5s", df.format(mileage), "km");
+        });
+
+        EditTextPreference etAvg = findPreference(Constants.AVERAGE);
+        etAvg.setSummaryProvider((Preference preference) -> {
+                int avg = Integer.valueOf(((EditTextPreference)preference).getText());
+                return String.format("%s%5s",df.format(avg), "km");
+        });
 
 
-        SpinnerDialogPreference spinnerPref = (SpinnerDialogPreference)findPreference("pref_dialog_district");
+        SpinnerDialogPreference spinnerPref = findPreference("pref_dialog_district");
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
-        SwitchPreferenceCompat switchPref = (SwitchPreferenceCompat)findPreference("pref_location_autoupdate");
+        SwitchPreferenceCompat switchPref = findPreference("pref_location_autoupdate");
 
     }
 
@@ -66,6 +77,9 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
         if(mTask != null) mTask = null;
     }
 
+
+    // Interface definition of PreferenceManager.OnDisplayPreferenceDialogListener when a Preference
+    // requests to display a dialog.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
@@ -74,13 +88,14 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
             DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), sigunCode);
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), "spinner");
-
         } else {
             super.onDisplayPreferenceDialog(pref);
         }
 
     }
 
+    // Interface definition of a callback(Preference.OnPreferenceClickListener) to be invoked
+    // when a Preference is clicked.
     @Override
     public boolean onPreferenceClick(Preference preference) {
         log.i("onPreferenceClick");

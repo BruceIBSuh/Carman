@@ -26,6 +26,8 @@ public class FireStoreSetRunnable implements Runnable {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreSetRunnable.class);
 
+
+
     // Objects
     private FireStoreSetMethods task;
     private FirebaseFirestore db;
@@ -42,7 +44,8 @@ public class FireStoreSetRunnable implements Runnable {
     // Constructor
     FireStoreSetRunnable(FireStoreSetMethods task) {
         this.task = task;
-        db = FirebaseFirestore.getInstance();
+        if(db == null) db = FirebaseFirestore.getInstance();
+
     }
 
     @Override
@@ -57,10 +60,12 @@ public class FireStoreSetRunnable implements Runnable {
         for(final Opinet.GasStnParcelable station : stnList) {
             //batch = db.batch();
             final Map<String, Object> data = new HashMap<>();
+
             // Check if the station already exists by querying the collection with the station id
             // at first. Undess it exists, set the station data in the store.
             // It prevents updated fields from being reverted to the default value.
             Query query = db.collection("stations").whereEqualTo("id", station.getStnId());
+            /*
             query.addSnapshotListener(new EventListener<QuerySnapshot>(){
                 @SuppressWarnings("ConstantConditions")
                 @Override
@@ -84,7 +89,25 @@ public class FireStoreSetRunnable implements Runnable {
                     }
                 }
             });
+            */
+            query.addSnapshotListener((snapshot, e) -> {
+                if (snapshot != null && snapshot.isEmpty()) {
+                    data.put("id", station.getStnId());
+                    data.put("name", station.getStnName());
+                    data.put("addrs", "");
+                    data.put("carwash", false);
+                    data.put("cvs", false);
+                    data.put("service", false);
+                    data.put("tel", "");
+                    data.put("geocode", new Point((int) station.getLatitude(), (int) station.getLongitude()));
+
+                    DocumentReference docRef = db.collection("stations").document(station.getStnId());
+                    docRef.set(data, SetOptions.merge());
+                    //batch.set(docRef, data, SetOptions.merge());
+                }
+            });
         }
+
 
         /*
         //java.lang.IllegalStateException: A write batch can no longer be used after commit() has been called.

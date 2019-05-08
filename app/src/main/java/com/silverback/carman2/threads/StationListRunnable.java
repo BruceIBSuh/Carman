@@ -152,10 +152,10 @@ public class StationListRunnable implements Runnable{
 
                         // Addition info from FireStore database in which station data have been accumulated.
                         // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
-                        setStationInfoFromFireStore();
+                        //setStationInfoFromFireStore();
 
-                        //mTask.setStationList(mStationList);
-                        //mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                        mTask.setStationList(mStationList);
+                        mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
                     }
                 }
 

@@ -20,6 +20,8 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import java.text.DecimalFormat;
+
 
 public class GeneralSettingActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
@@ -32,6 +34,7 @@ public class GeneralSettingActivity extends BaseActivity implements
     private GeneralSettingFragment settingFragment;
     private PriceTask priceTask;
     private String districtCode;
+    private DecimalFormat df;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -48,6 +51,9 @@ public class GeneralSettingActivity extends BaseActivity implements
         // it, the parent activity receives a call to onOptionsItemSelected().
         ab.setDisplayHomeAsUpEnabled(true);
 
+        // DecimalFormat singleton instance from BaseActivity
+        df = getDecimalFormatInstance();
+
         settingFragment = new GeneralSettingFragment();
         // Passes District Code(Sigun Code) and vehicle nickname to GeneralSettingFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
@@ -58,10 +64,11 @@ public class GeneralSettingActivity extends BaseActivity implements
         Bundle args = new Bundle();
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
         args.putString("name", vehicleName);
+        //args.putString(Constants.ODOMETER, mileage);
 
         settingFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.frame_setting, settingFragment)
+                .replace(R.id.frame_setting, settingFragment)
                 .commit();
 
     }
@@ -82,14 +89,14 @@ public class GeneralSettingActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
+        if(item.getItemId() == android.R.id.home) {
             // Respond to the action bar's Up/Home button
-            case android.R.id.home:
-                log.i("onOptionsItemSelected in GeneralSettingActivity");
-                //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
-                //onBackPressed();
-                finish();
-                return true;
+            log.i("onOptionsItemSelected in GeneralSettingActivity");
+            //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
+            //onBackPressed();
+            finish();
+            return true;
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -108,24 +115,38 @@ public class GeneralSettingActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
         switch(key) {
+
+            case Constants.VEHICLE_NAME:
+                EditTextPreference pref = (EditTextPreference)settingFragment.findPreference(key);
+                log.i("EditTextPref: %s", pref.getText());
+                if(!TextUtils.isEmpty(pref.getText())) {
+                    //pref.setSummary(pref.getText());
+                    //mSettings.edit().putString(Constants.VEHICLE_NAME, pref.getText()).apply();
+                }
+                break;
+
+            case Constants.ODOMETER:
+                EditTextPreference mileage = (EditTextPreference)settingFragment.findPreference(key);
+                log.i("EditTextPref: %s", mileage.getText());
+                if(!TextUtils.isEmpty(mileage.getText())) {
+                    //mileage.setSummary(mileage.getText() + "km");
+                    //mSettings.edit().putString(Constants.ODOMETER, mileage.getText()).apply();
+                }
+
+                break;
+
             case Constants.DISTRICT:
                 districtCode = convJSONArrayToList().get(2);
                 priceTask = ThreadManager.startPriceTask(this, districtCode);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
-            case Constants.VEHICLE_NAME:
-                EditTextPreference pref = (EditTextPreference)settingFragment.findPreference(key);
-                log.i("EditTextPref: %s", pref.getText());
-                if(!TextUtils.isEmpty(pref.getText())) {
-                    pref.setSummary(pref.getText());
-                    mSettings.edit().putString(Constants.VEHICLE_NAME, pref.getText()).apply();
-                }
-                break;
+
+
 
             case "pref_location_autoupdate":
-                SwitchPreferenceCompat switchPref = (SwitchPreferenceCompat)settingFragment.findPreference(key);
-                log.i("SwitchPreferenceCompat: %s", switchPref.isChecked());
-                mSettings.edit().putBoolean("pref_location_autoupdate", switchPref.isChecked()).apply();
+                //SwitchPreferenceCompat switchPref = (SwitchPreferenceCompat)settingFragment.findPreference(key);
+                //log.i("SwitchPreferenceCompat: %s", switchPref.isChecked());
+                //mSettings.edit().putBoolean("pref_location_autoupdate", switchPref.isChecked()).apply();
                 break;
         }
 

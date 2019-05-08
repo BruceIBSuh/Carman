@@ -9,12 +9,12 @@ public final class DataProviderContract {
 
     private static final String SCHEME = "content";
 
-    public static final String AUTHORITY = "com.ibnco.carstory.utils.provider";
+    public static final String AUTHORITY = "com.silverback.carman2.models.provider";
 
     private static final Uri CONTENT_URI = Uri.parse(SCHEME + "://" + AUTHORITY);
 
     // Implements ContentProvider MIME Types
-    public static final String MIME_TYPE_ROWS = "vnd.android.cursor.dir/vnd.com.ibnco.carman";
+    public static final String MIME_TYPE_ROWS = "vnd.android.cursor.dir/vnd.com.silverback.carman2";
     //public static final String MIME_TPYE_SINGLE_ROW = "vnd.android.cursor.item/vnd.com.ibnco.carman";
 
     public static final String GAS_ID = BaseColumns._ID;

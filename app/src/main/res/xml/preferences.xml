@@ -7,7 +7,8 @@
 
         <EditTextPreference
             app:key="pref_nickname"
-            app:title="@string/setting_nickname" />
+            app:title="@string/setting_nickname"
+            app:useSimpleSummaryProvider="true"/>
 
         <EditTextPreference
             app:key="pref_model"
@@ -18,14 +19,18 @@
             app:key="pref_fuel"
             app:entries="@array/spinner_fuel_name"
             app:entryValues="@array/spinner_fuel_code"
-            app:defaultValue="B027" />
+            app:defaultValue="B027"
+            app:useSimpleSummaryProvider="true"/>
 
-        <Preference
-            app:title="누적 주행거리(Ordometer)"
-            app:key="pref_ordometer" />
-        <Preference
+        <EditTextPreference
+            app:key="pref_odometer"
+            app:title="누적 주행거리"
+            app:defaultValue="0" />
+
+        <EditTextPreference
+            app:key="pref_et_avg"
             app:title="연간 평균 주행거리(Mileage)"
-            app:key="pref_mileage" />
+            app:defaultValue="0" />
 
     </PreferenceCategory>
 

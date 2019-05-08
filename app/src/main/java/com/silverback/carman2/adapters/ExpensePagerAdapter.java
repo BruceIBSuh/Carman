@@ -16,7 +16,7 @@ public class ExpensePagerAdapter extends FragmentStatePagerAdapter {
     private int mPage;
 
     public ExpensePagerAdapter(FragmentManager fm, int page) {
-        super(fm);
+        super(fm, FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         mPage = page;
     }
 

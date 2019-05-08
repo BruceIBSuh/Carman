@@ -15,6 +15,9 @@ import javax.annotation.Nullable;
 
 public class FireStoreGetRunnable implements Runnable {
 
+    // Constants
+    static final int FIRESTORE_GET_COMPLETE = 10;
+
     // Objects
     private FireStoreGetMethods task;
     private FirebaseFirestore mDB;
@@ -24,12 +27,13 @@ public class FireStoreGetRunnable implements Runnable {
     public interface FireStoreGetMethods {
         void setStationTaskThread(Thread thread);
         List<Opinet.GasStnParcelable> getStationList();
+        void handleStationTaskState(int state);
 
     }
 
     FireStoreGetRunnable(FireStoreGetMethods task) {
         this.task = task;
-        mDB = FirebaseFirestore.getInstance();
+        if(mDB == null) mDB = FirebaseFirestore.getInstance();
     }
 
     @Override
@@ -43,15 +47,32 @@ public class FireStoreGetRunnable implements Runnable {
         for(Opinet.GasStnParcelable station : stnList) {
 
             Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());
+            query.addSnapshotListener((snapshot, e) -> {
+                if(snapshot == null) return;
+                if(!snapshot.isEmpty()) {
+                    boolean isCarwash = (boolean)snapshot.getDocuments().get(0).get("carwash");
+                    //String carwash = (isCarwash)?"Y":"N";
+                    station.setIsWash(isCarwash);
+                    station.setHasVisited(true);
+                } else {
+                    station.setHasVisited(false);
+                    task.handleStationTaskState(FIRESTORE_GET_COMPLETE);
+                }
+            });
+            /*
             query.addSnapshotListener(new EventListener<QuerySnapshot>(){
                 @Override
                 public void onEvent(@Nullable QuerySnapshot snapshot,
                                     @Nullable FirebaseFirestoreException e) {
 
+                    if(snapshot == null) return;
+                    if(!snapshot.isEmpty()) {
 
+                    }
 
                 }
             });
+            */
         }
 
     }

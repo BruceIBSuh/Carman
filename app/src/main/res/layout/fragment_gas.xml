@@ -120,8 +120,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:minWidth="80dp"
         android:labelFor="@id/tv_mileage"
+        android:minWidth="80dp"
         android:text="@string/gas_label_odometer"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -262,7 +262,7 @@
 
     <TextView
         android:id="@+id/tv_carwash"
-        android:layout_width="100dp"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:background="@drawable/state_view_focus"
@@ -297,9 +297,10 @@
         app:layout_constraintStart_toStartOf="@+id/tv_label_wash"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_wash" />
 
+
     <TextView
         android:id="@+id/tv_extra"
-        android:layout_width="100dp"
+        android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:background="@drawable/state_view_focus"
@@ -321,6 +322,23 @@
         app:layout_constraintStart_toEndOf="@+id/tv_extra"
         app:layout_constraintTop_toTopOf="@+id/tv_extra"
         tools:text="@string/unit_won" />
+
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="207dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="3dp"
+        android:background="@drawable/state_view_focus"
+        android:ems="10"
+        android:hint="지출내역"
+        android:inputType="textMultiLine"
+        android:padding="5dp"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBaseline_toBaselineOf="@+id/tv_extra_unit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_extra_unit"
+        tools:ignore="Autofill" />
 
 
     <TextView

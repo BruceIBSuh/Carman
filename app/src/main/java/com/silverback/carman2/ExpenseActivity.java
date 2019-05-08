@@ -3,7 +3,7 @@ package com.silverback.carman2;
 import android.animation.ObjectAnimator;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.TypedValue;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -24,10 +24,6 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.views.StatGraphView;
 
-import org.json.JSONArray;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ExpenseActivity extends BaseActivity implements
@@ -92,39 +88,16 @@ public class ExpenseActivity extends BaseActivity implements
         // TEMPORARY CODING for ServiceList items which should be saved in SharedPreferences
         // as a Json-fomatted string.
         FragmentPagerAdapter pagerAdapter =
-                new CarmanFragmentPagerAdapter(getSupportFragmentManager());
-
-        String[] serviceItems = getResources().getStringArray(R.array.service_item_list);
-        JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
-        String json = jsonArray.toString();
-
-        Bundle args = new Bundle();
-        args.putString("serviceItems", json);
-        pagerAdapter.getItem(1).setArguments(args);
+                new CarmanFragmentPagerAdapter(this, getSupportFragmentManager());
 
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
 
-        // Custom method to set TabLayout title and icon, WHICH MUST BE INVOKED AFTER
-        // TabLayout.setupWithViewPager as far as TabLayout links with ViewPager.
-        //tabTitleList = new ArrayList<>();
-        //tabIconList = new ArrayList<>();
-
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
 
         // ViewPager to display receent 5 expenses on top of the screen.
-        /*
-        pagerView = new ExpensePagerView(this);
-        pagerView.setId(View.generateViewId());
-        ExpensePagerAdapter adapter = new ExpensePagerAdapter(getSupportFragmentManager(), NumOfPages);
-        pagerView.showExpensePagerView(adapter);
-        frameTop.addView(pagerView);
-
-        statGraphView = new StatGraphView(this);
-        statGraphView.setId(View.generateViewId());
-        */
         expFragment = new RecentExpFragment();
         graphFragment = new StatGraphFragment();
 
@@ -133,6 +106,7 @@ public class ExpenseActivity extends BaseActivity implements
                 .addToBackStack(null)
                 .commit();
     }
+
 
 
     @SuppressWarnings("ConstantConditions")
@@ -145,11 +119,23 @@ public class ExpenseActivity extends BaseActivity implements
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        menu.add(Menu.NONE, 1000, Menu.NONE, "SAVE");
+        MenuItem item = menu.findItem(1000);
+        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        item.setIcon(R.drawable.ic_toolbar_save);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
             log.i("onOptionsItemSelected in GeneralSettingActivity");
             finish();
             return true;
+        } else {
+            log.i("SAVE button clicked");
         }
 
         return super.onOptionsItemSelected(item);

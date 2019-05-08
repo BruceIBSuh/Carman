@@ -48,6 +48,8 @@ public class ThreadManager {
     static final int UPDATE_CLOCK = 114;
     static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
 
+    static final int FIRESTORE_STATION_GET_COMPLETED = 120;
+
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
     static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
@@ -233,6 +235,7 @@ public class ThreadManager {
                         mStationTaskListener.onStationInfoTaskComplete(info);
                         mStationInfoTaskQueue.offer(stationInfoTask);
                         break;
+
                     case DOWNLOAD_STN_MAPINFO_FAILED:
                         break;
 
@@ -258,9 +261,13 @@ public class ThreadManager {
             case DOWNLOAD_STATION_LIST_COMPLETED:
                 //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
                 mDownloadThreadPool.execute(((StationListTask)task).getFireStoreGetRunnable());
+                msg.sendToTarget();
+                break;
+
+            case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 mDecodeThreadPool.execute(((StationListTask) task).getFireStoreSetRunnalbe());
-                msg.sendToTarget();
+                //msg.sendToTarget();
                 break;
 
             case DOWNLOAD_STATION_INFO_COMPLETED:
