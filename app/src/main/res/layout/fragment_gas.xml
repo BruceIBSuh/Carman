@@ -65,7 +65,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:labelFor="@id/et_station"
+        android:labelFor="@id/et_station_name"
         android:text="@string/gas_label_station"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -85,7 +85,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_label_station" />
 
     <EditText
-        android:id="@+id/et_station"
+        android:id="@+id/et_station_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
@@ -110,9 +110,9 @@
         android:padding="5dp"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toBottomOf="@+id/et_station"
+        app:layout_constraintBottom_toBottomOf="@+id/et_station_name"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/et_station"
+        app:layout_constraintTop_toTopOf="@+id/et_station_name"
         tools:ignore="Autofill" />
 
     <TextView
@@ -211,6 +211,7 @@
         android:layout_marginStart="8dp"
         android:background="@drawable/state_view_focus"
         android:padding="5dp"
+        android:text="0"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_amount"
@@ -234,7 +235,7 @@
         android:layout_width="0dp"
         android:layout_height="35dp"
         android:layout_marginStart="3dp"
-        android:layout_marginTop="243dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="start|center_vertical"
@@ -244,7 +245,7 @@
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_amount" />
 
     <TextView
         android:id="@+id/tv_label_wash"
@@ -265,8 +266,9 @@
         android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:background="@drawable/state_view_focus"
         android:padding="5dp"
+        android:background="@drawable/state_view_focus"
+        android:text="0"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_wash"
@@ -303,8 +305,9 @@
         android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:background="@drawable/state_view_focus"
         android:padding="5dp"
+        android:background="@drawable/state_view_focus"
+        android:text="0"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_extra"
@@ -324,10 +327,10 @@
         tools:text="@string/unit_won" />
 
     <EditText
-        android:id="@+id/editText"
-        android:layout_width="207dp"
+        android:id="@+id/et_extra_expense"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         android:background="@drawable/state_view_focus"
         android:ems="10"
@@ -335,9 +338,9 @@
         android:inputType="textMultiLine"
         android:padding="5dp"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tv_extra_unit"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tv_extra_unit"
+        app:layout_constraintStart_toStartOf="@+id/tv_extra"
+        app:layout_constraintTop_toBottomOf="@+id/tv_extra"
         tools:ignore="Autofill" />
 
 
@@ -354,8 +357,9 @@
         android:textSize="@dimen/subtitle"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_extra" />
+        app:layout_constraintTop_toBottomOf="@+id/et_extra_expense" />
 
     <TextView
         android:id="@+id/tv_label_rating"

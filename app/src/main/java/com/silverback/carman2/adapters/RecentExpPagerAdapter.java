@@ -1,29 +1,31 @@
 package com.silverback.carman2.adapters;
 
-import com.silverback.carman2.fragments.RecentExpensePageFragment;
+import com.silverback.carman2.fragments.RecentExpPagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
-public class ExpensePagerAdapter extends FragmentStatePagerAdapter {
+public class RecentExpPagerAdapter extends FragmentStatePagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(RecentExpPagerAdapter.class);
 
     private int mPage;
 
-    public ExpensePagerAdapter(FragmentManager fm, int page) {
+    public RecentExpPagerAdapter(FragmentManager fm, int page) {
         super(fm, FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         mPage = page;
     }
 
+    @NonNull
     @Override
     public Fragment getItem(int position) {
         log.i("position: %s", position);
-        return RecentExpensePageFragment.create(position);
+        return RecentExpPagerFragment.create(position);
     }
 
     @Override

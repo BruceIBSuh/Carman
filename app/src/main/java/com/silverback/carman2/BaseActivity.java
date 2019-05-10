@@ -32,10 +32,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -77,6 +79,15 @@ public class BaseActivity extends AppCompatActivity {
 
     }
 
+    public static SharedPreferences getSharedPreferenceInstance(Context context) {
+        // SharedPreferences
+        if(mSettings == null) {
+            mSettings = PreferenceManager.getDefaultSharedPreferences(context);
+        }
+
+        return mSettings;
+    }
+
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
     protected final String[] getDefaultParams() {
@@ -107,14 +118,7 @@ public class BaseActivity extends AppCompatActivity {
         return null;
     }
 
-    public static SharedPreferences getSharedPreferenceInstance(Context context) {
-        // SharedPreferences
-        if(mSettings == null) {
-            mSettings = PreferenceManager.getDefaultSharedPreferences(context);
-        }
 
-        return mSettings;
-    }
 
     // DecimalFormat method
     public static DecimalFormat getDecimalformatInstance() {
@@ -135,6 +139,19 @@ public class BaseActivity extends AppCompatActivity {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
         return sdf.format(calendar.getTime());
 
+    }
+
+    public static long parseDateTime(String format, String datetime) {
+        SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
+
+        try {
+            Date date = sdf.parse(datetime);
+            return date.getTime();
+        } catch(ParseException e) {
+            log.e("ParseException: %s", e.getMessage());
+        }
+
+        return -1;
     }
 
     // Check the time interval between the current time and the last update time saved in

@@ -44,7 +44,8 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
     private String json;
 
     public CarmanFragmentPagerAdapter(Context context, FragmentManager fm) {
-        super(fm, FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT); // bug?
+        super(fm, FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT); // bug?
+
         this.context = context;
         mSettings = BaseActivity.getSharedPreferenceInstance(context);
         df = BaseActivity.getDecimalFormatInstance();
@@ -65,28 +66,6 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int pos){
-        Bundle args = new Bundle();
-        switch(pos) {
-            case GAS:
-                args.putString(Constants.ODOMETER, mSettings.getString(Constants.ODOMETER, df.format(1000)));
-                args.putString(Constants.PAYMENT, mSettings.getString(Constants.PAYMENT, df.format(50000)));
-
-                break;
-
-            case SERVICE:
-                String[] serviceItems = context.getResources().getStringArray(R.array.service_item_list);
-                JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
-                String json = jsonArray.toString();
-                args.putString("serviceItems", json);
-
-                break;
-
-            case STAT:
-                break;
-        }
-
-        fragments[pos].setArguments(args);
-
         return fragments[pos];
     }
 

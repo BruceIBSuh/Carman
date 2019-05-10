@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
@@ -16,7 +17,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
-import com.silverback.carman2.fragments.RecentExpFragment;
+import com.silverback.carman2.fragments.RecentExpenseFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -39,9 +40,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int NumOfPages = 5;
 
     // Objects
-    private GasManagerFragment gasFragment;
-    private RecentExpFragment expFragment;
-    private StatGraphFragment graphFragment;
+    private FragmentPagerAdapter pagerAdapter;
     private AppBarLayout appBar;
     private TabLayout tabLayout;
     private FrameLayout frameTop;
@@ -54,8 +53,14 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     // Fields
+    private int currentPage = 0;
     private boolean isTabVisible = false;
     private String pageTitle;
+
+    // Interface to communicate w/ containig fragments.
+    public interface OnFragmentListener {
+        void saveData();
+    }
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -87,9 +92,7 @@ public class ExpenseActivity extends BaseActivity implements
 
         // TEMPORARY CODING for ServiceList items which should be saved in SharedPreferences
         // as a Json-fomatted string.
-        FragmentPagerAdapter pagerAdapter =
-                new CarmanFragmentPagerAdapter(this, getSupportFragmentManager());
-
+        pagerAdapter = new CarmanFragmentPagerAdapter(this, getSupportFragmentManager());
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
@@ -97,12 +100,13 @@ public class ExpenseActivity extends BaseActivity implements
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
 
-        // ViewPager to display receent 5 expenses on top of the screen.
-        expFragment = new RecentExpFragment();
-        graphFragment = new StatGraphFragment();
 
+        // Add ViewPager Fragment to FrameLayout on the top
+        RecentExpenseFragment fragment = new RecentExpenseFragment();
+        Bundle arg = new Bundle();
+        arg.putInt("currentPage", currentPage);
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.frame_top, expFragment, "expFragment")
+                .add(R.id.frame_top, fragment, "expFragment")
                 .addToBackStack(null)
                 .commit();
     }
@@ -128,12 +132,25 @@ public class ExpenseActivity extends BaseActivity implements
         return super.onCreateOptionsMenu(menu);
     }
 
+    // Home button in Toolbar event handler, saving data in the current fragment
+    // in SQLite
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in GeneralSettingActivity");
+            Fragment fragment = pagerAdapter.getItem(currentPage);
+            switch(currentPage) {
+                case 0 : // GasManagerFragment
+                   ((GasManagerFragment)fragment).saveData();
+                   break;
+                case 1: // ServiceFragment
+                   //((ServiceFragment)fragment).saveData();
+                   break;
+            }
+
             finish();
             return true;
+
         } else {
             log.i("SAVE button clicked");
         }
@@ -148,45 +165,16 @@ public class ExpenseActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
+        currentPage = position;
 
         // When displaying the recent expense viewpager, FrameLayout(frameTop) holds the custom
         // view which consists of ViewPager and Indicator.
         switch(position) {
-            case 0:
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, expFragment)
-                        .commit();
-                // TEST CODING
-                pageTitle = "GasManager";
-                break;
-            case 1:
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, expFragment)
-                        .commit();
-                // TEST CODING
-                pageTitle = "ServiceManager";
-                break;
-            case 2:
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, graphFragment)
-                        .commit();
-                // TEST CODING
-                pageTitle = "Statistics";
-                break;
+            case 0: pageTitle = "GasManager"; break;
+            case 1: pageTitle = "ServiceManager"; break;
+            case 2: pageTitle = "Statistics"; break;
         }
-        /*
 
-        if(position == 0 || position == 1) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frame_top, expFragment)
-                    .commit();
-
-        } else if(position == 2) {
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frame_top, graphFragment)
-                    .commit();
-        }
-        */
     }
     @Override
     public void onPageScrollStateChanged(int state) {
@@ -198,8 +186,9 @@ public class ExpenseActivity extends BaseActivity implements
     public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
         log.i("AppBar scrolling state: %s", i);
         log.i("AppBar Total Scroll Range: %s", appBar.getTotalScrollRange());
-        if(Math.abs(i) == appBar.getTotalScrollRange())
+        if(Math.abs(i) == appBar.getTotalScrollRange()) {
             getSupportActionBar().setTitle(pageTitle);
+        }
     }
 
     /*
@@ -256,8 +245,6 @@ public class ExpenseActivity extends BaseActivity implements
         isTabVisible = !isTabVisible;
 
     }
-
-
     // Measures the size of an android attribute based on ?attr/actionBarSize
     /*
     private float getActionbarHeight() {

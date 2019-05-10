@@ -10,15 +10,22 @@ import android.widget.TextView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-
-import java.text.DecimalFormat;
+import com.silverback.carman2.models.DataProviderContract;
+import com.silverback.carman2.models.FragmentSharedModel;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProviders;
 
-public class RecentExpensePageFragment extends Fragment {
+public class RecentExpPagerFragment extends Fragment {
 
-    /*
+    // Constants
+
+
+    // Objects
+    private ViewModel viewModel;
+
     private final String[] gasColumns = {
             DataProviderContract.DATE_TIME_COLUMN,
             DataProviderContract.MILEAGE_COLUMN,
@@ -33,7 +40,7 @@ public class RecentExpensePageFragment extends Fragment {
             DataProviderContract.SERVICE_PROVIDER_COLUMN,
             DataProviderContract.SERVICE_TOTAL_PRICE_COLUMN
     };
-    */
+
 
     // Object References
     //private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
@@ -50,14 +57,14 @@ public class RecentExpensePageFragment extends Fragment {
     }
     */
 
-    public RecentExpensePageFragment(){
+    public RecentExpPagerFragment(){
         // Default Constructor. Leave this empty!
     }
 
     // Construct ViewPager fragment as static used in ViewPager Adapter
-    public static RecentExpensePageFragment create(int pageNumber) {
+    public static RecentExpPagerFragment create(int pageNumber) {
         //Instantiate SharedPreferences for getting tableName set as default
-        RecentExpensePageFragment fragment = new RecentExpensePageFragment();
+        RecentExpPagerFragment fragment = new RecentExpPagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", pageNumber);
         fragment.setArguments(args);
@@ -79,6 +86,7 @@ public class RecentExpensePageFragment extends Fragment {
         //String tableName = getArguments().getString("table");
         int mPageNumber = (getArguments().getInt("page")) * (-1); //Set minus for moving backword
 
+
         /*
         if(getActivity() instanceof GasManagerActivity) {
             projection = gasColumns;
@@ -87,9 +95,9 @@ public class RecentExpensePageFragment extends Fragment {
             projection = serviceColumns;
             baseUri = DataProviderContract.SERVICE_TABLE_URI;
         }
-        */
 
-        /*
+
+
         Cursor cursor = getActivity().getContentResolver().query(baseUri, projection, null, null, null);
 
         // Retrieve the last data to get the current mileage passing over to GasManagerActivity
@@ -105,15 +113,14 @@ public class RecentExpensePageFragment extends Fragment {
             // Make string last info retrieved from DB using displayLastInfo method which, in part,
             // converts numbers to decimal format with comma.
             try {
-                //lastInfo = displayLastInfo(cursor);
+                lastInfo = displayLastInfo(cursor);
             } catch (Exception e) {
-                //lastInfo = getResources().getString(R.string.err_viewpager_no_data);
+                lastInfo = getResources().getString(R.string.err_viewpager_no_data);
             }
         }
 
 
         if(cursor != null) cursor.close();
-
         */
 
     }
@@ -127,11 +134,13 @@ public class RecentExpensePageFragment extends Fragment {
         TextView tvLastInfo = localView.findViewById(R.id.tv_last_info);
         tvLastInfo.setText("Hello Fragment");
 
+
+
         return localView;
     }
 
 
-    /*
+
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
     private String displayLastInfo(Cursor cursor) {
 
@@ -139,10 +148,10 @@ public class RecentExpensePageFragment extends Fragment {
         // be retrieved from DB because the mileage value column in GasManagerTable and
         String format = getContext().getResources().getString(R.string.date_format_1);
         String date = BaseActivity.formatMilliseconds(format, cursor.getLong(0));
-        String won = getString(R.string.currency_won);
+        String won = getString(R.string.unit_won);
         String liter = getString(R.string.unit_liter);
 
-
+        /*
         if(getActivity() instanceof GasManagerActivity) {
             String a = String.format("%-8s%s%1s", getString(R.string.expense_gas_date), date, "\n");
             String b = String.format("%-8s%s%1s%s", getString(R.string.expense_ordometer), df.format(cursor.getInt(1)), "km", "\n");
@@ -158,8 +167,8 @@ public class RecentExpensePageFragment extends Fragment {
 
             return a + b + c + d;
         }
-
+        */
         return null;
     }
-    */
+
 }
