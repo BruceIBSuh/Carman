@@ -11,8 +11,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 
 public class CustomPagerIndicator extends LinearLayout {
+
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(CustomPagerIndicator.class);
 
     private Context mContext;
     private int itemMargin = 10;
@@ -52,6 +57,8 @@ public class CustomPagerIndicator extends LinearLayout {
     }
 
     public void createPanel(int count, int defaultCircle, int selectCircle) {
+
+        log.i("createPanel: %s %s %s", count, defaultCircle, selectCircle);
 
         mDefaultCircle = defaultCircle;
         mSelectCircle = selectCircle;

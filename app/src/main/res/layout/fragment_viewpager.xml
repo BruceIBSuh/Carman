@@ -1,12 +1,158 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!--
+
     <TextView
+        android:id="@+id/tv_label_date"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/gas_label_date"
+        android:textSize="15sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/tv_last_info"
-        android:layout_gravity="start" />
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
-</FrameLayout>
+    <TextView
+        android:id="@+id/tv_label_mileage"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/exp_label_odometer"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
+
+    <TextView
+        android:id="@+id/tv_mileage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
+        app:layout_constraintStart_toStartOf="@+id/tv_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_mileage" />
+
+    <TextView
+        android:id="@+id/tv_unit_km"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/unit_km"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_mileage"
+        app:layout_constraintStart_toEndOf="@+id/tv_mileage"
+        app:layout_constraintTop_toTopOf="@+id/tv_mileage" />
+
+    <TextView
+        android:id="@+id/tv_label_name"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/gas_label_station"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
+
+    <TextView
+        android:id="@+id/tv_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
+        app:layout_constraintStart_toStartOf="@+id/tv_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_name" />
+
+    <TextView
+        android:id="@+id/tv_label_payment"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/gas_label_expense"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
+
+    <TextView
+        android:id="@+id/tv_payment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_payment"
+        app:layout_constraintStart_toStartOf="@+id/tv_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_payment" />
+
+    <TextView
+        android:id="@+id/tv_unit_won"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/unit_won"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_payment"
+        app:layout_constraintStart_toEndOf="@+id/tv_payment"
+        app:layout_constraintTop_toTopOf="@+id/tv_payment" />
+
+    <TextView
+        android:id="@+id/tv_label_amount"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/gas_label_amount"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_payment" />
+
+    <TextView
+        android:id="@+id/tv_amount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_amount"
+        app:layout_constraintStart_toStartOf="@+id/tv_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_amount" />
+
+    <TextView
+        android:id="@+id/tv_unit_liter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/unit_liter"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_amount"
+        app:layout_constraintStart_toEndOf="@+id/tv_amount"
+        app:layout_constraintTop_toTopOf="@+id/tv_amount" />
+
+    -->
+
+    <TextView
+        android:id="@+id/tv_lastInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:textColor="#FFFFFF"
+        android:text="HELLO FRAGMENT"
+        app:layout_constraintEnd_toStartOf="@+id/tv_page"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_page"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/bg_colored_border"
+        android:padding="10dp"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

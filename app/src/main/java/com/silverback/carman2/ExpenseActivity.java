@@ -11,17 +11,19 @@ import android.widget.FrameLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
+import com.silverback.carman2.fragments.ExpensePagerFragment;
 import com.silverback.carman2.fragments.GasManagerFragment;
-import com.silverback.carman2.fragments.RecentExpenseFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.views.StatGraphView;
 
@@ -40,27 +42,26 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int NumOfPages = 5;
 
     // Objects
+    private FragmentSharedModel viewModel;
+    private ViewPager expensePager;
+    private ExpensePagerFragment expFragment;
+    private StatGraphFragment graphFragment;
     private FragmentPagerAdapter pagerAdapter;
     private AppBarLayout appBar;
     private TabLayout tabLayout;
-    private FrameLayout frameTop;
+    private FrameLayout topFrame;
     private List<String> tabTitleList;
     private List<Drawable> tabIconList;
     private ViewPager tabPager;
+    private ViewPager expPager;
     private StatGraphFragment statGraphFragment;
     private StatGraphView statGraphView;
     private CustomPagerIndicator indicator;
-
 
     // Fields
     private int currentPage = 0;
     private boolean isTabVisible = false;
     private String pageTitle;
-
-    // Interface to communicate w/ containig fragments.
-    public interface OnFragmentListener {
-        void saveData();
-    }
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -68,31 +69,31 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
-        // UIs
+        // Create ViewModel to communicate w/ RecentExepnseFragment to notify onPageSelected of
+        // Fragment.
+        viewModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
+
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
 
+        // Set Toolbar as Actionbar;
         Toolbar toolbar = findViewById(R.id.toolbar);
         tabLayout = findViewById(R.id.tabLayout);
-
-        frameTop = findViewById(R.id.frame_top);
-        FrameLayout frameFragments = findViewById(R.id.frame_fragments);
+        FrameLayout frameFragments = findViewById(R.id.frame_expense_fragment);
+        topFrame = findViewById(R.id.frame_top);
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        //TEST CODING
+
         pageTitle = "GasManager";
 
-        // ViewPager and Indicator
-        //tabViewPager = findViewById(R.id.viewPager_tap);
         tabPager = new ViewPager(this);
         tabPager.setId(View.generateViewId());
         frameFragments.addView(tabPager);
 
-        // TEMPORARY CODING for ServiceList items which should be saved in SharedPreferences
-        // as a Json-fomatted string.
-        pagerAdapter = new CarmanFragmentPagerAdapter(this, getSupportFragmentManager());
+
+        pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
@@ -101,14 +102,14 @@ public class ExpenseActivity extends BaseActivity implements
         animSlideTabLayout();
 
 
-        // Add ViewPager Fragment to FrameLayout on the top
-        RecentExpenseFragment fragment = new RecentExpenseFragment();
-        Bundle arg = new Bundle();
-        arg.putInt("currentPage", currentPage);
+        expFragment = new ExpensePagerFragment();
+        graphFragment = new StatGraphFragment();
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.frame_top, fragment, "expFragment")
+                .add(R.id.frame_top, expFragment)
                 .addToBackStack(null)
                 .commit();
+
+
     }
 
 
@@ -165,14 +166,33 @@ public class ExpenseActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
-        currentPage = position;
 
-        // When displaying the recent expense viewpager, FrameLayout(frameTop) holds the custom
+        // When displaying the recent expense viewpager, FrameLayout(topFrame) holds the custom
         // view which consists of ViewPager and Indicator.
         switch(position) {
-            case 0: pageTitle = "GasManager"; break;
-            case 1: pageTitle = "ServiceManager"; break;
-            case 2: pageTitle = "Statistics"; break;
+            case 0:
+                pageTitle = "GasManager";
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top, expFragment)
+                        .addToBackStack(null)
+                        .commit();
+                break;
+
+            case 1:
+                pageTitle = "ServiceManager";
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top, expFragment)
+                        .addToBackStack(null)
+                        .commit();
+                break;
+
+            case 2:
+                pageTitle = "Statistics";
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top, graphFragment)
+                        .addToBackStack(null)
+                        .commit();
+                break;
         }
 
     }
@@ -187,9 +207,13 @@ public class ExpenseActivity extends BaseActivity implements
         log.i("AppBar scrolling state: %s", i);
         log.i("AppBar Total Scroll Range: %s", appBar.getTotalScrollRange());
         if(Math.abs(i) == appBar.getTotalScrollRange()) {
-            getSupportActionBar().setTitle(pageTitle);
+            //getSupportActionBar().setTitle(pageTitle);
         }
+
+        //setBackgroundOpacity(appBar.getTotalScrollRange(), i);
     }
+
+
 
     /*
     // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
@@ -236,7 +260,7 @@ public class ExpenseActivity extends BaseActivity implements
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
+        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(1000);
         slideTab.start();
@@ -255,6 +279,11 @@ public class ExpenseActivity extends BaseActivity implements
         return -1;
     }
     */
+
+    private void setBackgroundOpacity(int maxRange, int scroll) {
+        float bgAlpha = (float)((100 + (scroll * 100 / maxRange)) * 0.01);
+        topFrame.setAlpha(bgAlpha);
+    }
 
 
 }

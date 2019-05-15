@@ -61,7 +61,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_date_time" />
 
     <TextView
-        android:id="@+id/tv_label_station"
+        android:id="@+id/tv_label_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -80,9 +80,9 @@
         android:background="@android:color/transparent"
         android:contentDescription="@null"
         android:src="@drawable/btn_favorite"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_station"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_station"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_station" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_name"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_name" />
 
     <EditText
         android:id="@+id/et_station_name"
@@ -93,10 +93,10 @@
         android:inputType="textMultiLine"
         android:padding="5dp"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_station"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
         app:layout_constraintEnd_toStartOf="@+id/et_unit_price"
         app:layout_constraintStart_toStartOf="@+id/tv_date_time"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_station"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_name"
         tools:ignore="AutoFill" />
 
     <EditText
@@ -122,11 +122,11 @@
         android:layout_marginTop="16dp"
         android:labelFor="@id/tv_mileage"
         android:minWidth="80dp"
-        android:text="@string/gas_label_odometer"
+        android:text="@string/exp_label_odometer"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_date"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_station" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
 
     <TextView
         android:id="@+id/tv_mileage"
@@ -150,7 +150,7 @@
         android:layout_marginTop="16dp"
         android:text="@string/unit_km"
         app:layout_constraintStart_toEndOf="@+id/tv_mileage"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_station" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
 
 
     <TextView
@@ -160,7 +160,7 @@
         android:layout_marginTop="16dp"
         android:labelFor="@id/tv_payment"
         android:minWidth="80dp"
-        android:text="@string/gas_label_expense_gas"
+        android:text="@string/gas_label_expense"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_date"

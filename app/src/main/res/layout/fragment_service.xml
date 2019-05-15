@@ -32,7 +32,7 @@
             android:layout_marginStart="5dp"
             android:layout_marginTop="13dp"
             android:minWidth="80dp"
-            android:text="@string/service_label_date"
+            android:text="@string/svc_label_date"
             android:textSize="@dimen/largeText"
             app:layout_constraintStart_toStartOf="@+id/view"
             app:layout_constraintTop_toTopOf="@+id/view" />
@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:labelFor="@id/et_provider"
-            android:text="@string/service_label_provider"
+            android:text="@string/svc_label_provider"
             android:textSize="@dimen/largeText"
             app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
@@ -99,7 +99,7 @@
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_mileage"
             android:minWidth="80dp"
-            android:text="@string/service_label_mileage"
+            android:text="@string/svc_label_mileage"
             android:textSize="@dimen/largeText"
             app:layout_constraintStart_toStartOf="@+id/tv_label_provider"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_provider" />
@@ -123,7 +123,7 @@
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_payment"
             android:minWidth="80dp"
-            android:text="@string/service_label_payment"
+            android:text="@string/svc_label_payment"
             android:textSize="@dimen/largeText"
             app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
@@ -166,7 +166,7 @@
         android:padding="5dp"
         android:gravity="center_vertical"
         android:background="@drawable/bg_service_subtitle"
-        android:text="@string/service_subtitle_stmts"
+        android:text="@string/svc_subtitle_stmts"
         android:textSize="@dimen/subtitle"
         android:textStyle="bold" />
 

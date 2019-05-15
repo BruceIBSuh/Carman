@@ -10,22 +10,23 @@ import android.widget.TextView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProviders;
+
+import java.text.DecimalFormat;
 
 public class RecentExpPagerFragment extends Fragment {
 
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(RecentExpPagerFragment.class);
+
     // Constants
-
-
-    // Objects
-    private ViewModel viewModel;
-
     private final String[] gasColumns = {
             DataProviderContract.DATE_TIME_COLUMN,
             DataProviderContract.MILEAGE_COLUMN,
@@ -41,11 +42,15 @@ public class RecentExpPagerFragment extends Fragment {
             DataProviderContract.SERVICE_TOTAL_PRICE_COLUMN
     };
 
+    private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
 
-    // Object References
-    //private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
+
+    // Objects
+    private FragmentSharedModel viewModel;
+    private Cursor cursor;
 
     // Fields
+    private Fragment currentFragment;
     private String lastInfo;
     private String[] projection;
     private Uri baseUri;
@@ -83,57 +88,71 @@ public class RecentExpPagerFragment extends Fragment {
 
         super.onCreate(savedInstanceState);
 
-        //String tableName = getArguments().getString("table");
-        int mPageNumber = (getArguments().getInt("page")) * (-1); //Set minus for moving backword
-
-
-        /*
-        if(getActivity() instanceof GasManagerActivity) {
-            projection = gasColumns;
-            baseUri = DataProviderContract.GAS_TABLE_URI;
-        } else if(getActivity() instanceof ServiceManagerActivity) {
-            projection = serviceColumns;
-            baseUri = DataProviderContract.SERVICE_TABLE_URI;
+        // ViewModel instance
+        if(getActivity() != null) {
+            viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         }
-
-
-
-        Cursor cursor = getActivity().getContentResolver().query(baseUri, projection, null, null, null);
-
-        // Retrieve the last data to get the current mileage passing over to GasManagerActivity
-        // using the callback method.
-        if(cursor.moveToLast()) {
-            // Pass the last mileage data over to the parent activity by calling callback method.
-            //lastInfo = displayLastInfo(cursor);
-        }
-
-
-        if(!cursor.move(mPageNumber)) lastInfo = getResources().getString(R.string.err_viewpager_no_data);
-        else {
-            // Make string last info retrieved from DB using displayLastInfo method which, in part,
-            // converts numbers to decimal format with comma.
-            try {
-                lastInfo = displayLastInfo(cursor);
-            } catch (Exception e) {
-                lastInfo = getResources().getString(R.string.err_viewpager_no_data);
-            }
-        }
-
-
-        if(cursor != null) cursor.close();
-        */
 
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         //ViewGroup rootView = (ViewGroup)inflater.inflate(R.layout.fragment_viewpager, container, false);
         View localView = inflater.inflate(R.layout.fragment_viewpager, container, false);
-        TextView tvLastInfo = localView.findViewById(R.id.tv_last_info);
-        tvLastInfo.setText("Hello Fragment");
+        final TextView tvLastInfo = localView.findViewById(R.id.tv_lastInfo);
+        final TextView tvPage = localView.findViewById(R.id.tv_page);
 
+
+        viewModel.getCurrentFragment().observe(this, fm -> {
+
+            log.i("Current Fragment: %s", fm);
+            currentFragment = fm;
+
+            if(currentFragment instanceof GasManagerFragment) {
+                projection = gasColumns;
+                baseUri = DataProviderContract.GAS_TABLE_URI;
+            } else if(currentFragment instanceof ServiceFragment) {
+                projection = serviceColumns;
+                baseUri = DataProviderContract.SERVICE_TABLE_URI;
+            }
+
+            cursor = getActivity().getContentResolver().query(baseUri, projection, null, null, null);
+
+            // Retrieve the last data to get the current mileage passing over to GasManagerActivity
+            // using the callback method.
+            if(cursor.moveToLast()) {
+                // Pass the last mileage data over to the parent activity by calling callback method.
+                lastInfo = displayLastInfo(cursor);
+                log.i("Last Info: %s", lastInfo);
+            }
+
+
+
+            //String tableName = getArguments().getString("table");
+            int mPageNumber = (getArguments().getInt("page")) * (-1); //Set minus for moving backword
+            if(!cursor.move(mPageNumber)) { //lastInfo = getResources().getString("no data in db");
+                lastInfo = "no data in db";
+            } else {
+                // Make string last info retrieved from DB using displayLastInfo method which, in part,
+                // converts numbers to decimal format with comma.
+                try {
+                    lastInfo = displayLastInfo(cursor);
+                } catch (Exception e) {
+                    lastInfo = "no_data_in db";//getResources().getString(R.string.err_viewpager_no_data);
+
+                }
+            }
+
+
+            if(cursor != null) cursor.close();
+            tvLastInfo.setText(lastInfo);
+            tvPage.setText(String.valueOf(mPageNumber));
+
+
+        });
 
 
         return localView;
@@ -151,23 +170,23 @@ public class RecentExpPagerFragment extends Fragment {
         String won = getString(R.string.unit_won);
         String liter = getString(R.string.unit_liter);
 
-        /*
-        if(getActivity() instanceof GasManagerActivity) {
-            String a = String.format("%-8s%s%1s", getString(R.string.expense_gas_date), date, "\n");
-            String b = String.format("%-8s%s%1s%s", getString(R.string.expense_ordometer), df.format(cursor.getInt(1)), "km", "\n");
-            String c = String.format("%-8s%s%s", getString(R.string.expense_gas_station), cursor.getString(2), "\n");
-            String d = String.format("%-8s%s%1s%s", getString(R.string.expense_gas_price), df.format(cursor.getInt(3)), won, "\n");
-            String e = String.format("%-11s%s%1s", getString(R.string.expense_gas_amount),df.format(cursor.getInt(4)), liter);
+
+        if(currentFragment instanceof GasManagerFragment) {
+            String a = String.format("%s%-15s%1s", getString(R.string.gas_label_date), date, "\n");
+            String b = String.format("%s%-15s%1s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
+            String c = String.format("%s%-15s%s", getString(R.string.gas_label_station), cursor.getString(2), "\n");
+            String d = String.format("%s%-15s%1s%s", getString(R.string.gas_label_expense), df.format(cursor.getInt(3)), won, "\n");
+            String e = String.format("%s%-15s%1s", getString(R.string.gas_label_amount),df.format(cursor.getInt(4)), liter);
             return a + b + c + d + e;
-        } else if(getActivity() instanceof ServiceManagerActivity) {
-            String a = String.format("%-8s%s%s", getString(R.string.expense_service_date), date,"\n");
-            String b = String.format("%-8s%s%1s%s", getString(R.string.expense_ordometer), df.format(cursor.getInt(1)), "km", "\n");
-            String c = String.format("%-8s%s%s", getString(R.string.expense_service_provider), cursor.getString(2), "\n");
-            String d = String.format("%-8s%s%1s%s", getString(R.string.expense_service_price), df.format(cursor.getInt(3)), won, "\n");
+        } else if(currentFragment instanceof ServiceFragment) {
+            String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
+            String b = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
+            String c = String.format("%-8s%s%s", getString(R.string.svc_label_provider), cursor.getString(2), "\n");
+            String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_period), df.format(cursor.getInt(3)), won, "\n");
 
             return a + b + c + d;
         }
-        */
+
         return null;
     }
 

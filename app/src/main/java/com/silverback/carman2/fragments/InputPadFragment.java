@@ -93,13 +93,13 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         switch(getArguments().getInt("viewId")) {
 
             case R.id.tv_mileage:
-                title = getString(R.string.gas_label_odometer);
+                title = getString(R.string.exp_label_odometer);
                 ////tvValue.setText(getArguments().getString("value"));
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
             case R.id.tv_payment:
-                title = getString(R.string.gas_label_expense_gas);
+                title = getString(R.string.gas_label_expense);
                 //tvValue.setText(getArguments().getString("value"));
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;

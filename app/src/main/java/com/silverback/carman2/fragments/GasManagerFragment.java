@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +27,7 @@ import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.utils.NumberTextWatcher;
+import com.silverback.carman2.views.RecentExpViewPager;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -36,6 +38,7 @@ import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.viewpager.widget.ViewPager;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -46,6 +49,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
     // Objects
+    private ViewPager recentPager;
     private SharedPreferences mSettings;
     private DecimalFormat df;
     private FragmentSharedModel viewModel;

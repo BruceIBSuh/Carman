@@ -64,6 +64,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.0.0'
 
     implementation 'com.jjoe64:graphview:4.2.1'
+    implementation 'androidx.viewpager:viewpager:1.0.0'
 
 }
 

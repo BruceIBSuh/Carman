@@ -1,24 +1,24 @@
 package com.silverback.carman2.adapters;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+
 import com.silverback.carman2.fragments.RecentExpPagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-
-public class RecentExpPagerAdapter extends FragmentStatePagerAdapter {
+public class RecentExpPagerAdapter extends FragmentPagerAdapter {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(RecentExpPagerAdapter.class);
 
-    private int mPage;
+    // Constants
+    private static final int NUM_PAGES = 5;
 
-    public RecentExpPagerAdapter(FragmentManager fm, int page) {
-        super(fm, FragmentStatePagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-        mPage = page;
+    public RecentExpPagerAdapter(FragmentManager fm) {
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
     @NonNull
@@ -30,6 +30,6 @@ public class RecentExpPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        return mPage;
+        return NUM_PAGES;
     }
 }
