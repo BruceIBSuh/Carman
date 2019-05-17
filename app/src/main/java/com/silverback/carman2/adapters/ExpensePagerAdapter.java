@@ -5,19 +5,21 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import com.silverback.carman2.fragments.RecentExpPagerFragment;
+import com.silverback.carman2.fragments.ExpensePagerFragment;
+import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class RecentExpPagerAdapter extends FragmentPagerAdapter {
+public class ExpensePagerAdapter extends FragmentPagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(RecentExpPagerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
 
     // Constants
     private static final int NUM_PAGES = 5;
 
-    public RecentExpPagerAdapter(FragmentManager fm) {
+
+    public ExpensePagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
@@ -25,7 +27,7 @@ public class RecentExpPagerAdapter extends FragmentPagerAdapter {
     @Override
     public Fragment getItem(int position) {
         log.i("position: %s", position);
-        return RecentExpPagerFragment.create(position);
+        return ExpensePagerFragment.create(position);
     }
 
     @Override

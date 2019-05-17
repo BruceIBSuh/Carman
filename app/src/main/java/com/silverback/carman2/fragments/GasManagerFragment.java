@@ -11,15 +11,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
 import com.silverback.carman2.BaseActivity;
-import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.RecentExpPagerAdapter;
+import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -27,7 +25,6 @@ import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.utils.NumberTextWatcher;
-import com.silverback.carman2.views.RecentExpViewPager;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -53,7 +50,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private SharedPreferences mSettings;
     private DecimalFormat df;
     private FragmentSharedModel viewModel;
-    private RecentExpPagerAdapter viewPagerAdapter;
+    private ExpensePagerAdapter viewPagerAdapter;
     private CustomPagerIndicator indicator;
     private Calendar calendar;
     private SimpleDateFormat sdf;
@@ -83,7 +80,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // ViewModel instance
         if(getActivity() != null) {
             viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-
         }
 
         mSettings = BaseActivity.getSharedPreferenceInstance(getActivity());

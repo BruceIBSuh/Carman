@@ -1,7 +1,6 @@
 package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,17 +16,15 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
-import com.silverback.carman2.fragments.ExpensePagerFragment;
+import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.fragments.ExpenseFragment;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.utils.CustomPagerIndicator;
-import com.silverback.carman2.views.StatGraphView;
-
-import java.util.List;
+import com.silverback.carman2.views.ExpenseViewPager;
 
 public class ExpenseActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
@@ -42,36 +39,25 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int NumOfPages = 5;
 
     // Objects
-    private FragmentSharedModel viewModel;
-    private ViewPager expensePager;
-    private ExpensePagerFragment expFragment;
-    private StatGraphFragment graphFragment;
+    private ExpenseFragment expenseFragment;
+    private StatGraphFragment statGraphFragment;
+    private ExpenseViewPager expensePager;
     private FragmentPagerAdapter pagerAdapter;
     private AppBarLayout appBar;
     private TabLayout tabLayout;
     private FrameLayout topFrame;
-    private List<String> tabTitleList;
-    private List<Drawable> tabIconList;
-    private ViewPager tabPager;
-    private ViewPager expPager;
-    private StatGraphFragment statGraphFragment;
-    private StatGraphView statGraphView;
-    private CustomPagerIndicator indicator;
 
     // Fields
     private int currentPage = 0;
     private boolean isTabVisible = false;
     private String pageTitle;
 
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
-
-        // Create ViewModel to communicate w/ RecentExepnseFragment to notify onPageSelected of
-        // Fragment.
-        viewModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
 
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
@@ -86,9 +72,7 @@ public class ExpenseActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        pageTitle = "GasManager";
-
-        tabPager = new ViewPager(this);
+        ViewPager tabPager = new ViewPager(this);
         tabPager.setId(View.generateViewId());
         frameFragments.addView(tabPager);
 
@@ -101,13 +85,20 @@ public class ExpenseActivity extends BaseActivity implements
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
 
-
-        expFragment = new ExpensePagerFragment();
-        graphFragment = new StatGraphFragment();
+        // Add a fragment to FrameLayout(topFrame)
+        /*
+        expenseFragment = new ExpenseFragment();
+        statGraphFragment = new StatGraphFragment();
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.frame_top, expFragment)
+                .add(R.id.frame_top, expenseFragment)
                 .addToBackStack(null)
                 .commit();
+        */
+
+        expensePager = new ExpenseViewPager(this);
+        expensePager.setId(View.generateViewId());
+        expensePager.initPager(getSupportFragmentManager());
+        topFrame.addView(expensePager);
 
 
     }
@@ -125,7 +116,6 @@ public class ExpenseActivity extends BaseActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
         menu.add(Menu.NONE, 1000, Menu.NONE, "SAVE");
         MenuItem item = menu.findItem(1000);
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
@@ -166,32 +156,25 @@ public class ExpenseActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
+        topFrame.removeAllViews();
+        expensePager.setCurrentItem(0);
 
-        // When displaying the recent expense viewpager, FrameLayout(topFrame) holds the custom
-        // view which consists of ViewPager and Indicator.
         switch(position) {
             case 0:
                 pageTitle = "GasManager";
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, expFragment)
-                        .addToBackStack(null)
-                        .commit();
+                topFrame.addView(expensePager);
                 break;
 
             case 1:
                 pageTitle = "ServiceManager";
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, expFragment)
-                        .addToBackStack(null)
-                        .commit();
+                topFrame.addView(expensePager);
                 break;
 
             case 2:
                 pageTitle = "Statistics";
+                statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, graphFragment)
-                        .addToBackStack(null)
-                        .commit();
+                        .replace(R.id.frame_top, statGraphFragment).addToBackStack(null).commit();
                 break;
         }
 

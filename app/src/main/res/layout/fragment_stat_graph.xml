@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="220dp"
+    android:padding="5dp"
     tools:context=".views.StatGraphView">
 
     <!--
@@ -22,7 +22,7 @@
     <com.silverback.carman2.views.StatGraphView
         android:id="@+id/graphView"
         android:layout_width="match_parent"
-        android:layout_height="120dp"
+        android:layout_height="100dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

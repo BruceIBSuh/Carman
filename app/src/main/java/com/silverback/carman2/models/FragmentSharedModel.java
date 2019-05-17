@@ -22,7 +22,7 @@ public class FragmentSharedModel extends ViewModel {
         return selected;
     }
 
-    // Communicate b/w RecentExpPagerFragment and a fragment contained in the bottom viewpagere
+    // Communicate b/w ExpensePagerFragment and a fragment contained in the bottom viewpagere
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
 

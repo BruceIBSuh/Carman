@@ -96,6 +96,12 @@ public class StatGraphView extends View {
 
 
     // Constructor
+
+    public StatGraphView(Context context) {
+        super(context);
+        this.context = context;
+        init();
+    }
     public StatGraphView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
