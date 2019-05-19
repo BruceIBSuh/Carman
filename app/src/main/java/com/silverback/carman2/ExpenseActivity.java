@@ -86,15 +86,6 @@ public class ExpenseActivity extends BaseActivity implements
         animSlideTabLayout();
 
         // Add a fragment to FrameLayout(topFrame)
-        /*
-        expenseFragment = new ExpenseFragment();
-        statGraphFragment = new StatGraphFragment();
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.frame_top, expenseFragment)
-                .addToBackStack(null)
-                .commit();
-        */
-
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         expensePager.initPager(getSupportFragmentManager());
@@ -174,7 +165,7 @@ public class ExpenseActivity extends BaseActivity implements
                 pageTitle = "Statistics";
                 statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, statGraphFragment).addToBackStack(null).commit();
+                        .replace(R.id.frame_top, statGraphFragment).commit();
                 break;
         }
 
