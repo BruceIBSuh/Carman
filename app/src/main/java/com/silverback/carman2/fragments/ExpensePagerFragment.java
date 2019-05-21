@@ -49,6 +49,9 @@ public class ExpensePagerFragment extends Fragment {
     private FragmentSharedModel viewModel;
     private Cursor cursor;
 
+    // UIs
+    private TextView tvDate, tvMileage, tvName, tvPayment, tvAmount;
+
     // Fields
     private Fragment currentFragment;
     private String lastInfo;
@@ -66,7 +69,7 @@ public class ExpensePagerFragment extends Fragment {
         // Default Constructor. Leave this empty!
     }
 
-    // Construct ViewPager fragment as static used in ViewPager Adapter
+    // Instantiate Singleton of ExpensePagerFragment
     public static ExpensePagerFragment create(int pageNumber) {
         //Instantiate SharedPreferences for getting tableName set as default
         ExpensePagerFragment fragment = new ExpensePagerFragment();
@@ -82,7 +85,7 @@ public class ExpensePagerFragment extends Fragment {
         //getActivity().getSupportLoaderManager().initLoader(0, null, this);
     }
 
-    @SuppressWarnings("ConstantConditions")
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -105,18 +108,18 @@ public class ExpensePagerFragment extends Fragment {
         final TextView tvLastInfo = localView.findViewById(R.id.tv_lastInfo);
         final TextView tvPage = localView.findViewById(R.id.tv_page);
 
+        viewModel.getCurrentFragment().observe(this, fragment -> {
 
-        viewModel.getCurrentFragment().observe(this, fm -> {
+            log.i("Current Fragment: %s", fragment);
+            currentFragment = fragment;
 
-            log.i("Current Fragment: %s", fm);
-            currentFragment = fm;
-
-            projection = gasColumns;
-            baseUri = DataProviderContract.GAS_TABLE_URI;
+            //projection = gasColumns;
+            //baseUri = DataProviderContract.GAS_TABLE_URI;
 
             if(currentFragment instanceof GasManagerFragment) {
                 projection = gasColumns;
                 baseUri = DataProviderContract.GAS_TABLE_URI;
+
             } else if(currentFragment instanceof ServiceFragment) {
                 projection = serviceColumns;
                 baseUri = DataProviderContract.SERVICE_TABLE_URI;
@@ -127,12 +130,9 @@ public class ExpensePagerFragment extends Fragment {
             // Retrieve the last data to get the current mileage passing over to GasManagerActivity
             // using the callback method.
             if(cursor.moveToLast()) {
-                // Pass the last mileage data over to the parent activity by calling callback method.
-                lastInfo = displayLastInfo(cursor);
+                displayLastInfo(cursor);
                 log.i("Last Info: %s", lastInfo);
             }
-
-
 
             //String tableName = getArguments().getString("table");
             int mPageNumber = (getArguments().getInt("page")) * (-1); //Set minus for moving backword
@@ -145,14 +145,13 @@ public class ExpensePagerFragment extends Fragment {
                     lastInfo = displayLastInfo(cursor);
                 } catch (Exception e) {
                     lastInfo = "no_data_in db";//getResources().getString(R.string.err_viewpager_no_data);
-
                 }
             }
 
-
             if(cursor != null) cursor.close();
+
             tvLastInfo.setText(lastInfo);
-            tvPage.setText(String.valueOf(mPageNumber));
+            tvPage.setText(String.valueOf(Math.abs(mPageNumber) + 1));
 
         });
 
@@ -163,6 +162,7 @@ public class ExpensePagerFragment extends Fragment {
 
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
+    @SuppressWarnings("ConstantConditions")
     private String displayLastInfo(Cursor cursor) {
 
         // The latest mileage should be retrieved from SharedPreferernces. Otherwise, the last mileage
@@ -174,12 +174,13 @@ public class ExpensePagerFragment extends Fragment {
 
 
         if(currentFragment instanceof GasManagerFragment) {
-            String a = String.format("%s%-15s%1s", getString(R.string.gas_label_date), date, "\n");
-            String b = String.format("%s%-15s%1s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
-            String c = String.format("%s%-15s%s", getString(R.string.gas_label_station), cursor.getString(2), "\n");
-            String d = String.format("%s%-15s%1s%s", getString(R.string.gas_label_expense), df.format(cursor.getInt(3)), won, "\n");
-            String e = String.format("%s%-15s%1s", getString(R.string.gas_label_amount),df.format(cursor.getInt(4)), liter);
+            String a = String.format("%-10s%s%s", getString(R.string.gas_label_date), date, "\n");
+            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
+            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), cursor.getString(2), "\n");
+            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(cursor.getInt(3)), won, "\n");
+            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(cursor.getInt(4)), liter);
             return a + b + c + d + e;
+
         } else if(currentFragment instanceof ServiceFragment) {
             String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
             String b = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
@@ -187,9 +188,11 @@ public class ExpensePagerFragment extends Fragment {
             String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_period), df.format(cursor.getInt(3)), won, "\n");
 
             return a + b + c + d;
+
         }
 
         return null;
+
     }
 
 }

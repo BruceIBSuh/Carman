@@ -7,8 +7,15 @@ import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 
 public class ExpenseViewPager extends ViewPager {
+
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseViewPager.class);
+
+    // Objects
 
     public ExpenseViewPager(Context context) {
         super(context);
@@ -35,8 +42,10 @@ public class ExpenseViewPager extends ViewPager {
             }
 
             heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
-            setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
+
         }
+
+        setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
     }
 
 

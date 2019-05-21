@@ -127,10 +127,20 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         });
         */
         // Pass a value in InputPad to Fragment by using Lambda expresstion
+        // Pass a current fragment to a ExpensePagerFragment
         viewModel.getInputValue().observe(this, data -> targetView.setText(data));
         viewModel.setCurrentFragment(this);
 
         return localView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Pass a value in InputPad to Fragment by using Lambda expresstion
+        // Pass a current fragment to a ExpensePagerFragment
+        viewModel.getInputValue().observe(this, data -> targetView.setText(data));
+        viewModel.setCurrentFragment(this);
     }
 
     @Override

@@ -10,6 +10,7 @@ import android.widget.FrameLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
@@ -84,16 +85,6 @@ public class ExpenseActivity extends BaseActivity implements
 
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
-
-        // Add a fragment to FrameLayout(topFrame)
-        /*
-        expenseFragment = new ExpenseFragment();
-        statGraphFragment = new StatGraphFragment();
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.frame_top, expenseFragment)
-                .addToBackStack(null)
-                .commit();
-        */
 
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
@@ -173,8 +164,7 @@ public class ExpenseActivity extends BaseActivity implements
             case 2:
                 pageTitle = "Statistics";
                 statGraphFragment = new StatGraphFragment();
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.frame_top, statGraphFragment).addToBackStack(null).commit();
+                getSupportFragmentManager().beginTransaction().replace(R.id.frame_top, statGraphFragment).commit();
                 break;
         }
 
@@ -184,16 +174,20 @@ public class ExpenseActivity extends BaseActivity implements
         log.i("onPageScrollStateChanged");
     }
 
-    // Invoked by AppBarLayout.OnOffsetChangeListener to be informed whether the scroll is located
+    // AppBarLayout.OnOffsetChangeListener invokes this method
+    // to be informed whether it is scrolling and whether the scroll position is located.
     @Override
-    public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
-        log.i("AppBar scrolling state: %s", i);
+    public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
+        log.i("AppBar scrolling state: %s", scroll);
         log.i("AppBar Total Scroll Range: %s", appBar.getTotalScrollRange());
-        if(Math.abs(i) == appBar.getTotalScrollRange()) {
+        if(Math.abs(scroll) == appBar.getTotalScrollRange()) {
             //getSupportActionBar().setTitle(pageTitle);
         }
 
-        //setBackgroundOpacity(appBar.getTotalScrollRange(), i);
+        // Fade the topFrame accroding to the scrolling of the AppBarLayout
+        //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
+        float bgAlpha = (float)((100 + (scroll * 100 / appBar.getTotalScrollRange())) * 0.01);
+        topFrame.setAlpha(bgAlpha);
     }
 
 
