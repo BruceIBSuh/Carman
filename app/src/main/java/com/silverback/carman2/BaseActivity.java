@@ -371,10 +371,13 @@ public class BaseActivity extends AppCompatActivity {
 
     // Measures the size of an android attribute based on ?attr/actionBarSize
     protected float getActionbarHeight() {
+
         TypedValue typedValue = new TypedValue();
+
         if(getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
             return TypedValue.complexToDimension(typedValue.data, getResources().getDisplayMetrics());
         }
+
         return -1;
     }
 

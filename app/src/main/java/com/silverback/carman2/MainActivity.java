@@ -25,8 +25,8 @@ import java.io.File;
 import java.util.List;
 
 public class MainActivity extends BaseActivity implements
-        FinishAppDialogFragment.NoticeDialogListener,
-        ViewPager.OnPageChangeListener {
+        FinishAppDialogFragment.NoticeDialogListener {
+        //ViewPager.OnPageChangeListener {
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -39,7 +39,7 @@ public class MainActivity extends BaseActivity implements
     private TabLayout tabLayout;
     private List<String> tabTitleList;
     private List<Drawable> tabIconList;
-    private ViewPager viewPager;
+    //private ViewPager viewPager;
     private Fragment generalFragment, boardFragment;
     private FrameLayout frameLayout;
     private StationInfoTask mapInfoTask;
@@ -137,7 +137,7 @@ public class MainActivity extends BaseActivity implements
     }
 
 
-
+    /*
     // Callbacks invoked by ViewPager.OnPageChangeListener
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -151,6 +151,7 @@ public class MainActivity extends BaseActivity implements
     public void onPageScrollStateChanged(int state) {
         log.d("ViewPager Listeenr_onPageScrollStateChanged");
     }
+    */
 
 
     @Override

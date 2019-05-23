@@ -44,13 +44,11 @@ public class StationListTask extends ThreadTask implements
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
     }
 
-    void initStationTask(
-            ThreadManager threadManager, StationRecyclerView view, String[] params, Location location) {
+    void initStationTask(ThreadManager threadManager, Location location, String[] params) {
 
         sThreadManager = threadManager;
         defaultParams = params;
         mLocation = location;
-        mWeakRecyclerView = new WeakReference<>(view);
         mStationInfoList = new ArrayList<>();
     }
 
@@ -60,10 +58,12 @@ public class StationListTask extends ThreadTask implements
     Runnable getFireStoreGetRunnable() { return mFireStoreGetRunnable; }
 
     void recycle() {
+        /*
         if(mWeakRecyclerView != null) {
             mWeakRecyclerView.clear();
             mWeakRecyclerView = null;
         }
+        */
 
         mStationList = null;
     }
@@ -106,21 +106,22 @@ public class StationListTask extends ThreadTask implements
         switch (state) {
             case StationListRunnable.DOWNLOAD_NEAR_STATIONS_COMPLETE:
                 log.i("DOWNLOAD_NEAR_STATIONS_COMPLETE");
-                outState = ThreadManager.DOWNLOAD_STATION_LIST_COMPLETED;
+                outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
                 break;
-
+            /*
             case StationListRunnable.DOWNLAOD_CURRENT_STATION_COMPLETE:
+                outState = ThreadManager.DOWNLOAD_CURRENT_STATION_COMPLETED;
                 break;
-
+            */
             case FireStoreGetRunnable.FIRESTORE_GET_COMPLETE:
                 log.i("FireStore_Set_Complete");
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
-
+            /*
             case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:
-                outState = ThreadManager.DOWNLOAD_NO_STATION_COMPLETE;
+                outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
-
+            */
             case StationListRunnable.DOWNLOAD_NEAR_STATIONS_FAILED:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;

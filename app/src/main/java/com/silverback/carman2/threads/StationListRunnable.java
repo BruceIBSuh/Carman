@@ -135,33 +135,28 @@ public class StationListRunnable implements Runnable{
             log.i("StationListRunnable:%s", mStationList.size());
 
 
-
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
             if(mStationList.size() > 0) {
-                log.i("StationListRunnable");
+
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
                     mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(DOWNLAOD_CURRENT_STATION_COMPLETE);
+                    mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
 
                 } else {
-                    log.i("StationList: %s", mStationList.size());
                     Uri uri = saveNearStationList(mStationList);
                     if (uri != null) {
-
                         // Addition info from FireStore database in which station data have been accumulated.
                         // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
                         //setStationInfoFromFireStore();
-
                         mTask.setStationList(mStationList);
                         mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
                     }
                 }
 
             } else {
-                if(radius.matches(Constants.MIN_RADIUS))
-                    mTask.handleStationTaskState(DOWNLOAD_CURRENT_STATION_FAILED);
+                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
                 else mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
             }
 

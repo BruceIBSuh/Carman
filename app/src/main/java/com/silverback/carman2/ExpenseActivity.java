@@ -25,6 +25,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.ExpenseViewPager;
 
 public class ExpenseActivity extends BaseActivity implements
@@ -40,7 +42,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int NumOfPages = 5;
 
     // Objects
-    private ExpenseFragment expenseFragment;
+    private LocationTask locationTask;
     private StatGraphFragment statGraphFragment;
     private ExpenseViewPager expensePager;
     private FragmentPagerAdapter pagerAdapter;
@@ -51,7 +53,9 @@ public class ExpenseActivity extends BaseActivity implements
     // Fields
     private int currentPage = 0;
     private boolean isTabVisible = false;
+    private boolean isLocationTask = false;
     private String pageTitle;
+
 
 
     @SuppressWarnings("ConstantConditions")
@@ -59,6 +63,8 @@ public class ExpenseActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
+
+
 
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
@@ -78,10 +84,19 @@ public class ExpenseActivity extends BaseActivity implements
         frameFragments.addView(tabPager);
 
 
+
+        String[] defaultParams = getDefaultParams();
+        defaultParams[1] = Constants.MIN_RADIUS;
+
         pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
+
+        Bundle args = new Bundle();
+        args.putStringArray("defaultParams", defaultParams);
+        pagerAdapter.getItem(0).setArguments(args);
+
 
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
@@ -90,7 +105,6 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setId(View.generateViewId());
         expensePager.initPager(getSupportFragmentManager());
         topFrame.addView(expensePager);
-
 
     }
 
@@ -143,7 +157,8 @@ public class ExpenseActivity extends BaseActivity implements
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        log.i("onPageScrolled: %s", position);
+        log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+        //topFrame.setAlpha(1 - positionOffset);
     }
     @Override
     public void onPageSelected(int position) {
@@ -159,6 +174,7 @@ public class ExpenseActivity extends BaseActivity implements
             case 1:
                 pageTitle = "ServiceManager";
                 topFrame.addView(expensePager);
+
                 break;
 
             case 2:
@@ -171,7 +187,7 @@ public class ExpenseActivity extends BaseActivity implements
     }
     @Override
     public void onPageScrollStateChanged(int state) {
-        log.i("onPageScrollStateChanged");
+        log.i("onPageScrollStateChanged:%s", state);
     }
 
     // AppBarLayout.OnOffsetChangeListener invokes this method
@@ -191,48 +207,9 @@ public class ExpenseActivity extends BaseActivity implements
     }
 
 
-
-    /*
-    // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
-    // setupWithViewPager when it is linked to ViewPager.
-    @SuppressWarnings("ConstantConditions")
-    private int addTabIconAndTitle(int tab) {
-
-        //if(!tabTitleList.isEmpty()) tabTitleList.clear();
-        //if(!tabIconList.isEmpty()) tabIconList.clear();
-        switch(tab) {
-            case TAB_CARMAN:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
-                Drawable[] icons = {
-                        getDrawable(R.drawable.ic_gas),
-                        getDrawable(R.drawable.ic_service),
-                        getDrawable(R.drawable.ic_stats)};
-
-                tabIconList = Arrays.asList(icons);
-                break;
-
-            case TAB_BOARD:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_board_title));
-                icons = new Drawable[]{};
-                tabIconList = Arrays.asList(icons);
-                break;
-
-        }
-
-        for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            log.i("Title: %s", tabTitleList.get(i));
-            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
-            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
-        }
-
-        return tab;
-    }
-    */
-
-
-
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
+
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 

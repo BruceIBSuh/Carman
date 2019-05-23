@@ -3,7 +3,9 @@ package com.silverback.carman2.fragments;
 
 import android.content.ContentValues;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -11,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +26,10 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.StationListTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
@@ -30,23 +37,34 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 import androidx.viewpager.widget.ViewPager;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GasManagerFragment extends Fragment implements View.OnClickListener{
+public class GasManagerFragment extends Fragment implements
+        LoaderManager.LoaderCallbacks<Cursor>,
+        View.OnClickListener,
+        ThreadManager.OnLocationTaskListener,
+        ThreadManager.OnStationTaskListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
     // Objects
-    private ViewPager recentPager;
+    private LoaderManager loaderManager;
+    private LocationTask locationTask;
+    private StationListTask stationListTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
     private FragmentSharedModel viewModel;
@@ -59,20 +77,24 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // UIs
     private TextView tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
     private EditText etStnName, etUnitPrice, etExtraExpense;
+    private ImageButton btnFavorite;
 
     // Fields
+    private String[] defaultParams;
     private int defMileage, defPayment;
     //private String defMileage, defPayment;
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private String dateFormat;
     private String stationAddrs, stationId;
 
+    private boolean isGeofenceIntent, isFavorite;
+
+
     // Constructor
     public GasManagerFragment() {
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -82,6 +104,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         }
 
+        // Get Default Params(FuelCode, Searching Radius, Sorting order);
+        if(getArguments() != null) {
+            defaultParams = getArguments().getStringArray("defaultParams");
+        }
+
         mSettings = BaseActivity.getSharedPreferenceInstance(getActivity());
         df = BaseActivity.getDecimalFormatInstance();
 
@@ -89,6 +116,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         final View localView = inflater.inflate(R.layout.fragment_gas, container, false);
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         etStnName = localView.findViewById(R.id.et_station_name);
+        btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
         tvOdometer = localView.findViewById(R.id.tv_mileage);
         tvGasPaid = localView.findViewById(R.id.tv_payment);
@@ -106,12 +134,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
         tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "50,000"));
 
+
         etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
         tvOdometer.setOnClickListener(this);
         tvGasPaid.setOnClickListener(this);
         tvGasLoaded.setOnClickListener(this);
         tvCarwashPaid.setOnClickListener(this);
         tvExtraPaid.setOnClickListener(this);
+
+        btnFavorite.setOnClickListener(view -> handleFavorite());
+
 
         /*
          * Introduce ViewModel to communicate between parent Fragment and AlertFragment
@@ -137,10 +169,25 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onResume() {
         super.onResume();
-        // Pass a value in InputPad to Fragment by using Lambda expresstion
-        // Pass a current fragment to a ExpensePagerFragment
-        viewModel.getInputValue().observe(this, data -> targetView.setText(data));
+
+        // Fetch the current location on a worker thread.
+        locationTask = ThreadManager.fetchLocationTask(this);
+
+        /*
+         * ViewModel to communicate b/w frgments directly
+         * setCurrentFrgment(): pass the current fragment to ExpensePagerFragment
+         * getInputValue().observe(): get a number input on the number pad.
+         */
         viewModel.setCurrentFragment(this);
+        viewModel.getInputValue().observe(this, data -> targetView.setText(data));
+
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(locationTask != null) locationTask = null;
+        if(stationListTask != null) stationListTask = null;
     }
 
     @Override
@@ -180,6 +227,86 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         if(getFragmentManager() != null) padDialog.show(getFragmentManager(), "InputPadDialog");
 
     }
+
+    // ThreadManager.OnLocationTaskListener invokes
+    @Override
+    public void onLocationFetched(Location location) {
+        log.i("GasManagerFragment Location: %s", location);
+        stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
+    }
+
+    // ThreadManager.OnStationTaskListener invokes the following 3 callback methods4
+    @Override
+    public void onStationListTaskComplete(List<Opinet.GasStnParcelable> result) {
+
+        if(result.size() == 0) return;
+
+        etStnName.setText(result.get(0).getStnName());
+        etUnitPrice.setText(String.valueOf(result.get(0).getStnPrice()));
+        etStnName.setCursorVisible(false);
+        etUnitPrice.setCursorVisible(false);
+
+
+        // Create Loader using LoaderManager with a station name as arg to pass it to onCreateLoader()
+        // to write selection clause to query.
+        Bundle bundle = new Bundle();
+        bundle.putString("stnName", result.get(0).getStnName());
+        loaderManager = LoaderManager.getInstance(this);
+        loaderManager.initLoader(0, bundle, this);
+    }
+
+    @Override
+    public void onStationInfoTaskComplete(Opinet.GasStationInfo mapInfo) {
+        log.i("onStationInfoTaskComplete");
+    }
+
+    @Override
+    public void onTaskFailure() {
+        log.i("onTaskFailure");
+    }
+
+    // LoaderManager.LoaderCallback<Cursor> invokes the following 3 overriding methods
+    // to find if a fetched station within MIN_RADIUS has already registered with Favorite
+    @SuppressWarnings("ConstantConditions")
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+
+        Uri uriFavorite = DataProviderContract.FAVORITE_TABLE_URI;
+        String stationName = null;
+        stationName = args.getString("stnName");
+
+        final String[] projection = {
+                DataProviderContract.FAVORITE_ID,
+                DataProviderContract.FAVORITE_PROVIDER_NAME
+        };
+
+        String selection = DataProviderContract.FAVORITE_PROVIDER_NAME + " = '" + stationName + "';";
+
+        return new CursorLoader(getContext(), uriFavorite, projection, selection, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
+
+        if(cursor.moveToLast()) {
+            isFavorite = true;
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+
+        } else {
+            isFavorite = false;
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
+    }
+
+
+
 
     // Method for inserting data to SQLite database
     public void saveData(){
@@ -262,6 +389,35 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         }
 
         return true;
+    }
+
+
+    private void handleFavorite() {
+        log.i("handleFavorite");
+        if(isGeofenceIntent) return;
+
+        // Add or remove a station to or out of Favorite.
+        if(isFavorite) {
+
+        } else {
+
+        }
+
+        int bgResource = (isFavorite)?R.drawable.btn_favorite:R.drawable.btn_favorite_selected;
+        btnFavorite.setBackgroundResource(bgResource);
+
+        isFavorite = !isFavorite;
+    }
+
+    // Calculate what amount of gas is filled as putting amount of payment.
+    // Whenever clicking each of the payment button, the gas amount is renewed.
+    private void calculateGasAmount(int paid) throws ParseException {
+        //Log.d(LOG_TAG, "price: " + etUnitPrice.getText().toString());
+        //int price = Integer.parseInt(etUnitPrice.getText().toString().replaceAll("[^0-9]", ""));
+        int price = df.parse(etUnitPrice.getText().toString()).intValue();
+        String amount = String.valueOf(paid/price);
+        //Log.d(LOG_TAG, "amount: " + (paid));
+        tvGasLoaded.setText(amount);
     }
 
 

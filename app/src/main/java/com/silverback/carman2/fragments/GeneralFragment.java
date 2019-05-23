@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,15 +16,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.ClockTask;
 import com.silverback.carman2.threads.LocationTask;
@@ -43,11 +39,9 @@ import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
-import static android.content.Context.POWER_SERVICE;
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
 /**
@@ -57,7 +51,7 @@ public class GeneralFragment extends Fragment implements
         View.OnClickListener,
         RecyclerView.OnItemTouchListener, StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener,
-        ThreadManager.OnCompleteTaskListener {
+        ThreadManager.OnStationTaskListener, ThreadManager.OnLocationTaskListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -122,7 +116,6 @@ public class GeneralFragment extends Fragment implements
         }
 
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
-
         tvDate = childView.findViewById(R.id.tv_today);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
@@ -247,7 +240,7 @@ public class GeneralFragment extends Fragment implements
 
             case R.id.fab_relocation:
                 isLocationFetched = true;
-                locationTask = ThreadManager.fetchLocationTask(GeneralFragment.this);
+                locationTask = ThreadManager.fetchLocationTask(this);
 
                 break;
 
@@ -314,28 +307,29 @@ public class GeneralFragment extends Fragment implements
     }
 
     /**
-     * The following methods are callbacks invoked by ThreadManager.OnCompleteTaskListener.
+     * The following methods are callbacks invoked by ThreadManager.OnStationTaskListener.
      * onLocationFetched():
      * onStationListTaskComplete():
      * onTaskFailure():
      * onStationInfoTaskComplete():
      */
-    // ThreadManager.OnCompleteTaskListener invokes the following callback methods
+    // ThreadManager.OnStationTaskListener invokes the following callback methods
     // to pass a location fetched by ThreadManager.fetchLocationTask() at first,
     // then, initializes another thread to download a station list based upon the location.
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onLocationFetched(Location location){
         //isLocationFetched = true;
         mCurrentLocation = location;
-        stationRecyclerView.initView(defaults, location);
+        //defaults[1] = "2500";
+        stationRecyclerView.initView(GeneralFragment.this, location, defaults);
 
         // On clicking the FAB, check if the current location outbounds the distance set in
         // Constants.UPDATE_DISTANC compared with the previous location.
         // If so, retrieve a new near station list and invalidate StationRecyclerView with new data.
+        /*
         if(!isLocationFetched || mCurrentLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
             mCurrentLocation = location;
-            stationRecyclerView.initView(defaults, mCurrentLocation);
+            stationRecyclerView.initView(GeneralFragment.this, mCurrentLocation, defaults);
 
         // Show Snackbar if it is within the UPDATE_DISTANCE
         } else {
@@ -347,9 +341,10 @@ public class GeneralFragment extends Fragment implements
             snackbar.show();
 
         }
+        */
     }
 
-    // The following 2 callback methods are invoked by ThreadManager.OnCompleteTaskListener
+    // The following 2 callback methods are invoked by ThreadManager.OnStationTaskListener
     // on having StationListTask completed or failed.
     @Override
     public void onStationListTaskComplete(List<Opinet.GasStnParcelable> stnList) {

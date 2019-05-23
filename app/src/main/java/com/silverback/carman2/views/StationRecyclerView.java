@@ -17,6 +17,7 @@ import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
 
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -67,10 +68,10 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
-    public void initView(String[] defaults, Location location) {
+    public void initView(Fragment fragment, Location location, String[] defaults) {
         defaultParams = defaults;
         this.location = location;
-        stationListTask = ThreadManager.startStationListTask(this, defaults, location);
+        stationListTask = ThreadManager.startStationListTask(fragment, location, defaults);
     }
 
     /*
@@ -91,9 +92,6 @@ public class StationRecyclerView extends RecyclerView {
             }
         }
     }
-
-    @Override
-    public void onDraw(Canvas canvas) {}
 
     /*
      * This callback is invoked when the ImageView is removed from a Window. It "unsets" variables
