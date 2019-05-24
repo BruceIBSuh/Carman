@@ -7,6 +7,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
 import java.util.List;
@@ -15,8 +17,9 @@ import javax.annotation.Nullable;
 
 public class FireStoreGetRunnable implements Runnable {
 
-    // Constants
-    static final int FIRESTORE_GET_COMPLETE = 10;
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreGetRunnable.class);
+
 
     // Objects
     private FireStoreGetMethods task;
@@ -48,15 +51,16 @@ public class FireStoreGetRunnable implements Runnable {
 
             Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());
             query.addSnapshotListener((snapshot, e) -> {
+
                 if(snapshot == null) return;
+
                 if(!snapshot.isEmpty()) {
                     boolean isCarwash = (boolean)snapshot.getDocuments().get(0).get("carwash");
-                    //String carwash = (isCarwash)?"Y":"N";
                     station.setIsWash(isCarwash);
                     station.setHasVisited(true);
                 } else {
                     station.setHasVisited(false);
-                    task.handleStationTaskState(FIRESTORE_GET_COMPLETE);
+                    task.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
                 }
             });
             /*

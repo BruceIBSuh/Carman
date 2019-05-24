@@ -202,13 +202,14 @@ public class ThreadManager {
                         Location location = locationTask.getLocationUpdated();
                         log.i("Last known location: %s, %s", location.getLongitude(), location.getLatitude());
                         mLocationTaskListener.onLocationFetched(location);
+                        recycleTask(locationTask);
 
                         break;
 
                     case FETCH_LOCATION_FAILED:
                         locationTask = (LocationTask)msg.obj;
                         locationTask.recycle();
-                        mLocationTaskQueue.offer(locationTask);
+
                         break;
 
                     case LOAD_SPINNER_DIST_CODE_COMPLETE:
@@ -227,23 +228,28 @@ public class ThreadManager {
                         stationListTask = (StationListTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationListTask.getStationList();
                         mStationTaskListener.onStationListTaskComplete(stnList);
-                        mStationTaskListener = null;
+                        recycleTask(stationListTask);
                         break;
 
                     case DOWNLOAD_NEAR_STATIONS_FAILED:
                         mStationTaskListener.onTaskFailure();
-                        mStationTaskListener = null;
+                        recycleTask((StationListTask)msg.obj);
                         break;
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
                         stationInfoTask = (StationInfoTask)msg.obj;
                         Opinet.GasStationInfo info = stationInfoTask.getStationInfo();
                         mStationTaskListener.onStationInfoTaskComplete(info);
-                        mStationInfoTaskQueue.offer(stationInfoTask);
+                        recycleTask(stationInfoTask);
                         break;
 
                     case DOWNLOAD_STN_MAPINFO_FAILED:
+                        recycleTask((StationInfoTask)msg.obj);
                         break;
+
+                    default:
+                        // Otherwise, calls the super method
+                        super.handleMessage(msg);
 
                 }
 
@@ -266,19 +272,19 @@ public class ThreadManager {
         switch(state) {
             case DOWNLOAD_NEAR_STATIONS_COMPLETED:
                 //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
-                mDownloadThreadPool.execute(((StationListTask)task).getFireStoreGetRunnable());
+                mDownloadThreadPool.execute(((StationListTask)task).getFireStoreRunnable());
                 msg.sendToTarget();
                 break;
 
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                mDecodeThreadPool.execute(((StationListTask) task).getFireStoreSetRunnalbe());
+                mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
                 //msg.sendToTarget();
                 break;
 
             case DOWNLOAD_STATION_INFO_COMPLETED:
                 // Save additional information of a selected station in FireStore
-                mDecodeThreadPool.execute(((StationInfoTask)task).getFireStoreUpdateRunnable());
+                mDecodeThreadPool.execute(((StationInfoTask)task).updateFireStoreRunnable());
                 msg.sendToTarget();
                 break;
 
@@ -336,8 +342,8 @@ public class ThreadManager {
                     msg.sendToTarget();
                     break;
 
-                case DOWNLOAD_NEAR_STATIONS_FAILED:
-                    log.i("DOWNLOAD_NEAR_STATIONS_FAILED");
+                case DOWNLOAD_NEAR_STATIONS_FAIL:
+                    log.i("DOWNLOAD_NEAR_STATIONS_FAIL");
                     msg.sendToTarget();
                     break;
             }
@@ -396,7 +402,7 @@ public class ThreadManager {
                     msg.sendToTarget();
                     break;
 
-                case DOWNLOAD_NEAR_STATIONS_FAILED:
+                case DOWNLOAD_NEAR_STATIONS_FAIL:
                     msg.sendToTarget();
                     break;
 
@@ -511,7 +517,6 @@ public class ThreadManager {
         PriceTask priceTask = (PriceTask)sInstance.mDownloadWorkQueue.poll();
 
         if(priceTask == null) {
-            log.i("PriceTask: " + priceTask);
             priceTask = new PriceTask(activity);
         }
 
@@ -577,9 +582,7 @@ public class ThreadManager {
 
     */
 
-    @SuppressWarnings("unchecked")
     public static LocationTask fetchLocationTask(Fragment fm){
-    //public static LocationTask fetchLocationTask(Context context) {
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
         if(locationTask == null) {
@@ -606,6 +609,7 @@ public class ThreadManager {
     public static StationListTask startStationListTask(Fragment fragment, Location location, String[] params) {
 
         StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
+
         if(stationListTask == null) {
             stationListTask = new StationListTask(fragment.getContext());
         }
@@ -626,22 +630,20 @@ public class ThreadManager {
         return stationListTask;
     }
 
-    public static StationInfoTask startStationInfoTask(Context context, String stnName, String stnId) {
+    public static StationInfoTask startStationInfoTask(Fragment fragment, String stnName, String stnId) {
 
         StationInfoTask stationTask = sInstance.mStationInfoTaskQueue.poll();
-        if(stationTask == null) stationTask = new StationInfoTask(context);
+        if(stationTask == null) stationTask = new StationInfoTask(fragment.getContext());
 
         // Attach OnCompleteInfoTaskListener
-        /*
         if(sInstance.mStationTaskListener == null) {
             try {
-                sInstance.mStationTaskListener = (OnStationTaskListener)context;
+                sInstance.mStationTaskListener = (OnStationTaskListener)fragment;
             } catch (ClassCastException e) {
-                throw new ClassCastException(String.valueOf(context)
-                        + " must implement OnStationInfoTaskListener");
+                throw new ClassCastException(fragment + " must implement OnStationInfoTaskListener");
             }
         }
-        */
+
 
 
         stationTask.initStationTask(ThreadManager.sInstance, stnName, stnId);
@@ -685,7 +687,7 @@ public class ThreadManager {
     */
 
 
-
+    /*
     public static ClockTask startClockTask(Context context, View view) {
         ClockTask clockTask = sInstance.mClockTaskQueue.poll();
         if(clockTask == null) clockTask = new ClockTask(context);
@@ -695,6 +697,7 @@ public class ThreadManager {
 
         return clockTask;
     }
+    */
 
 
     /*
@@ -714,16 +717,25 @@ public class ThreadManager {
     /*
      * Recycles tasks by calling their internal recycle() method and then putting them back into
      * the task queue.
-     * @param downloadTask The task to recycle
      */
-    void recycleTask(ThreadTask task) {
+    private void recycleTask(ThreadTask task) {
 
-        if(task instanceof StationInfoTask) {
-            //((StationInfoTask)task).recycle();
+        if(task instanceof LocationTask) {
+            ((LocationTask) task).recycle();
+            mLocationTaskQueue.offer((LocationTask) task);
+            mLocationTaskListener = null;
+
+        }else if(task instanceof StationListTask) {
+            ((StationListTask)task).recycle();
+            mStationListTaskQueue.offer((StationListTask)task);
+            mStationTaskListener = null;
+
+        }else if(task instanceof StationInfoTask) {
+            ((StationInfoTask)task).recycle();
             mStationInfoTaskQueue.offer((StationInfoTask)task);
+            mStationTaskListener = null;
         }
 
-        if(mStationTaskListener != null) mStationTaskListener = null;
     }
 
 }

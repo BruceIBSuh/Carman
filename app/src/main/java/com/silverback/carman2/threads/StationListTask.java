@@ -7,9 +7,7 @@ import android.location.Location;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.views.StationRecyclerView;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,9 +18,15 @@ public class StationListTask extends ThreadTask implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
 
+    // Constants
+    static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
+    static final int DOWNLAOD_CURRENT_STATION_COMPLETE = 2;
+    static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
+    static final int DOWNLOAD_CURRENT_STATION_FAILED = -2;
+    static final int DOWNLOAD_NO_STATION = -3;
+    static final int FIRESTORE_GET_COMPLETE = 3;
+
     // Objects
-    private Context context;
-    private WeakReference<StationRecyclerView> mWeakRecyclerView;
     private Runnable mStationListRunnable;
     private Runnable mFireStoreSetRunnable;
     private Runnable mFireStoreGetRunnable;
@@ -31,14 +35,13 @@ public class StationListTask extends ThreadTask implements
     private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     private Location mLocation;
     private String[] defaultParams;
-    private int count = 0;
 
     private static ThreadManager sThreadManager;
 
     // Constructor
     StationListTask(Context context) {
         super();
-        this.context = context;
+        //this.context = context;
         mStationListRunnable = new StationListRunnable(context, this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
@@ -54,17 +57,10 @@ public class StationListTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    Runnable getFireStoreSetRunnalbe() { return mFireStoreSetRunnable; }
-    Runnable getFireStoreGetRunnable() { return mFireStoreGetRunnable; }
+    Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
+    Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
 
     void recycle() {
-        /*
-        if(mWeakRecyclerView != null) {
-            mWeakRecyclerView.clear();
-            mWeakRecyclerView = null;
-        }
-        */
-
         mStationList = null;
     }
 
@@ -104,7 +100,7 @@ public class StationListTask extends ThreadTask implements
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch (state) {
-            case StationListRunnable.DOWNLOAD_NEAR_STATIONS_COMPLETE:
+            case DOWNLOAD_NEAR_STATIONS_COMPLETE:
                 log.i("DOWNLOAD_NEAR_STATIONS_COMPLETE");
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
                 break;
@@ -113,7 +109,7 @@ public class StationListTask extends ThreadTask implements
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_COMPLETED;
                 break;
             */
-            case FireStoreGetRunnable.FIRESTORE_GET_COMPLETE:
+            case FIRESTORE_GET_COMPLETE:
                 log.i("FireStore_Set_Complete");
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
@@ -122,7 +118,7 @@ public class StationListTask extends ThreadTask implements
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
             */
-            case StationListRunnable.DOWNLOAD_NEAR_STATIONS_FAILED:
+            case DOWNLOAD_NEAR_STATIONS_FAIL:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;
 

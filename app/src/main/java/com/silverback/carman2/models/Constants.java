@@ -5,7 +5,7 @@ public class Constants {
     /**
      * Global Setting Constants for Geofence, Opinet download interval, near station radius.
      */
-    public static final String MIN_RADIUS = "500"; //Current station locating radius
+    public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 100; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 60; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()

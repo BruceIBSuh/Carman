@@ -302,7 +302,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onItemClicked(int position) {
         //tmpStationName = mStationList.get(position).getStnName();
-        stationInfoTask = ThreadManager.startStationInfoTask(getContext(),
+        stationInfoTask = ThreadManager.startStationInfoTask(this,
                 mStationList.get(position).getStnName(), mStationList.get(position).getStnId());
     }
 
@@ -320,7 +320,6 @@ public class GeneralFragment extends Fragment implements
     public void onLocationFetched(Location location){
         //isLocationFetched = true;
         mCurrentLocation = location;
-        //defaults[1] = "2500";
         stationRecyclerView.initView(GeneralFragment.this, location, defaults);
 
         // On clicking the FAB, check if the current location outbounds the distance set in

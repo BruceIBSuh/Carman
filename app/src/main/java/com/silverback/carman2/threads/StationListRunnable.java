@@ -39,11 +39,7 @@ public class StationListRunnable implements Runnable{
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
-    static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
-    static final int DOWNLAOD_CURRENT_STATION_COMPLETE = 2;
-    static final int DOWNLOAD_NEAR_STATIONS_FAILED = -1;
-    static final int DOWNLOAD_CURRENT_STATION_FAILED = -2;
-    static final int DOWNLOAD_NO_STATION = -3;
+
 
     // Objects
     private Context context;
@@ -142,7 +138,7 @@ public class StationListRunnable implements Runnable{
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
                     mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
 
                 } else {
                     Uri uri = saveNearStationList(mStationList);
@@ -151,26 +147,27 @@ public class StationListRunnable implements Runnable{
                         // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
                         //setStationInfoFromFireStore();
                         mTask.setStationList(mStationList);
-                        mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                        mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
                     }
                 }
 
             } else {
-                if(radius.matches(Constants.MIN_RADIUS)) mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
-                else mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
+                if(radius.matches(Constants.MIN_RADIUS))
+                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+                else mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
             }
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
-            mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
+            mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
-            mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
+            mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } catch (InterruptedException e) {
             log.e("InterruptedException: %s", e.getMessage());
-            mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_FAILED);
+            mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } finally {
 
@@ -210,7 +207,7 @@ public class StationListRunnable implements Runnable{
 
                     // TEST CODING REQUIRED TO BE ELLABORATED!!!
                     mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
 
                 }
             });

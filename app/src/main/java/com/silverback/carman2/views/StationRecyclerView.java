@@ -68,9 +68,17 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
+    /**
+     * Initiate StationListTask with the params passed from GeneralFragment.
+     * @param defaults fuel code, searching radius, sorting order.
+     * @param location fetched using LocationTask
+     * @param fragment parent fragment
+     */
+
     public void initView(Fragment fragment, Location location, String[] defaults) {
         defaultParams = defaults;
         this.location = location;
+
         stationListTask = ThreadManager.startStationListTask(fragment, location, defaults);
     }
 

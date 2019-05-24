@@ -94,7 +94,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
 
             case R.id.tv_mileage:
                 title = getString(R.string.exp_label_odometer);
-                ////tvValue.setText(getArguments().getString("value"));
+                //tvValue.setText(getArguments().getString("value"));
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
@@ -129,19 +129,11 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(title)
                 .setView(localView)
-                .setPositiveButton("confirm", new DialogInterface.OnClickListener(){
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        log.i("which: %s", which);
-                        viewModel.setInputValue(tvValue.getText().toString());
-                    }
-                })
-                .setNegativeButton("cancel", new DialogInterface.OnClickListener(){
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setPositiveButton("confirm", (dialog, which) ->
+                        viewModel.setInputValue(tvValue.getText().toString()))
 
-                    }
-                });
+                .setNegativeButton("cancel", (dialog, which) -> {});
+
 
         return builder.create();
     }

@@ -31,9 +31,8 @@ public class FireStoreSetRunnable implements Runnable {
     // Objects
     private FireStoreSetMethods task;
     private FirebaseFirestore db;
-    private List<Opinet.GasStnParcelable> stnList;
-    private Map<String, Object> data;
-    private WriteBatch batch;
+    //private List<Opinet.GasStnParcelable> stnList;
+    //private WriteBatch batch;
 
     // Interface
     public interface FireStoreSetMethods {
@@ -55,15 +54,15 @@ public class FireStoreSetRunnable implements Runnable {
 
         //CollectionReference collRef = db.collection("stations");
         //batch = db.batch();
-        stnList = task.getStationList();
+        List<Opinet.GasStnParcelable> stnList = task.getStationList();
 
         for(final Opinet.GasStnParcelable station : stnList) {
             //batch = db.batch();
             final Map<String, Object> data = new HashMap<>();
 
             // Check if the station already exists by querying the collection with the station id
-            // at first. Undess it exists, set the station data in the store.
-            // It prevents updated fields from being reverted to the default value.
+            // at first. Undess it exists, set station data in the store to prevent updated fields
+            // from being reverted to the default value.
             Query query = db.collection("stations").whereEqualTo("id", station.getStnId());
             /*
             query.addSnapshotListener(new EventListener<QuerySnapshot>(){
@@ -91,6 +90,7 @@ public class FireStoreSetRunnable implements Runnable {
             });
             */
             query.addSnapshotListener((snapshot, e) -> {
+
                 if (snapshot != null && snapshot.isEmpty()) {
                     data.put("id", station.getStnId());
                     data.put("name", station.getStnName());

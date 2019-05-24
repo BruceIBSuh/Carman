@@ -83,16 +83,15 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.setId(View.generateViewId());
         frameFragments.addView(tabPager);
 
-
-
-        String[] defaultParams = getDefaultParams();
-        defaultParams[1] = Constants.MIN_RADIUS;
-
         pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
 
+        // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
+        // it to GasManagerFragment.
+        String[] defaultParams = getDefaultParams();
+        defaultParams[1] = Constants.MIN_RADIUS;
         Bundle args = new Bundle();
         args.putStringArray("defaultParams", defaultParams);
         pagerAdapter.getItem(0).setArguments(args);

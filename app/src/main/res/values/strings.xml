@@ -136,13 +136,37 @@
     <string name="pref_spinner_sido_sejong">세종시</string>
 
     <!--DialogFragment-->
-    <string name="msg_finish_app">확인 버튼을 누르면 카르맨이 종료됩니다.</string>
+    <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>
     <string name="btn_finish_confirm">확인</string>
     <string name="btn_finish_cancel">취소</string>
 
+    <!--Formatter-->
+    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
+    <string name="date_format_2">yyyy/MM/dd(E)</string>
+    <string name="date_format_3">%d년%d월%d일(%s)</string>
+    <string name="date_format_4">yy년MM월dd일</string>
+    <string name="date_format_5">MM월dd일</string>
+    <string name="date_format_6">MM월dd일(E) HH시mm분 </string>
+    <string name="time_format_1">%d시%d분</string>
+
+    <!--GeofenceTransitionService-->
+    <string name="geofence_notification_gas">주유정보</string>
+    <string name="geofence_notification_service">서비스정보</string>
+    <string name="geofence_notification_snooze">나중에 알림</string>
+    <string name="geofence_notification_gas_open">알림창을 클릭해서 주유정보를 입력해주세요</string>
+    <string name="geofence_notification_service_open">알림창을 클릭해서 서비스정보를 입력해주세요</string>
+    <string name="geofence_notification_dismiss">그냥 닫기</string>
+    <string name="geofence_enter">에 진입하였습니다. 주유정보를 입력해 주세요</string>
+    <string name="geofence_exit">단골주유소를 벗어났습니다</string>
+    <string name="geofence_dwell">단골주유소에 있습니다</string>
+    <string name="geofence_transition_title">카르맨 주유정보</string>
+    <string name="toast_remove_favorite">즐겨찾기에서 제외되었습니다</string>
+    <string name="notification_ch_name">geofence_carman</string>
+    <string name="notification_ch_description">frequently_visited_station</string>
+
+
 
     <!--Miscellany-->
-    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
     <string name="textview">TextView</string>
     <string name="title_activity_station_maps">Map</string>
     <string name="title_activity_maps">Map</string>

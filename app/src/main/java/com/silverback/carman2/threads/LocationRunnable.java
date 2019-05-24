@@ -74,6 +74,7 @@ public class LocationRunnable implements Runnable,
     @Override
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
         log.i("LocationCallback invoked");
+
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
         LocationCallback locationCallback = mLocationHelper.initLocationCallback();
@@ -97,8 +98,10 @@ public class LocationRunnable implements Runnable,
                     }
                 }
             });
+
         } catch (SecurityException e) {
             e.printStackTrace();
+
         } finally {
             mFusedLocationClient.removeLocationUpdates(locationCallback);
         }

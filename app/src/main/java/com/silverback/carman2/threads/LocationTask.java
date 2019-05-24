@@ -1,6 +1,5 @@
 package com.silverback.carman2.threads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.view.View;
@@ -14,37 +13,27 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     // Constants
     //private static final String TAG = "LocationTask";
 
-    private WeakReference<View> mWeakView;
-    private Context context;
+    //private WeakReference<View> mWeakView;
+    //private Context context;
     private Runnable mLocationRunnable;
-    private LocationCallback mLocationCallback;
     private Location mLocation;
 
     // Constructor
     LocationTask(Context context) {
         super();
-        this.context = context;
+        //this.context = context;
         mLocationRunnable = new LocationRunnable(context, this);
     }
 
     void initLocationTask(ThreadManager threadManager) {
-
         sThreadManager = threadManager;
-        //mWeakView = new WeakReference<>(view);
     }
 
     Runnable getLocationRunnable() {
         return mLocationRunnable;
     }
 
-    void recycle() {
-        if(mWeakView != null) {
-            mWeakView.clear();
-            mWeakView = null;
-        }
-
-        if(mLocationCallback != null) mLocationCallback = null;
-    }
+    void recycle() {}
 
     @Override
     public void setDownloadThread(Thread thread) {
@@ -74,6 +63,8 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         sThreadManager.handleState(this, outstate);
     }
 
+    // Invoked by hadleMessage(Message) in ThreadManager to pass the current location over to
+    // the UI Thread in GeneralFragment or GasManagerFragment.
     Location getLocationUpdated() {
         return mLocation;
     }
