@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.view.LayoutInflater;
@@ -46,6 +47,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
     private Button btnSign, btn1, btn2, btn3, btn4;
 
     // Fields
+    private int textViewId;
     private String initValue;
     private boolean isCurrency;
     private boolean isPlus = true;
@@ -54,23 +56,27 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         df = BaseActivity.getDecimalFormatInstance();
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(getActivity() != null)
+            viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
-    @SuppressWarnings("ConstantConditions")
+        if(getArguments() != null) {
+            textViewId = getArguments().getInt("viewId");
+            initValue = getArguments().getString("value");
+        }
+    }
+
+
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        if(getActivity() != null) {
-            viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        }
-
-        if(getArguments() != null) {
-            initValue = getArguments().getString("value");
-        }
-
         LayoutInflater inflater = requireActivity().getLayoutInflater();
         View localView = inflater.inflate(R.layout.fragment_input_pad, null);
 
+        TextView tvTitle = localView.findViewById(R.id.tv_title);
         tvValue = localView.findViewById(R.id.defaultValue);
         tvUnit = localView.findViewById(R.id.unit);
         btnSign = localView.findViewById(R.id.btn_sign);
@@ -90,7 +96,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
 
         // Get arguments from the parent activity dialog title, unit name, and button numbers.
         String title = null;
-        switch(getArguments().getInt("viewId")) {
+        switch(textViewId) {
 
             case R.id.tv_mileage:
                 title = getString(R.string.exp_label_odometer);
@@ -123,11 +129,13 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 break;
         }
 
+        tvTitle.setText(title);
+
         // Set texts and values of the buttons on the pad in InputBtnPadView.
         //btnPad.initPad(getArguments().getInt("viewId"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(title)
+        builder//.setTitle(title)
                 .setView(localView)
                 .setPositiveButton("confirm", (dialog, which) ->
                         viewModel.setInputValue(tvValue.getText().toString()))
@@ -191,4 +199,5 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         return unit.equals(getString(R.string.unit_won));
 
     }
+
 }

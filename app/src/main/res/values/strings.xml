@@ -160,6 +160,7 @@
     <string name="geofence_exit">단골주유소를 벗어났습니다</string>
     <string name="geofence_dwell">단골주유소에 있습니다</string>
     <string name="geofence_transition_title">카르맨 주유정보</string>
+    <string name="geofence_toast_add_favorite">즐겨찾기에 추가하였습니다</string>
     <string name="toast_remove_favorite">즐겨찾기에서 제외되었습니다</string>
     <string name="notification_ch_name">geofence_carman</string>
     <string name="notification_ch_description">frequently_visited_station</string>

@@ -37,7 +37,9 @@ public class FavoriteGeofenceHelper {
     private PendingIntent mGeofencePendingIntent;
     private OnGeofenceListener mListener;
 
+    // Fields
     private String geofenceId;
+    private String stnId, stnName;
     private Location geofenceLocation;
     private int category; // 1.gas station 2. service center 3. car wash....
     private Uri mNewUri;
@@ -132,6 +134,7 @@ public class FavoriteGeofenceHelper {
                         mNewUri = context.getContentResolver().insert(DataProviderContract.FAVORITE_TABLE_URI, values);
                         if (mNewUri != null) {
                             log.i("Successfully added favorite");
+                            Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
                             //mListener.notifyAddGeofenceCompleted();
                         }
                     })

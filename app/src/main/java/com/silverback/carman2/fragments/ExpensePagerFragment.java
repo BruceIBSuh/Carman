@@ -85,17 +85,15 @@ public class ExpensePagerFragment extends Fragment {
         //getActivity().getSupportLoaderManager().initLoader(0, null, this);
     }
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+        if(getActivity() == null) return;
 
-        // ViewModel instance
-        if(getActivity() != null) {
-            viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        }
-
+        // Create ViewModel to get data of which fragment is attached in the tab-linked ViewPager
+        // from the viewpager-containing fragments.
+        viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -110,11 +108,7 @@ public class ExpensePagerFragment extends Fragment {
 
         viewModel.getCurrentFragment().observe(this, fragment -> {
 
-            log.i("Current Fragment: %s", fragment);
             currentFragment = fragment;
-
-            //projection = gasColumns;
-            //baseUri = DataProviderContract.GAS_TABLE_URI;
 
             if(currentFragment instanceof GasManagerFragment) {
                 projection = gasColumns;
@@ -192,7 +186,6 @@ public class ExpensePagerFragment extends Fragment {
         }
 
         return null;
-
     }
 
 }

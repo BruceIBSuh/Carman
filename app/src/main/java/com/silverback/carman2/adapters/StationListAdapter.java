@@ -35,7 +35,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationItemHolder> 
     // Objects
     private Context context;
     private List<Opinet.GasStnParcelable> stationList;
-    private CardView cardView;
     private OnRecyclerItemClickListener mListener;
 
     // Interface
@@ -55,7 +54,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationItemHolder> 
     @Override
     public StationItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        cardView = (CardView)LayoutInflater.from(context)
+        CardView cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.view_card_stationlist, parent, false);
 
         return new StationItemHolder(cardView);
@@ -68,12 +67,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationItemHolder> 
         final Opinet.GasStnParcelable station = stationList.get(position);
         holder.bindToStationList(station);
 
-        holder.itemView.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                log.i("cardview position: %s, %s", position, mListener);
-                if(mListener != null) mListener.onItemClicked(position);
-            }
+        holder.itemView.setOnClickListener(view -> {
+            log.i("cardview position: %s, %s", position, mListener);
+            if(mListener != null) mListener.onItemClicked(position);
         });
 
     }

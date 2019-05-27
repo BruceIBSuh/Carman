@@ -10,9 +10,6 @@
         android:id="@+id/tv_subtitle_gas_expense"
         android:layout_width="0dp"
         android:layout_height="35dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="3dp"
-        android:layout_marginEnd="3dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="start|center"
         android:padding="5dp"
@@ -177,8 +174,7 @@
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_payment"
         app:layout_constraintStart_toEndOf="@+id/tv_label_payment"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_payment"
-        tools:ignore="AutoFill" />
+        app:layout_constraintTop_toTopOf="@+id/tv_label_payment" />
 
     <TextView
         android:id="@+id/tv_unit_won"
@@ -234,9 +230,7 @@
         android:id="@+id/tv_subtitle_extra"
         android:layout_width="0dp"
         android:layout_height="35dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="3dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="start|center_vertical"
         android:padding="5dp"
@@ -348,9 +342,7 @@
         android:id="@+id/tv_subtitle_evaluation"
         android:layout_width="0dp"
         android:layout_height="35dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="3dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/bg_colored_border"
         android:padding="5dp"
         android:text="@string/gas_subtitle_evaluation"

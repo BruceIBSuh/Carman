@@ -64,8 +64,6 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
-
-
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
 
@@ -95,7 +93,6 @@ public class ExpenseActivity extends BaseActivity implements
         Bundle args = new Bundle();
         args.putStringArray("defaultParams", defaultParams);
         pagerAdapter.getItem(0).setArguments(args);
-
 
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
@@ -161,6 +158,7 @@ public class ExpenseActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
+
         topFrame.removeAllViews();
         expensePager.setCurrentItem(0);
 

@@ -3,15 +3,25 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleEventObserver;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.OnLifecycleEvent;
+import androidx.lifecycle.ViewModelProviders;
+
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.StationInfoModel;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.lang.ref.WeakReference;
 
 public class StationInfoTask extends ThreadTask implements
+        //LifecycleObserver,
         StationInfoRunnable.StationInfoMethods,
         FireStoreUpdateRunnable.FireStoreUpdateMethods {
 
@@ -25,6 +35,10 @@ public class StationInfoTask extends ThreadTask implements
     private String stnName, stnId;
 
     // Constructor
+    public StationInfoTask() {
+        // Leave empty
+    }
+
     StationInfoTask(Context context) {
         mStationInfoRunnable = new StationInfoRunnable(context, this);
         mFireStoreUpdateRunnable = new FireStoreUpdateRunnable(this);
@@ -62,6 +76,8 @@ public class StationInfoTask extends ThreadTask implements
     public void setStationInfo(Opinet.GasStationInfo info) {
         stationInfo = info;
     }
+
+    //@OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
     public Opinet.GasStationInfo getStationInfo() {
         return stationInfo;
     }
@@ -88,4 +104,6 @@ public class StationInfoTask extends ThreadTask implements
     }
 
     void recycle(){}
+
+
 }
