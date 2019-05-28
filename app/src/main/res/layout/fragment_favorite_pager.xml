@@ -16,22 +16,19 @@
         android:layout_height="50dp"
         android:alpha="0.5"
         android:padding="0dp"
-        android:elevation="2dp"
-        app:tabBackground="@android:color/background_dark"
+        app:tabBackground="@android:color/holo_green_dark"
         app:tabIndicatorColor="@android:color/holo_orange_dark"
         app:tabIndicatorHeight="3dp"
-        app:tabSelectedTextColor="@android:color/holo_orange_dark"
+        app:tabSelectedTextColor="#383838"
         app:tabTextAppearance="@style/CustomTabText"
-        app:tabTextColor="@android:color/background_light" >
-    </com.google.android.material.tabs.TabLayout>
+        app:tabTextColor="#FFFFFF" />
 
     <!-- wrap_content doesn't work in ViewPager; it is always regarded as match_parent-->
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/viewpager_favorite"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="50dp"
-        android:background="#383838"/>
+        android:layout_marginTop="50dp" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -6,12 +6,11 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
-import com.silverback.carman2.GeneralSettingActivity;
+import com.silverback.carman2.SettingActivity;
 import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -191,8 +190,8 @@ public class ThreadManager {
                         // Each callback method according to the caller activity.
                         if(priceTask.getParentActivity() instanceof IntroActivity) {
                             ((IntroActivity)priceTask.getParentActivity()).onPriceTaskComplete();
-                        } else if(priceTask.getParentActivity() instanceof GeneralSettingActivity) {
-                            ((GeneralSettingActivity) priceTask.getParentActivity()).onPriceTaskComplete();
+                        } else if(priceTask.getParentActivity() instanceof SettingActivity) {
+                            ((SettingActivity) priceTask.getParentActivity()).onPriceTaskComplete();
                         }
 
                         break;
@@ -497,7 +496,7 @@ public class ThreadManager {
         return task;
     }
 
-    // Retrieves Sigun list with a sido code given in GeneralSettingActivity
+    // Retrieves Sigun list with a sido code given in SettingActivity
     public static LoadDistCodeTask loadSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
 
         LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mDecodeWorkQueue.poll();

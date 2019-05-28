@@ -14,7 +14,7 @@ public class BillboardPagerAdapter extends FragmentPagerAdapter {
 
     // Constructor
     public BillboardPagerAdapter(FragmentManager fm) {
-        super(fm);
+        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
 

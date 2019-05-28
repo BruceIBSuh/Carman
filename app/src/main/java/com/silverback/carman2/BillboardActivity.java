@@ -66,7 +66,7 @@ public class BillboardActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in GeneralSettingActivity");
+            log.i("onOptionsItemSelected in SettingActivity");
             finish();
             return true;
         }

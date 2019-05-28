@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.DialogFragment;
@@ -20,11 +19,11 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import java.text.DecimalFormat;
 
-public class GeneralSettingFragment extends PreferenceFragmentCompat implements
+public class SettingFragmentCompat extends PreferenceFragmentCompat implements
         Preference.OnPreferenceClickListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(GeneralSettingFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFragmentCompat.class);
 
     // Objects
     private DecimalFormat df;

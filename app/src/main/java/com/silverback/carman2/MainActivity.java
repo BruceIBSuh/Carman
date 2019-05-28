@@ -10,7 +10,6 @@ import android.widget.FrameLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.fragments.BillboardFragment;
@@ -128,9 +127,12 @@ public class MainActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_setting:
-                startActivity(new Intent(MainActivity.this, GeneralSettingActivity.class));
+                startActivity(new Intent(MainActivity.this, SettingActivity.class));
                 return true;
 
+            default:
+                log.i("finish activity");
+                finish();
         }
 
         return super.onOptionsItemSelected(item);

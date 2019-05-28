@@ -6,11 +6,13 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.silverback.carman2.fragments.GeneralSettingFragment;
+import com.silverback.carman2.fragments.SettingFavoriteFragment;
+import com.silverback.carman2.fragments.SettingFragmentCompat;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -21,16 +23,16 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 
-public class GeneralSettingActivity extends BaseActivity implements
+public class SettingActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(GeneralSettingActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
 
     // Objects
-
-    private GeneralSettingFragment settingFragment;
+    private PreferenceFragmentCompat caller;
+    private SettingFragmentCompat settingFragment;
     private PriceTask priceTask;
     private String distCode;
     private DecimalFormat df;
@@ -54,7 +56,7 @@ public class GeneralSettingActivity extends BaseActivity implements
         df = getDecimalFormatInstance();
 
 
-        // Passes District Code(Sigun Code) and vehicle nickname to GeneralSettingFragment for
+        // Passes District Code(Sigun Code) and vehicle nickname to SettingFragmentCompat for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name.
         List<String> district = convJSONArrayToList();
@@ -66,7 +68,7 @@ public class GeneralSettingActivity extends BaseActivity implements
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
         args.putString("name", vehicleName);
         //args.putString(Constants.ODOMETER, mileage);
-        settingFragment = new GeneralSettingFragment();
+        settingFragment = new SettingFragmentCompat();
         settingFragment.setArguments(args);
 
         getSupportFragmentManager().beginTransaction()
@@ -92,29 +94,26 @@ public class GeneralSettingActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            // Respond to the action bar's Up/Home button
-            log.i("onOptionsItemSelected in GeneralSettingActivity");
-            //NavUtils.navigateUpFromSameTask(this); not working b/c it might be a different task?
-            //onBackPressed();
-            finish();
+            log.i("onOptionsItemSelected in SettingActivity");
+            onBackPressed();
             return true;
-
         }
 
         return super.onOptionsItemSelected(item);
     }
 
 
-    //
-    // PreferenceFragmentCompat.OnPrefrenceStartFragmentCallback invokes
-    // when clicking a preference which is linked t a fragment to display.
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
 
         switch(pref.getKey()) {
             case Constants.FAVORITE:
                 getSupportActionBar().setTitle("Favorite Station");
+                this.caller = caller;
                 break;
+
+            default:
+
         }
 
         return false;
@@ -124,7 +123,6 @@ public class GeneralSettingActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
         switch(key) {
-
             case Constants.VEHICLE_NAME:
                 EditTextPreference pref = (EditTextPreference)settingFragment.findPreference(key);
                 log.i("EditTextPref: %s", pref.getText());
