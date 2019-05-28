@@ -39,11 +39,12 @@ public class Constants {
     public static final String AVERAGE = "pref_et_avg";
     public static final String PAYMENT = "carman_pref_payment";
     public static final String FUEL = "carman_pref_ls_fuel";
-    public static final String DISTRICT = "carman_pref_dialog_district";
+    public static final String DISTRICT = "pref_dialog_district";
     public static final String DISTRICT_NAME = "carman_pref_dialog_district_name";
     public static final String RADIUS = "carman_pref_ls_station_radius";
     public static final String ORDER = "carman_pref_ls_station_order";
-    public static final String LOCATION_UPDATE = "carman_pref_cb_location_update";
+    public static final String LOCATION_UPDATE = "pref_location_update";
+    public static final String FAVORITE = "pref_favorite_list";
     public static final String SERVICE_PERIOD = "carman_pref_ls_service_period";
     public static final String SERVICE_ITEM_LIST = "com.ibnco.carman.serviceitem_";
     public static final String IMAGE = "carman_pref_change_image";

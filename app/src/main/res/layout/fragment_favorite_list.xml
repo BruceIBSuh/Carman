@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    tools:context="com.silverback.carman2.ExpenseActivity">
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:alpha="0.5"
+        android:padding="0dp"
+        android:elevation="2dp"
+        app:tabBackground="@android:color/background_dark"
+        app:tabIndicatorColor="@android:color/holo_orange_dark"
+        app:tabIndicatorHeight="3dp"
+        app:tabSelectedTextColor="@android:color/holo_orange_dark"
+        app:tabTextAppearance="@style/CustomTabText"
+        app:tabTextColor="@android:color/background_light" >
+    </com.google.android.material.tabs.TabLayout>
+
+    <!-- wrap_content doesn't work in ViewPager; it is always regarded as match_parent-->
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/viewpager_favorite"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="50dp"
+        android:background="#383838"/>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

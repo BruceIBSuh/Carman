@@ -10,23 +10,17 @@ import android.widget.FrameLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
-import com.silverback.carman2.adapters.ExpensePagerAdapter;
-import com.silverback.carman2.fragments.ExpenseFragment;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.ExpenseViewPager;
 
 public class ExpenseActivity extends BaseActivity implements
@@ -37,6 +31,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
 
     // Constants
+    private static final int MENU_ITEM_ID = 100;
     private static final int TAB_CARMAN = 1;
     private static final int TAB_BOARD = 2;
     private static final int NumOfPages = 5;
@@ -117,10 +112,11 @@ public class ExpenseActivity extends BaseActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, 1000, Menu.NONE, "SAVE");
-        MenuItem item = menu.findItem(1000);
+        menu.add(Menu.NONE, MENU_ITEM_ID, Menu.NONE, R.string.exp_menuitem_title_save);
+        MenuItem item = menu.findItem(MENU_ITEM_ID);
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         item.setIcon(R.drawable.ic_toolbar_save);
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -129,22 +125,30 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        if(item.getItemId() == android.R.id.home) {
-            Fragment fragment = pagerAdapter.getItem(currentPage);
-            switch(currentPage) {
-                case 0 : // GasManagerFragment
-                   ((GasManagerFragment)fragment).saveData();
-                   break;
-                case 1: // ServiceFragment
-                   //((ServiceFragment)fragment).saveData();
-                   break;
-            }
+        boolean isSaved = false;
+        switch(item.getItemId()) {
 
-            finish();
-            return true;
+            case android.R.id.home:
+                finish();
+                return true;
 
-        } else {
-            log.i("SAVE button clicked");
+            case MENU_ITEM_ID:
+                Fragment fragment = pagerAdapter.getItem(currentPage);
+                switch(currentPage) {
+                    case 0 : // GasManagerFragment
+                        isSaved = ((GasManagerFragment)fragment).saveData();
+                        break;
+                    case 1: // ServiceFragment
+                        //((ServiceFragment)fragment).saveData();
+                        break;
+                }
+
+                if(isSaved) {
+                    finish();
+                    return true;
+                }
+
+                return false;
         }
 
         return super.onOptionsItemSelected(item);

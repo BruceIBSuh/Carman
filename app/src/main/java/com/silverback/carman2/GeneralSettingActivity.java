@@ -5,6 +5,11 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
 
+import androidx.appcompat.widget.Toolbar;
+import androidx.preference.EditTextPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
+
 import com.silverback.carman2.fragments.GeneralSettingFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -12,15 +17,8 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NavUtils;
-import androidx.preference.EditTextPreference;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SwitchPreferenceCompat;
-
 import java.text.DecimalFormat;
+import java.util.List;
 
 
 public class GeneralSettingActivity extends BaseActivity implements
@@ -31,9 +29,10 @@ public class GeneralSettingActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralSettingActivity.class);
 
     // Objects
+
     private GeneralSettingFragment settingFragment;
     private PriceTask priceTask;
-    private String districtCode;
+    private String distCode;
     private DecimalFormat df;
 
 
@@ -46,27 +45,30 @@ public class GeneralSettingActivity extends BaseActivity implements
         Toolbar settingToolbar = findViewById(R.id.toolbar_setting);
         setSupportActionBar(settingToolbar);
         // Get a support ActionBar corresponding to this toolbar
-        ActionBar ab = getSupportActionBar();
+        //ActionBar ab = getSupportActionBar();
         // Enable the Up button which enables it as an action button such that when the user presses
         // it, the parent activity receives a call to onOptionsItemSelected().
-        ab.setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // DecimalFormat singleton instance from BaseActivity
         df = getDecimalFormatInstance();
 
-        settingFragment = new GeneralSettingFragment();
+
         // Passes District Code(Sigun Code) and vehicle nickname to GeneralSettingFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name.
-        districtCode = convJSONArrayToList().get(2);
+        List<String> district = convJSONArrayToList();
+        if(district == null) distCode = "0101";
+        else distCode = district.get(2);
         String vehicleName = mSettings.getString(Constants.VEHICLE_NAME, null);
 
         Bundle args = new Bundle();
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
         args.putString("name", vehicleName);
         //args.putString(Constants.ODOMETER, mileage);
-
+        settingFragment = new GeneralSettingFragment();
         settingFragment.setArguments(args);
+
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
                 .commit();
@@ -103,11 +105,18 @@ public class GeneralSettingActivity extends BaseActivity implements
     }
 
 
-    // Invoked by PreferenceFragmentCompat.OnPrefrenceStartFragmentCallback to display a new
-    // fragment when a linked preference is clicked
+    //
+    // PreferenceFragmentCompat.OnPrefrenceStartFragmentCallback invokes
+    // when clicking a preference which is linked t a fragment to display.
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        log.i("onPreferenceStartFragment");
+
+        switch(pref.getKey()) {
+            case Constants.FAVORITE:
+                getSupportActionBar().setTitle("Favorite Station");
+                break;
+        }
+
         return false;
     }
 
@@ -136,8 +145,8 @@ public class GeneralSettingActivity extends BaseActivity implements
                 break;
 
             case Constants.DISTRICT:
-                districtCode = convJSONArrayToList().get(2);
-                priceTask = ThreadManager.startPriceTask(this, districtCode);
+                distCode = convJSONArrayToList().get(2);
+                priceTask = ThreadManager.startPriceTask(this, distCode);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
 

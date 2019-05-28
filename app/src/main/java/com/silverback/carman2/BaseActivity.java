@@ -102,11 +102,17 @@ public class BaseActivity extends AppCompatActivity {
 
     // Sido name, sig
     protected List<String> convJSONArrayToList() {
+
         String jsonString = mSettings.getString(Constants.DISTRICT, null);
+        log.i("jsonString of District: %s", jsonString);
+        if(jsonString == null) {
+            JSONArray jsonArray = new JSONArray(Arrays.asList("서울", "종로구", "0101"));
+            jsonString = jsonArray.toString();
+        }
+
+
+
         List<String> distCodeList = new ArrayList<>();
-
-        if(jsonString == null) return null;
-
         try {
             JSONArray jsonArray = new JSONArray(jsonString);
             for(int i = 0; i < jsonArray.length(); i++) distCodeList.add(jsonArray.get(i).toString());
@@ -285,7 +291,7 @@ public class BaseActivity extends AppCompatActivity {
     }
     */
 
-    // Prgramatically, add titles and icons on the TabLayout, which must be invoked after
+    // Programatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
     @SuppressWarnings("ConstantConditions")
     protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
@@ -370,7 +376,7 @@ public class BaseActivity extends AppCompatActivity {
 
 
     // Measures the size of an android attribute based on ?attr/actionBarSize
-    protected float getActionbarHeight() {
+    public float getActionbarHeight() {
 
         TypedValue typedValue = new TypedValue();
 

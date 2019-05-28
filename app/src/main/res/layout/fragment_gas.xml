@@ -73,7 +73,7 @@
         android:id="@+id/imgbtn_favorite"
         android:layout_width="20dp"
         android:layout_height="20dp"
-        android:layout_marginStart="1dp"
+        android:layout_marginStart="3dp"
         android:background="@android:color/transparent"
         android:contentDescription="@null"
         android:src="@drawable/btn_favorite"
@@ -95,6 +95,19 @@
         app:layout_constraintStart_toStartOf="@+id/tv_date_time"
         app:layout_constraintTop_toTopOf="@+id/tv_label_name"
         tools:ignore="AutoFill" />
+
+    <ImageButton
+        android:id="@+id/imgbtn_refresh"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginEnd="3dp"
+        android:contentDescription="@null"
+        android:background="@android:color/transparent"
+        android:src="@drawable/btn_rotate"
+        android:scaleType="fitCenter"
+        app:layout_constraintTop_toTopOf="@+id/et_station_name"
+        app:layout_constraintBottom_toBottomOf="@+id/et_station_name"
+        app:layout_constraintEnd_toEndOf="@+id/et_station_name" />
 
     <EditText
         android:id="@+id/et_unit_price"
@@ -207,7 +220,7 @@
         android:layout_marginStart="8dp"
         android:background="@drawable/state_view_focus"
         android:padding="5dp"
-        android:text="0"
+        android:text="@string/gas_value_null"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_amount"
@@ -262,7 +275,7 @@
         android:layout_marginStart="8dp"
         android:padding="5dp"
         android:background="@drawable/state_view_focus"
-        android:text="0"
+        android:text="@string/gas_value_null"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_wash"
@@ -301,7 +314,7 @@
         android:layout_marginStart="8dp"
         android:padding="5dp"
         android:background="@drawable/state_view_focus"
-        android:text="0"
+        android:text="@string/gas_value_null"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_extra"
@@ -368,12 +381,13 @@
 
     <RatingBar
         android:id="@+id/ratingBar"
-        style="?android:attr/ratingBarStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:scaleX="1.5"
-        android:scaleY="1.5"
+        android:layout_marginStart="8dp"
+        android:isIndicator="false"
+        android:numStars="5"
+        android:scaleX=".7"
+        android:scaleY=".7"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
         app:layout_constraintStart_toEndOf="@+id/tv_label_rating"
         app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />

@@ -206,16 +206,7 @@ public class GasManagerFragment extends Fragment implements
         // calculate the amount by dividing payment with unit price
         fragmentSharedModel.getInputValue().observe(this, data -> {
             targetView.setText(data);
-            if(!TextUtils.isEmpty(etUnitPrice.getText()) && !TextUtils.isEmpty(tvGasPaid.getText())) {
-                try {
-                    int price = df.parse(etUnitPrice.getText().toString()).intValue();
-                    int paid = df.parse(tvGasPaid.getText().toString()).intValue();
-                    String gasAmount = String.valueOf(paid/price);
-                    tvGasLoaded.setText(gasAmount);
-                } catch(ParseException e) {
-                    log.e("ParseException: %s", e.getMessage());
-                }
-            }
+            calculateGasAmount();
 
         });
     }
@@ -244,11 +235,7 @@ public class GasManagerFragment extends Fragment implements
             case R.id.tv_payment:
                 args.putString("value", tvGasPaid.getText().toString());
                 break;
-            /*
-            case R.id.tv_amount:
-                args.putString("value", tvGasLoaded.getText().toString());
-                break;
-            */
+
             case R.id.tv_carwash:
                 args.putString("value", tvCarwashPaid.getText().toString());
                 break;
@@ -303,6 +290,8 @@ public class GasManagerFragment extends Fragment implements
         log.i("onStationInfoTaskComplete: %s", info.getNewAddrs());
         stnAddrs = info.getNewAddrs();
 
+        // Once a current station is fetched, retrieve the station info(station address) which
+        // is passed over to addFavoriteGeofence() in FavoriteGeofenceHelper.
         geofenceHelper.setGeofenceParam(GasStation, stnId, location);
         geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
@@ -316,7 +305,7 @@ public class GasManagerFragment extends Fragment implements
 
     /**
      * LoaderManager.LoaderCallback<Cursor> invokes the following 3 overriding methods
-     * to find if a fetched current station within MIN_RADIUS has already registered w/ Favorite.
+     * to find if a current station within MIN_RADIUS has already registered w/ Favorite.
      *
      * onCreateLoader()
      * @param id id for recognizing each loader when multiple loaders exist.
@@ -359,7 +348,7 @@ public class GasManagerFragment extends Fragment implements
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {}
 
-    // Favorite button click event handler for adding or removing the current station to or out of
+    // Invoked when Favorite button clicks in order to add or remove the current station to or out of
     // Favorite and Geofence list.
     private void registerFavorite() {
         log.i("registerFavorite");
@@ -372,20 +361,17 @@ public class GasManagerFragment extends Fragment implements
         } else {
             // Initiate StationInfoTask to fetch an address of the current station.
             stationInfoTask = ThreadManager.startStationInfoTask(this, stnName, stnId);
-            /*
-            geofenceHelper.setGeofenceParam(GasStation, stnId, location);
-            geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            */
         }
 
         isFavorite = !isFavorite;
     }
 
     // Method for inserting data to SQLite database
-    public void saveData(){
+    @SuppressWarnings("ConstantConditions")
+    public boolean saveData(){
 
-        if(!doEmptyCheck()) return;
+        // Null check for the parent activity
+        if(!doEmptyCheck()) return false;
 
         ContentValues values = new ContentValues();
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
@@ -407,9 +393,8 @@ public class GasManagerFragment extends Fragment implements
             values.put(DataProviderContract.EXTRA_PAYMENT_COLUMN, extra = df.parse(tvExtraPaid.getText().toString()).intValue());
             values.put(DataProviderContract.GAS_TOTAL_PAYMENT_COLUMN, gas + wash + extra);
 
-            // Null check for the parent activity
-            if(getActivity() == null) return;
 
+            // Insert a new record in the DB.
             Uri mNewUri = getActivity().getContentResolver().insert(DataProviderContract.GAS_TABLE_URI, values);
 
             // Set the value of mileage in the SharedPreferences in order to sync it with ServiceManagerActivity
@@ -424,6 +409,8 @@ public class GasManagerFragment extends Fragment implements
                 */
             }
 
+            return true;
+
         } catch (NumberFormatException e) {
             //Log.d(LOG_TAG, "NumberFormatException: " + e.getMessage());
         } catch (SQLiteException e) {
@@ -431,6 +418,8 @@ public class GasManagerFragment extends Fragment implements
         } catch (ParseException e) {
             e.printStackTrace();
         }
+
+        return false;
 
     }
 
@@ -463,5 +452,24 @@ public class GasManagerFragment extends Fragment implements
         }
 
         return true;
+    }
+
+    // Calculate an gas amount loaded with a given payment and unit price.  Unless a unit price is
+    // given, toast a message to ask for inputting the price.
+    private void calculateGasAmount() {
+
+        if(TextUtils.isEmpty(etUnitPrice.getText())) {
+            Toast.makeText(getActivity(), R.string.toast_unit_price, Toast.LENGTH_SHORT).show();
+
+        } else if(!TextUtils.isEmpty(etUnitPrice.getText()) && !TextUtils.isEmpty(tvGasPaid.getText())) {
+            try {
+                int price = df.parse(etUnitPrice.getText().toString()).intValue();
+                int paid = df.parse(tvGasPaid.getText().toString()).intValue();
+                String gasAmount = String.valueOf(paid/price);
+                tvGasLoaded.setText(gasAmount);
+            } catch(ParseException e) {
+                log.e("ParseException: %s", e.getMessage());
+            }
+        }
     }
 }

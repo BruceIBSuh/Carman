@@ -20,9 +20,6 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import java.text.DecimalFormat;
 
-/**
- * A simple {@link PreferenceFragmentCompat} subclass.
- */
 public class GeneralSettingFragment extends PreferenceFragmentCompat implements
         Preference.OnPreferenceClickListener {
 
@@ -48,26 +45,27 @@ public class GeneralSettingFragment extends PreferenceFragmentCompat implements
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
 
-        // Custom SummaryProvider with Lambda expression for making numbers decimal-formatted.
+        // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
         // and ListPreference.
         EditTextPreference etMileage = findPreference(Constants.ODOMETER);
-        etMileage.setSummaryProvider((Preference preference) -> {
-            int mileage = Integer.valueOf(((EditTextPreference)preference).getText());
-            return String.format("%s%5s", df.format(mileage), "km");
-        });
+        // Custom SummaryProvider overriding provideSummary() with Lambda expression.
+        if(etMileage != null) {
+            etMileage.setSummaryProvider(preference -> String.format("%s%3s", etMileage.getText(), "km"));
+        }
 
         EditTextPreference etAvg = findPreference(Constants.AVERAGE);
-        etAvg.setSummaryProvider((Preference preference) -> {
-                int avg = Integer.valueOf(((EditTextPreference)preference).getText());
-                return String.format("%s%5s",df.format(avg), "km");
-        });
+        //etAvg.setSummaryProvider(EditTextPreference.SimpleSummaryProvider.getInstance());
+        if(etAvg != null) {
+            etAvg.setSummaryProvider(preference -> String.format("%s%3s", etAvg.getText(), "km"));
+        }
 
 
-        SpinnerDialogPreference spinnerPref = findPreference("pref_dialog_district");
+        SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
-        SwitchPreferenceCompat switchPref = findPreference("pref_location_autoupdate");
+        SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
+
 
     }
 

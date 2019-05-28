@@ -16,6 +16,7 @@ import org.json.JSONArray;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 public class IntroActivity extends BaseActivity implements View.OnClickListener {
 
@@ -71,10 +72,13 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         mProgBar.setVisibility(View.VISIBLE);
         File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
+        String distCode = null;
 
         if(checkUpdateOilPrice() || !file.exists()) {
-            String distCode = convJSONArrayToList().get(2);
-            log.i("DistCode: %s", distCode);
+
+            List<String> district = convJSONArrayToList();
+            if(district == null) distCode = "0101";
+            else distCode = district.get(2);
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
             // Consider whether the threads should be interrupted or not.

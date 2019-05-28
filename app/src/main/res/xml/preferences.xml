@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<androidx.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
         app:title="@string/pref_category_basic_info"
@@ -12,7 +13,8 @@
 
         <EditTextPreference
             app:key="pref_model"
-            app:title="@string/setting_model" />
+            app:title="@string/setting_model"
+            app:useSimpleSummaryProvider="true" />
 
         <ListPreference
             app:title="연료"
@@ -24,7 +26,7 @@
 
         <EditTextPreference
             app:key="pref_odometer"
-            app:title="누적 주행거리"
+            app:title="누적 주행거리(Odometer)"
             app:defaultValue="0" />
 
         <EditTextPreference
@@ -55,7 +57,7 @@
             app:defaultValue="2500"/>
 
         <SwitchPreferenceCompat
-            app:key="pref_location_autoupdate"
+            app:key="pref_location_update"
             app:title="@string/pref_title_autoupdate"
             app:summary="@string/pref_summary_autoupdate" />
 
@@ -67,8 +69,9 @@
         app:key="pref_favorites" >
 
         <Preference
+            app:fragment="com.silverback.carman2.fragments.SettingFavoritePagerFragment"
             app:title="@string/pref_favorite_station"
-            app:key="pref_favorite_station" />
+            app:key="pref_favorite_list" />
 
         <Preference
             app:title="@string/pref_favorite_carcenter"

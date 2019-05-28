@@ -49,7 +49,7 @@
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
         <activity android:name=".GeneralSettingActivity"
-            android:label="@string/setting_label"
+            android:label="@string/setting_toolbar_title"
             android:parentActivityName=".MainActivity">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
