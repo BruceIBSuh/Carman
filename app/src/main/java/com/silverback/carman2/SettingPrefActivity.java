@@ -6,12 +6,10 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.silverback.carman2.fragments.SettingFavoriteFragment;
 import com.silverback.carman2.fragments.SettingFragmentCompat;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -23,12 +21,12 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 
-public class SettingActivity extends BaseActivity implements
+public class SettingPrefActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefActivity.class);
 
     // Objects
     private PreferenceFragmentCompat caller;
@@ -94,7 +92,7 @@ public class SettingActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingActivity");
+            log.i("onOptionsItemSelected in SettingPrefActivity");
             onBackPressed();
             return true;
         }
@@ -143,6 +141,7 @@ public class SettingActivity extends BaseActivity implements
                 break;
 
             case Constants.DISTRICT:
+                log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
                 priceTask = ThreadManager.startPriceTask(this, distCode);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();

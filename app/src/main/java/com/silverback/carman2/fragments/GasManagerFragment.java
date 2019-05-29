@@ -64,7 +64,7 @@ public class GasManagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
     // Constants
-    private static final int GasStation = 1;
+    private static final int GasStation = 1; //favorite gas provider category
 
     // Objects
     //private StationInfoModel stnInfoModel;

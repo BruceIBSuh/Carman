@@ -46,7 +46,10 @@ public class FireStoreGetRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         stnList = task.getStationList();
+        if(stnList.size() == 0) return;
 
+        // Bugs have occurred many times here. NullPointerException is brought about due to
+        //
         for(Opinet.GasStnParcelable station : stnList) {
 
             Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());
