@@ -127,7 +127,7 @@ public class MainActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_setting:
-                startActivity(new Intent(MainActivity.this, SettingPrefActivity.class));
+                startActivity(new Intent(MainActivity.this, SettingActivity.class));
                 return true;
 
             default:

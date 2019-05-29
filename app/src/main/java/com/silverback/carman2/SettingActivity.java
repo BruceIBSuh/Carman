@@ -21,12 +21,12 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 
-public class SettingPrefActivity extends BaseActivity implements
+public class SettingActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
 
     // Objects
     private PreferenceFragmentCompat caller;
@@ -92,7 +92,7 @@ public class SettingPrefActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingPrefActivity");
+            log.i("onOptionsItemSelected in SettingActivity");
             onBackPressed();
             return true;
         }
@@ -100,14 +100,19 @@ public class SettingPrefActivity extends BaseActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        log.d("onPreferenceStartFragment");
 
         switch(pref.getKey()) {
             case Constants.FAVORITE:
+                // onPreferenceStartFragment is not implemented in the parent activity -
+                // attempting to use a fallback implementation.
+                // You should implement this method so that you can configure the new fragment
+                // that will be displayed, and set a transition between the fragments.
                 getSupportActionBar().setTitle("Favorite Station");
-                this.caller = caller;
+
                 break;
 
             default:

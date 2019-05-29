@@ -49,12 +49,16 @@ public class FavoriteGasFragment extends Fragment implements LoaderManager.Loade
                              Bundle savedInstanceState) {
 
         this.context = getContext();
-
         LoaderManager loaderManager = LoaderManager.getInstance(this);
         loaderManager.initLoader(1, null, this);
 
+        FavoriteCursorAdapter mAdapter = new FavoriteCursorAdapter();
+
+
         View localView = inflater.inflate(R.layout.fragment_favorite_gas, container, false);
-        recyclerView = localView.findViewById(R.id.recycler_favorite);
+        recyclerView = localView.findViewById(R.id.recycler_favorite_list);
+        recyclerView.setAdapter(mAdapter);
+
 
         // Inflate the layout for this fragment
         return localView;
@@ -80,15 +84,8 @@ public class FavoriteGasFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
         log.i("Loaded");
-        FavoriteCursorAdapter adapter = new FavoriteCursorAdapter(cursor);
-        recyclerView.setAdapter(adapter);
-        /*
-        if(cursor.moveToLast()) {
-            int columnIndex = cursor.getColumnIndex(DataProviderContract.FAVORITE_PROVIDER_ADDRS);
-            String addrs = cursor.getString(columnIndex);
-            log.i("Favorite Station address : %s", addrs);
-        }
-        */
+        //FavoriteCursorAdapter adapter = new FavoriteCursorAdapter(cursor);
+        //recyclerView.setAdapter(adapter);
     }
 
     @Override

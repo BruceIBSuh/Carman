@@ -21,10 +21,11 @@ public class StationListTask extends ThreadTask implements
     // Constants
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
     static final int DOWNLAOD_CURRENT_STATION_COMPLETE = 2;
+    static final int FIRESTORE_GET_COMPLETE = 3;
+    static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
     static final int DOWNLOAD_CURRENT_STATION_FAILED = -2;
     static final int DOWNLOAD_NO_STATION = -3;
-    static final int FIRESTORE_GET_COMPLETE = 3;
 
     // Objects
     private Runnable mStationListRunnable;
@@ -110,8 +111,13 @@ public class StationListTask extends ThreadTask implements
                 break;
             */
             case FIRESTORE_GET_COMPLETE:
-                log.i("FireStore_Set_Complete");
+                log.i("FireStore_Get_Complete");
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
+                break;
+
+            case FIRESTORE_SET_COMPLETE:
+                log.i("FireStore Set Complete");
+                outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
                 break;
             /*
             case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:

@@ -25,10 +25,14 @@ public class FavoriteCursorAdapter extends RecyclerView.Adapter<FavoriteItemHold
     private Cursor cursor;
 
     // Constructor
+    public FavoriteCursorAdapter() {}
+
+    /*
     public FavoriteCursorAdapter(Cursor cursor) {
         log.i("FavoriteCursorAdapter constructor");
         this.cursor = cursor;
     }
+    */
 
     @NonNull
     @Override

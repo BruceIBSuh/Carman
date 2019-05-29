@@ -7,9 +7,15 @@ import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.silverback.carman2.fragments.FavoriteGasFragment;
 import com.silverback.carman2.fragments.FavoriteServiceFragment;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 
 public class SettingFavoritePagerAdapter extends FragmentPagerAdapter {
 
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoritePagerAdapter.class);
+
+    // Constructor
     public SettingFavoritePagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }

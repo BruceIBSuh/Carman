@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
-import com.silverback.carman2.SettingPrefActivity;
+import com.silverback.carman2.SettingActivity;
 import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -47,6 +47,7 @@ public class ThreadManager {
     static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
 
     static final int FIRESTORE_STATION_GET_COMPLETED = 120;
+    static final int FIRESTORE_STATION_SET_COMPLETED = 130;
 
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
@@ -190,8 +191,8 @@ public class ThreadManager {
                         // Each callback method according to the caller activity.
                         if(priceTask.getParentActivity() instanceof IntroActivity) {
                             ((IntroActivity)priceTask.getParentActivity()).onPriceTaskComplete();
-                        } else if(priceTask.getParentActivity() instanceof SettingPrefActivity) {
-                            ((SettingPrefActivity) priceTask.getParentActivity()).onPriceTaskComplete();
+                        } else if(priceTask.getParentActivity() instanceof SettingActivity) {
+                            ((SettingActivity) priceTask.getParentActivity()).onPriceTaskComplete();
                         }
 
                         break;
@@ -227,13 +228,16 @@ public class ThreadManager {
                         stationListTask = (StationListTask)msg.obj;
                         List<Opinet.GasStnParcelable> stnList = stationListTask.getStationList();
                         mStationTaskListener.onStationListTaskComplete(stnList);
-                        recycleTask(stationListTask);
+                        //recycleTask(stationListTask);
                         break;
 
                     case DOWNLOAD_NEAR_STATIONS_FAILED:
                         mStationTaskListener.onTaskFailure();
-                        recycleTask((StationListTask)msg.obj);
+                        //recycleTask((StationListTask)msg.obj);
                         break;
+
+                    case FIRESTORE_STATION_SET_COMPLETED:
+                        recycleTask((StationListTask)msg.obj);
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
                         stationInfoTask = (StationInfoTask)msg.obj;
@@ -496,7 +500,7 @@ public class ThreadManager {
         return task;
     }
 
-    // Retrieves Sigun list with a sido code given in SettingPrefActivity
+    // Retrieves Sigun list with a sido code given in SettingActivity
     public static LoadDistCodeTask loadSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
 
         LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mDecodeWorkQueue.poll();

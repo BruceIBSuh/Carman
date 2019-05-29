@@ -1,19 +1,13 @@
 package com.silverback.carman2.fragments;
 
 
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
@@ -21,7 +15,6 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SettingFavoritePagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.DataProviderContract;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -46,7 +39,8 @@ public class SettingFavoriteFragment extends Fragment implements
         // Inflate the layout for this fragment
         View localView = inflater.inflate(R.layout.fragment_favorite_pager, container, false);
 
-        // TabLayout
+        // TabLayout. addTab(tabLayout.newTab().setText("hello") doesn't work when ViewPager
+        // is combined by invoking setUpWithViewPager.
         TabLayout tabLayout = localView.findViewById(R.id.tabLayout);
         tabLayout.addTab(tabLayout.newTab());
         tabLayout.addTab(tabLayout.newTab());
@@ -57,7 +51,6 @@ public class SettingFavoriteFragment extends Fragment implements
         SettingFavoritePagerAdapter adapter = new SettingFavoritePagerAdapter(getFragmentManager());
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(this);
-
         // setupWithViewPager() prevents tab titles from displaying. To avoid this, override
         // onPageTitle() defined in FragmentPagerAdapter.
         tabLayout.setupWithViewPager(viewPager);

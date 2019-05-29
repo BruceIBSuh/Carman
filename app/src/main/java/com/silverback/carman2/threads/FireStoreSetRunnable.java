@@ -38,6 +38,7 @@ public class FireStoreSetRunnable implements Runnable {
     public interface FireStoreSetMethods {
         void setStationTaskThread(Thread thread);
         List<Opinet.GasStnParcelable> getStationList();
+        void handleStationTaskState(int state);
     }
 
     // Constructor
@@ -105,6 +106,8 @@ public class FireStoreSetRunnable implements Runnable {
                     docRef.set(data, SetOptions.merge());
                     //batch.set(docRef, data, SetOptions.merge());
                 }
+
+                task.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
             });
         }
 
