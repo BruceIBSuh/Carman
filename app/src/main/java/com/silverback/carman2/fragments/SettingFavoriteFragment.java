@@ -60,16 +60,7 @@ public class SettingFavoriteFragment extends Fragment implements
 
 
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        switch(position) {
-            case 0: //favorite gas station
-                //loaderManager.initLoader(1, null, this);
-                break;
-            case 1: //favorite service station
-                //loaderManager.initLoader(2, null, this);
-                break;
-        }
-    }
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
     @Override
     public void onPageSelected(int position) {}
     @Override

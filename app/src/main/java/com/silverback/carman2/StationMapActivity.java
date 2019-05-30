@@ -161,7 +161,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingActivity");
+            log.i("onOptionsItemSelected in SettingPreferenceActivity");
             finish();
             return true;
         }

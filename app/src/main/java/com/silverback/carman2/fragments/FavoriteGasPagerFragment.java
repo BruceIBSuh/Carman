@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
@@ -19,7 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.FavoriteCursorAdapter;
+import com.silverback.carman2.adapters.SettingFavoriteRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.DataProviderContract;
@@ -27,10 +28,10 @@ import com.silverback.carman2.models.DataProviderContract;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FavoriteGasFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class FavoriteGasPagerFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGasFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGasPagerFragment.class);
 
     // Objects
     private Context context;
@@ -39,7 +40,7 @@ public class FavoriteGasFragment extends Fragment implements LoaderManager.Loade
     private RecyclerView recyclerView;
 
     // Constructor
-    public FavoriteGasFragment() {
+    public FavoriteGasPagerFragment() {
         // Required empty public constructor
     }
 
@@ -52,13 +53,11 @@ public class FavoriteGasFragment extends Fragment implements LoaderManager.Loade
         LoaderManager loaderManager = LoaderManager.getInstance(this);
         loaderManager.initLoader(1, null, this);
 
-        FavoriteCursorAdapter mAdapter = new FavoriteCursorAdapter();
+        View localView = inflater.inflate(R.layout.fragment_pager_favorite_gas, container, false);
 
-
-        View localView = inflater.inflate(R.layout.fragment_favorite_gas, container, false);
-        recyclerView = localView.findViewById(R.id.recycler_favorite_list);
-        recyclerView.setAdapter(mAdapter);
-
+        recyclerView = localView.findViewById(R.id.recycler_favorite);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(layoutManager);
 
         // Inflate the layout for this fragment
         return localView;
@@ -84,8 +83,8 @@ public class FavoriteGasFragment extends Fragment implements LoaderManager.Loade
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
         log.i("Loaded");
-        //FavoriteCursorAdapter adapter = new FavoriteCursorAdapter(cursor);
-        //recyclerView.setAdapter(adapter);
+        SettingFavoriteRecyclerAdapter adapter = new SettingFavoriteRecyclerAdapter(cursor);
+        recyclerView.setAdapter(adapter);
     }
 
     @Override

@@ -55,6 +55,7 @@ public class StationListRunnable implements Runnable{
         Location getStationLocation();
         void setStationTaskThread(Thread thread);
         void setStationList(List<Opinet.GasStnParcelable> list);
+        void setCurrentStation(Opinet.GasStnParcelable station);
         void handleStationTaskState(int state);
     }
 
@@ -93,8 +94,8 @@ public class StationListRunnable implements Runnable{
 
         // Complete the OPINET_ARUND URL w/ the given requests
         final String OPINET_AROUND = OPINET
-                + "&x=" + String.valueOf(x)
-                + "&y=" + String.valueOf(y)
+                + "&x=" + x
+                + "&y=" + y
                 + "&radius=" + radius
                 + "&sort=" + sort // 1: price 2: distance
                 + "&prodcd=" + fuelCode;
@@ -134,18 +135,17 @@ public class StationListRunnable implements Runnable{
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
             if(mStationList.size() > 0) {
-
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
-                    mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                    //mTask.setStationList(mStationList);
+                    mTask.setCurrentStation(mStationList.get(0));
+                        mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
 
                 } else {
                     Uri uri = saveNearStationList(mStationList);
                     if (uri != null) {
                         // Addition info from FireStore database in which station data have been accumulated.
                         // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
-                        //setStationInfoFromFireStore();
                         mTask.setStationList(mStationList);
                         mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
                     }

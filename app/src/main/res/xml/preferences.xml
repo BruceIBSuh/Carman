@@ -51,7 +51,7 @@
 
         <ListPreference
             app:title="@string/pref_location_radius"
-            app:key="pref_location_radius"
+            app:key="pref_searching_radius"
             app:entries="@array/list_station_radius_name"
             app:entryValues="@array/list_station_radius_value"
             app:defaultValue="2500"/>

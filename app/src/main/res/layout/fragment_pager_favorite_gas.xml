@@ -5,11 +5,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.FavoriteGasFragment">
+    tools:context=".fragments.FavoriteGasPagerFragment">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_favorite_list"
+        android:id="@+id/recycler_favorite"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="#E0E0E0"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

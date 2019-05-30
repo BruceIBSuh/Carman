@@ -2,9 +2,11 @@ package com.silverback.carman2.fragments;
 
 
 import android.os.Bundle;
+import android.text.InputType;
 
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
@@ -19,11 +21,10 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import java.text.DecimalFormat;
 
-public class SettingFragmentCompat extends PreferenceFragmentCompat implements
-        Preference.OnPreferenceClickListener {
+public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFragmentCompat.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
     // Objects
     private DecimalFormat df;
@@ -50,13 +51,20 @@ public class SettingFragmentCompat extends PreferenceFragmentCompat implements
         EditTextPreference etMileage = findPreference(Constants.ODOMETER);
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         if(etMileage != null) {
+            etMileage.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
             etMileage.setSummaryProvider(preference -> String.format("%s%3s", etMileage.getText(), "km"));
         }
 
         EditTextPreference etAvg = findPreference(Constants.AVERAGE);
         //etAvg.setSummaryProvider(EditTextPreference.SimpleSummaryProvider.getInstance());
         if(etAvg != null) {
+            etAvg.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
             etAvg.setSummaryProvider(preference -> String.format("%s%3s", etAvg.getText(), "km"));
+        }
+
+        ListPreference searchingRadius = findPreference(Constants.RADIUS);
+        if(searchingRadius != null) {
+            searchingRadius.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
 
 
@@ -89,20 +97,5 @@ public class SettingFragmentCompat extends PreferenceFragmentCompat implements
             super.onDisplayPreferenceDialog(pref);
         }
 
-    }
-
-    // Interface definition of a callback(Preference.OnPreferenceClickListener) to be invoked
-    // when a Preference is clicked.
-    @Override
-    public boolean onPreferenceClick(Preference preference) {
-        log.i("onPreferenceClick");
-
-        switch(preference.getKey()) {
-            case "pref_fuel":
-                log.i("Pref for Fuel: %s", preference.getKey());
-                break;
-        }
-
-        return true;
     }
 }

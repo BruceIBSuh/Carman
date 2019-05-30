@@ -49,9 +49,12 @@ import static com.silverback.carman2.BaseActivity.formatMilliseconds;
  */
 public class GeneralFragment extends Fragment implements
         View.OnClickListener,
-        RecyclerView.OnItemTouchListener, StationListAdapter.OnRecyclerItemClickListener,
+        RecyclerView.OnItemTouchListener,
+        StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener,
-        ThreadManager.OnStationTaskListener, ThreadManager.OnLocationTaskListener {
+        ThreadManager.OnLocationTaskListener,
+        ThreadManager.OnStationTaskListener,
+        ThreadManager.OnStationInfoListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);

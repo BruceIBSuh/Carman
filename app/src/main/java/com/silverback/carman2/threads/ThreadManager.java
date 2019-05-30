@@ -10,8 +10,9 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
-import com.silverback.carman2.SettingActivity;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
+import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -87,13 +88,23 @@ public class ThreadManager {
     public interface OnStationTaskListener {
         //void onLocationFetched(Location result);
         void onStationListTaskComplete(List<Opinet.GasStnParcelable> result);
-        void onStationInfoTaskComplete(Opinet.GasStationInfo mapInfo);
+        void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo);
         void onTaskFailure();
+    }
+
+    public interface OnCurrentStationListener {
+        void onCurrentStationTaskComplete(Opinet.GasStnParcelable result);
+    }
+
+    public interface OnStationInfoListener {
+        void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo);
     }
 
     // Objects
     private OnLocationTaskListener mLocationTaskListener;
     private OnStationTaskListener mStationTaskListener;
+    private OnStationInfoListener mStationInfoListener;
+    private OnCurrentStationListener mCurrentStationListener;
 
     // A queue of Runnables
     //private final BlockingQueue<Runnable> mOpinetDownloadWorkQueue, mLoadPriceWorkQueue;
@@ -191,8 +202,8 @@ public class ThreadManager {
                         // Each callback method according to the caller activity.
                         if(priceTask.getParentActivity() instanceof IntroActivity) {
                             ((IntroActivity)priceTask.getParentActivity()).onPriceTaskComplete();
-                        } else if(priceTask.getParentActivity() instanceof SettingActivity) {
-                            ((SettingActivity) priceTask.getParentActivity()).onPriceTaskComplete();
+                        } else if(priceTask.getParentActivity() instanceof SettingPreferenceActivity) {
+                            ((SettingPreferenceActivity) priceTask.getParentActivity()).onPriceTaskComplete();
                         }
 
                         break;
@@ -233,16 +244,24 @@ public class ThreadManager {
 
                     case DOWNLOAD_NEAR_STATIONS_FAILED:
                         mStationTaskListener.onTaskFailure();
-                        //recycleTask((StationListTask)msg.obj);
+                        recycleTask((StationListTask)msg.obj);
                         break;
 
                     case FIRESTORE_STATION_SET_COMPLETED:
                         recycleTask((StationListTask)msg.obj);
+                        break;
+
+                    case DOWNLOAD_CURRENT_STATION_COMPLETED:
+                        stationListTask = (StationListTask)msg.obj;
+                        Opinet.GasStnParcelable stnParcelable = stationListTask.getCurrentStation();
+                        mCurrentStationListener.onCurrentStationTaskComplete(stnParcelable);
+                        recycleTask(stationListTask);
+                        break;
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
                         stationInfoTask = (StationInfoTask)msg.obj;
                         Opinet.GasStationInfo info = stationInfoTask.getStationInfo();
-                        mStationTaskListener.onStationInfoTaskComplete(info);
+                        mStationInfoListener.onStationInfoTaskComplete(info);
                         recycleTask(stationInfoTask);
                         break;
 
@@ -500,7 +519,7 @@ public class ThreadManager {
         return task;
     }
 
-    // Retrieves Sigun list with a sido code given in SettingActivity
+    // Retrieves Sigun list with a sido code given in SettingPreferenceActivity
     public static LoadDistCodeTask loadSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
 
         LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mDecodeWorkQueue.poll();
@@ -617,8 +636,14 @@ public class ThreadManager {
             stationListTask = new StationListTask(fragment.getContext());
         }
 
-        // Attach OnStationTaskListener
-        if(sInstance.mStationTaskListener == null) {
+        if(fragment instanceof GasManagerFragment && sInstance.mCurrentStationListener == null) {
+            try {
+                sInstance.mCurrentStationListener = (OnCurrentStationListener)fragment;
+            } catch(ClassCastException e) {
+                throw new ClassCastException(fragment + " must implement OnCurrentStationListener");
+            }
+
+        } else if(sInstance.mStationTaskListener == null) {
             try {
                 log.i("Fragment: %s", fragment);
                 sInstance.mStationTaskListener = (OnStationTaskListener)fragment;
@@ -639,9 +664,9 @@ public class ThreadManager {
         if(stationTask == null) stationTask = new StationInfoTask(fragment.getContext());
 
         // Attach OnCompleteInfoTaskListener
-        if(sInstance.mStationTaskListener == null) {
+        if(sInstance.mStationInfoListener == null) {
             try {
-                sInstance.mStationTaskListener = (OnStationTaskListener)fragment;
+                sInstance.mStationInfoListener = (OnStationInfoListener) fragment;
             } catch (ClassCastException e) {
                 throw new ClassCastException(fragment + " must implement OnStationInfoTaskListener");
             }
@@ -726,17 +751,18 @@ public class ThreadManager {
         if(task instanceof LocationTask) {
             ((LocationTask) task).recycle();
             mLocationTaskQueue.offer((LocationTask) task);
-            mLocationTaskListener = null;
+            if(mLocationTaskListener != null) mLocationTaskListener = null;
 
         }else if(task instanceof StationListTask) {
             ((StationListTask)task).recycle();
             mStationListTaskQueue.offer((StationListTask)task);
             mStationTaskListener = null;
+            if(mCurrentStationListener != null) mCurrentStationListener = null;
 
         }else if(task instanceof StationInfoTask) {
             ((StationInfoTask)task).recycle();
             mStationInfoTaskQueue.offer((StationInfoTask)task);
-            mStationTaskListener = null;
+            mStationInfoListener = null;
         }
 
     }

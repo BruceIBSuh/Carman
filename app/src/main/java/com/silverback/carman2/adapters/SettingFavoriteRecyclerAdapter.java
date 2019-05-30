@@ -15,24 +15,21 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
-public class FavoriteCursorAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
+public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteCursorAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteRecyclerAdapter.class);
 
     // Objects
     private Context context;
     private Cursor cursor;
 
     // Constructor
-    public FavoriteCursorAdapter() {}
-
-    /*
-    public FavoriteCursorAdapter(Cursor cursor) {
-        log.i("FavoriteCursorAdapter constructor");
+    public SettingFavoriteRecyclerAdapter(Cursor cursor) {
+        log.i("SettingFavoriteRecyclerAdapter constructor");
         this.cursor = cursor;
     }
-    */
+
 
     @NonNull
     @Override

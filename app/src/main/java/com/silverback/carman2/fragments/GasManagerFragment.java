@@ -27,7 +27,6 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.StationInfoModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
@@ -40,7 +39,6 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
@@ -57,8 +55,8 @@ import androidx.loader.content.Loader;
 public class GasManagerFragment extends Fragment implements
         LoaderManager.LoaderCallbacks<Cursor>,
         View.OnClickListener,
-        ThreadManager.OnLocationTaskListener,
-        ThreadManager.OnStationTaskListener {
+        ThreadManager.OnLocationTaskListener, ThreadManager.OnStationInfoListener,
+        ThreadManager.OnCurrentStationListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
@@ -134,7 +132,7 @@ public class GasManagerFragment extends Fragment implements
         df = BaseActivity.getDecimalFormatInstance();
 
         // Inflate the layout for this fragment
-        final View localView = inflater.inflate(R.layout.fragment_gas, container, false);
+        final View localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         etStnName = localView.findViewById(R.id.et_station_name);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
@@ -254,7 +252,7 @@ public class GasManagerFragment extends Fragment implements
 
     }
 
-    // ThreadManager.OnLocationTaskListener invokes
+    // The following 3 methods are invoked by the listeners in ThreadManager.
     @Override
     public void onLocationFetched(Location location) {
         log.i("GasManagerFragment Location: %s", defaultParams[1]);
@@ -262,45 +260,34 @@ public class GasManagerFragment extends Fragment implements
         stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
     }
 
-    // ThreadManager.OnStationTaskListener invokes the following 3 callback methods
-    // to get the current statin located within MIN_RADIUS.
     @Override
-    public void onStationListTaskComplete(List<Opinet.GasStnParcelable> result) {
+    public void onCurrentStationTaskComplete(Opinet.GasStnParcelable result) {
+        if(result == null) return;
+        stnName = result.getStnName();
+        stnId = result.getStnId();
+        stnCode = result.getStnCode();
 
-        if(result.size() == 0) return;
-
-        stnName = result.get(0).getStnName();
-        stnId = result.get(0).getStnId();
-        stnCode = result.get(0).getStnCode();
-
-        etStnName.setText(stnName);
-        etUnitPrice.setText(String.valueOf(result.get(0).getStnPrice()));
+        etStnName.setText(result.getStnName());
+        etUnitPrice.setText(String.valueOf(result.getStnPrice()));
         etStnName.setCursorVisible(false);
         etUnitPrice.setCursorVisible(false);
 
-        // Check if the curren station has registered with Favorite.
         Bundle bundle = new Bundle();
-        bundle.putString("stnName", result.get(0).getStnName());
+        bundle.putString("stnName", result.getStnName());
         loaderManager = LoaderManager.getInstance(this);
         loaderManager.initLoader(0, bundle, this);
     }
 
     @Override
-    public void onStationInfoTaskComplete(Opinet.GasStationInfo info) {
-        log.i("onStationInfoTaskComplete: %s", info.getNewAddrs());
-        stnAddrs = info.getNewAddrs();
+    public void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo) {
+        log.i("onStationInfoTaskComplete: %s", stnInfo.getNewAddrs());
+        stnAddrs = stnInfo.getNewAddrs();
 
         // Once a current station is fetched, retrieve the station info(station address) which
         // is passed over to addFavoriteGeofence() in FavoriteGeofenceHelper.
         geofenceHelper.setGeofenceParam(GasStation, stnId, location);
         geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-
-    }
-
-    @Override
-    public void onTaskFailure() {
-        log.i("onTaskFailure");
     }
 
     /**
@@ -472,4 +459,7 @@ public class GasManagerFragment extends Fragment implements
             }
         }
     }
+
+
+
 }

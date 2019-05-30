@@ -6,11 +6,12 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.silverback.carman2.fragments.SettingFragmentCompat;
+import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -21,16 +22,16 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 
-public class SettingActivity extends BaseActivity implements
+public class SettingPreferenceActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceActivity.class);
 
     // Objects
     private PreferenceFragmentCompat caller;
-    private SettingFragmentCompat settingFragment;
+    private SettingPreferenceFragment settingFragment;
     private PriceTask priceTask;
     private String distCode;
     private DecimalFormat df;
@@ -54,7 +55,7 @@ public class SettingActivity extends BaseActivity implements
         df = getDecimalFormatInstance();
 
 
-        // Passes District Code(Sigun Code) and vehicle nickname to SettingFragmentCompat for
+        // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name.
         List<String> district = convJSONArrayToList();
@@ -66,7 +67,7 @@ public class SettingActivity extends BaseActivity implements
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
         args.putString("name", vehicleName);
         //args.putString(Constants.ODOMETER, mileage);
-        settingFragment = new SettingFragmentCompat();
+        settingFragment = new SettingPreferenceFragment();
         settingFragment.setArguments(args);
 
         getSupportFragmentManager().beginTransaction()
@@ -92,7 +93,7 @@ public class SettingActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingActivity");
+            log.i("onOptionsItemSelected in SettingPreferenceActivity");
             onBackPressed();
             return true;
         }
@@ -100,26 +101,27 @@ public class SettingActivity extends BaseActivity implements
         return super.onOptionsItemSelected(item);
     }
 
+    // If you do not implement onPreferenceStartFragment(), a fallback implementation is used instead.
+    // While this works in most cases, we strongly recommend implementing this method so you can fully
+    // configure transitions between Fragment objects and update the title displayed in your
+    // Activity toolbar, if applicable.
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        log.d("onPreferenceStartFragment");
+        log.d("onPreferenceStartFragment: title - %s", pref.getTitle());
+        final Bundle args = pref.getExtras();
+        final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
+                .instantiate(getClassLoader(), pref.getFragment());
+        fragment.setArguments(args);
+        fragment.setTargetFragment(caller, 0);
 
-        switch(pref.getKey()) {
-            case Constants.FAVORITE:
-                // onPreferenceStartFragment is not implemented in the parent activity -
-                // attempting to use a fallback implementation.
-                // You should implement this method so that you can configure the new fragment
-                // that will be displayed, and set a transition between the fragments.
-                getSupportActionBar().setTitle("Favorite Station");
+        getSupportActionBar().setTitle(pref.getTitle());
 
-                break;
-
-            default:
-
-        }
-
-        return false;
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.frame_setting, fragment)
+                .addToBackStack(null)
+                .commit();
+        return true;
     }
 
     @Override

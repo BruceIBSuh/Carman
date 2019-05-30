@@ -20,7 +20,7 @@ public class StationListTask extends ThreadTask implements
 
     // Constants
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
-    static final int DOWNLAOD_CURRENT_STATION_COMPLETE = 2;
+    static final int DOWNLOAD_CURRENT_STATION_COMPLETE = 2;
     static final int FIRESTORE_GET_COMPLETE = 3;
     static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
@@ -34,6 +34,7 @@ public class StationListTask extends ThreadTask implements
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
 
     private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
+    private Opinet.GasStnParcelable mCurrentStation;
     private Location mLocation;
     private String[] defaultParams;
 
@@ -58,8 +59,8 @@ public class StationListTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
+    Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
     void recycle() {
         mStationList = null;
@@ -73,7 +74,7 @@ public class StationListTask extends ThreadTask implements
         log.i("Download Thread: %s", thread);
     }
 
-    // The following 3 callbacks are invoked by StationListRunnable to retrieve stations within
+    // The following  callbacks are invoked by StationListRunnable to retrieve stations within
     // a radius and location, then give them back by setStationList().
     @Override
     public String[] getDefaultParam() {
@@ -92,10 +93,15 @@ public class StationListTask extends ThreadTask implements
     }
 
     @Override
+    public void setCurrentStation(Opinet.GasStnParcelable station) {
+        mCurrentStation = station;
+    }
+
+
+    @Override
     public List<Opinet.GasStnParcelable> getStationList() {
         return mStationList;
     }
-
 
     @Override
     public void handleStationTaskState(int state) {
@@ -105,11 +111,11 @@ public class StationListTask extends ThreadTask implements
                 log.i("DOWNLOAD_NEAR_STATIONS_COMPLETE");
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
                 break;
-            /*
-            case StationListRunnable.DOWNLAOD_CURRENT_STATION_COMPLETE:
+
+            case DOWNLOAD_CURRENT_STATION_COMPLETE:
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_COMPLETED;
                 break;
-            */
+
             case FIRESTORE_GET_COMPLETE:
                 log.i("FireStore_Get_Complete");
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
@@ -133,6 +139,10 @@ public class StationListTask extends ThreadTask implements
         }
 
         sThreadManager.handleState(this, outState);
+    }
+
+    Opinet.GasStnParcelable getCurrentStation() {
+        return mCurrentStation;
     }
 
 }
