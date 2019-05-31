@@ -326,9 +326,9 @@ public class XmlPullParserHandler {
                         } else if (tagName.equalsIgnoreCase("OS_NM")) {
                             gasStnParcelable.setStnName(text);
                         } else if (tagName.equalsIgnoreCase("PRICE")) {
-                            gasStnParcelable.setStnPrice(Float.parseFloat(text));
+                            gasStnParcelable.setStnPrice(Integer.parseInt(text));
                         } else if (tagName.equalsIgnoreCase("DISTANCE")) {
-                            gasStnParcelable.setDist(Float.parseFloat(text));
+                            gasStnParcelable.setStnDistance(Float.parseFloat(text));
                         } else if(tagName.equalsIgnoreCase("GIS_X_COOR")) {
                             gasStnParcelable.setLongitude(Float.parseFloat(text));
                         } else if(tagName.equalsIgnoreCase("GIS_Y_COOR")) {

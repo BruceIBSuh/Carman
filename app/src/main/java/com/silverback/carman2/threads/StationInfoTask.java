@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleObserver;
@@ -16,6 +17,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.StationInfoModel;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.lang.ref.WeakReference;
@@ -29,6 +31,7 @@ public class StationInfoTask extends ThreadTask implements
     private static final LoggingHelper log = LoggingHelperFactory.create(StationInfoTask.class);
 
     // Objects
+    private StationListViewModel stnViewModel;
     private static ThreadManager sThreadManager;
     private Runnable mStationInfoRunnable, mFireStoreUpdateRunnable;
     private Opinet.GasStationInfo stationInfo;
@@ -44,17 +47,17 @@ public class StationInfoTask extends ThreadTask implements
         mFireStoreUpdateRunnable = new FireStoreUpdateRunnable(this);
     }
 
-    void initStationTask(ThreadManager threadManager, String stationName, String stationId) {
+    void initStationTask(
+            ThreadManager threadManager, Fragment fragment, String stationName, String stationId) {
+
+        stnViewModel = ViewModelProviders.of(fragment).get(StationListViewModel.class);
         sThreadManager = threadManager;
         stnId = stationId;
         stnName = stationName;
-        log.i("StationID: %s", stnId);
     }
 
     // Getter for Runnables
-    Runnable getStationMapInfoRunnable() {
-        return mStationInfoRunnable;
-    }
+    Runnable getStationMapInfoRunnable() { return mStationInfoRunnable;}
     Runnable updateFireStoreRunnable() { return mFireStoreUpdateRunnable; }
 
     @Override
@@ -75,17 +78,15 @@ public class StationInfoTask extends ThreadTask implements
     @Override
     public void setStationInfo(Opinet.GasStationInfo info) {
         stationInfo = info;
+        stnViewModel.getStationInfoLiveData().postValue(info);
     }
 
-    //@OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+    // Referenced by FireStoreUpdateRunnable
+    @Override
     public Opinet.GasStationInfo getStationInfo() {
         return stationInfo;
     }
 
-    @Override
-    public String getStnID() {
-        return stnId;
-    }
 
     @Override
     public void handleStationTaskState(int state) {

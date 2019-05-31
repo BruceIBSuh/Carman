@@ -278,7 +278,7 @@ public class Opinet  {
         private String stnId;
         private String stnCode;
         private String stnName;
-        private float stnPrice;
+        private int stnPrice;
         private float distance;
         private float xCoord;
         private float yCoord;
@@ -304,7 +304,7 @@ public class Opinet  {
             out.writeString(stnId);
             out.writeString(stnCode);
             out.writeString(stnName);
-            out.writeFloat(stnPrice);
+            out.writeInt(stnPrice);
             out.writeFloat(distance);
             out.writeFloat(xCoord);
             out.writeFloat(yCoord);
@@ -330,7 +330,7 @@ public class Opinet  {
             stnId = in.readString();
             stnCode = in.readString();
             stnName = in.readString();
-            stnPrice = in.readFloat();
+            stnPrice = in.readInt();
             distance = in.readFloat();
             xCoord = in.readFloat();
             yCoord = in.readFloat();
@@ -359,19 +359,17 @@ public class Opinet  {
             this.stnName = stnName;
         }
 
-        public float getStnPrice() {
+        public int getStnPrice() {
             return stnPrice;
         }
-        void setStnPrice(float price) {
+        void setStnPrice(int price) {
             this.stnPrice = price;
         }
 
-        public float getDist() {
+        public float getStnDistance() {
             return distance;
         }
-        void setDist(float dist) {
-            this.distance = dist;
-        }
+        void setStnDistance(float dist) { this.distance = dist; }
 
         public float getLongitude() {
             return xCoord;

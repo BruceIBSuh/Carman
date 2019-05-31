@@ -2,31 +2,32 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
-import android.view.View;
 
-import com.google.android.gms.location.LocationCallback;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
-import java.lang.ref.WeakReference;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.LocationViewModel;
 
 public class LocationTask extends ThreadTask implements LocationRunnable.LocationMethods {
 
-    // Constants
-    //private static final String TAG = "LocationTask";
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(LocationTask.class);
 
-    //private WeakReference<View> mWeakView;
-    //private Context context;
+    // Objects
+    private LocationViewModel viewModel;
     private Runnable mLocationRunnable;
-    private Location mLocation;
 
     // Constructor
     LocationTask(Context context) {
         super();
-        //this.context = context;
         mLocationRunnable = new LocationRunnable(context, this);
     }
 
-    void initLocationTask(ThreadManager threadManager) {
+    void initLocationTask(ThreadManager threadManager, Fragment fragment) {
         sThreadManager = threadManager;
+        viewModel = ViewModelProviders.of(fragment).get(LocationViewModel.class);
     }
 
     Runnable getLocationRunnable() {
@@ -43,7 +44,8 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     @Override
     public void setCurrentLocation(Location location) {
-        mLocation = location;
+        log.i("Update Location from worker thread");
+        viewModel.getLocation().setValue(location);
     }
 
     @Override
@@ -61,11 +63,5 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         }
 
         sThreadManager.handleState(this, outstate);
-    }
-
-    // Invoked by hadleMessage(Message) in ThreadManager to pass the current location over to
-    // the UI Thread in GeneralFragment or GasManagerFragment.
-    Location getLocationUpdated() {
-        return mLocation;
     }
 }

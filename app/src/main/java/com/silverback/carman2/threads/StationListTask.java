@@ -4,11 +4,14 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.location.Location;
 
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.StationListViewModel;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class StationListTask extends ThreadTask implements
@@ -28,13 +31,14 @@ public class StationListTask extends ThreadTask implements
     static final int DOWNLOAD_NO_STATION = -3;
 
     // Objects
+    private StationListViewModel viewModel;
     private Runnable mStationListRunnable;
     private Runnable mFireStoreSetRunnable;
     private Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
 
-    private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
-    private Opinet.GasStnParcelable mCurrentStation;
+    //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
+    //private Opinet.GasStnParcelable mCurrentStation;
     private Location mLocation;
     private String[] defaultParams;
 
@@ -49,12 +53,15 @@ public class StationListTask extends ThreadTask implements
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
     }
 
-    void initStationTask(ThreadManager threadManager, Location location, String[] params) {
+    void initStationTask(
+            ThreadManager threadManager, Fragment fragment, Location location, String[] params) {
 
         sThreadManager = threadManager;
         defaultParams = params;
         mLocation = location;
-        mStationInfoList = new ArrayList<>();
+        //mStationInfoList = new ArrayList<>();
+
+        viewModel = ViewModelProviders.of(fragment).get(StationListViewModel.class);
     }
 
     // Get Runnables to be called in ThreadPool.executor()
@@ -90,11 +97,13 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
         mStationList = list;
+        viewModel.getStationListLiveData().postValue(list);
     }
 
     @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
-        mCurrentStation = station;
+        //postValue() used in worker thread. In UI thread, use setValue().
+        viewModel.getCurrentStationLiveData().postValue(station);
     }
 
 
@@ -140,9 +149,4 @@ public class StationListTask extends ThreadTask implements
 
         sThreadManager.handleState(this, outState);
     }
-
-    Opinet.GasStnParcelable getCurrentStation() {
-        return mCurrentStation;
-    }
-
 }

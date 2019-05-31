@@ -1,38 +1,47 @@
 package com.silverback.carman2.viewholders;
 
+import android.content.Context;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
+import java.text.DecimalFormat;
 import java.util.Locale;
 
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
+
+import static java.security.AccessController.getContext;
 
 public class StationItemHolder extends RecyclerView.ViewHolder {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationItemHolder.class);
 
-    // UI's
-    private CardView cardView;
+    // Objects
+    private Context context;
+    private static DecimalFormat df;
     private ImageView imgLogo;
     private TextView tvName, tvPrice, tvDistance, tvWashValue, tvWashLabel;
     private String price, distance, carwash;
     private String stnName, stnId;
 
+    static {
+        df = BaseActivity.getDecimalFormatInstance();
+    }
 
 
     // Constructor
     public StationItemHolder(CardView cardView) {
         super(cardView);
-
-        this.cardView = cardView;
+        this.context = cardView.getContext();
+        //this.cardView = cardView;
         imgLogo = cardView.findViewById(R.id.img_logo);
         tvName = cardView.findViewById(R.id.tv_station_name);
         tvPrice = cardView.findViewById(R.id.tv_value_price);
@@ -47,10 +56,12 @@ public class StationItemHolder extends RecyclerView.ViewHolder {
         int resLogo = getGasStationImage(data.getStnCode());
         imgLogo.setImageResource(resLogo);
 
+        log.i("price and distance: %s, %s", data.getStnPrice(), data.getStnDistance());
+
         // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
-        tvName.setText(String.format("%s%8s%5s", data.getStnName(), "-----", data.getHasVisited()));
-        tvPrice.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getStnPrice(), "원"));
-        tvDistance.setText(String.format(Locale.getDefault(),"%s3%s", (int)data.getDist(), "m"));
+        tvName.setText(String.format("%s%8s%5s", data.getStnName(), "---", data.getHasVisited()));
+        tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
+        tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
 
         if(data.getIsWash()) {
             tvWashLabel.setVisibility(View.VISIBLE);
@@ -58,7 +69,7 @@ public class StationItemHolder extends RecyclerView.ViewHolder {
             tvWashValue.setVisibility(View.VISIBLE);
         }
 
-        log.i("price and distance: %s, %s", data.getStnPrice(), data.getDist());
+        log.i("price and distance: %s, %s", data.getStnPrice(), data.getStnDistance());
     }
 
     private static int getGasStationImage(String name) {

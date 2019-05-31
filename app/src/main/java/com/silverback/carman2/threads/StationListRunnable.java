@@ -135,11 +135,12 @@ public class StationListRunnable implements Runnable{
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
             if(mStationList.size() > 0) {
+
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     log.i("Current Station: %s", mStationList.get(0).getStnName());
                     //mTask.setStationList(mStationList);
                     mTask.setCurrentStation(mStationList.get(0));
-                        mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
+                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
 
                 } else {
                     Uri uri = saveNearStationList(mStationList);

@@ -37,7 +37,7 @@ public class StationInfoRunnable implements Runnable {
         void handleStationTaskState(int state);
         void setStationInfo(Opinet.GasStationInfo info);
         String getStationName();
-        String getStnID();
+        String getStationId();
     }
 
     // Constructor
@@ -52,7 +52,7 @@ public class StationInfoRunnable implements Runnable {
         task.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        String OPINET_DETAIL = OPINET + "&id=" + task.getStnID();
+        String OPINET_DETAIL = OPINET + "&id=" + task.getStationId();
         HttpURLConnection conn = null;
         InputStream is = null;
 

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
@@ -143,10 +142,10 @@ public class StationListAdapter extends RecyclerView.Adapter<StationItemHolder> 
         @Override
         public int compare(Opinet.GasStnParcelable t1, Opinet.GasStnParcelable t2) {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                return Integer.compare((int)t1.getDist(), (int)t2.getDist());
+                return Integer.compare((int)t1.getStnDistance(), (int)t2.getStnDistance());
             } else {
-                return (int) t1.getDist() < (int) t2.getDist() ? -1 :
-                        (int) t1.getDist() > (int) t2.getDist() ? 1 : 0;
+                return (int) t1.getStnDistance() < (int) t2.getStnDistance() ? -1 :
+                        (int) t1.getStnDistance() > (int) t2.getStnDistance() ? 1 : 0;
             }
         }
     }

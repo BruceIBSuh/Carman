@@ -26,7 +26,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
@@ -54,9 +56,8 @@ import androidx.loader.content.Loader;
  */
 public class GasManagerFragment extends Fragment implements
         LoaderManager.LoaderCallbacks<Cursor>,
-        View.OnClickListener,
-        ThreadManager.OnLocationTaskListener, ThreadManager.OnStationInfoListener,
-        ThreadManager.OnCurrentStationListener {
+        View.OnClickListener {
+        //ThreadManager.OnStationInfoListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
@@ -65,8 +66,10 @@ public class GasManagerFragment extends Fragment implements
     private static final int GasStation = 1; //favorite gas provider category
 
     // Objects
-    //private StationInfoModel stnInfoModel;
+    private LocationViewModel locationModel;
+    private StationListViewModel stnModel;
     private FragmentSharedModel fragmentSharedModel;
+
     private FavoriteGeofenceHelper geofenceHelper;
     private LoaderManager loaderManager;
     private LocationTask locationTask;
@@ -106,17 +109,19 @@ public class GasManagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //getLifecycle().addObserver(new StationInfoTask());
+        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+        stnModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+        locationTask = ThreadManager.fetchLocationTask(this);
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // ViewModel instance
+        // Requires the parent activity when ViewModel is used in communicating b/w fragments of
+        // an Activity.
         if(getActivity() != null) {
             fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-            //stnInfoModel = ViewModelProviders.of(getActivity()).get(StationInfoModel.class);
         }
 
         // Get Default Params(FuelCode, Searching Radius, Sorting order);
@@ -127,12 +132,12 @@ public class GasManagerFragment extends Fragment implements
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
-
         mSettings = BaseActivity.getSharedPreferenceInstance(getActivity());
         df = BaseActivity.getDecimalFormatInstance();
 
         // Inflate the layout for this fragment
         final View localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
+
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         etStnName = localView.findViewById(R.id.et_station_name);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
@@ -157,7 +162,6 @@ public class GasManagerFragment extends Fragment implements
         etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
         tvOdometer.setOnClickListener(this);
         tvGasPaid.setOnClickListener(this);
-        //tvGasLoaded.setOnClickListener(this);
         tvCarwashPaid.setOnClickListener(this);
         tvExtraPaid.setOnClickListener(this);
 
@@ -165,23 +169,46 @@ public class GasManagerFragment extends Fragment implements
         btnFavorite.setOnClickListener(view -> registerFavorite());
 
 
-        /*
-         * Introduce ViewModel to communicate between parent Fragment and AlertFragment
-         * Set Observier to ViewModel(Lamda expression available, instead).
-         */
-        /*
-        fragmentSharedModel.getInputValue().observe(this, new Observer<String>(){
-            @Override
-            public void onChanged(String data) {
-                log.i("viewMode value:%s", data);
-                targetView.setText(data);
-            }
+        // ViewModels to communicate fragments of an Activity.
+        fragmentSharedModel.setCurrentFragment(this);
+        fragmentSharedModel.getInputValue().observe(this, data -> {
+            targetView.setText(data);
+            calculateGasAmount();
         });
-        */
-        // Pass a value in InputPad to Fragment by using Lambda expresstion
-        // Pass a current fragment to a ExpensePagerFragment
-        //fragmentSharedModel.setCurrentFragment(this);
-        //fragmentSharedModel.getInputValue().observe(this, data -> targetView.setText(data));
+
+        // Attach Observer to LiveData defined in LocationViewModel
+        locationModel.getLocation().observe(this, location -> {
+            this.location = location;
+            stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
+        });
+
+
+        stnModel.getCurrentStationLiveData().observe(this, currentStation -> {
+
+            stnName = currentStation.getStnName();
+            stnId = currentStation.getStnId();
+
+            etStnName.setText(stnName);
+            etUnitPrice.setText(String.valueOf(currentStation.getStnPrice()));
+            etStnName.setCursorVisible(false);
+            etUnitPrice.setCursorVisible(false);
+
+            Bundle bundle = new Bundle();
+            bundle.putString("stnName", stnName);
+            loaderManager = LoaderManager.getInstance(this);
+            loaderManager.initLoader(0, bundle, this);
+        });
+
+        stnModel.getStationInfoLiveData().observe(this, stnInfo -> {
+            log.i("onStationInfoTaskComplete: %s", stnInfo.getNewAddrs());
+            stnAddrs = stnInfo.getNewAddrs();
+
+            // Once a current station is fetched, retrieve the station info(station address) which
+            // is passed over to addFavoriteGeofence() in FavoriteGeofenceHelper.
+            geofenceHelper.setGeofenceParam(GasStation, stnId, location);
+            geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+        });
 
         return localView;
     }
@@ -190,23 +217,6 @@ public class GasManagerFragment extends Fragment implements
     public void onResume() {
         super.onResume();
 
-        // Fetch the current location on a worker thread.
-        locationTask = ThreadManager.fetchLocationTask(this);
-
-        /*
-         * ViewModel to communicate b/w frgments directly
-         * setCurrentFrgment(): pass the current fragment to ExpensePagerFragment
-         * getInputValue().observe(): get a number input on the number pad.
-         */
-        fragmentSharedModel.setCurrentFragment(this);
-
-        // Put the value from InputPadFragment via ViewModel and
-        // calculate the amount by dividing payment with unit price
-        fragmentSharedModel.getInputValue().observe(this, data -> {
-            targetView.setText(data);
-            calculateGasAmount();
-
-        });
     }
 
     @Override
@@ -252,32 +262,7 @@ public class GasManagerFragment extends Fragment implements
 
     }
 
-    // The following 3 methods are invoked by the listeners in ThreadManager.
-    @Override
-    public void onLocationFetched(Location location) {
-        log.i("GasManagerFragment Location: %s", defaultParams[1]);
-        this.location = location;
-        stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
-    }
-
-    @Override
-    public void onCurrentStationTaskComplete(Opinet.GasStnParcelable result) {
-        if(result == null) return;
-        stnName = result.getStnName();
-        stnId = result.getStnId();
-        stnCode = result.getStnCode();
-
-        etStnName.setText(result.getStnName());
-        etUnitPrice.setText(String.valueOf(result.getStnPrice()));
-        etStnName.setCursorVisible(false);
-        etUnitPrice.setCursorVisible(false);
-
-        Bundle bundle = new Bundle();
-        bundle.putString("stnName", result.getStnName());
-        loaderManager = LoaderManager.getInstance(this);
-        loaderManager.initLoader(0, bundle, this);
-    }
-
+    /*
     @Override
     public void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo) {
         log.i("onStationInfoTaskComplete: %s", stnInfo.getNewAddrs());
@@ -289,6 +274,7 @@ public class GasManagerFragment extends Fragment implements
         geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
     }
+    */
 
     /**
      * LoaderManager.LoaderCallback<Cursor> invokes the following 3 overriding methods
@@ -328,6 +314,7 @@ public class GasManagerFragment extends Fragment implements
         } else {
             isFavorite = false;
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+
         }
 
     }
