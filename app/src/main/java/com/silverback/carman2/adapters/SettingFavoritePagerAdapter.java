@@ -5,8 +5,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import com.silverback.carman2.fragments.FavoriteGasPagerFragment;
-import com.silverback.carman2.fragments.FavoriteServicePagerFragment;
+import com.silverback.carman2.fragments.FavoritePagerGasFragment;
+import com.silverback.carman2.fragments.FavoritePagerSvcFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -39,7 +39,7 @@ public class SettingFavoritePagerAdapter extends FragmentPagerAdapter {
 
 
     private final Fragment[] fragment = new Fragment[] {
-            new FavoriteGasPagerFragment(),
-            new FavoriteServicePagerFragment()
+            new FavoritePagerGasFragment(),
+            new FavoritePagerSvcFragment()
     };
 }

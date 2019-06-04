@@ -1,6 +1,5 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.database;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -8,6 +7,7 @@ import android.util.Log;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 
 public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
 
@@ -59,11 +59,11 @@ public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
         }
 
         // Separate SQL for the last columns from the previous ones to define the parenthesis.
-        String lastColumn = DataProviderContract.ITEM_NAME + Constants.SERVICE_ITEM_COLUMNS + " " + DataProvider.TEXT_TYPE + ", "
+        String finalColumn = DataProviderContract.ITEM_NAME + Constants.SERVICE_ITEM_COLUMNS + " " + DataProvider.TEXT_TYPE + ", "
                 + DataProviderContract.ITEM_PRICE + Constants.SERVICE_ITEM_COLUMNS  + " " + DataProvider.INTEGER_TYPE + ", "
                 + DataProviderContract.ITEM_MEMO + Constants.SERVICE_ITEM_COLUMNS + " " + DataProvider.TEXT_TYPE
                 + ");";
-        strbldr.append(lastColumn);
+        strbldr.append(finalColumn);
 
         //Log.d(TAG, "ServiceManager table sql: " + strbldr);
         db.execSQL(DataProvider.CREATE_GAS_TABLE_SQL); // Create GasTable

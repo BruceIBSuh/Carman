@@ -22,7 +22,7 @@ import com.google.android.gms.location.GeofencingEvent;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.DataProviderContract;
+import com.silverback.carman2.database.DataProviderContract;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

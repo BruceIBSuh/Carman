@@ -10,10 +10,13 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.FavoriteProvider;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.DataProviderContract;
+import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
+
+import java.util.List;
 
 public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
 
@@ -22,12 +25,12 @@ public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<Favorit
 
     // Objects
     private Context context;
-    private Cursor cursor;
+    private List<FavoriteProvider> favoriteList;
 
     // Constructor
-    public SettingFavoriteRecyclerAdapter(Cursor cursor) {
+    public SettingFavoriteRecyclerAdapter(List<FavoriteProvider> favorites) {
         log.i("SettingFavoriteRecyclerAdapter constructor");
-        this.cursor = cursor;
+        favoriteList = favorites;
     }
 
 
@@ -44,13 +47,14 @@ public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<Favorit
     @Override
     public void onBindViewHolder(@NonNull FavoriteItemHolder holder, int position) {
         log.i("onBindViewHolder");
-        int columnIndex = cursor.getColumnIndex(DataProviderContract.FAVORITE_PROVIDER_NAME);
-        if(cursor.moveToLast()) log.i("Cursor data: %s", cursor.getString(columnIndex));
+
+        final FavoriteProvider provider = favoriteList.get(position);
+        holder.bindToFavorite(provider);
     }
 
 
     @Override
     public int getItemCount() {
-        return cursor.getCount();
+        return favoriteList.size();
     }
 }

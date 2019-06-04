@@ -12,7 +12,7 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.DataProviderContract;
+import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 
 import androidx.annotation.NonNull;

@@ -19,8 +19,8 @@ import com.jjoe64.graphview.series.DataPoint;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.CarmanSQLiteOpenHelper;
-import com.silverback.carman2.models.DataProviderContract;
+import com.silverback.carman2.database.CarmanSQLiteOpenHelper;
+import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.views.StatGraphView;
 
 import java.lang.ref.WeakReference;

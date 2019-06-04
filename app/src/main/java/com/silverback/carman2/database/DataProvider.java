@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.database;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -122,17 +122,6 @@ public class DataProvider extends ContentProvider {
         return true;
     }
 
-
-    /**
-     * Returns the result of querying the chosen table.
-     * @see android.content.ContentProvider#query(Uri, String[], String, String[], String)
-     * @param uri The content URI of the table
-     * @param projection The names of the columns to return in the cursor
-     * @param selection The selection clause for the query
-     * @param selectionArgs An array of Strings containing search criteria
-     * @param sortOrder A clause defining the order in which the retrieved rows should be sorted
-     * @return The query results, as a {@link android.database.Cursor} of rows and columns
-     */
 
     @SuppressWarnings("ConstantConditions")
     @Override

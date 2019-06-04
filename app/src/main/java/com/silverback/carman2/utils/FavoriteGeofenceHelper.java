@@ -1,24 +1,22 @@
 package com.silverback.carman2.utils;
 
 import android.app.PendingIntent;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.widget.Toast;
 
-import androidx.lifecycle.LifecycleObserver;
-
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProvider;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.DataProviderContract;
 import com.silverback.carman2.services.GeofenceTransitionService;
 
 import java.util.ArrayList;
@@ -31,6 +29,10 @@ public class FavoriteGeofenceHelper {
 
     // Objects
     private Context context;
+
+    private CarmanDatabase mDB;
+    private FavoriteProvider favoriteModel;
+
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
     //private Geofence mGeofence;
@@ -55,6 +57,9 @@ public class FavoriteGeofenceHelper {
     public FavoriteGeofenceHelper(Context context) {
         this.context = context;
         mGeofencingClient = LocationServices.getGeofencingClient(context);
+
+        mDB = CarmanDatabase.getInMemoryDatabase(context.getApplicationContext());
+        favoriteModel = new FavoriteProvider();
     }
 
     public void setListener(OnGeofenceListener listener) {
@@ -115,31 +120,26 @@ public class FavoriteGeofenceHelper {
         // Set Geofencing with a providerId passed to Geofence API as a identifier.
         createGeofence();
 
+        favoriteModel.providerName = name;
+        favoriteModel.category = category;
+        favoriteModel.providerId = geofenceId;
+        favoriteModel.providerCode = providerCode;
+        favoriteModel.address = addrs;
+        favoriteModel.longitude = geofenceLocation.getLongitude();
+        favoriteModel.latitude = geofenceLocation.getLatitude();
+
+        mDB.favoriteProviderModel().insertFavoriteProvider(favoriteModel);
+
+
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.
         // Then, geofences should be saved in the Favorite table as far as they successfully added to
         // geofences. Otherwise, show the error messages using GeofenceStatusCodes
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
-                        // Insert a new provider into the Favorite table
-                        ContentValues values = new ContentValues();
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_NAME, name);
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_CATEGORY, category);
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_ID, geofenceId);
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_CODE, providerCode);
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_ADDRS, addrs);
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_LATITUDE, geofenceLocation.getLatitude());
-                        values.put(DataProviderContract.FAVORITE_PROVIDER_LONGITUDE, geofenceLocation.getLongitude());
-
-                        mNewUri = context.getContentResolver().insert(DataProviderContract.FAVORITE_TABLE_URI, values);
-                        if (mNewUri != null) {
-                            log.i("Successfully added favorite");
-                            Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
-                            //mListener.notifyAddGeofenceCompleted();
-                        }
-                    })
-
-                    .addOnFailureListener(e -> {
+                        mDB.favoriteProviderModel().insertFavoriteProvider(favoriteModel);
+                        Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
+                    }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());
                         //mListener.notifyAddGeofenceFailed();
                     });
@@ -147,6 +147,7 @@ public class FavoriteGeofenceHelper {
         } catch(SecurityException e) {
             log.w("SecurityException: %s", e.getMessage());
         }
+
 
     }
 
@@ -161,21 +162,12 @@ public class FavoriteGeofenceHelper {
 
         mGeofencingClient.removeGeofences(geofenceId)
                 .addOnSuccessListener(aVoid -> {
-                    // Remove the corresponding record with the Station ID.
-                    final String where = DataProviderContract.FAVORITE_PROVIDER_NAME + " = ? OR "
-                            + DataProviderContract.FAVORITE_PROVIDER_ID + " = ?";
-                    final String[] args = { name, id };
-
-                    rowDeleted = context.getContentResolver()
-                            .delete(DataProviderContract.FAVORITE_TABLE_URI, where, args);
-
-                    if(rowDeleted > 0) {
-                        log.i("successfully removed favorite");
+                    FavoriteProvider provider = mDB.favoriteProviderModel().findFavoriteProvider(name, id);
+                    if(provider != null) {
+                        mDB.favoriteProviderModel().deleteProvider(provider);
                         Toast.makeText(context, R.string.toast_remove_favorite, Toast.LENGTH_SHORT).show();
-                    } else log.e("Failed to delete the provider from the db");
-
-                })
-                .addOnFailureListener(e -> log.i("failed to remove"));
+                    }
+                }).addOnFailureListener(e -> log.i("failed to remove"));
 
     }
 

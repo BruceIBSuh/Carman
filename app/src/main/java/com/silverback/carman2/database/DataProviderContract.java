@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.database;
 
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -32,9 +32,9 @@ public final class DataProviderContract {
     // Defines the Gas Table for storing gas related data
     public static final String GAS_TABLE_NAME = "GasManager";
     public static final Uri GAS_TABLE_URI = Uri.withAppendedPath(CONTENT_URI, GAS_TABLE_NAME);
-    public static final String GAS_STATION_COLUMN = "gasStation";
-    public static final String GAS_STATION_ADDRESS_COLUMN = "stationAddress";
-    public static final String GAS_STATION_ID_COLUMN = "stationId";
+    public static final String GAS_STATION_COLUMN = "stnName";
+    public static final String GAS_STATION_ADDRESS_COLUMN = "stnAddrs";
+    public static final String GAS_STATION_ID_COLUMN = "stnId";
     public static final String GAS_PRICE_COLUMN = "gasPrice";
     public static final String GAS_TOTAL_PAYMENT_COLUMN = "totalPayment";
     public static final String GAS_PAYMENT_COLUMN = "gasPayment";
@@ -56,10 +56,10 @@ public final class DataProviderContract {
     // Define the Favorites table
     public static final String FAVORITE_TABLE_NAME = "FavoriteProvider";
     public static final Uri FAVORITE_TABLE_URI = Uri.withAppendedPath(CONTENT_URI, FAVORITE_TABLE_NAME);
-    public static final String FAVORITE_PROVIDER_NAME = "name";
+    public static final String FAVORITE_PROVIDER_NAME = "providerName";
     public static final String FAVORITE_PROVIDER_CATEGORY = "category";
+    public static final String FAVORITE_PROVIDER_ID = "providerId"; //gas station id provided by Opinet
     public static final String FAVORITE_PROVIDER_CODE = "providerCode"; //provider identifier: SKC, GS...
-    public static final String FAVORITE_PROVIDER_ID = "geofenceId"; //gas station id provided by Opinet
     public static final String FAVORITE_PROVIDER_ADDRS = "address";
     public static final String FAVORITE_PROVIDER_LATITUDE = "latitude";
     public static final String FAVORITE_PROVIDER_LONGITUDE = "longitude";

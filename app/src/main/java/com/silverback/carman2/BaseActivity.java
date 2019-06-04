@@ -387,4 +387,25 @@ public class BaseActivity extends AppCompatActivity {
         return -1;
     }
 
+    public static int getGasStationImage(String name) {
+
+        int resId = -1;
+
+        switch(name) {
+            case "SKE": resId = R.drawable.logo_sk; break;
+            case "GSC": resId = R.drawable.logo_gs; break;
+            case "HDO": resId = R.drawable.logo_hyundai; break;
+            case "SOL": resId = R.drawable.logo_soil; break;
+            case "RTO": resId = R.drawable.logo_pb; break;
+            case "RTX": resId = R.drawable.logo_express; break;
+            case "NHO": resId = R.drawable.logo_nonghyup; break;
+            case "E1G": resId = R.drawable.logo_e1g; break;
+            case "SKG": resId = R.drawable.logo_skg; break;
+            case "ETC": resId = R.drawable.logo_anonym; break;
+            default: break;
+        }
+
+        return resId;
+    }
+
 }

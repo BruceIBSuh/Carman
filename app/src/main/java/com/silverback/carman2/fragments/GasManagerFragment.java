@@ -3,7 +3,6 @@ package com.silverback.carman2.fragments;
 
 import android.content.ContentValues;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.location.Location;
 import android.net.Uri;
@@ -17,17 +16,23 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.loader.app.LoaderManager;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProvider;
+import com.silverback.carman2.database.GasManager;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.DataProviderContract;
+import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationInfoTask;
@@ -43,19 +48,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.loader.app.LoaderManager;
-import androidx.loader.content.CursorLoader;
-import androidx.loader.content.Loader;
-
 /**
  * A simple {@link Fragment} subclass.
  */
 public class GasManagerFragment extends Fragment implements
-        LoaderManager.LoaderCallbacks<Cursor>,
+        //LoaderManager.LoaderCallbacks<Cursor>,
         View.OnClickListener {
         //ThreadManager.OnStationInfoListener {
 
@@ -66,6 +63,8 @@ public class GasManagerFragment extends Fragment implements
     private static final int GasStation = 1; //favorite gas provider category
 
     // Objects
+    private CarmanDatabase mDB;
+    private FavoriteProvider favoriteModel;
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private FragmentSharedModel fragmentSharedModel;
@@ -106,9 +105,13 @@ public class GasManagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mDB = CarmanDatabase.getInMemoryDatabase(getActivity().getApplicationContext());
+        favoriteModel = new FavoriteProvider();
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnModel = ViewModelProviders.of(this).get(StationListViewModel.class);
         locationTask = ThreadManager.fetchLocationTask(this);
@@ -182,26 +185,38 @@ public class GasManagerFragment extends Fragment implements
             stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
         });
 
-
+        // Check if a fetched current station has registered with Favorite right after StationListModel
+        // is notified to retrieve a current station. Then, get StationInfoTask started to get
+        // its address, completion of which is notified by the same ViewModel.
         stnModel.getCurrentStationLiveData().observe(this, currentStation -> {
-
             stnName = currentStation.getStnName();
             stnId = currentStation.getStnId();
+            log.i("Current Station: %s, %s: ", stnName, stnId);
 
             etStnName.setText(stnName);
             etUnitPrice.setText(String.valueOf(currentStation.getStnPrice()));
             etStnName.setCursorVisible(false);
             etUnitPrice.setCursorVisible(false);
 
-            Bundle bundle = new Bundle();
-            bundle.putString("stnName", stnName);
-            loaderManager = LoaderManager.getInstance(this);
-            loaderManager.initLoader(0, bundle, this);
+            String favoriteName = mDB.favoriteProviderModel().findFavoriteName(stnName, stnId);
+            if(TextUtils.isEmpty(favoriteName)) {
+                log.i("favorite not found");
+                isFavorite = false;
+                btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            } else {
+                log.i("favorite not found");
+                isFavorite = true;
+                btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            }
+
         });
 
+        // When fetching the address, the station is registered with Favorite passing detailed info
+        // to FavoriteGeofenceHelper as params
         stnModel.getStationInfoLiveData().observe(this, stnInfo -> {
             log.i("onStationInfoTaskComplete: %s", stnInfo.getNewAddrs());
             stnAddrs = stnInfo.getNewAddrs();
+            stnCode = stnInfo.getStationCode();
 
             // Once a current station is fetched, retrieve the station info(station address) which
             // is passed over to addFavoriteGeofence() in FavoriteGeofenceHelper.
@@ -227,7 +242,7 @@ public class GasManagerFragment extends Fragment implements
         if(stationInfoTask != null) stationInfoTask = null;
     }
 
-    // Handle button click event on InputNumPad.
+    // InputNumPad handler
     @Override
     public void onClick(final View v) {
         Bundle args = new Bundle();
@@ -276,51 +291,6 @@ public class GasManagerFragment extends Fragment implements
     }
     */
 
-    /**
-     * LoaderManager.LoaderCallback<Cursor> invokes the following 3 overriding methods
-     * to find if a current station within MIN_RADIUS has already registered w/ Favorite.
-     *
-     * onCreateLoader()
-     * @param id id for recognizing each loader when multiple loaders exist.
-     * @param args passed from loader instance when creating using initLoader()
-     * onLoadFinished()
-     * onLoadResete()
-     */
-    @SuppressWarnings("ConstantConditions")
-    @NonNull
-    @Override
-    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
-
-        Uri uriFavorite = DataProviderContract.FAVORITE_TABLE_URI;
-        String stationName = args.getString("stnName");
-
-        final String[] projection = {
-                DataProviderContract.FAVORITE_ID,
-                DataProviderContract.FAVORITE_PROVIDER_NAME
-        };
-
-        String selection = DataProviderContract.FAVORITE_PROVIDER_NAME + " = '" + stationName + "';";
-
-        return new CursorLoader(getContext(), uriFavorite, projection, selection, null, null);
-    }
-
-    @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
-
-        if(cursor.moveToLast()) {
-            isFavorite = true;
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-
-        } else {
-            isFavorite = false;
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-
-        }
-
-    }
-
-    @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {}
 
     // Invoked when Favorite button clicks in order to add or remove the current station to or out of
     // Favorite and Geofence list.
@@ -347,10 +317,39 @@ public class GasManagerFragment extends Fragment implements
         // Null check for the parent activity
         if(!doEmptyCheck()) return false;
 
-        ContentValues values = new ContentValues();
+        //ContentValues values = new ContentValues();
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
-        int gas, wash, extra;
+        //int gas, wash, extra;
 
+        GasManager gasManager = new GasManager();
+
+        gasManager.dateTime = milliseconds;
+        gasManager.tableCode = DataProviderContract.GAS_TABLE_CODE;
+        gasManager.stnName = etStnName.getText().toString();
+        gasManager.stnAddrs = stnAddrs;
+        gasManager.stnId = stnId;
+        gasManager.extraExpense = etExtraExpense.getText().toString();
+
+        try {
+            gasManager.mileage = df.parse(tvOdometer.getText().toString()).intValue();
+            gasManager.gasPayment = df.parse(tvGasPaid.getText().toString()).intValue();
+            gasManager.gasAmount = df.parse(tvGasLoaded.getText().toString()).intValue();
+            gasManager.gasPrice = df.parse(etUnitPrice.getText().toString()).intValue();
+            gasManager.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
+            gasManager.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
+        } catch(ParseException e) {
+            log.e("ParseException: %s", e);
+        }
+
+        gasManager.totalPayment = gasManager.gasPayment + gasManager.washPayment + gasManager.extraPayment;
+
+        mDB.gasManagerModel().insert(gasManager);
+        mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
+        Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+
+        return true;
+
+        /*
         try {
             values.put(DataProviderContract.TABLE_CODE, DataProviderContract.GAS_TABLE_CODE);
             values.put(DataProviderContract.DATE_TIME_COLUMN, milliseconds);
@@ -376,11 +375,11 @@ public class GasManagerFragment extends Fragment implements
 
             if(mNewUri != null) {
                 Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-                /*
+
                 Intent intent = new Intent(this, GeofenceTransitionService.class);
                 intent.putExtra("Geofence_Saved", true);
                 startService(intent);
-                */
+
             }
 
             return true;
@@ -392,8 +391,8 @@ public class GasManagerFragment extends Fragment implements
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
-        return false;
+        */
+        //return false;
 
     }
 
