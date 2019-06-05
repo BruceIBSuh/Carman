@@ -15,11 +15,11 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProvider")
     LiveData<List<FavoriteProvider>> loadAllFavoriteProvider();
 
-    @Query("SELECT * FROM FavoriteProvider WHERE providerName = :stnName OR providerId = :stnId")
+    @Query("SELECT * FROM FavoriteProvider WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProvider findFavoriteProvider(String stnName, String stnId);
 
 
-    @Query("SELECT providerName FROM FavoriteProvider WHERE providerName = :stnName OR providerId = :stnId")
+    @Query("SELECT favorite_name FROM FavoriteProvider WHERE favorite_name = :stnName OR favorite_id = :stnId")
     String findFavoriteName(String stnName, String stnId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

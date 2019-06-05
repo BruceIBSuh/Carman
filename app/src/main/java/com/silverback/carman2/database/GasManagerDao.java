@@ -12,19 +12,19 @@ import static androidx.room.OnConflictStrategy.IGNORE;
 @Dao
 public interface GasManagerDao {
 
-    @Query("SELECT * FROM GasManager")
-    List<GasManager> loadAllGasRecord();
+    @Query("SELECT * FROM GasManager ORDER BY _id DESC LIMIT 5")
+    List<GasManager> loadRecentGasData();
 
-    @Query("SELECT * FROM GasManager WHERE stnName = :stnName or stnId = :stnId")
-    GasManager loadGasManagerByNameOrId(String stnName, String stnId);
+    @Query("SELECT * FROM GasManager WHERE stn_name = :stnName or stn_id = :stnId")
+    GasManager findGasManagerByNameOrId(String stnName, String stnId);
 
     @Insert(onConflict = IGNORE)
-    void insert(GasManager gasManager);
+    long insert(GasManager gasManager);
 
     @Delete
     void deleteGasRecord(GasManager gasManger);
 
-    @Query("DELETE FROM GasManager WHERE stnName = :stnName OR stnId = :stnId")
+    @Query("DELETE FROM GasManager WHERE stn_name = :stnName OR stn_id = :stnId")
     int deleteGasManager(String stnName, String stnId);
 
 }

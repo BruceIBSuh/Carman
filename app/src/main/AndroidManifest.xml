@@ -80,11 +80,13 @@
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_app_key" />
 
+        <!--
         <provider android:name=".database.DataProvider"
             android:authorities="com.silverback.carman2.models.provider"
             android:exported="false"
             android:grantUriPermissions="true"
             android:permission="true" />
+        -->
 
         <provider
             android:name="androidx.core.content.FileProvider"

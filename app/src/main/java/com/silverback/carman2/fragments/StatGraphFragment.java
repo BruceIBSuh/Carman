@@ -17,6 +17,8 @@ import androidx.fragment.app.Fragment;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.StatData;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.database.CarmanSQLiteOpenHelper;
@@ -26,6 +28,7 @@ import com.silverback.carman2.views.StatGraphView;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class StatGraphFragment extends Fragment implements View.OnClickListener {
@@ -49,7 +52,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
 
 
     // Object References
-    private static SQLiteDatabase mDB;
+    private static CarmanDatabase mDB;
     private static Calendar calendar;
     private static SimpleDateFormat sdf;
     private int currentYear;
@@ -77,11 +80,13 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle bundle) {
 
         super.onCreate(bundle);
-        mDB = CarmanSQLiteOpenHelper.getInstance(getActivity()).getReadableDatabase();
+
+        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         currentYear = calendar.get(Calendar.YEAR);
     }
 
@@ -152,6 +157,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
             weakGraphView = new WeakReference<>(graphView);
             this.calendar = calendar;
             monthlyTotalExpense = new int[12];
+
         }
 
         @Override
@@ -167,19 +173,22 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
             //Log.d(TAG, "Calendar: "+ calendar);
             conds[0] = String.valueOf(calendar.getTimeInMillis()); //First date of year for gasTable
             conds[2] = String.valueOf(calendar.getTimeInMillis()); //First date of year for serviceTable
-
+            long start = calendar.getTimeInMillis();
             // Set the Calendar tO the last day of a given year.
             calendar.set(params[0], 11, 31, 23, 59, 59);
             conds[1] = String.valueOf(calendar.getTimeInMillis()); //Last date of year to gasTable
             conds[3] = String.valueOf(calendar.getTimeInMillis()); //Last date of year to serviceTable
+            long end = calendar.getTimeInMillis();
 
             String graphDataSql = gasData + " UNION " + serviceData
                     + " ORDER BY " + DataProviderContract.DATE_TIME_COLUMN + " DESC ";
 
+            List<StatData>  statData = mDB.gasManagerModel().loadGasExpense(start, end);
+
             // conds: First day and last day of each year represented by milliseconds to fetch the
             // expenses during the year.
-            return mDB.rawQuery(graphDataSql, conds);
-
+            //return mDB.rawQuery(graphDataSql, conds);
+            return null;
         }
 
         @Override
@@ -236,7 +245,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
             }
 
         } finally {
-            cursor.close();
+            //cursor.close();
         }
 
         // Creates DataPoint for each month with month and total expenses in that month and inserts

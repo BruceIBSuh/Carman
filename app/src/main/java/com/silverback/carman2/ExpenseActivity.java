@@ -92,6 +92,7 @@ public class ExpenseActivity extends BaseActivity implements
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
 
+        // Create ViewPager for last 5 recent expense statements in the top frame.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         expensePager.initPager(getSupportFragmentManager());

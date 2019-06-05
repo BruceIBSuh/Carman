@@ -10,9 +10,11 @@ import android.widget.TextView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.GasManager;
+import com.silverback.carman2.database.ServiceManager;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 
 import androidx.annotation.NonNull;
@@ -20,6 +22,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import java.text.DecimalFormat;
+import java.util.List;
 
 public class ExpensePagerFragment extends Fragment {
 
@@ -27,6 +30,7 @@ public class ExpensePagerFragment extends Fragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerFragment.class);
 
     // Constants
+    /*
     private final String[] gasColumns = {
             DataProviderContract.DATE_TIME_COLUMN,
             DataProviderContract.MILEAGE_COLUMN,
@@ -41,13 +45,19 @@ public class ExpensePagerFragment extends Fragment {
             DataProviderContract.SERVICE_PROVIDER_COLUMN,
             DataProviderContract.SERVICE_TOTAL_PRICE_COLUMN
     };
+    */
 
     private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
 
 
     // Objects
+    private CarmanDatabase mDB;
+    private GasManager gasManager;
+    private ServiceManager serviceManager;
     private FragmentSharedModel viewModel;
-    private Cursor cursor;
+    //private Cursor cursor;
+    private List<GasManager> gasList;
+    private List<ServiceManager> serviceList;
 
     // UIs
     private TextView tvDate, tvMileage, tvName, tvPayment, tvAmount;
@@ -80,16 +90,13 @@ public class ExpensePagerFragment extends Fragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle bundle){
-        super.onActivityCreated(bundle);
-        //getActivity().getSupportLoaderManager().initLoader(0, null, this);
-    }
-
-    @Override
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         if(getActivity() == null) return;
+
+        // Instantiate CarmanDatabase as a type of singleton instance
+        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
 
         // Create ViewModel to get data of which fragment is attached in the tab-linked ViewPager
         // from the viewpager-containing fragments.
@@ -109,40 +116,16 @@ public class ExpensePagerFragment extends Fragment {
         viewModel.getCurrentFragment().observe(this, fragment -> {
 
             currentFragment = fragment;
+            int mPageNumber = (getArguments().getInt("page"));
 
             if(currentFragment instanceof GasManagerFragment) {
-                projection = gasColumns;
-                baseUri = DataProviderContract.GAS_TABLE_URI;
+                gasList = mDB.gasManagerModel().loadRecentGasData();
+                lastInfo = (gasList.size() > mPageNumber)? displayLastInfo(mPageNumber) : null;
 
             } else if(currentFragment instanceof ServiceFragment) {
-                projection = serviceColumns;
-                baseUri = DataProviderContract.SERVICE_TABLE_URI;
+                serviceList = mDB.serviceManagerModel().loadRecentServiceData();
+                lastInfo = (serviceList.size() > mPageNumber)? displayLastInfo(mPageNumber) : null;
             }
-
-            cursor = getActivity().getContentResolver().query(baseUri, projection, null, null, null);
-
-            // Retrieve the last data to get the current mileage passing over to GasManagerActivity
-            // using the callback method.
-            if(cursor.moveToLast()) {
-                displayLastInfo(cursor);
-                log.i("Last Info: %s", lastInfo);
-            }
-
-            //String tableName = getArguments().getString("table");
-            int mPageNumber = (getArguments().getInt("page")) * (-1); //Set minus for moving backword
-            if(!cursor.move(mPageNumber)) { //lastInfo = getResources().getString("no data in db");
-                lastInfo = "no data in db";
-            } else {
-                // Make string last info retrieved from DB using displayLastInfo method which, in part,
-                // converts numbers to decimal format with comma.
-                try {
-                    lastInfo = displayLastInfo(cursor);
-                } catch (Exception e) {
-                    lastInfo = "no_data_in db";//getResources().getString(R.string.err_viewpager_no_data);
-                }
-            }
-
-            if(cursor != null) cursor.close();
 
             tvLastInfo.setText(lastInfo);
             tvPage.setText(String.valueOf(Math.abs(mPageNumber) + 1));
@@ -157,29 +140,30 @@ public class ExpensePagerFragment extends Fragment {
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
     @SuppressWarnings("ConstantConditions")
-    private String displayLastInfo(Cursor cursor) {
+    private String displayLastInfo(int pos) {
 
         // The latest mileage should be retrieved from SharedPreferernces. Otherwise, the last mileage
         // be retrieved from DB because the mileage value column in GasManagerTable and
         String format = getContext().getResources().getString(R.string.date_format_1);
-        String date = BaseActivity.formatMilliseconds(format, cursor.getLong(0));
         String won = getString(R.string.unit_won);
         String liter = getString(R.string.unit_liter);
 
 
         if(currentFragment instanceof GasManagerFragment) {
+            String date = BaseActivity.formatMilliseconds(format, gasList.get(pos).dateTime);
             String a = String.format("%-10s%s%s", getString(R.string.gas_label_date), date, "\n");
-            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
-            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), cursor.getString(2), "\n");
-            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(cursor.getInt(3)), won, "\n");
-            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(cursor.getInt(4)), liter);
+            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(gasList.get(pos).mileage), "km", "\n");
+            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), gasList.get(pos).stnName, "\n");
+            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(gasList.get(pos).gasPayment), won, "\n");
+            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(gasList.get(pos).gasAmount), liter);
             return a + b + c + d + e;
 
         } else if(currentFragment instanceof ServiceFragment) {
+            String date = BaseActivity.formatMilliseconds(format, serviceList.get(pos).dateTime);
             String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
-            String b = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(cursor.getInt(1)), "km", "\n");
-            String c = String.format("%-8s%s%s", getString(R.string.svc_label_provider), cursor.getString(2), "\n");
-            String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_period), df.format(cursor.getInt(3)), won, "\n");
+            String b = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(serviceList.get(pos).mileage), "km", "\n");
+            String c = String.format("%-8s%s%s", getString(R.string.svc_label_provider), serviceList.get(pos).serviceCenter, "\n");
+            String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_payment), df.format(serviceList.get(pos).totalPayment), won, "\n");
 
             return a + b + c + d;
 

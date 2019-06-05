@@ -58,7 +58,7 @@ public class FavoriteGeofenceHelper {
         this.context = context;
         mGeofencingClient = LocationServices.getGeofencingClient(context);
 
-        mDB = CarmanDatabase.getInMemoryDatabase(context.getApplicationContext());
+        mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
         favoriteModel = new FavoriteProvider();
     }
 
@@ -128,7 +128,7 @@ public class FavoriteGeofenceHelper {
         favoriteModel.longitude = geofenceLocation.getLongitude();
         favoriteModel.latitude = geofenceLocation.getLatitude();
 
-        mDB.favoriteProviderModel().insertFavoriteProvider(favoriteModel);
+        mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
 
 
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.
@@ -137,7 +137,7 @@ public class FavoriteGeofenceHelper {
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
-                        mDB.favoriteProviderModel().insertFavoriteProvider(favoriteModel);
+                        mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
                         Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());
@@ -162,9 +162,9 @@ public class FavoriteGeofenceHelper {
 
         mGeofencingClient.removeGeofences(geofenceId)
                 .addOnSuccessListener(aVoid -> {
-                    FavoriteProvider provider = mDB.favoriteProviderModel().findFavoriteProvider(name, id);
+                    FavoriteProvider provider = mDB.favoriteModel().findFavoriteProvider(name, id);
                     if(provider != null) {
-                        mDB.favoriteProviderModel().deleteProvider(provider);
+                        mDB.favoriteModel().deleteProvider(provider);
                         Toast.makeText(context, R.string.toast_remove_favorite, Toast.LENGTH_SHORT).show();
                     }
                 }).addOnFailureListener(e -> log.i("failed to remove"));

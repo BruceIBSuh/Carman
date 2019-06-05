@@ -54,8 +54,8 @@ public class FavoritePagerGasFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         if(getActivity() != null) {
-            mDB = CarmanDatabase.getInMemoryDatabase(getActivity().getApplicationContext());
-            liveData = mDB.favoriteProviderModel().loadAllFavoriteProvider();
+            mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+            liveData = mDB.favoriteModel().loadAllFavoriteProvider();
         }
 
         View localView = inflater.inflate(R.layout.fragment_pager_favorite_gas, container, false);

@@ -7,21 +7,19 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 
-@Database(
-        entities = {GasManager.class, ServiceManager.class, FavoriteProvider.class},
-        version = 1,
-        exportSchema = false)
+@Database(entities = {GasManager.class, ServiceManager.class, FavoriteProvider.class},
+        version = 1, exportSchema = false)
 
 public abstract class CarmanDatabase extends RoomDatabase {
 
     private static CarmanDatabase INSTANCE;
 
     public abstract GasManagerDao gasManagerModel();
-    public abstract ServiceManagerDao serviceManagerMddel();
-    public abstract FavoriteProviderDao favoriteProviderModel();
+    public abstract ServiceManagerDao serviceManagerModel();
+    public abstract FavoriteProviderDao favoriteModel();
 
     // Constructor as Singletom type
-    public static CarmanDatabase getInMemoryDatabase(Context context) {
+    public static CarmanDatabase getDatabaseInstance(Context context) {
         if(INSTANCE == null) {
             //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)
             INSTANCE = Room.databaseBuilder(context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")

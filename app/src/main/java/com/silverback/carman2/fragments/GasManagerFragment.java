@@ -1,11 +1,8 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.ContentValues;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteException;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -30,7 +27,6 @@ import com.silverback.carman2.database.GasManager;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.StationListViewModel;
@@ -110,7 +106,7 @@ public class GasManagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mDB = CarmanDatabase.getInMemoryDatabase(getActivity().getApplicationContext());
+        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         favoriteModel = new FavoriteProvider();
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnModel = ViewModelProviders.of(this).get(StationListViewModel.class);
@@ -198,7 +194,7 @@ public class GasManagerFragment extends Fragment implements
             etStnName.setCursorVisible(false);
             etUnitPrice.setCursorVisible(false);
 
-            String favoriteName = mDB.favoriteProviderModel().findFavoriteName(stnName, stnId);
+            String favoriteName = mDB.favoriteModel().findFavoriteName(stnName, stnId);
             if(TextUtils.isEmpty(favoriteName)) {
                 log.i("favorite not found");
                 isFavorite = false;
@@ -324,7 +320,7 @@ public class GasManagerFragment extends Fragment implements
         GasManager gasManager = new GasManager();
 
         gasManager.dateTime = milliseconds;
-        gasManager.tableCode = DataProviderContract.GAS_TABLE_CODE;
+        //gasManager.tableCode = DataProviderContract.GAS_TABLE_CODE;
         gasManager.stnName = etStnName.getText().toString();
         gasManager.stnAddrs = stnAddrs;
         gasManager.stnId = stnId;
@@ -334,7 +330,7 @@ public class GasManagerFragment extends Fragment implements
             gasManager.mileage = df.parse(tvOdometer.getText().toString()).intValue();
             gasManager.gasPayment = df.parse(tvGasPaid.getText().toString()).intValue();
             gasManager.gasAmount = df.parse(tvGasLoaded.getText().toString()).intValue();
-            gasManager.gasPrice = df.parse(etUnitPrice.getText().toString()).intValue();
+            gasManager.unitPrice = df.parse(etUnitPrice.getText().toString()).intValue();
             gasManager.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
             gasManager.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
         } catch(ParseException e) {
@@ -343,56 +339,12 @@ public class GasManagerFragment extends Fragment implements
 
         gasManager.totalPayment = gasManager.gasPayment + gasManager.washPayment + gasManager.extraPayment;
 
-        mDB.gasManagerModel().insert(gasManager);
-        mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
-        Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-
-        return true;
-
-        /*
-        try {
-            values.put(DataProviderContract.TABLE_CODE, DataProviderContract.GAS_TABLE_CODE);
-            values.put(DataProviderContract.DATE_TIME_COLUMN, milliseconds);
-            values.put(DataProviderContract.MILEAGE_COLUMN, df.parse(tvOdometer.getText().toString()).intValue());
-
-            values.put(DataProviderContract.GAS_STATION_COLUMN, etStnName.getText().toString());
-            values.put(DataProviderContract.GAS_STATION_ADDRESS_COLUMN, stnAddrs);
-            values.put(DataProviderContract.GAS_STATION_ID_COLUMN, stnId);
-            values.put(DataProviderContract.GAS_PRICE_COLUMN, df.parse(etUnitPrice.getText().toString()).intValue());
-            values.put(DataProviderContract.GAS_PAYMENT_COLUMN, gas = df.parse(tvGasPaid.getText().toString()).intValue());
-            values.put(DataProviderContract.GAS_AMOUNT_COLUMN, df.parse(tvGasLoaded.getText().toString()).intValue());
-            values.put(DataProviderContract.WASH_PAYMENT_COLUMN, wash = df.parse(tvCarwashPaid.getText().toString()).intValue());
-            values.put(DataProviderContract.EXTRA_EXPENSE_COLUMN, etExtraExpense.getText().toString());
-            values.put(DataProviderContract.EXTRA_PAYMENT_COLUMN, extra = df.parse(tvExtraPaid.getText().toString()).intValue());
-            values.put(DataProviderContract.GAS_TOTAL_PAYMENT_COLUMN, gas + wash + extra);
-
-
-            // Insert a new record in the DB.
-            Uri mNewUri = getActivity().getContentResolver().insert(DataProviderContract.GAS_TABLE_URI, values);
-
-            // Set the value of mileage in the SharedPreferences in order to sync it with ServiceManagerActivity
+        long rowId =  mDB.gasManagerModel().insert(gasManager);
+        if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
-
-            if(mNewUri != null) {
-                Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(this, GeofenceTransitionService.class);
-                intent.putExtra("Geofence_Saved", true);
-                startService(intent);
-
-            }
-
+            Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
             return true;
-
-        } catch (NumberFormatException e) {
-            //Log.d(LOG_TAG, "NumberFormatException: " + e.getMessage());
-        } catch (SQLiteException e) {
-            //Log.d(LOG_TAG, "SQLiteException: " + e.getMessage());
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        */
-        //return false;
+        } else return false;
 
     }
 

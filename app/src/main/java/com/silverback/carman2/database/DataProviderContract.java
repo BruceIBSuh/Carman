@@ -47,7 +47,7 @@ public final class DataProviderContract {
     public static final String SERVICE_TABLE_NAME = "ServiceManager";
     public static final Uri SERVICE_TABLE_URI = Uri.withAppendedPath(CONTENT_URI, SERVICE_TABLE_NAME);
     public static final String SERVICE_PROVIDER_COLUMN = "serviceCenter";
-    public static final String SERVICE_ADDRESS_COLUMN = "serviceAddress";
+    public static final String SERVICE_ADDRESS_COLUMN = "serviceAddrs";
     public static final String SERVICE_TOTAL_PRICE_COLUMN = "totalPayment";
     public static final String ITEM_NAME = "serviceItem_";
     public static final String ITEM_PRICE = "itemPrice_";
