@@ -2,24 +2,19 @@ package com.silverback.carman2.database;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.ForeignKey;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity
-public class GasManager {
+@Entity(foreignKeys = @ForeignKey(
+        entity = BasicManagerEntity.class, parentColumns = "_id", childColumns = "basic_id"),
+        indices = @Index("basic_id"))
+
+public class GasManagerEntity {
 
     @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "gas_id")
     public int _id;
-
-    @ColumnInfo(name = "date_time")
-    public long dateTime;
-
-    @ColumnInfo(name = "mileage")
-    public int mileage;
-
-    /*
-    @ColumnInfo(name = "table_code")
-    public int tableCode;
-    */
 
     @ColumnInfo(name = "stn_name")
     public String stnName;
@@ -32,9 +27,6 @@ public class GasManager {
 
     @ColumnInfo(name = "unit_price")
     public int unitPrice;
-
-    @ColumnInfo(name = "total_payment")
-    public int totalPayment;
 
     @ColumnInfo(name = "gas_payment")
     public int gasPayment;
@@ -50,4 +42,7 @@ public class GasManager {
 
     @ColumnInfo(name = "extra_payment")
     public int extraPayment;
+
+    @ColumnInfo(name = "basic_id")
+    public int basicId;
 }

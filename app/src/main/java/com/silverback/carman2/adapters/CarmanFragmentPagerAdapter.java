@@ -6,7 +6,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 import com.silverback.carman2.fragments.GasManagerFragment;
-import com.silverback.carman2.fragments.ServiceFragment;
+import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -28,7 +28,7 @@ public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
 
     private final Fragment[] fragments = new Fragment[] {
             new GasManagerFragment(),
-            new ServiceFragment(),
+            new ServiceManagerFragment(),
             new StatStmtsFragment(),
     };
 

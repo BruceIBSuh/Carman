@@ -183,7 +183,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
             String graphDataSql = gasData + " UNION " + serviceData
                     + " ORDER BY " + DataProviderContract.DATE_TIME_COLUMN + " DESC ";
 
-            List<StatData>  statData = mDB.gasManagerModel().loadGasExpense(start, end);
+            //List<StatData>  statData = mDB.gasManagerModel().loadGasExpense(start, end);
 
             // conds: First day and last day of each year represented by milliseconds to fetch the
             // expenses during the year.

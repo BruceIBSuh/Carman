@@ -21,9 +21,10 @@ import androidx.loader.app.LoaderManager;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProvider;
-import com.silverback.carman2.database.GasManager;
+import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -317,29 +318,34 @@ public class GasManagerFragment extends Fragment implements
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
         //int gas, wash, extra;
 
-        GasManager gasManager = new GasManager();
+        // Create Entity instances both of which are correlated by Foreinkey
+        BasicManagerEntity basicEntity = new BasicManagerEntity();
+        GasManagerEntity gasEntity = new GasManagerEntity();
 
-        gasManager.dateTime = milliseconds;
-        //gasManager.tableCode = DataProviderContract.GAS_TABLE_CODE;
-        gasManager.stnName = etStnName.getText().toString();
-        gasManager.stnAddrs = stnAddrs;
-        gasManager.stnId = stnId;
-        gasManager.extraExpense = etExtraExpense.getText().toString();
+        basicEntity.dateTime = milliseconds;
+        basicEntity.category = 1;
+        gasEntity.stnName = etStnName.getText().toString();
+        gasEntity.stnAddrs = stnAddrs;
+        gasEntity.stnId = stnId;
+        gasEntity.extraExpense = etExtraExpense.getText().toString();
+        gasEntity.basicId = basicEntity._id;
 
         try {
-            gasManager.mileage = df.parse(tvOdometer.getText().toString()).intValue();
-            gasManager.gasPayment = df.parse(tvGasPaid.getText().toString()).intValue();
-            gasManager.gasAmount = df.parse(tvGasLoaded.getText().toString()).intValue();
-            gasManager.unitPrice = df.parse(etUnitPrice.getText().toString()).intValue();
-            gasManager.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
-            gasManager.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
+            basicEntity.mileage = df.parse(tvOdometer.getText().toString()).intValue();
+            gasEntity.gasPayment = df.parse(tvGasPaid.getText().toString()).intValue();
+            gasEntity.gasAmount = df.parse(tvGasLoaded.getText().toString()).intValue();
+            gasEntity.unitPrice = df.parse(etUnitPrice.getText().toString()).intValue();
+            gasEntity.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
+            gasEntity.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
+
         } catch(ParseException e) {
             log.e("ParseException: %s", e);
         }
 
-        gasManager.totalPayment = gasManager.gasPayment + gasManager.washPayment + gasManager.extraPayment;
+        basicEntity.totalExpense = gasEntity.gasPayment + gasEntity.washPayment + gasEntity.extraPayment;
 
-        long rowId =  mDB.gasManagerModel().insert(gasManager);
+        int rowId = mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
+
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();

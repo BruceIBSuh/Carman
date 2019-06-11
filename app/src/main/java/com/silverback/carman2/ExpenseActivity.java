@@ -6,6 +6,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
@@ -15,6 +16,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
+import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -39,8 +41,9 @@ public class ExpenseActivity extends BaseActivity implements
     // Objects
     private LocationTask locationTask;
     private StatGraphFragment statGraphFragment;
-    private ExpenseViewPager expensePager;
     private FragmentPagerAdapter pagerAdapter;
+    private ExpenseViewPager expensePager;
+    private ExpensePagerAdapter expenseAdapter;
     private AppBarLayout appBar;
     private TabLayout tabLayout;
     private FrameLayout topFrame;
@@ -95,8 +98,11 @@ public class ExpenseActivity extends BaseActivity implements
         // Create ViewPager for last 5 recent expense statements in the top frame.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        expensePager.initPager(getSupportFragmentManager());
-        topFrame.addView(expensePager);
+        expenseAdapter = new ExpensePagerAdapter(getSupportFragmentManager());
+        //expensePager.setAdapter(expenseAdapter);
+        //expensePager.setCurrentItem(0);
+        //topFrame.addView(expensePager);
+        dispRecentExpense(expensePager, expenseAdapter);
 
     }
 
@@ -126,7 +132,7 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        boolean isSaved = false;
+        boolean isSaved;
         switch(item.getItemId()) {
 
             case android.R.id.home:
@@ -138,16 +144,20 @@ public class ExpenseActivity extends BaseActivity implements
                 switch(currentPage) {
                     case 0 : // GasManagerFragment
                         isSaved = ((GasManagerFragment)fragment).saveData();
-                        break;
-                    case 1: // ServiceFragment
-                        //((ServiceFragment)fragment).saveData();
-                        break;
+                        if(isSaved) {
+                            finish();
+                            return true;
+                        } else {
+                            Toast.makeText(this, "Failed to save the data", Toast.LENGTH_SHORT).show();
+                            return false;
+                        }
+
+                    case 1: // ServiceManagerFragment
+                        log.i("Current Fragment: %s", fragment);
+                        //((ServiceManagerFragment)fragment).saveData();
+                        return true;
                 }
 
-                if(isSaved) {
-                    finish();
-                    return true;
-                }
 
                 return false;
         }
@@ -169,17 +179,24 @@ public class ExpenseActivity extends BaseActivity implements
 
         switch(position) {
             case 0:
-                pageTitle = "GasManager";
+                currentPage = 0;
+                pageTitle = "GasManagerEntity";
+                expenseAdapter.notifyDataSetChanged();
+                expensePager.initPager(getSupportFragmentManager());
+                //dispRecentExpense(expensePager, expenseAdapter);
                 topFrame.addView(expensePager);
+
                 break;
 
             case 1:
-                pageTitle = "ServiceManager";
+                currentPage = 1;
+                pageTitle = "ServiceManagerEntity";
                 topFrame.addView(expensePager);
 
                 break;
 
             case 2:
+                currentPage = 2;
                 pageTitle = "Statistics";
                 statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction().replace(R.id.frame_top, statGraphFragment).commit();
@@ -208,6 +225,12 @@ public class ExpenseActivity extends BaseActivity implements
         topFrame.setAlpha(bgAlpha);
     }
 
+    // Display ViewPager on the top to show the last 5 recent data
+    private void dispRecentExpense(ViewPager pager, FragmentPagerAdapter adapter) {
+        pager.setAdapter(adapter);
+        pager.setCurrentItem(0);
+        topFrame.addView(expensePager);
+    }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {

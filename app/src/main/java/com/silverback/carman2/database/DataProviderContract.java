@@ -30,7 +30,7 @@ public final class DataProviderContract {
     public static final String TABLE_CODE = "tableCode";
 
     // Defines the Gas Table for storing gas related data
-    public static final String GAS_TABLE_NAME = "GasManager";
+    public static final String GAS_TABLE_NAME = "GasManagerEntity";
     public static final Uri GAS_TABLE_URI = Uri.withAppendedPath(CONTENT_URI, GAS_TABLE_NAME);
     public static final String GAS_STATION_COLUMN = "stnName";
     public static final String GAS_STATION_ADDRESS_COLUMN = "stnAddrs";
@@ -44,7 +44,7 @@ public final class DataProviderContract {
     public static final String EXTRA_PAYMENT_COLUMN = "extraPayment";
 
     // Defines the Service Table for storing maintenance related data
-    public static final String SERVICE_TABLE_NAME = "ServiceManager";
+    public static final String SERVICE_TABLE_NAME = "ServiceManagerEntity";
     public static final Uri SERVICE_TABLE_URI = Uri.withAppendedPath(CONTENT_URI, SERVICE_TABLE_NAME);
     public static final String SERVICE_PROVIDER_COLUMN = "serviceCenter";
     public static final String SERVICE_ADDRESS_COLUMN = "serviceAddrs";

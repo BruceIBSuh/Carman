@@ -31,7 +31,7 @@ public class ServiceListAdapter extends RecyclerView.Adapter<ServiceItemHolder> 
         super();
 
         serviceList = new ArrayList<>();
-        // Covert Json string transferred from ServiceFragment to JSONArray which is bound to
+        // Covert Json string transferred from ServiceManagerFragment to JSONArray which is bound to
         // the viewholder.
         try {
             JSONArray jsonArray = new JSONArray(jsonItems);

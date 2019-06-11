@@ -1,29 +1,24 @@
 package com.silverback.carman2.database;
 
 import androidx.room.ColumnInfo;
+import androidx.room.Embedded;
 import androidx.room.Entity;
-import androidx.room.Fts4;
+import androidx.room.ForeignKey;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 // Use the class name as the db table name by default. Otherwise, use @Entity(tableName = "xxxxx")
 // Likewise, field names are used as column names by default and use @ColumnInfo(name = "xxxx")
 // to change names.
-@Entity
-public class ServiceManager {
+@Entity(foreignKeys = @ForeignKey(entity = BasicManagerEntity.class,
+        parentColumns = "_id", childColumns = "basic_id"),
+        indices = @Index("basic_id"))
 
-    @PrimaryKey(autoGenerate = true)
+public class ServiceManagerEntity {
+
+    @PrimaryKey
+    @ColumnInfo(name = "service_id")
     public int _id;
-
-    @ColumnInfo(name = "date_time")
-    public long dateTime;
-
-    @ColumnInfo(name = "mileage")
-    public int mileage;
-
-    /*
-    @ColumnInfo(name = "table_code")
-    public String tableCode;
-    */
 
     @ColumnInfo(name = "service_name")
     public String serviceCenter;
@@ -31,9 +26,7 @@ public class ServiceManager {
     @ColumnInfo(name = "service_addrs")
     public String serviceAddrs;
 
-    @ColumnInfo(name = "total_payment")
-    public int totalPayment;
-
+    /*
     @ColumnInfo(name = "custom_item_1")
     public String itemName_1;
 
@@ -69,6 +62,24 @@ public class ServiceManager {
 
     @ColumnInfo(name = "item_memo_4")
     public String itemMemo_4;
+    */
+    @Embedded(prefix = "1")
+    public ServiceItemEmbedded serviceItem1;
+
+    @Embedded(prefix = "2")
+    public ServiceItemEmbedded serviceItem2;
+
+    @Embedded(prefix = "3")
+    public ServiceItemEmbedded serviceItem3;
+
+    @Embedded(prefix = "4")
+    public ServiceItemEmbedded serviceItem4;
+
+    @Embedded(prefix = "5")
+    public ServiceItemEmbedded serviceItem5;
+
+    @ColumnInfo(name = "basic_id")
+    public int basicId;
 
 }
 
