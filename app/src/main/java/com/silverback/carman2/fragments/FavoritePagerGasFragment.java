@@ -16,7 +16,7 @@ import android.view.ViewGroup;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SettingFavoriteRecyclerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProvider;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -33,7 +33,7 @@ public class FavoritePagerGasFragment extends Fragment {
 
     // Objects
     private CarmanDatabase mDB;
-    private LiveData<List<FavoriteProvider>> liveData;
+    private LiveData<List<FavoriteProviderEntity>> liveData;
     private SettingFavoriteRecyclerAdapter adapter;
 
     // Constructor
@@ -65,7 +65,7 @@ public class FavoritePagerGasFragment extends Fragment {
 
         liveData.observe(getActivity(), observer -> {
             log.i("LiveData changed");
-            List<FavoriteProvider> list = liveData.getValue();
+            List<FavoriteProviderEntity> list = liveData.getValue();
             adapter = new SettingFavoriteRecyclerAdapter(list);
             recyclerView.setAdapter(adapter);
         });

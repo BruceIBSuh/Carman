@@ -6,9 +6,8 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.FavoriteProvider;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -31,7 +30,7 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
         imgLogo = cardView.findViewById(R.id.img_logo);
     }
 
-    public void bindToFavorite(FavoriteProvider favorite) {
+    public void bindToFavorite(FavoriteProviderEntity favorite) {
         log.i("Address: %s", favorite.address);
         tvName.setText(favorite.providerName);
         tvAddress.setText(favorite.address);

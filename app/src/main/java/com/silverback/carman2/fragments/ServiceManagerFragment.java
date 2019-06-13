@@ -90,8 +90,8 @@ public class ServiceManagerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Pass a current fragment in the bottom to ExpensePagerFragment to load which data shoud
-        // be loaded between Gas and Service.
+        // Notify ExpensePagerFragment of the current fragment to load the recent 5 expense data from
+        // ServiceTable.
         viewModel.setCurrentFragment(this);
     }
 

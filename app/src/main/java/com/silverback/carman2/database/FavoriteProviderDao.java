@@ -12,20 +12,20 @@ import java.util.List;
 @Dao
 public interface FavoriteProviderDao {
 
-    @Query("SELECT * FROM FavoriteProvider")
-    LiveData<List<FavoriteProvider>> loadAllFavoriteProvider();
+    @Query("SELECT * FROM FavoriteProviderEntity")
+    LiveData<List<FavoriteProviderEntity>> loadAllFavoriteProvider();
 
-    @Query("SELECT * FROM FavoriteProvider WHERE favorite_name = :stnName OR favorite_id = :stnId")
-    FavoriteProvider findFavoriteProvider(String stnName, String stnId);
+    @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
+    FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
 
-    @Query("SELECT favorite_name FROM FavoriteProvider WHERE favorite_name = :stnName OR favorite_id = :stnId")
-    String findFavoriteName(String stnName, String stnId);
+    @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
+    LiveData<String> findFavoriteName(String stnName, String stnId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertFavoriteProvider(FavoriteProvider favorite);
+    void insertFavoriteProvider(FavoriteProviderEntity favorite);
 
     @Delete
-    void deleteProvider(FavoriteProvider provider);
+    void deleteProvider(FavoriteProviderEntity provider);
 
 }

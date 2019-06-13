@@ -1,7 +1,6 @@
 package com.silverback.carman2.adapters;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -10,10 +9,9 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.FavoriteProvider;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.database.DataProviderContract;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
 import java.util.List;
@@ -25,10 +23,10 @@ public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<Favorit
 
     // Objects
     private Context context;
-    private List<FavoriteProvider> favoriteList;
+    private List<FavoriteProviderEntity> favoriteList;
 
     // Constructor
-    public SettingFavoriteRecyclerAdapter(List<FavoriteProvider> favorites) {
+    public SettingFavoriteRecyclerAdapter(List<FavoriteProviderEntity> favorites) {
         log.i("SettingFavoriteRecyclerAdapter constructor");
         favoriteList = favorites;
     }
@@ -48,7 +46,7 @@ public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<Favorit
     public void onBindViewHolder(@NonNull FavoriteItemHolder holder, int position) {
         log.i("onBindViewHolder");
 
-        final FavoriteProvider provider = favoriteList.get(position);
+        final FavoriteProviderEntity provider = favoriteList.get(position);
         holder.bindToFavorite(provider);
     }
 

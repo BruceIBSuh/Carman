@@ -54,7 +54,7 @@ public final class DataProviderContract {
     public static final String ITEM_MEMO = "itemMemo_";
 
     // Define the Favorites table
-    public static final String FAVORITE_TABLE_NAME = "FavoriteProvider";
+    public static final String FAVORITE_TABLE_NAME = "FavoriteProviderEntity";
     public static final Uri FAVORITE_TABLE_URI = Uri.withAppendedPath(CONTENT_URI, FAVORITE_TABLE_NAME);
     public static final String FAVORITE_PROVIDER_NAME = "providerName";
     public static final String FAVORITE_PROVIDER_CATEGORY = "category";

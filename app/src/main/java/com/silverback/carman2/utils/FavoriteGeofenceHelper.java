@@ -13,7 +13,7 @@ import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProvider;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -31,7 +31,7 @@ public class FavoriteGeofenceHelper {
     private Context context;
 
     private CarmanDatabase mDB;
-    private FavoriteProvider favoriteModel;
+    private FavoriteProviderEntity favoriteModel;
 
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
@@ -59,7 +59,7 @@ public class FavoriteGeofenceHelper {
         mGeofencingClient = LocationServices.getGeofencingClient(context);
 
         mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
-        favoriteModel = new FavoriteProvider();
+        favoriteModel = new FavoriteProviderEntity();
     }
 
     public void setListener(OnGeofenceListener listener) {
@@ -162,7 +162,7 @@ public class FavoriteGeofenceHelper {
 
         mGeofencingClient.removeGeofences(geofenceId)
                 .addOnSuccessListener(aVoid -> {
-                    FavoriteProvider provider = mDB.favoriteModel().findFavoriteProvider(name, id);
+                    FavoriteProviderEntity provider = mDB.favoriteModel().findFavoriteProvider(name, id);
                     if(provider != null) {
                         mDB.favoriteModel().deleteProvider(provider);
                         Toast.makeText(context, R.string.toast_remove_favorite, Toast.LENGTH_SHORT).show();

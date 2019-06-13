@@ -1,5 +1,6 @@
 package com.silverback.carman2.database;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -24,8 +25,7 @@ public abstract class GasManagerDao {
     @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
             "INNER JOIN BasicManagerEntity ON GasManagerEntity.basic_id = BasicManagerEntity._id " +
             "ORDER BY gas_id DESC LIMIT 5")
-    //public abstract List<GasManagerEntity> loadRecentGasData();
-    public abstract List<RecentGasData> loadRecentGasData();
+    public abstract LiveData<List<RecentGasData>> loadRecentGasData();
 
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
     public abstract GasManagerEntity findGasManagerByNameOrId(String stnName, String stnId);

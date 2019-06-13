@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity
-public class FavoriteProvider {
+public class FavoriteProviderEntity {
 
     @PrimaryKey(autoGenerate = true)
     public int _id;

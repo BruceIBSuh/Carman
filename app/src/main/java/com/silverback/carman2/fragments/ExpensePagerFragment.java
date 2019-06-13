@@ -20,6 +20,8 @@ import com.silverback.carman2.models.FragmentSharedModel;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import java.text.DecimalFormat;
@@ -55,17 +57,20 @@ public class ExpensePagerFragment extends Fragment {
     private CarmanDatabase mDB;
     private GasManagerEntity gasManagerEntity;
     private ServiceManagerEntity serviceManagerEntity;
-    private FragmentSharedModel viewModel;
+    private FragmentSharedModel fragmentSharedModel;
+    private Fragment currentFragment;
     //private Cursor cursor;
-    private List<GasManagerDao.RecentGasData> gasList;
+    private LiveData<List<GasManagerDao.RecentGasData>> gasLiveData;
     private List<ServiceManagerDao.RecentSvcData> serviceList;
+
+    private List<GasManagerDao.RecentGasData> gasDataList;
 
     // UIs
     private TextView tvDate, tvMileage, tvName, tvPayment, tvAmount;
     private TextView tvLastInfo, tvPage;
 
     // Fields
-    private Fragment currentFragment;
+    private int numPage;
     private String lastInfo;
     private String[] projection;
     private Uri baseUri;
@@ -102,39 +107,45 @@ public class ExpensePagerFragment extends Fragment {
 
         // Create ViewModel to get data of which fragment is attached in the tab-linked ViewPager
         // from the viewpager-containing fragments.
-        viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        //ViewGroup rootView = (ViewGroup)inflater.inflate(R.layout.fragment_viewpager_expense, container, false);
-        View localView = inflater.inflate(R.layout.fragment_viewpager_expense, container, false);
+        //ViewGroup rootView = (ViewGroup)inflater.inflate(R.layout.fragment_pager_expense, container, false);
+        View localView = inflater.inflate(R.layout.fragment_pager_expense, container, false);
         tvLastInfo = localView.findViewById(R.id.tv_lastInfo);
         tvPage = localView.findViewById(R.id.tv_page);
 
-        /*
-        viewModel.getCurrentFragment().observe(this, fragment -> {
+        // Observe whether the current fragment changes via ViewModel and find what is the current
+        // fragment attached in order to separately do actions according to the fragment.
+        fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
 
             currentFragment = fragment;
-            int mPageNumber = (getArguments().getInt("page"));
+            log.i("Current Fragment in ExpenseViewPager: %s, %s", currentFragment, numPage);
+            if(getArguments() != null) numPage = (getArguments().getInt("page"));
 
+            // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
-                gasList = mDB.gasManagerModel().loadRecentGasData();
-                lastInfo = (gasList.size() > mPageNumber)? displayLastInfo(mPageNumber) : null;
+
+                gasLiveData = mDB.gasManagerModel().loadRecentGasData();
+                gasLiveData.observe(this, recentGasData -> {
+                    gasDataList = recentGasData;
+                    lastInfo = (gasDataList.size() > numPage)? displayLastInfo(numPage) : null;
+                    tvLastInfo.setText(lastInfo);
+                    tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+                });
 
             } else if(currentFragment instanceof ServiceManagerFragment) {
+
                 serviceList = mDB.serviceManagerModel().loadRecentServiceData();
-                lastInfo = (serviceList.size() > mPageNumber)? displayLastInfo(mPageNumber) : null;
+                lastInfo = (serviceList.size() > numPage)? displayLastInfo(numPage) : "";
             }
 
-            tvLastInfo.setText(lastInfo);
-            tvPage.setText(String.valueOf(Math.abs(mPageNumber) + 1));
 
         });
-        */
 
         return localView;
     }
@@ -142,26 +153,6 @@ public class ExpensePagerFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume() of ExpensePagerFragment");
-        viewModel.getCurrentFragment().observe(this, fragment -> {
-
-            currentFragment = fragment;
-            int mPageNumber = (getArguments().getInt("page"));
-
-            if(currentFragment instanceof GasManagerFragment) {
-                gasList = mDB.gasManagerModel().loadRecentGasData();
-                lastInfo = (gasList.size() > mPageNumber)? displayLastInfo(mPageNumber) : null;
-
-            } else if(currentFragment instanceof ServiceManagerFragment) {
-                serviceList = mDB.serviceManagerModel().loadRecentServiceData();
-                lastInfo = (serviceList.size() > mPageNumber)? displayLastInfo(mPageNumber) : null;
-            }
-
-            tvLastInfo.setText(lastInfo);
-            tvPage.setText(String.valueOf(Math.abs(mPageNumber) + 1));
-
-        });
-
     }
 
 
@@ -177,12 +168,12 @@ public class ExpensePagerFragment extends Fragment {
         String liter = getString(R.string.unit_liter);
 
         if(currentFragment instanceof GasManagerFragment) {
-            String date = BaseActivity.formatMilliseconds(format, gasList.get(pos).dateTime);
+            String date = BaseActivity.formatMilliseconds(format, gasDataList.get(pos).dateTime);
             String a = String.format("%-10s%s%s", getString(R.string.gas_label_date), date, "\n");
-            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(gasList.get(pos).mileage), "km", "\n");
-            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), gasList.get(pos).stnName, "\n");
-            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(gasList.get(pos).gasPayment), won, "\n");
-            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(gasList.get(pos).gasAmount), liter);
+            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(gasDataList.get(pos).mileage), "km", "\n");
+            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), gasDataList.get(pos).stnName, "\n");
+            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(gasDataList.get(pos).gasPayment), won, "\n");
+            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(gasDataList.get(pos).gasAmount), liter);
             return a + b + c + d + e;
 
         } else if(currentFragment instanceof ServiceManagerFragment) {

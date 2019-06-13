@@ -11,7 +11,7 @@ import androidx.room.RoomDatabase;
         BasicManagerEntity.class,
         GasManagerEntity.class,
         ServiceManagerEntity.class,
-        FavoriteProvider.class},
+        FavoriteProviderEntity.class},
         version = 1, exportSchema = false)
 
 public abstract class CarmanDatabase extends RoomDatabase {

@@ -68,7 +68,7 @@ public class CarmanSQLiteOpenHelper extends SQLiteOpenHelper {
         //Log.d(TAG, "ServiceManagerEntity table sql: " + strbldr);
         db.execSQL(DataProvider.CREATE_GAS_TABLE_SQL); // Create GasTable
         db.execSQL(strbldr.toString());  // Create ServiceTable
-        db.execSQL(DataProvider.CREATE_FAVORITE_TABLE_SQL); // Create FavoriteProvider table.
+        db.execSQL(DataProvider.CREATE_FAVORITE_TABLE_SQL); // Create FavoriteProviderEntity table.
     }
 
     @Override

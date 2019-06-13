@@ -58,9 +58,9 @@
     <string name="gas_toolbar_title">주유 및 세차 지출</string>
     <string name="gas_subtitle_expense">주유 지출</string>
     <string name="gas_label_date">주유날짜</string>
-    <string name="gas_label_station">주유소</string>
-    <string name="gas_label_expense">주유비</string>
-    <string name="gas_label_amount">주유량</string>
+    <string name="gas_label_station">주 유 소</string>
+    <string name="gas_label_expense">주 유 비</string>
+    <string name="gas_label_amount">주 유 량</string>
     <string name="gas_subtitle_extra_expense">세차 및 기타 지출</string>
     <string name="gas_label_expense_wash">세차비</string>
     <string name="gas_label_expense_misc">기타지출</string>

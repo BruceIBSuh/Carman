@@ -10,14 +10,15 @@
     cardview:cardElevation="1dp"
     cardview:cardCornerRadius="2dp" >
 
-    <LinearLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="wrap_content" >
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:elevation="2dp"
+            cardview:layout_dodgeInsetEdges="top">
 
             <TextView
                 android:id="@+id/tv_name"
@@ -42,17 +43,17 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraint_stmts"
-            android:visibility="gone"
             android:layout_width="match_parent"
-            android:layout_height="132dp"
-            android:padding="8dp">
-
+            android:layout_height="0dp"
+            android:elevation="1dp"
+            android:background="#E0E0E0"
+            android:padding="8dp"
+            cardview:layout_dodgeInsetEdges="bottom">
 
             <TextView
                 android:id="@+id/tv_label_period"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
                 android:text="@string/svc_label_period"
                 cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
                 cardview:layout_constraintTop_toTopOf="parent" />
@@ -64,6 +65,7 @@
                 android:layout_height="20dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
                 cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_period"
                 cardview:layout_constraintTop_toTopOf="parent" />
@@ -83,13 +85,23 @@
                 android:layout_width="100dp"
                 android:layout_height="25dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
-                android:padding="0dp"
+                android:padding="8dp"
                 android:ems="10"
+                android:background="@drawable/state_view_focus"
                 android:inputType="numberDecimal"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_cost"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_cost"
-                cardview:layout_constraintTop_toBottomOf="@+id/progressBar"
-                tools:ignore="Autofill"/>
+                cardview:layout_constraintTop_toTopOf="@+id/tv_label_cost"
+                tools:ignore="Autofill" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/unit_won"
+                cardview:layout_constraintBottom_toBottomOf="@+id/et_cost"
+                cardview:layout_constraintStart_toEndOf="@+id/et_cost"
+                cardview:layout_constraintTop_toTopOf="@+id/et_cost" />
 
             <TextView
                 android:id="@+id/tv_label_info"
@@ -103,18 +115,23 @@
 
             <EditText
                 android:id="@+id/et_info"
-                android:layout_width="324dp"
-                android:layout_height="25dp"
+                android:layout_width="0dp"
+                android:layout_height="26dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="12dp"
+                android:layout_marginEnd="8dp"
+                android:padding="8dp"
+                android:background="@drawable/state_view_focus"
                 android:ems="10"
                 android:inputType="textPersonName"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_info"
+                cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_info"
-                cardview:layout_constraintTop_toBottomOf="@+id/et_cost"
+                cardview:layout_constraintTop_toTopOf="@+id/tv_label_info"
                 tools:ignore="Autofill" />
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </androidx.cardview.widget.CardView>

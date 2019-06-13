@@ -66,7 +66,7 @@ public class DataProvider extends ContentProvider {
             + DataProviderContract.SERVICE_ADDRESS_COLUMN + " " + TEXT_TYPE + ", "
             + DataProviderContract.SERVICE_TOTAL_PRICE_COLUMN + " " + INTEGER_TYPE + ", ";
 
-    // SQL to create the FavoriteProvider table.
+    // SQL to create the FavoriteProviderEntity table.
     protected static final String CREATE_FAVORITE_TABLE_SQL = "CREATE TABLE "
             + DataProviderContract.FAVORITE_TABLE_NAME
             + " ( "

@@ -12,15 +12,14 @@
         android:id="@+id/constraintBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true" >
 
         <View
             android:id="@+id/view"
             android:layout_width="0dp"
-            android:layout_height="152dp"
-            android:layout_margin="1dp"
+            android:layout_height="160dp"
+            android:layout_margin="2dp"
             android:background="@drawable/bg_service_boxing"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
@@ -32,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
-            android:layout_marginTop="13dp"
+            android:layout_marginTop="10dp"
             android:minWidth="80dp"
             android:text="@string/svc_label_date"
             android:textSize="@dimen/largeText"
@@ -170,7 +169,7 @@
 
     <!--Issue of RecyclerView Item Cutoff
     In the layout structure which contains AppBarLayout, CollapsingToolbarLayout, NestedScrollView
-    and Fragment via FrameLayout, it happnes that last item(s) of RecyclerView located in Fragment
+    and Fragment in FrameLayout, it happnes that last item(s) of RecyclerView located in Fragment
     is cut off. This might be caused by the reason that RecyclerView computes the top scrolling
     position and the top position of the view height in a different manner. It is the case that some
     other layoouts exist before RecyclerView in NestedScrollView,  which makes difference b/w those
@@ -185,13 +184,16 @@
         android:id="@+id/tv_subtitle_stmts"
         android:layout_width="match_parent"
         android:layout_height="35dp"
-        android:layout_margin="1dp"
-        android:layout_alignParentStart="true"
         android:layout_below="@id/constraintBox"
-        android:elevation="2dp"
-        android:padding="5dp"
-        android:gravity="center_vertical"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="2dp"
+        android:layout_marginBottom="1dp"
         android:background="@drawable/bg_service_subtitle"
+        android:elevation="2dp"
+        android:gravity="center_vertical"
+        android:padding="5dp"
         android:text="@string/svc_subtitle_stmts"
         android:textSize="@dimen/subtitle"
         android:textStyle="bold" />
@@ -204,10 +206,8 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="3dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="0dp"
         android:layout_marginEnd="3dp"
         android:elevation="1dp" />
-
-
 
 </RelativeLayout>

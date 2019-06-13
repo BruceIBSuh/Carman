@@ -1,6 +1,9 @@
 package com.silverback.carman2.viewholders;
 
+import android.animation.ObjectAnimator;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
@@ -20,7 +23,11 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
 
     // Objects
     private TextView tvItemName;
-    private ConstraintLayout constraintLayout;
+    private ConstraintLayout layout;
+    private Animation slideUp, slideDown;
+
+    // Temp
+    private ObjectAnimator animation;
 
 
     // Constructor
@@ -28,10 +35,17 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
         super(view);
 
         tvItemName = view.findViewById(R.id.tv_name);
-        constraintLayout = view.findViewById(R.id.constraint_stmts);
+        layout = view.findViewById(R.id.constraint_stmts);
         CheckBox chkbox = view.findViewById(R.id.chkbox);
 
+
+
         chkbox.setOnCheckedChangeListener(this);
+
+        slideUp = AnimationUtils.loadAnimation(view.getContext(), R.anim.slide_up);
+        slideDown = AnimationUtils.loadAnimation(view.getContext(), R.anim.slide_down);
+
+
 
     }
 
@@ -42,8 +56,16 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        if(isChecked) constraintLayout.setVisibility(View.VISIBLE);
-        else constraintLayout.setVisibility(View.GONE);
+
+        if(isChecked) {
+            layout.setVisibility(View.VISIBLE);
+            //layout.setAnimation(slideUp);
+            // Temp
+
+        } else {
+            layout.setVisibility(View.GONE);
+            layout.setAnimation(slideUp);
+        }
 
     }
 }

@@ -15,7 +15,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.adapters.CarmanFragmentPagerAdapter;
+import com.silverback.carman2.adapters.ManagerPagerAdapter;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
@@ -79,7 +79,7 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.setId(View.generateViewId());
         frameFragments.addView(tabPager);
 
-        pagerAdapter = new CarmanFragmentPagerAdapter(getSupportFragmentManager());
+        pagerAdapter = new ManagerPagerAdapter(getSupportFragmentManager());
         tabPager.setAdapter(pagerAdapter);
         tabPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabPager);
@@ -96,14 +96,14 @@ public class ExpenseActivity extends BaseActivity implements
         animSlideTabLayout();
 
         // Create ViewPager for last 5 recent expense statements in the top frame.
+        // Required to use FrameLayout.addView() b/c StatFragment should be applied here.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         expenseAdapter = new ExpensePagerAdapter(getSupportFragmentManager());
-        //expensePager.setAdapter(expenseAdapter);
-        //expensePager.setCurrentItem(0);
-        //topFrame.addView(expensePager);
-        dispRecentExpense(expensePager, expenseAdapter);
-
+        expensePager.setAdapter(expenseAdapter);
+        expensePager.setCurrentItem(0);
+        topFrame.addView(expensePager);
+        //dispRecentExpense(expensePager, expenseAdapter);
     }
 
 
@@ -173,7 +173,7 @@ public class ExpenseActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
-
+        log.i("onPageSelected: %s", position);
         topFrame.removeAllViews();
         expensePager.setCurrentItem(0);
 
@@ -181,9 +181,6 @@ public class ExpenseActivity extends BaseActivity implements
             case 0:
                 currentPage = 0;
                 pageTitle = "GasManagerEntity";
-                expenseAdapter.notifyDataSetChanged();
-                expensePager.initPager(getSupportFragmentManager());
-                //dispRecentExpense(expensePager, expenseAdapter);
                 topFrame.addView(expensePager);
 
                 break;

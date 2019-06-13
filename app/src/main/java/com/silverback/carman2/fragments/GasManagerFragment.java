@@ -15,6 +15,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.loader.app.LoaderManager;
 
@@ -23,7 +25,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProvider;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -61,13 +63,11 @@ public class GasManagerFragment extends Fragment implements
 
     // Objects
     private CarmanDatabase mDB;
-    private FavoriteProvider favoriteModel;
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private FragmentSharedModel fragmentSharedModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
-    private LoaderManager loaderManager;
     private LocationTask locationTask;
     private StationListTask stationListTask;
     private StationInfoTask stationInfoTask;
@@ -106,34 +106,37 @@ public class GasManagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        defaultParams = getArguments().getStringArray("defaultParams");
 
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        favoriteModel = new FavoriteProvider();
+        /*
+         * Create the instances of the ViewModels
+         * FragmentSharedModel: communicate b/w GasManagerFragment and InputPadFragment
+         * LocationViewModel: fetch a current location asynchnonously to have a station, if any.
+         * StationListViewModel: fetch a station within a MIN_RADIUS
+         */
+        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        locationTask = ThreadManager.fetchLocationTask(this);
-    }
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
 
-        // Requires the parent activity when ViewModel is used in communicating b/w fragments of
-        // an Activity.
-        if(getActivity() != null) {
-            fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        }
-
-        // Get Default Params(FuelCode, Searching Radius, Sorting order);
-        if(getArguments() != null) {
-            defaultParams = getArguments().getStringArray("defaultParams");
-        }
+        // Entity to retrieve list of favorite station to compare with a fetched current station
+        // to tell whether it has registered with Favorite.
+        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
 
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         mSettings = BaseActivity.getSharedPreferenceInstance(getActivity());
         df = BaseActivity.getDecimalFormatInstance();
+
+        // Fetch the current location using worker thread, the result of which is returned to
+        // getLocation() of ViewModel.LocationViewModel as a LiveData
+        locationTask = ThreadManager.fetchLocationTask(this);
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
         final View localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
@@ -154,29 +157,29 @@ public class GasManagerFragment extends Fragment implements
         sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         String date = BaseActivity.formatMilliseconds(dateFormat, System.currentTimeMillis());
         tvDateTime.setText(date);
-
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
         tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
 
-
+        // Attach event handlers
         etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
         tvOdometer.setOnClickListener(this);
         tvGasPaid.setOnClickListener(this);
         tvCarwashPaid.setOnClickListener(this);
         tvExtraPaid.setOnClickListener(this);
-
-        // Register the current station with Favorite when clicking the Favorite button.
         btnFavorite.setOnClickListener(view -> registerFavorite());
 
 
         // ViewModels to communicate fragments of an Activity.
-        fragmentSharedModel.setCurrentFragment(this);
+        //fragmentSharedModel.setCurrentFragment(this);
         fragmentSharedModel.getInputValue().observe(this, data -> {
             targetView.setText(data);
             calculateGasAmount();
         });
 
-        // Attach Observer to LiveData defined in LocationViewModel
+
+        // Once getting the current location fetched, attempt to get a station within MIN_RADIUS
+        // using a worker thread, the result of which is notified using getCurrentStationLiveData()
+        // of StationListViewModel as a LiveData like in the following method.
         locationModel.getLocation().observe(this, location -> {
             this.location = location;
             stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
@@ -195,16 +198,9 @@ public class GasManagerFragment extends Fragment implements
             etStnName.setCursorVisible(false);
             etUnitPrice.setCursorVisible(false);
 
-            String favoriteName = mDB.favoriteModel().findFavoriteName(stnName, stnId);
-            if(TextUtils.isEmpty(favoriteName)) {
-                log.i("favorite not found");
-                isFavorite = false;
-                btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-            } else {
-                log.i("favorite not found");
-                isFavorite = true;
-                btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            }
+            // Query Favorite with the fetched station name or station id to tell whether the station
+            // has registered with Favorite.
+            checkFavorite(stnName, stnId);
 
         });
 
@@ -228,6 +224,9 @@ public class GasManagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        // Notify ExpensePagerFragment of the current fragment to load the recent 5 data from
+        // GasTable.
+        fragmentSharedModel.setCurrentFragment(this);
 
     }
 
@@ -274,19 +273,22 @@ public class GasManagerFragment extends Fragment implements
 
     }
 
-    /*
-    @Override
-    public void onStationInfoTaskComplete(Opinet.GasStationInfo stnInfo) {
-        log.i("onStationInfoTaskComplete: %s", stnInfo.getNewAddrs());
-        stnAddrs = stnInfo.getNewAddrs();
-
-        // Once a current station is fetched, retrieve the station info(station address) which
-        // is passed over to addFavoriteGeofence() in FavoriteGeofenceHelper.
-        geofenceHelper.setGeofenceParam(GasStation, stnId, location);
-        geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
-        btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+    // Query Favorite with the fetched station name or station id to tell whether the station
+    // has registered with Favorite, and the result is notified as a LiveData.
+    private void checkFavorite(String name, String id) {
+        LiveData<String> favoriteName = mDB.favoriteModel().findFavoriteName(name, id);
+        favoriteName.observe(this, favorite -> {
+            if (TextUtils.isEmpty(favorite)) {
+                log.i("favorite not found");
+                isFavorite = false;
+                btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            } else {
+                log.i("favorite not found");
+                isFavorite = true;
+                btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            }
+        });
     }
-    */
 
 
     // Invoked when Favorite button clicks in order to add or remove the current station to or out of
@@ -308,7 +310,6 @@ public class GasManagerFragment extends Fragment implements
     }
 
     // Method for inserting data to SQLite database
-    @SuppressWarnings("ConstantConditions")
     public boolean saveData(){
 
         // Null check for the parent activity

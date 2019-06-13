@@ -11,18 +11,13 @@ import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class CarmanFragmentPagerAdapter extends FragmentPagerAdapter {
+public class ManagerPagerAdapter extends FragmentPagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(CarmanFragmentPagerAdapter.class);
-
-    // Constants
-    public static final int GAS = 0;
-    public static final int SERVICE = 1;
-    public static final int STAT = 2;
+    private static final LoggingHelper log = LoggingHelperFactory.create(ManagerPagerAdapter.class);
 
 
-    public CarmanFragmentPagerAdapter(FragmentManager fm) {
+    public ManagerPagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
