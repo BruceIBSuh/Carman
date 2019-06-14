@@ -16,16 +16,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.loader.app.LoaderManager;
 
 import com.silverback.carman2.BaseActivity;
+import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -126,7 +124,7 @@ public class GasManagerFragment extends Fragment implements
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
-        mSettings = BaseActivity.getSharedPreferenceInstance(getActivity());
+        mSettings = ((ExpenseActivity)getActivity()).getSettings();
         df = BaseActivity.getDecimalFormatInstance();
 
         // Fetch the current location using worker thread, the result of which is returned to
@@ -171,9 +169,11 @@ public class GasManagerFragment extends Fragment implements
 
         // ViewModels to communicate fragments of an Activity.
         //fragmentSharedModel.setCurrentFragment(this);
-        fragmentSharedModel.getInputValue().observe(this, data -> {
-            targetView.setText(data);
-            calculateGasAmount();
+        fragmentSharedModel.getValue().observe(this, data -> {
+            if(targetView != null) {
+                targetView.setText(data);
+                calculateGasAmount();
+            }
         });
 
 
@@ -310,7 +310,7 @@ public class GasManagerFragment extends Fragment implements
     }
 
     // Method for inserting data to SQLite database
-    public boolean saveData(){
+    public boolean saveGasData(){
 
         // Null check for the parent activity
         if(!doEmptyCheck()) return false;

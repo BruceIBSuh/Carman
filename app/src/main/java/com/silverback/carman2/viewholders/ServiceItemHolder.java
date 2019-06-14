@@ -1,6 +1,7 @@
 package com.silverback.carman2.viewholders;
 
 import android.animation.ObjectAnimator;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -24,7 +25,6 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
     // Objects
     private TextView tvItemName;
     private ConstraintLayout layout;
-    private Animation slideUp, slideDown;
 
     // Temp
     private ObjectAnimator animation;
@@ -38,15 +38,14 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
         layout = view.findViewById(R.id.constraint_stmts);
         CheckBox chkbox = view.findViewById(R.id.chkbox);
 
-
+        // Temp Coding to get the size of the layout.
+        /*
+        DisplayMetrics dispMetrics = new DisplayMetrics();
+        layout.getDisplay().getMetrics(dispMetrics);
+        log.i("ConstraintLayout size: %s, %s", dispMetrics.widthPixels, dispMetrics.heightPixels);
+        */
 
         chkbox.setOnCheckedChangeListener(this);
-
-        slideUp = AnimationUtils.loadAnimation(view.getContext(), R.anim.slide_up);
-        slideDown = AnimationUtils.loadAnimation(view.getContext(), R.anim.slide_down);
-
-
-
     }
 
     public void bindItemToHolder(String item) {
@@ -61,10 +60,21 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
             layout.setVisibility(View.VISIBLE);
             //layout.setAnimation(slideUp);
             // Temp
+            /*
+            ObjectAnimator animDown = ObjectAnimator.ofFloat(layout, "translationY", 50f);
+            animDown.setDuration(2000);
+            animDown.start();
+            */
 
         } else {
+            //layout.setVisibility(View.GONE);
+            //layout.setAnimation(slideUp);
+            /*
+            ObjectAnimator animUp = ObjectAnimator.ofFloat(layout, "translationY", -250f);
+            animUp.setDuration(1000);
+            animUp.start();
+            */
             layout.setVisibility(View.GONE);
-            layout.setAnimation(slideUp);
         }
 
     }

@@ -126,7 +126,7 @@
         tools:ignore="Autofill" />
 
     <TextView
-        android:id="@+id/tv_label_odometer"
+        android:id="@+id/tv_label_mileage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -147,9 +147,9 @@
         android:padding="5dp"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_odometer"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_odometer"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_odometer"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_mileage"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_mileage"
         tools:ignore="AutoFill" />
 
     <TextView
@@ -174,7 +174,7 @@
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_date"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_odometer" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
 
     <TextView
         android:id="@+id/tv_payment"

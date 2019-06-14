@@ -1,6 +1,7 @@
 package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +19,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.ManagerPagerAdapter;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
+import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -132,7 +134,7 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        boolean isSaved;
+
         switch(item.getItemId()) {
 
             case android.R.id.home:
@@ -141,25 +143,23 @@ public class ExpenseActivity extends BaseActivity implements
 
             case MENU_ITEM_ID:
                 Fragment fragment = pagerAdapter.getItem(currentPage);
-                switch(currentPage) {
-                    case 0 : // GasManagerFragment
-                        isSaved = ((GasManagerFragment)fragment).saveData();
-                        if(isSaved) {
-                            finish();
-                            return true;
-                        } else {
-                            Toast.makeText(this, "Failed to save the data", Toast.LENGTH_SHORT).show();
-                            return false;
-                        }
+                boolean isSaved = false;
 
-                    case 1: // ServiceManagerFragment
-                        log.i("Current Fragment: %s", fragment);
-                        //((ServiceManagerFragment)fragment).saveData();
-                        return true;
+                if(fragment instanceof GasManagerFragment) {
+                    isSaved = ((GasManagerFragment)fragment).saveGasData();
+                } else if(fragment instanceof ServiceManagerFragment) {
+                    isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
                 }
 
+                if(isSaved) {
+                    finish();
+                    return true;
 
-                return false;
+                } else {
+                    Toast.makeText(this, "Failed to save the data", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
         }
 
         return super.onOptionsItemSelected(item);
@@ -261,5 +261,8 @@ public class ExpenseActivity extends BaseActivity implements
         topFrame.setAlpha(bgAlpha);
     }
 
-
+    // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
+    public SharedPreferences getSettings() {
+        return mSettings;
+    }
 }

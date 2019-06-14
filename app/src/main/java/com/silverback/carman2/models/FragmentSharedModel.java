@@ -15,14 +15,16 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<String> selected = new MutableLiveData<>();
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
 
-    public void setInputValue(String data) {
+    // Communicate b/w GasManagerFragment or ServiceManagerFragment and InputPadFragment.
+    public void setValue(String data) {
         selected.setValue(data);
     }
-    public LiveData<String> getInputValue() {
+    public LiveData<String> getValue() {
         return selected;
     }
 
-    // Communicate b/w ExpensePagerFragment and a fragment contained in the bottom viewpagere
+
+    // Communicate b/w ExpensePagerFragment and a fragment contained in the bottom viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
 

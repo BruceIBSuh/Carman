@@ -107,13 +107,14 @@
             app:layout_constraintStart_toStartOf="@+id/tv_label_provider"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_provider" />
 
-        <EditText
+        <TextView
             android:id="@+id/tv_mileage"
             android:layout_width="100dp"
             android:layout_height="25dp"
+            android:padding="5dp"
             android:background="@drawable/state_view_focus"
-            android:ems="10"
-            android:inputType="numberDecimal"
+            android:gravity="center|end"
+            android:textSize="13sp"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
             app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toTopOf="@+id/tv_label_mileage"
@@ -145,9 +146,12 @@
             android:id="@+id/tv_payment"
             android:layout_width="100dp"
             android:layout_height="25dp"
+            android:padding="5dp"
             android:background="@drawable/state_view_focus"
-            android:ems="10"
             android:inputType="numberDecimal"
+            android:ems="10"
+            android:textSize="13sp"
+            android:textAlignment="viewEnd"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_payment"
             app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toTopOf="@+id/tv_label_payment"

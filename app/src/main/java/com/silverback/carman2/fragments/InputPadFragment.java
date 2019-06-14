@@ -2,14 +2,12 @@ package com.silverback.carman2.fragments;
 
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.view.LayoutInflater;
@@ -68,7 +66,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         }
     }
 
-
+    @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -97,7 +95,6 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         // Get arguments from the parent activity dialog title, unit name, and button numbers.
         String title = null;
         switch(textViewId) {
-
             case R.id.tv_mileage:
                 title = getString(R.string.exp_label_odometer);
                 //tvValue.setText(getArguments().getString("value"));
@@ -138,12 +135,13 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         builder//.setTitle(title)
                 .setView(localView)
                 .setPositiveButton("confirm", (dialog, which) ->
-                        viewModel.setInputValue(tvValue.getText().toString()))
+                        viewModel.setValue(tvValue.getText().toString()))
 
                 .setNegativeButton("cancel", (dialog, which) -> {});
 
 
         return builder.create();
+
     }
 
     @Override

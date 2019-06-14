@@ -138,7 +138,7 @@ public class ExpensePagerFragment extends Fragment {
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
-            } else if(currentFragment instanceof ServiceManagerFragment) {
+            }else if(currentFragment instanceof ServiceManagerFragment) {
 
                 serviceList = mDB.serviceManagerModel().loadRecentServiceData();
                 lastInfo = (serviceList.size() > numPage)? displayLastInfo(numPage) : "";
