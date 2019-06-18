@@ -46,7 +46,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
 
     // Fields
     private int textViewId;
-    private String initValue;
+    private String initValue, itemTitle;
     private boolean isCurrency;
     private boolean isPlus = true;
 
@@ -61,6 +61,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
             viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
+            itemTitle = getArguments().getString("title");
             textViewId = getArguments().getInt("viewId");
             initValue = getArguments().getString("value");
         }
@@ -101,7 +102,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
-            case R.id.tv_payment:
+            case R.id.tv_value_payment:
                 title = getString(R.string.gas_label_expense);
                 //tvValue.setText(getArguments().getString("value"));
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
@@ -124,6 +125,12 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 //tvValue.setText(getArguments().getString("value"));
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
+
+            default:
+                log.i("Title: %s", itemTitle);
+                title = itemTitle;
+                isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
+
         }
 
         tvTitle.setText(title);

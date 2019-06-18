@@ -24,7 +24,6 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.utils.ConnectNaviHelper;
-import com.skt.Tmap.TMapTapi;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -55,7 +54,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
         // UIs
-        tvName = findViewById(R.id.tv_name);
+        tvName = findViewById(R.id.tv_item_name);
         tvAddrs = findViewById(R.id.tv_address);
         tvPrice = findViewById(R.id.tv_price_info);
         tvCarwash = findViewById(R.id.tv_carwash);

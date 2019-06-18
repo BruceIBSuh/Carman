@@ -1,5 +1,6 @@
 package com.silverback.carman2.database;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Insert;
@@ -19,7 +20,7 @@ public abstract class ServiceManagerDao {
     @Query("SELECT date_time, mileage, service_name, total_expense FROM ServiceManagerEntity " +
             "INNER JOIN BasicManagerEntity ON ServiceManagerEntity.basic_id = BasicManagerEntity._id " +
             "ORDER BY service_id DESC LIMIT 5")
-    public abstract List<RecentSvcData> loadRecentServiceData();
+    public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
 
     /*
     @Query("SELECT date_time, total_payment FROM ServiceManagerEntity WHERE date_time BETWEEN :start AND :end")
@@ -41,7 +42,7 @@ public abstract class ServiceManagerDao {
     }
 
     // Static nested class for returning subsets of columns with the joined tables.
-    public static class RecentSvcData {
+    public static class RecentServiceData {
         @ColumnInfo(name = "date_time")
         public long dateTime;
         @ColumnInfo(name = "mileage")

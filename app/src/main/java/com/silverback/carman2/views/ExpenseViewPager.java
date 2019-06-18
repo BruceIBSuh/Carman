@@ -40,9 +40,7 @@ public class ExpenseViewPager extends ViewPager {
                 if(h > height) height = h;
 
             }
-
             heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
-
         }
 
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);

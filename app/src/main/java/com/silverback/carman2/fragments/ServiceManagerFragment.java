@@ -16,14 +16,14 @@ import android.widget.Toast;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ServiceListAdapter;
+import com.silverback.carman2.adapters.ServiceItemListAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.views.ServiceRecyclerView;
+import com.silverback.carman2.views.ServiceItemRecyclerView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -40,7 +40,8 @@ import java.util.Locale;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ServiceManagerFragment extends Fragment implements View.OnClickListener {
+public class ServiceManagerFragment extends Fragment implements
+        View.OnClickListener, ServiceItemListAdapter.ServiceItemListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -50,13 +51,17 @@ public class ServiceManagerFragment extends Fragment implements View.OnClickList
     private FragmentSharedModel viewModel;
     private InputPadFragment numPad;
     private Calendar calendar;
-    private ServiceListAdapter mAdapter;
-    private ServiceRecyclerView serviceRecyclerView;
+    private ServiceItemListAdapter mAdapter;
+    private ServiceItemRecyclerView serviceItemRecyclerView;
     private DecimalFormat df;
 
     // UIs
     private EditText etStnName;
-    private TextView tvDate, tvMileage;
+    private TextView tvDate, tvMileage, tvTotalCost, tvItemCost;
+    private TextView itemCost;
+
+    // Fields
+    private int itemResId;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -74,7 +79,6 @@ public class ServiceManagerFragment extends Fragment implements View.OnClickList
         calendar = Calendar.getInstance(Locale.getDefault());
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -92,6 +96,7 @@ public class ServiceManagerFragment extends Fragment implements View.OnClickList
         tvMileage = localView.findViewById(R.id.tv_mileage);
         Button btnDate = localView.findViewById(R.id.btn_date);
         ImageButton favorite = localView.findViewById(R.id.imgbtn_favorite);
+        tvTotalCost = localView.findViewById(R.id.tv_value_payment);
 
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
@@ -105,10 +110,11 @@ public class ServiceManagerFragment extends Fragment implements View.OnClickList
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
         viewModel.getValue().observe(this, data -> tvMileage.setText(data));
 
-        serviceRecyclerView = localView.findViewById(R.id.recycler_service);
+        serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
+        serviceItemRecyclerView.setHasFixedSize(true);
         //String jsonItems = getArguments().getString("serviceItems");
-        mAdapter = new ServiceListAdapter(json);
-        serviceRecyclerView.setAdapter(mAdapter);
+        mAdapter = new ServiceItemListAdapter(json);
+        serviceItemRecyclerView.setAdapter(mAdapter);
 
         // Inflate the layout for this fragment
         return localView;
@@ -188,4 +194,11 @@ public class ServiceManagerFragment extends Fragment implements View.OnClickList
     }
 
 
+    @Override
+    public void inputItemCost(String itemName, View view) {
+        Bundle args = new Bundle();
+        args.putString("title", itemName);
+
+        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
+    }
 }

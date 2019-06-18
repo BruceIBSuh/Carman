@@ -96,7 +96,6 @@ public class StatGraphView extends View {
 
 
     // Constructor
-
     public StatGraphView(Context context) {
         super(context);
         this.context = context;
@@ -129,7 +128,6 @@ public class StatGraphView extends View {
     }
 
     private void init() {
-
 
         int smallTextSize = getResources().getDimensionPixelSize(R.dimen.smallText);
 

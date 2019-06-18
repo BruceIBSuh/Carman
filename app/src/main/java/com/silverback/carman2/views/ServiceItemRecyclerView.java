@@ -9,22 +9,22 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class ServiceRecyclerView extends RecyclerView {
+public class ServiceItemRecyclerView extends RecyclerView {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceRecyclerView.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemRecyclerView.class);
 
     // Constructor
-    public ServiceRecyclerView(Context context) {
+    public ServiceItemRecyclerView(Context context) {
         super(context);
     }
 
-    public ServiceRecyclerView(Context context, AttributeSet attrs) {
+    public ServiceItemRecyclerView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttribute(context, attrs);
     }
 
-    public ServiceRecyclerView(Context context, AttributeSet attrs, int defStyle) {
+    public ServiceItemRecyclerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         getAttribute(context, attrs);
     }

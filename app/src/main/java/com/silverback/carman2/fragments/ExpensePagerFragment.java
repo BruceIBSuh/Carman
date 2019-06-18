@@ -21,7 +21,6 @@ import com.silverback.carman2.models.FragmentSharedModel;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import java.text.DecimalFormat;
@@ -31,49 +30,22 @@ public class ExpensePagerFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerFragment.class);
-
-    // Constants
-    /*
-    private final String[] gasColumns = {
-            DataProviderContract.DATE_TIME_COLUMN,
-            DataProviderContract.MILEAGE_COLUMN,
-            DataProviderContract.GAS_STATION_COLUMN,
-            DataProviderContract.GAS_PAYMENT_COLUMN,
-            DataProviderContract.GAS_AMOUNT_COLUMN
-    };
-
-    private final String[] serviceColumns = {
-            DataProviderContract.DATE_TIME_COLUMN,
-            DataProviderContract.MILEAGE_COLUMN,
-            DataProviderContract.SERVICE_PROVIDER_COLUMN,
-            DataProviderContract.SERVICE_TOTAL_PRICE_COLUMN
-    };
-    */
-
-    private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
-
+    private final static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
 
     // Objects
     private CarmanDatabase mDB;
-    private GasManagerEntity gasManagerEntity;
-    private ServiceManagerEntity serviceManagerEntity;
     private FragmentSharedModel fragmentSharedModel;
     private Fragment currentFragment;
-    //private Cursor cursor;
-    private LiveData<List<GasManagerDao.RecentGasData>> gasLiveData;
-    private List<ServiceManagerDao.RecentSvcData> serviceList;
-
     private List<GasManagerDao.RecentGasData> gasDataList;
+    private List<ServiceManagerDao.RecentServiceData> serviceList;
+
 
     // UIs
-    private TextView tvDate, tvMileage, tvName, tvPayment, tvAmount;
     private TextView tvLastInfo, tvPage;
 
     // Fields
     private int numPage;
     private String lastInfo;
-    private String[] projection;
-    private Uri baseUri;
 
     // Define Interface to pass over the current mileage to GasManagerActivity
     /*
@@ -129,19 +101,21 @@ public class ExpensePagerFragment extends Fragment {
 
             // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
-
-                gasLiveData = mDB.gasManagerModel().loadRecentGasData();
-                gasLiveData.observe(this, recentGasData -> {
-                    gasDataList = recentGasData;
-                    lastInfo = (gasDataList.size() > numPage)? displayLastInfo(numPage) : null;
+                mDB.gasManagerModel().loadRecentGasData().observe(this, data -> {
+                    gasDataList = data;
+                    lastInfo = (data.size() > numPage)? displayLastInfo(numPage) : null;
                     tvLastInfo.setText(lastInfo);
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
             }else if(currentFragment instanceof ServiceManagerFragment) {
+                mDB.serviceManagerModel().loadRecentServiceData().observe(this, data -> {
+                    serviceList = data;
+                    lastInfo = (data.size() > numPage)?displayLastInfo(numPage) : "";
+                    tvLastInfo.setText(lastInfo);
+                    tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+                });
 
-                serviceList = mDB.serviceManagerModel().loadRecentServiceData();
-                lastInfo = (serviceList.size() > numPage)? displayLastInfo(numPage) : "";
             }
 
 

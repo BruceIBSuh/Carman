@@ -30,6 +30,7 @@ public abstract class GasManagerDao {
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
     public abstract GasManagerEntity findGasManagerByNameOrId(String stnName, String stnId);
 
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract long insertParent(BasicManagerEntity basicEntity);
 

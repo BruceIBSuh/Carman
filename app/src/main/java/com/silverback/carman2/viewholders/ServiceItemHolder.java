@@ -1,12 +1,10 @@
 package com.silverback.carman2.viewholders;
 
-import android.animation.ObjectAnimator;
-import android.util.DisplayMetrics;
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
+import android.util.TypedValue;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
@@ -17,35 +15,49 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class ServiceItemHolder extends RecyclerView.ViewHolder implements CompoundButton.OnCheckedChangeListener{
+public class ServiceItemHolder extends RecyclerView.ViewHolder {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemHolder.class);
 
     // Objects
+
+
+    // UIs
     private TextView tvItemName;
     private ConstraintLayout layout;
+    private TextView tvCost;
+    private CheckBox cbServiceItem;
 
-    // Temp
-    private ObjectAnimator animation;
 
 
     // Constructor
     public ServiceItemHolder(CardView view) {
         super(view);
 
-        tvItemName = view.findViewById(R.id.tv_name);
+        tvItemName = view.findViewById(R.id.tv_item_name);
         layout = view.findViewById(R.id.constraint_stmts);
-        CheckBox chkbox = view.findViewById(R.id.chkbox);
+        cbServiceItem = view.findViewById(R.id.chkbox);
+        tvCost = view.findViewById(R.id.tv_value_cost);
 
-        // Temp Coding to get the size of the layout.
-        /*
-        DisplayMetrics dispMetrics = new DisplayMetrics();
-        layout.getDisplay().getMetrics(dispMetrics);
-        log.i("ConstraintLayout size: %s, %s", dispMetrics.widthPixels, dispMetrics.heightPixels);
-        */
+        // Initialize OnCheckedChangeListener with null at first, then attach its listener
+        // to retain the value as RecyclerView scrolls.
+        cbServiceItem.setOnCheckedChangeListener(null);
+        cbServiceItem.setOnCheckedChangeListener((buttnView, isChecked) -> {
+            cbServiceItem.setChecked(isChecked);
+            if(isChecked) {
+                layout.setVisibility(View.VISIBLE);
+                animSlideUpAndDown(layout, 0, 120);
 
-        chkbox.setOnCheckedChangeListener(this);
+            } else {
+                animSlideUpAndDown(layout, 120, 0);
+            }
+        });
+
+        tvCost.setOnClickListener(v -> {
+
+        });
+
     }
 
     public void bindItemToHolder(String item) {
@@ -53,29 +65,22 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder implements Compou
     }
 
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+    private void animSlideUpAndDown(View target, int startValue, int endValue) {
+        // Convert dp to int
+        int convEndValue = (int)TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, endValue, target.getResources().getDisplayMetrics());
 
-        if(isChecked) {
-            layout.setVisibility(View.VISIBLE);
-            //layout.setAnimation(slideUp);
-            // Temp
-            /*
-            ObjectAnimator animDown = ObjectAnimator.ofFloat(layout, "translationY", 50f);
-            animDown.setDuration(2000);
-            animDown.start();
-            */
+        int convStartValue = (int)TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, startValue, target.getResources().getDisplayMetrics());
 
-        } else {
-            //layout.setVisibility(View.GONE);
-            //layout.setAnimation(slideUp);
-            /*
-            ObjectAnimator animUp = ObjectAnimator.ofFloat(layout, "translationY", -250f);
-            animUp.setDuration(1000);
-            animUp.start();
-            */
-            layout.setVisibility(View.GONE);
-        }
+        ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue).setDuration(500);
+        animSlide.addUpdateListener(valueAnimator -> {
+            target.getLayoutParams().height = (Integer)valueAnimator.getAnimatedValue();
+            target.requestLayout();
+        });
 
+        AnimatorSet animSet = new AnimatorSet();
+        animSet.play(animSlide);
+        animSet.start();
     }
 }

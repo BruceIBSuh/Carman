@@ -366,7 +366,7 @@ public class ThreadManager {
 
     // Thread to start the Service Checklist items with params of adapter, view, itemName, position
     public static ServiceListTask startServiceListTask(
-            ServiceListAdapter adapter, ServiceListView view, String item, int position) {
+            ServiceItemListAdapter adapter, ServiceListView view, String item, int position) {
 
         ServiceListTask serviceListTask = sInstance.mServiceListTaskQueue.poll();
 

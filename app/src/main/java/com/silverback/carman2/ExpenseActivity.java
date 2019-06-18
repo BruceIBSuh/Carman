@@ -133,8 +133,7 @@ public class ExpenseActivity extends BaseActivity implements
     // in SQLite
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
-
+        
         switch(item.getItemId()) {
 
             case android.R.id.home:
