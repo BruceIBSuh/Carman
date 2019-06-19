@@ -53,8 +53,10 @@
     <string name="exp_toolbar_title">My Garage</string>
     <string name="exp_label_odometer">운행거리</string>
     <string name="exp_menuitem_title_save">저장</string>
+    <!--ExpenseActivity$ExpensPagerFragment-->
+    <string name="toast_expense_no_data">최근 데이터가 없습니다</string>
 
-    <!--GasMangerFragment-->
+    <!--ExpenseActivity$GasMangerFragment-->
     <string name="gas_toolbar_title">주유 및 세차 지출</string>
     <string name="gas_subtitle_expense">주유 지출</string>
     <string name="gas_label_date">주유날짜</string>
@@ -89,6 +91,8 @@
     <string name="svc_btn_modify">수정</string>
     <string name="toast_stn_name">정비 업체명을 입력해 주세요</string>
     <string name="toast_mileage">누적 운행거리를 입력해 주세요</string>
+    <string name="toast_remove_favorite_service">즐겨찾는 서비스센터에서 제외되었습니다</string>
+    <string name="toast_add_favorite_service">즐겨찾는 서비스센터에 추가되었습니다</string>
 
     <!--StatStmtsFragment-->
     <string name="graph_x_axis_month">월</string>

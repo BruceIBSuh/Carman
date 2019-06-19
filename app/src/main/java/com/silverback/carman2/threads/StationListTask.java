@@ -102,7 +102,7 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
-        //postValue() used in worker thread. In UI thread, use setValue().
+        //postValue() used in worker thread. In UI thread, use setInputValue().
         viewModel.getCurrentStationLiveData().postValue(station);
     }
 

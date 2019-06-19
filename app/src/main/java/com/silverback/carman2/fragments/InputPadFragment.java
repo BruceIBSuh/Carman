@@ -37,6 +37,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
     private String[] arrCurrency = { "5만", "1만", "5천", "1천" };
 
     // Objects
+    private static InputPadFragment numPad;
     private FragmentSharedModel viewModel;
     private static DecimalFormat df;
 
@@ -54,6 +55,26 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         df = BaseActivity.getDecimalFormatInstance();
     }
 
+    // Default Constructor
+    private InputPadFragment() {
+        // Required empty public constructor
+    }
+
+    public static InputPadFragment newInstance(String title, String value, int resId) {
+
+        if(numPad == null) numPad = new InputPadFragment();
+
+        Bundle args = new Bundle();
+        args.putString("title", title);
+        args.putString("initValue", value);
+        args.putInt("viewId", resId);
+
+        numPad.setArguments(args);
+
+        return numPad;
+
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +84,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         if(getArguments() != null) {
             itemTitle = getArguments().getString("title");
             textViewId = getArguments().getInt("viewId");
-            initValue = getArguments().getString("value");
+            initValue = getArguments().getString("initValue");
         }
     }
 
@@ -96,7 +117,13 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         // Get arguments from the parent activity dialog title, unit name, and button numbers.
         String title = null;
         switch(textViewId) {
-            case R.id.tv_mileage:
+            case R.id.tv_gas_mileage:
+                title = getString(R.string.exp_label_odometer);
+                //tvValue.setText(getArguments().getString("value"));
+                isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
+                break;
+
+            case R.id.tv_service_mileage:
                 title = getString(R.string.exp_label_odometer);
                 //tvValue.setText(getArguments().getString("value"));
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
@@ -126,10 +153,16 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
-            default:
-                log.i("Title: %s", itemTitle);
+            case R.id.tv_value_cost:
+                log.i("Service item cost");
                 title = itemTitle;
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
+                break;
+
+            default:
+                log.i("Title: %s", itemTitle);
+                break;
+
 
         }
 
@@ -139,10 +172,14 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         //btnPad.initPad(getArguments().getInt("viewId"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder//.setTitle(title)
-                .setView(localView)
-                .setPositiveButton("confirm", (dialog, which) ->
-                        viewModel.setValue(tvValue.getText().toString()))
+        builder.setView(localView)
+                .setPositiveButton("confirm", (dialog, which) -> {
+                    if(textViewId == R.id.tv_value_cost) {
+                        viewModel.setServiceValue(tvValue.getText().toString());
+                    } else {
+                        viewModel.setGasValue(tvValue.getText().toString());
+                    }
+                })
 
                 .setNegativeButton("cancel", (dialog, which) -> {});
 

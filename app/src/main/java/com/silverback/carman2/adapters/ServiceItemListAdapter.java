@@ -10,9 +10,9 @@ import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.type.Color;
 import com.silverback.carman2.R;
 import com.silverback.carman2.fragments.InputPadFragment;
-import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewholders.ServiceItemHolder;
@@ -21,6 +21,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static androidx.annotation.InspectableProperty.ValueType.COLOR;
 
 public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHolder> {
 
@@ -28,22 +31,21 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
 
     // Objects
-    private ServiceItemListener itemListener;
-    private InputPadFragment numPad;
-    private CardView cardView;
+    private OnServiceItemClickListener itemListener;
     private ArrayList<String> serviceList;
 
     //UIs
     private TextView tvItemName, tvItemCost;
 
-    public interface ServiceItemListener {
-        void inputItemCost(String itemName, View view);
+    public interface OnServiceItemClickListener {
+        void inputItemCost(String itemName, View view, int position);
     }
 
     // Constructor
-    public ServiceItemListAdapter(String jsonItems) {
+    public ServiceItemListAdapter(String jsonItems, OnServiceItemClickListener listener) {
         super();
 
+        itemListener = listener;
         serviceList = new ArrayList<>();
 
         // Covert Json string transferred from ServiceManagerFragment to JSONArray which is bound to
@@ -65,7 +67,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
     @Override
     public ServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
-        cardView = (CardView)LayoutInflater.from(parent.getContext())
+        CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_card_serviceitem, parent, false);
 
         tvItemName = cardView.findViewById(R.id.tv_item_name);
@@ -76,19 +78,35 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ServiceItemHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ServiceItemHolder holder, int pos) {
 
-        holder.bindItemToHolder(serviceList.get(position));
+        holder.bindItemToHolder(serviceList.get(pos));
 
+        // itemView is given as a field in ViewHolder.
+        // Attach an event handler when clicking an item of RecyclerView
+        holder.itemView.findViewById(R.id.tv_value_cost).setOnClickListener(v ->
+            itemListener.inputItemCost(serviceList.get(pos), tvItemCost, pos));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ServiceItemHolder holder, int pos, @NonNull List<Object> payloads){
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, pos, payloads);
+        } else {
+            for(Object payload : payloads) {
+                if(payload instanceof String) {
+                    log.i("payloads: %s", payload);
+                    TextView tvCost = holder.itemView.findViewById(R.id.tv_value_cost);
+                    tvCost.setBackgroundResource(android.R.color.white);
+                    tvCost.setText((String)payload);
+                }
+            }
+        }
     }
 
     @Override
     public int getItemCount() {
-        log.i("Item Count: %s", serviceList.size());
         return serviceList.size();
     }
 
-    public void setServiceItemListener(ServiceItemListener listener) {
-        itemListener = listener;
-    }
 }

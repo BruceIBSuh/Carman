@@ -73,20 +73,13 @@ public class GeneralFragment extends Fragment implements
     private PriceTask priceTask;
     private StationListTask stationListTask;
     private StationInfoTask stationInfoTask;
-    private Thread timeThread;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
     private StationPriceView stationPriceView;
 
-    // FirebaseFirestore
-    private FirebaseFirestore db;
-
-    //private FrameLayout frameRecycler;
     private StationRecyclerView stationRecyclerView;
-    private RecyclerView.LayoutManager layoutManager;
     private StationListAdapter mAdapter;
-
     private List<Opinet.GasStnParcelable> mStationList;
 
     //private Uri uriStationList;
@@ -164,6 +157,7 @@ public class GeneralFragment extends Fragment implements
         // Set Floating Action Button
         // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
         // button when scolling/idling
+        fabLocation.setOnClickListener(this);
         fabLocation.setSize(FloatingActionButton.SIZE_AUTO);
         stationRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
@@ -177,7 +171,7 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        fabLocation.setOnClickListener(this);
+
 
         locationTask = ThreadManager.fetchLocationTask(this);
         locationModel.getLocation().observe(this, location -> {
@@ -325,7 +319,7 @@ public class GeneralFragment extends Fragment implements
 
 
     // StationListAdapter.OnRecyclerItemClickListener invokes this when clicking
-    // a cardview, passing a position of the item.
+    // a cardview item, passing a position of the item.
     @Override
     public void onItemClicked(int position) {
         //tmpStationName = mStationList.get(position).getStnName();

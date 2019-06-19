@@ -130,7 +130,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:labelFor="@id/tv_mileage"
+        android:labelFor="@id/tv_service_mileage"
         android:minWidth="80dp"
         android:text="@string/exp_label_odometer"
         android:textSize="@dimen/largeText"
@@ -139,7 +139,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
 
     <TextView
-        android:id="@+id/tv_mileage"
+        android:id="@+id/tv_gas_mileage"
         android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -159,7 +159,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:text="@string/unit_km"
-        app:layout_constraintStart_toEndOf="@+id/tv_mileage"
+        app:layout_constraintStart_toEndOf="@+id/tv_gas_mileage"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
 
 

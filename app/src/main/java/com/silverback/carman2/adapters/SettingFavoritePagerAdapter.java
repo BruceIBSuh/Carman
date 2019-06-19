@@ -37,7 +37,6 @@ public class SettingFavoritePagerAdapter extends FragmentPagerAdapter {
         return (position == 0)? "Gas Station" : "ServiceStation";
     }
 
-
     private final Fragment[] fragment = new Fragment[] {
             new FavoritePagerGasFragment(),
             new FavoritePagerSvcFragment()

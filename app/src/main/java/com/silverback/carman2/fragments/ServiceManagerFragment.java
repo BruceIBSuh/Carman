@@ -23,6 +23,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.views.ServiceItemRecyclerView;
 
 import androidx.annotation.NonNull;
@@ -41,7 +42,7 @@ import java.util.Locale;
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ServiceItemListAdapter.ServiceItemListener {
+        View.OnClickListener, ServiceItemListAdapter.OnServiceItemClickListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -49,7 +50,7 @@ public class ServiceManagerFragment extends Fragment implements
     // Objects
     private SharedPreferences mSettings;
     private FragmentSharedModel viewModel;
-    private InputPadFragment numPad;
+    private FavoriteGeofenceHelper geofenceHelper;
     private Calendar calendar;
     private ServiceItemListAdapter mAdapter;
     private ServiceItemRecyclerView serviceItemRecyclerView;
@@ -59,9 +60,14 @@ public class ServiceManagerFragment extends Fragment implements
     private EditText etStnName;
     private TextView tvDate, tvMileage, tvTotalCost, tvItemCost;
     private TextView itemCost;
+    private ImageButton btnFavorite;
 
     // Fields
-    private int itemResId;
+    private TextView targetView; //reference to a clicked view which is used in ViewModel
+    private int itemPosition;
+    private int totalCost;
+    private boolean isGeofenceIntent; // check if this has been launched by Geofence.
+    private boolean isFavorite;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -74,9 +80,10 @@ public class ServiceManagerFragment extends Fragment implements
 
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        numPad = new InputPadFragment();
+        geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
+
     }
 
     @Override
@@ -92,29 +99,30 @@ public class ServiceManagerFragment extends Fragment implements
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
         tvDate = localView.findViewById(R.id.tv_service_date);
-        etStnName = localView.findViewById(R.id.et_station_name);
-        tvMileage = localView.findViewById(R.id.tv_mileage);
+        etStnName = localView.findViewById(R.id.et_service_provider);
+        tvMileage = localView.findViewById(R.id.tv_service_mileage);
         Button btnDate = localView.findViewById(R.id.btn_date);
-        ImageButton favorite = localView.findViewById(R.id.imgbtn_favorite);
+        btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_value_payment);
 
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
-        favorite.setOnClickListener(this);
+        btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+        btnFavorite.setOnClickListener(this);
 
         String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
-        favorite.setBackgroundResource(R.drawable.btn_favorite);
 
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
-        viewModel.getValue().observe(this, data -> tvMileage.setText(data));
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-        //String jsonItems = getArguments().getString("serviceItems");
-        mAdapter = new ServiceItemListAdapter(json);
+        mAdapter = new ServiceItemListAdapter(json, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
+
+        // Receive a value from InputPadFragment using LiveData defined in FragmentSharedModel.
+        addObserver();
 
         // Inflate the layout for this fragment
         return localView;
@@ -126,22 +134,48 @@ public class ServiceManagerFragment extends Fragment implements
         // Notify ExpensePagerFragment of the current fragment to load the recent 5 expense data from
         // ServiceTable.
         viewModel.setCurrentFragment(this);
+
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {
-
+        // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
+        // via FragmentViewModel in the textview.
         switch(v.getId()) {
             // Show InputPadFragment
-            case R.id.tv_mileage:
+            case R.id.tv_service_mileage:
+                targetView = (TextView)v;
+                InputPadFragment.newInstance(null, tvMileage.getText().toString(), v.getId())
+                        .show(getFragmentManager(), "numPad");
+                /*
                 Bundle args = new Bundle();
                 args.putString("value", tvMileage.getText().toString());
                 args.putInt("viewId", v.getId());
                 numPad.setArguments(args);
-                if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
+                numPad.show(getFragmentManager(), "numPad");
+                */
                 break;
 
             case R.id.imgbtn_favorite:
+                // In case the activity(fragment) has been lauched by Geofence b/c the current location
+                // is within the registered one.
+                if(isGeofenceIntent) return;
+
+                String providerName = etStnName.getText().toString();
+                String providerId = BaseActivity.formatMilliseconds("yyMMddHHmm", System.currentTimeMillis());
+
+                if(TextUtils.isEmpty(providerName)) return;
+
+                if(isFavorite) {
+                    geofenceHelper.removeFavoriteGeofence(providerName, providerId);
+                    btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                    Toast.makeText(getActivity(), getString(R.string.toast_remove_favorite_service), Toast.LENGTH_SHORT).show();
+
+                } else {
+                    AddFavoriteDialogFragment.newInstance(providerName, 2).show(getFragmentManager(), "favoriteDialog");
+                }
+
                 break;
 
             case R.id.btn_date:
@@ -151,6 +185,50 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
+    // ServiceItemList.OnServiceItemClickListener invokes this method
+    // to pop up InputPadFragment and input the amount of expense in a service item.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void inputItemCost(String itemName, View view, int position) {
+        log.i("Item Listener: %s, %s, %s", itemName, view, position);
+        targetView = (TextView)view;
+        itemPosition = position;
+
+        InputPadFragment.newInstance(itemName, tvMileage.getText().toString(), view.getId())
+                .show(getFragmentManager(), "numPad");
+
+        /*
+        Bundle args = new Bundle();
+        args.putString("title", itemName);
+        args.putInt("viewId", view.getId());
+        numPad.setArguments(args);
+        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
+        */
+
+    }
+
+    private void addObserver() {
+        viewModel.getServiceValue().observe(this, data -> {
+            log.i("targetView: %s", targetView);
+            targetView.setText(data);
+
+            // In case that targetView is the one in a ServiceRecyclerView item, get the value input on
+            // InputPadFragment via LiveData in FragmentSharedModel, which in turn notifies the
+            // ServiceItemListAdapter with payloads to update the view.
+            if(targetView.getId() == R.id.tv_value_cost) {
+                log.i("Item Position: %s", itemPosition);
+                mAdapter.notifyItemChanged(itemPosition, data);
+
+                // Calculate the total cost adding each service item cost.
+                try {
+                    totalCost += df.parse(data).intValue();
+                    tvTotalCost.setText(df.format(totalCost));
+                } catch(ParseException e) {
+                    log.e("ParseExcpetion: %s", e.getMessage());
+                }
+            }
+        });
+    }
 
     public boolean saveServiceData() {
         if(!doEmptyCheck()) return false;
@@ -194,11 +272,5 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
 
-    @Override
-    public void inputItemCost(String itemName, View view) {
-        Bundle args = new Bundle();
-        args.putString("title", itemName);
 
-        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
-    }
 }

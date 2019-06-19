@@ -101,10 +101,10 @@
                 android:layout_height="25dp"
                 android:layout_marginStart="16dp"
                 android:padding="5dp"
+                android:gravity="center|end"
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
-                android:textSize="13sp"
-                android:textAlignment="viewEnd"
+                android:textSize="14sp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_cost"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_cost"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_label_cost" />

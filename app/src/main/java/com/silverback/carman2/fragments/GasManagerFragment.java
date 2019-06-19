@@ -143,7 +143,7 @@ public class GasManagerFragment extends Fragment implements
         etStnName = localView.findViewById(R.id.et_station_name);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
-        tvOdometer = localView.findViewById(R.id.tv_mileage);
+        tvOdometer = localView.findViewById(R.id.tv_gas_mileage);
         tvGasPaid = localView.findViewById(R.id.tv_value_payment);
         tvGasLoaded = localView.findViewById(R.id.tv_amount);
         tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
@@ -169,7 +169,7 @@ public class GasManagerFragment extends Fragment implements
 
         // ViewModels to communicate fragments of an Activity.
         //fragmentSharedModel.setCurrentFragment(this);
-        fragmentSharedModel.getValue().observe(this, data -> {
+        fragmentSharedModel.getGasValue().observe(this, data -> {
             if(targetView != null) {
                 targetView.setText(data);
                 calculateGasAmount();
@@ -239,38 +239,45 @@ public class GasManagerFragment extends Fragment implements
     }
 
     // InputNumPad handler
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(final View v) {
-        Bundle args = new Bundle();
-        padDialog = new InputPadFragment();
+        String initValue = null;
         targetView = (TextView)v;
 
         // Pass the current saved value to InputPadFragment
         switch(v.getId()) {
-            case R.id.tv_mileage:
-                args.putString("value", tvOdometer.getText().toString());
+            case R.id.tv_service_mileage:
+                //args.putString("value", tvOdometer.getText().toString());
+                initValue = tvOdometer.getText().toString();
                 break;
 
             case R.id.tv_value_payment:
-                args.putString("value", tvGasPaid.getText().toString());
+                //args.putString("value", tvGasPaid.getText().toString());
+                initValue = tvGasPaid.getText().toString();
                 break;
 
             case R.id.tv_carwash:
-                args.putString("value", tvCarwashPaid.getText().toString());
+                //args.putString("value", tvCarwashPaid.getText().toString());
+                initValue = tvCarwashPaid.getText().toString();
                 break;
 
             case R.id.tv_extra:
-                args.putString("value", tvExtraPaid.getText().toString());
+                //args.putString("value", tvExtraPaid.getText().toString());
+                initValue = tvExtraPaid.getText().toString();
                 break;
         }
 
         // Pass the id of TextView to InputPadFragment for which TextView is being focused to wait
         // for a new value.
+        InputPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
+
+        /*
         args.putInt("viewId", v.getId());
         padDialog.setArguments(args);
 
         if(getFragmentManager() != null) padDialog.show(getFragmentManager(), "InputPadDialog");
-
+        */
     }
 
     // Query Favorite with the fetched station name or station id to tell whether the station

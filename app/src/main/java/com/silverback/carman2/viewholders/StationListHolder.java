@@ -12,17 +12,14 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
 import java.text.DecimalFormat;
-import java.util.Locale;
 
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import static java.security.AccessController.getContext;
-
-public class StationItemHolder extends RecyclerView.ViewHolder {
+public class StationListHolder extends RecyclerView.ViewHolder {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationItemHolder.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationListHolder.class);
 
     // Objects
     private Context context;
@@ -38,7 +35,7 @@ public class StationItemHolder extends RecyclerView.ViewHolder {
 
 
     // Constructor
-    public StationItemHolder(CardView cardView) {
+    public StationListHolder(CardView cardView) {
         super(cardView);
         this.context = cardView.getContext();
         //this.cardView = cardView;
