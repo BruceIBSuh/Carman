@@ -6,14 +6,14 @@
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="3dp"
+    android:layout_margin="2dp"
     cardview:cardElevation="1dp"
     cardview:cardCornerRadius="2dp" >
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="35dp">
+        android:minHeight="30dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -25,18 +25,10 @@
                 android:id="@+id/tv_item_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:minWidth="100dp"
                 android:layout_marginStart="3dp"
                 android:layout_marginTop="8dp"
+                android:minWidth="100dp"
                 cardview:layout_constraintStart_toStartOf="parent"
-                cardview:layout_constraintTop_toTopOf="parent" />
-
-            <CheckBox
-                android:id="@+id/chkbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="3dp"
-                cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintTop_toTopOf="parent" />
 
             <TextView
@@ -52,18 +44,27 @@
                 cardview:layout_constraintStart_toEndOf="@+id/tv_item_name"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_item_name" />
 
+            <CheckBox
+                android:id="@+id/chkbox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="3dp"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_item_name"
+                cardview:layout_constraintEnd_toEndOf="parent"
+                cardview:layout_constraintTop_toTopOf="@+id/tv_item_name" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraint_stmts"
             android:visibility="gone"
+            android:id="@+id/constraint_stmts"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
+            android:animateLayoutChanges="true"
+            android:background="?android:attr/colorPrimaryDark"
             android:elevation="1dp"
-            android:background="#E0E0E0"
-            android:padding="8dp"
-            android:animateLayoutChanges="true" >
+            android:padding="8dp" >
 
             <TextView
                 android:id="@+id/tv_label_period"
@@ -100,10 +101,11 @@
                 android:layout_width="100dp"
                 android:layout_height="25dp"
                 android:layout_marginStart="16dp"
-                android:padding="5dp"
-                android:gravity="center|end"
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
+                android:padding="3dp"
+                android:text="@string/value_zero"
+                android:textAlignment="viewEnd"
                 android:textSize="14sp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_cost"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_cost"
@@ -135,10 +137,10 @@
                 android:layout_height="26dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="8dp"
-                android:padding="8dp"
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
                 android:inputType="textPersonName"
+                android:padding="0dp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_info"
                 cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_info"

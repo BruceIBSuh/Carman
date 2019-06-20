@@ -64,6 +64,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Fields
     private TextView targetView; //reference to a clicked view which is used in ViewModel
+    private String jsonServiceitem;
     private int itemPosition;
     private int totalCost;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
@@ -84,15 +85,16 @@ public class ServiceManagerFragment extends Fragment implements
         df = BaseActivity.getDecimalFormatInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
 
+        String[] serviceItems = getResources().getStringArray(R.array.service_item_list);
+        JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
+        jsonServiceitem = jsonArray.toString();
+
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        String[] serviceItems = getResources().getStringArray(R.array.service_item_list);
-        JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
-        String json = jsonArray.toString();
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
         View boxview = localView.findViewById(R.id.view);
@@ -100,7 +102,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         tvDate = localView.findViewById(R.id.tv_service_date);
         etStnName = localView.findViewById(R.id.et_service_provider);
-        tvMileage = localView.findViewById(R.id.tv_service_mileage);
+        tvMileage = localView.findViewById(R.id.tv_mileage);
         Button btnDate = localView.findViewById(R.id.btn_date);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_value_payment);
@@ -118,11 +120,28 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(json, this);
+        mAdapter = new ServiceItemListAdapter(jsonServiceitem, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
 
         // Receive a value from InputPadFragment using LiveData defined in FragmentSharedModel.
-        addObserver();
+        viewModel.getSelectedValue().observe(this, data -> {
+            int viewId = data.keyAt(0);
+            String value = (String)data.valueAt(0);
+
+            targetView = localView.findViewById(viewId);
+            if(targetView == null) return;
+            targetView.setText(value);
+
+            if(data.keyAt(0) == R.id.tv_value_cost) {
+                mAdapter.notifyItemChanged(itemPosition, value);
+                try {
+                    totalCost += df.parse(value).intValue();
+                    tvTotalCost.setText(df.format(totalCost));
+                } catch(ParseException e) {
+                    log.e("ParseException: %s", e.getMessage());
+                }
+            }
+        });
 
         // Inflate the layout for this fragment
         return localView;
@@ -143,18 +162,10 @@ public class ServiceManagerFragment extends Fragment implements
         // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
         // via FragmentViewModel in the textview.
         switch(v.getId()) {
-            // Show InputPadFragment
-            case R.id.tv_service_mileage:
-                targetView = (TextView)v;
+            case R.id.tv_mileage:
+                //targetView = (TextView)v;
                 InputPadFragment.newInstance(null, tvMileage.getText().toString(), v.getId())
                         .show(getFragmentManager(), "numPad");
-                /*
-                Bundle args = new Bundle();
-                args.putString("value", tvMileage.getText().toString());
-                args.putInt("viewId", v.getId());
-                numPad.setArguments(args);
-                numPad.show(getFragmentManager(), "numPad");
-                */
                 break;
 
             case R.id.imgbtn_favorite:
@@ -189,45 +200,9 @@ public class ServiceManagerFragment extends Fragment implements
     // to pop up InputPadFragment and input the amount of expense in a service item.
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void inputItemCost(String itemName, View view, int position) {
-        log.i("Item Listener: %s, %s, %s", itemName, view, position);
-        targetView = (TextView)view;
+    public void inputItemCost(String itemName, TextView view, int position) {
         itemPosition = position;
-
-        InputPadFragment.newInstance(itemName, tvMileage.getText().toString(), view.getId())
-                .show(getFragmentManager(), "numPad");
-
-        /*
-        Bundle args = new Bundle();
-        args.putString("title", itemName);
-        args.putInt("viewId", view.getId());
-        numPad.setArguments(args);
-        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
-        */
-
-    }
-
-    private void addObserver() {
-        viewModel.getServiceValue().observe(this, data -> {
-            log.i("targetView: %s", targetView);
-            targetView.setText(data);
-
-            // In case that targetView is the one in a ServiceRecyclerView item, get the value input on
-            // InputPadFragment via LiveData in FragmentSharedModel, which in turn notifies the
-            // ServiceItemListAdapter with payloads to update the view.
-            if(targetView.getId() == R.id.tv_value_cost) {
-                log.i("Item Position: %s", itemPosition);
-                mAdapter.notifyItemChanged(itemPosition, data);
-
-                // Calculate the total cost adding each service item cost.
-                try {
-                    totalCost += df.parse(data).intValue();
-                    tvTotalCost.setText(df.format(totalCost));
-                } catch(ParseException e) {
-                    log.e("ParseExcpetion: %s", e.getMessage());
-                }
-            }
-        });
+        InputPadFragment.newInstance(itemName, "0", view.getId()).show(getFragmentManager(), "numPad");
     }
 
     public boolean saveServiceData() {

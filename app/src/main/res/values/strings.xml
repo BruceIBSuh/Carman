@@ -185,6 +185,7 @@
     <string name="unit_liter">리터</string>
     <string name="unit_won">원</string>
     <string name="liter_price">원/리터</string>
+    <string name="value_zero">0</string>
 
     <!-- Default Service Item List shared in ServiceRecyclerView and SettingPreferenceActivity -->
     <string name="service_item_engine_oll">엔진오일 및 오일필터</string>

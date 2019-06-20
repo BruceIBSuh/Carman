@@ -1,6 +1,7 @@
 package com.silverback.carman2.models;
 
 import android.content.ClipData;
+import android.util.SparseArray;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
@@ -12,24 +13,21 @@ import java.util.Map;
 
 public class FragmentSharedModel extends ViewModel {
 
-    private final MutableLiveData<String> gasSelected = new MutableLiveData<>();
-    private final MutableLiveData<String> svcseltected = new MutableLiveData<>();
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
+    private final MutableLiveData<SparseArray> selectedValue = new MutableLiveData<>();
 
-    // Communicate b/w GasManagerFragment or ServiceManagerFragment and InputPadFragment.
-    public void setServiceValue(String data) {
-        svcseltected.setValue(data);
+    /**
+     * LiveData<T> not sure which is better b/w HashMap or SparseArray.
+     * @param key view id of the view clicked in GasManagerFragment or ServiceManagerFragment
+     * @param value input with the number buttons
+     */
+    public void setSelectedValue(Integer key, String value) {
+        SparseArray<String> sparsesArray = new SparseArray<>(1); //param: initial capacity.
+        sparsesArray.append(key, value);
+        selectedValue.setValue(sparsesArray);
     }
-
-    public void setGasValue(String data) {
-        gasSelected.setValue(data);
-    }
-    public LiveData<String> getServiceValue() {
-        return svcseltected;
-    }
-
-    public LiveData<String> getGasValue() {
-        return gasSelected;
+    public LiveData<SparseArray> getSelectedValue() {
+        return selectedValue;
     }
 
 

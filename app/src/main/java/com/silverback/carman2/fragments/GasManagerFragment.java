@@ -91,6 +91,7 @@ public class GasManagerFragment extends Fragment implements
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private String dateFormat;
     private String stnName, stnId, stnCode, stnAddrs;
+    private String date;
 
     private boolean isGeofenceIntent, isFavorite;
 
@@ -130,6 +131,11 @@ public class GasManagerFragment extends Fragment implements
         // Fetch the current location using worker thread, the result of which is returned to
         // getLocation() of ViewModel.LocationViewModel as a LiveData
         locationTask = ThreadManager.fetchLocationTask(this);
+
+        dateFormat = getString(R.string.date_format_1);
+        calendar = Calendar.getInstance(Locale.getDefault());
+        sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
+        date = BaseActivity.formatMilliseconds(dateFormat, System.currentTimeMillis());
     }
 
     @Override
@@ -143,17 +149,13 @@ public class GasManagerFragment extends Fragment implements
         etStnName = localView.findViewById(R.id.et_station_name);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
-        tvOdometer = localView.findViewById(R.id.tv_gas_mileage);
+        tvOdometer = localView.findViewById(R.id.tv_mileage);
         tvGasPaid = localView.findViewById(R.id.tv_value_payment);
         tvGasLoaded = localView.findViewById(R.id.tv_amount);
         tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
         tvExtraPaid = localView.findViewById(R.id.tv_extra);
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
 
-        dateFormat = getString(R.string.date_format_1);
-        calendar = Calendar.getInstance(Locale.getDefault());
-        sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
-        String date = BaseActivity.formatMilliseconds(dateFormat, System.currentTimeMillis());
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
         tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
@@ -167,11 +169,12 @@ public class GasManagerFragment extends Fragment implements
         btnFavorite.setOnClickListener(view -> registerFavorite());
 
 
-        // ViewModels to communicate fragments of an Activity.
-        //fragmentSharedModel.setCurrentFragment(this);
-        fragmentSharedModel.getGasValue().observe(this, data -> {
+        // ViewModels to share data b/w fragments(GasManager, ServiceManager, and InputPadFragment)
+        // Return value is of SparseArray type the key of which is the view id of a clicked view.
+        fragmentSharedModel.getSelectedValue().observe(this, data -> {
+            targetView = localView.findViewById(data.keyAt(0));
             if(targetView != null) {
-                targetView.setText(data);
+                targetView.setText((String)data.valueAt(0));
                 calculateGasAmount();
             }
         });
@@ -247,7 +250,7 @@ public class GasManagerFragment extends Fragment implements
 
         // Pass the current saved value to InputPadFragment
         switch(v.getId()) {
-            case R.id.tv_service_mileage:
+            case R.id.tv_mileage:
                 //args.putString("value", tvOdometer.getText().toString());
                 initValue = tvOdometer.getText().toString();
                 break;

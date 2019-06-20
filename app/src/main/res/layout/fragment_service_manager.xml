@@ -100,7 +100,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:labelFor="@id/tv_service_mileage"
+            android:labelFor="@id/tv_mileage"
             android:minWidth="80dp"
             android:text="@string/svc_label_mileage"
             android:textSize="@dimen/largeText"
@@ -108,13 +108,13 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_label_provider" />
 
         <TextView
-            android:id="@+id/tv_service_mileage"
+            android:id="@+id/tv_mileage"
             android:layout_width="100dp"
             android:layout_height="25dp"
             android:padding="5dp"
             android:background="@drawable/state_view_focus"
-            android:gravity="center|end"
             android:textSize="13sp"
+            android:textAlignment="viewEnd"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
             app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toTopOf="@+id/tv_label_mileage"
@@ -126,9 +126,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="@string/unit_km"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_service_mileage"
-            app:layout_constraintStart_toEndOf="@+id/tv_service_mileage"
-            app:layout_constraintTop_toTopOf="@+id/tv_service_mileage" />
+            app:layout_constraintBottom_toBottomOf="@+id/tv_mileage"
+            app:layout_constraintStart_toEndOf="@+id/tv_mileage"
+            app:layout_constraintTop_toTopOf="@+id/tv_mileage" />
 
         <TextView
             android:id="@+id/tv_label_payment"
@@ -209,9 +209,6 @@
         android:layout_below="@+id/tv_subtitle_stmts"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="0dp"
-        android:layout_marginEnd="3dp"
         android:elevation="1dp" />
 
 </RelativeLayout>

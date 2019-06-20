@@ -2,6 +2,7 @@ package com.silverback.carman2.viewholders;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.util.SparseBooleanArray;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.CheckBox;
@@ -19,9 +20,6 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemHolder.class);
-
-    // Objects
-
 
     // UIs
     private TextView tvItemName;
@@ -42,7 +40,6 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder {
 
         // Initialize OnCheckedChangeListener with null at first, then attach its listener
         // to retain the value as RecyclerView scrolls.
-        cbServiceItem.setOnCheckedChangeListener(null);
         cbServiceItem.setOnCheckedChangeListener((buttnView, isChecked) -> {
             cbServiceItem.setChecked(isChecked);
             if(isChecked) {
@@ -50,6 +47,7 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder {
                 animSlideUpAndDown(layout, 0, 120);
 
             } else {
+                tvCost.setText(view.getResources().getString(R.string.value_zero));
                 animSlideUpAndDown(layout, 120, 0);
             }
         });

@@ -1,8 +1,11 @@
 package com.silverback.carman2.adapters;
 
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -25,20 +28,25 @@ import java.util.List;
 
 import static androidx.annotation.InspectableProperty.ValueType.COLOR;
 
-public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHolder> {
+public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHolder> implements CompoundButton.OnCheckedChangeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
 
     // Objects
     private OnServiceItemClickListener itemListener;
+    private SparseBooleanArray chkboxStateArray;
     private ArrayList<String> serviceList;
 
-    //UIs
+    // UIs
     private TextView tvItemName, tvItemCost;
+    private CheckBox checkBox;
+
+    // Fields
+    private int itemPosition;
 
     public interface OnServiceItemClickListener {
-        void inputItemCost(String itemName, View view, int position);
+        void inputItemCost(String itemName, TextView view, int position);
     }
 
     // Constructor
@@ -46,6 +54,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
         super();
 
         itemListener = listener;
+        chkboxStateArray = new SparseBooleanArray();
         serviceList = new ArrayList<>();
 
         // Covert Json string transferred from ServiceManagerFragment to JSONArray which is bound to
@@ -72,26 +81,30 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
 
         tvItemName = cardView.findViewById(R.id.tv_item_name);
         tvItemCost = cardView.findViewById(R.id.tv_value_cost);
+        checkBox = cardView.findViewById(R.id.chkbox);
 
 
         return new ServiceItemHolder(cardView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ServiceItemHolder holder, int pos) {
+    public void onBindViewHolder(@NonNull ServiceItemHolder holder, int position) {
 
-        holder.bindItemToHolder(serviceList.get(pos));
+        itemPosition = position;
+        holder.bindItemToHolder(serviceList.get(position));
 
         // itemView is given as a field in ViewHolder.
         // Attach an event handler when clicking an item of RecyclerView
         holder.itemView.findViewById(R.id.tv_value_cost).setOnClickListener(v ->
-            itemListener.inputItemCost(serviceList.get(pos), tvItemCost, pos));
+            itemListener.inputItemCost(tvItemName.getText().toString(), tvItemCost, position));
     }
 
+    // Invoked by RecyclerView.Adapter<VH>.notifyItemChanged() with payloads
     @Override
     public void onBindViewHolder(@NonNull ServiceItemHolder holder, int pos, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, pos, payloads);
+
         } else {
             for(Object payload : payloads) {
                 if(payload instanceof String) {
@@ -102,6 +115,11 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
                 }
             }
         }
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
     }
 
     @Override

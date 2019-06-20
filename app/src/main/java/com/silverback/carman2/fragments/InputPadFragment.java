@@ -60,7 +60,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         // Required empty public constructor
     }
 
-    public static InputPadFragment newInstance(String title, String value, int resId) {
+    static InputPadFragment newInstance(String title, String value, int resId) {
 
         if(numPad == null) numPad = new InputPadFragment();
 
@@ -85,6 +85,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
             itemTitle = getArguments().getString("title");
             textViewId = getArguments().getInt("viewId");
             initValue = getArguments().getString("initValue");
+            log.i("Dialog: %s, %s, %s", itemTitle, textViewId, initValue);
         }
     }
 
@@ -115,47 +116,33 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         btn4.setOnClickListener(this);
 
         // Get arguments from the parent activity dialog title, unit name, and button numbers.
-        String title = null;
         switch(textViewId) {
-            case R.id.tv_gas_mileage:
-                title = getString(R.string.exp_label_odometer);
-                //tvValue.setText(getArguments().getString("value"));
-                isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
-                break;
-
-            case R.id.tv_service_mileage:
-                title = getString(R.string.exp_label_odometer);
-                //tvValue.setText(getArguments().getString("value"));
+            case R.id.tv_mileage:
+                itemTitle = getString(R.string.exp_label_odometer);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
             case R.id.tv_value_payment:
-                title = getString(R.string.gas_label_expense);
-                //tvValue.setText(getArguments().getString("value"));
+                itemTitle = getString(R.string.gas_label_expense);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
             case R.id.tv_amount:
-                title = getString(R.string.gas_label_amount);
-                ///tvValue.setText(getArguments().getString("value"));
+                itemTitle = getString(R.string.gas_label_amount);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_liter));
                 break;
 
             case R.id.tv_carwash:
-                title = getString(R.string.gas_label_expense_wash);
-                //tvValue.setText(getArguments().getString("value"));
+                itemTitle = getString(R.string.gas_label_expense_wash);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
             case R.id.tv_extra:
-                title = getString(R.string.gas_label_expense_misc);
-                //tvValue.setText(getArguments().getString("value"));
+                itemTitle = getString(R.string.gas_label_expense_misc);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
             case R.id.tv_value_cost:
-                log.i("Service item cost");
-                title = itemTitle;
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
@@ -166,21 +153,16 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
 
         }
 
-        tvTitle.setText(title);
+        tvTitle.setText(itemTitle);
+        tvValue.setText(initValue);
 
         // Set texts and values of the buttons on the pad in InputBtnPadView.
         //btnPad.initPad(getArguments().getInt("viewId"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
-                .setPositiveButton("confirm", (dialog, which) -> {
-                    if(textViewId == R.id.tv_value_cost) {
-                        viewModel.setServiceValue(tvValue.getText().toString());
-                    } else {
-                        viewModel.setGasValue(tvValue.getText().toString());
-                    }
-                })
-
+                .setPositiveButton("confirm", (dialog, which) ->
+                    viewModel.setSelectedValue(textViewId, tvValue.getText().toString()))
                 .setNegativeButton("cancel", (dialog, which) -> {});
 
 
