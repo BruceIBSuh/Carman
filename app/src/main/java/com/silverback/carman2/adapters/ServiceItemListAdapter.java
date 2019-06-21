@@ -32,7 +32,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
     private OnServiceItemClickListener itemListener;
     //private SparseBooleanArray chkboxStateArray; //to retain the state of the checkbox in each item.
     private boolean[] arrCheckedState;
-    private int[] arrItemCost;
+    private String[] arrItemCost;
     private String[] arrItemMemo;
     private ArrayList<String> serviceList;
 
@@ -60,7 +60,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
             }
 
             arrCheckedState = new boolean[serviceList.size()];
-            arrItemCost = new int[serviceList.size()];
+            arrItemCost = new String[serviceList.size()];
             arrItemMemo = new String[serviceList.size()];
 
         } catch(JSONException e) {
@@ -79,7 +79,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
                 .inflate(R.layout.view_card_serviceitem, parent, false);
 
         tvItemName = cardView.findViewById(R.id.tv_item_name);
-        tvItemCost = cardView.findViewById(R.id.tv_value_cost);
+        //tvItemCost = cardView.findViewById(R.id.tv_value_cost);
         checkBox = cardView.findViewById(R.id.chkbox);
 
         return new ServiceItemHolder(cardView);
@@ -90,11 +90,12 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
 
         holder.bindItemToHolder(serviceList.get(position), arrCheckedState[position]);
 
+        tvItemCost = holder.itemView.findViewById(R.id.tv_value_cost);
+
         // itemView is given as a field in ViewHolder.
         // Attach an event handler when clicking an item of RecyclerView
         tvItemCost.setOnClickListener(v ->
                 itemListener.inputItemCost(tvItemName.getText().toString(), tvItemCost, position));
-
 
         checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             arrCheckedState[position] = isChecked;
@@ -121,6 +122,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
                     TextView tvCost = holder.itemView.findViewById(R.id.tv_value_cost);
                     tvCost.setBackgroundResource(android.R.color.white);
                     tvCost.setText((String)payload);
+                    arrItemCost[pos] = tvCost.getText().toString();
+                    log.i("Item Cost: %s", arrItemCost[pos]);
                 }
             }
         }
@@ -136,11 +139,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
         return arrCheckedState;
     }
 
-    public int[] getItemCost() {
 
-
-        return arrItemCost;
-    }
 
 
 }
