@@ -49,7 +49,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Objects
     private SharedPreferences mSettings;
-    private FragmentSharedModel viewModel;
+    private FragmentSharedModel fragmentSharedModel;
     private FavoriteGeofenceHelper geofenceHelper;
     private Calendar calendar;
     private ServiceItemListAdapter mAdapter;
@@ -80,7 +80,7 @@ public class ServiceManagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
-        viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
@@ -123,8 +123,9 @@ public class ServiceManagerFragment extends Fragment implements
         mAdapter = new ServiceItemListAdapter(jsonServiceitem, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
 
-        // Receive a value from InputPadFragment using LiveData defined in FragmentSharedModel.
-        viewModel.getSelectedValue().observe(this, data -> {
+        // Receive values from InputPadFragment using LiveData defined in FragmentSharedModel as
+        // SparseArray.
+        fragmentSharedModel.getSelectedValue().observe(this, data -> {
             int viewId = data.keyAt(0);
             String value = (String)data.valueAt(0);
 
@@ -152,7 +153,7 @@ public class ServiceManagerFragment extends Fragment implements
         super.onResume();
         // Notify ExpensePagerFragment of the current fragment to load the recent 5 expense data from
         // ServiceTable.
-        viewModel.setCurrentFragment(this);
+        fragmentSharedModel.setCurrentFragment(this);
 
     }
 
@@ -209,6 +210,7 @@ public class ServiceManagerFragment extends Fragment implements
         if(!doEmptyCheck()) return false;
         String dateFormat = getString(R.string.date_format_1);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDate.getText().toString());
+
 
         BasicManagerEntity basicEntity = new BasicManagerEntity();
         ServiceManagerEntity serviceEntity = new ServiceManagerEntity();

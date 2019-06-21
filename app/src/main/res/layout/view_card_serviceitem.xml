@@ -56,15 +56,15 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:visibility="gone"
             android:id="@+id/constraint_stmts"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:animateLayoutChanges="true"
-            android:background="?android:attr/colorPrimaryDark"
+            android:background="@android:color/darker_gray"
             android:elevation="1dp"
-            android:padding="8dp" >
+            android:padding="8dp"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/tv_label_period"
@@ -140,7 +140,8 @@
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
                 android:inputType="textPersonName"
-                android:padding="0dp"
+                android:padding="3dp"
+                android:textSize="12sp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_info"
                 cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_info"

@@ -10,12 +10,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.type.Color;
 import com.silverback.carman2.R;
-import com.silverback.carman2.fragments.InputPadFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewholders.ServiceItemHolder;
@@ -26,24 +23,22 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static androidx.annotation.InspectableProperty.ValueType.COLOR;
-
-public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHolder> implements CompoundButton.OnCheckedChangeListener {
+public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
 
     // Objects
     private OnServiceItemClickListener itemListener;
-    private SparseBooleanArray chkboxStateArray;
+    //private SparseBooleanArray chkboxStateArray; //to retain the state of the checkbox in each item.
+    private boolean[] arrCheckedState;
+    private int[] arrItemCost;
+    private String[] arrItemMemo;
     private ArrayList<String> serviceList;
 
     // UIs
     private TextView tvItemName, tvItemCost;
     private CheckBox checkBox;
-
-    // Fields
-    private int itemPosition;
 
     public interface OnServiceItemClickListener {
         void inputItemCost(String itemName, TextView view, int position);
@@ -54,7 +49,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
         super();
 
         itemListener = listener;
-        chkboxStateArray = new SparseBooleanArray();
         serviceList = new ArrayList<>();
 
         // Covert Json string transferred from ServiceManagerFragment to JSONArray which is bound to
@@ -64,11 +58,16 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
             for(int i = 0; i < jsonArray.length(); i++) {
                 serviceList.add(jsonArray.getString(i));
             }
-            //serviceList.add("test");
-            //serviceList.add("test2");
+
+            arrCheckedState = new boolean[serviceList.size()];
+            arrItemCost = new int[serviceList.size()];
+            arrItemMemo = new String[serviceList.size()];
+
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
+
+        //chkboxStateArray = new SparseBooleanArray();
 
     }
 
@@ -83,23 +82,33 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
         tvItemCost = cardView.findViewById(R.id.tv_value_cost);
         checkBox = cardView.findViewById(R.id.chkbox);
 
-
         return new ServiceItemHolder(cardView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ServiceItemHolder holder, int position) {
 
-        itemPosition = position;
-        holder.bindItemToHolder(serviceList.get(position));
+        holder.bindItemToHolder(serviceList.get(position), arrCheckedState[position]);
 
         // itemView is given as a field in ViewHolder.
         // Attach an event handler when clicking an item of RecyclerView
-        holder.itemView.findViewById(R.id.tv_value_cost).setOnClickListener(v ->
-            itemListener.inputItemCost(tvItemName.getText().toString(), tvItemCost, position));
+        tvItemCost.setOnClickListener(v ->
+                itemListener.inputItemCost(tvItemName.getText().toString(), tvItemCost, position));
+
+
+        checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            arrCheckedState[position] = isChecked;
+            holder.doCheckBoxAction(isChecked);
+            log.i("checkbox: %s", arrCheckedState[position]);
+
+        });
+
+
     }
 
-    // Invoked by RecyclerView.Adapter<VH>.notifyItemChanged() with payloads
+
+
+    // notifyItemChanged of RecyclerView.Adapter invokes this which has payloads param.
     @Override
     public void onBindViewHolder(@NonNull ServiceItemHolder holder, int pos, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) {
@@ -117,14 +126,21 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemHold
         }
     }
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-    }
 
     @Override
     public int getItemCount() {
         return serviceList.size();
     }
+
+    public boolean[] getCheckedState() {
+        return arrCheckedState;
+    }
+
+    public int[] getItemCost() {
+
+
+        return arrItemCost;
+    }
+
 
 }
