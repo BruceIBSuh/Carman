@@ -76,7 +76,7 @@ public class GasManagerFragment extends Fragment implements
     private CustomPagerIndicator indicator;
     private Calendar calendar;
     private SimpleDateFormat sdf;
-    private InputPadFragment padDialog;
+    private InputPadFragment numPad;
     private Location location;
 
     // UIs
@@ -127,6 +127,7 @@ public class GasManagerFragment extends Fragment implements
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         df = BaseActivity.getDecimalFormatInstance();
+        numPad = new InputPadFragment();
 
         // Fetch the current location using worker thread, the result of which is returned to
         // getLocation() of ViewModel.LocationViewModel as a LiveData
@@ -242,45 +243,47 @@ public class GasManagerFragment extends Fragment implements
     }
 
     // InputNumPad handler
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(final View v) {
+
+        Bundle args = new Bundle();
         String initValue = null;
         targetView = (TextView)v;
 
         // Pass the current saved value to InputPadFragment
         switch(v.getId()) {
             case R.id.tv_mileage:
-                //args.putString("value", tvOdometer.getText().toString());
+                //title = tvOdometer.getText().toString();
                 initValue = tvOdometer.getText().toString();
                 break;
 
             case R.id.tv_value_payment:
-                //args.putString("value", tvGasPaid.getText().toString());
+                //title = tvGasPaid.getText().toString();
                 initValue = tvGasPaid.getText().toString();
                 break;
 
             case R.id.tv_carwash:
-                //args.putString("value", tvCarwashPaid.getText().toString());
+                //title = tvCarwashPaid.getText().toString();
                 initValue = tvCarwashPaid.getText().toString();
                 break;
 
             case R.id.tv_extra:
-                //args.putString("value", tvExtraPaid.getText().toString());
+                //title = tvExtraPaid.getText().toString();
                 initValue = tvExtraPaid.getText().toString();
                 break;
         }
 
         // Pass the id of TextView to InputPadFragment for which TextView is being focused to wait
         // for a new value.
-        InputPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
+        //InputPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
 
-        /*
+        args.putString("title", null);
         args.putInt("viewId", v.getId());
-        padDialog.setArguments(args);
+        args.putString("initValue", initValue);
+        numPad.setArguments(args);
 
-        if(getFragmentManager() != null) padDialog.show(getFragmentManager(), "InputPadDialog");
-        */
+        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "InputPadDialog");
+
     }
 
     // Query Favorite with the fetched station name or station id to tell whether the station

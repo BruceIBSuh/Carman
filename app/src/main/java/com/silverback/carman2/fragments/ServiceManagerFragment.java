@@ -4,6 +4,8 @@ package com.silverback.carman2.fragments;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +19,11 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ServiceItemListAdapter;
-import com.silverback.carman2.database.BasicManagerEntity;
-import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.models.ServiceCheckListModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.views.ServiceItemRecyclerView;
 
@@ -30,11 +31,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
-import org.json.JSONArray;
-
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -42,14 +40,23 @@ import java.util.Locale;
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ServiceItemListAdapter.OnServiceItemClickListener {
+        View.OnClickListener, ServiceItemListAdapter.OnNumPadListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
 
     // Objects
+    private String[] arrServiceItem;
+
+
     private SharedPreferences mSettings;
     private FragmentSharedModel fragmentSharedModel;
+
+    private ServiceCheckListModel checkListModel;
+    private SparseBooleanArray sbArrCheckbox;
+    private SparseArray sArrItemCost, sArrItemMemo;
+
+    private InputPadFragment numPad;
     private FavoriteGeofenceHelper geofenceHelper;
     private Calendar calendar;
     private ServiceItemListAdapter mAdapter;
@@ -65,7 +72,7 @@ public class ServiceManagerFragment extends Fragment implements
     // Fields
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private String jsonServiceitem;
-    private int itemPosition;
+    private int itemPos;
     private int totalCost;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isFavorite;
@@ -80,14 +87,23 @@ public class ServiceManagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
+
+        // Instantiate ViewModels.
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        checkListModel = ViewModelProviders.of(getActivity()).get(ServiceCheckListModel.class);
+
+        sbArrCheckbox = new SparseBooleanArray();
+        sArrItemCost = new SparseArray();
+        sArrItemMemo = new SparseArray();
+
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
+        numPad = new InputPadFragment();
 
-        String[] serviceItems = getResources().getStringArray(R.array.service_item_list);
-        JSONArray jsonArray = new JSONArray(Arrays.asList(serviceItems));
-        jsonServiceitem = jsonArray.toString();
+
+        arrServiceItem = getResources().getStringArray(R.array.service_item_list);
+
 
     }
 
@@ -120,8 +136,9 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(jsonServiceitem, this);
+        mAdapter = new ServiceItemListAdapter(arrServiceItem, checkListModel, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
+
 
         // Receive values from InputPadFragment using LiveData defined in FragmentSharedModel as
         // SparseArray.
@@ -134,7 +151,7 @@ public class ServiceManagerFragment extends Fragment implements
             targetView.setText(value);
 
             if(data.keyAt(0) == R.id.tv_value_cost) {
-                mAdapter.notifyItemChanged(itemPosition, value);
+                mAdapter.notifyItemChanged(itemPos, value);
                 try {
                     totalCost += df.parse(value).intValue();
                     tvTotalCost.setText(df.format(totalCost));
@@ -143,6 +160,17 @@ public class ServiceManagerFragment extends Fragment implements
                 }
             }
         });
+
+        // ServiceCheckListModel
+        checkListModel.getChkboxState().observe(this, data -> {
+            log.i("Checkbox State: %s %s:", data.keyAt(0), data.valueAt(0));
+            sbArrCheckbox.put(data.keyAt(0), data.valueAt(0));
+
+        });
+        checkListModel.getItemCost().observe(this, data -> sArrItemCost.put(data.keyAt(0), data.valueAt(0)));
+        checkListModel.getItemMemo().observe(this, data -> sArrItemMemo.put(data.keyAt(0), data.valueAt(0)));
+
+
 
         // Inflate the layout for this fragment
         return localView;
@@ -165,8 +193,12 @@ public class ServiceManagerFragment extends Fragment implements
         switch(v.getId()) {
             case R.id.tv_mileage:
                 //targetView = (TextView)v;
-                InputPadFragment.newInstance(null, tvMileage.getText().toString(), v.getId())
-                        .show(getFragmentManager(), "numPad");
+                Bundle args = new Bundle();
+                args.putString("title", getString(R.string.svc_label_mileage));
+                args.putString("initValue", tvMileage.getText().toString());
+                args.putInt("viewId", v.getId());
+                numPad.setArguments(args);
+                if(getFragmentManager() != null) numPad.show(getFragmentManager(), "InputPadDialog");
                 break;
 
             case R.id.imgbtn_favorite:
@@ -197,21 +229,31 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    // ServiceItemList.OnServiceItemClickListener invokes this method
+    // ServiceItemList.OnNumPadListener invokes this method
     // to pop up InputPadFragment and input the amount of expense in a service item.
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void inputItemCost(String itemName, TextView view, int position) {
-        itemPosition = position;
-        InputPadFragment.newInstance(itemName, "0", view.getId()).show(getFragmentManager(), "numPad");
+        itemPos = position;
+
+        Bundle args = new Bundle();
+        args.putString("title", itemName);
+        args.putString("initValue", view.getText().toString());
+        args.putInt("viewId", view.getId());
+        numPad.setArguments(args);
+        log.i("inputItemCost: %s, %s", position, view.getId());
+        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
+
     }
 
     public boolean saveServiceData() {
+
         if(!doEmptyCheck()) return false;
+
         String dateFormat = getString(R.string.date_format_1);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDate.getText().toString());
 
 
+        /*
         BasicManagerEntity basicEntity = new BasicManagerEntity();
         ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
 
@@ -224,7 +266,7 @@ public class ServiceManagerFragment extends Fragment implements
             log.e("ParseException: %s", e.getMessage());
             return false;
         }
-
+        */
 
         return true;
     }

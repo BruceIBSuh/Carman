@@ -60,8 +60,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
-            android:animateLayoutChanges="true"
-            android:background="@android:color/darker_gray"
+            android:background="#E0E0E0"
             android:elevation="1dp"
             android:padding="8dp"
             android:visibility="gone">
@@ -126,20 +125,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:labelFor="@id/et_info"
+                android:labelFor="@id/et_item_info"
                 android:text="@string/svc_label_info"
                 cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
                 cardview:layout_constraintTop_toBottomOf="@+id/tv_label_cost" />
 
             <EditText
-                android:id="@+id/et_info"
+                android:id="@+id/et_item_info"
                 android:layout_width="0dp"
                 android:layout_height="26dp"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
-                android:inputType="textPersonName"
+                android:inputType="textMultiLine"
                 android:padding="3dp"
                 android:textSize="12sp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_info"

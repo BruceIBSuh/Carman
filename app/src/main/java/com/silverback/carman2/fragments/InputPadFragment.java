@@ -55,26 +55,6 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         df = BaseActivity.getDecimalFormatInstance();
     }
 
-    // Default Constructor
-    private InputPadFragment() {
-        // Required empty public constructor
-    }
-
-    static InputPadFragment newInstance(String title, String value, int resId) {
-
-        if(numPad == null) numPad = new InputPadFragment();
-
-        Bundle args = new Bundle();
-        args.putString("title", title);
-        args.putString("initValue", value);
-        args.putInt("viewId", resId);
-
-        numPad.setArguments(args);
-
-        return numPad;
-
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

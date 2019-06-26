@@ -7,6 +7,7 @@ import android.util.SparseBooleanArray;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
@@ -14,15 +15,21 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.ServiceItemListAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ServiceCheckListModel;
 
-public class ServiceItemHolder extends RecyclerView.ViewHolder {
+public class ServiceItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemHolder.class);
 
     // Objects
+    private ServiceCheckListModel checkListModel;
+    private SparseBooleanArray arrChkbox;
+    private ServiceItemListAdapter.OnNumPadListener mListener;
+    private SparseBooleanArray arrCheckBox;
     private Context context;
 
     // UIs
@@ -32,52 +39,55 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder {
 
 
     // Constructor
-    public ServiceItemHolder(CardView view) {
+    public ServiceItemHolder(CardView view, ServiceCheckListModel model, ServiceItemListAdapter.OnNumPadListener listener) {
         super(view);
+
+        log.i("ServiceItemHolder constructor");
+
         this.context = view.getContext();
+        checkListModel = model;
+        mListener = listener;
+        arrCheckBox = new SparseBooleanArray();
 
         layout = view.findViewById(R.id.constraint_stmts);
         tvItemName = view.findViewById(R.id.tv_item_name);
         tvItemCost = view.findViewById(R.id.tv_value_cost);
         cbServiceItem = view.findViewById(R.id.chkbox);
 
-        // Initialize OnCheckedChangeListener with null at first, then attach its listener
-        // to retain the value as RecyclerView scrolls.
-        /*
-        cbServiceItem.setOnCheckedChangeListener((buttnView, isChecked) -> {
-            cbServiceItem.setChecked(isChecked);
-            if(isChecked) {
-                layout.setVisibility(View.VISIBLE);
-                animSlideUpAndDown(layout, 0, 120);
-                chkboxStateArray.put(position, true);
+        tvItemCost.setOnClickListener(this);
+        cbServiceItem.setOnCheckedChangeListener(this);
 
-            } else {
-                tvCost.setText(view.getResources().getString(R.string.value_zero));
-                animSlideUpAndDown(layout, 120, 0);
-                chkboxStateArray.put(position, false);
-            }
-        });
-        */
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        mListener.inputItemCost(tvItemName.getText().toString(), tvItemCost, getAdapterPosition());
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if(isChecked) {
+            arrCheckBox.put(getAdapterPosition(), true);
+            layout.setVisibility(View.VISIBLE);
+            animSlideUpAndDown(layout, 0, 120);
+        } else {
+            cbServiceItem.setChecked(false);
+            arrCheckBox.put(getAdapterPosition(), false);
+            tvItemCost.setText(context.getResources().getString(R.string.value_zero));
+            animSlideUpAndDown(layout, 120, 0);
+        }
+
+        checkListModel.getChkboxState().setValue(arrCheckBox);
+
     }
 
     public void bindItemToHolder(String item, boolean isChecked) {
+        log.i("Item Checked: %s, %s", item, isChecked);
         tvItemName.setText(item);
         cbServiceItem.setChecked(isChecked);
 
     }
-
-    public void doCheckBoxAction(boolean isChecked) {
-        cbServiceItem.setChecked(isChecked);
-        if(isChecked) {
-            layout.setVisibility(View.VISIBLE);
-            animSlideUpAndDown(layout, 0, 120);
-
-        } else {
-            tvItemCost.setText(context.getResources().getString(R.string.value_zero));
-            animSlideUpAndDown(layout, 120, 0);
-        }
-    }
-
 
     private void animSlideUpAndDown(View target, int startValue, int endValue) {
         // Convert dp to int
@@ -97,4 +107,6 @@ public class ServiceItemHolder extends RecyclerView.ViewHolder {
         animSet.play(animSlide);
         animSet.start();
     }
+
+
 }
