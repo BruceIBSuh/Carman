@@ -40,7 +40,7 @@ import java.util.Locale;
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ServiceItemListAdapter.OnNumPadListener {
+        View.OnClickListener, ServiceItemListAdapter.OnParentFragmentListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -65,8 +65,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // UIs
     private EditText etStnName;
-    private TextView tvDate, tvMileage, tvTotalCost, tvItemCost;
-    private TextView itemCost;
+    private TextView tvDate, tvMileage, tvTotalCost;
     private ImageButton btnFavorite;
 
     // Fields
@@ -121,7 +120,8 @@ public class ServiceManagerFragment extends Fragment implements
         tvMileage = localView.findViewById(R.id.tv_mileage);
         Button btnDate = localView.findViewById(R.id.btn_date);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
-        tvTotalCost = localView.findViewById(R.id.tv_value_payment);
+        tvTotalCost = localView.findViewById(R.id.tv_total_cost);
+        tvTotalCost.setText("0");
 
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
@@ -136,39 +136,37 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(arrServiceItem, checkListModel, this);
+        mAdapter = new ServiceItemListAdapter(this, checkListModel, arrServiceItem);
         serviceItemRecyclerView.setAdapter(mAdapter);
 
 
         // Receive values from InputPadFragment using LiveData defined in FragmentSharedModel as
         // SparseArray.
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
-            int viewId = data.keyAt(0);
-            String value = (String)data.valueAt(0);
 
-            targetView = localView.findViewById(viewId);
-            if(targetView == null) return;
-            targetView.setText(value);
+            final int viewId = data.keyAt(0);
+            final String value = (String)data.valueAt(0);
 
-            if(data.keyAt(0) == R.id.tv_value_cost) {
-                mAdapter.notifyItemChanged(itemPos, value);
-                try {
-                    totalCost += df.parse(value).intValue();
-                    tvTotalCost.setText(df.format(totalCost));
-                } catch(ParseException e) {
-                    log.e("ParseException: %s", e.getMessage());
-                }
+            switch(viewId) {
+                case R.id.tv_mileage:
+                    targetView = localView.findViewById(viewId);
+                    targetView.setText(value);
+                    break;
+
+                case R.id.tv_value_cost:
+                    mAdapter.notifyItemChanged(itemPos, value);
+                    try {
+                        totalCost += df.parse(value).intValue();
+                        tvTotalCost.setText(df.format(totalCost));
+                    } catch(ParseException e) {
+                        log.e("ParseException: %s", e.getMessage());
+                    }
+
+                    break;
             }
-        });
-
-        // ServiceCheckListModel
-        checkListModel.getChkboxState().observe(this, data -> {
-            log.i("Checkbox State: %s %s:", data.keyAt(0), data.valueAt(0));
-            sbArrCheckbox.put(data.keyAt(0), data.valueAt(0));
 
         });
-        checkListModel.getItemCost().observe(this, data -> sArrItemCost.put(data.keyAt(0), data.valueAt(0)));
-        checkListModel.getItemMemo().observe(this, data -> sArrItemMemo.put(data.keyAt(0), data.valueAt(0)));
+
 
 
 
@@ -229,19 +227,36 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    // ServiceItemList.OnNumPadListener invokes this method
+    // ServiceItemList.OnParentFragmentListener invokes this method
     // to pop up InputPadFragment and input the amount of expense in a service item.
     @Override
-    public void inputItemCost(String itemName, TextView view, int position) {
+    public void inputItemCost(String title, TextView targetView, int position) {
         itemPos = position;
 
         Bundle args = new Bundle();
-        args.putString("title", itemName);
-        args.putString("initValue", view.getText().toString());
-        args.putInt("viewId", view.getId());
+        args.putString("title", title);
+        args.putString("initValue", targetView.getText().toString());
+        args.putInt("viewId", targetView.getId());
         numPad.setArguments(args);
-        log.i("inputItemCost: %s, %s", position, view.getId());
+
         if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
+
+    }
+
+    @Override
+    public void inputItemMemo(String title, TextView targetView, int position) {
+        ServiceItemMemoFragment memoFragment = ServiceItemMemoFragment.newInstance(title, position);
+        if(getFragmentManager() != null) memoFragment.show(getFragmentManager(), "memoPad");
+    }
+
+    @Override
+    public void subtractCost(String value) {
+        try {
+            totalCost -= df.parse(value).intValue();
+            tvTotalCost.setText(df.format(totalCost));
+        } catch(ParseException e) {
+            log.e("ParseException: %s", e.getMessage());
+        }
 
     }
 

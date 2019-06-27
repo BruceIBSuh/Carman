@@ -15,6 +15,7 @@ public class FragmentSharedModel extends ViewModel {
 
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> selectedValue = new MutableLiveData<>();
+    private MutableLiveData<String> itemMemoLiveData;
 
     /**
      * LiveData<T> not sure which is better b/w HashMap or SparseArray.
@@ -29,6 +30,8 @@ public class FragmentSharedModel extends ViewModel {
     public LiveData<SparseArray> getSelectedValue() {
         return selectedValue;
     }
+
+
 
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the bottom viewpager

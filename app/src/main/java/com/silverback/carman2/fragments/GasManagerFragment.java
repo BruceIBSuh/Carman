@@ -151,7 +151,7 @@ public class GasManagerFragment extends Fragment implements
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
         tvOdometer = localView.findViewById(R.id.tv_mileage);
-        tvGasPaid = localView.findViewById(R.id.tv_value_payment);
+        tvGasPaid = localView.findViewById(R.id.tv_total_cost);
         tvGasLoaded = localView.findViewById(R.id.tv_amount);
         tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
         tvExtraPaid = localView.findViewById(R.id.tv_extra);
@@ -257,7 +257,7 @@ public class GasManagerFragment extends Fragment implements
                 initValue = tvOdometer.getText().toString();
                 break;
 
-            case R.id.tv_value_payment:
+            case R.id.tv_total_cost:
                 //title = tvGasPaid.getText().toString();
                 initValue = tvGasPaid.getText().toString();
                 break;

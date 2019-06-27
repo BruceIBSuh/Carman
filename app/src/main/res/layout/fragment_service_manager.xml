@@ -135,20 +135,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:labelFor="@id/tv_value_payment"
+            android:labelFor="@id/tv_total_cost"
             android:minWidth="80dp"
             android:text="@string/svc_label_payment"
             android:textSize="@dimen/largeText"
             app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
 
-        <EditText
-            android:id="@+id/tv_value_payment"
+        <TextView
+            android:id="@+id/tv_total_cost"
             android:layout_width="100dp"
             android:layout_height="25dp"
             android:padding="5dp"
             android:background="@drawable/state_view_focus"
-            android:inputType="numberDecimal"
             android:ems="10"
             android:textSize="13sp"
             android:textAlignment="viewEnd"
@@ -165,9 +164,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="@string/unit_won"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_value_payment"
-            app:layout_constraintStart_toEndOf="@+id/tv_value_payment"
-            app:layout_constraintTop_toTopOf="@+id/tv_value_payment" />
+            app:layout_constraintBottom_toBottomOf="@+id/tv_total_cost"
+            app:layout_constraintStart_toEndOf="@+id/tv_total_cost"
+            app:layout_constraintTop_toTopOf="@+id/tv_total_cost" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

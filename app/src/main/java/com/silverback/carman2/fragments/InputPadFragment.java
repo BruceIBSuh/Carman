@@ -102,7 +102,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
-            case R.id.tv_value_payment:
+            case R.id.tv_total_cost:
                 itemTitle = getString(R.string.gas_label_expense);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
