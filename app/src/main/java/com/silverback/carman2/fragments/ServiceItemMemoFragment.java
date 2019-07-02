@@ -38,17 +38,6 @@ public class ServiceItemMemoFragment extends DialogFragment {
         // Required empty public constructor
     }
 
-    static ServiceItemMemoFragment newInstance(String name, int pos) {
-        ServiceItemMemoFragment memoDlgFragment = new ServiceItemMemoFragment();
-        Bundle args = new Bundle();
-        args.putString("title", name);
-        args.putInt("position", pos);
-        memoDlgFragment.setArguments(args);
-
-        return memoDlgFragment;
-    }
-
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,31 +57,20 @@ public class ServiceItemMemoFragment extends DialogFragment {
         // Set the dialog style: no title
         //if(getDialog().getWindow() != null) getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         final String itemName = getArguments().getString("title");
-        final int itemPosition = getArguments().getInt("position");
+        final int viewId = getArguments().getInt("viewId");
 
         TextView tvItemName = localView.findViewById(R.id.tv_item_title);
         EditText etMemo = localView.findViewById(R.id.et_item_memo);
         etMemo.requestFocus();
         tvItemName.setText(itemName);
 
-        localView.findViewById(R.id.btn_confirm).setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                String memo = etMemo.getText().toString();
-                //mListener.inputMemotext(memo, itemPosition);
-                dismiss();
-            }
+        localView.findViewById(R.id.btn_confirm).setOnClickListener(view -> {
+            String memo = etMemo.getText().toString();
+            sharedModel.setSelectedMemo(viewId, memo);
+            dismiss();
         });
 
-        localView.findViewById(R.id.btn_cancel).setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                dismiss();
-            }
-        });
-
-        // Define UI's
-
+        localView.findViewById(R.id.btn_cancel).setOnClickListener(view -> dismiss());
 
         return new AlertDialog.Builder(getActivity())
                 .setView(localView)

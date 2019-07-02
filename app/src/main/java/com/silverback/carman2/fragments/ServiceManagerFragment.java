@@ -57,6 +57,8 @@ public class ServiceManagerFragment extends Fragment implements
     private SparseArray sArrItemCost, sArrItemMemo;
 
     private InputPadFragment numPad;
+    private ServiceItemMemoFragment memoPad;
+
     private FavoriteGeofenceHelper geofenceHelper;
     private Calendar calendar;
     private ServiceItemListAdapter mAdapter;
@@ -70,7 +72,6 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Fields
     private TextView targetView; //reference to a clicked view which is used in ViewModel
-    private String jsonServiceitem;
     private int itemPos;
     private int totalCost;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
@@ -98,8 +99,9 @@ public class ServiceManagerFragment extends Fragment implements
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
-        numPad = new InputPadFragment();
 
+        numPad = new InputPadFragment();
+        memoPad = new ServiceItemMemoFragment();
 
         arrServiceItem = getResources().getStringArray(R.array.service_item_list);
 
@@ -143,31 +145,25 @@ public class ServiceManagerFragment extends Fragment implements
         // Receive values from InputPadFragment using LiveData defined in FragmentSharedModel as
         // SparseArray.
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
-
             final int viewId = data.keyAt(0);
-            final String value = (String)data.valueAt(0);
+            final int value = data.valueAt(0);
 
-            switch(viewId) {
+            switch(data.keyAt(0)) {
                 case R.id.tv_mileage:
                     targetView = localView.findViewById(viewId);
-                    targetView.setText(value);
+                    targetView.setText(df.format(value));
                     break;
 
                 case R.id.tv_value_cost:
-                    mAdapter.notifyItemChanged(itemPos, value);
-                    try {
-                        totalCost += df.parse(value).intValue();
-                        tvTotalCost.setText(df.format(totalCost));
-                    } catch(ParseException e) {
-                        log.e("ParseException: %s", e.getMessage());
-                    }
-
+                    mAdapter.notifyItemChanged(itemPos, data);
+                    totalCost += data.valueAt(0);
+                    tvTotalCost.setText(df.format(totalCost));
                     break;
             }
-
         });
 
-
+        fragmentSharedModel.getSelectedMenu().observe(this, data ->
+                mAdapter.notifyItemChanged(itemPos, data));
 
 
         // Inflate the layout for this fragment
@@ -239,25 +235,28 @@ public class ServiceManagerFragment extends Fragment implements
         args.putInt("viewId", targetView.getId());
         numPad.setArguments(args);
 
-        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "numPad");
+        if(getFragmentManager() != null) numPad.show(getFragmentManager(), null);
 
     }
 
     @Override
     public void inputItemMemo(String title, TextView targetView, int position) {
-        ServiceItemMemoFragment memoFragment = ServiceItemMemoFragment.newInstance(title, position);
-        if(getFragmentManager() != null) memoFragment.show(getFragmentManager(), "memoPad");
+        log.i("Item Info: %s %s %s", title, targetView.getId(), position);
+        itemPos = position;
+
+        Bundle args = new Bundle();
+        args.putString("title", title);
+        args.putInt("viewId", targetView.getId());
+        memoPad.setArguments(args);
+
+        if(getFragmentManager() != null) memoPad.show(getFragmentManager(), null);
     }
 
     @Override
-    public void subtractCost(String value) {
-        try {
-            totalCost -= df.parse(value).intValue();
-            tvTotalCost.setText(df.format(totalCost));
-        } catch(ParseException e) {
-            log.e("ParseException: %s", e.getMessage());
-        }
-
+    public void subtractCost(int value) {
+        log.i("Calculate Total Cost");
+        totalCost -= value;
+        tvTotalCost.setText(df.format(totalCost));
     }
 
     public boolean saveServiceData() {

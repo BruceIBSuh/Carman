@@ -2,7 +2,10 @@ package com.silverback.carman2.adapters;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.content.Context;
+import android.util.SparseArray;
 import android.util.SparseBooleanArray;
+import android.util.SparseIntArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -18,11 +22,13 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ServiceCheckListModel;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemListAdapter.ServiceItemViewHolder> {
@@ -30,20 +36,22 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
 
     // Objects
+    private Context context;
     private Fragment serviceFragment;
     private ServiceCheckListModel checkListModel;
     private Observer<SparseBooleanArray> chkboxObserver;
     private OnParentFragmentListener mListener;
+    private DecimalFormat df;
 
     private boolean[] arrCheckedState;
-    private String[] arrItemCost;
+    private int[] arrItemCost;
     private String[] arrItemMemo;
     private String[] arrItems;
 
     public interface OnParentFragmentListener {
         void inputItemCost(String title, TextView targetView, int position);
         void inputItemMemo(String title, TextView targetView, int position);
-        void subtractCost(String value);
+        void subtractCost(int value);
     }
 
     // Constructor
@@ -51,13 +59,15 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
         super();
 
-        serviceFragment = fm;
+        this.context = fm.getContext();
+        this.arrItems = items;
         checkListModel = model;
         mListener = (OnParentFragmentListener)fm;
-        this.arrItems = items;
+
+        df = BaseActivity.getDecimalFormatInstance();
 
         arrCheckedState = new boolean[arrItems.length];
-        arrItemCost = new String[arrItems.length];
+        arrItemCost = new int[arrItems.length];
         arrItemMemo = new String[arrItems.length];
 
     }
@@ -73,18 +83,24 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
 
     // Invoked by notifyItemChanged of RecyclerView.Adapter with payloads as param.
+    @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int pos, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, pos, payloads);
         } else {
-            if(payloads.get(0) instanceof String) {
-                String value = (String)payloads.get(0);
-                holder.tvItemCost.setText(value);
-                arrItemCost[pos] = value;
+            if(payloads.get(0) instanceof SparseIntArray) {
+                SparseIntArray data = (SparseIntArray)payloads.get(0);
+                holder.tvItemCost.setText(df.format(data.valueAt(0)));
+                arrItemCost[pos] = data.valueAt(0);
+            } else if(payloads.get(0) instanceof SparseArray) {
+                SparseArray<String> data = (SparseArray)payloads.get(0);
+                holder.tvItemMemo.setText(data.valueAt(0));
+                arrItemMemo[pos] = data.valueAt(0);
             }
 
         }
+
     }
 
     @Override
@@ -103,7 +119,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
      * ViewModel
      */
     class ServiceItemViewHolder extends RecyclerView.ViewHolder implements
-            CompoundButton.OnCheckedChangeListener, View.OnClickListener {
+            View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
         // UIs
         ConstraintLayout layout;
@@ -123,7 +139,9 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
             tvItemCost.setOnClickListener(this);
             tvItemMemo.setOnClickListener(this);
+            cbServiceItem.setOnClickListener(this);
             cbServiceItem.setOnCheckedChangeListener(this);
+
 
         }
 
@@ -139,40 +157,51 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                     mListener.inputItemMemo(title, tvItemMemo, getAdapterPosition());
                     break;
 
+                case R.id.chkbox:
+                    if(cbServiceItem.isChecked()) {
+                        int count = 0;
+                        for(boolean b : arrCheckedState) count += (b ? 1 : 0);
+
+                        if(count < 5) arrCheckedState[getAdapterPosition()] = true;
+                        else {
+                            Toast.makeText(v.getContext(), "Up to 5 items", Toast.LENGTH_SHORT).show();
+                            cbServiceItem.setChecked(false);
+                        }
+                    } else {
+                        arrCheckedState[getAdapterPosition()] = false;
+                        if(arrItemCost[getAdapterPosition()] != 0)
+                            mListener.subtractCost(arrItemCost[getAdapterPosition()]);
+
+                        arrItemCost[getAdapterPosition()] = 0;
+                        tvItemCost.setText("0");
+                        tvItemMemo.setText("");
+
+                    }
+                    break;
             }
         }
 
-
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-            // Check if checked items are beyond the number set in SharedPreferences.
-            // Required to be completed.
-            int count = 0;
-            for(boolean b : arrCheckedState) count += (b ? 1 : 0);
-            log.i("checked count: %s, %s", count, buttonView);
-
             if(isChecked) {
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 120);
             } else {
-                // Subtract the cost from the total cost when canceling using the listener.
-                mListener.subtractCost(tvItemCost.getText().toString());
-                tvItemCost.setText("0");
                 animSlideUpAndDown(layout, 120, 0);
-
             }
-
-            // Set a checked state value in boolean Array to retain the value while recycling.
-            arrCheckedState[getAdapterPosition()] = isChecked;
         }
 
+
         // Combine data in the adapter with views in the viewholder.
-        void bindItemToHolder(int position) {
-            tvItemName.setText(arrItems[position]);
-            cbServiceItem.setChecked(arrCheckedState[position]);
-            tvItemCost.setText(arrItemCost[position]);
-            tvItemMemo.setText(arrItemMemo[position]);
+        void bindItemToHolder(int pos) {
+            tvItemName.setText(arrItems[pos]);
+            cbServiceItem.setChecked(arrCheckedState[pos]);
+
+            if (arrCheckedState[pos]) {
+                tvItemCost.setText(df.format(arrItemCost[pos]));
+                tvItemMemo.setText(arrItemMemo[pos]);
+            }
+
         }
 
         void animSlideUpAndDown(View target, int startValue, int endValue) {
@@ -183,7 +212,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             int convStartValue = (int)TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP, startValue, target.getResources().getDisplayMetrics());
 
-            ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue).setDuration(500);
+            ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue).setDuration(250);
             animSlide.addUpdateListener(valueAnimator -> {
                 target.getLayoutParams().height = (Integer)valueAnimator.getAnimatedValue();
                 target.requestLayout();
@@ -194,6 +223,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             animSet.play(animSlide);
             animSet.start();
         }
+
 
 
     }

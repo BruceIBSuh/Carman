@@ -175,11 +175,10 @@ public class GasManagerFragment extends Fragment implements
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
             targetView = localView.findViewById(data.keyAt(0));
             if(targetView != null) {
-                targetView.setText((String)data.valueAt(0));
+                targetView.setText(df.format(data.valueAt(0)));
                 calculateGasAmount();
             }
         });
-
 
         // Once getting the current location fetched, attempt to get a station within MIN_RADIUS
         // using a worker thread, the result of which is notified using getCurrentStationLiveData()

@@ -139,7 +139,6 @@
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
-
                 android:padding="3dp"
                 android:textSize="12sp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_info"

@@ -37,9 +37,8 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
     private String[] arrCurrency = { "5만", "1만", "5천", "1천" };
 
     // Objects
-    private static InputPadFragment numPad;
     private FragmentSharedModel viewModel;
-    private static DecimalFormat df;
+    private DecimalFormat df;
 
     // UIs
     private TextView tvValue, tvUnit;
@@ -47,13 +46,10 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
 
     // Fields
     private int textViewId;
+    private int selectedValue;
     private String initValue, itemTitle;
     private boolean isCurrency;
     private boolean isPlus = true;
-
-    static {
-        df = BaseActivity.getDecimalFormatInstance();
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,6 +63,9 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
             initValue = getArguments().getString("initValue");
             log.i("Dialog: %s, %s, %s", itemTitle, textViewId, initValue);
         }
+
+        df = BaseActivity.getDecimalFormatInstance();
+        selectedValue = 0;
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -137,12 +136,10 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         tvValue.setText(initValue);
 
         // Set texts and values of the buttons on the pad in InputBtnPadView.
-        //btnPad.initPad(getArguments().getInt("viewId"));
-
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
                 .setPositiveButton("confirm", (dialog, which) ->
-                    viewModel.setSelectedValue(textViewId, tvValue.getText().toString()))
+                    viewModel.setSelectedValue(textViewId, selectedValue))
                 .setNegativeButton("cancel", (dialog, which) -> {});
 
 
@@ -153,11 +150,11 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
     @Override
     public void onClick(View v) {
 
-        int value = 0;
+        //selectedValue = 0;
         int number = 0;
 
         try {
-            value = df.parse(tvValue.getText().toString()).intValue();
+            selectedValue = df.parse(tvValue.getText().toString()).intValue();
         } catch (ParseException e) {
             log.e("ParseException: %s", e.getMessage());
         }
@@ -187,8 +184,8 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 break;
         }
 
-        value = (isPlus)? value + number : value - number;
-        tvValue.setText(df.format(value));
+        selectedValue = (isPlus)? selectedValue + number : selectedValue - number;
+        tvValue.setText(df.format(selectedValue));
 
     }
 
