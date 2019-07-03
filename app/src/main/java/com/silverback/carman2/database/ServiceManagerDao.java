@@ -27,6 +27,16 @@ public abstract class ServiceManagerDao {
     public List<StatData> loadServiceExpense(long start, long end);
     */
 
+    @Query("SELECT * FROM ServiceManagerEntity WHERE " +
+            "item1_name = :itemName OR " +
+            "item2_name = :itemName OR " +
+            "item3_name = :itemName OR " +
+            "item4_name = :itemName OR " +
+            "item5_name = :itemName " +
+            "ORDER BY service_id DESC LIMIT 1")
+
+    public abstract LiveData<List<ServiceItemInfo>> loadServiceItemInfo(String itemName);
+
     @Insert(onConflict = IGNORE)
     abstract long insertParent(BasicManagerEntity basicEntity);
 
@@ -51,6 +61,10 @@ public abstract class ServiceManagerDao {
         public int totalExpense;
         @ColumnInfo(name = "service_name")
         public String svcName;
+    }
+
+    public static class ServiceItemInfo {
+
     }
 
 }

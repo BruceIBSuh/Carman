@@ -35,19 +35,19 @@ public class ServiceManagerEntity {
 
     // Annotate the nested entity of ServiceItemEmbedded, which may be updated adding more items than
     // the current 5 items by setting SharedPreferences.
-    @Embedded(prefix = "1_")
+    @Embedded(prefix = "item1_")
     public ServiceItemEmbedded serviceItem1;
 
-    @Embedded(prefix = "2_")
+    @Embedded(prefix = "item2_")
     public ServiceItemEmbedded serviceItem2;
 
-    @Embedded(prefix = "3_")
+    @Embedded(prefix = "item3_")
     public ServiceItemEmbedded serviceItem3;
 
-    @Embedded(prefix = "4_")
+    @Embedded(prefix = "item4_")
     public ServiceItemEmbedded serviceItem4;
 
-    @Embedded(prefix = "5_")
+    @Embedded(prefix = "item5_")
     public ServiceItemEmbedded serviceItem5;
 
 }
