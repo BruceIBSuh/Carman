@@ -3,6 +3,7 @@ package com.silverback.carman2.adapters;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
@@ -150,9 +151,13 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                 case R.id.tv_value_cost:
                     // Subtract the number at first, no matter the number is zero or not in order
                     // to subtract a ready-input number from the total cost.
-                    tvItemCost.setText("0");
-                    mListener.subtractCost(arrItemCost[getAdapterPosition()]);
+                    if(!TextUtils.equals(tvItemCost.getText(), "0")) {
+                        tvItemCost.setText("0");
+                        mListener.subtractCost(arrItemCost[getAdapterPosition()]);
+                    }
+
                     mListener.inputItemCost(title, tvItemCost, getAdapterPosition());
+
                     break;
 
                 case R.id.tv_item_info:
