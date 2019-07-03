@@ -11,6 +11,6 @@ public interface BasicManagerDao {
 
     // Retrieve monthly total expense which put gas and service expense in together.
     @Query("SELECT * FROM BasicManagerEntity WHERE date_time BETWEEN :start AND :end")
-    public LiveData<List<BasicManagerEntity>> loadExpenseLiveData(long start, long end);
+    LiveData<List<BasicManagerEntity>> loadExpenseLiveData(long start, long end);
 
 }

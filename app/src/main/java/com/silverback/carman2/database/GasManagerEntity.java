@@ -16,6 +16,9 @@ public class GasManagerEntity {
     @ColumnInfo(name = "gas_id")
     public int _id;
 
+    @ColumnInfo(name = "basic_id")
+    public int basicId;
+
     @ColumnInfo(name = "stn_name")
     public String stnName;
 
@@ -43,6 +46,5 @@ public class GasManagerEntity {
     @ColumnInfo(name = "extra_payment")
     public int extraPayment;
 
-    @ColumnInfo(name = "basic_id")
-    public int basicId;
+
 }

@@ -8,7 +8,7 @@ public class ServiceItemEmbedded {
     public String itemName;
 
     @ColumnInfo(name = "item_price")
-    public int imtePrice;
+    public int itemPrice;
 
     @ColumnInfo(name = "item_memo")
     public String itemMemo;

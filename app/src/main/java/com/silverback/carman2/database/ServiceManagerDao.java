@@ -17,7 +17,7 @@ public abstract class ServiceManagerDao {
     @Query("SELECT * FROM ServiceManagerEntity WHERE service_id = :id")
     public abstract ServiceManagerEntity loadServiceManager(int id);
 
-    @Query("SELECT date_time, mileage, service_name, total_expense FROM ServiceManagerEntity " +
+    @Query("SELECT date_time, mileage, service_name, total_expense  FROM ServiceManagerEntity " +
             "INNER JOIN BasicManagerEntity ON ServiceManagerEntity.basic_id = BasicManagerEntity._id " +
             "ORDER BY service_id DESC LIMIT 5")
     public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
@@ -34,7 +34,7 @@ public abstract class ServiceManagerDao {
     abstract long insert(ServiceManagerEntity svcEntity);
 
     @Transaction
-    public long insertBoth(BasicManagerEntity basicEntity, ServiceManagerEntity svcEntity) {
+    public int insertBoth(BasicManagerEntity basicEntity, ServiceManagerEntity svcEntity) {
         long basicId = insertParent(basicEntity);
         svcEntity.basicId = (int)basicId;
         long svcId = insert(svcEntity);

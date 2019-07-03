@@ -45,8 +45,7 @@ public abstract class GasManagerDao {
 
     @Transaction
     public int insertBoth(BasicManagerEntity basicEntity, GasManagerEntity gasEntity) {
-        long basicId = insertParent(basicEntity);
-        gasEntity.basicId = (int)basicId;
+        gasEntity.basicId = (int)insertParent(basicEntity);
         long gasId = insert(gasEntity);
         return (int)gasId;
     }

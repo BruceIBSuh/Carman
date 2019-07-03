@@ -49,8 +49,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
     private int selectedValue;
     private String initValue, itemTitle;
     private boolean isCurrency;
-    private boolean isPlus = true;
-
+    private boolean isPlus;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +65,7 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
 
         df = BaseActivity.getDecimalFormatInstance();
         selectedValue = 0;
+        isPlus = true;
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -150,7 +150,6 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
     @Override
     public void onClick(View v) {
 
-        //selectedValue = 0;
         int number = 0;
 
         try {
@@ -160,7 +159,6 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
         }
 
         switch(v.getId()) {
-
             case R.id.btn_sign:
                 isPlus = !isPlus;
                 String sign = (isPlus)? "+" : "-";
@@ -184,7 +182,14 @@ public class InputPadFragment extends DialogFragment implements View.OnClickList
                 break;
         }
 
-        selectedValue = (isPlus)? selectedValue + number : selectedValue - number;
+        // Check if the sign is set to plus or minus and adds or substract a number unless the number
+        // is under zero, in which the number reverts to zero and the sign is set to plus.
+        if((selectedValue = (isPlus)? selectedValue + number : selectedValue - number) < 0) {
+            selectedValue = 0;
+            isPlus = !isPlus;
+            btnSign.setText((isPlus)? "+" : "-");
+        }
+
         tvValue.setText(df.format(selectedValue));
 
     }

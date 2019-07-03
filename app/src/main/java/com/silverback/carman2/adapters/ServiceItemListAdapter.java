@@ -36,18 +36,18 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
 
     // Objects
-    private Context context;
-    private Fragment serviceFragment;
-    private ServiceCheckListModel checkListModel;
+   // private ServiceCheckListModel checkListModel;
     private Observer<SparseBooleanArray> chkboxObserver;
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
 
-    private boolean[] arrCheckedState;
-    private int[] arrItemCost;
-    private String[] arrItemMemo;
-    private String[] arrItems;
+    public boolean[] arrCheckedState;
+    public int[] arrItemCost;
+    public String[] arrItemMemo;
+    public String[] arrItems;
 
+    // Listener to communicate b/w the parent Fragment and this RecyclerView.Adapter
+    // to invoke
     public interface OnParentFragmentListener {
         void inputItemCost(String title, TextView targetView, int position);
         void inputItemMemo(String title, TextView targetView, int position);
@@ -55,14 +55,14 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     }
 
     // Constructor
-    public ServiceItemListAdapter(Fragment fm, ServiceCheckListModel model, String[] items) {
+    public ServiceItemListAdapter(
+            ServiceCheckListModel model, String[] items, OnParentFragmentListener listener) {
 
         super();
 
-        this.context = fm.getContext();
         this.arrItems = items;
-        checkListModel = model;
-        mListener = (OnParentFragmentListener)fm;
+        //checkListModel = model;
+        mListener = listener;
 
         df = BaseActivity.getDecimalFormatInstance();
 
@@ -141,8 +141,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             tvItemMemo.setOnClickListener(this);
             cbServiceItem.setOnClickListener(this);
             cbServiceItem.setOnCheckedChangeListener(this);
-
-
         }
 
         @Override
@@ -150,6 +148,10 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             final String title = tvItemName.getText().toString();
             switch(v.getId()) {
                 case R.id.tv_value_cost:
+                    // Subtract the number at first, no matter the number is zero or not in order
+                    // to subtract a ready-input number from the total cost.
+                    tvItemCost.setText("0");
+                    mListener.subtractCost(arrItemCost[getAdapterPosition()]);
                     mListener.inputItemCost(title, tvItemCost, getAdapterPosition());
                     break;
 
@@ -212,7 +214,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             int convStartValue = (int)TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP, startValue, target.getResources().getDisplayMetrics());
 
-            ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue).setDuration(250);
+            ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue).setDuration(500);
             animSlide.addUpdateListener(valueAnimator -> {
                 target.getLayoutParams().height = (Integer)valueAnimator.getAnimatedValue();
                 target.requestLayout();
