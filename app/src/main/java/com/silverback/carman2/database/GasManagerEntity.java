@@ -14,7 +14,7 @@ public class GasManagerEntity {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "gas_id")
-    public int _id;
+    public int gasId;
 
     @ColumnInfo(name = "basic_id")
     public int basicId;

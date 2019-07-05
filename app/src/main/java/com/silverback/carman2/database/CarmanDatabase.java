@@ -11,6 +11,7 @@ import androidx.room.RoomDatabase;
         BasicManagerEntity.class,
         GasManagerEntity.class,
         ServiceManagerEntity.class,
+        ServiceItemEntity.class,
         FavoriteProviderEntity.class},
         version = 1, exportSchema = false)
 

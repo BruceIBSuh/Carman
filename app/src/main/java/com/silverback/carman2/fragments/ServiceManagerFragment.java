@@ -21,7 +21,8 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ServiceItemListAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.ServiceItemEmbedded;
+import com.silverback.carman2.database.ServiceItemEntity;
+import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -33,11 +34,13 @@ import com.silverback.carman2.views.ServiceItemRecyclerView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -58,10 +61,6 @@ public class ServiceManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
-
-    private ServiceCheckListModel checkListModel;
-    private SparseBooleanArray sbArrCheckbox;
-    private SparseArray sArrItemCost, sArrItemMemo;
 
     private InputPadFragment numPad;
     private ServiceItemMemoFragment memoPad;
@@ -94,18 +93,13 @@ public class ServiceManagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        arrServiceItem = getResources().getStringArray(R.array.service_item_list);
 
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-
         // Instantiate ViewModels.
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        checkListModel = ViewModelProviders.of(getActivity()).get(ServiceCheckListModel.class);
-
-        sbArrCheckbox = new SparseBooleanArray();
-        sArrItemCost = new SparseArray();
-        sArrItemMemo = new SparseArray();
 
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
@@ -113,10 +107,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         numPad = new InputPadFragment();
         memoPad = new ServiceItemMemoFragment();
-
-        arrServiceItem = getResources().getStringArray(R.array.service_item_list);
-
-
     }
 
     @Override
@@ -149,9 +139,8 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         //serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(checkListModel, arrServiceItem, this);
+        mAdapter = new ServiceItemListAdapter(arrServiceItem, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
-
 
         /*
          * ViewModel to share data b/w Fragments(this and InputPadFragment)
@@ -159,13 +148,15 @@ public class ServiceManagerFragment extends Fragment implements
          * @param: getSelectedMemo(): SparseArray<String>
          */
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
+
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
 
             switch(data.keyAt(0)) {
                 case R.id.tv_mileage:
-                    targetView = localView.findViewById(viewId);
-                    targetView.setText(df.format(value));
+                    //targetView = localView.findViewById(viewId);
+                    //targetView.setText(df.format(value));
+                    tvMileage.setText(df.format(value));
                     break;
 
                 case R.id.tv_value_cost:
@@ -176,9 +167,19 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
+        // Communicate b/w RecyclerView.ViewHolder and item memo in ServiceItemMemoFragment
         fragmentSharedModel.getSelectedMenu().observe(this, data ->
                 mAdapter.notifyItemChanged(itemPos, data));
 
+        mDB.serviceManagerModel().loadServicedItemData(arrServiceItem).observe(this, data -> {
+            if(data != null) {
+                for(int i = 0; i < data.size(); i++) {
+                    int position = Arrays.asList(arrServiceItem).indexOf(data.get(i).itemName);
+                    mAdapter.notifyItemChanged(position, data.get(i));
+                    log.i("Serviced Data mileage: %s", data.get(i).mileage);
+                }
+            }
+        });
 
         // Inflate the layout for this fragment
         return localView;
@@ -279,47 +280,45 @@ public class ServiceManagerFragment extends Fragment implements
 
         String dateFormat = getString(R.string.date_format_1);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDate.getText().toString());
-
-        BasicManagerEntity basicEntity = new BasicManagerEntity();
-        ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
+        int mileage;
 
         try {
-            basicEntity.mileage = df.parse(tvMileage.getText().toString()).intValue();
+            mileage = df.parse(tvMileage.getText().toString()).intValue();
         } catch(ParseException e) {
             log.e("ParseException: %s", e.getMessage());
             return false;
         }
 
+        BasicManagerEntity basicEntity = new BasicManagerEntity();
+        ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
+        ServiceItemEntity svcItemEntity = new ServiceItemEntity();
+        List<ServiceItemEntity> itemEntityList = new ArrayList<>();
+
+
         basicEntity.dateTime = milliseconds;
+        basicEntity.mileage = mileage;
         basicEntity.category = 2;
+        basicEntity.mileage =
         basicEntity.totalExpense = totalServiceExpense;
 
         serviceEntity.serviceCenter = etStnName.getText().toString();
-        //serviceEntity.serviceAddrs = ?;
-        //serviceEntity.basicId = basicEntity._id;
+        serviceEntity.serviceAddrs = "seoul, korea";
 
-        // Retrieve the values(name, cost, item info) of checked items.
-        List<ServiceItemEmbedded> embeddedItem = new ArrayList<>();
-        embeddedItem.add(serviceEntity.serviceItem1 = new ServiceItemEmbedded());
-        embeddedItem.add(serviceEntity.serviceItem2 = new ServiceItemEmbedded());
-        embeddedItem.add(serviceEntity.serviceItem3 = new ServiceItemEmbedded());
-        embeddedItem.add(serviceEntity.serviceItem4 = new ServiceItemEmbedded());
-        embeddedItem.add(serviceEntity.serviceItem5 = new ServiceItemEmbedded());
-
-        int itemCount = 0;
         for(int i = 0; i < mAdapter.arrCheckedState.length; i++) {
+
             if(mAdapter.arrCheckedState[i]) {
-                log.i("ServiceEntityEmbedded: %s %s", itemCount, embeddedItem.get(itemCount));
-                embeddedItem.get(itemCount).itemName = mAdapter.arrItems[i];
-                embeddedItem.get(itemCount).itemPrice = mAdapter.arrItemCost[i];
-                embeddedItem.get(itemCount).itemMemo = mAdapter.arrItemMemo[i];
-                itemCount++;
+                svcItemEntity.itemName = mAdapter.arrItems[i];
+                svcItemEntity.itemPrice = mAdapter.arrItemCost[i];
+                svcItemEntity.itemMemo = mAdapter.arrItemMemo[i];
             }
+
+            itemEntityList.add(svcItemEntity);
         }
 
         // Insert data into both BasicManagerEntity and ServiceManagerEntity at the same time
         // using @Transaction in ServiceManagerDao.
-        int rowId = mDB.serviceManagerModel().insertBoth(basicEntity, serviceEntity);
+        int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
+
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();

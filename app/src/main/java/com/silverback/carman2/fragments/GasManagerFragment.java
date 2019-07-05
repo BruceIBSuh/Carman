@@ -341,7 +341,7 @@ public class GasManagerFragment extends Fragment implements
         gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;
         gasEntity.extraExpense = etExtraExpense.getText().toString();
-        //gasEntity.basicId = basicEntity._id;
+        //gasEntity.basicId = basicEntity.serviceId;
 
         try {
             basicEntity.mileage = df.parse(tvOdometer.getText().toString()).intValue();

@@ -14,8 +14,6 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
 
-import static androidx.room.OnConflictStrategy.IGNORE;
-
 @Dao
 public abstract class GasManagerDao {
 

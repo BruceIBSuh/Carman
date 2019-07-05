@@ -25,6 +25,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ServiceCheckListModel;
@@ -36,9 +38,9 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
 
+
+
     // Objects
-   // private ServiceCheckListModel checkListModel;
-    private Observer<SparseBooleanArray> chkboxObserver;
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
 
@@ -46,6 +48,9 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     public int[] arrItemCost;
     public String[] arrItemMemo;
     public String[] arrItems;
+
+    // Fields
+    private String format;
 
     // Listener to communicate b/w the parent Fragment and this RecyclerView.Adapter
     // to invoke
@@ -56,13 +61,11 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     }
 
     // Constructor
-    public ServiceItemListAdapter(
-            ServiceCheckListModel model, String[] items, OnParentFragmentListener listener) {
+    public ServiceItemListAdapter(String[] items, OnParentFragmentListener listener) {
 
         super();
 
         this.arrItems = items;
-        //checkListModel = model;
         mListener = listener;
 
         df = BaseActivity.getDecimalFormatInstance();
@@ -79,6 +82,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_card_serviceitem, parent, false);
 
+        format = cardView.getContext().getResources().getString(R.string.date_format_1);
+
         return new ServiceItemViewHolder(cardView);
     }
 
@@ -87,17 +92,29 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int pos, @NonNull List<Object> payloads){
+
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, pos, payloads);
+
         } else {
+
             if(payloads.get(0) instanceof SparseIntArray) {
                 SparseIntArray data = (SparseIntArray)payloads.get(0);
                 holder.tvItemCost.setText(df.format(data.valueAt(0)));
                 arrItemCost[pos] = data.valueAt(0);
+
             } else if(payloads.get(0) instanceof SparseArray) {
                 SparseArray<String> data = (SparseArray)payloads.get(0);
                 holder.tvItemMemo.setText(data.valueAt(0));
                 arrItemMemo[pos] = data.valueAt(0);
+
+            } else if(payloads.get(0) instanceof ServiceManagerDao.ServicedItemData) {
+                ServiceManagerDao.ServicedItemData data = (ServiceManagerDao.ServicedItemData)payloads.get(0);
+                String date = BaseActivity.formatMilliseconds(format, data.dateTime);
+                String mileage = df.format(data.mileage);
+
+                holder.tvLastService.setText(String.format("%s%s", date, mileage));
+
             }
 
         }
@@ -116,7 +133,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
 
 
-    /**
+    /*
      * ViewModel
      */
     class ServiceItemViewHolder extends RecyclerView.ViewHolder implements
@@ -125,6 +142,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         // UIs
         ConstraintLayout layout;
         TextView tvItemName;
+        TextView tvLastService;
         TextView tvItemCost;
         TextView tvItemMemo;
         CheckBox cbServiceItem;
@@ -134,6 +152,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
             layout = view.findViewById(R.id.constraint_stmts);
             tvItemName = view.findViewById(R.id.tv_item_name);
+            tvLastService = view.findViewById(R.id.tv_last_service);
             tvItemCost = view.findViewById(R.id.tv_value_cost);
             tvItemMemo = view.findViewById(R.id.tv_item_info);
             cbServiceItem = view.findViewById(R.id.chkbox);
@@ -152,7 +171,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                     // Subtract the number at first, no matter the number is zero or not in order
                     // to subtract a ready-input number from the total cost.
                     if(!TextUtils.equals(tvItemCost.getText(), "0")) {
-                        tvItemCost.setText("0");
+                        //tvItemCost.setText("0");
                         mListener.subtractCost(arrItemCost[getAdapterPosition()]);
                     }
 
@@ -208,7 +227,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                 tvItemCost.setText(df.format(arrItemCost[pos]));
                 tvItemMemo.setText(arrItemMemo[pos]);
             }
-
         }
 
         void animSlideUpAndDown(View target, int startValue, int endValue) {
