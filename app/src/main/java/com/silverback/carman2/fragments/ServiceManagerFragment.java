@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.SparseArray;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,20 +20,18 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ServiceItemListAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.ServiceItemEntity;
 import com.silverback.carman2.database.ServiceManagerDao;
+import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.models.ServiceCheckListModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.views.ServiceItemRecyclerView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import java.text.DecimalFormat;
@@ -77,6 +74,7 @@ public class ServiceManagerFragment extends Fragment implements
     private ImageButton btnFavorite;
 
     // Fields
+    private SparseArray<ServiceManagerDao.ServicedItemData> servicedItemArray;
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private int itemPos;
     private int totalServiceExpense;
@@ -107,6 +105,18 @@ public class ServiceManagerFragment extends Fragment implements
 
         numPad = new InputPadFragment();
         memoPad = new ServiceItemMemoFragment();
+        servicedItemArray = new SparseArray<>();
+
+        // Query the history of service for each item using ServiceManagerDao with itemName
+        // as key
+        for(String name : arrServiceItem) {
+            ServiceManagerDao.ServicedItemData data = mDB.serviceManagerModel().loadServicedItem(name);
+            if(data != null) {
+                int pos = Arrays.asList(arrServiceItem).indexOf(data.itemName);
+                log.i("Serviced Item: %s, %s, %s", pos, data.itemName, data.mileage);
+                servicedItemArray.put(pos, data);
+            }
+        }
     }
 
     @Override
@@ -138,9 +148,20 @@ public class ServiceManagerFragment extends Fragment implements
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
-        //serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(arrServiceItem, this);
+        serviceItemRecyclerView.setHasFixedSize(true);
+        mAdapter = new ServiceItemListAdapter(arrServiceItem, servicedItemArray, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
+
+        // LiveData Return value: List<ServicedItemData>
+        /*
+        mDB.serviceManagerModel().loadServicedItemData(arrServiceItem).observe(this, data -> {
+            mAdapter = new ServiceItemListAdapter(arrServiceItem, data, this);
+            serviceItemRecyclerView.setAdapter(mAdapter);
+        });
+        */
+
+
+
 
         /*
          * ViewModel to share data b/w Fragments(this and InputPadFragment)
@@ -171,15 +192,7 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel.getSelectedMenu().observe(this, data ->
                 mAdapter.notifyItemChanged(itemPos, data));
 
-        mDB.serviceManagerModel().loadServicedItemData(arrServiceItem).observe(this, data -> {
-            if(data != null) {
-                for(int i = 0; i < data.size(); i++) {
-                    int position = Arrays.asList(arrServiceItem).indexOf(data.get(i).itemName);
-                    mAdapter.notifyItemChanged(position, data.get(i));
-                    log.i("Serviced Data mileage: %s", data.get(i).mileage);
-                }
-            }
-        });
+
 
         // Inflate the layout for this fragment
         return localView;
@@ -291,28 +304,32 @@ public class ServiceManagerFragment extends Fragment implements
 
         BasicManagerEntity basicEntity = new BasicManagerEntity();
         ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
-        ServiceItemEntity svcItemEntity = new ServiceItemEntity();
-        List<ServiceItemEntity> itemEntityList = new ArrayList<>();
-
+        ServicedItemEntity servicedItem;
+        List<ServicedItemEntity> itemEntityList = new ArrayList<>();
 
         basicEntity.dateTime = milliseconds;
         basicEntity.mileage = mileage;
         basicEntity.category = 2;
-        basicEntity.mileage =
         basicEntity.totalExpense = totalServiceExpense;
 
+        //serviceEntity.basicId = basicEntity._id;
         serviceEntity.serviceCenter = etStnName.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea";
 
         for(int i = 0; i < mAdapter.arrCheckedState.length; i++) {
 
             if(mAdapter.arrCheckedState[i]) {
-                svcItemEntity.itemName = mAdapter.arrItems[i];
-                svcItemEntity.itemPrice = mAdapter.arrItemCost[i];
-                svcItemEntity.itemMemo = mAdapter.arrItemMemo[i];
+                servicedItem = new ServicedItemEntity();
+                servicedItem.itemName = mAdapter.arrItems[i];
+                servicedItem.itemPrice = mAdapter.arrItemCost[i];
+                servicedItem.itemMemo = mAdapter.arrItemMemo[i];
+                log.i("Serviced Item: %s", servicedItem.itemName);
+                itemEntityList.add(servicedItem);
             }
+        }
 
-            itemEntityList.add(svcItemEntity);
+        for(ServicedItemEntity obj : itemEntityList) {
+            log.i("ServicedItemEntity: %s", obj.itemName);
         }
 
         // Insert data into both BasicManagerEntity and ServiceManagerEntity at the same time

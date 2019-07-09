@@ -15,7 +15,7 @@ import java.util.List;
         entity = ServiceManagerEntity.class, parentColumns = "service_id", childColumns = "svc_id"),
         indices = @Index("svc_id"))
 
-public class ServiceItemEntity {
+public class ServicedItemEntity {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "item_id")
@@ -32,6 +32,5 @@ public class ServiceItemEntity {
 
     @ColumnInfo(name = "item_memo")
     public String itemMemo;
-
 
 }

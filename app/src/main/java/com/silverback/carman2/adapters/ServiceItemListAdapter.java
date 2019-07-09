@@ -32,6 +32,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ServiceCheckListModel;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.List;
 
 public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemListAdapter.ServiceItemViewHolder> {
@@ -44,10 +45,12 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
 
+    private SparseArray<ServiceManagerDao.ServicedItemData> servicedItems;
     public boolean[] arrCheckedState;
     public int[] arrItemCost;
     public String[] arrItemMemo;
     public String[] arrItems;
+
 
     // Fields
     private String format;
@@ -61,11 +64,15 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     }
 
     // Constructor
-    public ServiceItemListAdapter(String[] items, OnParentFragmentListener listener) {
+    public ServiceItemListAdapter(
+            String[] items,
+            SparseArray<ServiceManagerDao.ServicedItemData> servicedItems,
+            OnParentFragmentListener listener) {
 
         super();
 
         this.arrItems = items;
+        this.servicedItems = servicedItems;
         mListener = listener;
 
         df = BaseActivity.getDecimalFormatInstance();
@@ -73,7 +80,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         arrCheckedState = new boolean[arrItems.length];
         arrItemCost = new int[arrItems.length];
         arrItemMemo = new String[arrItems.length];
-
     }
 
     @NonNull
@@ -86,6 +92,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
         return new ServiceItemViewHolder(cardView);
     }
+
+
 
 
     // Invoked by notifyItemChanged of RecyclerView.Adapter with payloads as param.
@@ -108,13 +116,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                 holder.tvItemMemo.setText(data.valueAt(0));
                 arrItemMemo[pos] = data.valueAt(0);
 
-            } else if(payloads.get(0) instanceof ServiceManagerDao.ServicedItemData) {
-                ServiceManagerDao.ServicedItemData data = (ServiceManagerDao.ServicedItemData)payloads.get(0);
-                String date = BaseActivity.formatMilliseconds(format, data.dateTime);
-                String mileage = df.format(data.mileage);
-
-                holder.tvLastService.setText(String.format("%s%s", date, mileage));
-
             }
 
         }
@@ -130,8 +131,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     public int getItemCount() {
         return arrItems.length;
     }
-
-
 
     /*
      * ViewModel
@@ -222,6 +221,12 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         void bindItemToHolder(int pos) {
             tvItemName.setText(arrItems[pos]);
             cbServiceItem.setChecked(arrCheckedState[pos]);
+
+            if(servicedItems.get(pos) != null) {
+                String date = BaseActivity.formatMilliseconds(format, servicedItems.get(pos).dateTime);
+                String mileage = df.format(servicedItems.get(pos).mileage);
+                tvLastService.setText(String.format("%s, %s%s", date, mileage, "km"));
+            }
 
             if (arrCheckedState[pos]) {
                 tvItemCost.setText(df.format(arrItemCost[pos]));
