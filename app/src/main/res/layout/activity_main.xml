@@ -13,7 +13,7 @@
         android:layout_height="match_parent" >
 
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+            android:id="@+id/toolbar_main"
             android:layout_width="0dp"
             android:layout_height="?attr/actionBarSize"
             android:background="@android:color/holo_blue_dark"
@@ -33,21 +33,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar" />
-
-        <!--
-        <android.support.v4.view.ViewPager
-            android:id="@+id/viewPager"
-            android:visibility="gone"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:padding="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar" />
-        !-->
-
+            app:layout_constraintTop_toBottomOf="@+id/toolbar_main" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

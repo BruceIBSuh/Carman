@@ -67,16 +67,25 @@
     <PreferenceCategory
         app:title="@string/pref_category_favorites"
         app:key="pref_favorites" >
-
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingFavoriteFragment"
             app:title="@string/pref_favorite_station"
             app:key="pref_favorite_list" />
-
         <Preference
             app:title="@string/pref_favorite_carcenter"
             app:key="pref_favorite_carcenter" />
+    </PreferenceCategory>
 
+    <PreferenceCategory
+        app:title="@string/pref_category_service"
+        app:key="pref_service" >
+        <Preference
+            app:title="@string/pref_service_period"
+            app:key="pref_service_period"/>
+        <Preference
+            app:fragment="com.silverback.carman2.fragments.SettingServiceListFragment"
+            app:title="@string/pref_service_chklist"
+            app:key="pref_service_chklist" />
     </PreferenceCategory>
 
 
@@ -85,8 +94,11 @@
         app:key="pref_app_setting" >
 
         <SwitchPreferenceCompat
-            app:key="notification"
-            app:title="알림 정보 수신" />
+            app:title="@string/pref_app_notification"
+            app:key="notification" />
+        <Preference
+            app:title="@string/pref_app_coverimage"
+            app:key="pref_app_coverimage" />
 
     </PreferenceCategory>
 

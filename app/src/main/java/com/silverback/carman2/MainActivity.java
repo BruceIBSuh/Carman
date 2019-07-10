@@ -55,7 +55,7 @@ public class MainActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar_main);
         frameLayout = findViewById(R.id.frameLayout);
 
         // Sets the toolbar used as ActionBar
@@ -101,7 +101,7 @@ public class MainActivity extends BaseActivity implements
         if(mapInfoTask != null) mapInfoTask = null;
     }
 
-    /**
+    /*
      * The following 2 overriding methods are invoked by Toolbar working as Appbar or ActionBar
      */
     @Override

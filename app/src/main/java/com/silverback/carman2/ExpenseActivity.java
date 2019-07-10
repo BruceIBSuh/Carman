@@ -68,7 +68,7 @@ public class ExpenseActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
 
         // Set Toolbar as Actionbar;
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar_main);
         tabLayout = findViewById(R.id.tabLayout);
         FrameLayout frameFragments = findViewById(R.id.frame_expense_fragment);
         topFrame = findViewById(R.id.frame_top);

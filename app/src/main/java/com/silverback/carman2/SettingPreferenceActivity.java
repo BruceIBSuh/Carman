@@ -3,6 +3,7 @@ package com.silverback.carman2;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
@@ -57,7 +58,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
-        // of the vehicle name.
+        // of the vehicle name respectively.
         List<String> district = convJSONArrayToList();
         if(district == null) distCode = "0101";
         else distCode = district.get(2);
@@ -90,6 +91,26 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(priceTask != null) priceTask = null;
     }
 
+    // The following methods are invoked by Toolbar working as Action Bar or Appbar.
+    // When SettingServiceListFragment is launched,
+    /*
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_setting, menu);
+        return true;
+    }
+    */
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        log.i("onCreateOptionsMenu");
+        getMenuInflater().inflate(R.menu.menu_setting, menu);
+        menu.findItem(R.id.menu_add).setVisible(false);
+        menu.findItem(R.id.menu_edit).setVisible(false);
+        getMenuInflater().inflate(R.menu.menu_setting, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
@@ -116,11 +137,13 @@ public class SettingPreferenceActivity extends BaseActivity implements
         fragment.setTargetFragment(caller, 0);
 
         getSupportActionBar().setTitle(pref.getTitle());
+        log.i("PreferenceFragmentCompat: %s", pref.getKey());
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)
                 .addToBackStack(null)
                 .commit();
+
         return true;
     }
 

@@ -3,6 +3,8 @@ package com.silverback.carman2.fragments;
 
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.EditTextPreference;
@@ -37,6 +39,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
         setPreferencesFromResource(R.xml.preferences, rootKey);
+        // Indicates that this fragment may initialize the contents of the Activity's standard options menu.
+        setHasOptionsMenu(true);
 
         df = BaseActivity.getDecimalFormatInstance();
 
@@ -72,6 +76,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
+
+        Preference svcItemPreferernce = findPreference("pref_service_chklist");
 
 
     }
