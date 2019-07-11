@@ -31,6 +31,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceActivity.class);
 
     // Objects
+    private MenuItem menuEdit, menuAdd;
     private PreferenceFragmentCompat caller;
     private SettingPreferenceFragment settingFragment;
     private PriceTask priceTask;
@@ -91,26 +92,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(priceTask != null) priceTask = null;
     }
 
-    // The following methods are invoked by Toolbar working as Action Bar or Appbar.
-    // When SettingServiceListFragment is launched,
-    /*
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_setting, menu);
-        return true;
-    }
-    */
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        log.i("onCreateOptionsMenu");
-        getMenuInflater().inflate(R.menu.menu_setting, menu);
-        menu.findItem(R.id.menu_add).setVisible(false);
-        menu.findItem(R.id.menu_edit).setVisible(false);
-        getMenuInflater().inflate(R.menu.menu_setting, menu);
-
-        return super.onCreateOptionsMenu(menu);
-    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
@@ -129,15 +111,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        log.d("onPreferenceStartFragment: title - %s", pref.getTitle());
+
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
+
         fragment.setArguments(args);
         fragment.setTargetFragment(caller, 0);
-
         getSupportActionBar().setTitle(pref.getTitle());
-        log.i("PreferenceFragmentCompat: %s", pref.getKey());
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)

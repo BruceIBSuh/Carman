@@ -77,9 +77,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
-        Preference svcItemPreferernce = findPreference("pref_service_chklist");
-
-
     }
 
     @Override
