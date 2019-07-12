@@ -54,7 +54,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
         // UIs
-        tvName = findViewById(R.id.tv_item_name);
+        tvName = findViewById(R.id.tv_setting_item);
         tvAddrs = findViewById(R.id.tv_address);
         tvPrice = findViewById(R.id.tv_price_info);
         tvCarwash = findViewById(R.id.tv_carwash);

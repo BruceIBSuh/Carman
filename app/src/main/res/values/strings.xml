@@ -190,6 +190,7 @@
     <string name="unit_meter">m</string>
     <string name="unit_liter">리터</string>
     <string name="unit_won">원</string>
+    <string name="unit_month">개월</string>
     <string name="liter_price">원/리터</string>
     <string name="value_zero">0</string>
 

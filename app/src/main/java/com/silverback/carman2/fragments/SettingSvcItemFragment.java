@@ -16,42 +16,37 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.SettingChklistAdapter;
+import com.silverback.carman2.adapters.SettingServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingChklistFragment extends Fragment {
+public class SettingSvcItemFragment extends Fragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingChklistFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemFragment.class);
 
     // Objects
-    private MenuItem menuItem;
-    private RecyclerView.Adapter chklistAdapter;
-    private RecyclerView.LayoutManager layoutManager;
+    private SettingServiceItemAdapter mAdapter;
 
-    public SettingChklistFragment() {
+
+    // Fields
+    private boolean bEditMode = false;
+
+    public SettingSvcItemFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Indicate the fragment has the option menu, invoking onCreateOptionsMenu()
         setHasOptionsMenu(true);
 
-
         String[] arrServiceItems = getResources().getStringArray(R.array.service_item_list);
-        for(String item : arrServiceItems) {
-            log.i("Service Item: %s", item);
-        }
-
-        layoutManager = new LinearLayoutManager(getActivity());
-        chklistAdapter = new SettingChklistAdapter(arrServiceItems);
-
-
+        mAdapter = new SettingServiceItemAdapter(arrServiceItems);
     }
 
 
@@ -59,23 +54,40 @@ public class SettingChklistFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        log.i("SettingChklistFragment");
-
         View localView = inflater.inflate(R.layout.fragment_setting_chklist, container, false);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_chklist);
 
         //recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(chklistAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        recyclerView.setAdapter(mAdapter);
+
 
         // Inflate the layout for this fragment
         return localView;
     }
 
+    // Create the Toolbar option menu when the fragment is instantiated.
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_options_setting, menu);
         super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+        switch(item.getItemId()) {
+            case R.id.menu_add:
+                return true;
+
+            case R.id.menu_edit:
+                bEditMode = !bEditMode;
+                mAdapter.setEditMode(bEditMode);
+                mAdapter.notifyDataSetChanged();
+                return true;
+        }
+
+        return false;
     }
 
 }

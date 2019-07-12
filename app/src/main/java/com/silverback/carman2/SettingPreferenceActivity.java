@@ -95,10 +95,18 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingPreferenceActivity");
-            onBackPressed();
-            return true;
+        switch(item.getItemId()) {
+            case android.R.id.home:
+                log.i("onOptionsItemSelected in SettingPreferenceActivity");
+                onBackPressed();
+                return true;
+            case R.id.menu_add:
+                log.i("onOptionsItemSelected: menu_add");
+
+                return true;
+            case R.id.menu_edit:
+                break;
+
         }
 
         return super.onOptionsItemSelected(item);

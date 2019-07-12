@@ -2,10 +2,8 @@ package com.silverback.carman2.adapters;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
-import android.content.Context;
 import android.text.TextUtils;
 import android.util.SparseArray;
-import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -19,20 +17,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ServiceCheckListModel;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.List;
 
 public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemListAdapter.ServiceItemViewHolder> {
@@ -150,7 +143,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             super(view);
 
             layout = view.findViewById(R.id.constraint_stmts);
-            tvItemName = view.findViewById(R.id.tv_item_name);
+            tvItemName = view.findViewById(R.id.tv_setting_item);
             tvLastService = view.findViewById(R.id.tv_last_service);
             tvItemCost = view.findViewById(R.id.tv_value_cost);
             tvItemMemo = view.findViewById(R.id.tv_item_info);

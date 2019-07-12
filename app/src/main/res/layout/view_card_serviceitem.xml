@@ -22,7 +22,7 @@
             cardview:layout_dodgeInsetEdges="top">
 
             <TextView
-                android:id="@+id/tv_item_name"
+                android:id="@+id/tv_setting_item"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="3dp"
@@ -39,19 +39,19 @@
                 android:layout_marginEnd="8dp"
                 android:textAlignment="viewEnd"
                 android:textSize="12sp"
-                cardview:layout_constraintBottom_toBottomOf="@+id/tv_item_name"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_setting_item"
                 cardview:layout_constraintEnd_toStartOf="@+id/chkbox"
-                cardview:layout_constraintStart_toEndOf="@+id/tv_item_name"
-                cardview:layout_constraintTop_toTopOf="@+id/tv_item_name" />
+                cardview:layout_constraintStart_toEndOf="@+id/tv_setting_item"
+                cardview:layout_constraintTop_toTopOf="@+id/tv_setting_item" />
 
             <CheckBox
                 android:id="@+id/chkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="3dp"
-                cardview:layout_constraintBottom_toBottomOf="@+id/tv_item_name"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_setting_item"
                 cardview:layout_constraintEnd_toEndOf="parent"
-                cardview:layout_constraintTop_toTopOf="@+id/tv_item_name" />
+                cardview:layout_constraintTop_toTopOf="@+id/tv_setting_item" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
