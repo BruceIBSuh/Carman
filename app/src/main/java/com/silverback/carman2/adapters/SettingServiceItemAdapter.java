@@ -45,7 +45,7 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
         */
 
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.view_setting_modify_items, parent, false);
+                .inflate(R.layout.view_setting_svc_items, parent, false);
 
 
         return new SettingChklistHolder(itemView);
