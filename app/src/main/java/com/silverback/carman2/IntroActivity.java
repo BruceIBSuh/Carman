@@ -13,6 +13,7 @@ import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Arrays;
@@ -103,9 +104,12 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
         if(!distCode.exists()) saveDistCodeTask = ThreadManager.downloadOpinetDistCodeTask(this);
 
+        // Retrieve the default district values of sido, sigun and sigun code, then save them in
+        // SharedPreferences.
         JSONArray jsonArray = new JSONArray(Arrays.asList(
                 getResources().getStringArray(R.array.default_district)));
         mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+
     }
 
     // Invoked by ThreadManager when the average, sido, and sigun oil prices have been retrieved

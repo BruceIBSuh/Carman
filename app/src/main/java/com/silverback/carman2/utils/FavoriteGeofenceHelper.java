@@ -17,7 +17,6 @@ import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.services.GeofenceTransitionService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,8 +105,8 @@ public class FavoriteGeofenceHelper {
         // Reuse the PendingIntent if we have already have it
         if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
 
-        Intent intent = new Intent(context, GeofenceTransitionService.class);
-        mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //Intent intent = new Intent(context, GeofenceTransitionService.class);
+        //mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         log.i("PendingIntent Location Data: %s, %s", geofenceLocation.getLongitude(), geofenceLocation.getLatitude());
         return mGeofencePendingIntent;
         //return PendingIntent.getService(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);

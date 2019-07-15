@@ -15,20 +15,23 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServiceItemAdapter.SettingChklistHolder> {
+import java.util.List;
+
+public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServiceItemAdapter.SettingServiceItemHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemAdapter.class);
 
     // Objects & UIs
-    private String[] serviceItems;
-    private EditText etMileage, etMonth;
+    private List<String> serviceItems;
+    public EditText etMileage, etMonth;
     private ImageButton btnUp, btnDown, btnDel;
 
     // Fields
+    private String mileage, month;
     private boolean isEditMode;
 
-    public SettingServiceItemAdapter(String[] items) {
+    public SettingServiceItemAdapter(List<String> items) {
         log.i("SettingServiceItemAdapter");
         serviceItems = items;
     }
@@ -37,7 +40,7 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
 
     @NonNull
     @Override
-    public SettingChklistHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public SettingServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         log.i("onCreateViewHolder");
         /*
         CardView cardView = (CardView) LayoutInflater.from(parent.getContext())
@@ -48,11 +51,12 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
                 .inflate(R.layout.view_setting_svc_items, parent, false);
 
 
-        return new SettingChklistHolder(itemView);
+
+        return new SettingServiceItemHolder(itemView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull SettingChklistHolder holder, int position) {
+    public void onBindViewHolder(@NonNull SettingServiceItemHolder holder, int position) {
         log.i("onBindViewHolder");
 
         if(isEditMode) {
@@ -63,12 +67,12 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
             holder.setLayout.setVisibility(View.VISIBLE);
         }
 
-        holder.tvItemName.setText(serviceItems[position]);
+        holder.tvItemName.setText(serviceItems.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return serviceItems.length;
+        return serviceItems.size();
     }
 
 
@@ -80,17 +84,20 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
 
 
     // RecyclerView.ViewHolder
-    static class SettingChklistHolder extends RecyclerView.ViewHolder {
+    static class SettingServiceItemHolder extends RecyclerView.ViewHolder {
 
         TextView tvItemName;
+        EditText etMileage, etMonth;
         RelativeLayout setLayout, editLayout;
 
-        SettingChklistHolder(View v) {
+        SettingServiceItemHolder(View v) {
             super(v);
 
             editLayout = v.findViewById(R.id.layout_mode_edit);
             setLayout = v.findViewById(R.id.layout_mode_set);
             tvItemName = v.findViewById(R.id.tv_setting_item);
+            etMileage = v.findViewById(R.id.et_default_mileage);
+            etMonth = v.findViewById(R.id.et_default_month);
 
         }
 

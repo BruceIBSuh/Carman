@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,6 +20,11 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,6 +37,8 @@ public class SettingServiceItemFragment extends Fragment {
     // Objects
     private SettingServiceItemAdapter mAdapter;
     private SettingServiceDlgFragment dlgFragment;
+    private FragmentSharedModel sharedModel;
+    private List<String> svcItemList;
 
 
     // Fields
@@ -46,9 +54,27 @@ public class SettingServiceItemFragment extends Fragment {
         // Indicate the fragment has the option menu, invoking onCreateOptionsMenu()
         setHasOptionsMenu(true);
 
+        // List.add() does not work if List is create by Arrays.asList().
         String[] arrServiceItems = getResources().getStringArray(R.array.service_item_list);
-        mAdapter = new SettingServiceItemAdapter(arrServiceItems);
+        svcItemList = new ArrayList<>();
+        for(String item : arrServiceItems) {
+            svcItemList.add(item);
+        }
+        //svcItemList = Arrays.asList(getResources().getStringArray(R.array.service_item_list));
+        mAdapter = new SettingServiceItemAdapter(svcItemList);
+
         dlgFragment = new SettingServiceDlgFragment();
+
+        sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        sharedModel.getServiceItem().observe(this, data -> {
+            String itemName = data.get(0);
+            String itemKm = data.get(1);
+            String itemMonth = data.get(2);
+
+            svcItemList.add(itemName);
+            mAdapter.notifyDataSetChanged();
+
+        });
     }
 
 
@@ -62,7 +88,6 @@ public class SettingServiceItemFragment extends Fragment {
         //recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mAdapter);
-
 
         // Inflate the layout for this fragment
         return localView;
