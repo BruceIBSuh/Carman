@@ -93,8 +93,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
 
+    /*
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         switch(item.getItemId()) {
             case android.R.id.home:
                 log.i("onOptionsItemSelected in SettingPreferenceActivity");
@@ -111,6 +113,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         return super.onOptionsItemSelected(item);
     }
+    */
 
     // If you do not implement onPreferenceStartFragment(), a fallback implementation is used instead.
     // While this works in most cases, we strongly recommend implementing this method so you can fully

@@ -121,6 +121,9 @@
     <string name="pref_category_service">정비/점검 </string>
     <string name="pref_service_period">정비/점검 주기</string>
     <string name="pref_service_chklist">정비/점검 체크리스트</string>
+    <string name="pref_service_dlg_title">정비/점검 항목 추가</string>
+    <string name="pref_service_dlg_name">항목 이름:</string>
+    <string name="pref_service_dlg_period">점검 주기:</string>
     <string name="pref_category_app_setting">앱 설정</string>
     <string name="pref_app_notification">알림 수신</string>
     <string name="pref_app_coverimage">커버이미지 편집</string>

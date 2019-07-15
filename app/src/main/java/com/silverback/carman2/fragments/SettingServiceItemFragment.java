@@ -23,19 +23,20 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingSvcItemFragment extends Fragment {
+public class SettingServiceItemFragment extends Fragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
 
     // Objects
     private SettingServiceItemAdapter mAdapter;
+    private SettingServiceDlgFragment dlgFragment;
 
 
     // Fields
     private boolean bEditMode = false;
 
-    public SettingSvcItemFragment() {
+    public SettingServiceItemFragment() {
         // Required empty public constructor
     }
 
@@ -47,6 +48,7 @@ public class SettingSvcItemFragment extends Fragment {
 
         String[] arrServiceItems = getResources().getStringArray(R.array.service_item_list);
         mAdapter = new SettingServiceItemAdapter(arrServiceItems);
+        dlgFragment = new SettingServiceDlgFragment();
     }
 
 
@@ -78,6 +80,9 @@ public class SettingSvcItemFragment extends Fragment {
 
         switch(item.getItemId()) {
             case R.id.menu_add:
+                if(getFragmentManager() != null)
+                    dlgFragment.show(getFragmentManager(), null);
+
                 return true;
 
             case R.id.menu_edit:
