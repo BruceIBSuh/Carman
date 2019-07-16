@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -16,13 +17,19 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 
-import java.util.ArrayList;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,11 +42,10 @@ public class SettingServiceItemFragment extends Fragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
 
     // Objects
+    private SharedPreferences mSettings;
     private SettingServiceItemAdapter mAdapter;
     private SettingServiceDlgFragment dlgFragment;
-    private FragmentSharedModel sharedModel;
-    private List<String> svcItemList;
-
+    private JSONArray jsonSvcItemArray;
 
     // Fields
     private boolean bEditMode = false;
@@ -48,32 +54,34 @@ public class SettingServiceItemFragment extends Fragment {
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // Indicate the fragment has the option menu, invoking onCreateOptionsMenu()
         setHasOptionsMenu(true);
-
-        // List.add() does not work if List is create by Arrays.asList().
-        String[] arrServiceItems = getResources().getStringArray(R.array.service_item_list);
-        svcItemList = new ArrayList<>();
-        for(String item : arrServiceItems) {
-            svcItemList.add(item);
-        }
-        //svcItemList = Arrays.asList(getResources().getStringArray(R.array.service_item_list));
-        mAdapter = new SettingServiceItemAdapter(svcItemList);
-
         dlgFragment = new SettingServiceDlgFragment();
 
-        sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        sharedModel.getServiceItem().observe(this, data -> {
-            String itemName = data.get(0);
-            String itemKm = data.get(1);
-            String itemMonth = data.get(2);
+        // List.add() does not work if List is create by Arrays.asList().
+        mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
+        String jsonServiceItem = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
-            svcItemList.add(itemName);
+        try {
+            jsonSvcItemArray = new JSONArray(jsonServiceItem);
+            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray);
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
+
+        // ViewModel to share data b/w SettingServiceItemFragment and SettingServiceDlgFragment.
+        // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
+        // which are passed here using FragmentSharedModel as the type of List<String>
+        FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        sharedModel.getJsonServiceItemObject().observe(this, data -> {
+            jsonSvcItemArray.put(data);
             mAdapter.notifyDataSetChanged();
-
         });
     }
 
@@ -104,6 +112,9 @@ public class SettingServiceItemFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         switch(item.getItemId()) {
+            case android.R.id.home:
+                mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+                return true;
             case R.id.menu_add:
                 if(getFragmentManager() != null)
                     dlgFragment.show(getFragmentManager(), null);

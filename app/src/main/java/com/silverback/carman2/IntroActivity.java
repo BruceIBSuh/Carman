@@ -13,7 +13,6 @@ import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.util.Arrays;
@@ -97,6 +96,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     // Invokes this method only once at launching for the first time in order to have the ImageView
     // size for a cover image
+    @SuppressWarnings("ConstantConditions")
     private void firstInitProcess() {
 
         // Unless the district code has been saved, download again the sigun code list and save it.
@@ -106,9 +106,11 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         // Retrieve the default district values of sido, sigun and sigun code, then save them in
         // SharedPreferences.
-        JSONArray jsonArray = new JSONArray(Arrays.asList(
-                getResources().getStringArray(R.array.default_district)));
+        JSONArray jsonArray = new JSONArray(Arrays.asList(getResources().getStringArray(R.array.default_district)));
+        JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
+
         mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+        mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
     }
 

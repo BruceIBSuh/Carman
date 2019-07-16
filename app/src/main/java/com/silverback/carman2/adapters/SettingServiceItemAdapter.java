@@ -15,6 +15,9 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.List;
 
 public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServiceItemAdapter.SettingServiceItemHolder> {
@@ -23,7 +26,8 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemAdapter.class);
 
     // Objects & UIs
-    private List<String> serviceItems;
+    private List<String> serviceItemsList;
+    private JSONArray jsonServiceItemArray;
     public EditText etMileage, etMonth;
     private ImageButton btnUp, btnDown, btnDel;
 
@@ -31,9 +35,9 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
     private String mileage, month;
     private boolean isEditMode;
 
-    public SettingServiceItemAdapter(List<String> items) {
-        log.i("SettingServiceItemAdapter");
-        serviceItems = items;
+    // Constructor
+    public SettingServiceItemAdapter(JSONArray jsonArray) {
+        jsonServiceItemArray = jsonArray;
     }
 
 
@@ -67,12 +71,18 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
             holder.setLayout.setVisibility(View.VISIBLE);
         }
 
-        holder.tvItemName.setText(serviceItems.get(position));
+        try {
+            holder.tvItemName.setText(jsonServiceItemArray.getJSONObject(position).getString("name"));
+            holder.etMileage.setHint(jsonServiceItemArray.getJSONObject(position).getString("mileage"));
+            holder.etMonth.setHint(jsonServiceItemArray.getJSONObject(position).getString("month"));
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
     }
 
     @Override
     public int getItemCount() {
-        return serviceItems.size();
+        return jsonServiceItemArray.length();
     }
 
 

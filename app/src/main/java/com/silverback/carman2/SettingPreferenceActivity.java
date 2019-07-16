@@ -184,4 +184,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onPriceTaskComplete() {
         //mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
     }
+
+    // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
+    public SharedPreferences getSettings() {
+        return mSettings;
+    }
 }

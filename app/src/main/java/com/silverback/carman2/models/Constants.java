@@ -53,6 +53,7 @@ public class Constants {
     public static final String CoverImageWidth = "com.ibnco.carman.coverimage.width";
     public static final String CoverImageHeight = "com.ibnco.carman.coverimage.height";
     public static final String CODE = "carman_pref_district_code";
+    public static final String SERVICE_ITEMS = "carman_setting_service";
 
     // Notification Channel ID
     public static final String CHANNEL_ID = "com.ibnco.carman";
@@ -69,4 +70,6 @@ public class Constants {
     public static final int GEOCODER_ADDRS_FAIL = -1;
     public static final int GEOCODER_ADDRS_LOCATION_SUCCESS = 1;
     public static final int GEOCODER_ADDRS_NAME_SUCCESS = 2;
+
+
 }

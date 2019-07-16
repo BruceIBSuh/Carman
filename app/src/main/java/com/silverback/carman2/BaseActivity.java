@@ -26,6 +26,7 @@ import com.silverback.carman2.models.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.security.MessageDigest;
@@ -407,5 +408,32 @@ public class BaseActivity extends AppCompatActivity {
 
         return resId;
     }
+
+
+    public static JSONArray getJsonServiceItemArray() {
+        String jsonServiceItem =
+                "[{\"name\":\"엔진오일 및 오일필터\",\"mileage\":\"8000\",\"month\":\"6\"}," +
+                "{\"name\":\"에어클리너\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"에어컨 필터\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"에어컨 가스\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"냉각수\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"얼라인먼트\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"타이어 위치 교환\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"타이어 교체\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"브레이크 패드\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"브레이크 라이닝\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"배터리 교체\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"트랜스미션오일 교체\",\"mileage\":\"5000\",\"month\":\"6\"}," +
+                "{\"name\":\"타이밍벨트 교체\",\"mileage\":\"5000\",\"month\":\"6\"}]";
+
+        try {
+            return  new JSONArray(jsonServiceItem);
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
+        return null;
+    }
+
 
 }

@@ -8,6 +8,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import org.json.JSONObject;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,7 +18,7 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
     private final MutableLiveData<SparseIntArray> selectedValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> selectedMemo = new MutableLiveData<>();
-    private final MutableLiveData<List<String>> serviceItem = new MutableLiveData<>();
+    private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -44,12 +46,12 @@ public class FragmentSharedModel extends ViewModel {
 
     // Communicate b/w SettingServiceItemFragment and SettingServiceDlgFragment to modify the
     // service item list.
-    public void setServiceItem(List<String> itemList) {
-        serviceItem.setValue(itemList);
+    public void setServiceItem(JSONObject jsonObject) {
+        jsonServiceItemObj.setValue(jsonObject);
 
     }
-    public LiveData<List<String>> getServiceItem() {
-        return serviceItem;
+    public LiveData<JSONObject> getJsonServiceItemObject() {
+        return jsonServiceItemObj;
     }
 
 }

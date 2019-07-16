@@ -21,6 +21,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,8 +46,9 @@ public class SettingServiceDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null)
+        if(getActivity() != null) {
             sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        }
     }
 
 
@@ -56,19 +60,24 @@ public class SettingServiceDlgFragment extends DialogFragment {
         View localView = inflater.inflate(R.layout.dialog_setting_service, null);
 
         EditText etItemName = localView.findViewById(R.id.et_item_name);
-        EditText etPeriodKm = localView.findViewById(R.id.et_period_km);
-        EditText etPeriodMonth = localView.findViewById(R.id.et_period_month);
+        EditText etMileage = localView.findViewById(R.id.et_period_km);
+        EditText etMonth = localView.findViewById(R.id.et_period_month);
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
                 .setPositiveButton("confirm", (dialog, which) -> {
-                        String[] arrItem = {
-                                etItemName.getText().toString(),
-                                etPeriodKm.getText().toString(),
-                                etPeriodMonth.getText().toString()};
-                        final List<String> itemInfo = Arrays.asList(arrItem);
-                        sharedModel.setServiceItem(itemInfo);
+                    JSONObject jsonObject = new JSONObject();
+                    try {
+                        jsonObject.put("name", etItemName.getText().toString());
+                        jsonObject.put("mileage", etMileage.getText().toString());
+                        jsonObject.put("month", etMonth.getText().toString());
+                        sharedModel.setServiceItem(jsonObject);
+                    } catch(JSONException e) {
+                        log.e("JSONException: %s", e.getMessage());
+                    }
+
+
                 })
                 .setNegativeButton("cancel", (dialog, which) -> {});
 

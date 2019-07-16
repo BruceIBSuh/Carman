@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="50dp"
-    android:layout_marginBottom="2dp"
+    android:layout_marginBottom="3dp"
     android:padding="5dp"
     android:gravity="center_vertical"
-    android:background="#E8E8E8" >
+    android:background="#FFFFFF">
 
     <TextView
         android:id="@+id/tv_setting_item"
@@ -29,9 +29,10 @@
             android:layout_width="60dp"
             android:layout_height="30dp"
             android:layout_alignParentStart="true"
-            android:padding="3dp"
+            android:padding="5dp"
+            android:gravity="end|center_vertical"
             android:background="@drawable/bg_view_outfocus"
-            android:hint="6000"
+            android:hint="@null"
             android:textSize="@dimen/smallText"
             android:inputType="numberDecimal"
             tools:ignore="AutoFill"/>
@@ -52,9 +53,10 @@
             android:layout_height="30dp"
             android:layout_toEndOf="@id/tv_unit_mileage"
             android:layout_marginStart="16dp"
-            android:padding="3dp"
+            android:padding="5dp"
+            android:gravity="end|center_vertical"
             android:background="@drawable/bg_view_outfocus"
-            android:hint="0"
+            android:hint="@null"
             android:textSize="@dimen/smallText"
             android:inputType="numberDecimal"
             tools:ignore="AutoFill"/>
