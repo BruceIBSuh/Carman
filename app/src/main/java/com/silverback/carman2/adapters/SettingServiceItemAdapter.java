@@ -3,6 +3,7 @@ package com.silverback.carman2.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -45,16 +46,8 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
     @NonNull
     @Override
     public SettingServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        log.i("onCreateViewHolder");
-        /*
-        CardView cardView = (CardView) LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_setting_chklist, parent, false);
-        */
-
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_setting_svc_items, parent, false);
-
-
 
         return new SettingServiceItemHolder(itemView);
     }
@@ -85,20 +78,18 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
         return jsonServiceItemArray.length();
     }
 
-
     public void setEditMode(boolean b) {
         isEditMode = b;
     }
 
 
-
-
     // RecyclerView.ViewHolder
-    static class SettingServiceItemHolder extends RecyclerView.ViewHolder {
+    static class SettingServiceItemHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
         TextView tvItemName;
         EditText etMileage, etMonth;
         RelativeLayout setLayout, editLayout;
+        Button btnUp, btnDn, btnDel;
 
         SettingServiceItemHolder(View v) {
             super(v);
@@ -108,8 +99,31 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
             tvItemName = v.findViewById(R.id.tv_setting_item);
             etMileage = v.findViewById(R.id.et_default_mileage);
             etMonth = v.findViewById(R.id.et_default_month);
+            btnUp = v.findViewById(R.id.btn_setting_up);
+            btnDn = v.findViewById(R.id.btn_setting_down);
+            btnDel = v.findViewById(R.id.btn_setting_del);
 
+            btnUp.setOnClickListener(this);
+            btnDn.setOnClickListener(this);
+            btnDel.setOnClickListener(this);
         }
 
+        @Override
+        public void onClick(View v) {
+            switch(v.getId()) {
+                case R.id.btn_setting_up:
+                    log.i("btnUp: %s", getAdapterPosition());
+                    if(getAdapterPosition() == 0) return;
+
+                    break;
+                case R.id.btn_setting_down:
+                    log.i("btnDown: %s", getAdapterPosition());
+                    break;
+                case R.id.btn_setting_del:
+                    log.i("btnDel: %s", getAdapterPosition());
+                    break;
+            }
+
+        }
     }
 }
