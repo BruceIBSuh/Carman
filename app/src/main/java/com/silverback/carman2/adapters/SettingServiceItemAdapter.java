@@ -62,9 +62,9 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
 
     @Override
     public void onBindViewHolder(@NonNull SettingServiceItemHolder holder, int position) {
-        log.i("onBindViewHolder");
 
         if(isEditMode) {
+            //
             holder.editLayout.setVisibility(View.VISIBLE);
             holder.setLayout.setVisibility(View.GONE);
 
@@ -85,8 +85,6 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
-
-        // Event Handler for the buttons in the edit mode
 
     }
 

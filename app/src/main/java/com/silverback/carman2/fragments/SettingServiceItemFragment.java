@@ -57,6 +57,7 @@ public class SettingServiceItemFragment extends Fragment implements
 
     // Fields
     private boolean bEditMode = false;
+    private int itemPos;
 
     public SettingServiceItemFragment() {
         // Required empty public constructor
@@ -88,10 +89,19 @@ public class SettingServiceItemFragment extends Fragment implements
         // which are passed here using FragmentSharedModel as the type of List<String>
         FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         sharedModel.getJsonServiceItemObject().observe(this, data -> {
-            log.i("FragmentSharedModel");
             jsonSvcItemArray.put(data);
             mAdapter.notifyItemInserted(jsonSvcItemArray.length() - 1);
             mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+        });
+
+        // Fetch LiveData<Boolean> that indicates whch button to select in AlertDialogFragment when
+        // a service item is removed.
+        sharedModel.getAlert().observe(this, data -> {
+            if(data) {
+                jsonSvcItemArray.remove(itemPos);
+                mAdapter.notifyDataSetChanged();
+                mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+            }
         });
     }
 
@@ -146,20 +156,30 @@ public class SettingServiceItemFragment extends Fragment implements
         log.i("Edit Service Item: %s", pos);
         switch(resId) {
             case R.id.btn_setting_del:
-                jsonSvcItemArray.remove(pos);
+                //jsonSvcItemArray.remove(pos);
+                itemPos = pos;
+                AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", "Delete");
+                if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
                 break;
 
             case R.id.btn_setting_up:
-                if(pos > 0) swapJSONObject(pos, MOVEUP);
+                if(pos > 0) {
+                    swapJSONObject(pos, MOVEUP);
+                    mAdapter.notifyDataSetChanged();
+                    mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+                }
+
                 break;
 
             case R.id.btn_setting_down:
-                if(pos < (jsonSvcItemArray.length() -1)) swapJSONObject(pos, MOVEDOWN);
+                if(pos < (jsonSvcItemArray.length() -1)) {
+                    swapJSONObject(pos, MOVEDOWN);
+                    mAdapter.notifyDataSetChanged();
+                    mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+                }
                 break;
         }
 
-        mAdapter.notifyDataSetChanged();
-        mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
     }
 
     // Method for switching the location of an service item using Up and Down button
