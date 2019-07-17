@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -13,7 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.silverback.carman2.ExpenseActivity;
+import com.silverback.carman2.ManagementActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -56,7 +55,7 @@ public class AddFavoriteDialogFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        mSettings = ((ManagementActivity)getActivity()).getSettings();
         providerName = getArguments().getString("favoriteName");
         category = getArguments().getInt("category");
     }

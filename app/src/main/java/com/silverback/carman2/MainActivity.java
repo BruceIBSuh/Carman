@@ -116,7 +116,7 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
 
             case R.id.action_carman:
-                startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
+                startActivity(new Intent(MainActivity.this, ManagementActivity.class));
                 return true;
 
             case R.id.action_board:

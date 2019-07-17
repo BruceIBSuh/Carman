@@ -19,7 +19,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.BaseActivity;
-import com.silverback.carman2.ExpenseActivity;
+import com.silverback.carman2.ManagementActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpensePagerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
@@ -125,7 +125,7 @@ public class GasManagerFragment extends Fragment implements
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        mSettings = ((ManagementActivity)getActivity()).getSettings();
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new InputPadFragment();
 

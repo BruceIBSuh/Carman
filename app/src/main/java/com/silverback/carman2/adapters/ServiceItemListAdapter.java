@@ -25,6 +25,8 @@ import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import org.json.JSONArray;
+
 import java.text.DecimalFormat;
 import java.util.List;
 
@@ -35,6 +37,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
 
     // Objects
+    private JSONArray jsonArray;
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
 
@@ -58,21 +61,21 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
     // Constructor
     public ServiceItemListAdapter(
-            String[] items,
+            JSONArray jsonArray,
             SparseArray<ServiceManagerDao.ServicedItemData> servicedItems,
             OnParentFragmentListener listener) {
 
         super();
 
-        this.arrItems = items;
+        this.jsonArray = jsonArray;
         this.servicedItems = servicedItems;
         mListener = listener;
 
         df = BaseActivity.getDecimalFormatInstance();
 
-        arrCheckedState = new boolean[arrItems.length];
-        arrItemCost = new int[arrItems.length];
-        arrItemMemo = new String[arrItems.length];
+        arrCheckedState = new boolean[jsonArray.length()];
+        arrItemCost = new int[jsonArray.length()];
+        arrItemMemo = new String[jsonArray.length()];
     }
 
     @NonNull
@@ -122,7 +125,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
     @Override
     public int getItemCount() {
-        return arrItems.length;
+        return jsonArray.length();
     }
 
     /*
@@ -212,7 +215,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
         // Combine data in the adapter with views in the viewholder.
         void bindItemToHolder(int pos) {
-            tvItemName.setText(arrItems[pos]);
+            //tvItemName.setText(arrItems[pos]);
+            tvItemName.setText(jsonArray.optJSONObject(pos).optString("name"));
             cbServiceItem.setChecked(arrCheckedState[pos]);
 
             if(servicedItems.get(pos) != null) {

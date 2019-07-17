@@ -55,7 +55,6 @@ public abstract class ServiceManagerDao {
                          ServiceManagerEntity svcEntity,
                          List<ServicedItemEntity> itemEntityList) {
 
-
         long basicId = insertBasics(basicEntity);
         svcEntity.basicId = (int)basicId;
         final int serviceId = (int)insertService(svcEntity);

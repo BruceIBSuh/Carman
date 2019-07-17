@@ -49,14 +49,14 @@
     <string name="map_cardview_service">정 비:</string>
     <string name="map_cardview_wash">세 차:</string>
 
-    <!-- ExpenseActivity -->
+    <!-- ManagementActivity -->
     <string name="exp_toolbar_title">My Garage</string>
     <string name="exp_label_odometer">운행거리</string>
     <string name="exp_menuitem_title_save">저장</string>
-    <!--ExpenseActivity$ExpensPagerFragment-->
+    <!--ManagementActivity$ExpensPagerFragment-->
     <string name="toast_expense_no_data">최근 데이터가 없습니다</string>
 
-    <!--ExpenseActivity$GasMangerFragment-->
+    <!--ManagementActivity$GasMangerFragment-->
     <string name="gas_toolbar_title">주유 및 세차 지출</string>
     <string name="gas_subtitle_expense">주유 지출</string>
     <string name="gas_label_date">주유날짜</string>

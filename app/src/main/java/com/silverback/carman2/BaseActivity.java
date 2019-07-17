@@ -1,23 +1,14 @@
 package com.silverback.carman2;
 
 import android.Manifest;
-import android.animation.ObjectAnimator;
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Base64;
 import android.util.TypedValue;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -26,11 +17,7 @@ import com.silverback.carman2.models.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.File;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -46,7 +33,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
 public class BaseActivity extends AppCompatActivity {
@@ -328,7 +314,7 @@ public class BaseActivity extends AppCompatActivity {
         List<String> tabTitleList = null;
         List<Drawable> tabIconList = null;
 
-        if(context instanceof ExpenseActivity) {
+        if(context instanceof ManagementActivity) {
             log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
 

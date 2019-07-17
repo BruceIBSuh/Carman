@@ -15,7 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.silverback.carman2.BaseActivity;
-import com.silverback.carman2.ExpenseActivity;
+import com.silverback.carman2.ManagementActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ServiceItemListAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
@@ -33,6 +33,9 @@ import com.silverback.carman2.views.ServiceItemRecyclerView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -53,6 +56,8 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Objects
     private String[] arrServiceItem;
+    private List<String> svcItemList;
+    private JSONArray jsonServiceItemArray;
 
 
     private SharedPreferences mSettings;
@@ -90,13 +95,21 @@ public class ServiceManagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        mSettings = ((ManagementActivity)getActivity()).getSettings();
         arrServiceItem = getResources().getStringArray(R.array.service_item_list);
+
+        String jsonServiceItem = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        try {
+            jsonServiceItemArray = new JSONArray(jsonServiceItem);
+
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
 
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        // Instantiate ViewModels.
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
@@ -109,12 +122,15 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Query the history of service for each item using ServiceManagerDao with itemName
         // as key
-        for(String name : arrServiceItem) {
-            ServiceManagerDao.ServicedItemData data = mDB.serviceManagerModel().loadServicedItem(name);
+        for(int i = 0; i < jsonServiceItemArray.length(); i++) {
+            log.i("Service Item name: %s", jsonServiceItemArray.optJSONObject(i).optString("name"));
+            ServiceManagerDao.ServicedItemData data =
+                    mDB.serviceManagerModel().loadServicedItem(jsonServiceItemArray.optJSONObject(i).optString("name"));
+
             if(data != null) {
-                int pos = Arrays.asList(arrServiceItem).indexOf(data.itemName);
-                log.i("Serviced Item: %s, %s, %s", pos, data.itemName, data.mileage);
-                servicedItemArray.put(pos, data);
+                //int pos = Arrays.asList(arrServiceItem).indexOf(data.itemName);
+                log.i("Serviced Item: %s, %s, %s", i, data.itemName, data.mileage);
+                servicedItemArray.put(i, data);
             }
         }
     }
@@ -149,7 +165,9 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(arrServiceItem, servicedItemArray, this);
+
+
+        mAdapter = new ServiceItemListAdapter(jsonServiceItemArray, servicedItemArray, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
 
         // LiveData Return value: List<ServicedItemData>
@@ -159,9 +177,6 @@ public class ServiceManagerFragment extends Fragment implements
             serviceItemRecyclerView.setAdapter(mAdapter);
         });
         */
-
-
-
 
         /*
          * ViewModel to share data b/w Fragments(this and InputPadFragment)
@@ -173,7 +188,7 @@ public class ServiceManagerFragment extends Fragment implements
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
 
-            switch(data.keyAt(0)) {
+            switch(viewId) {
                 case R.id.tv_mileage:
                     //targetView = localView.findViewById(viewId);
                     //targetView.setText(df.format(value));

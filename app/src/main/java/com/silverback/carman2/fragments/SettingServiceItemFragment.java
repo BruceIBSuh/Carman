@@ -30,16 +30,24 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceItemFragment extends Fragment {
+public class SettingServiceItemFragment extends Fragment implements
+        SettingServiceItemAdapter.OnServiceItemClickListener{
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
+
+    // Constants for the mode param in modifyJSONArray()
+    private static final int MOVEUP = 3;
+    private static final int MOVEDOWN = 4;
+
 
     // Objects
     private SharedPreferences mSettings;
@@ -69,7 +77,7 @@ public class SettingServiceItemFragment extends Fragment {
 
         try {
             jsonSvcItemArray = new JSONArray(jsonServiceItem);
-            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray);
+            mAdapter = new SettingServiceItemAdapter(this, jsonSvcItemArray);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
@@ -80,8 +88,10 @@ public class SettingServiceItemFragment extends Fragment {
         // which are passed here using FragmentSharedModel as the type of List<String>
         FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         sharedModel.getJsonServiceItemObject().observe(this, data -> {
+            log.i("FragmentSharedModel");
             jsonSvcItemArray.put(data);
-            mAdapter.notifyDataSetChanged();
+            mAdapter.notifyItemInserted(jsonSvcItemArray.length() - 1);
+            mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
         });
     }
 
@@ -93,7 +103,7 @@ public class SettingServiceItemFragment extends Fragment {
         View localView = inflater.inflate(R.layout.fragment_setting_chklist, container, false);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_chklist);
 
-        //recyclerView.setHasFixedSize(true);
+        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(mAdapter);
 
@@ -112,9 +122,7 @@ public class SettingServiceItemFragment extends Fragment {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         switch(item.getItemId()) {
-            case android.R.id.home:
-                mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                return true;
+
             case R.id.menu_add:
                 if(getFragmentManager() != null)
                     dlgFragment.show(getFragmentManager(), null);
@@ -131,4 +139,49 @@ public class SettingServiceItemFragment extends Fragment {
         return false;
     }
 
+    // Callback invoked by SettingServiceItemAdapter.OnServiceItemClickListener
+    @Override
+    public void editServiceItem(int resId, int pos) {
+
+        log.i("Edit Service Item: %s", pos);
+        switch(resId) {
+            case R.id.btn_setting_del:
+                jsonSvcItemArray.remove(pos);
+                break;
+
+            case R.id.btn_setting_up:
+                if(pos > 0) swapJSONObject(pos, MOVEUP);
+                break;
+
+            case R.id.btn_setting_down:
+                if(pos < (jsonSvcItemArray.length() -1)) swapJSONObject(pos, MOVEDOWN);
+                break;
+        }
+
+        mAdapter.notifyDataSetChanged();
+        mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+    }
+
+    // Method for switching the location of an service item using Up and Down button
+    private void swapJSONObject(int index, int mode) {
+        JSONObject obj = jsonSvcItemArray.optJSONObject(index);
+        try {
+            switch(mode) {
+                case MOVEUP:
+                    JSONObject tempUp = jsonSvcItemArray.optJSONObject(index - 1);
+                    jsonSvcItemArray.put(index - 1, obj);
+                    jsonSvcItemArray.put(index, tempUp);
+                    break;
+
+                case MOVEDOWN:
+                    JSONObject tempDown = jsonSvcItemArray.optJSONObject(index + 1);
+                    jsonSvcItemArray.put(index + 1, obj);
+                    jsonSvcItemArray.put(index, tempDown);
+                    break;
+            }
+
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+    }
 }

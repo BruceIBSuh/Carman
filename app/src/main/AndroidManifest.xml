@@ -39,7 +39,7 @@
         <activity android:name=".BaseActivity" />
         <activity android:name=".MainActivity" />
 
-        <activity android:name=".ExpenseActivity"
+        <activity android:name=".ManagementActivity"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="adjustPan">
 

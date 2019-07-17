@@ -27,12 +27,12 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.views.ExpenseViewPager;
 
-public class ExpenseActivity extends BaseActivity implements
+public class ManagementActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ManagementActivity.class);
 
     // Constants
     private static final int MENU_ITEM_ID = 100;
