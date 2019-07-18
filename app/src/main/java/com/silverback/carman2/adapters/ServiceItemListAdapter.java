@@ -9,8 +9,11 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,29 +29,33 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.util.List;
 
 public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemListAdapter.ServiceItemViewHolder> {
+
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
-
-
 
     // Objects
     private JSONArray jsonArray;
     private OnParentFragmentListener mListener;
+    private ProgressBarAnimation pbAnim;
     private DecimalFormat df;
 
     private SparseArray<ServiceManagerDao.ServicedItemData> servicedItems;
     public boolean[] arrCheckedState;
     public int[] arrItemCost;
     public String[] arrItemMemo;
-    public String[] arrItems;
+    //public String[] arrItems;
 
 
     // Fields
+    private int period;
+    private int currentMileage;
+
     private String format;
 
     // Listener to communicate b/w the parent Fragment and this RecyclerView.Adapter
@@ -76,6 +83,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         arrCheckedState = new boolean[jsonArray.length()];
         arrItemCost = new int[jsonArray.length()];
         arrItemMemo = new String[jsonArray.length()];
+
     }
 
     @NonNull
@@ -83,8 +91,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
     public ServiceItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_card_serviceitem, parent, false);
-
-        format = cardView.getContext().getResources().getString(R.string.date_format_1);
+        format = cardView.getContext().getResources().getString(R.string.date_format_2);
 
         return new ServiceItemViewHolder(cardView);
     }
@@ -120,7 +127,24 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
     @Override
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int position) {
-        holder.bindItemToHolder(position);
+
+        JSONObject jsonObject = jsonArray.optJSONObject(position);
+        holder.tvItemName.setText(jsonObject.optString("name"));
+        holder.cbServiceItem.setChecked(arrCheckedState[position]);
+
+        log.i("Last Service: %s", servicedItems.size());
+
+        if(servicedItems.get(position) != null) {
+            String date = BaseActivity.formatMilliseconds(format, servicedItems.get(position).dateTime);
+            String mileage = df.format(servicedItems.get(position).mileage);
+            holder.tvLastService.setText(String.format("%s, %s%s", date, mileage, "km"));
+        }
+
+        if (arrCheckedState[position]) {
+            holder.tvItemCost.setText(df.format(arrItemCost[position]));
+            holder.tvItemMemo.setText(arrItemMemo[position]);
+        }
+
     }
 
     @Override
@@ -141,6 +165,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         TextView tvItemCost;
         TextView tvItemMemo;
         CheckBox cbServiceItem;
+        ProgressBar progBar;
+
 
         ServiceItemViewHolder(CardView view){
             super(view);
@@ -151,6 +177,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             tvItemCost = view.findViewById(R.id.tv_value_cost);
             tvItemMemo = view.findViewById(R.id.tv_item_info);
             cbServiceItem = view.findViewById(R.id.chkbox);
+            progBar = view.findViewById(R.id.progressBar);
 
             tvItemCost.setOnClickListener(this);
             tvItemMemo.setOnClickListener(this);
@@ -179,16 +206,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                     break;
 
                 case R.id.chkbox:
-                    if(cbServiceItem.isChecked()) {
-                        int count = 0;
-                        for(boolean b : arrCheckedState) count += (b ? 1 : 0);
-
-                        if(count < 5) arrCheckedState[getAdapterPosition()] = true;
-                        else {
-                            Toast.makeText(v.getContext(), "Up to 5 items", Toast.LENGTH_SHORT).show();
-                            cbServiceItem.setChecked(false);
-                        }
-                    } else {
+                    if(cbServiceItem.isChecked()) arrCheckedState[getAdapterPosition()] = true;
+                    else {
                         arrCheckedState[getAdapterPosition()] = false;
                         if(arrItemCost[getAdapterPosition()] != 0)
                             mListener.subtractCost(arrItemCost[getAdapterPosition()]);
@@ -213,24 +232,6 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         }
 
 
-        // Combine data in the adapter with views in the viewholder.
-        void bindItemToHolder(int pos) {
-            //tvItemName.setText(arrItems[pos]);
-            tvItemName.setText(jsonArray.optJSONObject(pos).optString("name"));
-            cbServiceItem.setChecked(arrCheckedState[pos]);
-
-            if(servicedItems.get(pos) != null) {
-                String date = BaseActivity.formatMilliseconds(format, servicedItems.get(pos).dateTime);
-                String mileage = df.format(servicedItems.get(pos).mileage);
-                tvLastService.setText(String.format("%s, %s%s", date, mileage, "km"));
-            }
-
-            if (arrCheckedState[pos]) {
-                tvItemCost.setText(df.format(arrItemCost[pos]));
-                tvItemMemo.setText(arrItemMemo[pos]);
-            }
-        }
-
         void animSlideUpAndDown(View target, int startValue, int endValue) {
             // Convert dp to int
             int convEndValue = (int) TypedValue.applyDimension(
@@ -251,8 +252,28 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             animSet.start();
         }
 
+    }
 
+    // ProgressBar Animation class from StackOverflow
+    class ProgressBarAnimation extends Animation {
 
+        private ProgressBar progressBar;
+        private float from;
+        private float to;
+
+        ProgressBarAnimation(ProgressBar progressBar, float from, final float to) {
+            super();
+            this.progressBar = progressBar;
+            this.from = from;
+            this.to = to;
+        }
+
+        @Override
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+            super.applyTransformation(interpolatedTime, t);
+            float value = from + (to - from) * interpolatedTime;
+            progressBar.setProgress((int)value);
+        }
     }
 
 }

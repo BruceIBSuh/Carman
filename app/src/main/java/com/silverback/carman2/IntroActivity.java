@@ -106,10 +106,10 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         // Retrieve the default district values of sido, sigun and sigun code, then save them in
         // SharedPreferences.
-        JSONArray jsonArray = new JSONArray(Arrays.asList(getResources().getStringArray(R.array.default_district)));
+        JSONArray jsonDistrictArray = new JSONArray(Arrays.asList(getResources().getStringArray(R.array.default_district)));
         JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
 
-        mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+        mSettings.edit().putString(Constants.DISTRICT, jsonDistrictArray.toString()).apply();
         mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
     }

@@ -46,14 +46,13 @@ public class Constants {
     public static final String LOCATION_UPDATE = "pref_location_update";
     public static final String FAVORITE = "pref_favorite_list";
     public static final String SERVICE_PERIOD = "carman_pref_ls_service_period";
-    public static final String SERVICE_ITEM_LIST = "com.ibnco.carman.serviceitem_";
     public static final String IMAGE = "carman_pref_change_image";
     public static final String THEME = "carman_pref_ls_theme";
     public static final String GUIDE = "carman_pref_intro_guide";
     public static final String CoverImageWidth = "com.ibnco.carman.coverimage.width";
     public static final String CoverImageHeight = "com.ibnco.carman.coverimage.height";
     public static final String CODE = "carman_pref_district_code";
-    public static final String SERVICE_ITEMS = "carman_setting_service";
+    public static final String SERVICE_ITEMS = "carman_service_checklist";
 
     // Notification Channel ID
     public static final String CHANNEL_ID = "com.ibnco.carman";

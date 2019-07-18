@@ -40,7 +40,6 @@ import org.json.JSONException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -55,11 +54,7 @@ public class ServiceManagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
 
     // Objects
-    private String[] arrServiceItem;
-    private List<String> svcItemList;
-    private JSONArray jsonServiceItemArray;
-
-
+    private JSONArray jsonSvcItemArray;
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
@@ -95,20 +90,8 @@ public class ServiceManagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Instantiate objects.
         mSettings = ((ManagementActivity)getActivity()).getSettings();
-        arrServiceItem = getResources().getStringArray(R.array.service_item_list);
-
-        String jsonServiceItem = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        try {
-            jsonServiceItemArray = new JSONArray(jsonServiceItem);
-
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-
-
-        // Entity to retrieve list of favorite station to compare with a fetched current station
-        // to tell whether it has registered with Favorite.
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
@@ -120,18 +103,24 @@ public class ServiceManagerFragment extends Fragment implements
         memoPad = new ServiceItemMemoFragment();
         servicedItemArray = new SparseArray<>();
 
-        // Query the history of service for each item using ServiceManagerDao with itemName
-        // as key
-        for(int i = 0; i < jsonServiceItemArray.length(); i++) {
-            log.i("Service Item name: %s", jsonServiceItemArray.optJSONObject(i).optString("name"));
-            ServiceManagerDao.ServicedItemData data =
-                    mDB.serviceManagerModel().loadServicedItem(jsonServiceItemArray.optJSONObject(i).optString("name"));
+        // Retrieve service items which are saved in SharedPreferences as the type of JSON string.
+        String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        try {
+            jsonSvcItemArray = new JSONArray(json);
+            log.i("JSONArray length: %s", jsonSvcItemArray.length());
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
 
+        // Query the history of service for each item using ServiceManagerDao with itemName as key.
+        for(int i = 0; i < jsonSvcItemArray.length(); i++) {
+            String itemName = jsonSvcItemArray.optJSONObject(itemPos).optString("name");
+            ServiceManagerDao.ServicedItemData data = mDB.serviceManagerModel().loadServicedItem(itemName);
             if(data != null) {
-                //int pos = Arrays.asList(arrServiceItem).indexOf(data.itemName);
-                log.i("Serviced Item: %s, %s, %s", i, data.itemName, data.mileage);
                 servicedItemArray.put(i, data);
+                log.i("Queried array: %s", data.mileage);
             }
+
         }
     }
 
@@ -165,18 +154,8 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-
-
-        mAdapter = new ServiceItemListAdapter(jsonServiceItemArray, servicedItemArray, this);
+        mAdapter = new ServiceItemListAdapter(jsonSvcItemArray, servicedItemArray, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
-
-        // LiveData Return value: List<ServicedItemData>
-        /*
-        mDB.serviceManagerModel().loadServicedItemData(arrServiceItem).observe(this, data -> {
-            mAdapter = new ServiceItemListAdapter(arrServiceItem, data, this);
-            serviceItemRecyclerView.setAdapter(mAdapter);
-        });
-        */
 
         /*
          * ViewModel to share data b/w Fragments(this and InputPadFragment)
@@ -302,6 +281,8 @@ public class ServiceManagerFragment extends Fragment implements
         tvTotalCost.setText(df.format(totalServiceExpense));
     }
 
+
+    // Invoked by OnOptions
     public boolean saveServiceData() {
 
         if(!doEmptyCheck()) return false;
@@ -319,7 +300,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         BasicManagerEntity basicEntity = new BasicManagerEntity();
         ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
-        ServicedItemEntity servicedItem;
+        ServicedItemEntity checkedItem;
         List<ServicedItemEntity> itemEntityList = new ArrayList<>();
 
         basicEntity.dateTime = milliseconds;
@@ -327,19 +308,17 @@ public class ServiceManagerFragment extends Fragment implements
         basicEntity.category = 2;
         basicEntity.totalExpense = totalServiceExpense;
 
-        //serviceEntity.basicId = basicEntity._id;
         serviceEntity.serviceCenter = etStnName.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea";
 
         for(int i = 0; i < mAdapter.arrCheckedState.length; i++) {
-
             if(mAdapter.arrCheckedState[i]) {
-                servicedItem = new ServicedItemEntity();
-                servicedItem.itemName = mAdapter.arrItems[i];
-                servicedItem.itemPrice = mAdapter.arrItemCost[i];
-                servicedItem.itemMemo = mAdapter.arrItemMemo[i];
-                log.i("Serviced Item: %s", servicedItem.itemName);
-                itemEntityList.add(servicedItem);
+                checkedItem = new ServicedItemEntity();
+                checkedItem.itemName = jsonSvcItemArray.optJSONObject(i).optString("name");
+                checkedItem.itemPrice = mAdapter.arrItemCost[i];
+                checkedItem.itemMemo = mAdapter.arrItemMemo[i];
+                log.i("Serviced Item: %s", checkedItem.itemName);
+                itemEntityList.add(checkedItem);
             }
         }
 

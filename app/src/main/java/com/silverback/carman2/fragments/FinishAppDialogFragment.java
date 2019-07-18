@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -41,12 +40,12 @@ public class FinishAppDialogFragment extends DialogFragment {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(R.string.msg_finish_app)
-                .setPositiveButton(R.string.btn_finish_confirm, new DialogInterface.OnClickListener(){
+                .setPositiveButton(R.string.dialog_btn_confirm, new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         mListener.onDialogPositiveClick(FinishAppDialogFragment.this);
                     }
                 })
-                .setNegativeButton(R.string.btn_finish_cancel, new DialogInterface.OnClickListener(){
+                .setNegativeButton(R.string.dialog_btn_cancel, new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int id){
                         mListener.onDialogNegativeClick(FinishAppDialogFragment.this);
                     }

@@ -26,21 +26,17 @@ public abstract class ServiceManagerDao {
     public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
 
 
-    // Fetch the serviced items to be displayed in RecyclerView
-    @Query("SELECT item_name, date_time, mileage FROM ServicedItemEntity " +
-            "INNER JOIN ServiceManagerEntity ON ServicedItemEntity.svc_id = ServiceManagerEntity.service_id " +
-            "INNER JOIN BasicManagerEntity ON ServiceManagerEntity.basic_id = BasicManagerEntity._id " +
-            "WHERE item_name IN (:itemNames) ORDER BY date_time DESC")
-    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
-    public abstract LiveData<List<ServicedItemData>> loadServicedItemData(String[] itemNames);
-
+    // Query the last service history for each item with item name as keyword in ServicedItemEntity
     @Query("SELECT item_name, service_center, date_time, mileage FROM ServicedItemEntity " +
-            "INNER JOIN ServiceManagerEntity ON ServicedItemEntity.svc_id = ServiceManagerEntity.service_id " +
-            "INNER JOIN BasicManagerEntity ON ServiceManagerEntity.basic_id = BasicManagerEntity._id " +
+            "INNER JOIN ServiceManagerEntity ON ServiceManagerEntity.service_id = ServicedItemEntity.svc_id " +
+            "INNER JOIN BasicManagerEntity ON  BasicManagerEntity._id = ServiceManagerEntity.basic_id " +
             "WHERE item_name = :itemName ORDER BY date_time DESC LIMIT 1")
+
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     public abstract ServicedItemData loadServicedItem(String itemName);
 
+
+    // Insert
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract long insertBasics(BasicManagerEntity basicEntity);
 

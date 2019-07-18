@@ -154,18 +154,15 @@
     <string name="pref_spinner_sido_sejong">세종시</string>
 
     <!--DialogFragment-->
+    <string name="dialog_service_favorite_location">현재위치</string>
+    <string name="dialog_service_favorite_region">지 역</string>
+    <string name="dialog_service_favorite_address">상세주소</string>
+    <string name="dialog_service_favorite_name">업체이름</string>
     <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>
-    <string name="btn_finish_confirm">확인</string>
-    <string name="btn_finish_cancel">취소</string>
+    <string name="dialog_btn_confirm">확인</string>
+    <string name="dialog_btn_cancel">취소</string>
 
-    <!--Formatter-->
-    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
-    <string name="date_format_2">yyyy/MM/dd(E)</string>
-    <string name="date_format_3">%d년%d월%d일(%s)</string>
-    <string name="date_format_4">yy년MM월dd일</string>
-    <string name="date_format_5">MM월dd일</string>
-    <string name="date_format_6">MM월dd일(E) HH시mm분 </string>
-    <string name="time_format_1">%d시%d분</string>
+
 
     <!--GeofenceTransitionService-->
     <string name="geofence_notification_gas">주유정보</string>
@@ -183,6 +180,15 @@
     <string name="notification_ch_name">geofence_carman</string>
     <string name="notification_ch_description">frequently_visited_station</string>
 
+
+    <!--Formatter-->
+    <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
+    <string name="date_format_2">yyyy/MM/dd(E)HH:mm</string>
+    <string name="date_format_3">%d년%d월%d일(%s)</string>
+    <string name="date_format_4">yy년MM월dd일</string>
+    <string name="date_format_5">MM월dd일</string>
+    <string name="date_format_6">MM월dd일(E) HH시mm분</string>
+    <string name="time_format_1">%d시%d분</string>
 
     <!--Miscellany-->
     <string name="textview">TextView</string>

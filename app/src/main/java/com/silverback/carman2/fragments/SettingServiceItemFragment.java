@@ -74,10 +74,10 @@ public class SettingServiceItemFragment extends Fragment implements
 
         // List.add() does not work if List is create by Arrays.asList().
         mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
-        String jsonServiceItem = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
         try {
-            jsonSvcItemArray = new JSONArray(jsonServiceItem);
+            jsonSvcItemArray = new JSONArray(json);
             mAdapter = new SettingServiceItemAdapter(this, jsonSvcItemArray);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
