@@ -56,7 +56,7 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
 
     // Fields
     private String format;
-    private int currentMileage;
+    private int currentMileage, lastMileage, maxMileage, period;
 
     // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein,
     public interface OnParentFragmentListener {
@@ -139,12 +139,6 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
         JSONObject jsonObject = jsonArray.optJSONObject(position);
         holder.tvItemName.setText(jsonObject.optString("name"));
         holder.cbServiceItem.setChecked(arrCheckedState[position]);
-
-        int lastMileage = (sparseSvcDataArray.get(position) != null)?sparseSvcDataArray.get(position).mileage : 0;
-        int maxMileage = jsonArray.optJSONObject(position).optInt("mileage");
-        int period = ((currentMileage - lastMileage) <= maxMileage)?currentMileage - lastMileage : maxMileage;
-        log.i("onBindViewHolder: %s, %s, %s", lastMileage, maxMileage, period);
-
 
         // Retain the values of service cost and memo when rebound.
         if (arrCheckedState[position]) {
@@ -230,6 +224,15 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 120);
 
+                lastMileage = (sparseSvcDataArray.get(pos) != null)?sparseSvcDataArray.get(pos).mileage : 0;
+                maxMileage = jsonArray.optJSONObject(pos).optInt("mileage");
+                period = ((currentMileage - lastMileage) <= maxMileage)?currentMileage - lastMileage : maxMileage;
+                log.i("onBindViewHolder: %s, %s, %s", lastMileage, maxMileage, period);
+
+                final ProgressBarAnimation pbAnim = new ProgressBarAnimation(pb, 0, period);
+                pbAnim.setDuration(1000);
+                pb.startAnimation(pbAnim);
+
             } else {
                 animSlideUpAndDown(layout, 120, 0);
                 // Substract the item cost input at the moment out of the total cost.
@@ -262,8 +265,6 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
         }
 
     }
-
-    private
 
     // ProgressBar Animation class from StackOverflow
     class ProgressBarAnimation extends Animation {
