@@ -2,6 +2,7 @@ package com.silverback.carman2.adapters;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -15,16 +16,18 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
+import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -32,58 +35,50 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.List;
 
-public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemListAdapter.ServiceItemViewHolder> {
+public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceChecklistAdapter.ServiceItemViewHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemListAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceChecklistAdapter.class);
 
     // Objects
+    private CarmanDatabase mDB;
     private JSONArray jsonArray;
     private OnParentFragmentListener mListener;
-    private ProgressBarAnimation pbAnim;
     private DecimalFormat df;
 
-    private SparseArray<ServiceManagerDao.ServicedItemData> servicedItems;
+    private SparseArray<ServiceManagerDao.ServicedItemData> sparseSvcDataArray;
     public boolean[] arrCheckedState;
     public int[] arrItemCost;
     public String[] arrItemMemo;
-    //public String[] arrItems;
-
 
     // Fields
-    private int period;
+    private String format;
     private int currentMileage;
 
-    private String format;
-
-    // Listener to communicate b/w the parent Fragment and this RecyclerView.Adapter
-    // to invoke
+    // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein,
     public interface OnParentFragmentListener {
         void inputItemCost(String title, TextView targetView, int position);
         void inputItemMemo(String title, TextView targetView, int position);
         void subtractCost(int value);
+        int getCurrentMileage();
     }
 
     // Constructor
-    public ServiceItemListAdapter(
-            JSONArray jsonArray,
-            SparseArray<ServiceManagerDao.ServicedItemData> servicedItems,
-            OnParentFragmentListener listener) {
+    public ServiceChecklistAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
 
         super();
 
         this.jsonArray = jsonArray;
-        this.servicedItems = servicedItems;
         mListener = listener;
-
         df = BaseActivity.getDecimalFormatInstance();
 
         arrCheckedState = new boolean[jsonArray.length()];
         arrItemCost = new int[jsonArray.length()];
         arrItemMemo = new String[jsonArray.length()];
-
+        sparseSvcDataArray = new SparseArray<>();
     }
 
     @NonNull
@@ -92,15 +87,18 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_card_serviceitem, parent, false);
         format = cardView.getContext().getResources().getString(R.string.date_format_2);
-
+        // Get the current mileage from ServiceManagerFragment via OnParentFragmentListener.
+        currentMileage = mListener.getCurrentMileage();
         return new ServiceItemViewHolder(cardView);
     }
 
-
-
-
-    // Invoked by notifyItemChanged of RecyclerView.Adapter with payloads as param.
-    @SuppressWarnings("unchecked")
+    /*
+     * Partial Bind: onBindViewHolder(holder, pos, payloads) vs Full bind: onBindViewHolder(holder, pos)
+     * The payloads parameter is a merge list from notifyItemChanged(int, Object) or
+     * notifyItemRangeChanged(int, int, Object).f the payloads list is not empty, the ViewHolder is currently bound to old data and
+     * Adapter may run an efficient partial update using the payload info. If the payload is empty, Adapter must run a full bind.
+     * Adapter should not assume that the payload passed in notify methods will be received by onBindViewHolder()
+     */
     @Override
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int pos, @NonNull List<Object> payloads){
 
@@ -109,16 +107,26 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
 
         } else {
 
-            if(payloads.get(0) instanceof SparseIntArray) {
-                SparseIntArray data = (SparseIntArray)payloads.get(0);
-                holder.tvItemCost.setText(df.format(data.valueAt(0)));
-                arrItemCost[pos] = data.valueAt(0);
+            for(Object payload: payloads) {
+                if(payload instanceof SparseIntArray) {
+                    SparseIntArray data = (SparseIntArray)payload;
+                    holder.tvItemCost.setText(df.format(data.valueAt(0)));
+                    arrItemCost[pos] = data.valueAt(0);
 
-            } else if(payloads.get(0) instanceof SparseArray) {
-                SparseArray<String> data = (SparseArray)payloads.get(0);
-                holder.tvItemMemo.setText(data.valueAt(0));
-                arrItemMemo[pos] = data.valueAt(0);
+                }else if(payload instanceof SparseArray) {
+                    SparseArray data = (SparseArray)payload;
+                    holder.tvItemMemo.setText(data.valueAt(0).toString());
+                    arrItemMemo[pos] = data.valueAt(0).toString();
 
+                }else if(payload instanceof ServiceManagerDao.ServicedItemData) {
+                    ServiceManagerDao.ServicedItemData data = (ServiceManagerDao.ServicedItemData)payload;
+                    String date = BaseActivity.formatMilliseconds(format, data.dateTime);
+                    String mileage = df.format(data.mileage);
+                    holder.tvLastService.setText(String.format("%s, %s%s", date, mileage, "km"));
+
+                    sparseSvcDataArray.put(pos, data);
+
+                }
             }
 
         }
@@ -132,18 +140,22 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         holder.tvItemName.setText(jsonObject.optString("name"));
         holder.cbServiceItem.setChecked(arrCheckedState[position]);
 
-        log.i("Last Service: %s", servicedItems.size());
+        int lastMileage = (sparseSvcDataArray.get(position) != null)?sparseSvcDataArray.get(position).mileage : 0;
+        int maxMileage = jsonArray.optJSONObject(position).optInt("mileage");
+        int period = ((currentMileage - lastMileage) <= maxMileage)?currentMileage - lastMileage : maxMileage;
+        log.i("onBindViewHolder: %s, %s, %s", lastMileage, maxMileage, period);
 
-        if(servicedItems.get(position) != null) {
-            String date = BaseActivity.formatMilliseconds(format, servicedItems.get(position).dateTime);
-            String mileage = df.format(servicedItems.get(position).mileage);
-            holder.tvLastService.setText(String.format("%s, %s%s", date, mileage, "km"));
-        }
 
+        // Retain the values of service cost and memo when rebound.
         if (arrCheckedState[position]) {
             holder.tvItemCost.setText(df.format(arrItemCost[position]));
             holder.tvItemMemo.setText(arrItemMemo[position]);
+
+            final ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, 0, period);
+            pbAnim.setDuration(1000);
+            holder.pb.startAnimation(pbAnim);
         }
+
 
     }
 
@@ -165,8 +177,7 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         TextView tvItemCost;
         TextView tvItemMemo;
         CheckBox cbServiceItem;
-        ProgressBar progBar;
-
+        ProgressBar pb;
 
         ServiceItemViewHolder(CardView view){
             super(view);
@@ -177,17 +188,20 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
             tvItemCost = view.findViewById(R.id.tv_value_cost);
             tvItemMemo = view.findViewById(R.id.tv_item_info);
             cbServiceItem = view.findViewById(R.id.chkbox);
-            progBar = view.findViewById(R.id.progressBar);
+            pb = view.findViewById(R.id.progressBar);
 
             tvItemCost.setOnClickListener(this);
             tvItemMemo.setOnClickListener(this);
             cbServiceItem.setOnClickListener(this);
             cbServiceItem.setOnCheckedChangeListener(this);
+
         }
 
         @Override
         public void onClick(View v) {
+
             final String title = tvItemName.getText().toString();
+
             switch(v.getId()) {
                 case R.id.tv_value_cost:
                     // Subtract the number at first, no matter the number is zero or not in order
@@ -198,36 +212,31 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
                     }
 
                     mListener.inputItemCost(title, tvItemCost, getAdapterPosition());
-
                     break;
 
                 case R.id.tv_item_info:
                     mListener.inputItemMemo(title, tvItemMemo, getAdapterPosition());
-                    break;
-
-                case R.id.chkbox:
-                    if(cbServiceItem.isChecked()) arrCheckedState[getAdapterPosition()] = true;
-                    else {
-                        arrCheckedState[getAdapterPosition()] = false;
-                        if(arrItemCost[getAdapterPosition()] != 0)
-                            mListener.subtractCost(arrItemCost[getAdapterPosition()]);
-
-                        arrItemCost[getAdapterPosition()] = 0;
-                        tvItemCost.setText("0");
-                        tvItemMemo.setText("");
-
-                    }
                     break;
             }
         }
 
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+            final int pos = getAdapterPosition(); // get the position of a checked item.
+            arrCheckedState[pos] = isChecked; // update checked items in the entire list.
+
             if(isChecked) {
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 120);
+
             } else {
                 animSlideUpAndDown(layout, 120, 0);
+                // Substract the item cost input at the moment out of the total cost.
+                if(arrItemCost[pos] != 0) mListener.subtractCost(arrItemCost[pos]);
+                arrItemCost[pos] = 0;
+                tvItemCost.setText("0");
+                tvItemMemo.setText("");
             }
         }
 
@@ -253,6 +262,8 @@ public class ServiceItemListAdapter extends RecyclerView.Adapter<ServiceItemList
         }
 
     }
+
+    private
 
     // ProgressBar Animation class from StackOverflow
     class ProgressBarAnimation extends Animation {

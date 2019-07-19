@@ -17,7 +17,7 @@ import android.widget.Toast;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ManagementActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ServiceItemListAdapter;
+import com.silverback.carman2.adapters.ServiceChecklistAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
@@ -48,7 +48,7 @@ import java.util.Locale;
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ServiceItemListAdapter.OnParentFragmentListener {
+        View.OnClickListener, ServiceChecklistAdapter.OnParentFragmentListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -64,7 +64,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     private FavoriteGeofenceHelper geofenceHelper;
     private Calendar calendar;
-    private ServiceItemListAdapter mAdapter;
+    private ServiceChecklistAdapter mAdapter;
     private ServiceItemRecyclerView serviceItemRecyclerView;
     private DecimalFormat df;
 
@@ -103,25 +103,26 @@ public class ServiceManagerFragment extends Fragment implements
         memoPad = new ServiceItemMemoFragment();
         servicedItemArray = new SparseArray<>();
 
+
         // Retrieve service items which are saved in SharedPreferences as the type of JSON string.
         String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
         try {
             jsonSvcItemArray = new JSONArray(json);
-            log.i("JSONArray length: %s", jsonSvcItemArray.length());
+            mAdapter = new ServiceChecklistAdapter(jsonSvcItemArray, this);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
 
-        // Query the history of service for each item using ServiceManagerDao with itemName as key.
-        for(int i = 0; i < jsonSvcItemArray.length(); i++) {
-            String itemName = jsonSvcItemArray.optJSONObject(itemPos).optString("name");
-            ServiceManagerDao.ServicedItemData data = mDB.serviceManagerModel().loadServicedItem(itemName);
-            if(data != null) {
-                servicedItemArray.put(i, data);
-                log.i("Queried array: %s", data.mileage);
-            }
 
+        // Query the recent service data of each service checklist using ServiceManagerDao.
+        for(int i = 0; i < jsonSvcItemArray.length(); i++) {
+            final int position = i;
+            String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
+
+            mDB.serviceManagerModel().loadServicedItem(itemName).observe(this, servicedItemData ->
+                mAdapter.notifyItemChanged(position, servicedItemData));
         }
+
     }
 
     @Override
@@ -154,7 +155,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
         serviceItemRecyclerView.setHasFixedSize(true);
-        mAdapter = new ServiceItemListAdapter(jsonSvcItemArray, servicedItemArray, this);
         serviceItemRecyclerView.setAdapter(mAdapter);
 
         /*
@@ -214,7 +214,7 @@ public class ServiceManagerFragment extends Fragment implements
                 args.putString("initValue", tvMileage.getText().toString());
                 args.putInt("viewId", v.getId());
                 numPad.setArguments(args);
-                if(getFragmentManager() != null) numPad.show(getFragmentManager(), "InputPadDialog");
+                if(getFragmentManager() != null) numPad.show(getFragmentManager(), null);
                 break;
 
             case R.id.imgbtn_favorite:
@@ -233,7 +233,7 @@ public class ServiceManagerFragment extends Fragment implements
                     Toast.makeText(getActivity(), getString(R.string.toast_remove_favorite_service), Toast.LENGTH_SHORT).show();
 
                 } else {
-                    AddFavoriteDialogFragment.newInstance(providerName, 2).show(getFragmentManager(), "favoriteDialog");
+                    AddFavoriteDialogFragment.newInstance(providerName, 2).show(getFragmentManager(), null);
                 }
 
                 break;
@@ -279,6 +279,18 @@ public class ServiceManagerFragment extends Fragment implements
         log.i("Calculate Total Cost");
         totalServiceExpense -= value;
         tvTotalCost.setText(df.format(totalServiceExpense));
+    }
+
+    @Override
+    public int getCurrentMileage() {
+
+        try {
+            return df.parse(tvMileage.getText().toString()).intValue();
+        } catch(ParseException e) {
+            log.e("ParseException: %s", e.getMessage());
+        }
+
+        return -1;
     }
 
 

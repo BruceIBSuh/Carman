@@ -8,12 +8,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -49,8 +46,9 @@ public class ServiceItemMemoFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle bundle) {
-        //View localView = LayoutInflater.from(getContext()).inflate(R.layout.fragment_service_item_memo, null);
-        View localView = View.inflate(getContext(), R.layout.fragment_service_item_memo, null);
+        //View localView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_service_memo, null);
+        View localView = View.inflate(getContext(), R.layout.dialog_service_memo, null);
+
         // Prevent the Dialog from closing by clicking outside of the dialog
         setCancelable(false);
 
@@ -59,11 +57,12 @@ public class ServiceItemMemoFragment extends DialogFragment {
         final String itemName = getArguments().getString("title");
         final int viewId = getArguments().getInt("viewId");
 
-        TextView tvItemName = localView.findViewById(R.id.tv_item_title);
+        TextView tvItemName = localView.findViewById(R.id.tv_memo_title);
         EditText etMemo = localView.findViewById(R.id.et_item_memo);
         etMemo.requestFocus();
         tvItemName.setText(itemName);
 
+        /*
         localView.findViewById(R.id.btn_confirm).setOnClickListener(view -> {
             String memo = etMemo.getText().toString();
             sharedModel.setSelectedMemo(viewId, memo);
@@ -71,10 +70,19 @@ public class ServiceItemMemoFragment extends DialogFragment {
         });
 
         localView.findViewById(R.id.btn_cancel).setOnClickListener(view -> dismiss());
+        */
 
-        return new AlertDialog.Builder(getActivity())
-                .setView(localView)
-                .create();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setView(localView)
+                .setPositiveButton(R.string.dialog_btn_confirm, (dialog, which) -> {
+                    String memo = etMemo.getText().toString();
+                    sharedModel.setSelectedMemo(viewId, memo);
+                    dismiss();
+                })
+                .setNegativeButton(R.string.dialog_btn_cancel, (dialog, which) -> dismiss());
+
+        return builder.create();
+
     }
 
 }
