@@ -96,7 +96,9 @@ public class MainActivity extends BaseActivity implements
 
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
+
         progressBar.setVisibility(View.GONE);
+        frameLayout.setAlpha(1f);
 
     }
 
@@ -122,6 +124,7 @@ public class MainActivity extends BaseActivity implements
 
             case R.id.action_carman:
                 progressBar.setVisibility(View.VISIBLE);
+                frameLayout.setAlpha(0.5f);
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
 
