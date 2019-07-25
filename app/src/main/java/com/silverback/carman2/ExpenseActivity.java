@@ -11,41 +11,34 @@ import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.adapters.ManagerPagerAdapter;
-import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
+import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.views.ExpenseViewPager;
 
-public class ManagementActivity extends BaseActivity implements
+public class ExpenseActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ManagementActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
 
     // Constants
     private static final int MENU_ITEM_ID = 100;
-    private static final int TAB_CARMAN = 1;
-    private static final int TAB_BOARD = 2;
-    private static final int NumOfPages = 5;
 
     // Objects
-    private LocationTask locationTask;
-    private StatGraphFragment statGraphFragment;
-    private FragmentPagerAdapter pagerAdapter;
+    //private LocationTask locationTask;
     private ExpenseViewPager expensePager;
-    private ExpensePagerAdapter expenseAdapter;
+    private ExpenseTabPagerAdapter tabPagerAdapter;
     private AppBarLayout appBar;
     private TabLayout tabLayout;
     private FrameLayout topFrame;
@@ -53,10 +46,10 @@ public class ManagementActivity extends BaseActivity implements
     // Fields
     private int currentPage = 0;
     private boolean isTabVisible = false;
-    private boolean isLocationTask = false;
+    //private boolean isLocationTask = false;
     private String pageTitle;
 
-
+    private Toolbar toolbar;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -68,23 +61,26 @@ public class ManagementActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
 
         // Set Toolbar as Actionbar;
-        Toolbar toolbar = findViewById(R.id.toolbar_main);
+        toolbar = findViewById(R.id.toolbar_expense);
+        FrameLayout tabFrame = findViewById(R.id.frame_tab_fragments);
         tabLayout = findViewById(R.id.tabLayout);
-        FrameLayout frameFragments = findViewById(R.id.frame_expense_fragment);
-        topFrame = findViewById(R.id.frame_top);
+        topFrame = findViewById(R.id.frame_top_fragments);
 
+        // Set the toolbar as the working action bar
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
+        //getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
-        ViewPager tabPager = new ViewPager(this);
-        tabPager.setId(View.generateViewId());
-        frameFragments.addView(tabPager);
+        // Create ViewPager to hold the tab fragments and add it in FrameLayout
+        ViewPager tabViewPager = new ViewPager(this);
+        tabViewPager.setId(View.generateViewId());
+        tabFrame.addView(tabViewPager);
 
-        pagerAdapter = new ManagerPagerAdapter(getSupportFragmentManager());
-        tabPager.setAdapter(pagerAdapter);
-        tabPager.addOnPageChangeListener(this);
-        tabLayout.setupWithViewPager(tabPager);
+        tabPagerAdapter = new ExpenseTabPagerAdapter(getSupportFragmentManager());
+        tabViewPager.setAdapter(tabPagerAdapter);
+        tabViewPager.addOnPageChangeListener(this);
+        tabLayout.setupWithViewPager(tabViewPager);
 
         // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
         // it to GasManagerFragment.
@@ -92,7 +88,7 @@ public class ManagementActivity extends BaseActivity implements
         defaultParams[1] = Constants.MIN_RADIUS;
         Bundle args = new Bundle();
         args.putStringArray("defaultParams", defaultParams);
-        pagerAdapter.getItem(0).setArguments(args);
+        tabPagerAdapter.getItem(0).setArguments(args);
 
         addTabIconAndTitle(this, tabLayout);
         animSlideTabLayout();
@@ -101,11 +97,10 @@ public class ManagementActivity extends BaseActivity implements
         // Required to use FrameLayout.addView() b/c StatFragment should be applied here.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        expenseAdapter = new ExpensePagerAdapter(getSupportFragmentManager());
-        expensePager.setAdapter(expenseAdapter);
+        ExpenseTopPagerAdapter topPagerAdapter = new ExpenseTopPagerAdapter(getSupportFragmentManager());
+        expensePager.setAdapter(topPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
-        //dispRecentExpense(expensePager, expenseAdapter);
     }
 
 
@@ -141,13 +136,13 @@ public class ManagementActivity extends BaseActivity implements
                 return true;
 
             case MENU_ITEM_ID:
-                Fragment fragment = pagerAdapter.getItem(currentPage);
+                Fragment fragment = tabPagerAdapter.getItem(currentPage);
                 boolean isSaved = false;
 
                 if(fragment instanceof GasManagerFragment) {
-                    isSaved = ((GasManagerFragment)fragment).saveGasData();
+                    isSaved = ((GasManagerFragment) fragment).saveGasData();
                 } else if(fragment instanceof ServiceManagerFragment) {
-                    isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
+                    isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
                 }
 
                 if(isSaved) {
@@ -168,8 +163,8 @@ public class ManagementActivity extends BaseActivity implements
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
         log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
-        //topFrame.setAlpha(1 - positionOffset);
     }
+
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected: %s", position);
@@ -179,23 +174,26 @@ public class ManagementActivity extends BaseActivity implements
         switch(position) {
             case 0:
                 currentPage = 0;
-                pageTitle = "GasManagerEntity";
+                pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
 
                 break;
 
             case 1:
                 currentPage = 1;
-                pageTitle = "ServiceManagerEntity";
+                pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
 
                 break;
 
             case 2:
                 currentPage = 2;
-                pageTitle = "Statistics";
-                statGraphFragment = new StatGraphFragment();
-                getSupportFragmentManager().beginTransaction().replace(R.id.frame_top, statGraphFragment).commit();
+                pageTitle = getString(R.string.exp_title_stat);
+                StatGraphFragment statGraphFragment = new StatGraphFragment();
+
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.frame_top_fragments, statGraphFragment).commit();
+
                 break;
         }
 
@@ -205,28 +203,39 @@ public class ManagementActivity extends BaseActivity implements
         log.i("onPageScrollStateChanged:%s", state);
     }
 
+
     // AppBarLayout.OnOffsetChangeListener invokes this method
-    // to be informed whether it is scrolling and whether the scroll position is located.
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
-        log.i("AppBar scrolling state: %s", scroll);
-        log.i("AppBar Total Scroll Range: %s", appBar.getTotalScrollRange());
+        appBar.post(new Runnable(){
+            @Override
+            public void run() {
+                if(Math.abs(scroll) == 0)
+                    getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
+                else if(Math.abs(scroll) == appBar.getTotalScrollRange())
+                    getSupportActionBar().setTitle(getString(R.string.exp_title_gas));
+
+            }
+        });
+
+
+        /*
         if(Math.abs(scroll) == appBar.getTotalScrollRange()) {
-            //getSupportActionBar().setTitle(pageTitle);
+            getSupportActionBar().setTitle(pageTitle);
+        } else if(Math.abs(scroll) == 0) {
+            getSupportActionBar().setTitle("My Garage");
         }
+        */
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
+        /*
         float bgAlpha = (float)((100 + (scroll * 100 / appBar.getTotalScrollRange())) * 0.01);
         topFrame.setAlpha(bgAlpha);
+        */
     }
 
-    // Display ViewPager on the top to show the last 5 recent data
-    private void dispRecentExpense(ViewPager pager, FragmentPagerAdapter adapter) {
-        pager.setAdapter(adapter);
-        pager.setCurrentItem(0);
-        topFrame.addView(expensePager);
-    }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
@@ -253,12 +262,13 @@ public class ManagementActivity extends BaseActivity implements
         }
         return -1;
     }
-    */
+
 
     private void setBackgroundOpacity(int maxRange, int scroll) {
         float bgAlpha = (float)((100 + (scroll * 100 / maxRange)) * 0.01);
         topFrame.setAlpha(bgAlpha);
     }
+    */
 
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {

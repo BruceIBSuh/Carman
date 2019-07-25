@@ -3,6 +3,7 @@ package com.silverback.carman2.adapters;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -44,7 +45,6 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceChecklistAdapter.class);
 
     // Objects
-    private CarmanDatabase mDB;
     private JSONArray jsonArray;
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
@@ -71,8 +71,8 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
 
         super();
 
-        this.jsonArray = jsonArray;
         mListener = listener;
+        this.jsonArray = jsonArray;
         df = BaseActivity.getDecimalFormatInstance();
 
         arrCheckedState = new boolean[jsonArray.length()];
@@ -88,7 +88,7 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
                 .inflate(R.layout.view_card_serviceitem, parent, false);
         format = cardView.getContext().getResources().getString(R.string.date_format_2);
         // Get the current mileage from ServiceManagerFragment via OnParentFragmentListener.
-        currentMileage = mListener.getCurrentMileage();
+
         return new ServiceItemViewHolder(cardView);
     }
 
@@ -145,9 +145,8 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
             holder.tvItemCost.setText(df.format(arrItemCost[position]));
             holder.tvItemMemo.setText(arrItemMemo[position]);
 
-            final ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, 0, period);
-            pbAnim.setDuration(1000);
-            holder.pb.startAnimation(pbAnim);
+            holder.pb.setProgress(period);
+
         }
 
 
@@ -224,10 +223,12 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 120);
 
-                lastMileage = (sparseSvcDataArray.get(pos) != null)?sparseSvcDataArray.get(pos).mileage : 0;
+                currentMileage = mListener.getCurrentMileage();
+                lastMileage = (sparseSvcDataArray.get(pos) != null)? sparseSvcDataArray.get(pos).mileage : 0;
                 maxMileage = jsonArray.optJSONObject(pos).optInt("mileage");
-                period = ((currentMileage - lastMileage) <= maxMileage)?currentMileage - lastMileage : maxMileage;
-                log.i("onBindViewHolder: %s, %s, %s", lastMileage, maxMileage, period);
+                period = (currentMileage - lastMileage <= maxMileage)? currentMileage - lastMileage : maxMileage;
+                pb.setMax(maxMileage);
+                log.i("onBindViewHolder: %s, %s, %s, %s", currentMileage, lastMileage, maxMileage, period);
 
                 final ProgressBarAnimation pbAnim = new ProgressBarAnimation(pb, 0, period);
                 pbAnim.setDuration(1000);

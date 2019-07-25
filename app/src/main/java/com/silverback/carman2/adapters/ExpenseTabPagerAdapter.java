@@ -11,20 +11,19 @@ import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class ManagerPagerAdapter extends FragmentPagerAdapter {
+public class ExpenseTabPagerAdapter extends FragmentPagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ManagerPagerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTabPagerAdapter.class);
 
-
-    public ManagerPagerAdapter(FragmentManager fm) {
+    public ExpenseTabPagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
     private final Fragment[] fragments = new Fragment[] {
             new GasManagerFragment(),
             new ServiceManagerFragment(),
-            new StatStmtsFragment(),
+            new StatStmtsFragment()
     };
 
     @Override

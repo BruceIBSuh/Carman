@@ -4,22 +4,21 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.silverback.carman2.fragments.ExpensePagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class ExpensePagerAdapter extends FragmentPagerAdapter {
+public class ExpenseTopPagerAdapter extends FragmentPagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTopPagerAdapter.class);
 
     // Constants
     private static final int NUM_PAGES = 5;
 
 
-    public ExpensePagerAdapter(FragmentManager fm) {
+    public ExpenseTopPagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 

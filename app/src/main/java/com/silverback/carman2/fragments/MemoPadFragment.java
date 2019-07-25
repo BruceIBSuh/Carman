@@ -22,16 +22,15 @@ import com.silverback.carman2.models.FragmentSharedModel;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class ServiceItemMemoFragment extends DialogFragment {
-
+public class MemoPadFragment extends DialogFragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemMemoFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(MemoPadFragment.class);
 
     // Objects
     private FragmentSharedModel sharedModel;
 
-    public ServiceItemMemoFragment() {
+    public MemoPadFragment() {
         // Required empty public constructor
     }
 
@@ -61,16 +60,6 @@ public class ServiceItemMemoFragment extends DialogFragment {
         EditText etMemo = localView.findViewById(R.id.et_item_memo);
         etMemo.requestFocus();
         tvItemName.setText(itemName);
-
-        /*
-        localView.findViewById(R.id.btn_confirm).setOnClickListener(view -> {
-            String memo = etMemo.getText().toString();
-            sharedModel.setSelectedMemo(viewId, memo);
-            dismiss();
-        });
-
-        localView.findViewById(R.id.btn_cancel).setOnClickListener(view -> dismiss());
-        */
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)

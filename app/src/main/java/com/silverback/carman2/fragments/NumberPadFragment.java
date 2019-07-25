@@ -27,10 +27,10 @@ import java.text.ParseException;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class InputPadFragment extends DialogFragment implements View.OnClickListener{
+public class NumberPadFragment extends DialogFragment implements View.OnClickListener{
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(InputPadFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(NumberPadFragment.class);
 
     // Constants
     private String[] arrNumber = { "100", "50", "10", "1"};

@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    tools:context="com.silverback.carman2.ManagementActivity">
+    tools:context="com.silverback.carman2.ExpenseActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
@@ -27,7 +27,7 @@
             app:titleEnabled="false" >
 
             <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar_main"
+                android:id="@+id/toolbar_expense"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@android:color/holo_blue_dark"
@@ -48,13 +48,12 @@
                 app:tabSelectedTextColor="@android:color/holo_orange_dark"
                 app:tabTextAppearance="@style/CustomTabText"
                 app:tabTextColor="@android:color/background_light"
-                app:layout_collapseMode="parallax">
-            </com.google.android.material.tabs.TabLayout>
+                app:layout_collapseMode="parallax" />
 
             <!-- Take care of minHeight -->
             <!-- layout_marginTop must be equal to the height of TabLayout-->
             <FrameLayout
-                android:id="@+id/frame_top"
+                android:id="@+id/frame_top_fragments"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="120dp"
@@ -77,7 +76,7 @@
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <FrameLayout
-            android:id="@+id/frame_expense_fragment"
+            android:id="@+id/frame_tab_fragments"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

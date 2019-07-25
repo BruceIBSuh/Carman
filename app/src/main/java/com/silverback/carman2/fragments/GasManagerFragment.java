@@ -19,9 +19,9 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.BaseActivity;
-import com.silverback.carman2.ManagementActivity;
+import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.GasManagerEntity;
@@ -72,11 +72,11 @@ public class GasManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private DecimalFormat df;
 
-    private ExpensePagerAdapter viewPagerAdapter;
+    private ExpenseTopPagerAdapter viewPagerAdapter;
     private CustomPagerIndicator indicator;
     private Calendar calendar;
     private SimpleDateFormat sdf;
-    private InputPadFragment numPad;
+    private NumberPadFragment numPad;
     private Location location;
 
     // UIs
@@ -109,7 +109,7 @@ public class GasManagerFragment extends Fragment implements
 
         /*
          * Create the instances of the ViewModels
-         * FragmentSharedModel: communicate b/w GasManagerFragment and InputPadFragment
+         * FragmentSharedModel: communicate b/w GasManagerFragment and NumberPadFragment
          * LocationViewModel: fetch a current location asynchnonously to have a station, if any.
          * StationListViewModel: fetch a station within a MIN_RADIUS
          */
@@ -125,9 +125,9 @@ public class GasManagerFragment extends Fragment implements
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
-        mSettings = ((ManagementActivity)getActivity()).getSettings();
+        mSettings = ((ExpenseActivity)getActivity()).getSettings();
         df = BaseActivity.getDecimalFormatInstance();
-        numPad = new InputPadFragment();
+        numPad = new NumberPadFragment();
 
         // Fetch the current location using worker thread, the result of which is returned to
         // getLocation() of ViewModel.LocationViewModel as a LiveData
@@ -170,7 +170,7 @@ public class GasManagerFragment extends Fragment implements
         btnFavorite.setOnClickListener(view -> registerFavorite());
 
 
-        // ViewModels to share data b/w fragments(GasManager, ServiceManager, and InputPadFragment)
+        // ViewModels to share data b/w fragments(GasManager, ServiceManager, and NumberPadFragment)
         // Return value is of SparseArray type the key of which is the view id of a clicked view.
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
             targetView = localView.findViewById(data.keyAt(0));
@@ -249,7 +249,7 @@ public class GasManagerFragment extends Fragment implements
         String initValue = null;
         targetView = (TextView)v;
 
-        // Pass the current saved value to InputPadFragment
+        // Pass the current saved value to NumberPadFragment
         switch(v.getId()) {
             case R.id.tv_mileage:
                 //title = tvOdometer.getText().toString();
@@ -272,9 +272,9 @@ public class GasManagerFragment extends Fragment implements
                 break;
         }
 
-        // Pass the id of TextView to InputPadFragment for which TextView is being focused to wait
+        // Pass the id of TextView to NumberPadFragment for which TextView is being focused to wait
         // for a new value.
-        //InputPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
+        //NumberPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
 
         args.putString("title", null);
         args.putInt("viewId", v.getId());

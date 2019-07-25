@@ -5,7 +5,9 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -44,6 +46,8 @@ public class MainActivity extends BaseActivity implements
     private StationInfoTask mapInfoTask;
     private FinishAppDialogFragment alertDialog;
 
+    // UIs
+    private ProgressBar progressBar;
     // Fields
     private boolean isTabVisible = false;
     private int tabSelected;
@@ -55,8 +59,9 @@ public class MainActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = findViewById(R.id.toolbar_main);
+        Toolbar toolbar = findViewById(R.id.toolbar_expense);
         frameLayout = findViewById(R.id.frameLayout);
+        progressBar = findViewById(R.id.progbar);
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
@@ -86,12 +91,12 @@ public class MainActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onResume(){
-        log.i("onResume: pop");
         super.onResume();
         //getSupportFragmentManager().popBackStack();
 
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
+        progressBar.setVisibility(View.GONE);
 
     }
 
@@ -116,7 +121,8 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
 
             case R.id.action_carman:
-                startActivity(new Intent(MainActivity.this, ManagementActivity.class));
+                progressBar.setVisibility(View.VISIBLE);
+                startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
 
             case R.id.action_board:

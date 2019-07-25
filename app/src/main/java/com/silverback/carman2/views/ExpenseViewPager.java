@@ -6,7 +6,7 @@ import android.view.View;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
-import com.silverback.carman2.adapters.ExpensePagerAdapter;
+import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -21,11 +21,13 @@ public class ExpenseViewPager extends ViewPager {
         super(context);
     }
 
+    /*
     public void initPager(FragmentManager fm) {
-        ExpensePagerAdapter adapter = new ExpensePagerAdapter(fm);
+        ExpenseTopPagerAdapter adapter = new ExpenseTopPagerAdapter(fm);
         setAdapter(adapter);
         setCurrentItem(0);
     }
+    */
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {

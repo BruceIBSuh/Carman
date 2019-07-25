@@ -25,6 +25,14 @@ public class FragmentSharedModel extends ViewModel {
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
 
+    /*
+     * Share data b/w fragments
+     * setSelectedValue(): defined in NumberPadFragment
+     * getSelectedValue(): defined in GasManagerFragment or ServiceManagerFragment
+     *
+     * Pass the values put in NumberPadFragment to GasManagerFragment or ServiceManagerFragment
+     * as the type of SparseIntArray, the key of which indicates the id of views in NumberPadFragment.
+     */
     public void setSelectedValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.
         sparsesArray.put(key, value);
@@ -35,6 +43,11 @@ public class FragmentSharedModel extends ViewModel {
         return selectedValue;
     }
 
+    /**
+     * Share data b/w Input
+     * @param key
+     * @param value
+     */
     public void setSelectedMemo(int key, String value) {
         SparseArray<String> sparseArray = new SparseArray<>(1);
         sparseArray.put(key, value);

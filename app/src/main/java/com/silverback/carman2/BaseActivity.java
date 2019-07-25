@@ -314,7 +314,7 @@ public class BaseActivity extends AppCompatActivity {
         List<String> tabTitleList = null;
         List<Drawable> tabIconList = null;
 
-        if(context instanceof ManagementActivity) {
+        if(context instanceof ExpenseActivity) {
             log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
 
@@ -329,9 +329,7 @@ public class BaseActivity extends AppCompatActivity {
 
             log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_billboard_title));
-            //Drawable[] icons = {};
 
-            //tabIconList = Arrays.asList(icons);
         }
 
         for(int i = 0; i < tabLayout.getTabCount(); i++) {

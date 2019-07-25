@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    tools:context="com.silverback.carman2.ManagementActivity">
+    tools:context="com.silverback.carman2.ExpenseActivity">
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"

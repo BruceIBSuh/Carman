@@ -4,7 +4,6 @@ package com.silverback.carman2.fragments;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,25 +13,25 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.silverback.carman2.BaseActivity;
-import com.silverback.carman2.ManagementActivity;
+import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ServiceChecklistAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.ServiceManagerDao;
-import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.database.ServiceManagerEntity;
+import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
-import com.silverback.carman2.views.ServiceItemRecyclerView;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,9 +39,7 @@ import org.json.JSONException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -59,13 +56,12 @@ public class ServiceManagerFragment extends Fragment implements
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
 
-    private InputPadFragment numPad;
-    private ServiceItemMemoFragment memoPad;
+    private NumberPadFragment numPad;
+    private MemoPadFragment memoPad;
 
     private FavoriteGeofenceHelper geofenceHelper;
-    private Calendar calendar;
+    //private Calendar calendar;
     private ServiceChecklistAdapter mAdapter;
-    private ServiceItemRecyclerView serviceItemRecyclerView;
     private DecimalFormat df;
 
     // UIs
@@ -74,10 +70,9 @@ public class ServiceManagerFragment extends Fragment implements
     private ImageButton btnFavorite;
 
     // Fields
-    private SparseArray<ServiceManagerDao.ServicedItemData> servicedItemArray;
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private int itemPos;
-    private int totalServiceExpense;
+    private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isFavorite;
 
@@ -91,17 +86,16 @@ public class ServiceManagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         // Instantiate objects.
-        mSettings = ((ManagementActivity)getActivity()).getSettings();
+        mSettings = ((ExpenseActivity)getActivity()).getSettings();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
-        calendar = Calendar.getInstance(Locale.getDefault());
+        //calendar = Calendar.getInstance(Locale.getDefault());
 
-        numPad = new InputPadFragment();
-        memoPad = new ServiceItemMemoFragment();
-        servicedItemArray = new SparseArray<>();
+        numPad = new NumberPadFragment();
+        memoPad = new MemoPadFragment();
 
 
         // Retrieve service items which are saved in SharedPreferences as the type of JSON string.
@@ -113,8 +107,7 @@ public class ServiceManagerFragment extends Fragment implements
             log.e("JSONException: %s", e.getMessage());
         }
 
-
-        // Query the recent service data of each service checklist using ServiceManagerDao.
+        // Query the latest service record of each service checklist using ServiceManagerDao.
         for(int i = 0; i < jsonSvcItemArray.length(); i++) {
             final int position = i;
             String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
@@ -134,6 +127,7 @@ public class ServiceManagerFragment extends Fragment implements
         View boxview = localView.findViewById(R.id.view);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
+        RecyclerView recyclerView = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etStnName = localView.findViewById(R.id.et_service_provider);
         tvMileage = localView.findViewById(R.id.tv_mileage);
@@ -153,17 +147,18 @@ public class ServiceManagerFragment extends Fragment implements
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
 
-        serviceItemRecyclerView = localView.findViewById(R.id.recycler_service);
-        serviceItemRecyclerView.setHasFixedSize(true);
-        serviceItemRecyclerView.setAdapter(mAdapter);
+        // Set the recycler view for enlisting the service checklist and attach the adapter to it.
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(mAdapter);
+
 
         /*
-         * ViewModel to share data b/w Fragments(this and InputPadFragment)
+         * ViewModel to share data b/w Fragments(this and NumberPadFragment)
          * @param: getSelectedValue(): SparseArray<Integer>
          * @param: getSelectedMemo(): SparseArray<String>
          */
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
-
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
 
@@ -176,13 +171,13 @@ public class ServiceManagerFragment extends Fragment implements
 
                 case R.id.tv_value_cost:
                     mAdapter.notifyItemChanged(itemPos, data);
-                    totalServiceExpense += data.valueAt(0);
-                    tvTotalCost.setText(df.format(totalServiceExpense));
+                    totalExpense += data.valueAt(0);
+                    tvTotalCost.setText(df.format(totalExpense));
                     break;
             }
         });
 
-        // Communicate b/w RecyclerView.ViewHolder and item memo in ServiceItemMemoFragment
+        // Communicate b/w RecyclerView.ViewHolder and item memo in MemoPadFragment
         fragmentSharedModel.getSelectedMenu().observe(this, data ->
                 mAdapter.notifyItemChanged(itemPos, data));
 
@@ -246,7 +241,7 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // ServiceItemList.OnParentFragmentListener invokes this method
-    // to pop up InputPadFragment and input the amount of expense in a service item.
+    // to pop up NumberPadFragment and input the amount of expense in a service item.
     @Override
     public void inputItemCost(String title, TextView targetView, int position) {
         itemPos = position;
@@ -277,8 +272,8 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void subtractCost(int value) {
         log.i("Calculate Total Cost");
-        totalServiceExpense -= value;
-        tvTotalCost.setText(df.format(totalServiceExpense));
+        totalExpense -= value;
+        tvTotalCost.setText(df.format(totalExpense));
     }
 
     @Override
@@ -318,7 +313,7 @@ public class ServiceManagerFragment extends Fragment implements
         basicEntity.dateTime = milliseconds;
         basicEntity.mileage = mileage;
         basicEntity.category = 2;
-        basicEntity.totalExpense = totalServiceExpense;
+        basicEntity.totalExpense = totalExpense;
 
         serviceEntity.serviceCenter = etStnName.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea";

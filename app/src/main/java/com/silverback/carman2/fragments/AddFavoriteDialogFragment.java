@@ -10,21 +10,18 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.silverback.carman2.ManagementActivity;
+import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.LoadDistCodeTask;
-import com.silverback.carman2.threads.ThreadManager;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -69,7 +66,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mSettings = ((ManagementActivity)getActivity()).getSettings();
+        mSettings = ((ExpenseActivity)getActivity()).getSettings();
         providerName = getArguments().getString("favoriteName");
         category = getArguments().getInt("category");
     }

@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    tools:context="com.silverback.carman2.ManagementActivity">
+    tools:context="com.silverback.carman2.ExpenseActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
@@ -27,7 +27,7 @@
             app:titleEnabled="false" >
 
             <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar_main"
+                android:id="@+id/toolbar_expense"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@android:color/holo_blue_dark"
