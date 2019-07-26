@@ -178,7 +178,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 distCode = convJSONArrayToList().get(2);
                 priceTask = ThreadManager.startPriceTask(this, distCode);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-
                 break;
 
             case "pref_location_autoupdate":

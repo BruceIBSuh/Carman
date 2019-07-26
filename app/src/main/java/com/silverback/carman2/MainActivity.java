@@ -140,7 +140,6 @@ public class MainActivity extends BaseActivity implements
 
             case R.id.action_setting:
                 startActivity(new Intent(MainActivity.this, SettingPreferenceActivity.class));
-                finish();
                 return true;
 
             default:
