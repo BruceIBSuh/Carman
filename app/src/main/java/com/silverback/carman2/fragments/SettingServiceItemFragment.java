@@ -128,10 +128,14 @@ public class SettingServiceItemFragment extends Fragment implements
         super.onCreateOptionsMenu(menu, inflater);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         switch(item.getItemId()) {
+            case android.R.id.home:
+                getActivity().onBackPressed();
+                return true;
 
             case R.id.menu_add:
                 if(getFragmentManager() != null)

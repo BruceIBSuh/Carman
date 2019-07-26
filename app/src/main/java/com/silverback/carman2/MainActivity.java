@@ -1,6 +1,7 @@
 package com.silverback.carman2;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
@@ -33,6 +34,7 @@ public class MainActivity extends BaseActivity implements
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Constants
+    private static final int REQ_SETTING_CODE = 100;
     private static final int TAB_CARMAN = 1;
     private static final int TAB_BOARD = 2;
 
@@ -124,7 +126,8 @@ public class MainActivity extends BaseActivity implements
 
             case R.id.action_carman:
                 progressBar.setVisibility(View.VISIBLE);
-                frameLayout.setAlpha(0.5f);
+                frameLayout.setAlpha(0.3f);
+
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
 
@@ -137,6 +140,7 @@ public class MainActivity extends BaseActivity implements
 
             case R.id.action_setting:
                 startActivity(new Intent(MainActivity.this, SettingPreferenceActivity.class));
+                finish();
                 return true;
 
             default:

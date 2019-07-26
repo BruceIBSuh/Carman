@@ -3,28 +3,16 @@ package com.silverback.carman2.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
-
-import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 
 import androidx.preference.DialogPreference;
 import androidx.preference.Preference;
+
+import com.silverback.carman2.R;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 public class SpinnerDialogPreference extends DialogPreference implements Preference.OnPreferenceChangeListener{
 
@@ -35,28 +23,23 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
     private String districtName;
 
     /*
-     *When you replace the 0 in the second constructor with R.attr.dialogPreferenceStyle
-     * (For a DialogPreference) or R.attr.preferenceStyle (For any other preference) you
+     * When you replace the 0 in the second constructor with R.attr.dialogPreferenceStyle
+     * (for a DialogPreference) or R.attr.preferenceStyle (For any other preference) you
      * won’t face any design issues later. Thanks Ivan Soriano
      */
 
     // Constructors
-
     public SpinnerDialogPreference(Context context) {
         super(context);
     }
-
-
     public SpinnerDialogPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
-
     public SpinnerDialogPreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         getAttributes(context, attrs);
     }
-
     public SpinnerDialogPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         getAttributes(context, attrs);
@@ -65,25 +48,18 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
 
     private void getAttributes(Context context, AttributeSet attrs) {
 
-        setDialogLayoutResource(R.layout.dialogpref_spinner);
+        setDialogLayoutResource(R.layout.dialog_setting_spinner);
         setOnPreferenceChangeListener(this);
-
-
-
+        /*
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
         try {
 
         } finally {
             typedArray.recycle();
         }
+        */
+
     }
-
-
-    @Override
-    public int getDialogLayoutResource() {
-        return R.layout.dialogpref_spinner;
-    }
-
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {

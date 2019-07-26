@@ -72,7 +72,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         mProgBar.setVisibility(View.VISIBLE);
         File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
-        String distCode = null;
+        String distCode;
 
         if(checkUpdateOilPrice() || !file.exists()) {
 
