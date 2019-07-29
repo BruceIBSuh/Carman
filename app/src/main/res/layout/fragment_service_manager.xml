@@ -16,7 +16,7 @@
         android:layout_alignParentTop="true" >
 
         <View
-            android:id="@+id/view"
+            android:id="@+id/view_line"
             android:layout_width="0dp"
             android:layout_height="160dp"
             android:layout_margin="2dp"
@@ -35,8 +35,8 @@
             android:minWidth="80dp"
             android:text="@string/svc_label_date"
             android:textSize="@dimen/largeText"
-            app:layout_constraintStart_toStartOf="@+id/view"
-            app:layout_constraintTop_toTopOf="@+id/view" />
+            app:layout_constraintStart_toStartOf="@+id/view_line"
+            app:layout_constraintTop_toTopOf="@+id/view_line" />
 
         <TextView
             android:id="@+id/tv_service_date"
@@ -90,7 +90,7 @@
             android:minWidth="200dp"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="@+id/imgbtn_favorite"
-            app:layout_constraintEnd_toEndOf="@+id/view"
+            app:layout_constraintEnd_toEndOf="@+id/view_line"
             app:layout_constraintStart_toStartOf="@+id/tv_service_date"
             app:layout_constraintTop_toTopOf="@+id/imgbtn_favorite"
             tools:ignore="Autofill" />

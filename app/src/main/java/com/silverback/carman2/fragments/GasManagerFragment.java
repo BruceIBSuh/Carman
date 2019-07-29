@@ -48,9 +48,7 @@ import java.util.Locale;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GasManagerFragment extends Fragment implements
-        //LoaderManager.LoaderCallbacks<Cursor>,
-        View.OnClickListener {
+public class GasManagerFragment extends Fragment implements View.OnClickListener {
         //ThreadManager.OnStationInfoListener {
 
     // Logging
@@ -187,6 +185,7 @@ public class GasManagerFragment extends Fragment implements
             this.location = location;
             stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
         });
+
 
         // Check if a fetched current station has registered with Favorite right after StationListModel
         // is notified to retrieve a current station. Then, get StationInfoTask started to get

@@ -2,13 +2,15 @@ package com.silverback.carman2.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Canvas;
 import android.location.Location;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -16,10 +18,6 @@ import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
-
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class StationRecyclerView extends RecyclerView {
 
@@ -33,15 +31,14 @@ public class StationRecyclerView extends RecyclerView {
     private int mPBResId = -1;
     private int mTextViewResId = -2;
     private int mFabResId = -3;
-    private String[] defaultParams;
-    private Location location;
+    //private String[] defaultParams;
+    //private Location location;
 
 
     // Default constructors
     public StationRecyclerView(Context context) {
         super(context);
     }
-
     public StationRecyclerView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
@@ -68,16 +65,15 @@ public class StationRecyclerView extends RecyclerView {
         }
     }
 
-    /**
+    /*
      * Initiate StationListTask with the params passed from GeneralFragment.
      * @param defaults fuel code, searching radius, sorting order.
      * @param location fetched using LocationTask
      * @param fragment parent fragment
      */
-
     public void initView(Fragment fragment, Location location, String[] defaults) {
-        defaultParams = defaults;
-        this.location = location;
+        //defaultParams = defaults;
+        //this.location = location;
 
         stationListTask = ThreadManager.startStationListTask(fragment, location, defaults);
     }
@@ -90,7 +86,7 @@ public class StationRecyclerView extends RecyclerView {
     protected void onAttachedToWindow() {
         // Always call the supermethod first
         super.onAttachedToWindow();
-        if (mPBResId != -1 && (getParent() instanceof View)) {
+        if (mPBResId != -1 && getParent() instanceof View) {
             // Gets a handle to the sibling View
             View localView = ((View)getParent()).findViewById(mPBResId);
             // If the sibling View contains something, make it the weak reference for this View
@@ -125,7 +121,7 @@ public class StationRecyclerView extends RecyclerView {
     // list completed.
     public void showStationListRecyclerView() {
 
-        mThisView = new WeakReference<View>(this);
+        mThisView = new WeakReference<>(this);
         View localView = mThisView.get();
 
         if(localView != null) {
@@ -141,7 +137,7 @@ public class StationRecyclerView extends RecyclerView {
     // within a givene radius.
     public void showTextView(String message){
 
-        if((mTextViewResId != -2) && (getParent() instanceof View)) {
+        if((mTextViewResId != -2) && getParent() instanceof View) {
 
             View localView = ((View)getParent()).findViewById(mTextViewResId);
             // If the sibling View contains something, make it the weak reference for this View

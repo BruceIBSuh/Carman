@@ -124,7 +124,7 @@ public class ServiceManagerFragment extends Fragment implements
 
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
-        View boxview = localView.findViewById(R.id.view);
+        View boxview = localView.findViewById(R.id.view_line);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_service);

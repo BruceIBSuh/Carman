@@ -23,6 +23,5 @@
     <color name="graphBarColor">@color/statThemeColor</color>
     <color name="graphLabelColor">#202020</color>
     <color name="graphAxisColor">#202020</color>
-
     <color name="bgRecentExp">#999900</color>
 </resources>

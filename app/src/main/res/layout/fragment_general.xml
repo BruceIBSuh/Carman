@@ -7,61 +7,41 @@
     tools:context=".fragments.GeneralFragment">
 
     <TextView
-        android:id="@+id/tv_label_date"
-        android:layout_width="wrap_content"
-        android:layout_height="35dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:text="@string/general_label_today"
-        android:textSize="@dimen/subtitle"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
         android:id="@+id/tv_today"
         android:layout_width="wrap_content"
-        android:layout_height="35dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="3dp"
         android:layout_marginTop="10dp"
         android:gravity="center_vertical"
-        android:textSize="@dimen/mediumText"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_date"
+        android:textSize="@dimen/extraLargeText"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
         android:id="@+id/spinner_fuel"
-        android:layout_width="120dp"
-        android:layout_height="35dp"
-        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="70dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         android:gravity="center_vertical"
+        android:background="@drawable/spinner_main"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
-    <FrameLayout
-        android:id="@+id/frame_rotate_contents"
-        android:layout_width="wrap_content"
-        android:layout_height="80dp"
-        android:minWidth="110dp"
-        android:layout_marginStart="3dp"
+    <com.silverback.carman2.views.AvgPriceView
+        android:id="@+id/avgPriceView"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
         android:layout_marginTop="8dp"
         android:background="@drawable/bg_colored_border"
+        android:gravity="center"
+        android:padding="5dp"
+        app:avgPriceDown="@color/priceDown"
+        app:avgPriceUp="@color/priceUp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_date">
-
-        <com.silverback.carman2.views.AvgPriceView
-            android:id="@+id/avgPriceView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:padding="5dp"
-            app:avgPriceDown="@color/priceDown"
-            app:avgPriceUp="@color/priceUp" />
-
-    </FrameLayout>
+        app:layout_constraintTop_toBottomOf="@+id/tv_today" />
 
     <TextView
         android:id="@+id/tv_subtitle_region"
@@ -72,18 +52,18 @@
         android:text="@string/general_subtitle_region"
         android:textSize="@dimen/subtitle"
         android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@+id/frame_rotate_contents"
-        app:layout_constraintTop_toTopOf="@+id/frame_rotate_contents" />
+        app:layout_constraintStart_toEndOf="@+id/avgPriceView"
+        app:layout_constraintTop_toTopOf="@+id/avgPriceView" />
 
     <View
-        android:id="@+id/view"
+        android:id="@+id/view_line"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="3dp"
         android:background="@color/subBorder"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/frame_rotate_contents"
+        app:layout_constraintStart_toEndOf="@+id/avgPriceView"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_region" />
 
     <HorizontalScrollView
@@ -93,10 +73,10 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         android:scrollbars="none"
-        app:layout_constraintBottom_toBottomOf="@+id/frame_rotate_contents"
+        app:layout_constraintBottom_toBottomOf="@+id/avgPriceView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/view"
-        app:layout_constraintTop_toBottomOf="@+id/view">
+        app:layout_constraintStart_toStartOf="@+id/view_line"
+        app:layout_constraintTop_toBottomOf="@+id/view_line">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -131,15 +111,16 @@
     </HorizontalScrollView>
 
     <View
-        android:id="@+id/view_expense"
+        android:id="@+id/view_subtitle_expense"
         android:layout_width="0dp"
         android:layout_height="35dp"
         android:layout_marginTop="8dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/frame_rotate_contents" />
-
+        app:layout_constraintTop_toBottomOf="@+id/avgPriceView" />
 
     <TextView
         android:id="@+id/tv_subtitle_exp"
@@ -150,9 +131,9 @@
         android:text="@string/general_subtitle_expense"
         android:textSize="@dimen/subtitle"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/view_expense"
-        app:layout_constraintTop_toTopOf="@+id/view_expense"
-        app:layout_constraintBottom_toBottomOf="@+id/view_expense" />
+        app:layout_constraintStart_toStartOf="@+id/view_subtitle_expense"
+        app:layout_constraintTop_toTopOf="@+id/view_subtitle_expense"
+        app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_expense" />
 
     <ImageButton
         android:id="@+id/imgbtn_expense"
@@ -163,9 +144,9 @@
         android:src="@drawable/state_btn_rotate"
         android:contentDescription="@null"
         android:scaleType="fitXY"
-        app:layout_constraintTop_toTopOf="@+id/view_expense"
-        app:layout_constraintBottom_toBottomOf="@+id/view_expense"
-        app:layout_constraintEnd_toEndOf="@+id/view_expense" />
+        app:layout_constraintTop_toTopOf="@+id/view_subtitle_expense"
+        app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_expense"
+        app:layout_constraintEnd_toEndOf="@+id/view_subtitle_expense" />
 
     <TextView
         android:id="@+id/tv_recent_exp"
@@ -176,17 +157,18 @@
         android:text="@string/textview"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view_expense" />
+        app:layout_constraintTop_toBottomOf="@+id/view_subtitle_expense" />
 
     <View
-        android:id="@+id/view_near_stations"
+        android:id="@+id/view_subtitle_stations"
         android:layout_width="0dp"
         android:layout_height="35dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_recent_exp" />
-
 
     <TextView
         android:id="@+id/tv_subtitle_stations"
@@ -197,9 +179,9 @@
         android:text="@string/general_subtitle_stations"
         android:textSize="@dimen/subtitle"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/view_near_stations"
-        app:layout_constraintTop_toTopOf="@+id/view_near_stations"
-        app:layout_constraintBottom_toBottomOf="@+id/view_near_stations"/>
+        app:layout_constraintStart_toStartOf="@+id/view_subtitle_stations"
+        app:layout_constraintTop_toTopOf="@+id/view_subtitle_stations"
+        app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_stations"/>
 
     <TextView
         android:id="@+id/tv_stations_order"
@@ -209,8 +191,8 @@
         android:gravity="center_vertical"
         android:text="@string/general_stations_distance"
         app:layout_constraintStart_toEndOf="@+id/tv_subtitle_stations"
-        app:layout_constraintTop_toTopOf="@+id/view_near_stations"
-        app:layout_constraintBottom_toBottomOf="@+id/view_near_stations" />
+        app:layout_constraintTop_toTopOf="@+id/view_subtitle_stations"
+        app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_stations" />
 
     <ImageButton
         android:id="@+id/imgbtn_stations"
@@ -221,116 +203,9 @@
         android:src="@drawable/state_btn_rotate"
         android:contentDescription="@null"
         android:scaleType="fitXY"
-        app:layout_constraintEnd_toEndOf="@+id/view_near_stations"
-        app:layout_constraintBottom_toBottomOf="@+id/view_near_stations"
-        app:layout_constraintTop_toTopOf="@+id/view_near_stations" />
-
-    <!--
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout2"
-        android:layout_width="0dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="3dp"
-        android:background="@drawable/bg_colored_border"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/horizontalScrollView">
-
-        <TextView
-            android:id="@+id/textView4"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginStart="5dp"
-            android:gravity="center_vertical"
-            android:text="@string/general_subtitle_expense"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/imgbtn_expense"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginEnd="8dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:scaleType="fitXY"
-
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="405dp"
-        android:layout_height="100dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginEnd="3dp"
-        android:text="@string/textview"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout2" />
-
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout"
-        android:layout_width="0dp"
-        android:layout_height="35dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="3dp"
-        android:background="@drawable/bg_colored_border"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView">
-
-        <TextView
-            android:id="@+id/tv_subtitle_stations"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginStart="5dp"
-            android:gravity="center_vertical"
-            android:text="@string/general_subtitle_stations"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/tv_stations_order"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_marginStart="16dp"
-            android:gravity="center_vertical"
-            android:text="@string/general_stations_distance"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/tv_subtitle_stations"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/imgbtn_stations"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginEnd="8dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
-            android:scaleType="fitXY"
-
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-    -->
+        app:layout_constraintEnd_toEndOf="@+id/view_subtitle_stations"
+        app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_stations"
+        app:layout_constraintTop_toTopOf="@+id/view_subtitle_stations" />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/frame_recyclerview"
@@ -341,7 +216,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view_near_stations">
+        app:layout_constraintTop_toBottomOf="@+id/view_subtitle_stations">
 
         <TextView
             android:id="@+id/tv_no_stations"

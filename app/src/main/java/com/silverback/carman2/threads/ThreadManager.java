@@ -139,7 +139,6 @@ public class ThreadManager {
          */
 
         mMainHandler = new Handler(Looper.getMainLooper()) {
-            @SuppressWarnings("unchecked")
             @Override
             public void handleMessage(Message msg) {
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
@@ -464,8 +463,6 @@ public class ThreadManager {
             }
         }
         */
-
-
 
         stationTask.initStationTask(ThreadManager.sInstance, fragment, stnName, stnId);
         sInstance.mDownloadThreadPool.execute(stationTask.getStationMapInfoRunnable());
