@@ -62,7 +62,6 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Set Toolbar as Actionbar;
         toolbar = findViewById(R.id.toolbar_expense);
-        FrameLayout tabFrame = findViewById(R.id.frame_tab_fragments);
         tabLayout = findViewById(R.id.tabLayout);
         topFrame = findViewById(R.id.frame_top_fragments);
 
@@ -73,13 +72,11 @@ public class ExpenseActivity extends BaseActivity implements
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
-        ViewPager tabViewPager = new ViewPager(this);
-        tabViewPager.setId(View.generateViewId());
-        tabFrame.addView(tabViewPager);
+        ViewPager tabViewPager = findViewById(R.id.tabpager);
+        tabViewPager.addOnPageChangeListener(this);
 
         tabPagerAdapter = new ExpenseTabPagerAdapter(getSupportFragmentManager());
         tabViewPager.setAdapter(tabPagerAdapter);
-        tabViewPager.addOnPageChangeListener(this);
         tabLayout.setupWithViewPager(tabViewPager);
 
         // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
@@ -95,15 +92,15 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Create ViewPager for last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied here.
+
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         ExpenseTopPagerAdapter topPagerAdapter = new ExpenseTopPagerAdapter(getSupportFragmentManager());
         expensePager.setAdapter(topPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
+
     }
-
-
 
     @SuppressWarnings("ConstantConditions")
     @Override

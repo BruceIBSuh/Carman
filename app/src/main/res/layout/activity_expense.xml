@@ -75,8 +75,8 @@
         android:fillViewport="true"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <FrameLayout
-            android:id="@+id/frame_tab_fragments"
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/tabpager"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

@@ -171,8 +171,6 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-
-
         locationTask = ThreadManager.fetchLocationTask(this);
         locationModel.getLocation().observe(this, location -> {
             // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
@@ -218,8 +216,6 @@ public class GeneralFragment extends Fragment implements
             startActivity(intent);
         });
 
-
-
         return childView;
     }
 
@@ -244,12 +240,6 @@ public class GeneralFragment extends Fragment implements
         if(priceTask != null) priceTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
     }
-
-    @Override
-    public void onStop(){
-        super.onStop();
-    }
-
 
     @Override
     public void onClick(View view) {

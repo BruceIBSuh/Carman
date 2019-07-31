@@ -34,7 +34,12 @@ public class ExpenseTabPagerAdapter extends FragmentPagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int pos) {
-        return fragments[pos];
+        //return fragments[pos];
+        return new DummyFragment();
+    }
+
+    public static class DummyFragment extends Fragment{
+        public DummyFragment() {}
     }
 
 }

@@ -123,8 +123,8 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
 
             case R.id.action_carman:
-                progressBar.setVisibility(View.VISIBLE);
-                frameLayout.setAlpha(0.5f);
+                //progressBar.setVisibility(View.VISIBLE);
+                //frameLayout.setAlpha(0.5f);
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
 
