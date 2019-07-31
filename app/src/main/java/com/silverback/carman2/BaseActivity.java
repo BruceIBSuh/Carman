@@ -282,40 +282,10 @@ public class BaseActivity extends AppCompatActivity {
     // setupWithViewPager when it is linked to ViewPager.
     @SuppressWarnings("ConstantConditions")
     protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
-
-        //if(!tabTitleList.isEmpty()) tabTitleList.clear();
-        //if(!tabIconList.isEmpty()) tabIconList.clear();
-        /*
-        switch(tab) {
-            case TAB_CARMAN:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_carman_title));
-                Drawable[] icons = {
-                        getDrawable(R.drawable.ic_gas),
-                        getDrawable(R.drawable.ic_service),
-                        getDrawable(R.drawable.ic_stats)};
-
-                tabIconList = Arrays.asList(icons);
-                break;
-
-            case TAB_BOARD:
-                tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tap_board_title));
-                icons = new Drawable[]{};
-                tabIconList = Arrays.asList(icons);
-                break;
-
-        }
-
-        for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            log.i("Title: %s", tabTitleList.get(i));
-            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
-            if(!tabIconList.isEmpty()) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
-        }
-        */
         List<String> tabTitleList = null;
         List<Drawable> tabIconList = null;
 
         if(context instanceof ExpenseActivity) {
-            log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
 
             Drawable[] icons = {
@@ -337,8 +307,6 @@ public class BaseActivity extends AppCompatActivity {
             tabLayout.getTabAt(i).setText(tabTitleList.get(i));
             if(tabIconList != null) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
         }
-
-
     }
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.

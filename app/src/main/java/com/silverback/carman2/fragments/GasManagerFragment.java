@@ -21,7 +21,7 @@ import androidx.lifecycle.ViewModelProviders;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
+import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.GasManagerEntity;
@@ -70,7 +70,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private SharedPreferences mSettings;
     private DecimalFormat df;
 
-    private ExpenseTopPagerAdapter viewPagerAdapter;
+    private RecentExpensePagerAdapter viewPagerAdapter;
     private CustomPagerIndicator indicator;
     private Calendar calendar;
     private SimpleDateFormat sdf;
@@ -181,6 +181,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Once getting the current location fetched, attempt to get a station within MIN_RADIUS
         // using a worker thread, the result of which is notified using getCurrentStationLiveData()
         // of StationListViewModel as a LiveData like in the following method.
+
         locationModel.getLocation().observe(this, location -> {
             this.location = location;
             stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);

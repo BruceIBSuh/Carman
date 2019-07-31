@@ -3,26 +3,33 @@ package com.silverback.carman2;
 import android.animation.ObjectAnimator;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
-import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
+import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
+import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.models.ViewPagerModel;
+import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.ViewPagerTask;
 import com.silverback.carman2.views.ExpenseViewPager;
 
 public class ExpenseActivity extends BaseActivity implements
@@ -37,10 +44,13 @@ public class ExpenseActivity extends BaseActivity implements
 
     // Objects
     //private LocationTask locationTask;
+    private ViewPager tabPager;
+    private ViewPagerModel pagerModel;
+    private ViewPagerTask pagerTask;
     private ExpenseViewPager expensePager;
     private ExpenseTabPagerAdapter tabPagerAdapter;
     private AppBarLayout appBar;
-    private TabLayout tabLayout;
+    private TabLayout expenseTabLayout;
     private FrameLayout topFrame;
 
     // Fields
@@ -57,55 +67,66 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
+        pagerModel = ViewModelProviders.of(this).get(ViewPagerModel.class);
+
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
-
-        // Set Toolbar as Actionbar;
         toolbar = findViewById(R.id.toolbar_expense);
-        FrameLayout tabFrame = findViewById(R.id.frame_tab_fragments);
-        tabLayout = findViewById(R.id.tabLayout);
+        expenseTabLayout = findViewById(R.id.tab_expense);
         topFrame = findViewById(R.id.frame_top_fragments);
+        tabPager = findViewById(R.id.tabpager);
 
         // Set the toolbar as the working action bar
         setSupportActionBar(toolbar);
-        //getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
+        pagerTask = ThreadManager.startViewPagerTask(
+                pagerModel, getSupportFragmentManager(), getDefaultParams());
         /*
-        ViewPager tabViewPager = new ViewPager(this);
-        tabViewPager.setId(View.generateViewId());
-        tabFrame.addView(tabViewPager);
-
-
         tabPagerAdapter = new ExpenseTabPagerAdapter(getSupportFragmentManager());
-        tabViewPager.setAdapter(tabPagerAdapter);
-        tabViewPager.addOnPageChangeListener(this);
-        tabLayout.setupWithViewPager(tabViewPager);
-        */
+        tabPager.setOffscreenPageLimit(0);
+        tabPager.setAdapter(tabPagerAdapter);
+        tabPager.addOnPageChangeListener(this);
+        expenseTabLayout.setupWithViewPager(tabPager);
 
         // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
         // it to GasManagerFragment.
+
         String[] defaultParams = getDefaultParams();
         defaultParams[1] = Constants.MIN_RADIUS;
         Bundle args = new Bundle();
         args.putStringArray("defaultParams", defaultParams);
         tabPagerAdapter.getItem(0).setArguments(args);
 
-        addTabIconAndTitle(this, tabLayout);
+        addTabIconAndTitle(this, expenseTabLayout);
         animSlideTabLayout();
+        */
 
         // Create ViewPager for last 5 recent expense statements in the top frame.
-        // Required to use FrameLayout.addView() b/c StatFragment should be applied here.
-        /*
+        // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
+        // not ViewPager.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        ExpenseTopPagerAdapter topPagerAdapter = new ExpenseTopPagerAdapter(getSupportFragmentManager());
+        RecentExpensePagerAdapter topPagerAdapter = new RecentExpensePagerAdapter(getSupportFragmentManager());
         expensePager.setAdapter(topPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
-        */
+
+
+        pagerModel.getPagerAdapter().observe(this, adapter -> {
+            log.i("ViewPagerModel: %s", adapter.getItem(0));
+            tabPagerAdapter = adapter;
+            tabPager.setAdapter(tabPagerAdapter);
+            expenseTabLayout.setupWithViewPager(tabPager);
+
+            addTabIconAndTitle(this, expenseTabLayout);
+            animSlideTabLayout();
+        });
+
+
     }
 
 
@@ -117,6 +138,12 @@ public class ExpenseActivity extends BaseActivity implements
 
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(pagerTask != null) pagerTask = null;
     }
 
     @Override
@@ -146,6 +173,7 @@ public class ExpenseActivity extends BaseActivity implements
 
                 if(fragment instanceof GasManagerFragment) {
                     isSaved = ((GasManagerFragment) fragment).saveGasData();
+
                 } else if(fragment instanceof ServiceManagerFragment) {
                     isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
                 }
@@ -158,7 +186,6 @@ public class ExpenseActivity extends BaseActivity implements
                     Toast.makeText(this, "Failed to save the data", Toast.LENGTH_SHORT).show();
                     return false;
                 }
-
         }
 
         return super.onOptionsItemSelected(item);
@@ -206,6 +233,13 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollStateChanged:%s", state);
+        tabPagerAdapter.getPagerFragments()[1] = new ServiceManagerFragment();
+        tabPagerAdapter.getPagerFragments()[2] = new StatStmtsFragment();
+
+        tabPagerAdapter.notifyDataSetChanged();
+        tabPager.requestLayout();
+
+        addTabIconAndTitle(this, expenseTabLayout);
     }
 
 
@@ -248,7 +282,7 @@ public class ExpenseActivity extends BaseActivity implements
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expenseTabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(1000);

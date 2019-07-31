@@ -74,6 +74,8 @@ public class ExpensePagerFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if(getActivity() == null) return;
 
+        log.i("ExpensePgaerFragment");
+
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
 
@@ -94,7 +96,6 @@ public class ExpensePagerFragment extends Fragment {
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
         fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
-
             currentFragment = fragment;
             log.i("Current Fragment in ExpenseViewPager: %s, %s", currentFragment, numPage);
             if(getArguments() != null) numPage = (getArguments().getInt("page"));
@@ -106,6 +107,7 @@ public class ExpensePagerFragment extends Fragment {
                     lastInfo = (data.size() > numPage)? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+                    log.i("Last Info: %s", lastInfo);
                 });
 
             }else if(currentFragment instanceof ServiceManagerFragment) {
@@ -117,8 +119,6 @@ public class ExpensePagerFragment extends Fragment {
                 });
 
             }
-
-
         });
 
         return localView;

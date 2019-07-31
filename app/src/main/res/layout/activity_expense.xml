@@ -36,7 +36,7 @@
                 app:titleTextColor="#fb9000" />
 
             <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayout"
+                android:id="@+id/tab_expense"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:alpha="0.5"
@@ -75,8 +75,8 @@
         android:fillViewport="true"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <FrameLayout
-            android:id="@+id/frame_tab_fragments"
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/tabpager"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
