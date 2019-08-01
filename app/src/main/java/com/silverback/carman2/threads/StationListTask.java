@@ -42,7 +42,6 @@ public class StationListTask extends ThreadTask implements
     private Location mLocation;
     private String[] defaultParams;
 
-    private static ThreadManager sThreadManager;
 
     // Constructor
     StationListTask(Context context) {
@@ -53,15 +52,12 @@ public class StationListTask extends ThreadTask implements
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
     }
 
-    void initStationTask(
-            ThreadManager threadManager, Fragment fragment, Location location, String[] params) {
-
-        sThreadManager = threadManager;
+    void initStationTask(StationListViewModel model, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
         //mStationInfoList = new ArrayList<>();
 
-        viewModel = ViewModelProviders.of(fragment).get(StationListViewModel.class);
+        viewModel = model;
     }
 
     // Get Runnables to be called in ThreadPool.executor()

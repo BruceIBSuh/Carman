@@ -2,13 +2,15 @@ package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.TextView;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
@@ -23,11 +25,15 @@ import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
-import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.models.ViewPagerModel;
+import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.RecyclerAdapterTask;
+import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ViewPagerTask;
 import com.silverback.carman2.views.ExpenseViewPager;
@@ -43,7 +49,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int MENU_ITEM_ID = 100;
 
     // Objects
-    //private LocationTask locationTask;
+    private Fragment targetFragment;
     private ViewPager tabPager;
     private ViewPagerModel pagerModel;
     private ViewPagerTask pagerTask;
@@ -53,11 +59,28 @@ public class ExpenseActivity extends BaseActivity implements
     private TabLayout expenseTabLayout;
     private FrameLayout topFrame;
 
+
+    private LocationTask locationTask;
+    private LocationViewModel locationModel;
+    private StationListViewModel stationModel;
+    private Location location;
+    private StationListTask stationListTask;
+
+    private RecyclerAdapterTask recyclerTask;
+
+
+    // UIs
+    private EditText etStnName;
+    private ProgressBar pbSearchStation;
+    private ImageButton imgRefresh;
+
     // Fields
+    private boolean isFirst = true;
     private int currentPage = 0;
     private boolean isTabVisible = false;
     //private boolean isLocationTask = false;
     private String pageTitle;
+    private String jsonServiceItems;
 
     private Toolbar toolbar;
 
@@ -67,7 +90,10 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
+        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         pagerModel = ViewModelProviders.of(this).get(ViewPagerModel.class);
+        jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+
 
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
@@ -90,18 +116,28 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.setAdapter(tabPagerAdapter);
         tabPager.addOnPageChangeListener(this);
         expenseTabLayout.setupWithViewPager(tabPager);
-
         // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
         // it to GasManagerFragment.
-        String[] defaultParams = getDefaultParams();
-        defaultParams[1] = Constants.MIN_RADIUS;
+        String[] defaults = getDefaultParams();
+        defaults[1] = Constants.MIN_RADIUS;
         Bundle args = new Bundle();
-        args.putStringArray("defaultParams", defaultParams);
+        args.putStringArray("defaultParams", defaults);
         tabPagerAdapter.getItem(0).setArguments(args);
-
         addTabIconAndTitle(this, expenseTabLayout);
         animSlideTabLayout();
         */
+
+        pagerModel.getPagerAdapter().observe(this, adapter -> {
+            log.i("ViewPagerModel: %s", adapter.getItem(0));
+            tabPagerAdapter = adapter;
+            tabPager.setAdapter(tabPagerAdapter);
+            expenseTabLayout.setupWithViewPager(tabPager);
+
+            addTabIconAndTitle(this, expenseTabLayout);
+            animSlideTabLayout();
+
+            locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+        });
 
         // Create ViewPager for last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
@@ -112,17 +148,6 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setAdapter(topPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
-
-
-        pagerModel.getPagerAdapter().observe(this, adapter -> {
-            tabPagerAdapter = adapter;
-            tabPager.setAdapter(tabPagerAdapter);
-            expenseTabLayout.setupWithViewPager(tabPager);
-
-            addTabIconAndTitle(this, expenseTabLayout);
-            animSlideTabLayout();
-        });
-
     }
 
 
@@ -140,6 +165,8 @@ public class ExpenseActivity extends BaseActivity implements
     public void onPause() {
         super.onPause();
         if(pagerTask != null) pagerTask = null;
+        if(locationTask != null) locationTask = null;
+        if(recyclerTask != null) recyclerTask = null;
     }
 
     @Override
@@ -191,6 +218,13 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
         log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+
+        if(isFirst && positionOffset == 0 && positionOffsetPixels == 0) {
+            log.i("onPageScrolled at initiating");
+            onPageSelected(0);
+            isFirst = false;
+        }
+
     }
 
     @Override
@@ -200,11 +234,10 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setCurrentItem(0);
 
         switch(position) {
-            case 0:
+            case 0: // GasManagerFragment
                 currentPage = 0;
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
-
                 break;
 
             case 1:
@@ -212,6 +245,7 @@ public class ExpenseActivity extends BaseActivity implements
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
 
+                recyclerTask = ThreadManager.setRecyclerAdapterTask(jsonServiceItems);
                 break;
 
             case 2:
@@ -221,7 +255,6 @@ public class ExpenseActivity extends BaseActivity implements
 
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
-
                 break;
         }
 
@@ -246,8 +279,6 @@ public class ExpenseActivity extends BaseActivity implements
 
             }
         });
-
-
         /*
         if(Math.abs(scroll) == appBar.getTotalScrollRange()) {
             getSupportActionBar().setTitle(pageTitle);
@@ -302,4 +333,5 @@ public class ExpenseActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
 }

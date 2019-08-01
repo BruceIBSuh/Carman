@@ -99,7 +99,7 @@ public class GeneralFragment extends Fragment implements
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
-        locationTask = ThreadManager.fetchLocationTask(this);
+        locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -170,7 +170,7 @@ public class GeneralFragment extends Fragment implements
             // attempt to retreive a new station list based on the location.
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
                 mPrevLocation = location;
-                stationRecyclerView.initView(GeneralFragment.this, location, defaults);
+                stationRecyclerView.initView(stnListModel, location, defaults);
 
             // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
             // the station recyclerView should not be refreshed, showing the snackbar message.
@@ -251,7 +251,7 @@ public class GeneralFragment extends Fragment implements
                 break;
 
             case R.id.fab_relocation:
-                locationTask = ThreadManager.fetchLocationTask(this);
+                locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
                 break;
 
         }

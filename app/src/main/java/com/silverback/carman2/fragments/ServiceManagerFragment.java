@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -87,11 +88,11 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
-        //mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        //fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
-        //geofenceHelper = new FavoriteGeofenceHelper(getContext());
-        //df = BaseActivity.getDecimalFormatInstance();
+        geofenceHelper = new FavoriteGeofenceHelper(getContext());
+        df = BaseActivity.getDecimalFormatInstance();
         //calendar = Calendar.getInstance(Locale.getDefault());
 
         numPad = new NumberPadFragment();
@@ -112,7 +113,6 @@ public class ServiceManagerFragment extends Fragment implements
         for(int i = 0; i < jsonSvcItemArray.length(); i++) {
             final int position = i;
             String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
-
             mDB.serviceManagerModel().loadServicedItem(itemName).observe(this, servicedItemData ->
                 mAdapter.notifyItemChanged(position, servicedItemData));
         }
@@ -126,8 +126,11 @@ public class ServiceManagerFragment extends Fragment implements
 
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
-        View boxview = localView.findViewById(R.id.view_frame);
+        View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
+
+        ProgressBar pbService = localView.findViewById(R.id.pb_checklist);
+        pbService.setVisibility(View.VISIBLE);
 
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
@@ -152,7 +155,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Set the recycler view for enlisting the service checklist and attach the adapter to it.
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(mAdapter);
+        //recyclerView.setAdapter(mAdapter);
 
 
         /*
@@ -180,7 +183,6 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
-
         // Communicate b/w RecyclerView.ViewHolder and item memo in MemoPadFragment
         fragmentSharedModel.getSelectedMenu().observe(this, data ->
                 mAdapter.notifyItemChanged(itemPos, data));
@@ -196,7 +198,7 @@ public class ServiceManagerFragment extends Fragment implements
         super.onResume();
         // Notify ExpensePagerFragment of the current fragment to load the recent 5 expense data from
         // ServiceTable.
-        //fragmentSharedModel.setCurrentFragment(this);
+        fragmentSharedModel.setCurrentFragment(this);
 
     }
 

@@ -14,13 +14,9 @@ public class ViewPagerRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ViewPagerRunnable.class);
 
-    // Constants
-    static final int FRAGMENT_GAS_COMPLETE = 1;
-    static final int FRAGMENT_GAS_FAIL = -1;
 
     // Objects
     private ViewPagerMethods task;
-
 
     public interface ViewPagerMethods {
         void setViewPagerTaskThread(Thread thread);
@@ -48,9 +44,6 @@ public class ViewPagerRunnable implements Runnable {
         pagerAdapter.getItem(0).setArguments(args);
 
         task.setViewPagerAdapter(pagerAdapter);
-
-        //pagerAdapter.getPagerFragments()[1] = new ServiceManagerFragment();
-        //pagerAdapter.getPagerFragments()[2] = new StatStmtsFragment();
 
     }
 }

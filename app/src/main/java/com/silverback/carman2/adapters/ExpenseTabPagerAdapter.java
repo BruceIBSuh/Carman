@@ -24,6 +24,8 @@ public class ExpenseTabPagerAdapter extends FragmentStatePagerAdapter {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTabPagerAdapter.class);
 
+    // Constants
+    private static final int NUM_PAGES = 3;
 
     public ExpenseTabPagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
@@ -32,11 +34,11 @@ public class ExpenseTabPagerAdapter extends FragmentStatePagerAdapter {
 
     private final Fragment[] fragments = new Fragment[] {
             new GasManagerFragment(),
-            //new ServiceManagerFragment(),
-            //new StatStmtsFragment()
-            new DummyFragment(),
+            new ServiceManagerFragment(),
+            new StatStmtsFragment()
             //new DummyFragment(),
-            new DummyFragment()
+            //new DummyFragment(),
+            //new DummyFragment()
 
     };
 

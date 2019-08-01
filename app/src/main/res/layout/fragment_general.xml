@@ -56,7 +56,7 @@
         app:layout_constraintTop_toTopOf="@+id/avgPriceView" />
 
     <View
-        android:id="@+id/view_line"
+        android:id="@+id/view_boxing"
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginStart="16dp"
@@ -75,8 +75,8 @@
         android:scrollbars="none"
         app:layout_constraintBottom_toBottomOf="@+id/avgPriceView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/view_line"
-        app:layout_constraintTop_toBottomOf="@+id/view_line">
+        app:layout_constraintStart_toStartOf="@+id/view_boxing"
+        app:layout_constraintTop_toBottomOf="@+id/view_boxing">
 
         <LinearLayout
             android:layout_width="wrap_content"
