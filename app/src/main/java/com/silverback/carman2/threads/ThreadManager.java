@@ -19,7 +19,9 @@ import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.models.ViewPagerModel;
 
 import java.util.List;
@@ -363,69 +365,15 @@ public class ThreadManager {
         return viewPagerTask;
     }
 
-    /*
-
-    // Gets the average, sido, sigun oil price from the saved files
-    public static LoadPriceListTask startLoadPriceTask(TextView view, String fuelCode, Uri uri){
-
-        //LoadPriceListTask loadPriceTask = sInstance.mLoadPriceListWorkQueue.poll();
-        LoadPriceListTask loadPriceTask = sInstance.mLoadPriceListTaskQueue.poll();
-
-        if(loadPriceTask == null) {
-            loadPriceTask = new LoadPriceListTask(view.getContext());
-        }
-
-        loadPriceTask.initLoadPriceTask(ThreadManager.sInstance, view, fuelCode, uri);
-        sInstance.mDownloadThreadPool.execute(loadPriceTask.getLoadPriceListRunnable());
-
-        return loadPriceTask;
-    }
-
-    // Thread to start the Service Checklist items with params of adapter, view, itemName, position
-    public static ServiceListTask startServiceListTask(
-            ServiceChecklistAdapter adapter, ServiceListView view, String item, int position) {
-
-        ServiceListTask serviceListTask = sInstance.mServiceListTaskQueue.poll();
-
-        if(serviceListTask == null) {
-            serviceListTask = new ServiceListTask(view.getContext());
-        }
-
-        serviceListTask.initServiceTask(adapter, view, item, position);
-        sInstance.mDownloadThreadPool.execute(serviceListTask.getServiceItemListRunnable());
-
-        return serviceListTask;
-    }
-
-    // Find a gas station within Constant.MIN_RADIUS distance
-    public static StationCurrentTask startCurrentStationTask(
-            GasManagerActivity activity, String[] defaults, Location location) {
-
-        //CurrentStationTask task = (CurrentStationTask)sInstance.mThreadTaskWorkQueue.poll();
-        StationCurrentTask task = sInstance.mCurStnTaskWorkQueue.poll();
-
-        if(task == null) {
-            //task = new CurrentStationTask(activity);
-            task = new StationCurrentTask(activity.getApplicationContext());
-        }
-
-        task.initCurrentStationTask(ThreadManager.sInstance, activity, defaults, location);
-        sInstance.mDownloadThreadPool.execute(task.getDownloadRunnable());
-
-        return task;
-    }
-
-    */
-
-    public static LocationTask fetchLocationTask(Fragment fragment){
+    public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
 
         if(locationTask == null) {
-            locationTask = new LocationTask(fragment.getContext());
+            locationTask = new LocationTask(context);
         }
 
-        locationTask.initLocationTask(ThreadManager.sInstance, fragment);
+        locationTask.initLocationTask(model);
         sInstance.mDownloadThreadPool.execute(locationTask.getLocationRunnable());
         return locationTask;
 
@@ -434,33 +382,16 @@ public class ThreadManager {
 
     // Download stations around the current location from Opinet
     // given Location and defaut params transferred from OpinetStationListFragment
-    public static StationListTask startStationListTask(Fragment fragment, Location location, String[] params) {
+    public static StationListTask startStationListTask(
+            Context context, StationListViewModel model, Location location, String[] params) {
 
         StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
 
         if(stationListTask == null) {
-            stationListTask = new StationListTask(fragment.getContext());
+            stationListTask = new StationListTask(context);
         }
 
-        /*
-        if(fragment instanceof GasManagerFragment && sInstance.mCurrentStationListener == null) {
-            try {
-                sInstance.mCurrentStationListener = (OnCurrentStationListener)fragment;
-            } catch(ClassCastException e) {
-                throw new ClassCastException(fragment + " must implement OnCurrentStationListener");
-            }
-
-        } else if(sInstance.mStationTaskListener == null) {
-            try {
-                log.i("Fragment: %s", fragment);
-                sInstance.mStationTaskListener = (OnStationTaskListener)fragment;
-            } catch (ClassCastException e) {
-                throw new ClassCastException(fragment + " must implement OnStationTaskListener");
-            }
-        }
-        */
-
-        stationListTask.initStationTask(ThreadManager.sInstance, fragment, location, params);
+        stationListTask.initStationTask(model, location, params);
         sInstance.mDownloadThreadPool.execute(stationListTask.getStationListRunnable());
 
         return stationListTask;

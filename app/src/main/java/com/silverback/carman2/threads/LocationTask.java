@@ -25,9 +25,9 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         mLocationRunnable = new LocationRunnable(context, this);
     }
 
-    void initLocationTask(ThreadManager threadManager, Fragment fragment) {
-        sThreadManager = threadManager;
-        viewModel = ViewModelProviders.of(fragment).get(LocationViewModel.class);
+    void initLocationTask(LocationViewModel model) {
+        //sThreadManager = threadManager;
+        viewModel = model;
     }
 
     Runnable getLocationRunnable() {

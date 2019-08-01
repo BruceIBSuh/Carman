@@ -2,13 +2,15 @@ package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.TextView;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
@@ -23,11 +25,14 @@ import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
-import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.models.ViewPagerModel;
+import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ViewPagerTask;
 import com.silverback.carman2.views.ExpenseViewPager;
@@ -43,7 +48,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int MENU_ITEM_ID = 100;
 
     // Objects
-    //private LocationTask locationTask;
+    private Fragment targetFragment;
     private ViewPager tabPager;
     private ViewPagerModel pagerModel;
     private ViewPagerTask pagerTask;
@@ -53,7 +58,21 @@ public class ExpenseActivity extends BaseActivity implements
     private TabLayout expenseTabLayout;
     private FrameLayout topFrame;
 
+
+    private LocationTask locationTask;
+    private LocationViewModel locationModel;
+    private StationListViewModel stationModel;
+    private Location location;
+    private StationListTask stationListTask;
+
+
+    // UIs
+    private EditText etStnName;
+    private ProgressBar pbSearchStation;
+    private ImageButton imgRefresh;
+
     // Fields
+    private boolean isFirst = true;
     private int currentPage = 0;
     private boolean isTabVisible = false;
     //private boolean isLocationTask = false;
@@ -66,6 +85,7 @@ public class ExpenseActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
+
 
         pagerModel = ViewModelProviders.of(this).get(ViewPagerModel.class);
 
@@ -83,28 +103,23 @@ public class ExpenseActivity extends BaseActivity implements
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
-        pagerTask = ThreadManager.startViewPagerTask(
-                pagerModel, getSupportFragmentManager(), getDefaultParams());
+        pagerTask = ThreadManager.startViewPagerTask(pagerModel, getSupportFragmentManager(), getDefaultParams());
         /*
         tabPagerAdapter = new ExpenseTabPagerAdapter(getSupportFragmentManager());
         tabPager.setOffscreenPageLimit(0);
         tabPager.setAdapter(tabPagerAdapter);
         tabPager.addOnPageChangeListener(this);
         expenseTabLayout.setupWithViewPager(tabPager);
-
         // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
         // it to GasManagerFragment.
-
-        String[] defaultParams = getDefaultParams();
-        defaultParams[1] = Constants.MIN_RADIUS;
+        String[] defaults = getDefaultParams();
+        defaults[1] = Constants.MIN_RADIUS;
         Bundle args = new Bundle();
-        args.putStringArray("defaultParams", defaultParams);
+        args.putStringArray("defaultParams", defaults);
         tabPagerAdapter.getItem(0).setArguments(args);
-
         addTabIconAndTitle(this, expenseTabLayout);
         animSlideTabLayout();
         */
-
         // Create ViewPager for last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
         // not ViewPager.
@@ -124,7 +139,11 @@ public class ExpenseActivity extends BaseActivity implements
 
             addTabIconAndTitle(this, expenseTabLayout);
             animSlideTabLayout();
+            //onPageSelected(0);
+
+            locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         });
+
 
 
     }
@@ -195,6 +214,13 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
         log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+
+        if(isFirst && positionOffset == 0 && positionOffsetPixels == 0) {
+            log.i("onPageScrolled at initiating");
+            onPageSelected(0);
+            isFirst = false;
+        }
+
     }
 
     @Override
@@ -204,11 +230,12 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setCurrentItem(0);
 
         switch(position) {
-            case 0:
+            case 0: // GasManagerFragment
                 currentPage = 0;
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
 
+                if(locationTask == null) locationTask = ThreadManager.fetchLocationTask(this, locationModel);
                 break;
 
             case 1:
@@ -233,13 +260,6 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollStateChanged:%s", state);
-        tabPagerAdapter.getPagerFragments()[1] = new ServiceManagerFragment();
-        tabPagerAdapter.getPagerFragments()[2] = new StatStmtsFragment();
-
-        tabPagerAdapter.notifyDataSetChanged();
-        tabPager.requestLayout();
-
-        addTabIconAndTitle(this, expenseTabLayout);
     }
 
 
@@ -313,4 +333,5 @@ public class ExpenseActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
 }

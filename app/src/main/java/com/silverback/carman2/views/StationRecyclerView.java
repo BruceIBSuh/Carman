@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 
@@ -71,11 +72,10 @@ public class StationRecyclerView extends RecyclerView {
      * @param location fetched using LocationTask
      * @param fragment parent fragment
      */
-    public void initView(Fragment fragment, Location location, String[] defaults) {
+    public void initView(StationListViewModel model, Location location, String[] defaults) {
         //defaultParams = defaults;
         //this.location = location;
-
-        stationListTask = ThreadManager.startStationListTask(fragment, location, defaults);
+        stationListTask = ThreadManager.startStationListTask(getContext(), model, location, defaults);
     }
 
     /*

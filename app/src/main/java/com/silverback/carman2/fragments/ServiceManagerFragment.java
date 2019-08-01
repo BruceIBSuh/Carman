@@ -99,6 +99,7 @@ public class ServiceManagerFragment extends Fragment implements
 
 
         // Retrieve service items which are saved in SharedPreferences as the type of JSON string.
+        /*
         String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
         try {
             jsonSvcItemArray = new JSONArray(json);
@@ -111,10 +112,10 @@ public class ServiceManagerFragment extends Fragment implements
         for(int i = 0; i < jsonSvcItemArray.length(); i++) {
             final int position = i;
             String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
-
             mDB.serviceManagerModel().loadServicedItem(itemName).observe(this, servicedItemData ->
                 mAdapter.notifyItemChanged(position, servicedItemData));
         }
+        */
 
     }
 
@@ -124,7 +125,7 @@ public class ServiceManagerFragment extends Fragment implements
 
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
-        View boxview = localView.findViewById(R.id.view_line);
+        View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_service);
@@ -150,7 +151,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Set the recycler view for enlisting the service checklist and attach the adapter to it.
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true);
-        recyclerView.setAdapter(mAdapter);
+        //recyclerView.setAdapter(mAdapter);
 
 
         /*
@@ -158,6 +159,7 @@ public class ServiceManagerFragment extends Fragment implements
          * @param: getSelectedValue(): SparseArray<Integer>
          * @param: getSelectedMemo(): SparseArray<String>
          */
+        /*
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
@@ -180,7 +182,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Communicate b/w RecyclerView.ViewHolder and item memo in MemoPadFragment
         fragmentSharedModel.getSelectedMenu().observe(this, data ->
                 mAdapter.notifyItemChanged(itemPos, data));
-
+        */
 
 
         // Inflate the layout for this fragment

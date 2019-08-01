@@ -34,11 +34,11 @@ public class ExpenseTabPagerAdapter extends FragmentStatePagerAdapter {
 
     private final Fragment[] fragments = new Fragment[] {
             new GasManagerFragment(),
-            //new ServiceManagerFragment(),
-            //new StatStmtsFragment()
+            new ServiceManagerFragment(),
+            new StatStmtsFragment()
             //new DummyFragment(),
-            new DummyFragment(),
-            new DummyFragment()
+            //new DummyFragment(),
+            //new DummyFragment()
 
     };
 

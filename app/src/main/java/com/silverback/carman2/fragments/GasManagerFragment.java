@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,7 +65,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FragmentSharedModel fragmentSharedModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
-    private LocationTask locationTask;
     private StationListTask stationListTask;
     private StationInfoTask stationInfoTask;
     private SharedPreferences mSettings;
@@ -112,13 +112,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
          * StationListViewModel: fetch a station within a MIN_RADIUS
          */
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
-        stnModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+        locationModel = ViewModelProviders.of(getActivity()).get(LocationViewModel.class);
+        stnModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
 
 
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        //mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
 
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
@@ -129,12 +129,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Fetch the current location using worker thread, the result of which is returned to
         // getLocation() of ViewModel.LocationViewModel as a LiveData
-        locationTask = ThreadManager.fetchLocationTask(this);
-
+        //locationTask = ThreadManager.fetchLocationTask(this);
         dateFormat = getString(R.string.date_format_1);
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         date = BaseActivity.formatMilliseconds(dateFormat, System.currentTimeMillis());
+
     }
 
     @Override
@@ -146,6 +146,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         etStnName = localView.findViewById(R.id.et_station_name);
+        ProgressBar pbStation = localView.findViewById(R.id.pb_search_station);
+        ImageButton imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
         tvOdometer = localView.findViewById(R.id.tv_mileage);
@@ -158,6 +160,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
         tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
+        pbStation.setVisibility(View.VISIBLE);
 
         // Attach event handlers
         etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
@@ -178,15 +181,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         });
 
-        // Once getting the current location fetched, attempt to get a station within MIN_RADIUS
-        // using a worker thread, the result of which is notified using getCurrentStationLiveData()
-        // of StationListViewModel as a LiveData like in the following method.
-
+        // Attach an observer to fetch a current location from LocationTask, then initiate
+        // StationListTask based on the value.
         locationModel.getLocation().observe(this, location -> {
+            log.i("location fetched");
             this.location = location;
-            stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
+            stationListTask = ThreadManager.startStationListTask(getContext(), stnModel, location, defaultParams);
         });
-
 
         // Check if a fetched current station has registered with Favorite right after StationListModel
         // is notified to retrieve a current station. Then, get StationInfoTask started to get
@@ -203,8 +204,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
             // Query Favorite with the fetched station name or station id to tell whether the station
             // has registered with Favorite.
-            checkFavorite(stnName, stnId);
+            //checkFavorite(stnName, stnId);
 
+            pbStation.setVisibility(View.GONE);
+            imgRefresh.setVisibility(View.VISIBLE);
         });
 
         // When fetching the address, the station is registered with Favorite passing detailed info
@@ -219,7 +222,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             geofenceHelper.setGeofenceParam(GasStation, stnId, location);
             geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+
+
         });
+
 
         return localView;
     }
@@ -236,7 +242,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onPause() {
         super.onPause();
-        if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
     }
