@@ -3,6 +3,7 @@ package com.silverback.carman2;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
@@ -21,7 +22,7 @@ public class BillboardActivity extends BaseActivity implements
 
     // Objects
     private AppBarLayout appBar;
-    private TabLayout tabLayout;
+    private TabLayout boardTabLayout;
     private ViewPager boardPager;
 
     // Fields
@@ -36,7 +37,7 @@ public class BillboardActivity extends BaseActivity implements
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);
         ViewPager boardPager = findViewById(R.id.viewpager_board);
         appBar = findViewById(R.id.appBar);
-        tabLayout = findViewById(R.id.tabLayout);
+        boardTabLayout = findViewById(R.id.tab_board);
 
         // Add an listener to AppBarLayout
         appBar.addOnOffsetChangedListener(this);
@@ -46,17 +47,14 @@ public class BillboardActivity extends BaseActivity implements
         getSupportActionBar().setTitle("Hello Billboard");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //boardPager = new ViewPager(this);
-        //boardPager.setId(View.generateViewId());
-        //framePager.addView(boardPager);
 
         BillboardPagerAdapter pagerAdapter = new BillboardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);
         boardPager.addOnPageChangeListener(this);
-        tabLayout.setupWithViewPager(boardPager);
+        boardTabLayout.setupWithViewPager(boardPager);
 
 
-        addTabIconAndTitle(this, tabLayout);
+        addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
 
     }
@@ -108,7 +106,7 @@ public class BillboardActivity extends BaseActivity implements
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
         log.i("anim:%s", tabEndValue);
 
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEndValue);
         //ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         //slideViewPager.setDuration(1000);

@@ -41,7 +41,7 @@ public class SettingFavoriteFragment extends Fragment implements
 
         // TabLayout. addTab(tabLayout.newTab().setText("hello") doesn't work when ViewPager
         // is combined by invoking setUpWithViewPager.
-        TabLayout tabLayout = localView.findViewById(R.id.tabLayout);
+        TabLayout tabLayout = localView.findViewById(R.id.tab_favorite);
         tabLayout.addTab(tabLayout.newTab());
         tabLayout.addTab(tabLayout.newTab());
 

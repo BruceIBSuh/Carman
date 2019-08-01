@@ -4,20 +4,23 @@ package com.silverback.carman2.fragments;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -27,7 +30,6 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.threads.ClockTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.StationInfoTask;
@@ -40,12 +42,6 @@ import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.util.List;
-
-import androidx.annotation.NonNull;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.RecyclerView;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
@@ -66,9 +62,6 @@ public class GeneralFragment extends Fragment implements
     // Objects
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
-
-    private Handler clockHandler;
-    private ClockTask clockTask;
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
@@ -86,15 +79,10 @@ public class GeneralFragment extends Fragment implements
     private Location mPrevLocation;
 
     // UI's
-    private TextView tvDate, tvStationsOrder;
-    private Spinner fuelSpinner;
-    private FrameLayout frameAvgPrice;
+    private TextView tvStationsOrder;
     private FloatingActionButton fabLocation;
 
     // Fields
-    //private String tmpStationName;
-    private String today;
-    //private boolean isLocationFetched = false;//prevent StationListTask from repaeating when adding the fragment.
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
 
@@ -108,6 +96,10 @@ public class GeneralFragment extends Fragment implements
         // Create LocationViewModel
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+
+        // Fetch the current location using the worker thread and return the value via ViewModel
+        // as the type of LiveData, on the basis of which the near stations is to be retrieved.
+        locationTask = ThreadManager.fetchLocationTask(this);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -116,9 +108,9 @@ public class GeneralFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         View childView = inflater.inflate(R.layout.fragment_general, container, false);
-        tvDate = childView.findViewById(R.id.tv_today);
+        TextView tvDate = childView.findViewById(R.id.tv_today);
+        Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
-        fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         avgPriceView = childView.findViewById(R.id.avgPriceView);
         sidoPriceView = childView.findViewById(R.id.sidoPriceView);
         sigunPriceView = childView.findViewById(R.id.sigunPriceView);
@@ -137,9 +129,9 @@ public class GeneralFragment extends Fragment implements
 
         // Sets the spinner_stat default value if it is saved in SharedPreference.Otherwise, sets it to 0.
         fuelSpinner.setOnItemSelectedListener(this);
-        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(getContext(),
-                R.array.spinner_fuel_name, android.R.layout.simple_spinner_item);
-        spinnerAdapter.setDropDownViewResource(R.layout.spinner_dropdown);
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
+                getContext(), R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
+        spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
         fuelSpinner.setAdapter(spinnerAdapter);
 
         // Set the spinner to the default value that's fetched from SharedPreferences
@@ -171,18 +163,18 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        locationTask = ThreadManager.fetchLocationTask(this);
+
+        // On fetching the current location, attempt to get the near station list based on the value.
         locationModel.getLocation().observe(this, location -> {
             // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
             // attempt to retreive a new station list based on the location.
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
-                log.i("Refresh StationList");
                 mPrevLocation = location;
                 stationRecyclerView.initView(GeneralFragment.this, location, defaults);
+
             // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
             // the station recyclerView should not be refreshed, showing the snackbar message.
             } else {
-
                 CoordinatorLayout layout = getActivity().findViewById(R.id.vg_main);
                 Snackbar snackbar = Snackbar.make(
                         layout, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT);
@@ -250,8 +242,9 @@ public class GeneralFragment extends Fragment implements
 
             case R.id.imgbtn_stations:
                 mAdapter.sortStationList(bStationsOrder);
-                String sort = (bStationsOrder)?getString(R.string.general_stations_price):
-                        getString(R.string.general_stations_distance);
+                String sort = (bStationsOrder)?
+                        getString(R.string.general_stations_price):getString(R.string.general_stations_distance);
+
                 tvStationsOrder.setText(sort);
                 bStationsOrder = !bStationsOrder;
                 mAdapter.notifyDataSetChanged();

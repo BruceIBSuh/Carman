@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <declare-styleable name="AvgPriceView">
+    <declare-styleable name="avgPriceView">
         <attr name="avgPriceUp" format="color|reference" />
         <attr name="avgPriceDown" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="SidoPriceView">
+    <declare-styleable name="sidoPriceView">
         <attr name="sidoPriceUp" format="color|reference" />
         <attr name="sidoPriceDown" format="color|reference" />
     </declare-styleable>

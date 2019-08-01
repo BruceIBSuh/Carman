@@ -55,11 +55,11 @@ public class SidoPriceView extends OpinetPriceView {
         tvSidoName = findViewById(R.id.tv_sido_name);
         tvSidoPrice = findViewById(R.id.tv_sido_price);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SidoPriceView);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.sidoPriceView);
 
         try {
-            priceUpColor = typedArray.getColor(R.styleable.SidoPriceView_sidoPriceUp, 0);
-            priceDownColor = typedArray.getColor(R.styleable.SidoPriceView_sidoPriceDown, 0);
+            priceUpColor = typedArray.getColor(R.styleable.sidoPriceView_sidoPriceUp, 0);
+            priceDownColor = typedArray.getColor(R.styleable.sidoPriceView_sidoPriceDown, 0);
             log.i("Color: %d, %d", priceUpColor, priceDownColor);
 
         } finally {

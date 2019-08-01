@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -75,7 +76,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
                 .commit();
-
     }
 
 
@@ -93,15 +93,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
 
+
     /*
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
+
         switch(item.getItemId()) {
             case android.R.id.home:
                 log.i("onOptionsItemSelected in SettingPreferenceActivity");
-                onBackPressed();
+                Intent mainIntent = new Intent(this, MainActivity.class);
+                startActivity(mainIntent);
+                finish();
+
+                //onBackPressed();
                 return true;
+
             case R.id.menu_add:
                 log.i("onOptionsItemSelected: menu_add");
 
@@ -115,14 +122,18 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
     */
 
-    // If you do not implement onPreferenceStartFragment(), a fallback implementation is used instead.
-    // While this works in most cases, we strongly recommend implementing this method so you can fully
-    // configure transitions between Fragment objects and update the title displayed in your
-    // Activity toolbar, if applicable.
+
+    /*
+     * Invoked when a Preference with an associated Fragment is tabbed.
+     * If you do not implement on PreferenceStartFragment(), a fallback implementation is used instead.
+     * While this works i most cases, we strongly recommend implementing this method so you can fully
+     * configure transitions b/w Fragment objects and update the title in the toolbar, if applicable.
+     */
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
 
+        log.i("Preference tabbed: %s", pref);
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
@@ -144,7 +155,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         switch(key) {
             case Constants.VEHICLE_NAME:
-                EditTextPreference pref = (EditTextPreference)settingFragment.findPreference(key);
+                EditTextPreference pref = settingFragment.findPreference(key);
                 log.i("EditTextPref: %s", pref.getText());
                 if(!TextUtils.isEmpty(pref.getText())) {
                     //pref.setSummary(pref.getText());
@@ -153,7 +164,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case Constants.ODOMETER:
-                EditTextPreference mileage = (EditTextPreference)settingFragment.findPreference(key);
+                EditTextPreference mileage = settingFragment.findPreference(key);
                 log.i("EditTextPref: %s", mileage.getText());
                 if(!TextUtils.isEmpty(mileage.getText())) {
                     //mileage.setSummary(mileage.getText() + "km");
@@ -169,12 +180,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
 
-
-
             case "pref_location_autoupdate":
-                //SwitchPreferenceCompat switchPref = (SwitchPreferenceCompat)settingFragment.findPreference(key);
-                //log.i("SwitchPreferenceCompat: %s", switchPref.isChecked());
-                //mSettings.edit().putBoolean("pref_location_autoupdate", switchPref.isChecked()).apply();
                 break;
         }
 

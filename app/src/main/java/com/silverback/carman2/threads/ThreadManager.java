@@ -9,6 +9,9 @@ import android.os.Message;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
@@ -17,6 +20,7 @@ import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.ViewPagerModel;
 
 import java.util.List;
 import java.util.Queue;
@@ -139,7 +143,6 @@ public class ThreadManager {
          */
 
         mMainHandler = new Handler(Looper.getMainLooper()) {
-            @SuppressWarnings("unchecked")
             @Override
             public void handleMessage(Message msg) {
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
@@ -326,10 +329,8 @@ public class ThreadManager {
         return task;
     }
 
-
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-
     public static PriceTask startPriceTask(Activity activity, String distCode) {
 
         PriceTask priceTask = (PriceTask)sInstance.mDownloadWorkQueue.poll();
@@ -344,6 +345,22 @@ public class ThreadManager {
         sInstance.mDownloadThreadPool.execute(priceTask.getSigunPriceRunnable());
 
         return priceTask;
+    }
+
+
+    public static ViewPagerTask startViewPagerTask(
+            ViewPagerModel model, FragmentManager fragmentManager, String[] defaults){
+
+        ViewPagerTask viewPagerTask = (ViewPagerTask)sInstance.mDecodeWorkQueue.poll();
+
+        if(viewPagerTask == null) {
+            viewPagerTask = new ViewPagerTask();
+        }
+
+        viewPagerTask.initViewPagerTask(model, fragmentManager, defaults);
+        sInstance.mDecodeThreadPool.execute(viewPagerTask.getViewPagerRunnable());
+
+        return viewPagerTask;
     }
 
     /*
@@ -464,9 +481,6 @@ public class ThreadManager {
             }
         }
         */
-
-
-
         stationTask.initStationTask(ThreadManager.sInstance, fragment, stnName, stnId);
         sInstance.mDownloadThreadPool.execute(stationTask.getStationMapInfoRunnable());
 

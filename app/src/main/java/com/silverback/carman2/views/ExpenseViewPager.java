@@ -3,10 +3,8 @@ package com.silverback.carman2.views;
 import android.content.Context;
 import android.view.View;
 
-import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
-import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -23,7 +21,7 @@ public class ExpenseViewPager extends ViewPager {
 
     /*
     public void initPager(FragmentManager fm) {
-        ExpenseTopPagerAdapter adapter = new ExpenseTopPagerAdapter(fm);
+        RecentExpensePagerAdapter adapter = new RecentExpensePagerAdapter(fm);
         setAdapter(adapter);
         setCurrentItem(0);
     }

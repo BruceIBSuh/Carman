@@ -21,7 +21,7 @@ import androidx.lifecycle.ViewModelProviders;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ExpenseTopPagerAdapter;
+import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.GasManagerEntity;
@@ -48,9 +48,7 @@ import java.util.Locale;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class GasManagerFragment extends Fragment implements
-        //LoaderManager.LoaderCallbacks<Cursor>,
-        View.OnClickListener {
+public class GasManagerFragment extends Fragment implements View.OnClickListener {
         //ThreadManager.OnStationInfoListener {
 
     // Logging
@@ -72,7 +70,7 @@ public class GasManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private DecimalFormat df;
 
-    private ExpenseTopPagerAdapter viewPagerAdapter;
+    private RecentExpensePagerAdapter viewPagerAdapter;
     private CustomPagerIndicator indicator;
     private Calendar calendar;
     private SimpleDateFormat sdf;
@@ -183,10 +181,12 @@ public class GasManagerFragment extends Fragment implements
         // Once getting the current location fetched, attempt to get a station within MIN_RADIUS
         // using a worker thread, the result of which is notified using getCurrentStationLiveData()
         // of StationListViewModel as a LiveData like in the following method.
+
         locationModel.getLocation().observe(this, location -> {
             this.location = location;
             stationListTask = ThreadManager.startStationListTask(this, location, defaultParams);
         });
+
 
         // Check if a fetched current station has registered with Favorite right after StationListModel
         // is notified to retrieve a current station. Then, get StationInfoTask started to get

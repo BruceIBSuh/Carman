@@ -57,11 +57,11 @@ public class AvgPriceView extends OpinetPriceView {
         //linearLayout = (LinearLayout)inflater.inflate(R.layout.view_avg_price, this, true);
         LayoutInflater.from(context).inflate(R.layout.view_avg_price, this, true);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.AvgPriceView);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.avgPriceView);
 
         try {
-            priceUpColor = typedArray.getColor(R.styleable.AvgPriceView_avgPriceUp, 0);
-            priceDownColor = typedArray.getColor(R.styleable.AvgPriceView_avgPriceDown, 0);
+            priceUpColor = typedArray.getColor(R.styleable.avgPriceView_avgPriceUp, 0);
+            priceDownColor = typedArray.getColor(R.styleable.avgPriceView_avgPriceDown, 0);
             log.i("Color: %d, %d", priceUpColor, priceDownColor);
         } finally {
             typedArray.recycle();

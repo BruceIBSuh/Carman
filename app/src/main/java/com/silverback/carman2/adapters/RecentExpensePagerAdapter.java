@@ -9,16 +9,16 @@ import com.silverback.carman2.fragments.ExpensePagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class ExpenseTopPagerAdapter extends FragmentPagerAdapter {
+public class RecentExpensePagerAdapter extends FragmentPagerAdapter {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTopPagerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(RecentExpensePagerAdapter.class);
 
     // Constants
     private static final int NUM_PAGES = 5;
 
 
-    public ExpenseTopPagerAdapter(FragmentManager fm) {
+    public RecentExpensePagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 

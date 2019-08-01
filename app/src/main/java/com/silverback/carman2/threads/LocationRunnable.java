@@ -21,8 +21,7 @@ import com.silverback.carman2.models.CarmanLocationHelper;
 
 import androidx.annotation.NonNull;
 
-public class LocationRunnable implements Runnable,
-        OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
+public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(LocationRunnable.class);
@@ -82,21 +81,14 @@ public class LocationRunnable implements Runnable,
 
         try {
             mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-
-            // getLoastLocation() Invokes LocationCallback.onLocationChanged(), then get a updated location
-            mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                @Override
-                public void onSuccess(Location location) {
-                    if(location != null) {
-                        log.i("Location: %s, %s", location.getLongitude(), location.getLatitude());
-                        task.setCurrentLocation(location);
-                        task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
-
-                    } else {
-                        log.i("no location fetched");
-                        task.handleLocationTask(CURRENT_LOCATION_FAIL);
-                    }
+            mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                if(location != null) {
+                    task.setCurrentLocation(location);
+                    task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
+                } else {
+                    task.handleLocationTask(CURRENT_LOCATION_FAIL);
                 }
+
             });
 
         } catch (SecurityException e) {

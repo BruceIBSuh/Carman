@@ -1,19 +1,15 @@
 package com.silverback.carman2;
 
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
-import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.fragments.BillboardFragment;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
@@ -23,35 +19,15 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.threads.StationInfoTask;
 
 import java.io.File;
-import java.util.List;
 
 public class MainActivity extends BaseActivity implements
         FinishAppDialogFragment.NoticeDialogListener {
-        //ViewPager.OnPageChangeListener {
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
-    // Constants
-    private static final int TAB_CARMAN = 1;
-    private static final int TAB_BOARD = 2;
-
     // Objects
-    private TabLayout tabLayout;
-    private List<String> tabTitleList;
-    private List<Drawable> tabIconList;
-    //private ViewPager viewPager;
-    private Fragment generalFragment, boardFragment;
-    private FrameLayout frameLayout;
     private StationInfoTask mapInfoTask;
-    private FinishAppDialogFragment alertDialog;
-
-    // UIs
-    private ProgressBar progressBar;
-    // Fields
-    private boolean isTabVisible = false;
-    private int tabSelected;
-    private float toolbarHeight;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -60,8 +36,6 @@ public class MainActivity extends BaseActivity implements
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = findViewById(R.id.toolbar_expense);
-        frameLayout = findViewById(R.id.frameLayout);
-        progressBar = findViewById(R.id.progbar);
 
         // Sets the toolbar used as ActionBar
         setSupportActionBar(toolbar);
@@ -70,17 +44,15 @@ public class MainActivity extends BaseActivity implements
         String[] defaults = getDefaultParams();
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", defaults);
-        log.i("Default Params: %s, %s, %s", defaults[0], defaults[1], defaults[2]);
 
         // Instantiates Fragments which FrameLayout adds, replaces or removes a Fragment by selecting
         // a toolbar menu.
-        generalFragment = new GeneralFragment();
-        boardFragment = new BillboardFragment();
+        Fragment generalFragment = new GeneralFragment();
+        Fragment boardFragment = new BillboardFragment();
 
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
-
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.frameLayout, generalFragment, "general").addToBackStack(null).commit();
 
@@ -92,14 +64,9 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onResume(){
         super.onResume();
-        //getSupportFragmentManager().popBackStack();
 
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
-
-        progressBar.setVisibility(View.GONE);
-        frameLayout.setAlpha(1f);
-
     }
 
     @Override
@@ -123,8 +90,6 @@ public class MainActivity extends BaseActivity implements
         switch(item.getItemId()) {
 
             case R.id.action_carman:
-                //progressBar.setVisibility(View.VISIBLE);
-                //frameLayout.setAlpha(0.5f);
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
 
@@ -147,28 +112,10 @@ public class MainActivity extends BaseActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-
-    /*
-    // Callbacks invoked by ViewPager.OnPageChangeListener
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        log.d("ViewPager Listener_onPageScrolled");
-    }
-    @Override
-    public void onPageSelected(int position) {
-        log.d("ViewPager Listeenr_onPageSelected");
-    }
-    @Override
-    public void onPageScrollStateChanged(int state) {
-        log.d("ViewPager Listeenr_onPageScrollStateChanged");
-    }
-    */
-
-
     @Override
     public void onBackPressed(){
         // Pop up the dialog to confirm to leave the app.
-        alertDialog = new FinishAppDialogFragment();
+        FinishAppDialogFragment alertDialog = new FinishAppDialogFragment();
         alertDialog.show(getSupportFragmentManager(), "FinishAppDialogFragment");
     }
 

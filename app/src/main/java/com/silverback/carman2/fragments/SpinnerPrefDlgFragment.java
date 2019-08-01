@@ -1,14 +1,17 @@
 package com.silverback.carman2.fragments;
 
 
+import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -20,9 +23,9 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 
 import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
@@ -41,6 +44,7 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     private Spinner sidoSpinner, sigunSpinner;
     private ArrayAdapter sidoAdapter;
     private DistrictSpinnerAdapter sigunAdapter;
+    private SharedPreferences mSettings;
     // Fields
     private String sidoName, sigunName, distCode;
     private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
@@ -54,7 +58,6 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     // Method for singleton instance
     static SpinnerPrefDlgFragment newInstance(String key, String code) {
 
-        log.d("Singleton PreferenceDialogFragmentCompat:%s, %s", key, code);
         final SpinnerPrefDlgFragment fm = new SpinnerPrefDlgFragment();
         final Bundle args = new Bundle(2);
         args.putString(ARG_KEY, key);
@@ -64,16 +67,20 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
 
     }
 
+
+
     @SuppressWarnings("ConstantConditions")
     @Override
     protected void onBindDialogView(View view) {
         super.onBindDialogView(view);
 
+        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+
         String districtCode = getArguments().getString("district_code");
-        spinnerPref= (SpinnerDialogPreference) getPreference();
+        spinnerPref= (SpinnerDialogPreference)getPreference();
         log.i("SigunCode: %s", districtCode);
 
-        //sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+
         String sidoCode = districtCode.substring(0, 2);
         String sigunCode = districtCode.substring(2,4);
         log.i("District Code: %s, %s", sidoCode, sigunCode);
@@ -140,9 +147,10 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
 
             JSONArray jsonArray = new JSONArray(Arrays.asList(sidoName, sigunName, distCode));
             spinnerPref.callChangeListener(jsonArray);
+
             // Save values in SharedPreferences
-            PreferenceManager.getDefaultSharedPreferences(getContext()).edit()
-                    .putString(Constants.DISTRICT, jsonArray.toString()).apply();
+            //PreferenceManager.getDefaultSharedPreferences(getContext()).edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+            mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
         }
     }
 

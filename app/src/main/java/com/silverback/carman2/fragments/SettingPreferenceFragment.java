@@ -3,8 +3,6 @@ package com.silverback.carman2.fragments;
 
 import android.os.Bundle;
 import android.text.InputType;
-import android.view.Menu;
-import android.view.MenuItem;
 
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.EditTextPreference;
@@ -38,7 +36,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
+        // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
+
         // Indicates that this fragment may initialize the contents of the Activity's standard options menu.
         setHasOptionsMenu(true);
 
@@ -95,7 +95,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         if(pref instanceof SpinnerDialogPreference) {
             DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), sigunCode);
             dlgFragment.setTargetFragment(this, 0);
-            dlgFragment.show(getFragmentManager(), "spinner");
+            dlgFragment.show(getFragmentManager(), null);
         } else {
             super.onDisplayPreferenceDialog(pref);
         }

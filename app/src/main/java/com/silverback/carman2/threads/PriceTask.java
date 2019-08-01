@@ -38,16 +38,12 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
     Runnable getAvgPriceRunnable() {
         return mAvgPriceRunnable;
     }
-
     Runnable getSidoPriceRunnable() {
         return mSidoPriceRunnable;
     }
-
     Runnable getSigunPriceRunnable(){
         return mSigunPriceRunnable;
     }
-
-
 
 
     // Callback methods defined in PriceRunnable.OpinentPriceListMethods
@@ -89,7 +85,7 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
         sThreadManager.handleState(this, outstate);
     }
 
-    public Activity getParentActivity(){
+    Activity getParentActivity(){
         if(mWeakActivity != null) return mWeakActivity.get();
         return null;
     }
