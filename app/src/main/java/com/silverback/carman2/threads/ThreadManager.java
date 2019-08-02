@@ -10,21 +10,16 @@ import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
-import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.models.ViewPagerModel;
+import com.silverback.carman2.models.AdapterViewModel;
 
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -55,6 +50,9 @@ public class ThreadManager {
 
     static final int FIRESTORE_STATION_GET_COMPLETED = 120;
     static final int FIRESTORE_STATION_SET_COMPLETED = 130;
+
+    static final int RECYCLER_ADAPTER_SERVICE_COMPLETED = 140;
+    static final int RECYCLER_ADAPTER_SERVICE_FAILED = -141;
 
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
@@ -272,6 +270,11 @@ public class ThreadManager {
                 msg.sendToTarget();
                 break;
 
+            case RECYCLER_ADAPTER_SERVICE_COMPLETED:
+                mDecodeThreadPool.execute(((RecyclerAdapterTask)task).getRecyclerServicedItemRunnable());
+                msg.sendToTarget();
+                break;
+
             default:
                 msg.sendToTarget();
         }
@@ -351,7 +354,7 @@ public class ThreadManager {
 
 
     public static ViewPagerTask startViewPagerTask(
-            ViewPagerModel model, FragmentManager fragmentManager, String[] defaults){
+            AdapterViewModel model, FragmentManager fragmentManager, String[] defaults){
 
         ViewPagerTask viewPagerTask = (ViewPagerTask)sInstance.mDecodeWorkQueue.poll();
 
@@ -364,6 +367,20 @@ public class ThreadManager {
 
         return viewPagerTask;
     }
+
+    public static RecyclerAdapterTask startRecyclerAdapterTask(AdapterViewModel model, String jsonItems) {
+
+        RecyclerAdapterTask recyclerTask = (RecyclerAdapterTask)sInstance.mDecodeWorkQueue.poll();
+        if(recyclerTask == null) {
+            recyclerTask = new RecyclerAdapterTask();
+        }
+
+        recyclerTask.initTask(model, jsonItems);
+        sInstance.mDecodeThreadPool.execute(recyclerTask.getRecyclerAdapterRunnable());
+        return recyclerTask;
+
+    }
+
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 

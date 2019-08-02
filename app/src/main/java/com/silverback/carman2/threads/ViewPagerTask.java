@@ -1,17 +1,11 @@
 package com.silverback.carman2.threads;
 
-import android.app.Activity;
-
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ViewPagerModel;
-
-import java.lang.ref.WeakReference;
+import com.silverback.carman2.models.AdapterViewModel;
 
 public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewPagerMethods {
 
@@ -19,7 +13,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
 
     // Objects
     private FragmentManager fragmentManager;
-    private ViewPagerModel pagerModel;
+    private AdapterViewModel pagerModel;
     private String[] defaults;
 
     // Constructor
@@ -27,7 +21,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
         super();
     }
 
-    void initViewPagerTask(ViewPagerModel viewModel, FragmentManager fm, String[] defaults) {
+    void initViewPagerTask(AdapterViewModel viewModel, FragmentManager fm, String[] defaults) {
         fragmentManager = fm;
         pagerModel = viewModel;
         this.defaults = defaults;

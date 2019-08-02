@@ -30,8 +30,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.models.ViewPagerModel;
+import com.silverback.carman2.models.AdapterViewModel;
 import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.RecyclerAdapterTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ViewPagerTask;
@@ -50,8 +51,8 @@ public class ExpenseActivity extends BaseActivity implements
     // Objects
     private Fragment targetFragment;
     private ViewPager tabPager;
-    private ViewPagerModel pagerModel;
-    private ViewPagerTask pagerTask;
+    private AdapterViewModel adapterViewModel;
+    private ViewPagerTask tabPagerTask;
     private ExpenseViewPager expensePager;
     private ExpenseTabPagerAdapter tabPagerAdapter;
     private AppBarLayout appBar;
@@ -65,6 +66,8 @@ public class ExpenseActivity extends BaseActivity implements
     private Location location;
     private StationListTask stationListTask;
 
+    private RecyclerAdapterTask recyclerTask;
+
 
     // UIs
     private EditText etStnName;
@@ -77,9 +80,9 @@ public class ExpenseActivity extends BaseActivity implements
     private boolean isTabVisible = false;
     //private boolean isLocationTask = false;
     private String pageTitle;
+    private String jsonServiceItems;
 
     private Toolbar toolbar;
-    private final String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -87,7 +90,10 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
-        pagerModel = ViewModelProviders.of(this).get(ViewPagerModel.class);
+        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+        adapterViewModel = ViewModelProviders.of(this).get(AdapterViewModel.class);
+        jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+
 
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
@@ -103,7 +109,8 @@ public class ExpenseActivity extends BaseActivity implements
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
-        pagerTask = ThreadManager.startViewPagerTask(pagerModel, getSupportFragmentManager(), getDefaultParams());
+        tabPagerTask = ThreadManager.startViewPagerTask(
+                adapterViewModel, getSupportFragmentManager(), getDefaultParams());
         /*
         tabPagerAdapter = new ExpenseTabPagerAdapter(getSupportFragmentManager());
         tabPager.setOffscreenPageLimit(0);
@@ -120,6 +127,7 @@ public class ExpenseActivity extends BaseActivity implements
         addTabIconAndTitle(this, expenseTabLayout);
         animSlideTabLayout();
         */
+
         // Create ViewPager for last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
         // not ViewPager.
@@ -130,25 +138,22 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
 
-
-        pagerModel.getPagerAdapter().observe(this, adapter -> {
-            log.i("ViewPagerModel: %s", adapter.getItem(0));
+        // LiveData observer of AdapterViewModel to listen to whether ExpenseTabPagerAdapter has
+        // finished to instantiate the fragments to display, then lauch LocationTask to have
+        // any near station within MIN_RADIUS, if any.
+        adapterViewModel.getPagerAdapter().observe(this, adapter -> {
+            log.i("AdapterViewModel: %s", adapter.getItem(0));
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             expenseTabLayout.setupWithViewPager(tabPager);
 
             addTabIconAndTitle(this, expenseTabLayout);
             animSlideTabLayout();
-            //onPageSelected(0);
 
-            locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+            if(locationTask == null) locationTask = ThreadManager.fetchLocationTask(this, locationModel);
         });
 
-
-
     }
-
-
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -162,7 +167,9 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        if(pagerTask != null) pagerTask = null;
+        if(tabPagerTask != null) tabPagerTask = null;
+        if(locationTask != null) locationTask = null;
+        if(recyclerTask != null) recyclerTask = null;
     }
 
     @Override
@@ -213,8 +220,7 @@ public class ExpenseActivity extends BaseActivity implements
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
-
+        // for revoking the callback of onPageSelected when initiating.
         if(isFirst && positionOffset == 0 && positionOffsetPixels == 0) {
             log.i("onPageScrolled at initiating");
             onPageSelected(0);
@@ -235,7 +241,6 @@ public class ExpenseActivity extends BaseActivity implements
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
 
-                if(locationTask == null) locationTask = ThreadManager.fetchLocationTask(this, locationModel);
                 break;
 
             case 1:
@@ -243,7 +248,6 @@ public class ExpenseActivity extends BaseActivity implements
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
 
-                ((ServiceManagerFragment)tabPagerAdapter.getItem(position)).setRecyclerView(json);
                 break;
 
             case 2:
@@ -253,7 +257,6 @@ public class ExpenseActivity extends BaseActivity implements
 
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
-
                 break;
         }
 
@@ -261,6 +264,21 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollStateChanged:%s", state);
+        if(state != 0) return;
+        switch (currentPage) {
+            case 0:
+                break;
+            case 1:
+                if(recyclerTask == null) {
+                    log.i("RecyclerTask");
+                    recyclerTask = ThreadManager.startRecyclerAdapterTask(adapterViewModel, jsonServiceItems);
+                }
+
+                break;
+            case 2:
+                break;
+
+        }
     }
 
 
@@ -268,26 +286,12 @@ public class ExpenseActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
-        appBar.post(new Runnable(){
-            @Override
-            public void run() {
-                if(Math.abs(scroll) == 0)
-                    getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
-                else if(Math.abs(scroll) == appBar.getTotalScrollRange())
-                    getSupportActionBar().setTitle(getString(R.string.exp_title_gas));
-
-            }
+        appBar.post(() -> {
+            if(Math.abs(scroll) == 0)
+                getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
+            else if(Math.abs(scroll) == appBar.getTotalScrollRange())
+                getSupportActionBar().setTitle(pageTitle);
         });
-
-
-        /*
-        if(Math.abs(scroll) == appBar.getTotalScrollRange()) {
-            getSupportActionBar().setTitle(pageTitle);
-        } else if(Math.abs(scroll) == 0) {
-            getSupportActionBar().setTitle("My Garage");
-        }
-        */
-
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
         /*

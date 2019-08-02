@@ -2,8 +2,6 @@ package com.silverback.carman2.adapters;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
-import android.content.Context;
-import android.os.Build;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -21,14 +19,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
-import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -36,13 +31,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.util.List;
 
-public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceChecklistAdapter.ServiceItemViewHolder> {
+public class ServiceItemAdapter extends RecyclerView.Adapter<ServiceItemAdapter.ServiceItemViewHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceChecklistAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemAdapter.class);
 
     // Objects
     private JSONArray jsonArray;
@@ -67,11 +61,12 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
     }
 
     // Constructor
-    public ServiceChecklistAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
+    //public ServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
+    public ServiceItemAdapter(JSONArray jsonArray) {
 
         super();
 
-        mListener = listener;
+        //mListener = listener;
         this.jsonArray = jsonArray;
         df = BaseActivity.getDecimalFormatInstance();
 
@@ -79,6 +74,10 @@ public class ServiceChecklistAdapter extends RecyclerView.Adapter<ServiceCheckli
         arrItemCost = new int[jsonArray.length()];
         arrItemMemo = new String[jsonArray.length()];
         sparseSvcDataArray = new SparseArray<>();
+    }
+
+    public void setParentFragmentListener(OnParentFragmentListener listener) {
+        mListener = listener;
     }
 
     @NonNull

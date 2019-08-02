@@ -11,7 +11,7 @@
     tools:context="com.silverback.carman2.ExpenseActivity">
 
     <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_board"
+        android:id="@+id/tab_favorite"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:alpha="0.5"

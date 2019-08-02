@@ -44,6 +44,7 @@ public class StationRecyclerView extends RecyclerView {
         super(context, attrs);
         getAttributes(context, attrs);
     }
+
     public StationRecyclerView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
         getAttributes(context, attrs);
