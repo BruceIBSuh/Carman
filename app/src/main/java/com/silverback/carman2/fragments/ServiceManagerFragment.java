@@ -65,6 +65,7 @@ public class ServiceManagerFragment extends Fragment implements
     private DecimalFormat df;
 
     // UIs
+    private RecyclerView serviceRecyclerView;
     private EditText etStnName;
     private TextView tvDate, tvMileage, tvTotalCost;
     private ImageButton btnFavorite;
@@ -128,7 +129,7 @@ public class ServiceManagerFragment extends Fragment implements
         View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
-        RecyclerView recyclerView = localView.findViewById(R.id.recycler_service);
+        serviceRecyclerView = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etStnName = localView.findViewById(R.id.et_service_provider);
         tvMileage = localView.findViewById(R.id.tv_mileage);
@@ -149,8 +150,8 @@ public class ServiceManagerFragment extends Fragment implements
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
 
         // Set the recycler view for enlisting the service checklist and attach the adapter to it.
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setHasFixedSize(true);
+        //recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        //recyclerView.setHasFixedSize(true);
         //recyclerView.setAdapter(mAdapter);
 
 
@@ -288,6 +289,20 @@ public class ServiceManagerFragment extends Fragment implements
         }
 
         return -1;
+    }
+
+    // Invoked by ExpenseActivity right after ViewPager attached.
+    public void setRecyclerView(String json) {
+        log.i("Set RecyclerView in ServiceManagerFragment");
+        try {
+            jsonSvcItemArray = new JSONArray(json);
+            mAdapter = new ServiceChecklistAdapter(jsonSvcItemArray, this);
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+        serviceRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        serviceRecyclerView.setHasFixedSize(true);
+        serviceRecyclerView.setAdapter(mAdapter);
     }
 
 

@@ -79,13 +79,13 @@ public class ExpenseActivity extends BaseActivity implements
     private String pageTitle;
 
     private Toolbar toolbar;
+    private final String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
-
 
         pagerModel = ViewModelProviders.of(this).get(ViewPagerModel.class);
 
@@ -243,6 +243,7 @@ public class ExpenseActivity extends BaseActivity implements
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
 
+                ((ServiceManagerFragment)tabPagerAdapter.getItem(position)).setRecyclerView(json);
                 break;
 
             case 2:
