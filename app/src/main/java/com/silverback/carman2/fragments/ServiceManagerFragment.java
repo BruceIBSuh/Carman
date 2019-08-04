@@ -26,6 +26,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ServiceItemAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -104,46 +105,33 @@ public class ServiceManagerFragment extends Fragment implements
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
-
-        // Retrieve service items which are saved in SharedPreferences as the type of JSON string.
-        /*
-        String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        try {
-            jsonSvcItemArray = new JSONArray(json);
-            mAdapter = new ServiceItemAdapter(jsonSvcItemArray, this);
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-
-        // Query the latest service record of each service checklist using ServiceManagerDao.
-        for(int i = 0; i < jsonSvcItemArray.length(); i++) {
-            final int position = i;
-            String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
-            mDB.serviceManagerModel().loadServicedItem(itemName).observe(this, servicedItemData ->
-                mAdapter.notifyItemChanged(position, servicedItemData));
-        }
-        */
         adapterModel.getServiceAdapter().observe(this, adapter -> {
             log.i("AdapterModel observe: %s", adapter);
             mAdapter = adapter;
             pbServiceItems.setVisibility(View.GONE);
             recyclerServiceItems.setVisibility(View.VISIBLE);
 
-            recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
-            recyclerServiceItems.setHasFixedSize(true);
-            adapter.setParentFragmentListener(this);
+            mAdapter.setParentFragmentListener(this);
             recyclerServiceItems.setAdapter(adapter);
         });
 
         adapterModel.getServicedItem().observe(this, checklist -> {
             log.i("Serviced Item: %s", checklist.size());
             serviceItemList = checklist;
+
             for(int i = 0; i < checklist.size(); i++) {
+                //log.i("servicedItemList: %s", serviceItemList.get(i));
                 final int pos = i;
-                mDB.serviceManagerModel().loadServicedItem(checklist.get(i)).observe(this, itemData ->
-                    mAdapter.notifyItemChanged(pos, itemData));
+                mDB.serviceManagerModel().loadServicedItem(checklist.get(pos)).observe(this, itemData -> {
+                    if(itemData != null) {
+                        log.i("Queried data: %s, %s, %s", pos, itemData.itemName, itemData.dateTime, itemData.mileage);
+                        mAdapter.notifyItemChanged(pos, itemData);
+                    }
+                });
+
             }
         });
+
 
         /*
          * ViewModel to share data b/w Fragments(this and NumberPadFragment)
@@ -196,6 +184,9 @@ public class ServiceManagerFragment extends Fragment implements
         tvTotalCost = localView.findViewById(R.id.tv_total_cost);
         tvTotalCost.setText("0");
 
+        recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerServiceItems.setHasFixedSize(true);
+
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
         btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
@@ -206,10 +197,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
-
-
-
-
 
         // Inflate the layout for this fragment
         return localView;

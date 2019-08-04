@@ -105,7 +105,7 @@ public class ServiceItemAdapter extends RecyclerView.Adapter<ServiceItemAdapter.
             super.onBindViewHolder(holder, pos, payloads);
 
         } else {
-
+            log.i("payload: %s", payloads.get(0));
             for(Object payload: payloads) {
                 if(payload instanceof SparseIntArray) {
                     SparseIntArray data = (SparseIntArray)payload;
@@ -145,7 +145,6 @@ public class ServiceItemAdapter extends RecyclerView.Adapter<ServiceItemAdapter.
             holder.tvItemMemo.setText(arrItemMemo[position]);
 
             holder.pb.setProgress(period);
-
         }
 
 

@@ -150,7 +150,7 @@ public class ExpenseActivity extends BaseActivity implements
             addTabIconAndTitle(this, expenseTabLayout);
             animSlideTabLayout();
 
-            if(locationTask == null) locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+            locationTask = ThreadManager.fetchLocationTask(this, locationModel);
         });
 
     }
@@ -167,9 +167,9 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        if(tabPagerTask != null) tabPagerTask = null;
-        if(locationTask != null) locationTask = null;
-        if(recyclerTask != null) recyclerTask = null;
+        if (tabPagerTask != null) tabPagerTask = null;
+        if (locationTask != null) locationTask = null;
+        if (recyclerTask != null) recyclerTask = null;
     }
 
     @Override
