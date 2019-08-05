@@ -12,9 +12,9 @@
         android:id="@+id/tv_subtitle_stats"
         android:layout_width="0dp"
         android:layout_height="35dp"
-        android:layout_marginStart="3dp"
+        android:layout_marginStart="2dp"
         android:layout_marginTop="3dp"
-        android:layout_marginEnd="3dp"
+        android:layout_marginEnd="2dp"
         android:background="@drawable/bg_stat_subtitle"
         android:padding="5dp"
         android:text="@string/stat_subtitle"
@@ -25,7 +25,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
-        android:id="@+id/spinner2"
+        android:id="@+id/spinner_expense"
         android:layout_width="84dp"
         android:layout_height="24dp"
         android:layout_marginTop="8dp"
@@ -33,21 +33,12 @@
         app:layout_constraintEnd_toEndOf="@+id/tv_subtitle_stats"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:layout_width="387dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="3dp"
-        android:layout_marginEnd="3dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view2" />
-
     <View
-        android:id="@+id/view2"
+        android:id="@+id/view_labels"
         android:layout_width="0dp"
         android:layout_height="30dp"
-        android:layout_marginStart="3dp"
-        android:layout_marginEnd="3dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
         android:background="@color/statThemeColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -62,12 +53,12 @@
         android:text="@string/stat_header_date"
         android:textColor="@color/white"
         android:textSize="@dimen/mediumText"
-        app:layout_constraintBottom_toBottomOf="@+id/view2"
-        app:layout_constraintStart_toStartOf="@+id/view2"
-        app:layout_constraintTop_toTopOf="@+id/view2" />
+        app:layout_constraintBottom_toBottomOf="@+id/view_labels"
+        app:layout_constraintStart_toStartOf="@+id/view_labels"
+        app:layout_constraintTop_toTopOf="@+id/view_labels" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/tv_label_mileage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
@@ -79,28 +70,36 @@
         app:layout_constraintTop_toTopOf="@+id/tv_date" />
 
     <TextView
-        android:id="@+id/textView5"
+        android:id="@+id/tv_label_expense"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:text="@string/stat_header_payment"
         android:textColor="@color/white"
         android:textSize="@dimen/mediumText"
-        app:layout_constraintBottom_toBottomOf="@+id/textView3"
-        app:layout_constraintStart_toEndOf="@+id/textView3"
-        app:layout_constraintTop_toTopOf="@+id/textView3" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_mileage"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_mileage" />
 
     <TextView
-        android:id="@+id/textView6"
+        android:id="@+id/tv_label_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/stat_header_provider"
         android:textColor="@color/white"
         android:textSize="@dimen/mediumText"
-        app:layout_constraintBottom_toBottomOf="@+id/textView5"
-        app:layout_constraintEnd_toEndOf="@+id/view2"
-        app:layout_constraintStart_toEndOf="@+id/textView5"
-        app:layout_constraintTop_toTopOf="@+id/textView5" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_expense"
+        app:layout_constraintEnd_toEndOf="@+id/view_labels"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_expense"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_expense" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_stmts"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view_labels" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

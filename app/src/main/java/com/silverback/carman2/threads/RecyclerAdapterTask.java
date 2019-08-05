@@ -1,17 +1,9 @@
 package com.silverback.carman2.threads;
 
-import android.content.Context;
-
-import androidx.lifecycle.LiveData;
-
-import com.silverback.carman2.adapters.ServiceItemAdapter;
-import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.ServiceManagerDao;
+import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.AdapterViewModel;
-
-import org.json.JSONArray;
 
 import java.util.List;
 
@@ -68,7 +60,7 @@ public class RecyclerAdapterTask extends ThreadTask implements
     }
 
     @Override
-    public void setRecyclerAdapter(ServiceItemAdapter adapter) {
+    public void setRecyclerAdapter(ExpenseSvcRecyclerAdapter adapter) {
         model.getServiceAdapter().postValue(adapter);
     }
 

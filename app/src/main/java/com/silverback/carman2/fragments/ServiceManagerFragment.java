@@ -23,10 +23,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ServiceItemAdapter;
+import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
 import com.silverback.carman2.database.BasicManagerEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -35,8 +34,6 @@ import com.silverback.carman2.models.AdapterViewModel;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
-
-import org.json.JSONArray;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -47,7 +44,7 @@ import java.util.List;
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ServiceItemAdapter.OnParentFragmentListener {
+        View.OnClickListener, ExpenseSvcRecyclerAdapter.OnParentFragmentListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -64,7 +61,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     private FavoriteGeofenceHelper geofenceHelper;
     //private Calendar calendar;
-    private ServiceItemAdapter mAdapter;
+    private ExpenseSvcRecyclerAdapter mAdapter;
     private DecimalFormat df;
 
 
@@ -109,7 +106,7 @@ public class ServiceManagerFragment extends Fragment implements
             log.i("AdapterModel observe: %s", adapter);
             mAdapter = adapter;
             pbServiceItems.setVisibility(View.GONE);
-            recyclerServiceItems.setVisibility(View.VISIBLE);
+            //recyclerServiceItems.setVisibility(View.VISIBLE);
 
             mAdapter.setParentFragmentListener(this);
             recyclerServiceItems.setAdapter(adapter);
@@ -124,7 +121,7 @@ public class ServiceManagerFragment extends Fragment implements
                 final int pos = i;
                 mDB.serviceManagerModel().loadServicedItem(checklist.get(pos)).observe(this, itemData -> {
                     if(itemData != null) {
-                        log.i("Queried data: %s, %s, %s", pos, itemData.itemName, itemData.dateTime, itemData.mileage);
+                        log.i("Queried data: %s, %s", pos, itemData.itemName);
                         mAdapter.notifyItemChanged(pos, itemData);
                     }
                 });

@@ -1,10 +1,8 @@
 package com.silverback.carman2.threads;
 
-import android.content.Context;
 import android.os.Process;
 
-import com.silverback.carman2.adapters.ServiceItemAdapter;
-import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -24,7 +22,7 @@ public class RecyclerAdapterRunnable implements Runnable {
     // Interface
     public interface RecyclerAdapterMethods {
         void setRecyclerAdapterThread(Thread thread);
-        void setRecyclerAdapter(ServiceItemAdapter adapter);
+        void setRecyclerAdapter(ExpenseSvcRecyclerAdapter adapter);
         void handleRecyclerTask(int state);
         String getServiceItems();
 
@@ -46,7 +44,7 @@ public class RecyclerAdapterRunnable implements Runnable {
         String jsonItems = task.getServiceItems();
         try {
             JSONArray jsonArray = new JSONArray(jsonItems);
-            ServiceItemAdapter adapter = new ServiceItemAdapter(jsonArray);
+            ExpenseSvcRecyclerAdapter adapter = new ExpenseSvcRecyclerAdapter(jsonArray);
             task.setRecyclerAdapter(adapter);
             task.handleRecyclerTask(TASK_COMPLETE);
         } catch(JSONException e) {

@@ -203,7 +203,6 @@
 
     <ProgressBar style="?android:attr/progressBarStyle"
         android:id="@+id/pb_checklist"
-        android:visibility="gone"
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_alignParentStart="true"
@@ -213,7 +212,6 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_service"
-        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/tv_subtitle_stmts"

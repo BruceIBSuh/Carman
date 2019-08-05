@@ -33,10 +33,10 @@ import org.json.JSONObject;
 import java.text.DecimalFormat;
 import java.util.List;
 
-public class ServiceItemAdapter extends RecyclerView.Adapter<ServiceItemAdapter.ServiceItemViewHolder> {
+public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRecyclerAdapter.ServiceItemViewHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseSvcRecyclerAdapter.class);
 
     // Objects
     private JSONArray jsonArray;
@@ -61,8 +61,8 @@ public class ServiceItemAdapter extends RecyclerView.Adapter<ServiceItemAdapter.
     }
 
     // Constructor
-    //public ServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
-    public ServiceItemAdapter(JSONArray jsonArray) {
+    //public ExpenseSvcRecyclerAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
+    public ExpenseSvcRecyclerAdapter(JSONArray jsonArray) {
 
         super();
 
