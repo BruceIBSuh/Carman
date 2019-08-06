@@ -30,6 +30,7 @@ public class StatStmtsFragment extends Fragment {
     // Objects
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
+    private RecyclerView recyclerExpense;
 
     public StatStmtsFragment() {
         // Required empty public constructor
@@ -38,11 +39,10 @@ public class StatStmtsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(getActivity() == null) return; //prevent Nullpointer exception.
 
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-
-
     }
 
     @Override
@@ -51,12 +51,20 @@ public class StatStmtsFragment extends Fragment {
 
         View localView = inflater.inflate(R.layout.fragment_stat_stmts, container, false);
 
-        RecyclerView recyclerExpense = localView.findViewById(R.id.recycler_stmts);
+        recyclerExpense = localView.findViewById(R.id.recycler_stmts);
         recyclerExpense.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerExpense.setHasFixedSize(true);
-        recyclerExpense.setAdapter(new ExpenseStatRecyclerAdapter());
 
         return localView;
+    }
+
+    // Invoked from onPageScrollStateChange in ExpenseActivity in order to load the fragment
+    // w/o the recyclerview and call the recyclerview when the fragment shows up in the tabpager
+    public void queryExpense() {
+        mDB.expenseBaseModel().loadExpenseByCategory(1, 2).observe(this, data -> {
+            log.i("All Expenses: %s", data.size());
+            recyclerExpense.setAdapter(new ExpenseStatRecyclerAdapter(data));
+        });
     }
 
 }

@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity
-public class BasicManagerEntity {
+public class ExpenseBaseEntity {
 
     @PrimaryKey(autoGenerate = true)
     public int _id;

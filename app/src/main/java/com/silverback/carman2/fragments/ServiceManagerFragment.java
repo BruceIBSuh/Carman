@@ -24,7 +24,7 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
-import com.silverback.carman2.database.BasicManagerEntity;
+import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
@@ -317,7 +317,7 @@ public class ServiceManagerFragment extends Fragment implements
             return false;
         }
 
-        BasicManagerEntity basicEntity = new BasicManagerEntity();
+        ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
         ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
         ServicedItemEntity checkedItem;
         List<ServicedItemEntity> itemEntityList = new ArrayList<>();
@@ -346,7 +346,7 @@ public class ServiceManagerFragment extends Fragment implements
             log.i("ServicedItemEntity: %s", obj.itemName);
         }
 
-        // Insert data into both BasicManagerEntity and ServiceManagerEntity at the same time
+        // Insert data into both ExpenseBaseEntity and ServiceManagerEntity at the same time
         // using @Transaction in ServiceManagerDao.
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
 

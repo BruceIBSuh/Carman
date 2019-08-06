@@ -22,9 +22,11 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
 import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
+import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -49,6 +51,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int MENU_ITEM_ID = 100;
 
     // Objects
+    private CarmanDatabase mDB;
     private Fragment targetFragment;
     private ViewPager tabPager;
     private AdapterViewModel adapterViewModel;
@@ -89,6 +92,8 @@ public class ExpenseActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
+
+        mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
 
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         adapterViewModel = ViewModelProviders.of(this).get(AdapterViewModel.class);
@@ -167,9 +172,13 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPause() {
         super.onPause();
+
         if (tabPagerTask != null) tabPagerTask = null;
         if (locationTask != null) locationTask = null;
         if (recyclerTask != null) recyclerTask = null;
+
+        // Destroy the static CarmanDatabase instance.
+        CarmanDatabase.destroyInstance();
     }
 
     @Override
@@ -276,7 +285,8 @@ public class ExpenseActivity extends BaseActivity implements
 
                 break;
             case 2:
-
+                StatStmtsFragment fragment = (StatStmtsFragment)tabPagerAdapter.getPagerFragments()[2];
+                fragment.queryExpense();
                 break;
 
         }
