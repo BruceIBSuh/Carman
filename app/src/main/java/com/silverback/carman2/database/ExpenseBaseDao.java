@@ -20,7 +20,7 @@ public interface ExpenseBaseDao {
     @Query("SELECT date_time, mileage, total_expense, stn_name, service_center FROM ExpenseBaseEntity " +
             "LEFT JOIN GasManagerEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "LEFT JOIN ServiceManagerEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
-            "WHERE category = :category1 OR category = :category2 ORDER BY date_time DESC")
+            "WHERE category = :category1 OR category = :category2 ORDER BY mileage DESC")
     LiveData<List<ExpenseStatements>> loadExpenseByCategory(int category1, int category2);
 
 
