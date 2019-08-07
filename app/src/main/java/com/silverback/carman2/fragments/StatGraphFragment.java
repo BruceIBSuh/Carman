@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.BasicManagerEntity;
+import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -130,7 +130,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         calendar.set(year, 11, 31, 23, 59, 59);
         long end = calendar.getTimeInMillis();
 
-        mDB.basicManagerMdoel().loadExpenseLiveData(start, end).observe(this, entities -> {
+        mDB.expenseBaseMdoel().loadExpenseLiveData(start, end).observe(this, entities -> {
             //monthlyTotalExpense = calculateMonthlyExpense(entities);
             graph.setGraphData(calculateMonthlyExpense(entities));
         });
@@ -213,11 +213,11 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
 
 
 
-    private int[] calculateMonthlyExpense(List<BasicManagerEntity> entityList) {
+    private int[] calculateMonthlyExpense(List<ExpenseBaseEntity> entityList) {
 
         int[] monthlyTotalExpense = new int[12];
 
-        for (BasicManagerEntity entity : entityList) {
+        for (ExpenseBaseEntity entity : entityList) {
             int month = Integer.valueOf(sdf.format(entity.dateTime));
             log.i("Month: %s", month);
             switch (month) {

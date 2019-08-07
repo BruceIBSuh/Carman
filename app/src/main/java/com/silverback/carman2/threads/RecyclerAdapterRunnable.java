@@ -33,8 +33,6 @@ public class RecyclerAdapterRunnable implements Runnable {
         this.task = task;
     }
 
-
-
     @Override
     public void run() {
         log.i("RecyclerAdapterRunnable");

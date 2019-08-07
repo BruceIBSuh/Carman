@@ -23,7 +23,7 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
-import com.silverback.carman2.database.BasicManagerEntity;
+import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -32,7 +32,6 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
@@ -337,7 +336,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         //int gas, wash, extra;
 
         // Create Entity instances both of which are correlated by Foreinkey
-        BasicManagerEntity basicEntity = new BasicManagerEntity();
+        ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
         GasManagerEntity gasEntity = new GasManagerEntity();
 
         basicEntity.dateTime = milliseconds;

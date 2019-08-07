@@ -7,19 +7,15 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 
-@Database(entities = {
-        BasicManagerEntity.class,
-        GasManagerEntity.class,
-        ServiceManagerEntity.class,
-        ServicedItemEntity.class,
-        FavoriteProviderEntity.class},
+@Database(entities = {ExpenseBaseEntity.class, GasManagerEntity.class, ServiceManagerEntity.class,
+        ServicedItemEntity.class, FavoriteProviderEntity.class},
         version = 1, exportSchema = false)
 
 public abstract class CarmanDatabase extends RoomDatabase {
 
     private static CarmanDatabase INSTANCE;
 
-    public abstract BasicManagerDao basicManagerMdoel();
+    public abstract ExpenseBaseDao expenseBaseMdoel();
     public abstract GasManagerDao gasManagerModel();
     public abstract ServiceManagerDao serviceManagerModel();
     public abstract FavoriteProviderDao favoriteModel();

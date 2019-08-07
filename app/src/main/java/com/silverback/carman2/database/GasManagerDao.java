@@ -21,7 +21,7 @@ public abstract class GasManagerDao {
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerDao.class);
 
     @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
-            "INNER JOIN BasicManagerEntity ON GasManagerEntity.basic_id = BasicManagerEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "ORDER BY gas_id DESC LIMIT 5")
     public abstract LiveData<List<RecentGasData>> loadRecentGasData();
 
@@ -30,7 +30,7 @@ public abstract class GasManagerDao {
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract long insertParent(BasicManagerEntity basicEntity);
+    abstract long insertParent(ExpenseBaseEntity basicEntity);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract long insert(GasManagerEntity gasManagerEntity);
@@ -42,7 +42,7 @@ public abstract class GasManagerDao {
     abstract int deleteGasManager(String stnName, String stnId);
 
     @Transaction
-    public int insertBoth(BasicManagerEntity basicEntity, GasManagerEntity gasEntity) {
+    public int insertBoth(ExpenseBaseEntity basicEntity, GasManagerEntity gasEntity) {
         gasEntity.basicId = (int)insertParent(basicEntity);
         long gasId = insert(gasEntity);
         return (int)gasId;

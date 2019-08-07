@@ -39,9 +39,12 @@ public class StatStmtsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if(getActivity() == null) return;
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
 
+        mDB.expenseBaseMdoel().loadAllExpenses().observe(this, data ->
+                log.i("data: %s, %s", data.category, data.totalExpense));
 
     }
 
@@ -51,7 +54,7 @@ public class StatStmtsFragment extends Fragment {
 
         View localView = inflater.inflate(R.layout.fragment_stat_stmts, container, false);
 
-        RecyclerView recyclerExpense = localView.findViewById(R.id.recycler_stmts);
+        RecyclerView recyclerExpense = localView.findViewById(R.id.recycler_stats);
         recyclerExpense.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerExpense.setHasFixedSize(true);
         recyclerExpense.setAdapter(new ExpenseStatRecyclerAdapter());

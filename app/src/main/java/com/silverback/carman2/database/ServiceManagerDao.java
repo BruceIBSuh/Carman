@@ -21,7 +21,7 @@ public abstract class ServiceManagerDao {
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerDao.class);
 
     @Query("SELECT date_time, mileage, total_expense, service_center FROM ServiceManagerEntity " +
-            "INNER JOIN BasicManagerEntity ON ServiceManagerEntity.basic_id = BasicManagerEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "ORDER BY service_id DESC LIMIT 5")
     public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
 
@@ -29,7 +29,7 @@ public abstract class ServiceManagerDao {
     // Query the last service history for each item with item name as keyword in ServicedItemEntity
     @Query("SELECT item_name, service_center, date_time, mileage FROM ServicedItemEntity " +
             "INNER JOIN ServiceManagerEntity ON ServiceManagerEntity.service_id = ServicedItemEntity.svc_id " +
-            "INNER JOIN BasicManagerEntity ON  BasicManagerEntity._id = ServiceManagerEntity.basic_id " +
+            "INNER JOIN ExpenseBaseEntity ON  ExpenseBaseEntity._id = ServiceManagerEntity.basic_id " +
             "WHERE item_name = :itemName ORDER BY date_time DESC LIMIT 1")
 
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
@@ -38,7 +38,7 @@ public abstract class ServiceManagerDao {
 
     // Insert
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract long insertBasics(BasicManagerEntity basicEntity);
+    abstract long insertBasics(ExpenseBaseEntity basicEntity);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract long insertService(ServiceManagerEntity svcEntity);
@@ -47,7 +47,7 @@ public abstract class ServiceManagerDao {
     abstract void insertServicedItem(ServicedItemEntity itemEntity);
 
     @Transaction
-    public int insertAll(BasicManagerEntity basicEntity,
+    public int insertAll(ExpenseBaseEntity basicEntity,
                          ServiceManagerEntity svcEntity,
                          List<ServicedItemEntity> itemEntityList) {
 
