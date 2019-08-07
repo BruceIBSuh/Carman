@@ -7,14 +7,13 @@
     android:layout_height="match_parent"
     tools:context=".fragments.StatStmtsFragment">
 
-
     <TextView
         android:id="@+id/tv_subtitle_stats"
         android:layout_width="0dp"
         android:layout_height="35dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginTop="3dp"
-        android:layout_marginEnd="2dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="1dp"
         android:background="@drawable/bg_stat_subtitle"
         android:padding="5dp"
         android:text="@string/stat_subtitle"
@@ -26,7 +25,7 @@
 
     <Spinner
         android:id="@+id/spinner_expense"
-        android:layout_width="84dp"
+        android:layout_width="wrap_content"
         android:layout_height="24dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
@@ -37,8 +36,8 @@
         android:id="@+id/view_labels"
         android:layout_width="0dp"
         android:layout_height="30dp"
-        android:layout_marginStart="2dp"
-        android:layout_marginEnd="2dp"
+        android:layout_marginStart="1dp"
+        android:layout_marginEnd="1dp"
         android:background="@color/statThemeColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

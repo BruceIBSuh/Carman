@@ -15,6 +15,7 @@ public class ExpenseStatHolder extends RecyclerView.ViewHolder {
     private String dateFormat;
     private TextView tvDate, tvMileage, tvExpense, tvLocation;
 
+    // Constructor
     public ExpenseStatHolder(CardView cardView) {
         super(cardView);
 
@@ -26,6 +27,7 @@ public class ExpenseStatHolder extends RecyclerView.ViewHolder {
         tvLocation = cardView.findViewById(R.id.tv_stat_location);
     }
 
+    // Bind the queried data to the viewholder in BindViewHolder of ExpenseStatRecyclerAdapter
     public void bindToExpenseStat(ExpenseBaseDao.ExpenseStatements entity) {
         tvDate.setText(BaseActivity.formatMilliseconds(dateFormat, entity.dateTime));
         tvMileage.setText(BaseActivity.getDecimalFormatInstance().format(entity.mileage));

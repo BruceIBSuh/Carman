@@ -35,10 +35,7 @@ public class ThreadManager {
     static final int DOWNLOAD_PRICE_COMPLETE = 100;
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
-    static final int DOWNLOAD_NO_STN_COMPLETE = 105;
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 200;
-    static final int DOWNLOAD_STN_MAPINFO_FAILED = - 201;
-    static final int POPULATE_STATION_LIST_COMPLETED = 106;
 
     static final int SERVICE_ITEM_LIST_COMPLETED = 109;
     static final int FETCH_LOCATION_COMPLETED = 110;
@@ -57,6 +54,7 @@ public class ThreadManager {
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
     static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
+
     static final int DOWNLOAD_PRICE_FAILED = -200;
     static final int DOWNLOAD_NEAR_STATIONS_FAILED = -2;
     static final int DOWNLOAD_CURRENT_STATION_FAILED = -4;
@@ -211,6 +209,9 @@ public class ThreadManager {
                         recycleTask((StationListTask)msg.obj);
                         break;
 
+                    case DOWNLOAD_CURRENT_STATION_FAILED:
+                        break;
+
                     case FIRESTORE_STATION_SET_COMPLETED:
                         recycleTask((StationListTask)msg.obj);
                         break;
@@ -225,7 +226,7 @@ public class ThreadManager {
                         recycleTask(stationInfoTask);
                         break;
 
-                    case DOWNLOAD_STN_MAPINFO_FAILED:
+                    case DOWNLOAD_STATION_INFO_FAILED:
                         recycleTask((StationInfoTask)msg.obj);
                         break;
 
@@ -258,6 +259,7 @@ public class ThreadManager {
                 msg.sendToTarget();
                 break;
 
+            // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
@@ -414,10 +416,10 @@ public class ThreadManager {
         return stationListTask;
     }
 
-    public static StationInfoTask startStationInfoTask(Fragment fragment, String stnName, String stnId) {
+    public static StationInfoTask startStationInfoTask(StationListViewModel model, String stnName, String stnId) {
 
-        StationInfoTask stationTask = sInstance.mStationInfoTaskQueue.poll();
-        if(stationTask == null) stationTask = new StationInfoTask(fragment.getContext());
+        StationInfoTask stationInfoTask = sInstance.mStationInfoTaskQueue.poll();
+        if(stationInfoTask == null) stationInfoTask = new StationInfoTask();
 
         // Attach OnCompleteInfoTaskListener
         /*
@@ -429,10 +431,10 @@ public class ThreadManager {
             }
         }
         */
-        stationTask.initStationTask(ThreadManager.sInstance, fragment, stnName, stnId);
-        sInstance.mDownloadThreadPool.execute(stationTask.getStationMapInfoRunnable());
+        stationInfoTask.initStationTask(model, stnName, stnId);
+        sInstance.mDownloadThreadPool.execute(stationInfoTask.getStationMapInfoRunnable());
 
-        return stationTask;
+        return stationInfoTask;
     }
 
     /*

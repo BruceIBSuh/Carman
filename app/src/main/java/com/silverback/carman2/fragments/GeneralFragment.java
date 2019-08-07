@@ -187,7 +187,7 @@ public class GeneralFragment extends Fragment implements
         stnListModel.getStationListLiveData().observe(this, stnList -> {
             log.i("StationList: %s", stnList.size());
             mStationList = stnList;
-            mAdapter = new StationListAdapter(stnList, this);
+            mAdapter = new StationListAdapter(mStationList, this);
             stationRecyclerView.showStationListRecyclerView();
             stationRecyclerView.setAdapter(mAdapter);
         });
@@ -206,6 +206,14 @@ public class GeneralFragment extends Fragment implements
             Intent intent = new Intent(getActivity(), StationMapActivity.class);
             intent.putExtras(bundle);
             startActivity(intent);
+        });
+
+        stnListModel.getStationCarWashInfo().observe(this, sparseBooleanArray -> {
+            log.i("SparseBooleanArray: %s" , sparseBooleanArray.size());
+            if(sparseBooleanArray.valueAt(0)) {
+                log.i("CarWash true: %s", sparseBooleanArray.keyAt(0));
+                mAdapter.notifyItemChanged(sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
+            }
         });
 
         return childView;
@@ -305,9 +313,9 @@ public class GeneralFragment extends Fragment implements
     // a cardview item, passing a position of the item.
     @Override
     public void onItemClicked(int position) {
-        //tmpStationName = mStationList.get(position).getStnName();
-        stationInfoTask = ThreadManager.startStationInfoTask(this,
+        stationInfoTask = ThreadManager.startStationInfoTask(stnListModel,
                 mStationList.get(position).getStnName(), mStationList.get(position).getStnId());
+
     }
 
 }

@@ -25,9 +25,10 @@ public class StationListHolder extends RecyclerView.ViewHolder {
     private Context context;
     private static DecimalFormat df;
     private ImageView imgLogo;
-    private TextView tvName, tvPrice, tvDistance, tvWashValue, tvWashLabel;
+    private TextView tvName, tvPrice, tvDistance, tvWashLabel;
     private String price, distance, carwash;
     private String stnName, stnId;
+    public TextView tvWashValue;
 
     static {
         df = BaseActivity.getDecimalFormatInstance();

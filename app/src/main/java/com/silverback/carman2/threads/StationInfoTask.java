@@ -1,26 +1,9 @@
 package com.silverback.carman2.threads;
 
-import android.content.Context;
-import android.view.View;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleEventObserver;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
-import androidx.lifecycle.ViewModelProviders;
-
-import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.StationInfoModel;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.views.StationRecyclerView;
-
-import java.lang.ref.WeakReference;
 
 public class StationInfoTask extends ThreadTask implements
         //LifecycleObserver,
@@ -32,26 +15,18 @@ public class StationInfoTask extends ThreadTask implements
 
     // Objects
     private StationListViewModel stnViewModel;
-    private static ThreadManager sThreadManager;
     private Runnable mStationInfoRunnable, mFireStoreUpdateRunnable;
     private Opinet.GasStationInfo stationInfo;
     private String stnName, stnId;
 
     // Constructor
-    public StationInfoTask() {
-        // Leave empty
-    }
-
-    StationInfoTask(Context context) {
-        mStationInfoRunnable = new StationInfoRunnable(context, this);
+    StationInfoTask() {
+        mStationInfoRunnable = new StationInfoRunnable(this);
         mFireStoreUpdateRunnable = new FireStoreUpdateRunnable(this);
     }
 
-    void initStationTask(
-            ThreadManager threadManager, Fragment fragment, String stationName, String stationId) {
-
-        stnViewModel = ViewModelProviders.of(fragment).get(StationListViewModel.class);
-        sThreadManager = threadManager;
+    void initStationTask(StationListViewModel model, String stationName, String stationId) {
+        stnViewModel = model;
         stnId = stationId;
         stnName = stationName;
     }
@@ -59,6 +34,10 @@ public class StationInfoTask extends ThreadTask implements
     // Getter for Runnables
     Runnable getStationMapInfoRunnable() { return mStationInfoRunnable;}
     Runnable updateFireStoreRunnable() { return mFireStoreUpdateRunnable; }
+
+    void recycle(){
+        log.i("recycler");
+    }
 
     @Override
     public void setStationTaskThread(Thread thread) {
@@ -97,14 +76,11 @@ public class StationInfoTask extends ThreadTask implements
                 break;
 
             case StationInfoRunnable.DOWNLOAD_STATION_INFO_FAIL:
-                outState = ThreadManager.DOWNLOAD_STN_MAPINFO_FAILED;
+                outState = ThreadManager.DOWNLOAD_STATION_INFO_FAILED;
                 break;
         }
 
         sThreadManager.handleState(this, outState);
     }
-
-    void recycle(){}
-
 
 }

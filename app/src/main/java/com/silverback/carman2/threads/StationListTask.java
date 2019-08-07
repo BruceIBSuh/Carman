@@ -3,6 +3,8 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
+import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -27,7 +29,7 @@ public class StationListTask extends ThreadTask implements
     static final int FIRESTORE_GET_COMPLETE = 3;
     static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
-    static final int DOWNLOAD_CURRENT_STATION_FAILED = -2;
+    static final int DOWNLOAD_CURRENT_STATION_FAIL = -2;
     static final int DOWNLOAD_NO_STATION = -3;
 
     // Objects
@@ -42,11 +44,10 @@ public class StationListTask extends ThreadTask implements
     private Location mLocation;
     private String[] defaultParams;
 
-
     // Constructor
     StationListTask(Context context) {
         super();
-        //this.context = context;
+
         mStationListRunnable = new StationListRunnable(context, this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
@@ -56,7 +57,6 @@ public class StationListTask extends ThreadTask implements
         defaultParams = params;
         mLocation = location;
         //mStationInfoList = new ArrayList<>();
-
         viewModel = model;
     }
 
@@ -102,7 +102,13 @@ public class StationListTask extends ThreadTask implements
         viewModel.getCurrentStationLiveData().postValue(station);
     }
 
+    @Override
+    public void setStationInfo(int position, boolean b) {
+        viewModel.setStationCarWashInfo(position, b);
+    }
 
+    // FireStoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
+    // each of which is queried for whether it has the carwash or has been visited.
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {
         return mStationList;
@@ -130,11 +136,12 @@ public class StationListTask extends ThreadTask implements
                 log.i("FireStore Set Complete");
                 outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
                 break;
-            /*
-            case StationListRunnable.DOWNLOAD_CURRENT_STATION_FAILED:
+
+            case DOWNLOAD_CURRENT_STATION_FAIL:
+                viewModel.getCurrentStationLiveData().postValue(null);
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
-            */
+
             case DOWNLOAD_NEAR_STATIONS_FAIL:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;

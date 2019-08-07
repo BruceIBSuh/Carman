@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.Spinner;
 
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -23,7 +26,7 @@ import androidx.recyclerview.widget.RecyclerView;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class StatStmtsFragment extends Fragment {
+public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSelectedListener{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StatStmtsFragment.class);
 
@@ -45,17 +48,38 @@ public class StatStmtsFragment extends Fragment {
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.fragment_stat_stmts, container, false);
-
+        Spinner spinner = localView.findViewById(R.id.spinner_expense);
         recyclerExpense = localView.findViewById(R.id.recycler_stmts);
+
+
+        spinner.setOnItemSelectedListener(this);
+
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
+                getContext(), R.array.spinner_expense_stmts, R.layout.spinner_stat_stmts);
+        spinnerAdapter.setDropDownViewResource(R.layout.spinner_stat_dropdown);
+        spinner.setAdapter(spinnerAdapter);
+
+
         recyclerExpense.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerExpense.setHasFixedSize(true);
 
         return localView;
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 
     // Invoked from onPageScrollStateChange in ExpenseActivity in order to load the fragment
@@ -66,5 +90,6 @@ public class StatStmtsFragment extends Fragment {
             recyclerExpense.setAdapter(new ExpenseStatRecyclerAdapter(data));
         });
     }
+
 
 }

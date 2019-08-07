@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.ExpenseBaseDao;
-import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewholders.ExpenseStatHolder;
@@ -33,7 +32,7 @@ public class ExpenseStatRecyclerAdapter extends RecyclerView.Adapter<ExpenseStat
     @Override
     public ExpenseStatHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.view_card_statements, parent, false);
+                .inflate(R.layout.cardview_statstmts, parent, false);
 
         return new ExpenseStatHolder(cardView);
     }

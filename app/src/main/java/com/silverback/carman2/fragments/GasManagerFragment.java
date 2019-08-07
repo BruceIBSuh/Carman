@@ -192,18 +192,22 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // is notified to retrieve a current station. Then, get StationInfoTask started to get
         // its address, completion of which is notified by the same ViewModel.
         stnModel.getCurrentStationLiveData().observe(this, currentStation -> {
-            stnName = currentStation.getStnName();
-            stnId = currentStation.getStnId();
-            log.i("Current Station: %s, %s: ", stnName, stnId);
 
-            etStnName.setText(stnName);
-            etUnitPrice.setText(String.valueOf(currentStation.getStnPrice()));
-            etStnName.setCursorVisible(false);
-            etUnitPrice.setCursorVisible(false);
+            if(currentStation != null) {
+                stnName = currentStation.getStnName();
+                stnId = currentStation.getStnId();
+                etStnName.setText(stnName);
+                etUnitPrice.setText(String.valueOf(currentStation.getStnPrice()));
+                etStnName.setCursorVisible(false);
+                etUnitPrice.setCursorVisible(false);
 
-            // Query Favorite with the fetched station name or station id to tell whether the station
-            // has registered with Favorite.
-            //checkFavorite(stnName, stnId);
+                // Query Favorite with the fetched station name or station id to tell whether the station
+                // has registered with Favorite.
+                checkFavorite(stnName, stnId);
+
+            } else {
+                etStnName.setHint(getString(R.string.gas_hint_no_station));
+            }
 
             pbStation.setVisibility(View.GONE);
             imgRefresh.setVisibility(View.VISIBLE);
@@ -212,7 +216,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // When fetching the address, the station is registered with Favorite passing detailed info
         // to FavoriteGeofenceHelper as params
         stnModel.getStationInfoLiveData().observe(this, stnInfo -> {
-            log.i("onStationInfoTaskComplete: %s", stnInfo.getNewAddrs());
+
             stnAddrs = stnInfo.getNewAddrs();
             stnCode = stnInfo.getStationCode();
 
@@ -292,14 +296,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // Query Favorite with the fetched station name or station id to tell whether the station
     // has registered with Favorite, and the result is notified as a LiveData.
     private void checkFavorite(String name, String id) {
+
         LiveData<String> favoriteName = mDB.favoriteModel().findFavoriteName(name, id);
+
         favoriteName.observe(this, favorite -> {
             if (TextUtils.isEmpty(favorite)) {
-                log.i("favorite not found");
                 isFavorite = false;
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
             } else {
-                log.i("favorite not found");
+                log.i("favorite found");
                 isFavorite = true;
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             }
@@ -310,16 +315,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // Invoked when Favorite button clicks in order to add or remove the current station to or out of
     // Favorite and Geofence list.
     private void registerFavorite() {
-        log.i("registerFavorite");
+
         if(TextUtils.isEmpty(etStnName.getText())) return;
 
         if(isFavorite) {
             geofenceHelper.removeFavoriteGeofence(stnName, stnId);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-
         } else {
             // Initiate StationInfoTask to fetch an address of the current station.
-            stationInfoTask = ThreadManager.startStationInfoTask(this, stnName, stnId);
+            stationInfoTask = ThreadManager.startStationInfoTask(stnModel, stnName, stnId);
         }
 
         isFavorite = !isFavorite;
@@ -333,7 +337,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         //ContentValues values = new ContentValues();
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
-        //int gas, wash, extra;
 
         // Create Entity instances both of which are correlated by Foreinkey
         ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
@@ -420,7 +423,4 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         }
     }
-
-
-
 }

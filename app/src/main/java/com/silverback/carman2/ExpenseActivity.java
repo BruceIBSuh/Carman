@@ -99,6 +99,8 @@ public class ExpenseActivity extends BaseActivity implements
         adapterViewModel = ViewModelProviders.of(this).get(AdapterViewModel.class);
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
+        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+
 
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
@@ -155,7 +157,7 @@ public class ExpenseActivity extends BaseActivity implements
             addTabIconAndTitle(this, expenseTabLayout);
             animSlideTabLayout();
 
-            locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+
         });
 
     }
