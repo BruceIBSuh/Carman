@@ -2,18 +2,13 @@ package com.silverback.carman2.threads;
 
 import android.os.Process;
 
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 public class FireStoreGetRunnable implements Runnable {
 
@@ -23,13 +18,13 @@ public class FireStoreGetRunnable implements Runnable {
 
     // Objects
     private FireStoreGetMethods task;
-    private FirebaseFirestore mDB;
+    private FirebaseFirestore fireStore;
     private List<Opinet.GasStnParcelable> stnList;
 
 
     public interface FireStoreGetMethods {
         void setStationTaskThread(Thread thread);
-        void setStationInfo(int position, boolean isCarwash);
+        void setStationInfo(int position, Object obj);
         List<Opinet.GasStnParcelable> getStationList();
         void handleStationTaskState(int state);
 
@@ -37,7 +32,7 @@ public class FireStoreGetRunnable implements Runnable {
 
     FireStoreGetRunnable(FireStoreGetMethods task) {
         this.task = task;
-        if(mDB == null) mDB = FirebaseFirestore.getInstance();
+        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
     }
 
     @Override
@@ -53,19 +48,22 @@ public class FireStoreGetRunnable implements Runnable {
         //for(Opinet.GasStnParcelable station : stnList) {
         for(int i = 0; i < stnList.size(); i++) {
             final int pos = i;
-            Query query = mDB.collection("stations").whereEqualTo("id", stnList.get(pos).getStnId());
+            Query query = fireStore.collection("stations").whereEqualTo("id", stnList.get(pos).getStnId());
             query.addSnapshotListener((snapshot, e) -> {
 
-                if(snapshot == null) return;
-                if(!snapshot.isEmpty()) {
-                    boolean isCarwash = (boolean)snapshot.getDocuments().get(0).get("carwash");
+                if (snapshot == null) return;
+                if (!snapshot.isEmpty()) {
+                    boolean isCarwash = (boolean) snapshot.getDocuments().get(0).get("carwash");
                     stnList.get(pos).setIsWash(isCarwash);
                     stnList.get(pos).setHasVisited(true);
 
                     task.setStationInfo(pos, isCarwash);
+                    //log.i("FireStoreGetRunnable isCarwash: %s, %s", stnList.get(pos).getStnName(), isCarwash);
 
                 } else {
+                    log.i("never visited");
                     stnList.get(pos).setHasVisited(false);
+                    task.setStationInfo(pos, null);
                     task.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
                 }
             });

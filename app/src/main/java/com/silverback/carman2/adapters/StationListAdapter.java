@@ -68,26 +68,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
 
     }
 
-
-    @Override
-    public void onBindViewHolder(@NonNull StationListViewHolder holder, int position, @NonNull List<Object> payloads) {
-
-        if(payloads.isEmpty()) {
-            super.onBindViewHolder(holder, position, payloads);
-
-        }else{
-            for(Object obj : payloads) {
-                if(obj instanceof Boolean) {
-                    boolean isCarwash = (boolean) obj;
-                    holder.tvWashValue.setText((isCarwash)?"YES":"NO");
-                }
-            }
-        }
-
-    }
-
-
-
     @Override
     public void onBindViewHolder(@NonNull StationListViewHolder holder, int position) {
 
@@ -98,13 +78,12 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
         int resLogo = getGasStationImage(data.getStnCode());
         holder.imgLogo.setImageResource(resLogo);
 
-        log.i("price and distance: %s, %s", data.getStnPrice(), data.getStnDistance());
-
         // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
         //holder.tvName.setText(String.format("%s%8s%5s", data.getStnName(), "---", data.getHasVisited()));
         holder.tvName.setText(data.getStnName());
         holder.tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
         holder.tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
+        holder.tvWashValue.setText(String.valueOf(data.getIsWash()));
 
         holder.itemView.setOnClickListener(view -> {
             log.i("cardview position: %s, %s", position, mListener);
@@ -113,6 +92,25 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
 
     }
 
+
+    @Override
+    public void onBindViewHolder(@NonNull StationListViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+
+        }else{
+            for(Object obj : payloads) {
+                if(obj instanceof Boolean) {
+                    log.i("isCarwash in StationListAdapter: %s, %s", position, obj);
+                    String isWash = obj.toString();
+                    holder.tvWashValue.setText(isWash);
+                } else if(obj == null) {
+                    holder.tvWashValue.setText("N/A");
+                }
+            }
+        }
+
+    }
 
     @Override
     public int getItemCount() {

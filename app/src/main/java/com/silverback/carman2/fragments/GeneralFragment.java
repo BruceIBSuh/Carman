@@ -192,28 +192,21 @@ public class GeneralFragment extends Fragment implements
             stationRecyclerView.setAdapter(mAdapter);
         });
 
-        stnListModel.getStationInfoLiveData().observe(this, sntInfo -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("stationName", sntInfo.getStationName());
-            bundle.putString("stationAddrs", sntInfo.getNewAddrs());
-            bundle.putString("stationTel", sntInfo.getTelNo());
-            bundle.putString("isCarWash", sntInfo.getIsCarWash());
-            bundle.putString("isService", sntInfo.getIsService());
-            bundle.putString("isCVS", sntInfo.getIsCVS());
-            bundle.putString("xCoord", sntInfo.getXcoord());
-            bundle.putString("yCoord", sntInfo.getYcoord());
 
-            Intent intent = new Intent(getActivity(), StationMapActivity.class);
-            intent.putExtras(bundle);
-            startActivity(intent);
-        });
 
-        stnListModel.getStationCarWashInfo().observe(this, sparseBooleanArray -> {
-            log.i("SparseBooleanArray: %s" , sparseBooleanArray.size());
-            if(sparseBooleanArray.valueAt(0)) {
-                log.i("CarWash true: %s", sparseBooleanArray.keyAt(0));
+        stnListModel.getStationCarWashInfo().observe(this, obj -> {
+            if(obj.size() > 0) mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
+            /*
+            if(obj.valueAt(0) == null) {
+                mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
+            } else if(obj.valueAt(0) instanceof Boolean) {
+
+            }
+            if (sparseArray.valueAt(0)) {
+                log.i("CarWash true: %s, %s", sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
                 mAdapter.notifyItemChanged(sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
             }
+            */
         });
 
         return childView;
@@ -222,11 +215,8 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume");
-
         // Update the current time using worker thread every 1 minute.
         //clockTask = ThreadManager.startClockTask(getContext(), tvDate);
-
     }
 
     @Override
@@ -236,7 +226,7 @@ public class GeneralFragment extends Fragment implements
         // Refactor required as to how to finish worker threads.
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
-        if(stationListTask != null) stationListTask = null;
+        //if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
     }
@@ -309,12 +299,16 @@ public class GeneralFragment extends Fragment implements
     }
 
 
-    // StationListAdapter.OnRecyclerItemClickListener invokes this when clicking
-    // a cardview item, passing a position of the item.
+    // Callback invoked by StationListAdapter.OnRecyclerItemClickListener
+    // on clicking an RecyclerView item with fetched station name and id passing to the activity.
     @Override
     public void onItemClicked(int position) {
-        stationInfoTask = ThreadManager.startStationInfoTask(stnListModel,
-                mStationList.get(position).getStnName(), mStationList.get(position).getStnId());
+        Bundle bundle = new Bundle();
+        bundle.putString("stationName", mStationList.get(position).getStnName());
+        bundle.putString("stationId", mStationList.get(position).getStnId());
+        Intent intent = new Intent(getActivity(), StationMapActivity.class);
+        intent.putExtras(bundle);
+        startActivity(intent);
 
     }
 
