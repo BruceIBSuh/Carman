@@ -41,9 +41,9 @@ public class MainActivity extends BaseActivity implements
         setSupportActionBar(toolbar);
 
         // Get Defaults from BaseActivity and sets it bundled for passing to GeneralFragment
-        String[] defaults = getDefaultParams();
+        //String[] defaults = getDefaultParams();
         Bundle bundle = new Bundle();
-        bundle.putStringArray("defaults", defaults);
+        bundle.putStringArray("defaults", getDefaultParams());
 
         // Instantiates Fragments which FrameLayout adds, replaces or removes a Fragment by selecting
         // a toolbar menu.
@@ -132,7 +132,7 @@ public class MainActivity extends BaseActivity implements
             for (File file : cacheDir.listFiles()) file.delete();
         }
 
-        this.finishAffinity();
+        finishAffinity();
     }
 
     @Override

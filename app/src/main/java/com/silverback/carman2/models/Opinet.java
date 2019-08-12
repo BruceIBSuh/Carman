@@ -111,11 +111,11 @@ public class Opinet  {
         @NonNull
         @Override
         public String toString(){
-            return "시도코드: " + getSidoCode()
-                    + "\n시도이름: " + getSidoName()
-                    + "\n제품코드: " + getProductCd()
-                    + "\n제품가격: " + getPrice()
-                    + "\n변동률: " + getDiff();
+            return "sidoCode: " + getSidoCode()
+                    + "\nsidoName: " + getSidoName()
+                    + "\nproductCd: " + getProductCd()
+                    + "\nprice: " + getPrice()
+                    + "\ndiff: " + getDiff();
         }
     }
 
@@ -166,11 +166,11 @@ public class Opinet  {
 
         @Override
         public String toString(){
-            return "시군코드: " + getSigunCode()
-                    + "\n시군이름: " + getSigunName()
-                    + "\n제품코드: " + getProductCd()
-                    + "\n제품가격: " + getPrice()
-                    + "\n변동률: " + getDiff();
+            return "sigunCode: " + getSigunCode()
+                    + "\nsigunName: " + getSigunName()
+                    + "\nproductCd: " + getProductCd()
+                    + "\nprice: " + getPrice()
+                    + "\ndiff: " + getDiff();
         }
     }
 
@@ -194,15 +194,17 @@ public class Opinet  {
 
         @Override
         public String toString(){
-            return "지역코드: " + getDistrictCode()
-                    + "\n지역이름: " + getDistrictName();
+            return "districtCode: " + getDistrictCode()
+                    + "\ndistrictName: " + getDistrictName();
         }
     }
 
     /**
      * Retrieve data of a specific station with the station id given.
      */
-    public static class GasStationInfo {
+    public static class GasStationInfo implements Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         private String stationCode;
         private String stationName;
@@ -269,6 +271,24 @@ public class Opinet  {
 
         void setyCoord(String yCoord) { this.yCoord = yCoord; }
         public String getYcoord() { return yCoord; }
+
+        /*
+        @NonNull
+        @Override
+        public String toString() {
+            return "stationCode: " + getStationCode()
+                    + "\nstationName: " + getStationName()
+                    + "\noldAddrs: " + getOldAddrs()
+                    + "\nnewAddrs: " + getNewAddrs()
+                    + "\ntelNo: " + getTelNo()
+                    + "\nisCarWash: " + getIsCarWash()
+                    + "\nisService: " + getIsService()
+                    + "\nisCVS: " + getIsCarWash()
+                    + "\noilPrice: " + getOilPrice()
+                    + "\nxCoord: " + getXcoord()
+                    + "\nyCorrd: " + getYcoord();
+        }
+        */
     }
 
 

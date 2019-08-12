@@ -153,9 +153,9 @@ public class StationListRunnable implements Runnable{
                 }
 
             } else {
-                if(radius.matches(Constants.MIN_RADIUS))
-                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
-                else mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+                if(radius.matches(Constants.MIN_RADIUS)) {
+                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
+                } else mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
             }
 
         } catch (MalformedURLException e) {

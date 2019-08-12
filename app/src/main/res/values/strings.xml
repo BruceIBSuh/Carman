@@ -80,6 +80,7 @@
     <string name="toast_unit_price">리터당 가격을 입력해 주세요</string>
     <string name="toast_save_success">저장하였습니다</string>
     <string name="toast_save_fail">저장하지 못하였습니다</string>
+    <string name="gas_hint_no_station">주유소 위치가 아닙니다</string>
 
 
     <!--ServiceManagerFragment-->
@@ -108,6 +109,9 @@
     <string name="stat_header_milegae">누적거리(km)</string>
     <string name="stat_header_payment">금액(원)</string>
     <string name="stat_header_provider">장 소</string>
+    <string name="stat_spinner_all">전체</string>
+    <string name="stat_spinner_gas">주유비</string>
+    <string name="stat_spinner_service">서비스</string>
 
     <!--SettingPreferenceActivity-->
     <string name="setting_toolbar_title">차량정보/앱 설정</string>
@@ -194,6 +198,7 @@
     <string name="date_format_4">yy년MM월dd일</string>
     <string name="date_format_5">MM월dd일</string>
     <string name="date_format_6">MM월dd일(E) HH시mm분</string>
+    <string name="date_format_7">yy/MM/dd(E)HH:mm</string>
     <string name="time_format_1">%d시%d분</string>
 
     <!--Miscellany-->

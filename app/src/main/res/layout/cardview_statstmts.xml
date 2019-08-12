@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content" >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -17,11 +17,11 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp"
-            android:text="TextView"
+            android:textSize="@dimen/smallText"
             cardview:layout_constraintBottom_toBottomOf="parent"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_stat_mileage"
             cardview:layout_constraintHorizontal_bias="0.5"
-            cardview:layout_constraintHorizontal_weight="1"
+            cardview:layout_constraintHorizontal_weight="2"
             cardview:layout_constraintStart_toStartOf="parent"
             cardview:layout_constraintTop_toTopOf="parent" />
 
@@ -31,7 +31,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:text="TextView"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_date"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_stat_expense"
             cardview:layout_constraintHorizontal_bias="0.5"
@@ -45,7 +44,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:text="TextView"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_mileage"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_stat_location"
             cardview:layout_constraintHorizontal_bias="0.5"
@@ -59,7 +57,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="3dp"
-            android:text="TextView"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_expense"
             cardview:layout_constraintEnd_toEndOf="parent"
             cardview:layout_constraintHorizontal_bias="0.5"

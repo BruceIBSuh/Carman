@@ -4,8 +4,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -18,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -26,15 +31,17 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> {
+public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.StationListViewHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
 
     // Objects
     private Context context;
+    private DecimalFormat df;
     private List<Opinet.GasStnParcelable> stationList;
     private OnRecyclerItemClickListener mListener;
+
 
     // Interface
     public interface OnRecyclerItemClickListener {
@@ -44,6 +51,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     // Constructor
     public StationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
         super();
+        df = BaseActivity.getDecimalFormatInstance();
         stationList = list;
         mListener = listener;
     }
@@ -51,20 +59,52 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     @NonNull
     @Override
-    public StationListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public StationListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        CardView cardView = (CardView)LayoutInflater.from(context)
+        CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_card_stationlist, parent, false);
 
-        return new StationListHolder(cardView);
+        return new StationListViewHolder(cardView);
 
     }
 
+
     @Override
-    public void onBindViewHolder(@NonNull StationListHolder holder, final int position) {
-        log.i("Binder position: %s", position);
-        final Opinet.GasStnParcelable station = stationList.get(position);
-        holder.bindToStationList(station);
+    public void onBindViewHolder(@NonNull StationListViewHolder holder, int position, @NonNull List<Object> payloads) {
+
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+
+        }else{
+            for(Object obj : payloads) {
+                if(obj instanceof Boolean) {
+                    boolean isCarwash = (boolean) obj;
+                    holder.tvWashValue.setText((isCarwash)?"YES":"NO");
+                }
+            }
+        }
+
+    }
+
+
+
+    @Override
+    public void onBindViewHolder(@NonNull StationListViewHolder holder, int position) {
+
+        final Opinet.GasStnParcelable data = stationList.get(position);
+        //holder.bindToStationList(station);
+        holder.stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
+        holder.stnName = data.getStnName();
+        int resLogo = getGasStationImage(data.getStnCode());
+        holder.imgLogo.setImageResource(resLogo);
+
+        log.i("price and distance: %s, %s", data.getStnPrice(), data.getStnDistance());
+
+        // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
+        //holder.tvName.setText(String.format("%s%8s%5s", data.getStnName(), "---", data.getHasVisited()));
+        holder.tvName.setText(data.getStnName());
+        holder.tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
+        holder.tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
 
         holder.itemView.setOnClickListener(view -> {
             log.i("cardview position: %s, %s", position, mListener);
@@ -73,10 +113,33 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     }
 
-
     @Override
     public int getItemCount() {
         return stationList.size();
+    }
+
+
+    // RecyclerView.ViewHolder
+    class StationListViewHolder extends RecyclerView.ViewHolder {
+
+        Context context;
+        DecimalFormat df;
+        ImageView imgLogo;
+        TextView tvName, tvPrice, tvDistance, tvWashValue, tvWashLabel;
+        String price, distance, carwash;
+        String stnName, stnId;
+
+        StationListViewHolder(CardView cardView) {
+            super(cardView);
+            this.context = cardView.getContext();
+
+            imgLogo = cardView.findViewById(R.id.img_logo);
+            tvName = cardView.findViewById(R.id.tv_station_name);
+            tvPrice = cardView.findViewById(R.id.tv_value_price);
+            tvDistance = cardView.findViewById(R.id.tv_value_distance);
+            tvWashLabel = cardView.findViewById(R.id.tv_label_carwash);
+            tvWashValue = cardView.findViewById(R.id.tv_value_carwash);
+        }
     }
 
     /*
@@ -97,7 +160,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
             //if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
             //else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
-
             notifyDataSetChanged();
 
         } catch (FileNotFoundException e) {
@@ -150,5 +212,25 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         }
     }
 
+
+    private static int getGasStationImage(String name) {
+
+        int resId = -1;
+        switch(name) {
+            case "SKE": resId = R.drawable.logo_sk; break;
+            case "GSC": resId = R.drawable.logo_gs; break;
+            case "HDO": resId = R.drawable.logo_hyundai; break;
+            case "SOL": resId = R.drawable.logo_soil; break;
+            case "RTO": resId = R.drawable.logo_pb; break;
+            case "RTX": resId = R.drawable.logo_express; break;
+            case "NHO": resId = R.drawable.logo_nonghyup; break;
+            case "E1G": resId = R.drawable.logo_e1g; break;
+            case "SKG": resId = R.drawable.logo_skg; break;
+            case "ETC": resId = R.drawable.logo_anonym; break;
+            default: break;
+        }
+
+        return resId;
+    }
 
 }

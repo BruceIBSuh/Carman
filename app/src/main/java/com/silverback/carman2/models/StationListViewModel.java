@@ -1,5 +1,9 @@
 package com.silverback.carman2.models;
 
+import android.util.SparseArray;
+import android.util.SparseBooleanArray;
+
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -17,6 +21,7 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
     private MutableLiveData<Opinet.GasStnParcelable> currentStation;
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
+    private MutableLiveData<SparseBooleanArray> hasCarWash;
 
     // Get a station list stationos of which are located within a given radius conditions.
     public MutableLiveData<List<Opinet.GasStnParcelable>> getStationListLiveData() {
@@ -42,5 +47,17 @@ public class StationListViewModel extends ViewModel {
         }
 
         return stnInfo;
+    }
+
+
+    public void setStationExtraInfo(int position, boolean isCarwash) {
+        SparseBooleanArray sparseArray = new SparseBooleanArray();
+        sparseArray.put(position, isCarwash);
+        hasCarWash.postValue(sparseArray);
+    }
+
+    public LiveData<SparseBooleanArray> getStationExtraInfo() {
+        if(hasCarWash == null) hasCarWash = new MutableLiveData<>();
+        return hasCarWash;
     }
 }

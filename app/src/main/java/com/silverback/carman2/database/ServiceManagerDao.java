@@ -65,6 +65,10 @@ public abstract class ServiceManagerDao {
 
     }
 
+    /*
+     * Subsets of Columns to return when finished to query.
+     */
+
     // Static nested class for returning subsets of columns with the joined tables.
     public static class RecentServiceData {
         @ColumnInfo(name = "date_time")

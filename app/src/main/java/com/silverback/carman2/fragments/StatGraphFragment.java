@@ -130,7 +130,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         calendar.set(year, 11, 31, 23, 59, 59);
         long end = calendar.getTimeInMillis();
 
-        mDB.expenseBaseMdoel().loadExpenseLiveData(start, end).observe(this, entities -> {
+        mDB.expenseBaseModel().loadExpenseLiveData(start, end).observe(this, entities -> {
             //monthlyTotalExpense = calculateMonthlyExpense(entities);
             graph.setGraphData(calculateMonthlyExpense(entities));
         });

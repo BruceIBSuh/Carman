@@ -27,7 +27,6 @@ public class FireStoreSetRunnable implements Runnable {
     private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreSetRunnable.class);
 
 
-
     // Objects
     private FireStoreSetMethods task;
     private FirebaseFirestore db;

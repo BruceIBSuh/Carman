@@ -44,6 +44,7 @@ public class FavoritePagerGasFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
 
 
     }

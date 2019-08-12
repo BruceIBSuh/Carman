@@ -53,8 +53,6 @@ public class GeneralFragment extends Fragment implements
         RecyclerView.OnItemTouchListener,
         StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener {
-        //ThreadManager.OnStationTaskListener,
-        //ThreadManager.OnStationInfoListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -73,7 +71,7 @@ public class GeneralFragment extends Fragment implements
 
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
-    private List<Opinet.GasStnParcelable> mStationList;
+    private List<Opinet.GasStnParcelable> mStnList;
 
     //private Uri uriStationList;
     private Location mPrevLocation;
@@ -186,26 +184,28 @@ public class GeneralFragment extends Fragment implements
 
         stnListModel.getStationListLiveData().observe(this, stnList -> {
             log.i("StationList: %s", stnList.size());
-            mStationList = stnList;
-            mAdapter = new StationListAdapter(stnList, this);
+            mStnList = stnList;
+            mAdapter = new StationListAdapter(mStnList, this);
             stationRecyclerView.showStationListRecyclerView();
             stationRecyclerView.setAdapter(mAdapter);
         });
 
-        stnListModel.getStationInfoLiveData().observe(this, sntInfo -> {
+        // StationInfoTask retrieves station info, which is passed as LiveData
+        // defined in StationListViewModel
+        stnListModel.getStationInfoLiveData().observe(this, stnInfo -> {
             Bundle bundle = new Bundle();
-            bundle.putString("stationName", sntInfo.getStationName());
-            bundle.putString("stationAddrs", sntInfo.getNewAddrs());
-            bundle.putString("stationTel", sntInfo.getTelNo());
-            bundle.putString("isCarWash", sntInfo.getIsCarWash());
-            bundle.putString("isService", sntInfo.getIsService());
-            bundle.putString("isCVS", sntInfo.getIsCVS());
-            bundle.putString("xCoord", sntInfo.getXcoord());
-            bundle.putString("yCoord", sntInfo.getYcoord());
-
+            bundle.putSerializable("stnInfo", stnInfo);
             Intent intent = new Intent(getActivity(), StationMapActivity.class);
-            intent.putExtras(bundle);
+            intent.putExtra("stnInfo", stnInfo);
             startActivity(intent);
+        });
+
+        stnListModel.getStationExtraInfo().observe(this, sparseBooleanArray -> {
+            log.i("SparseBooleanArray: %s" , sparseBooleanArray.size());
+            if(sparseBooleanArray.valueAt(0)) {
+                log.i("CarWash true: %s", sparseBooleanArray.keyAt(0));
+                mAdapter.notifyItemChanged(sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
+            }
         });
 
         return childView;
@@ -231,6 +231,15 @@ public class GeneralFragment extends Fragment implements
         if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
+    }
+
+    // StationListAdapter.OnRecyclerItemClickListener invokes this overriding method
+    // when clicking a cardview item, passing a position of the item.
+    @Override
+    public void onItemClicked(int pos) {
+        stationInfoTask = ThreadManager.startStationInfoTask(stnListModel,
+                mStnList.get(pos).getStnName(), mStnList.get(pos).getStnId());
+
     }
 
     @Override
@@ -299,15 +308,4 @@ public class GeneralFragment extends Fragment implements
     public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
         log.i("onRequestDisallowInterceptTouchEvent");
     }
-
-
-    // StationListAdapter.OnRecyclerItemClickListener invokes this when clicking
-    // a cardview item, passing a position of the item.
-    @Override
-    public void onItemClicked(int position) {
-        //tmpStationName = mStationList.get(position).getStnName();
-        stationInfoTask = ThreadManager.startStationInfoTask(this,
-                mStationList.get(position).getStnName(), mStationList.get(position).getStnId());
-    }
-
 }

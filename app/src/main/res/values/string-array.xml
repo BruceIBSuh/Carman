@@ -54,6 +54,12 @@
         <item>5000</item>
     </string-array>
 
+    <string-array name="spinner_expense_stmts">
+        <item>@string/stat_spinner_all</item>
+        <item>@string/stat_spinner_gas</item>
+        <item>@string/stat_spinner_service</item>
+    </string-array>
+
     <string-array name="sido_name">
         <item>@string/pref_spinner_sido_seoul</item>
         <item>@string/pref_spinner_sido_gyunggi</item>

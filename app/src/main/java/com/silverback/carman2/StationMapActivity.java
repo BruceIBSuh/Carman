@@ -3,6 +3,7 @@ package com.silverback.carman2;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,6 +23,7 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 
@@ -33,7 +35,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     // Objects
     private StationInfoTask stationInfoTask;
     private ConnectNaviHelper naviHelper;
-    private double xCoord, yCoord;
     private double longitude, latitude;
 
     // UIs
@@ -46,6 +47,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_station_map);
+
+        // Receive Intent extras
+        Opinet.GasStationInfo info = (Opinet.GasStationInfo)getIntent().getSerializableExtra("stnInfo");
+        log.i("station name: %s", info.getStationName());
+
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
@@ -61,30 +67,20 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         tvService = findViewById(R.id.tv_service);
         tvCVS = findViewById(R.id.tv_cvs);
 
-        // Get intent and extras
-        stnName = getIntent().getStringExtra("stationName");
-        String stnAddrs = getIntent().getStringExtra("stationAddrs");
-        String stnTel = getIntent().getStringExtra("stationTel");
-        String carWash = getIntent().getStringExtra("isCarWash");
-        String service = getIntent().getStringExtra("isService");
-        String cvs = getIntent().getStringExtra("isCVS");
-        xCoord = Double.valueOf(getIntent().getStringExtra("xCoord")); //KATEC
-        yCoord = Double.valueOf(getIntent().getStringExtra("yCoord"));
-
         // Convert KATEC to longitude and latitude
+        double xCoord = Double.valueOf(info.getXcoord());
+        double yCoord = Double.valueOf(info.getYcoord());
         GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
         GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
         longitude = in_pt.getX();
         latitude = in_pt.getY();
-
         log.i("GeoCode: %s %s,%s %s", xCoord, yCoord, longitude, latitude);
 
-
-        tvName.setText(stnName);
-        tvAddrs.setText(String.format("%s %15s", stnAddrs, stnTel));
-        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), carWash));
-        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), service));
-        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), cvs));
+        tvName.setText(info.getStationName());
+        tvAddrs.setText(String.format("%s %15s", info.getNewAddrs(), info.getTelNo()));
+        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getIsCarWash()));
+        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getIsService()));
+        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getIsCVS()));
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()

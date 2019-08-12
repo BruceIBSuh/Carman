@@ -27,7 +27,6 @@ public class StationInfoRunnable implements Runnable {
     static final int DOWNLOAD_STATION_INFO_FAIL = -1;
 
     // Objects
-    private Context context;
     private StationInfoMethods task;
     private XmlPullParserHandler xmlHandler;
 
@@ -41,8 +40,7 @@ public class StationInfoRunnable implements Runnable {
     }
 
     // Constructor
-    StationInfoRunnable(Context context, StationInfoMethods task) {
-        this.context = context;
+    StationInfoRunnable(StationInfoMethods task) {
         this.task = task;
         xmlHandler = new XmlPullParserHandler();
     }

@@ -146,8 +146,6 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
 
             holder.pb.setProgress(period);
         }
-
-
     }
 
     @Override
@@ -155,9 +153,7 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
         return jsonArray.length();
     }
 
-    /*
-     * ViewModel
-     */
+    // RecyclerView.ViewHolder
     class ServiceItemViewHolder extends RecyclerView.ViewHolder implements
             View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
