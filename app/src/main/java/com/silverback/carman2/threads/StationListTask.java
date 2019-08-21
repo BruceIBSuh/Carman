@@ -25,7 +25,6 @@ public class StationListTask extends ThreadTask implements
     static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
     static final int DOWNLOAD_CURRENT_STATION_FAIL = -2;
-    static final int DOWNLOAD_NO_STATION = -3;
 
     // Objects
     private StationListViewModel viewModel;
@@ -42,7 +41,6 @@ public class StationListTask extends ThreadTask implements
     // Constructor
     StationListTask(Context context) {
         super();
-
         mStationListRunnable = new StationListRunnable(context, this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
@@ -51,7 +49,6 @@ public class StationListTask extends ThreadTask implements
     void initStationTask(StationListViewModel model, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
-        //mStationInfoList = new ArrayList<>();
         viewModel = model;
     }
 
@@ -98,8 +95,8 @@ public class StationListTask extends ThreadTask implements
     }
 
     @Override
-    public void setStationInfo(int position, boolean b) {
-        viewModel.setStationExtraInfo(position, b);
+    public void setStationInfo(int position, Object obj) {
+        viewModel.setStationCarWashInfo(position, obj);
     }
 
     // FireStoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
@@ -113,23 +110,29 @@ public class StationListTask extends ThreadTask implements
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch (state) {
+            // Retrieve Stations located within the radius set in SharedPreferences
             case DOWNLOAD_NEAR_STATIONS_COMPLETE:
                 log.i("DOWNLOAD_NEAR_STATIONS_COMPLETE");
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
                 break;
-
+            // Retrieve a station, if any, within the radius set in Constants.MIN_RADIUS
             case DOWNLOAD_CURRENT_STATION_COMPLETE:
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_COMPLETED;
                 break;
-
+            // Query stations with station ids and add info as to car wash and hasVisited to it
+            // when any station is queried.
             case FIRESTORE_GET_COMPLETE:
                 log.i("FireStore_Get_Complete");
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
-
+            // Update extra inforamtion on queried station.
             case FIRESTORE_SET_COMPLETE:
                 log.i("FireStore Set Complete");
                 outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
+                break;
+
+            case DOWNLOAD_NEAR_STATIONS_FAIL:
+                outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;
 
             case DOWNLOAD_CURRENT_STATION_FAIL:
@@ -137,9 +140,7 @@ public class StationListTask extends ThreadTask implements
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
 
-            case DOWNLOAD_NEAR_STATIONS_FAIL:
-                outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
-                break;
+
 
             default:
                 break;

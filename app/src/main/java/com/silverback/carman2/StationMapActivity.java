@@ -1,13 +1,12 @@
 package com.silverback.carman2;
 
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
-
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -23,8 +22,9 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
@@ -35,23 +35,20 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     // Objects
     private StationInfoTask stationInfoTask;
     private ConnectNaviHelper naviHelper;
+    private double xCoord, yCoord;
     private double longitude, latitude;
 
     // UIs
-    TextView tvName, tvAddrs, tvPrice, tvCarwash, tvService,tvCVS;
+    private TextView tvName, tvAddrs, tvCarwash, tvService,tvCVS;
 
     // Fields
     private String stnName;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_station_map);
-
-        // Receive Intent extras
-        Opinet.GasStationInfo info = (Opinet.GasStationInfo)getIntent().getSerializableExtra("stnInfo");
-        log.i("station name: %s", info.getStationName());
-
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
@@ -62,44 +59,49 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         // UIs
         tvName = findViewById(R.id.tv_setting_item);
         tvAddrs = findViewById(R.id.tv_address);
-        tvPrice = findViewById(R.id.tv_price_info);
         tvCarwash = findViewById(R.id.tv_carwash);
         tvService = findViewById(R.id.tv_service);
         tvCVS = findViewById(R.id.tv_cvs);
-
-        // Convert KATEC to longitude and latitude
-        double xCoord = Double.valueOf(info.getXcoord());
-        double yCoord = Double.valueOf(info.getYcoord());
-        GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
-        GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
-        longitude = in_pt.getX();
-        latitude = in_pt.getY();
-        log.i("GeoCode: %s %s,%s %s", xCoord, yCoord, longitude, latitude);
-
-        tvName.setText(info.getStationName());
-        tvAddrs.setText(String.format("%s %15s", info.getNewAddrs(), info.getTelNo()));
-        tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), info.getIsCarWash()));
-        tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), info.getIsService()));
-        tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), info.getIsCVS()));
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.google_map);
-
-        if(mapFragment != null) mapFragment.getMapAsync(this);
-
-        // Floating Action Button for initiating Kakao Navi, which is temporarily suspended.
         FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
+
+        stnName = getIntent().getStringExtra("stationName");
+        String stnId = getIntent().getStringExtra("stationId");
+        StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+
+        // Initiate the worker thread to retrieve station info.
+        stationInfoTask = ThreadManager.startStationInfoTask(stnListModel, stnName, stnId);
+
+        // Retrieve extra station info from the result of StationIntoTask via ViewModel.
+        stnListModel.getStationInfoLiveData().observe(this, stnInfo -> {
+            tvName.setText(stnName);
+            tvAddrs.setText(String.format("%s, %15s", stnInfo.getNewAddrs(), stnInfo.getTelNo()));
+            tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), stnInfo.getIsCarWash()));
+            tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), stnInfo.getIsService()));
+            tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), stnInfo.getIsCVS()));
+
+            xCoord = Double.valueOf(stnInfo.getXcoord()); //KATEC
+            yCoord = Double.valueOf(stnInfo.getYcoord());
+
+            // Convert KATEC to longitude and latitude
+            GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
+            GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
+            longitude = in_pt.getX();
+            latitude = in_pt.getY();
+
+            log.i("GeoCode: %s %s,%s %s", xCoord, yCoord, longitude, latitude);
+
+            // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.google_map);
+
+            if(mapFragment != null) mapFragment.getMapAsync(this);
+        });
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
         // KakaoNavi as an installed app is first applied.
-        fabNavi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude);
-            }
-        });
-
+        fabNavi.setOnClickListener(view ->
+                naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
+        );
     }
 
     @SuppressWarnings("ConstantConditions")

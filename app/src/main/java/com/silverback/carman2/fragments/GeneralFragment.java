@@ -53,6 +53,8 @@ public class GeneralFragment extends Fragment implements
         RecyclerView.OnItemTouchListener,
         StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener {
+        //ThreadManager.OnStationTaskListener,
+        //ThreadManager.OnStationInfoListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -71,7 +73,7 @@ public class GeneralFragment extends Fragment implements
 
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
-    private List<Opinet.GasStnParcelable> mStnList;
+    private List<Opinet.GasStnParcelable> mStationList;
 
     //private Uri uriStationList;
     private Location mPrevLocation;
@@ -184,28 +186,27 @@ public class GeneralFragment extends Fragment implements
 
         stnListModel.getStationListLiveData().observe(this, stnList -> {
             log.i("StationList: %s", stnList.size());
-            mStnList = stnList;
-            mAdapter = new StationListAdapter(mStnList, this);
+            mStationList = stnList;
+            mAdapter = new StationListAdapter(mStationList, this);
             stationRecyclerView.showStationListRecyclerView();
             stationRecyclerView.setAdapter(mAdapter);
         });
 
-        // StationInfoTask retrieves station info, which is passed as LiveData
-        // defined in StationListViewModel
-        stnListModel.getStationInfoLiveData().observe(this, stnInfo -> {
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("stnInfo", stnInfo);
-            Intent intent = new Intent(getActivity(), StationMapActivity.class);
-            intent.putExtra("stnInfo", stnInfo);
-            startActivity(intent);
-        });
 
-        stnListModel.getStationExtraInfo().observe(this, sparseBooleanArray -> {
-            log.i("SparseBooleanArray: %s" , sparseBooleanArray.size());
-            if(sparseBooleanArray.valueAt(0)) {
-                log.i("CarWash true: %s", sparseBooleanArray.keyAt(0));
+
+        stnListModel.getStationCarWashInfo().observe(this, obj -> {
+            if(obj.size() > 0) mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
+            /*
+            if(obj.valueAt(0) == null) {
+                mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
+            } else if(obj.valueAt(0) instanceof Boolean) {
+
+            }
+            if (sparseArray.valueAt(0)) {
+                log.i("CarWash true: %s, %s", sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
                 mAdapter.notifyItemChanged(sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
             }
+            */
         });
 
         return childView;
@@ -214,11 +215,8 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume");
-
         // Update the current time using worker thread every 1 minute.
         //clockTask = ThreadManager.startClockTask(getContext(), tvDate);
-
     }
 
     @Override
@@ -228,18 +226,9 @@ public class GeneralFragment extends Fragment implements
         // Refactor required as to how to finish worker threads.
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
-        if(stationListTask != null) stationListTask = null;
+        //if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
-    }
-
-    // StationListAdapter.OnRecyclerItemClickListener invokes this overriding method
-    // when clicking a cardview item, passing a position of the item.
-    @Override
-    public void onItemClicked(int pos) {
-        stationInfoTask = ThreadManager.startStationInfoTask(stnListModel,
-                mStnList.get(pos).getStnName(), mStnList.get(pos).getStnId());
-
     }
 
     @Override
@@ -308,4 +297,19 @@ public class GeneralFragment extends Fragment implements
     public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
         log.i("onRequestDisallowInterceptTouchEvent");
     }
+
+
+    // Callback invoked by StationListAdapter.OnRecyclerItemClickListener
+    // on clicking an RecyclerView item with fetched station name and id passing to the activity.
+    @Override
+    public void onItemClicked(int position) {
+        Bundle bundle = new Bundle();
+        bundle.putString("stationName", mStationList.get(position).getStnName());
+        bundle.putString("stationId", mStationList.get(position).getStnId());
+        Intent intent = new Intent(getActivity(), StationMapActivity.class);
+        intent.putExtras(bundle);
+        startActivity(intent);
+
+    }
+
 }
