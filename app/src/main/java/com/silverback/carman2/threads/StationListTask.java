@@ -12,7 +12,7 @@ import com.silverback.carman2.models.StationListViewModel;
 import java.util.List;
 
 public class StationListTask extends ThreadTask implements
-        StationListRunnable.StationListMethod,
+        StationListRunnable.StationListMethod, StationInfoRunnable.StationInfoMethods,
         FireStoreSetRunnable.FireStoreSetMethods, FireStoreGetRunnable.FireStoreGetMethods {
 
     // Logging
@@ -29,21 +29,26 @@ public class StationListTask extends ThreadTask implements
     // Objects
     private StationListViewModel viewModel;
     private Runnable mStationListRunnable;
+    private Runnable mStationInfoRunnable;
     private Runnable mFireStoreSetRunnable;
     private Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
+    private Opinet.GasStnParcelable gasStation;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     //private Opinet.GasStnParcelable mCurrentStation;
     private Location mLocation;
     private String[] defaultParams;
+    private String stnId;
 
     // Constructor
     StationListTask(Context context) {
         super();
         mStationListRunnable = new StationListRunnable(context, this);
-        mFireStoreSetRunnable = new FireStoreSetRunnable(this);
+        mStationInfoRunnable = new StationInfoRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
+        mFireStoreSetRunnable = new FireStoreSetRunnable(this);
+
     }
 
     void initStationTask(StationListViewModel model, Location location, String[] params) {
@@ -54,8 +59,9 @@ public class StationListTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
+    Runnable getStationInfoRunnable() { return mStationInfoRunnable; }
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
-    Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
+    //Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
     void recycle() {
         mStationList = null;
@@ -81,6 +87,12 @@ public class StationListTask extends ThreadTask implements
         return mLocation;
     }
 
+    @Override
+    public String getStationId() {
+        log.i("Station Id: %s", stnId);
+        return stnId;
+    }
+
 
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
@@ -89,15 +101,24 @@ public class StationListTask extends ThreadTask implements
     }
 
     @Override
+    public void setStationId(String stnId) {
+        //viewModel.setStationCarWashInfo(position, obj);
+        //mStationList = list;
+        this.stnId = stnId;
+    }
+
+    @Override
+    public void setCarWashInfo(int position, Object obj) {
+        viewModel.setStationCarWashInfo(position, obj);
+    }
+
+
+    @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
         //postValue() used in worker thread. In UI thread, use setInputValue().
         viewModel.getCurrentStationLiveData().postValue(station);
     }
 
-    @Override
-    public void setStationInfo(int position, Object obj) {
-        viewModel.setStationCarWashInfo(position, obj);
-    }
 
     // FireStoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
@@ -106,13 +127,20 @@ public class StationListTask extends ThreadTask implements
         return mStationList;
     }
 
+
+    @Override
+    public void setStationInfo(Opinet.GasStationInfo info) {
+
+    }
+
+
+
     @Override
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch (state) {
             // Retrieve Stations located within the radius set in SharedPreferences
             case DOWNLOAD_NEAR_STATIONS_COMPLETE:
-                log.i("DOWNLOAD_NEAR_STATIONS_COMPLETE");
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
                 break;
             // Retrieve a station, if any, within the radius set in Constants.MIN_RADIUS
@@ -148,4 +176,5 @@ public class StationListTask extends ThreadTask implements
 
         sThreadManager.handleState(this, outState);
     }
+
 }

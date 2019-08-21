@@ -3,6 +3,7 @@ package com.silverback.carman2.adapters;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -78,12 +80,15 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
         int resLogo = getGasStationImage(data.getStnCode());
         holder.imgLogo.setImageResource(resLogo);
 
+        String carwash = (data.getHasVisited())? "false" : "n/a";
+
         // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
         //holder.tvName.setText(String.format("%s%8s%5s", data.getStnName(), "---", data.getHasVisited()));
         holder.tvName.setText(data.getStnName());
         holder.tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
         holder.tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
-        holder.tvWashValue.setText(String.valueOf(data.getIsWash()));
+        //holder.tvWashValue.setText(String.valueOf(data.getIsWash()));
+        holder.tvWashValue.setText(carwash);
 
         holder.itemView.setOnClickListener(view -> {
             log.i("cardview position: %s, %s", position, mListener);
@@ -97,7 +102,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
     public void onBindViewHolder(@NonNull StationListViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
-
         }else{
             for(Object obj : payloads) {
                 if(obj instanceof Boolean) {
@@ -109,7 +113,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
                 }
             }
         }
-
     }
 
     @Override

@@ -46,8 +46,6 @@ public class StationListRunnable implements Runnable{
     private FirebaseFirestore mDB;
     private List<Opinet.GasStnParcelable> mStationList;
     private StationListMethod mTask;
-    private URL url;
-
 
     // Interface
     public interface StationListMethod {
@@ -90,7 +88,6 @@ public class StationListRunnable implements Runnable{
         GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
         float x = (float) katec_pt.getX();
         float y = (float) katec_pt.getY();
-
 
         // Complete the OPINET_ARUND URL w/ the given requests
         final String OPINET_AROUND = OPINET
@@ -190,7 +187,6 @@ public class StationListRunnable implements Runnable{
     @SuppressWarnings("Constant")
     private void setStationInfoFromFireStore() {
         if(mDB == null) return;
-
         for(final Opinet.GasStnParcelable station : mStationList) {
 
             Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());

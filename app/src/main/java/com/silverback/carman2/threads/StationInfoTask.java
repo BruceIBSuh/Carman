@@ -50,11 +50,6 @@ public class StationInfoTask extends ThreadTask implements
     }
 
     @Override
-    public String getStationName() {
-        return stnName;
-    }
-
-    @Override
     public void setStationInfo(Opinet.GasStationInfo info) {
         stationInfo = info;
         stnViewModel.getStationInfoLiveData().postValue(info);

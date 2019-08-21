@@ -22,9 +22,9 @@ public class FireStoreSetRunnable implements Runnable {
 
 
     // Objects
-    private FireStoreSetMethods task;
+    private FireStoreSetMethods mTask;
     private FirebaseFirestore fireStore;
-    //private List<Opinet.GasStnParcelable> stnList;
+    private List<Opinet.GasStnParcelable> stnList;
     //private WriteBatch batch;
 
     // Interface
@@ -36,26 +36,27 @@ public class FireStoreSetRunnable implements Runnable {
 
     // Constructor
     FireStoreSetRunnable(FireStoreSetMethods task) {
-        this.task = task;
+        this.mTask = task;
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
 
     }
 
     @Override
     public void run() {
-        task.setStationTaskThread(Thread.currentThread());
+        mTask.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         //CollectionReference collRef = fireStore.collection("stations");
         //batch = fireStore.batch();
         /*
-        if(task.getStationList() == null) {
-            log.e("task.getStationList()");
+        if(mTask.getStationList() == null) {
+            log.e("mTask.getStationList()");
             return;
         }
         */
-        List<Opinet.GasStnParcelable> stnList = task.getStationList();
+        List<Opinet.GasStnParcelable> stnList = mTask.getStationList();
 
+        /*
         for(final Opinet.GasStnParcelable station : stnList) {
             //batch = fireStore.batch();
             final Map<String, Object> data = new HashMap<>();
@@ -88,7 +89,7 @@ public class FireStoreSetRunnable implements Runnable {
                     }
                 }
             });
-            */
+
             query.addSnapshotListener((snapshot, e) -> {
 
                 if (snapshot != null && snapshot.isEmpty()) {
@@ -106,16 +107,16 @@ public class FireStoreSetRunnable implements Runnable {
                     //batch.set(docRef, data, SetOptions.merge());
                 }
 
-                task.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+                mTask.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
             });
         }
-
+        */
 
         /*
         //java.lang.IllegalStateException: A write batch can no longer be used after commit() has been called.
         batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
-            public void onComplete(@NonNull Task<Void> task) {
+            public void onComplete(@NonNull Task<Void> mTask) {
                 log.i("Save the data in Firestore complete");
             }
         });

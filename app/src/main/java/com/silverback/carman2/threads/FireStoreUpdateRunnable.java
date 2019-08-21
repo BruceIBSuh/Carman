@@ -1,20 +1,24 @@
 package com.silverback.carman2.threads;
 
 import android.os.Process;
+import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import androidx.annotation.NonNull;
 
 public class FireStoreUpdateRunnable implements Runnable {
 
@@ -23,7 +27,7 @@ public class FireStoreUpdateRunnable implements Runnable {
 
     // Objects
     private FirebaseFirestore fireStore;
-    private FireStoreUpdateMethods task;
+    private FireStoreUpdateMethods mCallback;
 
     // Interface
     public interface FireStoreUpdateMethods {
@@ -33,19 +37,19 @@ public class FireStoreUpdateRunnable implements Runnable {
     }
 
     // Constructor
-    FireStoreUpdateRunnable(FireStoreUpdateMethods task) {
-        this.task = task;
+    FireStoreUpdateRunnable(FireStoreUpdateMethods callback) {
+        mCallback = callback;
         fireStore = FirebaseFirestore.getInstance();
     }
 
     @Override
     public void run() {
-        task.setStationTaskThread(Thread.currentThread());
+        mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        String stationId = task.getStationId();
-        final Opinet.GasStationInfo stnInfo = task.getStationInfo();
-        final DocumentReference docRef = fireStore.collection("stations").document(stationId);
+        String stationId = mCallback.getStationId();
+        final Opinet.GasStationInfo stnInfo = mCallback.getStationInfo();
+        final DocumentReference docRef = fireStore.collection("gas_station").document(stationId);
 
         // TEST CODING to convert String "Y" to boolean true or false as to carwash, service, CVS.
         final boolean isCarwash = stnInfo.getIsCarWash().equalsIgnoreCase("Y");
@@ -54,7 +58,6 @@ public class FireStoreUpdateRunnable implements Runnable {
 
         log.i("Facilities: %s %s %s: ", isCarwash, isService, isCVS);
 
-
         // Update a document only if a document contains the address field as empty, which works
         // as a flag for whether it has been updated.
         docRef.get().addOnCompleteListener(task -> {
@@ -62,7 +65,7 @@ public class FireStoreUpdateRunnable implements Runnable {
                 DocumentSnapshot document = task.getResult();
                 if(document == null) return;
 
-                if(document.get("addrs") == null) {
+                if(TextUtils.isEmpty(document.getString("addrs"))) {
                     log.i("Addess flag is null");
                     Map<String, Object> updates = new HashMap<>();
                     updates.put("addrs", stnInfo.getNewAddrs());
@@ -74,12 +77,15 @@ public class FireStoreUpdateRunnable implements Runnable {
                     //updates.put("service", stnInfo.getIsService());
                     updates.put("service", isService);
 
+                    /*
                     docRef.update(updates).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
-                        public void onComplete(@NonNull Task<Void> task) {
+                        public void onComplete(@NonNull Task<Void> mCallback) {
                             log.i("Update completes!");
                         }
                     });
+                    */
+                    docRef.update(updates).addOnCompleteListener(update -> log.i("Update complelte"));
                 }
             }
         });
@@ -88,9 +94,9 @@ public class FireStoreUpdateRunnable implements Runnable {
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @SuppressWarnings("ConstantConditions")
             @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if(task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
+            public void onComplete(@NonNull Task<DocumentSnapshot> mCallback) {
+                if(mCallback.isSuccessful()) {
+                    DocumentSnapshot document = mCallback.getResult();
                     if(document.exists() && document.get("addrs") == null) {
                         log.i("Addess flag is null");
                         Map<String, Object> updates = new HashMap<>();
@@ -105,7 +111,7 @@ public class FireStoreUpdateRunnable implements Runnable {
 
                         docRef.update(updates).addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
-                            public void onComplete(@NonNull Task<Void> task) {
+                            public void onComplete(@NonNull Task<Void> mCallback) {
                                 log.i("Update completes!");
                             }
                         });
@@ -117,4 +123,7 @@ public class FireStoreUpdateRunnable implements Runnable {
 
         */
     }
+
+
+
 }

@@ -4,6 +4,7 @@ package com.silverback.carman2.fragments;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,7 +42,10 @@ import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
@@ -93,7 +97,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Create LocationViewModel
+        // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
 
@@ -185,7 +189,6 @@ public class GeneralFragment extends Fragment implements
         });
 
         stnListModel.getStationListLiveData().observe(this, stnList -> {
-            log.i("StationList: %s", stnList.size());
             mStationList = stnList;
             mAdapter = new StationListAdapter(mStationList, this);
             stationRecyclerView.showStationListRecyclerView();
@@ -193,20 +196,9 @@ public class GeneralFragment extends Fragment implements
         });
 
 
-
         stnListModel.getStationCarWashInfo().observe(this, obj -> {
+            log.i("stnListModel: getStationCarWashInfo(): %s", obj);
             if(obj.size() > 0) mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
-            /*
-            if(obj.valueAt(0) == null) {
-                mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
-            } else if(obj.valueAt(0) instanceof Boolean) {
-
-            }
-            if (sparseArray.valueAt(0)) {
-                log.i("CarWash true: %s, %s", sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
-                mAdapter.notifyItemChanged(sparseBooleanArray.keyAt(0), sparseBooleanArray.valueAt(0));
-            }
-            */
         });
 
         return childView;
@@ -226,7 +218,7 @@ public class GeneralFragment extends Fragment implements
         // Refactor required as to how to finish worker threads.
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
-        //if(stationListTask != null) stationListTask = null;
+        if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
     }
@@ -309,7 +301,6 @@ public class GeneralFragment extends Fragment implements
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
         intent.putExtras(bundle);
         startActivity(intent);
-
     }
 
 }
