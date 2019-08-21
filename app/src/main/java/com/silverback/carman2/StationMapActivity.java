@@ -78,6 +78,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
             tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), stnInfo.getIsCarWash()));
             tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), stnInfo.getIsService()));
             tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), stnInfo.getIsCVS()));
+            log.i("Station Info: %s %s %s %s", stnInfo.getNewAddrs(), stnInfo.getIsCarWash(), stnInfo.getIsService(), stnInfo.getIsCVS());
 
             xCoord = Double.valueOf(stnInfo.getXcoord()); //KATEC
             yCoord = Double.valueOf(stnInfo.getYcoord());
@@ -87,8 +88,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
             GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
             longitude = in_pt.getX();
             latitude = in_pt.getY();
-
-            log.i("GeoCode: %s %s,%s %s", xCoord, yCoord, longitude, latitude);
 
             // Obtain the SupportMapFragment and get notified when the map is ready to be used.
             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()

@@ -1,14 +1,20 @@
 package com.silverback.carman2.threads;
 
+import android.graphics.Point;
 import android.os.Process;
 
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.GeoPoint;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FireStoreGetRunnable implements Runnable {
 
@@ -17,73 +23,66 @@ public class FireStoreGetRunnable implements Runnable {
 
 
     // Objects
-    private FireStoreGetMethods task;
+    private FireStoreGetMethods mCallback;
     private FirebaseFirestore fireStore;
     private List<Opinet.GasStnParcelable> stnList;
 
 
     public interface FireStoreGetMethods {
         void setStationTaskThread(Thread thread);
-        void setStationInfo(int position, Object obj);
-        List<Opinet.GasStnParcelable> getStationList();
+        void setStationId(String stnId);
+        void setCarWashInfo(int position, Object obj);
         void handleStationTaskState(int state);
+        List<Opinet.GasStnParcelable> getStationList();
 
     }
 
-    FireStoreGetRunnable(FireStoreGetMethods task) {
-        this.task = task;
+    FireStoreGetRunnable(FireStoreGetMethods callback) {
+        this.mCallback = callback;
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
     }
 
     @Override
     public void run() {
-
-        task.setStationTaskThread(Thread.currentThread());
+        mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
-        stnList = task.getStationList();
-        if(stnList.size() == 0) return;
+        stnList = mCallback.getStationList();
 
         // Bugs have occurred many times here. NullPointerException is brought about due to
-        //for(Opinet.GasStnParcelable station : stnList) {
+        //for(Opinet.GasStnParcelable stn : stnList) {
         for(int i = 0; i < stnList.size(); i++) {
             final int pos = i;
-            Query query = fireStore.collection("stations").whereEqualTo("id", stnList.get(pos).getStnId());
-            query.addSnapshotListener((snapshot, e) -> {
+            final DocumentReference docRef = fireStore.collection("gas_station").document(stnList.get(pos).getStnId());
+            docRef.addSnapshotListener((snapshot, e) -> {
+                if (e != null) return;
+                String source = (snapshot != null && snapshot.getMetadata().hasPendingWrites()) ?
+                        "Local" : "Server";
 
-                if (snapshot == null) return;
-                if (!snapshot.isEmpty()) {
-                    boolean isCarwash = (boolean) snapshot.getDocuments().get(0).get("carwash");
-                    stnList.get(pos).setIsWash(isCarwash);
-                    stnList.get(pos).setHasVisited(true);
-
-                    task.setStationInfo(pos, isCarwash);
-                    //log.i("FireStoreGetRunnable isCarwash: %s, %s", stnList.get(pos).getStnName(), isCarwash);
-
+                if (snapshot != null && snapshot.exists()) {
+                    log.i("document: %s", snapshot.getString("stnName"));
+                    mCallback.setCarWashInfo(pos, snapshot.getBoolean("carwash"));
                 } else {
-                    log.i("never visited");
-                    stnList.get(pos).setHasVisited(false);
-                    task.setStationInfo(pos, null);
-                    task.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
-                }
-            });
+                    //stn.setHasVisited(false);
+                    //mCallback.setStationInfo(stn);
+                    //mCallback.setStationId(stn.getStnId());
+                    //mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
 
+                    Map<String, Object> stnData = new HashMap<>();
+                    stnData.put("stnId", stnList.get(pos).getStnId());
+                    stnData.put("stnName", stnList.get(pos).getStnName());
+                    stnData.put("stnCode", stnList.get(pos).getStnCode());
+                    stnData.put("xCoord", stnList.get(pos).getLongitude());
+                    stnData.put("yCoord", stnList.get(pos).getLatitude());
 
-            /*
-            query.addSnapshotListener(new EventListener<QuerySnapshot>(){
-                @Override
-                public void onEvent(@Nullable QuerySnapshot snapshot,
-                                    @Nullable FirebaseFirestoreException e) {
-
-                    if(snapshot == null) return;
-                    if(!snapshot.isEmpty()) {
-
-                    }
+                    fireStore.collection("gas_station").document(stnList.get(pos).getStnId()).set(stnData)
+                            .addOnSuccessListener(documentReference -> log.i("successfully added data"))
+                            .addOnFailureListener(error -> log.e("failed to add data"));
 
                 }
             });
-            */
+
         }
 
     }
+
 }

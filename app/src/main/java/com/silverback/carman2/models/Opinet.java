@@ -219,6 +219,7 @@ public class Opinet  {
         private String xCoord;
         private String yCoord;
 
+
         // Setters and Getters by JavaBean format
         void setStationCode(String stationCode) { this.stationCode = stationCode; }
         public String getStationCode() { return stationCode; }
@@ -242,7 +243,6 @@ public class Opinet  {
         void setIsCarWash(String isCarWash) {
             this.isCarWash = isCarWash;
         }
-
         public String getIsCarWash() { return isCarWash; }
 
         void setIsService(String isService) {
@@ -302,10 +302,7 @@ public class Opinet  {
         private float distance;
         private float xCoord;
         private float yCoord;
-
         private boolean isWash;
-        private byte byteWash;
-
         // TEST CODING
         private boolean hasVisited;
 

@@ -3,6 +3,7 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.os.Process;
 
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -27,6 +28,7 @@ public class StationInfoRunnable implements Runnable {
     static final int DOWNLOAD_STATION_INFO_FAIL = -1;
 
     // Objects
+    private FirebaseFirestore fireStore;
     private StationInfoMethods task;
     private XmlPullParserHandler xmlHandler;
 
@@ -35,22 +37,26 @@ public class StationInfoRunnable implements Runnable {
         void setStationTaskThread(Thread thread);
         void handleStationTaskState(int state);
         void setStationInfo(Opinet.GasStationInfo info);
-        String getStationName();
+        //String getStationName();
         String getStationId();
     }
 
     // Constructor
     StationInfoRunnable(StationInfoMethods task) {
         this.task = task;
+        if(fireStore != null) fireStore = FirebaseFirestore.getInstance();
         xmlHandler = new XmlPullParserHandler();
     }
 
     @Override
     public void run() {
+        log.i("stationinforunnable");
         task.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        String OPINET_DETAIL = OPINET + "&id=" + task.getStationId();
+        final String stnId = task.getStationId();
+
+        String OPINET_DETAIL = OPINET + "&id=" + stnId;
         HttpURLConnection conn = null;
         InputStream is = null;
 
@@ -59,7 +65,9 @@ public class StationInfoRunnable implements Runnable {
             conn = (HttpURLConnection) url.openConnection();
             is = new BufferedInputStream(conn.getInputStream());
             Opinet.GasStationInfo info = xmlHandler.parseGasStationInfo(is);
-            info.setStationName(task.getStationName());
+            //info.setStationName(task.getStationName());
+            log.i("Station Info: %s", info.getNewAddrs());
+
             task.setStationInfo(info);
             task.handleStationTaskState(DOWNLOAD_STATION_INFO_COMPLETE);
 
