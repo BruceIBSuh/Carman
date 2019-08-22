@@ -50,7 +50,6 @@ public class StationInfoRunnable implements Runnable {
 
     @Override
     public void run() {
-        log.i("stationinforunnable");
         task.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 

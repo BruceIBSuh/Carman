@@ -262,8 +262,8 @@ public class ThreadManager {
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                //mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
-                mDecodeThreadPool.execute(((StationListTask) task).getStationInfoRunnable());
+                mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
+                //mDecodeThreadPool.execute(((StationListTask) task).getStationInfoRunnable());
                 //msg.sendToTarget();
                 break;
 

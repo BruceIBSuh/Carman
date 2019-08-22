@@ -49,7 +49,6 @@ public class StationListViewModel extends ViewModel {
         return stnInfo;
     }
 
-
     public void setStationCarWashInfo(int position, Object obj) {
         SparseArray<Object> sparseArray = new SparseArray<>();
         sparseArray.put(position, obj);
@@ -60,4 +59,5 @@ public class StationListViewModel extends ViewModel {
         if(hasCarWash == null) hasCarWash = new MutableLiveData<>();
         return hasCarWash;
     }
+
 }

@@ -85,7 +85,7 @@ public class FireStoreUpdateRunnable implements Runnable {
                         }
                     });
                     */
-                    docRef.update(updates).addOnCompleteListener(update -> log.i("Update complelte"));
+                    //docRef.update(updates).addOnCompleteListener(update -> log.i("Update complelte"));
                 }
             }
         });

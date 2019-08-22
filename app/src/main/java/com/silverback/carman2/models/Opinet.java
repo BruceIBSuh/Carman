@@ -283,9 +283,6 @@ public class Opinet  {
         private float xCoord;
         private float yCoord;
         private boolean isWash;
-        // TEST CODING
-        private boolean hasVisited;
-
 
         GasStnParcelable() {
             // default
@@ -305,9 +302,7 @@ public class Opinet  {
             out.writeFloat(distance);
             out.writeFloat(xCoord);
             out.writeFloat(yCoord);
-
             out.writeByte((byte)(isWash? 1 : 0));
-            out.writeByte((byte)(hasVisited? 1 : 0));
         }
 
         static final Parcelable.Creator<GasStnParcelable> CREATOR = new Parcelable.Creator<GasStnParcelable>() {
@@ -334,7 +329,7 @@ public class Opinet  {
 
             // Handle boolean with byte
             isWash = in.readByte() != 0;
-            hasVisited = in.readByte() != 0;
+            //hasVisited = in.readByte() != 0;
         }
 
         public String getStnId() { return stnId; }
@@ -390,8 +385,8 @@ public class Opinet  {
         }
 
         // TEST CODING FOR WHETHER A STATION HAS BEEN VISITED.
-        public boolean getHasVisited() { return hasVisited; }
-        public void setHasVisited(boolean hasVisited) { this.hasVisited = hasVisited; }
+        //public boolean getHasVisited() { return hasVisited; }
+        //public void setHasVisited(boolean hasVisited) { this.hasVisited = hasVisited; }
     }
 
     // Makes List<TypedList> parcelable such that it is passed from DownloadStationService to Local

@@ -5,6 +5,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Process;
 
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -39,11 +40,9 @@ public class StationListRunnable implements Runnable{
     // Constants
     private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
-
-
     // Objects
-    private Context context;
-    private FirebaseFirestore mDB;
+    //private Context context;
+    private FirebaseFirestore fireStore;
     private List<Opinet.GasStnParcelable> mStationList;
     private StationListMethod mTask;
 
@@ -58,10 +57,10 @@ public class StationListRunnable implements Runnable{
     }
 
     // Constructor
-    StationListRunnable(Context context, StationListMethod task) {
-        mDB = FirebaseFirestore.getInstance();
+    StationListRunnable(StationListMethod task) {
+        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         mStationList = null;
-        this.context = context;
+        //this.context = context;
         mTask = task;
     }
 
@@ -123,11 +122,7 @@ public class StationListRunnable implements Runnable{
 
             //bis = new BufferedInputStream(conn.getInputStream());
             is = conn.getInputStream();
-            log.i("InputStream: %s", is);
-
             mStationList = xmlHandler.parseStationListParcelable(is);
-            log.i("StationListRunnable:%s", mStationList.size());
-
 
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
             // GasManagerActivity
@@ -140,6 +135,7 @@ public class StationListRunnable implements Runnable{
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
 
                 } else {
+                    /*
                     Uri uri = saveNearStationList(mStationList);
                     if (uri != null) {
                         // Addition info from FireStore database in which station data have been accumulated.
@@ -147,6 +143,9 @@ public class StationListRunnable implements Runnable{
                         mTask.setStationList(mStationList);
                         mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
                     }
+                    */
+                    mTask.setStationList(mStationList);
+                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
                 }
 
             } else {
@@ -179,41 +178,9 @@ public class StationListRunnable implements Runnable{
         }
     }
 
-    /**
-     * This method is for the purpose of retrieving near station information from FireStore database
-     * which accumulates station data in Opinet. Until data complete to sync with Opinte server,
-     * it should be off.
-     */
-    @SuppressWarnings("Constant")
-    private void setStationInfoFromFireStore() {
-        if(mDB == null) return;
-        for(final Opinet.GasStnParcelable station : mStationList) {
-
-            Query query = mDB.collection("stations").whereEqualTo("id", station.getStnId());
-            query.addSnapshotListener(new EventListener<QuerySnapshot>(){
-                @Override
-                public void onEvent(@Nullable QuerySnapshot snapshot,
-                                    @Nullable FirebaseFirestoreException e) {
-                    log.i("FireStore isWash retrieved");
-                    if(snapshot == null) return;
-                    if(!snapshot.isEmpty()) {
-                        boolean isCarwash = (boolean)snapshot.getDocuments().get(0).get("carwash");
-                        //String carwash = (isCarwash)?"Y":"N";
-                        station.setIsWash(isCarwash);
-                    }
-
-                    // TEST CODING REQUIRED TO BE ELLABORATED!!!
-                    mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
-
-                }
-            });
-        }
-
-
-    }
 
     // Save the downloaded near station list in the designated file location.
+    /*
     private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
 
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
@@ -240,5 +207,6 @@ public class StationListRunnable implements Runnable{
 
         return null;
     }
+    */
 
 }
