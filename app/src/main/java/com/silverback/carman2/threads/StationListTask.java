@@ -29,7 +29,7 @@ public class StationListTask extends ThreadTask implements
     // Objects
     private StationListViewModel viewModel;
     private Runnable mStationListRunnable;
-    private Runnable mStationInfoRunnable;
+    //private Runnable mStationInfoRunnable;
     private Runnable mFireStoreSetRunnable;
     private Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
@@ -45,7 +45,7 @@ public class StationListTask extends ThreadTask implements
     StationListTask(Context context) {
         super();
         mStationListRunnable = new StationListRunnable(context, this);
-        mStationInfoRunnable = new StationInfoRunnable(this);
+        //mStationInfoRunnable = new StationInfoRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
 
@@ -59,9 +59,9 @@ public class StationListTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    Runnable getStationInfoRunnable() { return mStationInfoRunnable; }
+    //Runnable getStationInfoRunnable() { return mStationInfoRunnable; }
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
-    //Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
+    Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
     void recycle() {
         mStationList = null;
@@ -104,12 +104,13 @@ public class StationListTask extends ThreadTask implements
     public void setStationId(String stnId) {
         //viewModel.setStationCarWashInfo(position, obj);
         //mStationList = list;
+        log.i("station id: %s", stnId);
         this.stnId = stnId;
     }
 
     @Override
     public void setCarWashInfo(int position, Object obj) {
-        viewModel.setStationCarWashInfo(position, obj);
+        //viewModel.setStationCarWashInfo(position, obj);
     }
 
 

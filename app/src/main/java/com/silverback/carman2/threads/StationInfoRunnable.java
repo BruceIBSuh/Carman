@@ -3,6 +3,7 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.os.Process;
 
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;

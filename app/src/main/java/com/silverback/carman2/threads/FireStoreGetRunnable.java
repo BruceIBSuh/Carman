@@ -42,6 +42,7 @@ public class FireStoreGetRunnable implements Runnable {
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
         mCallback.setStationTaskThread(Thread.currentThread());
@@ -49,10 +50,38 @@ public class FireStoreGetRunnable implements Runnable {
         stnList = mCallback.getStationList();
 
         // Bugs have occurred many times here. NullPointerException is brought about due to
-        //for(Opinet.GasStnParcelable stn : stnList) {
-        for(int i = 0; i < stnList.size(); i++) {
-            final int pos = i;
-            final DocumentReference docRef = fireStore.collection("gas_station").document(stnList.get(pos).getStnId());
+        for(Opinet.GasStnParcelable stn : stnList) {
+        //for(int i = 0; i < stnList.size(); i++) {
+            final DocumentReference docRef = fireStore.collection("gas_station").document(stn.getStnId());
+            docRef.get().addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    DocumentSnapshot doc = task.getResult();
+                    if(doc.exists()) {
+                        log.d("Station: %s", doc.getString("stnName"));
+
+                    } else {
+                        Map<String, Object> stnData = new HashMap<>();
+                        //stnData.put("stnId", stn.getStnId());
+                        stnData.put("stnName", stn.getStnName());
+                        stnData.put("stnCode", stn.getStnCode());
+                        stnData.put("xCoord", stn.getLongitude());
+                        stnData.put("yCoord", stn.getLatitude());
+
+                        fireStore.collection("gas_station").document(stn.getStnId()).set(stnData)
+                                .addOnSuccessListener(documentReference -> {
+                                    log.i("successfully added data");
+                                    mCallback.setStationId(stn.getStnId());
+                                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
+                                })
+                                .addOnFailureListener(error -> log.e("failed to add data"));
+
+                    }
+                } else {
+                    log.e("Task failed: %s", task.getException());
+                }
+            });
+
+            /*
             docRef.addSnapshotListener((snapshot, e) -> {
                 if (e != null) return;
                 String source = (snapshot != null && snapshot.getMetadata().hasPendingWrites()) ?
@@ -75,11 +104,14 @@ public class FireStoreGetRunnable implements Runnable {
                     stnData.put("yCoord", stnList.get(pos).getLatitude());
 
                     fireStore.collection("gas_station").document(stnList.get(pos).getStnId()).set(stnData)
-                            .addOnSuccessListener(documentReference -> log.i("successfully added data"))
-                            .addOnFailureListener(error -> log.e("failed to add data"));
+                            .addOnSuccessListener(documentReference -> {
+                                log.i("successfully added data");
+                                mCallback.setStationId(stnList.get(pos).getStnId());
+                            }).addOnFailureListener(error -> log.e("failed to add data"));
 
                 }
             });
+            */
 
         }
 
