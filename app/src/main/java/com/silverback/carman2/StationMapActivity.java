@@ -17,6 +17,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -33,6 +36,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
+    private FirebaseFirestore fireStore;
     private StationInfoTask stationInfoTask;
     private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
@@ -45,6 +49,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private String stnName;
 
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,13 +69,66 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         tvCVS = findViewById(R.id.tv_cvs);
         FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
 
-        stnName = getIntent().getStringExtra("stationName");
+        //stnName = getIntent().getStringExtra("stationName");
         String stnId = getIntent().getStringExtra("stationId");
         StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+        log.i("StationId: %s", stnId);
+        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
+        DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
 
+        /*
+         * Handling task results
+         * To be notified when the task succeeds, attach on an OnSuccessListener
+         * To be notified when the task fails, attach on an OnFailureListener
+         * To handle success and failure in the same listener, attach an OnCompleteListener.
+         */
+        docRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                if(snapshot != null && snapshot.exists()) {
+                    tvName.setText(snapshot.getString("stnName"));
+                    tvAddrs.setText(String.format("%s%15s", snapshot.getString("new_addrs"), snapshot.getString("phone")));
+                    tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), snapshot.getBoolean("carwash")));
+                    tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), snapshot.getBoolean("service")));
+                    tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), snapshot.getBoolean("cvs")));
+                    xCoord = snapshot.getDouble("xCoord");
+                    yCoord = snapshot.getDouble("yCoord");
+
+                    // Convert KATEC to longitude and latitude
+                    GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
+                    GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
+                    longitude = in_pt.getX();
+                    latitude = in_pt.getY();
+
+                    // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                            .findFragmentById(R.id.google_map);
+
+                    if(mapFragment != null) mapFragment.getMapAsync(this);
+
+                }
+            } else {
+                log.e("Read the FireStore failed: %s", task.getException());
+            }
+
+        });
+
+        // When the fab is clicked, connect to a navigation which is opted between Tmap and
+        // KakaoNavi as an installed app is first applied.
+        fabNavi.setOnClickListener(view ->
+                naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
+        );
+
+
+        /*
+         * RETRIEVE THE DETAILED STATION INFO DIRECTLY FROM OPINET, WHICH HAS BEEN ALREADY PERFORMED
+         * WHEN THE NEAR STATIONS WERE FETCHED, SETTING NEW STATION INFO TO FIRESTORE.
+         * REQUIRED TO REMOVE STATIONINFOTASK, STATIONINFORUNNABLE, FIRESTOREUPDATERUNNABLE.
+         */
+
+        /*
         // Initiate the worker thread to retrieve station info.
         stationInfoTask = ThreadManager.startStationInfoTask(stnListModel, stnName, stnId);
-
         // Retrieve extra station info from the result of StationIntoTask via ViewModel.
         stnListModel.getStationInfoLiveData().observe(this, stnInfo -> {
             tvName.setText(stnName);
@@ -94,6 +152,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                     .findFragmentById(R.id.google_map);
 
             if(mapFragment != null) mapFragment.getMapAsync(this);
+
         });
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
@@ -101,6 +160,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         fabNavi.setOnClickListener(view ->
                 naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
         );
+        */
     }
 
     @SuppressWarnings("ConstantConditions")

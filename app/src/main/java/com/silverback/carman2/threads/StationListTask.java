@@ -3,6 +3,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
+import android.util.SparseBooleanArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -35,6 +36,8 @@ public class StationListTask extends ThreadTask implements
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
     private Opinet.GasStnParcelable gasStation;
 
+    private SparseBooleanArray sparseArray;
+
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     //private Opinet.GasStnParcelable mCurrentStation;
     private Location mLocation;
@@ -47,6 +50,8 @@ public class StationListTask extends ThreadTask implements
         mStationListRunnable = new StationListRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
+
+        sparseArray = new SparseBooleanArray();
 
     }
 
@@ -85,8 +90,14 @@ public class StationListTask extends ThreadTask implements
     }
 
     @Override
-    public void setCarWashInfo(int position, Object obj) {
-        viewModel.setStationCarWashInfo(position, obj);
+    public void setCarWashInfo(int position, boolean isCarwash) {
+        sparseArray.put(position, isCarwash);
+        mStationList.get(position).setIsWash(isCarwash);
+        log.i("SparseBooleanArray: %s, %s", sparseArray.size(), mStationList.size());
+        if(sparseArray.size() == mStationList.size()) {
+            //viewModel.setStationCarWashInfo(position, );
+            viewModel.getStationCarWashInfo().postValue(sparseArray);
+        }
     }
 
 

@@ -8,9 +8,11 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,12 +21,17 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
-import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -43,7 +50,9 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -59,6 +68,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Objects
     private CarmanDatabase mDB;
+    private FirebaseFirestore fireStore;
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private FragmentSharedModel fragmentSharedModel;
@@ -78,17 +88,19 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // UIs
     private TextView tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
-    private EditText etStnName, etUnitPrice, etExtraExpense;
+    private EditText etStnName, etUnitPrice, etExtraExpense, etComment;
     private ImageButton btnFavorite;
+    private Button btnResetRating;
+    private RatingBar ratingBar;
 
     // Fields
     private String[] defaultParams;
-    private int defMileage, defPayment;
-    //private String defMileage, defPayment;
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private String dateFormat;
     private String stnName, stnId, stnCode, stnAddrs;
     private String date;
+    private String nickname;
+    private boolean isCommentUploaded;
 
     private boolean isGeofenceIntent, isFavorite;
 
@@ -103,6 +115,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         defaultParams = getArguments().getStringArray("defaultParams");
+
+        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
 
         /*
          * Create the instances of the ViewModels
@@ -155,6 +169,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
         tvExtraPaid = localView.findViewById(R.id.tv_extra);
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
+        ratingBar = localView.findViewById(R.id.ratingBar);
+        etComment = localView.findViewById(R.id.et_comment);
+        btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
 
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
@@ -168,6 +185,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvCarwashPaid.setOnClickListener(this);
         tvExtraPaid.setOnClickListener(this);
         btnFavorite.setOnClickListener(view -> registerFavorite());
+        btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
+
+
+        etComment.setOnFocusChangeListener((view, b) -> {
+            nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
+            if(b && TextUtils.isEmpty(nickname)) {
+                log.i("Comment required to have nickname");
+                Toast.makeText(getActivity(), "Nickname required", Toast.LENGTH_SHORT).show();
+                view.clearFocus();
+            }
+        });
 
 
         // ViewModels to share data b/w fragments(GasManager, ServiceManager, and NumberPadFragment)
@@ -298,7 +326,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private void checkFavorite(String name, String id) {
 
         LiveData<String> favoriteName = mDB.favoriteModel().findFavoriteName(name, id);
-
         favoriteName.observe(this, favorite -> {
             if (TextUtils.isEmpty(favorite)) {
                 isFavorite = false;
@@ -366,10 +393,50 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         int rowId = mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
 
+
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+
+            if(ratingBar.getRating() > 0) {
+                log.i("RatingBar: %s", ratingBar.getRating());
+                Map<String, Object> ratingData = new HashMap<>();
+                ratingData.put("eval_num", FieldValue.increment(1));
+                ratingData.put("eval_sum", FieldValue.increment(ratingBar.getRating()));
+
+                DocumentReference docRef = fireStore.collection("gas_eval").document(stnId);
+                docRef.get().addOnSuccessListener(snapshot -> {
+                    if(snapshot.exists() && snapshot.get("eval_num") != null) docRef.update(ratingData);
+                    else docRef.set(ratingData);
+                }).addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) log.i("Successfully uploaded the rating");
+                    else log.e("The rating failed to upload");
+                });
+            }
+
+            // Add ranting or comments to the Firestore, if any.
+            if(!TextUtils.isEmpty(etComment.getText()   )) {
+                Map<String, Object> commentData = new HashMap<>();
+                commentData.put("timestamp", FieldValue.serverTimestamp());
+                commentData.put("name", nickname);
+                commentData.put("comments", etComment.getText().toString());
+                commentData.put("rating", ratingBar.getRating());
+
+                fireStore.collection("gas_eval").document(stnId).collection("comments").add(commentData)
+                        .addOnCompleteListener(task -> {
+                            if(task.isSuccessful()) {
+                                log.e("Commments successfully uploaded");
+                                isCommentUploaded = true;
+                            } else {
+                                log.e("Comments upload failed: %s", task.getException());
+                            }
+                        });
+            }
+
+
+
             return true;
+
         } else return false;
 
     }
