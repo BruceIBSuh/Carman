@@ -21,7 +21,7 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
     private MutableLiveData<Opinet.GasStnParcelable> currentStation;
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
-    private MutableLiveData<SparseArray> hasCarWash;
+    private MutableLiveData<SparseBooleanArray> hasCarWash;
 
     // Get a station list stationos of which are located within a given radius conditions.
     public MutableLiveData<List<Opinet.GasStnParcelable>> getStationListLiveData() {
@@ -49,15 +49,14 @@ public class StationListViewModel extends ViewModel {
         return stnInfo;
     }
 
-    public void setStationCarWashInfo(int position, Object obj) {
-        SparseArray<Object> sparseArray = new SparseArray<>();
-        sparseArray.put(position, obj);
-        hasCarWash.postValue(sparseArray);
-    }
+    public MutableLiveData<SparseBooleanArray> getStationCarWashInfo() {
 
-    public LiveData<SparseArray> getStationCarWashInfo() {
-        if(hasCarWash == null) hasCarWash = new MutableLiveData<>();
+        if(hasCarWash == null) {
+            hasCarWash = new MutableLiveData<>();
+        }
         return hasCarWash;
     }
+
+
 
 }

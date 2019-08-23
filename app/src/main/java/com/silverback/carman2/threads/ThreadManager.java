@@ -269,7 +269,7 @@ public class ThreadManager {
 
             case DOWNLOAD_STATION_INFO_COMPLETED:
                 // Save additional information of a selected station in FireStore
-                mDecodeThreadPool.execute(((StationInfoTask)task).updateFireStoreRunnable());
+                //mDecodeThreadPool.execute(((StationInfoTask)task).updateFireStoreRunnable());
                 msg.sendToTarget();
                 break;
 

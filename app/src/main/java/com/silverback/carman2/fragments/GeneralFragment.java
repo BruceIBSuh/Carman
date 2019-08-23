@@ -6,6 +6,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.SparseArray;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -207,12 +208,20 @@ public class GeneralFragment extends Fragment implements
             stationRecyclerView.setAdapter(mAdapter);
         });
 
-        stnListModel.getStationCarWashInfo().observe(this, obj -> {
-            synchronized (this) {
-                mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
-                //if(mStationList != null) mStationList.get(obj.keyAt(0)).setIsWash((boolean)obj.valueAt(0));
-                saveNearStationList(mStationList);
+        stnListModel.getStationCarWashInfo().observe(this, sparseArray -> {
+
+            // Update the carwash info to StationList and notify the data change to Adapter.
+            // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+            // e.g. when the view is not attached.
+
+            for(int i = 0; i < sparseArray.size(); i++) {
+                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
+                mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
+
+            Uri uri = saveNearStationList(mStationList);
+            log.i("Saved StationList: %s", uri);
+
         });
 
         return childView;
@@ -308,12 +317,9 @@ public class GeneralFragment extends Fragment implements
     // Callback invoked by StationListAdapter.OnRecyclerItemClickListener
     // on clicking an RecyclerView item with fetched station name and id passing to the activity.
     @Override
-    public void onItemClicked(int position) {
-        Bundle bundle = new Bundle();
-        bundle.putString("stationName", mStationList.get(position).getStnName());
-        bundle.putString("stationId", mStationList.get(position).getStnId());
+    public void onItemClicked(final int position) {
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putExtras(bundle);
+        intent.putExtra("stationId", mStationList.get(position).getStnId());
         startActivity(intent);
     }
 

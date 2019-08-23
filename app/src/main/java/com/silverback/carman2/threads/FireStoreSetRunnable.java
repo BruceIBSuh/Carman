@@ -104,33 +104,4 @@ public class FireStoreSetRunnable implements Runnable {
             if (conn != null) conn.disconnect();
         }
     }
-
-    public class Facility {
-        boolean carwash;
-        boolean cvs;
-        boolean service;
-
-        public Facility(){
-            // required to have the default constructor
-        }
-        public Facility(boolean carwash, boolean service, boolean cvs) {
-            this.carwash = carwash;
-            this.cvs = cvs;
-            this.service = service;
-        }
-
-        public boolean isCarwash() {
-            return carwash;
-        }
-
-        public boolean isCvs() {
-            return cvs;
-        }
-
-        public boolean isService() {
-            return service;
-        }
-
-
-    }
 }
