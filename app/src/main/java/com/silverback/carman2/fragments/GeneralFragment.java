@@ -213,6 +213,7 @@ public class GeneralFragment extends Fragment implements
             // Update the carwash info to StationList and notify the data change to Adapter.
             // Adapter should not assume that the payload will always be passed to onBindViewHolder()
             // e.g. when the view is not attached.
+
             for(int i = 0; i < sparseArray.size(); i++) {
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));

@@ -81,7 +81,7 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
         mStationList = list;
-        viewModel.getStationListLiveData().postValue(list);
+        viewModel.getStationListLiveData().postValue(mStationList);
     }
 
     @Override

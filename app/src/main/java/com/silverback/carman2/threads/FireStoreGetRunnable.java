@@ -53,43 +53,45 @@ public class FireStoreGetRunnable implements Runnable {
         // Bugs have occurred many times here. NullPointerException is brought about due to
         //for(Opinet.GasStnParcelable stn : stnList) {
         for(int i = 0; i < stnList.size(); i++) {
-            final int pos = i;
-            final DocumentReference docRef = fireStore.collection("gas_station").document(stnList.get(pos).getStnId());
-            docRef.addSnapshotListener((snapshot, e) -> {
-                if (e != null) {
-                    log.e("SnapshotListener failed: %s", e.getMessage());
-                    return;
-                }
-                //String source = (snapshot != null && snapshot.getMetadata().hasPendingWrites())?"Local" : "Server";
+            synchronized(this) {
+                final int pos = i;
+                final DocumentReference docRef = fireStore.collection("gas_station").document(stnList.get(pos).getStnId());
+                docRef.addSnapshotListener((snapshot, e) -> {
+                    if (e != null) {
+                        log.e("SnapshotListener failed: %s", e.getMessage());
+                        return;
+                    }
+                    //String source = (snapshot != null && snapshot.getMetadata().hasPendingWrites())?"Local" : "Server";
 
-                /*
-                 * Process to add new gas stations if no documents exists in FireStore, initiating
-                 * FireStoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
-                 * to add additional info to FireStore and notifies the listener ready to read
-                 * newly added fields including the field of "carwash".
-                 * On the other hand, if any document exists, directly read "carwash" field.
-                 */
-                if (snapshot != null && snapshot.exists()) {
-                    log.i("document: %s, %s", pos, snapshot.get("carwash"));
-                    mCallback.setCarWashInfo(pos, (boolean)snapshot.get("carwash"));
+                    /*
+                     * Process to add new gas stations if no documents exists in FireStore, initiating
+                     * FireStoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
+                     * to add additional info to FireStore and notifies the listener ready to read
+                     * newly added fields including the field of "carwash".
+                     * On the other hand, if any document exists, directly read "carwash" field.
+                     */
+                    if (snapshot != null && snapshot.exists()) {
+                        log.i("document: %s, %s", pos, snapshot.get("carwash"));
+                        //mCallback.setCarWashInfo(pos, (boolean) snapshot.get("carwash"));
 
-                } else {
-                    Map<String, Object> stnData = new HashMap<>();
-                    //stnData.put("stnId", stnList.get(pos).getStnId());
-                    stnData.put("stnName", stnList.get(pos).getStnName());
-                    stnData.put("stnCode", stnList.get(pos).getStnCode());
-                    stnData.put("xCoord", stnList.get(pos).getLongitude());
-                    stnData.put("yCoord", stnList.get(pos).getLatitude());
+                    } else {
+                        Map<String, Object> stnData = new HashMap<>();
+                        //stnData.put("stnId", stnList.get(pos).getStnId());
+                        stnData.put("stnName", stnList.get(pos).getStnName());
+                        stnData.put("stnCode", stnList.get(pos).getStnCode());
+                        stnData.put("xCoord", stnList.get(pos).getLongitude());
+                        stnData.put("yCoord", stnList.get(pos).getLatitude());
 
-                    fireStore.collection("gas_station").document(stnList.get(pos).getStnId()).set(stnData)
-                            .addOnSuccessListener(documentReference -> {
-                                log.i("successfully added data");
-                                mCallback.setStationId(stnList.get(pos).getStnId());
-                                mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
-                            })
-                            .addOnFailureListener(error -> log.e("failed to add data"));
-                }
-            });
+                        fireStore.collection("gas_station").document(stnList.get(pos).getStnId()).set(stnData)
+                                .addOnSuccessListener(documentReference -> {
+                                    log.i("successfully added data");
+                                    mCallback.setStationId(stnList.get(pos).getStnId());
+                                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
+                                })
+                                .addOnFailureListener(error -> log.e("failed to add data"));
+                    }
+                });
+            }
         }
     }
 
