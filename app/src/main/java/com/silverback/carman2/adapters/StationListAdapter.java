@@ -33,7 +33,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.StationListViewHolder> {
+public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
@@ -61,35 +61,33 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
 
     @NonNull
     @Override
-    public StationListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public StationListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.view_card_stationlist, parent, false);
 
-        return new StationListViewHolder(cardView);
+        return new StationListHolder(cardView);
 
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StationListViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull StationListHolder holder, int position) {
 
         final Opinet.GasStnParcelable data = stationList.get(position);
-        //holder.bindToStationList(station);
+        holder.bindToStationList(data);
+
+        /*
         holder.stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
         holder.stnName = data.getStnName();
         int resLogo = getGasStationImage(data.getStnCode());
         holder.imgLogo.setImageResource(resLogo);
 
-        String carwash = (data.getHasVisited())? "false" : "n/a";
-
         // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
-        //holder.tvName.setText(String.format("%s%8s%5s", data.getStnName(), "---", data.getHasVisited()));
         holder.tvName.setText(data.getStnName());
         holder.tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
         holder.tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
-        //holder.tvWashValue.setText(String.valueOf(data.getIsWash()));
-        holder.tvWashValue.setText(carwash);
-
+        holder.tvWashValue.setText(String.valueOf(data.getIsWash()));
+        */
         holder.itemView.setOnClickListener(view -> {
             log.i("cardview position: %s, %s", position, mListener);
             if(mListener != null) mListener.onItemClicked(position);
@@ -97,11 +95,16 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
 
     }
 
+
     @Override
-    public void onBindViewHolder(@NonNull StationListViewHolder holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
+
         }else{
+            log.i("OnItemChagned: %s", payloads.get(0));
+            holder.tvWashValue.setText(payloads.get(0).toString());
+            /*
             for(Object obj : payloads) {
                 if(obj instanceof Boolean) {
                     log.i("isCarwash in StationListAdapter: %s, %s", position, obj);
@@ -111,6 +114,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
                     holder.tvWashValue.setText("N/A");
                 }
             }
+            */
         }
     }
 
@@ -118,31 +122,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListAdapter.
     public int getItemCount() {
         return stationList.size();
     }
-
-
-    // RecyclerView.ViewHolder
-    class StationListViewHolder extends RecyclerView.ViewHolder {
-
-        Context context;
-        DecimalFormat df;
-        ImageView imgLogo;
-        TextView tvName, tvPrice, tvDistance, tvWashValue, tvWashLabel;
-        String price, distance, carwash;
-        String stnName, stnId;
-
-        StationListViewHolder(CardView cardView) {
-            super(cardView);
-            this.context = cardView.getContext();
-
-            imgLogo = cardView.findViewById(R.id.img_logo);
-            tvName = cardView.findViewById(R.id.tv_station_name);
-            tvPrice = cardView.findViewById(R.id.tv_value_price);
-            tvDistance = cardView.findViewById(R.id.tv_value_distance);
-            tvWashLabel = cardView.findViewById(R.id.tv_label_carwash);
-            tvWashValue = cardView.findViewById(R.id.tv_value_carwash);
-        }
-    }
-
     /*
      * Sorts the already saved station list  from the Opinet by price and distance
      * @param uri :  file saved in the cache location

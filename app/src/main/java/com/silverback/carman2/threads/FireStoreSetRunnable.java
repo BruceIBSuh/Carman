@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class FireStoreSetRunnable implements Runnable {
 
-    // Logging
+    // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreSetRunnable.class);
     private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
 
@@ -35,9 +35,8 @@ public class FireStoreSetRunnable implements Runnable {
     // Interface
     public interface FireStoreSetMethods {
         void setStationTaskThread(Thread thread);
-        //List<Opinet.GasStnParcelable> getStationList();
-        String getStationId();
         void handleStationTaskState(int state);
+        String getStationId();
     }
 
     // Constructor
@@ -45,7 +44,6 @@ public class FireStoreSetRunnable implements Runnable {
         this.mCallback = task;
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         xmlHandler = new XmlPullParserHandler();
-
     }
 
     @Override
@@ -54,7 +52,6 @@ public class FireStoreSetRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         final String stnId = mCallback.getStationId();
-
         String OPINET_DETAIL = OPINET + "&id=" + stnId;
         HttpURLConnection conn = null;
         InputStream is = null;
@@ -63,10 +60,32 @@ public class FireStoreSetRunnable implements Runnable {
             URL url = new URL(OPINET_DETAIL);
             conn = (HttpURLConnection) url.openConnection();
             is = new BufferedInputStream(conn.getInputStream());
-            Opinet.GasStationInfo info = xmlHandler.parseGasStationInfo(is);
-            //info.setStationName(task.getStationName());
-            log.i("Station Info: %s", info.getNewAddrs());
-            setStationExtraInfo(stnId, info);
+            Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
+            final boolean isCarwash = stnInfo.getIsCarWash().equalsIgnoreCase("Y");
+            final boolean isService = stnInfo.getIsService().equalsIgnoreCase("Y");
+            final boolean isCVS = stnInfo.getIsCVS().equalsIgnoreCase("Y");
+
+            // Set additional station info to FireStore using Transaction.
+            final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("new_addrs", stnInfo.getNewAddrs());
+            data.put("old_addrs", stnInfo.getOldAddrs());
+            data.put("phone", stnInfo.getTelNo());
+            data.put("carwash", isCarwash);
+            data.put("service", isService);
+            data.put("cvs", isCVS);
+
+            fireStore.runTransaction(transaction -> {
+                DocumentSnapshot snapshot = transaction.get(docRef);
+                if(snapshot.exists()) {
+                    transaction.set(docRef, data, SetOptions.merge());
+                }
+
+                return null;
+
+            }).addOnSuccessListener(aVoid -> log.i("Successfully set data to FireStore"))
+            .addOnFailureListener(e -> log.e("Failed to set data to FireStore:%s", e.getMessage()));
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
@@ -86,61 +105,32 @@ public class FireStoreSetRunnable implements Runnable {
         }
     }
 
-    private synchronized void setStationExtraInfo(final String stnId, final Opinet.GasStationInfo info) {
-        final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
-        fireStore.runTransaction(transaction -> {
-            DocumentSnapshot doc = transaction.get(docRef);
-            if(doc.exists()) {
-                log.i("set extra data: %s", docRef);
-                Map<String, Object> data = new HashMap<>();
-                data.put("new_addrs", info.getNewAddrs());
-                data.put("old_addrs", info.getOldAddrs());
-                data.put("phone", info.getTelNo());
-
-                final boolean isCarwash = info.getIsCarWash().equalsIgnoreCase("Y");
-                final boolean isService = info.getIsService().equalsIgnoreCase("Y");
-                final boolean isCVS = info.getIsCVS().equalsIgnoreCase("Y");
-                log.i("Facility: %s, %s, %s", isCarwash, isService, isCVS);
-                Map<String, Object> extra = new HashMap<>();
-                extra.put("carwash", isCarwash);
-                extra.put("service", isService);
-                extra.put("cvs", isCVS);
-
-                data.put("facility", extra);
-
-
-                transaction.set(docRef, data, SetOptions.merge());
-            }
-
-            return null;
-        });
-    }
-
-    /*
-    private class StationFacility {
+    public class Facility {
         boolean carwash;
-        boolean service;
         boolean cvs;
+        boolean service;
 
-        public StationFacility(){}
-
-        StationFacility(boolean carwash, boolean service, boolean cvs) {
+        public Facility(){
+            // required to have the default constructor
+        }
+        public Facility(boolean carwash, boolean service, boolean cvs) {
             this.carwash = carwash;
-            this.service = service;
             this.cvs = cvs;
+            this.service = service;
         }
 
         public boolean isCarwash() {
             return carwash;
         }
 
+        public boolean isCvs() {
+            return cvs;
+        }
+
         public boolean isService() {
             return service;
         }
 
-        public boolean isCvs() {
-            return cvs;
-        }
+
     }
-    */
 }

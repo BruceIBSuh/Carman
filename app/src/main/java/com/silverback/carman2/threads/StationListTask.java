@@ -12,8 +12,9 @@ import com.silverback.carman2.models.StationListViewModel;
 import java.util.List;
 
 public class StationListTask extends ThreadTask implements
-        StationListRunnable.StationListMethod, StationInfoRunnable.StationInfoMethods,
-        FireStoreSetRunnable.FireStoreSetMethods, FireStoreGetRunnable.FireStoreGetMethods {
+        StationListRunnable.StationListMethod,
+        FireStoreGetRunnable.FireStoreGetMethods,
+        FireStoreSetRunnable.FireStoreSetMethods {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
@@ -22,14 +23,13 @@ public class StationListTask extends ThreadTask implements
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETE = 2;
     static final int FIRESTORE_GET_COMPLETE = 3;
-    static final int FIRESTORE_SET_COMPLETE = 4;
+    //static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
     static final int DOWNLOAD_CURRENT_STATION_FAIL = -2;
 
     // Objects
     private StationListViewModel viewModel;
     private Runnable mStationListRunnable;
-    //private Runnable mStationInfoRunnable;
     private Runnable mFireStoreSetRunnable;
     private Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
@@ -44,8 +44,7 @@ public class StationListTask extends ThreadTask implements
     // Constructor
     StationListTask(Context context) {
         super();
-        mStationListRunnable = new StationListRunnable(context, this);
-        //mStationInfoRunnable = new StationInfoRunnable(this);
+        mStationListRunnable = new StationListRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
 
@@ -59,7 +58,6 @@ public class StationListTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
-    //Runnable getStationInfoRunnable() { return mStationInfoRunnable; }
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
     Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
@@ -73,6 +71,29 @@ public class StationListTask extends ThreadTask implements
     public synchronized void setStationTaskThread(Thread thread) {
         setCurrentThread(thread);
         log.i("Download Thread: %s", thread);
+    }
+
+    @Override
+    public void setStationList(List<Opinet.GasStnParcelable> list) {
+        mStationList = list;
+        viewModel.getStationListLiveData().postValue(list);
+    }
+
+    @Override
+    public void setStationId(String stnId) {
+        this.stnId = stnId;
+    }
+
+    @Override
+    public void setCarWashInfo(int position, Object obj) {
+        viewModel.setStationCarWashInfo(position, obj);
+    }
+
+
+    @Override
+    public void setCurrentStation(Opinet.GasStnParcelable station) {
+        //postValue() used in worker thread. In UI thread, use setInputValue().
+        viewModel.getCurrentStationLiveData().postValue(station);
     }
 
     // The following  callbacks are invoked by StationListRunnable to retrieve stations within
@@ -94,46 +115,12 @@ public class StationListTask extends ThreadTask implements
     }
 
 
-    @Override
-    public void setStationList(List<Opinet.GasStnParcelable> list) {
-        mStationList = list;
-        viewModel.getStationListLiveData().postValue(list);
-    }
-
-    @Override
-    public void setStationId(String stnId) {
-        //viewModel.setStationCarWashInfo(position, obj);
-        //mStationList = list;
-        log.i("station id: %s", stnId);
-        this.stnId = stnId;
-    }
-
-    @Override
-    public void setCarWashInfo(int position, Object obj) {
-        //viewModel.setStationCarWashInfo(position, obj);
-    }
-
-
-    @Override
-    public void setCurrentStation(Opinet.GasStnParcelable station) {
-        //postValue() used in worker thread. In UI thread, use setInputValue().
-        viewModel.getCurrentStationLiveData().postValue(station);
-    }
-
-
     // FireStoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {
         return mStationList;
     }
-
-
-    @Override
-    public void setStationInfo(Opinet.GasStationInfo info) {
-
-    }
-
 
 
     @Override
@@ -151,15 +138,15 @@ public class StationListTask extends ThreadTask implements
             // Query stations with station ids and add info as to car wash and hasVisited to it
             // when any station is queried.
             case FIRESTORE_GET_COMPLETE:
-                log.i("FireStore_Get_Complete");
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
             // Update extra inforamtion on queried station.
+            /*
             case FIRESTORE_SET_COMPLETE:
                 log.i("FireStore Set Complete");
                 outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
                 break;
-
+            */
             case DOWNLOAD_NEAR_STATIONS_FAIL:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;

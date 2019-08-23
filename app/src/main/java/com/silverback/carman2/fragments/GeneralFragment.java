@@ -3,6 +3,7 @@ package com.silverback.carman2.fragments;
 
 import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -42,6 +43,11 @@ import com.silverback.carman2.views.SigunPriceView;
 import com.silverback.carman2.views.StationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +85,6 @@ public class GeneralFragment extends Fragment implements
     private StationListAdapter mAdapter;
     private List<Opinet.GasStnParcelable> mStationList;
 
-    //private Uri uriStationList;
     private Location mPrevLocation;
 
     // UI's
@@ -89,6 +94,7 @@ public class GeneralFragment extends Fragment implements
     // Fields
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
+    private static int count = 0;
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -167,6 +173,11 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
+        /*
+         * ViewModels
+         * LocationViewModel: data as to the current location using LocationTask
+         * StationListViewModel: data as to the stations within a given radius using StationListTask
+         */
 
         // On fetching the current location, attempt to get the near station list based on the value.
         locationModel.getLocation().observe(this, location -> {
@@ -188,6 +199,7 @@ public class GeneralFragment extends Fragment implements
 
         });
 
+        // Receive the LiveData of station list within a given radius based on
         stnListModel.getStationListLiveData().observe(this, stnList -> {
             mStationList = stnList;
             mAdapter = new StationListAdapter(mStationList, this);
@@ -195,10 +207,12 @@ public class GeneralFragment extends Fragment implements
             stationRecyclerView.setAdapter(mAdapter);
         });
 
-
         stnListModel.getStationCarWashInfo().observe(this, obj -> {
-            log.i("stnListModel: getStationCarWashInfo(): %s", obj);
-            if(obj.size() > 0) mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
+            synchronized (this) {
+                mAdapter.notifyItemChanged(obj.keyAt(0), obj.valueAt(0));
+                //if(mStationList != null) mStationList.get(obj.keyAt(0)).setIsWash((boolean)obj.valueAt(0));
+                saveNearStationList(mStationList);
+            }
         });
 
         return childView;
@@ -302,5 +316,34 @@ public class GeneralFragment extends Fragment implements
         intent.putExtras(bundle);
         startActivity(intent);
     }
+
+    @SuppressWarnings("ConstantConditions")
+    private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
+
+        File file = new File(getContext().getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+
+        // Delete the file before saving a new list.
+        if(file.exists()) {
+            boolean delete = file.delete();
+            if(delete) log.i("cache cleared");
+        }
+
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(list);
+
+            return Uri.fromFile(file);
+
+        } catch (FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e.getMessage());
+
+        } catch (IOException e) {
+            log.e("IOException: %s", e.getMessage());
+
+        }
+
+        return null;
+    }
+
 
 }
