@@ -7,6 +7,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -17,11 +19,15 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
+import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -30,6 +36,9 @@ import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
     // Logging
@@ -37,10 +46,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Objects
     private FirebaseFirestore fireStore;
-    private StationInfoTask stationInfoTask;
+    //private StationInfoTask stationInfoTask;
     private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
     private double longitude, latitude;
+    private RecyclerView recyclerComments;
+    private CommentRecyclerAdapter commentAdapter;
 
     // UIs
     private TextView tvName, tvAddrs, tvCarwash, tvService,tvCVS;
@@ -69,12 +80,16 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         tvCVS = findViewById(R.id.tv_cvs);
         FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
 
+        recyclerComments = findViewById(R.id.recycler_stn_comments);
+        recyclerComments.setLayoutManager(new LinearLayoutManager(this));
+
         //stnName = getIntent().getStringExtra("stationName");
         String stnId = getIntent().getStringExtra("stationId");
-        StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        log.i("StationId: %s", stnId);
+        //StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+
+        // Instantiate FireStore and define DocumentReference to retrieve the station information
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
-        DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
+        DocumentReference docStation = fireStore.collection("gas_station").document(stnId);
 
         /*
          * Handling task results
@@ -82,7 +97,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
          * To be notified when the task fails, attach on an OnFailureListener
          * To handle success and failure in the same listener, attach an OnCompleteListener.
          */
-        docRef.get().addOnCompleteListener(task -> {
+        docStation.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
@@ -111,6 +126,25 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                 log.e("Read the FireStore failed: %s", task.getException());
             }
 
+        });
+
+        // Read comments on gas stations
+        CollectionReference colRef = fireStore.collection("gas_eval").document(stnId).collection("comments");
+        List<DocumentSnapshot> snapshotList = new ArrayList<>();
+        colRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                for(DocumentSnapshot document : task.getResult()) {
+                    log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
+                    snapshotList.add(document);
+                }
+
+                commentAdapter = new CommentRecyclerAdapter(snapshotList);
+                recyclerComments.setAdapter(commentAdapter);
+
+
+            } else {
+                log.e("task failed: %s", task.getException());
+            }
         });
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
@@ -169,7 +203,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         super.onResume();
 
         String title = mSettings.getString(Constants.VEHICLE_NAME, null);
-        if(title != null) getSupportActionBar().setTitle(title);
+        //if(title != null) getSupportActionBar().setTitle(title);
 
         // When returning from the navigation, the navigation instance should be killed and garbage
         // collected.
@@ -179,7 +213,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     @Override
     public void onPause() {
         super.onPause();
-        if(stationInfoTask != null) stationInfoTask = null;
+        //if(stationInfoTask != null) stationInfoTask = null;
 
     }
 

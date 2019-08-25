@@ -21,7 +21,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
-import com.silverback.carman2.adapters.RecentExpensePagerAdapter;
+import com.silverback.carman2.adapters.ExpenseRecentPagerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
@@ -59,7 +59,7 @@ public class ExpenseActivity extends BaseActivity implements
     private ExpenseViewPager expensePager;
     private ExpenseTabPagerAdapter tabPagerAdapter;
     private AppBarLayout appBar;
-    private TabLayout expenseTabLayout;
+    private TabLayout expTabLayout;
     private FrameLayout topFrame;
 
 
@@ -94,18 +94,18 @@ public class ExpenseActivity extends BaseActivity implements
         setContentView(R.layout.activity_expense);
 
         mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
-
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         adapterViewModel = ViewModelProviders.of(this).get(AdapterViewModel.class);
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
+        // Init LocationTask to get the currentLocation, which is passed back to GasManagerFragment
+        // via LocationViewModel
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
-
 
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
         toolbar = findViewById(R.id.toolbar_expense);
-        expenseTabLayout = findViewById(R.id.tab_expense);
+        expTabLayout = findViewById(R.id.tab_expense);
         topFrame = findViewById(R.id.frame_top_fragments);
         tabPager = findViewById(R.id.tabpager);
 
@@ -123,7 +123,7 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.setOffscreenPageLimit(0);
         tabPager.setAdapter(tabPagerAdapter);
         tabPager.addOnPageChangeListener(this);
-        expenseTabLayout.setupWithViewPager(tabPager);
+        expTabLayout.setupWithViewPager(tabPager);
         // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
         // it to GasManagerFragment.
         String[] defaults = getDefaultParams();
@@ -131,7 +131,7 @@ public class ExpenseActivity extends BaseActivity implements
         Bundle args = new Bundle();
         args.putStringArray("defaultParams", defaults);
         tabPagerAdapter.getItem(0).setArguments(args);
-        addTabIconAndTitle(this, expenseTabLayout);
+        addTabIconAndTitle(this, expTabLayout);
         animSlideTabLayout();
         */
 
@@ -140,7 +140,7 @@ public class ExpenseActivity extends BaseActivity implements
         // not ViewPager.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        RecentExpensePagerAdapter topPagerAdapter = new RecentExpensePagerAdapter(getSupportFragmentManager());
+        ExpenseRecentPagerAdapter topPagerAdapter = new ExpenseRecentPagerAdapter(getSupportFragmentManager());
         expensePager.setAdapter(topPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
@@ -152,9 +152,9 @@ public class ExpenseActivity extends BaseActivity implements
             log.i("AdapterViewModel: %s", adapter.getItem(0));
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
-            expenseTabLayout.setupWithViewPager(tabPager);
+            expTabLayout.setupWithViewPager(tabPager);
 
-            addTabIconAndTitle(this, expenseTabLayout);
+            addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
 
 
@@ -272,6 +272,7 @@ public class ExpenseActivity extends BaseActivity implements
         }
 
     }
+
     @Override
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollStateChanged:%s", state);
@@ -320,7 +321,7 @@ public class ExpenseActivity extends BaseActivity implements
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expenseTabLayout, "y", tabEndValue);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(1000);

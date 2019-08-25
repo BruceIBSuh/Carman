@@ -21,7 +21,7 @@ public class ExpenseViewPager extends ViewPager {
 
     /*
     public void initPager(FragmentManager fm) {
-        RecentExpensePagerAdapter adapter = new RecentExpensePagerAdapter(fm);
+        ExpenseRecentPagerAdapter adapter = new ExpenseRecentPagerAdapter(fm);
         setAdapter(adapter);
         setCurrentItem(0);
     }

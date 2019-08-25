@@ -19,7 +19,7 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<SparseIntArray> selectedValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> selectedMemo = new MutableLiveData<>();
     private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
-    private final MutableLiveData<Boolean> alert = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> alertResult = new MutableLiveData<>();
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -70,10 +70,11 @@ public class FragmentSharedModel extends ViewModel {
 
     // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
     public void setAlert(boolean b) {
-        alert.setValue(b);
+        alertResult.setValue(b);
     }
     public LiveData<Boolean> getAlert() {
-        return alert;
+        return alertResult;
     }
+
 
 }

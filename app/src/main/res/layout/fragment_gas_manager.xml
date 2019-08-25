@@ -63,7 +63,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:labelFor="@id/et_station_name"
+        android:labelFor="@id/tv_station_name"
         android:text="@string/gas_label_station"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -82,13 +82,12 @@
         app:layout_constraintStart_toEndOf="@+id/tv_label_name"
         app:layout_constraintTop_toTopOf="@+id/tv_label_name" />
 
-    <EditText
-        android:id="@+id/et_station_name"
+    <TextView
+        android:id="@+id/tv_station_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:background="@drawable/state_view_focus"
-        android:inputType="textMultiLine"
         android:padding="5dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
@@ -103,9 +102,9 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_marginEnd="3dp"
-        app:layout_constraintBottom_toBottomOf="@+id/et_station_name"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
         app:layout_constraintEnd_toStartOf="@+id/imgbtn_refresh"
-        app:layout_constraintTop_toTopOf="@+id/et_station_name" />
+        app:layout_constraintTop_toTopOf="@+id/tv_station_name" />
 
     <ImageButton
         android:id="@+id/imgbtn_refresh"
@@ -117,9 +116,9 @@
         android:background="@android:color/transparent"
         android:src="@drawable/btn_rotate"
         android:scaleType="fitCenter"
-        app:layout_constraintTop_toTopOf="@+id/et_station_name"
-        app:layout_constraintBottom_toBottomOf="@+id/et_station_name"
-        app:layout_constraintEnd_toEndOf="@+id/et_station_name" />
+        app:layout_constraintTop_toTopOf="@+id/tv_station_name"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
+        app:layout_constraintEnd_toEndOf="@+id/tv_station_name" />
 
     <EditText
         android:id="@+id/et_unit_price"
@@ -132,9 +131,9 @@
         android:padding="5dp"
         android:textAlignment="viewEnd"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toBottomOf="@+id/et_station_name"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/et_station_name"
+        app:layout_constraintTop_toTopOf="@+id/tv_station_name"
         tools:ignore="Autofill" />
 
     <TextView

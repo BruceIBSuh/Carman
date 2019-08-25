@@ -54,17 +54,17 @@
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
         app:behavior_overlapTop="100dp" >
 
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardview_map"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:layout_margin="3dp" >
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/vg_constraint"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="10dp" >
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:background="#FF9900">
 
                 <TextView
                     android:id="@+id/tv_setting_item"
@@ -117,7 +117,16 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </androidx.cardview.widget.CardView>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_stn_comments"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#FFFF00"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_carwash"/>
+
+        </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
 
@@ -127,7 +136,7 @@
         android:layout_height="wrap_content"
         android:src="@drawable/ic_gas"
         android:layout_margin="5dp"
-        app:layout_anchor="@+id/cardview_map"
+        app:layout_anchor="@+id/vg_constraint"
         app:layout_anchorGravity="end|top"/>
 
 

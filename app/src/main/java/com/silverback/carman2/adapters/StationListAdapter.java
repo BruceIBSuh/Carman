@@ -3,12 +3,8 @@ package com.silverback.carman2.adapters;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
@@ -24,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -64,7 +59,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     public StationListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.view_card_stationlist, parent, false);
+                .inflate(R.layout.cardview_stationlist, parent, false);
 
         return new StationListHolder(cardView);
 

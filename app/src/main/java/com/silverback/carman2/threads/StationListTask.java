@@ -36,7 +36,7 @@ public class StationListTask extends ThreadTask implements
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
     private Opinet.GasStnParcelable gasStation;
 
-    private SparseBooleanArray sparseArray;
+    private SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     //private Opinet.GasStnParcelable mCurrentStation;
@@ -51,7 +51,7 @@ public class StationListTask extends ThreadTask implements
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);
         mFireStoreSetRunnable = new FireStoreSetRunnable(this);
 
-        sparseArray = new SparseBooleanArray();
+        sparseBooleanArray = new SparseBooleanArray();
 
     }
 
@@ -86,17 +86,17 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public void setStationId(String stnId) {
+        log.i("StationListThread: %s", stnId);
         this.stnId = stnId;
     }
 
     @Override
     public void setCarWashInfo(int position, boolean isCarwash) {
-        sparseArray.put(position, isCarwash);
         mStationList.get(position).setIsWash(isCarwash);
-        log.i("SparseBooleanArray: %s, %s", sparseArray.size(), mStationList.size());
-        if(sparseArray.size() == mStationList.size()) {
-            //viewModel.setStationCarWashInfo(position, );
-            viewModel.getStationCarWashInfo().postValue(sparseArray);
+        sparseBooleanArray.put(position, isCarwash);
+
+        if(sparseBooleanArray.size() == mStationList.size()) {
+            viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
         }
     }
 

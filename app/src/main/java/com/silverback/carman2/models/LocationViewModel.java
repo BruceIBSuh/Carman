@@ -18,7 +18,7 @@ public class LocationViewModel extends ViewModel {
         if(location == null) {
             location = new MutableLiveData<>();
         }
-        log.i("Location in ViewModel: %s", location);
+
         return location;
     }
 
