@@ -96,7 +96,12 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
 
         // Get arguments from the parent activity dialog title, unit name, and button numbers.
         switch(textViewId) {
-            case R.id.tv_mileage:
+            case R.id.tv_gas_mileage:
+                itemTitle = getString(R.string.exp_label_odometer);
+                isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
+                break;
+
+            case R.id.tv_service_mileage:
                 itemTitle = getString(R.string.exp_label_odometer);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;

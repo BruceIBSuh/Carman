@@ -10,9 +10,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
 
-public class AdapterViewModel extends ViewModel {
+public class PagerAdapterViewModel extends ViewModel {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(AdapterViewModel.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PagerAdapterViewModel.class);
 
     private MutableLiveData<ExpenseTabPagerAdapter> pagerAdapter;
     private MutableLiveData<ExpenseSvcRecyclerAdapter> serviceAdapter;

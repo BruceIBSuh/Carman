@@ -8,7 +8,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.widget.TextView;
 
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -17,8 +16,8 @@ import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.models.AdapterViewModel;
 
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -357,7 +356,7 @@ public class ThreadManager {
 
 
     public static ViewPagerTask startViewPagerTask(
-            AdapterViewModel model, FragmentManager fragmentManager, String[] defaults){
+            PagerAdapterViewModel model, FragmentManager fragmentManager, String[] defaults){
 
         ViewPagerTask viewPagerTask = (ViewPagerTask)sInstance.mDecodeWorkQueue.poll();
 
@@ -371,7 +370,7 @@ public class ThreadManager {
         return viewPagerTask;
     }
 
-    public static RecyclerAdapterTask startRecyclerAdapterTask(AdapterViewModel model, String jsonItems) {
+    public static RecyclerAdapterTask startRecyclerAdapterTask(PagerAdapterViewModel model, String jsonItems) {
 
         RecyclerAdapterTask recyclerTask = (RecyclerAdapterTask)sInstance.mDecodeWorkQueue.poll();
         if(recyclerTask == null) {

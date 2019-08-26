@@ -5,7 +5,7 @@ import androidx.fragment.app.FragmentManager;
 import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.AdapterViewModel;
+import com.silverback.carman2.models.PagerAdapterViewModel;
 
 public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewPagerMethods {
 
@@ -13,7 +13,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
 
     // Objects
     private FragmentManager fragmentManager;
-    private AdapterViewModel pagerModel;
+    private PagerAdapterViewModel pagerModel;
     private String[] defaults;
 
     // Constructor
@@ -21,7 +21,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
         super();
     }
 
-    void initViewPagerTask(AdapterViewModel viewModel, FragmentManager fm, String[] defaults) {
+    void initViewPagerTask(PagerAdapterViewModel viewModel, FragmentManager fm, String[] defaults) {
         fragmentManager = fm;
         pagerModel = viewModel;
         this.defaults = defaults;
@@ -38,24 +38,19 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
     }
 
     @Override
-    public FragmentManager getFragmentManager() {
-        return fragmentManager;
-    }
-
-    @Override
     public void setViewPagerAdapter(ExpenseTabPagerAdapter adapter) {
         log.i("FragmentStatePagerAdapter in background thread: %s", adapter);
         pagerModel.getPagerAdapter().postValue(adapter);
     }
 
     @Override
+    public FragmentManager getFragmentManager() {
+        return fragmentManager;
+    }
+
+    @Override
     public String[] getDefaults() {
         return defaults;
     }
-
-    void recycle() {
-
-    }
-
 
 }

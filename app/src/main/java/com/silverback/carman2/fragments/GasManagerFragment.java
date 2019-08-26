@@ -161,7 +161,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         ImageButton imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
-        tvOdometer = localView.findViewById(R.id.tv_mileage);
+        tvOdometer = localView.findViewById(R.id.tv_gas_mileage);
         tvGasPaid = localView.findViewById(R.id.tv_total_cost);
         tvGasLoaded = localView.findViewById(R.id.tv_amount);
         tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
@@ -295,7 +295,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Pass the current saved value to NumberPadFragment
         switch(v.getId()) {
-            case R.id.tv_mileage:
+            case R.id.tv_gas_mileage:
                 //title = tvOdometer.getText().toString();
                 initValue = tvOdometer.getText().toString();
                 break;

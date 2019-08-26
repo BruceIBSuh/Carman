@@ -2,15 +2,11 @@ package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
@@ -20,8 +16,8 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
 import com.silverback.carman2.adapters.ExpenseRecentPagerAdapter;
+import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
@@ -31,11 +27,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.LocationViewModel;
-import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.models.AdapterViewModel;
+import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.RecyclerAdapterTask;
-import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ViewPagerTask;
 import com.silverback.carman2.views.ExpenseViewPager;
@@ -51,10 +45,9 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int MENU_ITEM_ID = 100;
 
     // Objects
-    private CarmanDatabase mDB;
-    private Fragment targetFragment;
+    //private CarmanDatabase mDB;
     private ViewPager tabPager;
-    private AdapterViewModel adapterViewModel;
+    private PagerAdapterViewModel pagerAdapterViewModel;
     private ViewPagerTask tabPagerTask;
     private ExpenseViewPager expensePager;
     private ExpenseTabPagerAdapter tabPagerAdapter;
@@ -64,18 +57,9 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     private LocationTask locationTask;
-    private LocationViewModel locationModel;
-    private StationListViewModel stationModel;
-    private Location location;
-    private StationListTask stationListTask;
-
+    //private LocationViewModel locationModel;
+    //private StationListViewModel stationModel;
     private RecyclerAdapterTask recyclerTask;
-
-
-    // UIs
-    private EditText etStnName;
-    private ProgressBar pbSearchStation;
-    private ImageButton imgRefresh;
 
     // Fields
     private boolean isFirst = true;
@@ -85,7 +69,7 @@ public class ExpenseActivity extends BaseActivity implements
     private String pageTitle;
     private String jsonServiceItems;
 
-    private Toolbar toolbar;
+    //private Toolbar toolbar;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -93,18 +77,9 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
-        mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
-        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
-        adapterViewModel = ViewModelProviders.of(this).get(AdapterViewModel.class);
-        jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
-
-        // Init LocationTask to get the currentLocation, which is passed back to GasManagerFragment
-        // via LocationViewModel
-        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
-
         appBar = findViewById(R.id.appBar);
         appBar.addOnOffsetChangedListener(this);
-        toolbar = findViewById(R.id.toolbar_expense);
+        Toolbar toolbar = findViewById(R.id.toolbar_expense);
         expTabLayout = findViewById(R.id.tab_expense);
         topFrame = findViewById(R.id.frame_top_fragments);
         tabPager = findViewById(R.id.tabpager);
@@ -115,25 +90,19 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
+
+        //mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
+        LocationViewModel locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+        pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
+        jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+
+        // Init LocationTask to get the currentLocation, which is passed back to GasManagerFragment
+        // via LocationViewModel
+        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
         tabPagerTask = ThreadManager.startViewPagerTask(
-                adapterViewModel, getSupportFragmentManager(), getDefaultParams());
-        /*
-        tabPagerAdapter = new ExpenseTabPagerAdapter(getSupportFragmentManager());
-        tabPager.setOffscreenPageLimit(0);
-        tabPager.setAdapter(tabPagerAdapter);
-        tabPager.addOnPageChangeListener(this);
-        expTabLayout.setupWithViewPager(tabPager);
-        // Get defaultParams first and reset the radius param to Conststants.MIN_RADIUS, passing
-        // it to GasManagerFragment.
-        String[] defaults = getDefaultParams();
-        defaults[1] = Constants.MIN_RADIUS;
-        Bundle args = new Bundle();
-        args.putStringArray("defaultParams", defaults);
-        tabPagerAdapter.getItem(0).setArguments(args);
-        addTabIconAndTitle(this, expTabLayout);
-        animSlideTabLayout();
-        */
+                pagerAdapterViewModel, getSupportFragmentManager(), getDefaultParams());
 
         // Create ViewPager for last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
@@ -145,19 +114,17 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
 
-        // LiveData observer of AdapterViewModel to listen to whether ExpenseTabPagerAdapter has
+        // LiveData observer of PagerAdapterViewModel to listen to whether ExpenseTabPagerAdapter has
         // finished to instantiate the fragments to display, then lauch LocationTask to have
         // any near station within MIN_RADIUS, if any.
-        adapterViewModel.getPagerAdapter().observe(this, adapter -> {
-            log.i("AdapterViewModel: %s", adapter.getItem(0));
+        pagerAdapterViewModel.getPagerAdapter().observe(this, adapter -> {
+            log.i("PagerAdapterViewModel: %s", adapter.getItem(0));
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             expTabLayout.setupWithViewPager(tabPager);
 
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
-
-
         });
 
     }
@@ -175,8 +142,8 @@ public class ExpenseActivity extends BaseActivity implements
     public void onPause() {
         super.onPause();
 
-        if (tabPagerTask != null) tabPagerTask = null;
         if (locationTask != null) locationTask = null;
+        if (tabPagerTask != null) tabPagerTask = null;
         if (recyclerTask != null) recyclerTask = null;
 
         // Destroy the static CarmanDatabase instance.
@@ -277,22 +244,27 @@ public class ExpenseActivity extends BaseActivity implements
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollStateChanged:%s", state);
         if(state != 0) return;
+
         switch (currentPage) {
+
             case 0:
                 break;
-            case 1:
+
+            case 1: // Attach the Service Item RecyclerView to ServiceManagerFragment
                 if(recyclerTask == null) {
                     log.i("RecyclerTask");
-                    recyclerTask = ThreadManager.startRecyclerAdapterTask(adapterViewModel, jsonServiceItems);
+                    recyclerTask = ThreadManager.startRecyclerAdapterTask(pagerAdapterViewModel, jsonServiceItems);
                 }
 
                 break;
-            case 2:
+            case 2: // Attach the RecyclerView of Statements to StatStmtsFragment
+                log.i("onPageScrolledChanged: StatFragment");
                 StatStmtsFragment fragment = (StatStmtsFragment)tabPagerAdapter.getPagerFragments()[2];
                 fragment.queryExpense();
                 break;
 
         }
+
     }
 
 

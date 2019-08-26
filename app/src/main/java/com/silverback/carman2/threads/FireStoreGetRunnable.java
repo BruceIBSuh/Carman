@@ -55,7 +55,7 @@ public class FireStoreGetRunnable implements Runnable {
         // Bugs have occurred many times here. NullPointerException is brought about due to
         //for(Opinet.GasStnParcelable stn : stnList) {
         for(int i = 0; i < stnList.size(); i++) {
-            //synchronized(this) {
+            synchronized(this) {
                 final int pos = i;
                 final String stnId = stnList.get(pos).getStnId();
                 final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
@@ -77,13 +77,20 @@ public class FireStoreGetRunnable implements Runnable {
                      */
 
                     // Bugs frequently occurred here maybe b/c snapshot.get("carwash") would sometimes
-                    // result in null value.
+                    // result in null value. Bugs may be fixed by the following way.
+                    // If snapshot data is null, make it false to get it countered in SparseBooleanArray
+                    // to notify when it should send the notification to end up the array.
                     if (snapshot != null && snapshot.exists()) {
-                        log.i("document: %s, %s, %s", source, pos, snapshot.get("carwash"));
-                        if(snapshot.get("carwash") != null)
+
+                        if(snapshot.get("carwash") != null) {
                             mCallback.setCarWashInfo(pos, (boolean) snapshot.get("carwash"));
+                        } else {
+                            log.e("carwash value is null:%s", snapshot.getString("stnName"));
+                            mCallback.setCarWashInfo(pos, false);
+                        }
 
                     } else {
+                        log.i("new station: %s", pos);
                         Map<String, Object> stnData = new HashMap<>();
                         //stnData.put("stnId", stnList.get(pos).getStnId());
                         stnData.put("stnName", stnList.get(pos).getStnName());
@@ -101,7 +108,7 @@ public class FireStoreGetRunnable implements Runnable {
                                 .addOnFailureListener(error -> log.e("failed to add data"));
                     }
                 });
-            //}
+            }
         }
     }
 

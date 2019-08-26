@@ -30,7 +30,7 @@ import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.AdapterViewModel;
+import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
@@ -54,7 +54,7 @@ public class ServiceManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
-    private AdapterViewModel adapterModel;
+    private PagerAdapterViewModel adapterModel;
 
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
@@ -92,7 +92,7 @@ public class ServiceManagerFragment extends Fragment implements
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        adapterModel = ViewModelProviders.of(getActivity()).get(AdapterViewModel.class);
+        adapterModel = ViewModelProviders.of(getActivity()).get(PagerAdapterViewModel.class);
 
 
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
@@ -140,7 +140,7 @@ public class ServiceManagerFragment extends Fragment implements
             final int value = data.valueAt(0);
 
             switch(viewId) {
-                case R.id.tv_mileage:
+                case R.id.tv_service_mileage:
                     //targetView = localView.findViewById(viewId);
                     //targetView.setText(df.format(value));
                     tvMileage.setText(df.format(value));
@@ -175,7 +175,7 @@ public class ServiceManagerFragment extends Fragment implements
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etStnName = localView.findViewById(R.id.et_service_provider);
-        tvMileage = localView.findViewById(R.id.tv_mileage);
+        tvMileage = localView.findViewById(R.id.tv_service_mileage);
         Button btnDate = localView.findViewById(R.id.btn_date);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_total_cost);
@@ -214,7 +214,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
         // via FragmentViewModel in the textview.
         switch(v.getId()) {
-            case R.id.tv_mileage:
+            case R.id.tv_service_mileage:
                 //targetView = (TextView)v;
                 Bundle args = new Bundle();
                 args.putString("title", getString(R.string.svc_label_mileage));

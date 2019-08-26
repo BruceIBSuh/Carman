@@ -98,8 +98,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
         }else{
             log.i("OnItemChagned: %s", payloads.get(0));
-            holder.tvWashValue.setText(payloads.get(0).toString());
-            /*
+            //holder.tvWashValue.setText(payloads.get(0).toString());
+
             for(Object obj : payloads) {
                 if(obj instanceof Boolean) {
                     log.i("isCarwash in StationListAdapter: %s, %s", position, obj);
@@ -109,7 +109,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
                     holder.tvWashValue.setText("N/A");
                 }
             }
-            */
+
         }
     }
 

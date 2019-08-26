@@ -50,7 +50,7 @@ public class StationListViewModel extends ViewModel {
     }
 
     public MutableLiveData<SparseBooleanArray> getStationCarWashInfo() {
-
+        log.i("getStationCarWashInfo");
         if(hasCarWash == null) {
             hasCarWash = new MutableLiveData<>();
         }

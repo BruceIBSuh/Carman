@@ -3,7 +3,7 @@ package com.silverback.carman2.threads;
 import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.AdapterViewModel;
+import com.silverback.carman2.models.PagerAdapterViewModel;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class RecyclerAdapterTask extends ThreadTask implements
     private static final LoggingHelper log = LoggingHelperFactory.create(RecyclerAdapterTask.class);
 
     // Objects
-    private AdapterViewModel model;
+    private PagerAdapterViewModel model;
     private String jsonServiceItems;
     private Runnable recyclerAdapterRunnable;
     private Runnable recyclerServicedItemRunnable;
@@ -27,7 +27,7 @@ public class RecyclerAdapterTask extends ThreadTask implements
         recyclerServicedItemRunnable = new RecyclerServicedItemRunnable(this);
     }
 
-    void initTask(AdapterViewModel model, String json) {
+    void initTask(PagerAdapterViewModel model, String json) {
         this.model = model;
         jsonServiceItems = json;
     }
@@ -35,7 +35,6 @@ public class RecyclerAdapterTask extends ThreadTask implements
     Runnable getRecyclerAdapterRunnable() {
         return recyclerAdapterRunnable;
     }
-
     Runnable getRecyclerServicedItemRunnable() {
         return recyclerServicedItemRunnable;
     }

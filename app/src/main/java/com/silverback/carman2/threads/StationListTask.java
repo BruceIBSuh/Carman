@@ -68,6 +68,7 @@ public class StationListTask extends ThreadTask implements
 
     void recycle() {
         mStationList = null;
+        //if(sparseBooleanArray.size() > 0) sparseBooleanArray.clear();
     }
 
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
@@ -92,12 +93,13 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public void setCarWashInfo(int position, boolean isCarwash) {
-        mStationList.get(position).setIsWash(isCarwash);
-        sparseBooleanArray.put(position, isCarwash);
 
+        sparseBooleanArray.put(position, isCarwash);
         if(sparseBooleanArray.size() == mStationList.size()) {
+            log.i("Invoke CarWash viewmodel");
             viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
         }
+
     }
 
 

@@ -76,7 +76,7 @@ public class GeneralFragment extends Fragment implements
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
-    private StationInfoTask stationInfoTask;
+    //private StationInfoTask stationInfoTask;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -219,8 +219,8 @@ public class GeneralFragment extends Fragment implements
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
 
-            Uri uri = saveNearStationList(mStationList);
-            log.i("Saved StationList: %s", uri);
+            //Uri uri = saveNearStationList(mStationList);
+            //log.i("Saved StationList: %s", uri);
 
         });
 
@@ -243,7 +243,7 @@ public class GeneralFragment extends Fragment implements
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(priceTask != null) priceTask = null;
-        if(stationInfoTask != null) stationInfoTask = null;
+        //if(stationInfoTask != null) stationInfoTask = null;
     }
 
     @Override
@@ -254,13 +254,17 @@ public class GeneralFragment extends Fragment implements
                 break;
 
             case R.id.imgbtn_stations:
-                mAdapter.sortStationList(bStationsOrder);
-                String sort = (bStationsOrder)?
-                        getString(R.string.general_stations_price):getString(R.string.general_stations_distance);
+                // Save the station list to prevent reordering from retasking the station list.
+                Uri uri = saveNearStationList(mStationList);
+                if(uri != null) {
+                    mAdapter.sortStationList(bStationsOrder);
+                    String sort = (bStationsOrder) ?
+                            getString(R.string.general_stations_price) : getString(R.string.general_stations_distance);
+                    tvStationsOrder.setText(sort);
+                    bStationsOrder = !bStationsOrder;
+                    mAdapter.notifyDataSetChanged();
+                }
 
-                tvStationsOrder.setText(sort);
-                bStationsOrder = !bStationsOrder;
-                mAdapter.notifyDataSetChanged();
                 break;
 
             case R.id.fab_relocation:

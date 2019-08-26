@@ -84,7 +84,7 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
     @Override
     public ServiceItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.view_card_serviceitem, parent, false);
+                .inflate(R.layout.cardview_service_item, parent, false);
         format = cardView.getContext().getResources().getString(R.string.date_format_2);
         // Get the current mileage from ServiceManagerFragment via OnParentFragmentListener.
 
