@@ -1,6 +1,6 @@
 package com.silverback.carman2.threads;
 
-import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
+import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
@@ -59,7 +59,7 @@ public class RecyclerAdapterTask extends ThreadTask implements
     }
 
     @Override
-    public void setRecyclerAdapter(ExpenseSvcRecyclerAdapter adapter) {
+    public void setRecyclerAdapter(ExpServiceItemAdapter adapter) {
         model.getServiceAdapter().postValue(adapter);
     }
 

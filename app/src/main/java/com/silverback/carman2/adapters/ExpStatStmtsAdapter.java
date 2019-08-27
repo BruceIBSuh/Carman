@@ -15,15 +15,15 @@ import com.silverback.carman2.viewholders.ExpenseStatHolder;
 
 import java.util.List;
 
-public class ExpenseStatRecyclerAdapter extends RecyclerView.Adapter<ExpenseStatHolder> {
+public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpenseStatHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseStatRecyclerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpStatStmtsAdapter.class);
 
     // Objects
     private List<ExpenseBaseDao.ExpenseStatements> expList;
 
     // Constructor
-    public ExpenseStatRecyclerAdapter(List<ExpenseBaseDao.ExpenseStatements> list) {
+    public ExpStatStmtsAdapter(List<ExpenseBaseDao.ExpenseStatements> list) {
         super();
         expList = list;
     }

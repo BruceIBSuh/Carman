@@ -2,7 +2,7 @@ package com.silverback.carman2.threads;
 
 import androidx.fragment.app.FragmentManager;
 
-import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
+import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
@@ -38,7 +38,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
     }
 
     @Override
-    public void setViewPagerAdapter(ExpenseTabPagerAdapter adapter) {
+    public void setViewPagerAdapter(ExpTabPagerAdapter adapter) {
         log.i("FragmentStatePagerAdapter in background thread: %s", adapter);
         pagerModel.getPagerAdapter().postValue(adapter);
     }

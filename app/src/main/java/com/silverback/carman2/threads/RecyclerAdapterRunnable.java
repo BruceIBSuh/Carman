@@ -2,7 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.os.Process;
 
-import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
+import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -22,7 +22,7 @@ public class RecyclerAdapterRunnable implements Runnable {
     // Interface
     public interface RecyclerAdapterMethods {
         void setRecyclerAdapterThread(Thread thread);
-        void setRecyclerAdapter(ExpenseSvcRecyclerAdapter adapter);
+        void setRecyclerAdapter(ExpServiceItemAdapter adapter);
         void handleRecyclerTask(int state);
         String getServiceItems();
 
@@ -42,7 +42,7 @@ public class RecyclerAdapterRunnable implements Runnable {
         String jsonItems = task.getServiceItems();
         try {
             JSONArray jsonArray = new JSONArray(jsonItems);
-            ExpenseSvcRecyclerAdapter adapter = new ExpenseSvcRecyclerAdapter(jsonArray);
+            ExpServiceItemAdapter adapter = new ExpServiceItemAdapter(jsonArray);
             task.setRecyclerAdapter(adapter);
             task.handleRecyclerTask(TASK_COMPLETE);
         } catch(JSONException e) {

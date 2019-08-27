@@ -83,6 +83,7 @@
     <string name="toast_save_fail">저장하지 못하였습니다</string>
     <string name="gas_hint_no_station">주유소 위치가 아닙니다</string>
     <string name="gas_hint_extra_expense">지출내역</string>
+    <string name="gas_msg_empty_name">주유소 이름을 입력해 주세요</string>
 
     <!--ServiceManagerFragment-->
     <string name="svc_toolbar_title">정비 점검 관리</string>
@@ -100,6 +101,7 @@
     <string name="toast_remove_favorite_service">즐겨찾는 서비스센터에서 제외되었습니다</string>
     <string name="toast_add_favorite_service">즐겨찾는 서비스센터에 추가되었습니다</string>
     <string name="service_dialog_label_memo">메 모:</string>
+    <string name="svc_msg_empty_name">서비스센터 이름을 입력해 주세요</string>
 
     <!--StatStmtsFragment-->
     <string name="graph_x_axis_month">월</string>

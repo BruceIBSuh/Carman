@@ -93,7 +93,6 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public void setCarWashInfo(int position, boolean isCarwash) {
-
         sparseBooleanArray.put(position, isCarwash);
         if(sparseBooleanArray.size() == mStationList.size()) {
             log.i("Invoke CarWash viewmodel");

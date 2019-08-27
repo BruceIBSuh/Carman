@@ -70,11 +70,8 @@ public class ExpensePagerFragment extends Fragment {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         if(getActivity() == null) return;
-
-        log.i("ExpensePgaerFragment");
 
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());

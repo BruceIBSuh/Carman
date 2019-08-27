@@ -3,8 +3,8 @@ package com.silverback.carman2.models;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
-import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
+import com.silverback.carman2.adapters.ExpServiceItemAdapter;
+import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -14,12 +14,12 @@ public class PagerAdapterViewModel extends ViewModel {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PagerAdapterViewModel.class);
 
-    private MutableLiveData<ExpenseTabPagerAdapter> pagerAdapter;
-    private MutableLiveData<ExpenseSvcRecyclerAdapter> serviceAdapter;
+    private MutableLiveData<ExpTabPagerAdapter> pagerAdapter;
+    private MutableLiveData<ExpServiceItemAdapter> serviceAdapter;
     private MutableLiveData<List<String>> servicedItem;
 
     // Should conform to the Java Bean Convention when creating setter and getter.
-    public MutableLiveData<ExpenseTabPagerAdapter> getPagerAdapter() {
+    public MutableLiveData<ExpTabPagerAdapter> getPagerAdapter() {
         if(pagerAdapter == null) {
             pagerAdapter = new MutableLiveData<>();
             log.i("PagerAdapter in Model: %s", pagerAdapter);
@@ -28,7 +28,7 @@ public class PagerAdapterViewModel extends ViewModel {
         return pagerAdapter;
     }
 
-    public MutableLiveData<ExpenseSvcRecyclerAdapter> getServiceAdapter() {
+    public MutableLiveData<ExpServiceItemAdapter> getServiceAdapter() {
         if(serviceAdapter == null) {
             serviceAdapter = new MutableLiveData<>();
         }

@@ -33,7 +33,7 @@
                 android:background="@android:color/holo_blue_dark"
                 android:elevation="3dp"
                 app:layout_collapseMode="pin"
-                app:titleTextColor="#fb9000" />
+                app:titleTextColor="#FFFFFF" />
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_expense"

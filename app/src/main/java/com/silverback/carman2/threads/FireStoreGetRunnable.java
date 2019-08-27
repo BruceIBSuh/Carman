@@ -1,20 +1,13 @@
 package com.silverback.carman2.threads;
 
-import android.graphics.Point;
 import android.os.Process;
-import android.util.SparseArray;
-import android.util.SparseBooleanArray;
 
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.MetadataChanges;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +53,7 @@ public class FireStoreGetRunnable implements Runnable {
                 final String stnId = stnList.get(pos).getStnId();
                 final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
 
-                docRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+                docRef.addSnapshotListener((snapshot, e) -> {
                     if (e != null) {
                         log.e("SnapshotListener failed: %s", e.getMessage());
                         return;
@@ -80,17 +73,18 @@ public class FireStoreGetRunnable implements Runnable {
                     // result in null value. Bugs may be fixed by the following way.
                     // If snapshot data is null, make it false to get it countered in SparseBooleanArray
                     // to notify when it should send the notification to end up the array.
-                    if (snapshot != null && snapshot.exists()) {
-
+                    if (snapshot != null && snapshot.exists()){
                         if(snapshot.get("carwash") != null) {
                             mCallback.setCarWashInfo(pos, (boolean) snapshot.get("carwash"));
                         } else {
                             log.e("carwash value is null:%s", snapshot.getString("stnName"));
                             mCallback.setCarWashInfo(pos, false);
+                            // Error occurred here. Indefinite looping and required to switch set to update.
+                            uploadStationInfo(pos);
                         }
 
                     } else {
-                        log.i("new station: %s", pos);
+
                         Map<String, Object> stnData = new HashMap<>();
                         //stnData.put("stnId", stnList.get(pos).getStnId());
                         stnData.put("stnName", stnList.get(pos).getStnName());
@@ -106,10 +100,30 @@ public class FireStoreGetRunnable implements Runnable {
                                     mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
                                 })
                                 .addOnFailureListener(error -> log.e("failed to add data"));
+
                     }
                 });
             }
         }
+    }
+
+    private void uploadStationInfo(final int position) {
+        Map<String, Object> stnData = new HashMap<>();
+        //stnData.put("stnId", stnList.get(pos).getStnId());
+        stnData.put("stnName", stnList.get(position).getStnName());
+        stnData.put("stnCode", stnList.get(position).getStnCode());
+        stnData.put("xCoord", stnList.get(position).getLongitude());
+        stnData.put("yCoord", stnList.get(position).getLatitude());
+
+        fireStore.collection("gas_station").document(stnList.get(position).getStnId()).set(stnData)
+                .addOnSuccessListener(documentReference -> {
+                    log.i("successfully added data");
+                    // Start the task to retrieve addtional information
+                    mCallback.setStationId(stnList.get(position).getStnId());
+                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
+                })
+                .addOnFailureListener(error -> log.e("failed to add data"));
+
     }
 
 }

@@ -33,10 +33,10 @@ import org.json.JSONObject;
 import java.text.DecimalFormat;
 import java.util.List;
 
-public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRecyclerAdapter.ServiceItemViewHolder> {
+public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAdapter.ServiceItemViewHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseSvcRecyclerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpServiceItemAdapter.class);
 
     // Objects
     private JSONArray jsonArray;
@@ -50,9 +50,10 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
 
     // Fields
     private String format;
-    private int currentMileage, lastMileage, maxMileage, period;
+    private int maxMileage, period;
 
-    // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein,
+    // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein
+    // to get the values from the service item recyclerview.
     public interface OnParentFragmentListener {
         void inputItemCost(String title, TextView targetView, int position);
         void inputItemMemo(String title, TextView targetView, int position);
@@ -61,15 +62,14 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
     }
 
     // Constructor
-    //public ExpenseSvcRecyclerAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
-    public ExpenseSvcRecyclerAdapter(JSONArray jsonArray) {
+    //public ExpServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
+    public ExpServiceItemAdapter(JSONArray jsonArray) {
 
         super();
 
         //mListener = listener;
         this.jsonArray = jsonArray;
         df = BaseActivity.getDecimalFormatInstance();
-
         arrCheckedState = new boolean[jsonArray.length()];
         arrItemCost = new int[jsonArray.length()];
         arrItemMemo = new String[jsonArray.length()];
@@ -138,14 +138,16 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
         JSONObject jsonObject = jsonArray.optJSONObject(position);
         holder.tvItemName.setText(jsonObject.optString("name"));
         holder.cbServiceItem.setChecked(arrCheckedState[position]);
+        maxMileage = jsonObject.optInt("mileage");
+        holder.tvMaxPeriod.setText(String.format("%s%s", df.format(maxMileage), "km"));
 
         // Retain the values of service cost and memo when rebound.
         if (arrCheckedState[position]) {
             holder.tvItemCost.setText(df.format(arrItemCost[position]));
             holder.tvItemMemo.setText(arrItemMemo[position]);
-
             holder.pb.setProgress(period);
         }
+
     }
 
     @Override
@@ -163,6 +165,7 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
         TextView tvLastService;
         TextView tvItemCost;
         TextView tvItemMemo;
+        TextView tvMaxPeriod;
         CheckBox cbServiceItem;
         ProgressBar pb;
 
@@ -174,6 +177,7 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
             tvLastService = view.findViewById(R.id.tv_last_service);
             tvItemCost = view.findViewById(R.id.tv_value_cost);
             tvItemMemo = view.findViewById(R.id.tv_item_info);
+            tvMaxPeriod = view.findViewById(R.id.tv_max_period);
             cbServiceItem = view.findViewById(R.id.chkbox);
             pb = view.findViewById(R.id.progressBar);
 
@@ -217,9 +221,9 @@ public class ExpenseSvcRecyclerAdapter extends RecyclerView.Adapter<ExpenseSvcRe
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 120);
 
-                currentMileage = mListener.getCurrentMileage();
-                lastMileage = (sparseSvcDataArray.get(pos) != null)? sparseSvcDataArray.get(pos).mileage : 0;
-                maxMileage = jsonArray.optJSONObject(pos).optInt("mileage");
+                int currentMileage = mListener.getCurrentMileage();
+                int lastMileage = (sparseSvcDataArray.get(pos) != null)? sparseSvcDataArray.get(pos).mileage : 0;
+                //maxMileage = jsonArray.optJSONObject(pos).optInt("mileage");
                 period = (currentMileage - lastMileage <= maxMileage)? currentMileage - lastMileage : maxMileage;
                 pb.setMax(maxMileage);
                 log.i("onBindViewHolder: %s, %s, %s, %s", currentMileage, lastMileage, maxMileage, period);

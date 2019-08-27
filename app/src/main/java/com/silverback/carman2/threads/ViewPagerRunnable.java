@@ -5,7 +5,7 @@ import android.os.Process;
 
 import androidx.fragment.app.FragmentManager;
 
-import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
+import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
@@ -17,10 +17,11 @@ public class ViewPagerRunnable implements Runnable {
 
     // Objects
     private ViewPagerMethods task;
+    private ExpTabPagerAdapter pagerAdapter;
 
     public interface ViewPagerMethods {
         void setViewPagerTaskThread(Thread thread);
-        void setViewPagerAdapter(ExpenseTabPagerAdapter adapter);
+        void setViewPagerAdapter(ExpTabPagerAdapter adapter);
         String[] getDefaults();
         FragmentManager getFragmentManager();
     }
@@ -29,6 +30,7 @@ public class ViewPagerRunnable implements Runnable {
     // Constructor
     ViewPagerRunnable(ViewPagerMethods task) {
         this.task = task;
+        pagerAdapter = new ExpTabPagerAdapter(task.getFragmentManager());
     }
 
     @Override
@@ -36,7 +38,7 @@ public class ViewPagerRunnable implements Runnable {
         task.setViewPagerTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        ExpenseTabPagerAdapter pagerAdapter = new ExpenseTabPagerAdapter(task.getFragmentManager());
+        //ExpTabPagerAdapter pagerAdapter = new ExpTabPagerAdapter(task.getFragmentManager());
 
         task.getDefaults()[1] = Constants.MIN_RADIUS;
         Bundle args = new Bundle();

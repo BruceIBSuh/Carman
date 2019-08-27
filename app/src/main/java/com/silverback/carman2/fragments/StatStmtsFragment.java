@@ -8,12 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.FrameLayout;
 import android.widget.Spinner;
 
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ExpenseStatRecyclerAdapter;
+import com.silverback.carman2.adapters.ExpStatStmtsAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -87,7 +86,7 @@ public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSel
     public void queryExpense() {
         mDB.expenseBaseModel().loadExpenseByCategory(1, 2).observe(this, data -> {
             log.i("All Expenses: %s", data.size());
-            recyclerExpense.setAdapter(new ExpenseStatRecyclerAdapter(data));
+            recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data));
         });
     }
 

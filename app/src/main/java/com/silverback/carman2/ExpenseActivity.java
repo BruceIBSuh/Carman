@@ -16,8 +16,8 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.adapters.ExpenseRecentPagerAdapter;
-import com.silverback.carman2.adapters.ExpenseTabPagerAdapter;
+import com.silverback.carman2.adapters.ExpRecentPagerAdapter;
+import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
@@ -50,15 +50,13 @@ public class ExpenseActivity extends BaseActivity implements
     private PagerAdapterViewModel pagerAdapterViewModel;
     private ViewPagerTask tabPagerTask;
     private ExpenseViewPager expensePager;
-    private ExpenseTabPagerAdapter tabPagerAdapter;
+    private ExpTabPagerAdapter tabPagerAdapter;
     private AppBarLayout appBar;
     private TabLayout expTabLayout;
     private FrameLayout topFrame;
 
 
     private LocationTask locationTask;
-    //private LocationViewModel locationModel;
-    //private StationListViewModel stationModel;
     private RecyclerAdapterTask recyclerTask;
 
     // Fields
@@ -69,7 +67,6 @@ public class ExpenseActivity extends BaseActivity implements
     private String pageTitle;
     private String jsonServiceItems;
 
-    //private Toolbar toolbar;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -96,7 +93,7 @@ public class ExpenseActivity extends BaseActivity implements
         pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
 
-        // Init LocationTask to get the currentLocation, which is passed back to GasManagerFragment
+        // Instantiate LocationTask to get the currentLocation, which is passed back to GasManagerFragment
         // via LocationViewModel
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
 
@@ -109,12 +106,12 @@ public class ExpenseActivity extends BaseActivity implements
         // not ViewPager.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        ExpenseRecentPagerAdapter topPagerAdapter = new ExpenseRecentPagerAdapter(getSupportFragmentManager());
+        ExpRecentPagerAdapter topPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
         expensePager.setAdapter(topPagerAdapter);
-        expensePager.setCurrentItem(0);
-        topFrame.addView(expensePager);
+        //expensePager.setCurrentItem(0);
+        //topFrame.addView(expensePager);
 
-        // LiveData observer of PagerAdapterViewModel to listen to whether ExpenseTabPagerAdapter has
+        // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then lauch LocationTask to have
         // any near station within MIN_RADIUS, if any.
         pagerAdapterViewModel.getPagerAdapter().observe(this, adapter -> {
@@ -210,7 +207,7 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected: %s", position);
-        topFrame.removeAllViews();
+        //topFrame.removeAllViews();
         expensePager.setCurrentItem(0);
 
         switch(position) {

@@ -75,6 +75,7 @@ public class FireStoreSetRunnable implements Runnable {
             data.put("carwash", isCarwash);
             data.put("service", isService);
             data.put("cvs", isCVS);
+            log.i("carwash from StationInfo: %s", isCarwash);
 
             fireStore.runTransaction(transaction -> {
                 DocumentSnapshot snapshot = transaction.get(docRef);

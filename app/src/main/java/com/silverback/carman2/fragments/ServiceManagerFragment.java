@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,10 +21,11 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ExpenseSvcRecyclerAdapter;
+import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerEntity;
@@ -44,7 +46,7 @@ import java.util.List;
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ExpenseSvcRecyclerAdapter.OnParentFragmentListener {
+        View.OnClickListener, ExpServiceItemAdapter.OnParentFragmentListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -61,13 +63,14 @@ public class ServiceManagerFragment extends Fragment implements
 
     private FavoriteGeofenceHelper geofenceHelper;
     //private Calendar calendar;
-    private ExpenseSvcRecyclerAdapter mAdapter;
+    private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
 
 
     // UIs
+    private RelativeLayout relativeLayout;
     private RecyclerView recyclerServiceItems;
-    private ProgressBar pbServiceItems;
+    private ProgressBar progbar;
     private EditText etStnName;
     private TextView tvDate, tvMileage, tvTotalCost;
     private ImageButton btnFavorite;
@@ -94,20 +97,17 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         adapterModel = ViewModelProviders.of(getActivity()).get(PagerAdapterViewModel.class);
 
-
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         //calendar = Calendar.getInstance(Locale.getDefault());
-
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
         adapterModel.getServiceAdapter().observe(this, adapter -> {
             log.i("AdapterModel observe: %s", adapter);
             mAdapter = adapter;
-            pbServiceItems.setVisibility(View.GONE);
+            progbar.setVisibility(View.GONE);
             //recyclerServiceItems.setVisibility(View.VISIBLE);
-
             mAdapter.setParentFragmentListener(this);
             recyclerServiceItems.setAdapter(adapter);
         });
@@ -169,9 +169,10 @@ public class ServiceManagerFragment extends Fragment implements
         View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
-        pbServiceItems = localView.findViewById(R.id.pb_checklist);
-        pbServiceItems.setVisibility(View.VISIBLE);
+        progbar = localView.findViewById(R.id.pb_checklist);
+        progbar.setVisibility(View.VISIBLE);
 
+        relativeLayout = localView.findViewById(R.id.rl_service);
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etStnName = localView.findViewById(R.id.et_service_provider);
@@ -229,18 +230,21 @@ public class ServiceManagerFragment extends Fragment implements
                 // is within the registered one.
                 if(isGeofenceIntent) return;
 
-                String providerName = etStnName.getText().toString();
-                String providerId = BaseActivity.formatMilliseconds("yyMMddHHmm", System.currentTimeMillis());
+                String serviceName = etStnName.getText().toString();
+                String serivceId = BaseActivity.formatMilliseconds("yyMMddHHmm", System.currentTimeMillis());
 
-                if(TextUtils.isEmpty(providerName)) return;
+                if(TextUtils.isEmpty(serviceName)) {
+                    Snackbar.make(relativeLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
 
                 if(isFavorite) {
-                    geofenceHelper.removeFavoriteGeofence(providerName, providerId);
+                    geofenceHelper.removeFavoriteGeofence(serviceName, serivceId);
                     btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
                     Toast.makeText(getActivity(), getString(R.string.toast_remove_favorite_service), Toast.LENGTH_SHORT).show();
 
                 } else {
-                    AddFavoriteDialogFragment.newInstance(providerName, 2).show(getFragmentManager(), null);
+                    AddFavoriteDialogFragment.newInstance(serviceName, 2).show(getFragmentManager(), null);
                 }
 
                 break;

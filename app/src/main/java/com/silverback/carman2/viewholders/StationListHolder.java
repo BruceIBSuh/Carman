@@ -53,25 +53,10 @@ public class StationListHolder extends RecyclerView.ViewHolder {
         this.stnName = data.getStnName();
         int resLogo = getGasStationImage(data.getStnCode());
         imgLogo.setImageResource(resLogo);
-
-        log.i("price and distance: %s, %s", data.getStnPrice(), data.getStnDistance());
-
-        // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
         tvName.setText(data.getStnName());
-        //tvName.setText(String.format("%s%8s%5s", data.getStnName(), "---", data.getHasVisited()));
         tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
         tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
         tvWashValue.setText(String.valueOf(data.getIsWash()));
-
-        /*
-        if(data.getIsWash()) {
-            tvWashLabel.setVisibility(View.VISIBLE);
-            tvWashValue.setText(String.valueOf(data.getIsWash()));
-            tvWashValue.setVisibility(View.VISIBLE);
-        }
-        */
-
-        log.i("price and distance: %s, %s", data.getStnPrice(), data.getStnDistance());
     }
 
     private static int getGasStationImage(String name) {

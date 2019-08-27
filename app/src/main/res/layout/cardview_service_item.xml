@@ -6,13 +6,15 @@
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    cardview:cardElevation="2dp"
-    cardview:cardCornerRadius="2dp" >
+    android:layout_marginTop="5dp"
+    android:layout_marginStart="5dp"
+    android:layout_marginEnd="5dp"
+    cardview:cardCornerRadius="3dp" >
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="5dp"
         android:minHeight="30dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -79,11 +81,19 @@
                 android:layout_width="0dp"
                 android:layout_height="20dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginEnd="8dp"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_period"
                 cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_period"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_label_period" />
+
+            <TextView
+                android:id="@+id/tv_max_period"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:textSize="@dimen/extraSmallText"
+                cardview:layout_constraintTop_toTopOf="parent"
+                cardview:layout_constraintEnd_toEndOf="parent" />
 
             <TextView
                 android:id="@+id/tv_label_cost"
@@ -136,7 +146,6 @@
                 android:layout_height="wrap_content"
                 android:minHeight="25dp"
                 android:layout_marginStart="16dp"
-                android:layout_marginEnd="8dp"
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
                 android:padding="3dp"

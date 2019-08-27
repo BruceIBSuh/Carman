@@ -52,7 +52,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     }
 
     // Instantiate DialogFragment as a SingleTon
-    public static AddFavoriteDialogFragment newInstance(String name, int category) {
+    static AddFavoriteDialogFragment newInstance(String name, int category) {
         AddFavoriteDialogFragment favoriteDialog = new AddFavoriteDialogFragment();
         Bundle args = new Bundle();
         args.putString("favoriteName", name);

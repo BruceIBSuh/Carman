@@ -6,6 +6,10 @@ import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -23,10 +27,6 @@ import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
 
 public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> {
 
@@ -71,18 +71,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         final Opinet.GasStnParcelable data = stationList.get(position);
         holder.bindToStationList(data);
 
-        /*
-        holder.stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
-        holder.stnName = data.getStnName();
-        int resLogo = getGasStationImage(data.getStnCode());
-        holder.imgLogo.setImageResource(resLogo);
-
-        // TEST CODING FOR CHECKING IF A STATION HAS BEEN VISITED!!
-        holder.tvName.setText(data.getStnName());
-        holder.tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
-        holder.tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
-        holder.tvWashValue.setText(String.valueOf(data.getIsWash()));
-        */
         holder.itemView.setOnClickListener(view -> {
             log.i("cardview position: %s, %s", position, mListener);
             if(mListener != null) mListener.onItemClicked(position);
@@ -97,9 +85,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
             super.onBindViewHolder(holder, position, payloads);
 
         }else{
-            log.i("OnItemChagned: %s", payloads.get(0));
-            //holder.tvWashValue.setText(payloads.get(0).toString());
 
+            for(Object obj : payloads) holder.tvWashValue.setText(obj.toString());
+            /*
             for(Object obj : payloads) {
                 if(obj instanceof Boolean) {
                     log.i("isCarwash in StationListAdapter: %s, %s", position, obj);
@@ -109,6 +97,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
                     holder.tvWashValue.setText("N/A");
                 }
             }
+            */
 
         }
     }
