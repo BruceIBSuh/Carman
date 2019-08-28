@@ -6,7 +6,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,17 +22,12 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
-import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.threads.StationInfoTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 
 import java.util.ArrayList;
@@ -73,7 +67,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
         // UIs
-        tvName = findViewById(R.id.tv_setting_item);
+        tvName = findViewById(R.id.tv_service_item);
         tvAddrs = findViewById(R.id.tv_address);
         tvCarwash = findViewById(R.id.tv_carwash);
         tvService = findViewById(R.id.tv_service);

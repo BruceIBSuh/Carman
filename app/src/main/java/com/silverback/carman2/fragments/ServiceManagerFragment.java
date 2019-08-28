@@ -37,6 +37,8 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
+import org.json.JSONArray;
+
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -99,7 +101,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
-        //calendar = Calendar.getInstance(Locale.getDefault());
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
@@ -107,18 +108,18 @@ public class ServiceManagerFragment extends Fragment implements
             log.i("AdapterModel observe: %s", adapter);
             mAdapter = adapter;
             progbar.setVisibility(View.GONE);
-            //recyclerServiceItems.setVisibility(View.VISIBLE);
             mAdapter.setParentFragmentListener(this);
             recyclerServiceItems.setAdapter(adapter);
         });
+
 
         adapterModel.getServicedItem().observe(this, checklist -> {
             log.i("Serviced Item: %s", checklist.size());
             serviceItemList = checklist;
 
             for(int i = 0; i < checklist.size(); i++) {
-                //log.i("servicedItemList: %s", serviceItemList.get(i));
                 final int pos = i;
+
                 mDB.serviceManagerModel().loadServicedItem(checklist.get(pos)).observe(this, itemData -> {
                     if(itemData != null) {
                         log.i("Queried data: %s, %s", pos, itemData.itemName);
@@ -203,8 +204,7 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        // Notify ExpensePagerFragment of the current fragment to load the recent 5 expense data from
-        // ServiceTable.
+        // Notify ExpensePagerFragment of this ServiceManagerFragment as the current fragment
         fragmentSharedModel.setCurrentFragment(this);
 
     }

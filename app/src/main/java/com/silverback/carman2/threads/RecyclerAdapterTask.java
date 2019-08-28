@@ -1,5 +1,7 @@
 package com.silverback.carman2.threads;
 
+import android.content.Context;
+
 import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -14,17 +16,23 @@ public class RecyclerAdapterTask extends ThreadTask implements
     private static final LoggingHelper log = LoggingHelperFactory.create(RecyclerAdapterTask.class);
 
     // Objects
+    private Context context;
     private PagerAdapterViewModel model;
     private String jsonServiceItems;
     private Runnable recyclerAdapterRunnable;
     private Runnable recyclerServicedItemRunnable;
 
+    // Fields
+    private String svcItemName;
+
 
     // Constructor
-    RecyclerAdapterTask() {
+    RecyclerAdapterTask(Context context) {
         super();
+
+        this.context = context;
         recyclerAdapterRunnable = new RecyclerAdapterRunnable(this);
-        recyclerServicedItemRunnable = new RecyclerServicedItemRunnable(this);
+        recyclerServicedItemRunnable = new RecyclerServicedItemRunnable(context, this);
     }
 
     void initTask(PagerAdapterViewModel model, String json) {
@@ -54,19 +62,31 @@ public class RecyclerAdapterTask extends ThreadTask implements
     }
 
     @Override
-    public String getServiceItems() {
-        return jsonServiceItems;
+    public void setRecyclerAdapter(ExpServiceItemAdapter adapter) {
+        model.getServiceAdapter().postValue(adapter);
     }
 
     @Override
-    public void setRecyclerAdapter(ExpServiceItemAdapter adapter) {
-        model.getServiceAdapter().postValue(adapter);
+    public void setServiceItemName(String name) {
+        svcItemName = name;
     }
 
     @Override
     public void setServiceItemList(List<String> itemList) {
         model.getServicedItem().postValue(itemList);
     }
+
+    @Override
+    public String getServiceItem(){
+        return svcItemName;
+    }
+
+    @Override
+    public String getServiceItems() {
+        return jsonServiceItems;
+    }
+
+
 
     @Override
     public void handleRecyclerTask(int state) {

@@ -43,11 +43,7 @@ public class FragmentSharedModel extends ViewModel {
         return selectedValue;
     }
 
-    /**
-     * Share data b/w Input
-     * @param key
-     * @param value
-     */
+
     public void setSelectedMemo(int key, String value) {
         SparseArray<String> sparseArray = new SparseArray<>(1);
         sparseArray.put(key, value);

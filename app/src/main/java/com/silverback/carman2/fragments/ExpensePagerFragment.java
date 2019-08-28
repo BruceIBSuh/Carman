@@ -94,7 +94,6 @@ public class ExpensePagerFragment extends Fragment {
         // fragment attached in order to separately do actions according to the fragment.
         fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
             currentFragment = fragment;
-            log.i("Current Fragment in ExpenseViewPager: %s, %s", currentFragment, numPage);
             if(getArguments() != null) numPage = (getArguments().getInt("page"));
 
             // Query the recent data as the type of LiveData using Room(query on worker thread)

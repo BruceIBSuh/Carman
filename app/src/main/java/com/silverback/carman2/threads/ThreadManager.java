@@ -370,11 +370,12 @@ public class ThreadManager {
         return viewPagerTask;
     }
 
-    public static RecyclerAdapterTask startRecyclerAdapterTask(PagerAdapterViewModel model, String jsonItems) {
+    public static RecyclerAdapterTask startRecyclerAdapterTask(
+            Context context, PagerAdapterViewModel model, String jsonItems) {
 
         RecyclerAdapterTask recyclerTask = (RecyclerAdapterTask)sInstance.mDecodeWorkQueue.poll();
         if(recyclerTask == null) {
-            recyclerTask = new RecyclerAdapterTask();
+            recyclerTask = new RecyclerAdapterTask(context);
         }
 
         recyclerTask.initTask(model, jsonItems);

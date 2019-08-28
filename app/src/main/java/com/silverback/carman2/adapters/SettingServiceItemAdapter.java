@@ -115,7 +115,7 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
 
             editLayout = v.findViewById(R.id.layout_mode_edit);
             setLayout = v.findViewById(R.id.layout_mode_set);
-            tvItemName = v.findViewById(R.id.tv_setting_item);
+            tvItemName = v.findViewById(R.id.tv_service_item);
             etMileage = v.findViewById(R.id.et_default_mileage);
             etMonth = v.findViewById(R.id.et_default_month);
             btnUp = v.findViewById(R.id.btn_setting_up);

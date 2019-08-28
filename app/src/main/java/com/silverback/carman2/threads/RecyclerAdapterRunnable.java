@@ -23,6 +23,7 @@ public class RecyclerAdapterRunnable implements Runnable {
     public interface RecyclerAdapterMethods {
         void setRecyclerAdapterThread(Thread thread);
         void setRecyclerAdapter(ExpServiceItemAdapter adapter);
+        void setServiceItemName(String name);
         void handleRecyclerTask(int state);
         String getServiceItems();
 
@@ -35,16 +36,19 @@ public class RecyclerAdapterRunnable implements Runnable {
 
     @Override
     public void run() {
-        log.i("RecyclerAdapterRunnable");
+
         task.setRecyclerAdapterThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         String jsonItems = task.getServiceItems();
+
         try {
             JSONArray jsonArray = new JSONArray(jsonItems);
             ExpServiceItemAdapter adapter = new ExpServiceItemAdapter(jsonArray);
             task.setRecyclerAdapter(adapter);
             task.handleRecyclerTask(TASK_COMPLETE);
+
+
         } catch(JSONException e) {
             log.i("JSONException: %s", e.getMessage());
             task.handleRecyclerTask(TASK_FAIL);

@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
@@ -49,8 +50,9 @@ public class ExpenseActivity extends BaseActivity implements
     private ViewPager tabPager;
     private PagerAdapterViewModel pagerAdapterViewModel;
     private ViewPagerTask tabPagerTask;
-    private ExpenseViewPager expensePager;
     private ExpTabPagerAdapter tabPagerAdapter;
+    private ExpenseViewPager expensePager;
+    private ExpRecentPagerAdapter recentPagerAdapter;
     private AppBarLayout appBar;
     private TabLayout expTabLayout;
     private FrameLayout topFrame;
@@ -75,15 +77,15 @@ public class ExpenseActivity extends BaseActivity implements
         setContentView(R.layout.activity_expense);
 
         appBar = findViewById(R.id.appBar);
-        appBar.addOnOffsetChangedListener(this);
         Toolbar toolbar = findViewById(R.id.toolbar_expense);
         expTabLayout = findViewById(R.id.tab_expense);
         topFrame = findViewById(R.id.frame_top_fragments);
         tabPager = findViewById(R.id.tabpager);
-
         // Set the toolbar as the working action bar
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        appBar.addOnOffsetChangedListener(this);
         tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
@@ -106,10 +108,7 @@ public class ExpenseActivity extends BaseActivity implements
         // not ViewPager.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        ExpRecentPagerAdapter topPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
-        expensePager.setAdapter(topPagerAdapter);
-        //expensePager.setCurrentItem(0);
-        //topFrame.addView(expensePager);
+        recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then lauch LocationTask to have
@@ -119,9 +118,14 @@ public class ExpenseActivity extends BaseActivity implements
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             expTabLayout.setupWithViewPager(tabPager);
-
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
+
+            // On finishing ViewPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
+            // attach it in the top FrameLayout.
+            expensePager.setAdapter(recentPagerAdapter);
+            expensePager.setCurrentItem(0);
+            topFrame.addView(expensePager);
         });
 
     }
@@ -196,33 +200,33 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
         // for revoking the callback of onPageSelected when initiating.
+        log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+        /*
         if(isFirst && positionOffset == 0 && positionOffsetPixels == 0) {
             log.i("onPageScrolled at initiating");
             onPageSelected(0);
             isFirst = false;
         }
+        */
 
     }
 
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected: %s", position);
-        //topFrame.removeAllViews();
-        expensePager.setCurrentItem(0);
+        topFrame.removeAllViews();
 
         switch(position) {
             case 0: // GasManagerFragment
                 currentPage = 0;
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
-
                 break;
 
             case 1:
                 currentPage = 1;
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
-
                 break;
 
             case 2:
@@ -248,9 +252,11 @@ public class ExpenseActivity extends BaseActivity implements
                 break;
 
             case 1: // Attach the Service Item RecyclerView to ServiceManagerFragment
+
                 if(recyclerTask == null) {
                     log.i("RecyclerTask");
-                    recyclerTask = ThreadManager.startRecyclerAdapterTask(pagerAdapterViewModel, jsonServiceItems);
+                    recyclerTask = ThreadManager.startRecyclerAdapterTask(
+                            this, pagerAdapterViewModel, jsonServiceItems);
                 }
 
                 break;
@@ -261,6 +267,7 @@ public class ExpenseActivity extends BaseActivity implements
                 break;
 
         }
+
 
     }
 

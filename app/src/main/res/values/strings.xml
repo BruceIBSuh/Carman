@@ -92,7 +92,7 @@
     <string name="svc_label_mileage">운행 거리</string>
     <string name="svc_label_payment">전체 비용</string>
     <string name="svc_subtitle_stmts">상세 내역</string>
-    <string name="svc_label_period">교체 주기</string>
+    <string name="svc_label_period">교체 주기:</string>
     <string name="svc_label_cost">소요 비용</string>
     <string name="svc_label_info">추가 정보</string>
     <string name="svc_btn_modify">수정</string>
