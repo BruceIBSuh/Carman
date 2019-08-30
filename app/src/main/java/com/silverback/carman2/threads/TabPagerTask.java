@@ -7,9 +7,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 
-public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewPagerMethods {
+public class TabPagerTask extends ThreadTask implements TabPagerRunnable.ViewPagerMethods {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(ViewPagerTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(TabPagerTask.class);
 
     // Objects
     private FragmentManager fragmentManager;
@@ -17,7 +17,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
     private String[] defaults;
 
     // Constructor
-    ViewPagerTask() {
+    TabPagerTask() {
         super();
     }
 
@@ -28,7 +28,7 @@ public class ViewPagerTask extends ThreadTask implements ViewPagerRunnable.ViewP
     }
 
     Runnable getViewPagerRunnable() {
-        return new ViewPagerRunnable(this);
+        return new TabPagerRunnable(this);
     }
 
 

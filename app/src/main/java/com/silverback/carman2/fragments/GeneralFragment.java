@@ -209,7 +209,6 @@ public class GeneralFragment extends Fragment implements
         });
 
         stnListModel.getStationCarWashInfo().observe(this, sparseArray -> {
-
             // Update the carwash info to StationList and notify the data change to Adapter.
             // Adapter should not assume that the payload will always be passed to onBindViewHolder()
             // e.g. when the view is not attached.

@@ -66,6 +66,7 @@ public class BaseActivity extends AppCompatActivity {
 
     }
 
+    /*
     public static SharedPreferences getSharedPreferenceInstance(Context context) {
         // SharedPreferences
         if(mSettings == null) {
@@ -74,6 +75,8 @@ public class BaseActivity extends AppCompatActivity {
 
         return mSettings;
     }
+
+    */
 
 
     // DefaultParams: fuelCode, radius to locate, sorting radius

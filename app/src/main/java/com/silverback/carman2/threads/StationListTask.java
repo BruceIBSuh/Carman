@@ -45,7 +45,7 @@ public class StationListTask extends ThreadTask implements
     private String stnId;
 
     // Constructor
-    StationListTask(Context context) {
+    StationListTask() {
         super();
         mStationListRunnable = new StationListRunnable(this);
         mFireStoreGetRunnable = new FireStoreGetRunnable(this);

@@ -9,9 +9,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class RecyclerAdapterRunnable implements Runnable {
+public class ServiceRecyclerRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(RecyclerAdapterRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceRecyclerRunnable.class);
     static final int TASK_COMPLETE = 1;
     static final int TASK_FAIL = -1;
 
@@ -23,14 +23,14 @@ public class RecyclerAdapterRunnable implements Runnable {
     public interface RecyclerAdapterMethods {
         void setRecyclerAdapterThread(Thread thread);
         void setRecyclerAdapter(ExpServiceItemAdapter adapter);
-        void setServiceItemName(String name);
+        void setJsonServiceArray(JSONArray jsonArray);
         void handleRecyclerTask(int state);
         String getServiceItems();
 
     }
 
     // Constructor
-    RecyclerAdapterRunnable(RecyclerAdapterMethods task) {
+    ServiceRecyclerRunnable(RecyclerAdapterMethods task) {
         this.task = task;
     }
 
@@ -40,12 +40,13 @@ public class RecyclerAdapterRunnable implements Runnable {
         task.setRecyclerAdapterThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        String jsonItems = task.getServiceItems();
+        String jsonItemsString = task.getServiceItems();
 
         try {
-            JSONArray jsonArray = new JSONArray(jsonItems);
-            ExpServiceItemAdapter adapter = new ExpServiceItemAdapter(jsonArray);
-            task.setRecyclerAdapter(adapter);
+            JSONArray jsonArray = new JSONArray(jsonItemsString);
+            //ExpServiceItemAdapter adapter = new ExpServiceItemAdapter(jsonArray);
+            //task.setRecyclerAdapter(adapter);
+            task.setJsonServiceArray(jsonArray);
             task.handleRecyclerTask(TASK_COMPLETE);
 
 

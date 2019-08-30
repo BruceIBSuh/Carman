@@ -7,13 +7,15 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 
+import org.json.JSONArray;
+
 import java.util.List;
 
-public class RecyclerAdapterTask extends ThreadTask implements
-        RecyclerAdapterRunnable.RecyclerAdapterMethods,
-        RecyclerServicedItemRunnable.RecyclerServicedItemMethods {
+public class ServiceRecyclerTask extends ThreadTask implements
+        ServiceRecyclerRunnable.RecyclerAdapterMethods,
+        ServiceStmtsRecyclerRunnable.RecyclerServicedItemMethods {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(RecyclerAdapterTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceRecyclerTask.class);
 
     // Objects
     private Context context;
@@ -27,12 +29,10 @@ public class RecyclerAdapterTask extends ThreadTask implements
 
 
     // Constructor
-    RecyclerAdapterTask(Context context) {
+    ServiceRecyclerTask() {
         super();
-
-        this.context = context;
-        recyclerAdapterRunnable = new RecyclerAdapterRunnable(this);
-        recyclerServicedItemRunnable = new RecyclerServicedItemRunnable(context, this);
+        recyclerAdapterRunnable = new ServiceRecyclerRunnable(this);
+        recyclerServicedItemRunnable = new ServiceStmtsRecyclerRunnable(context, this);
     }
 
     void initTask(PagerAdapterViewModel model, String json) {
@@ -49,13 +49,13 @@ public class RecyclerAdapterTask extends ThreadTask implements
 
     void recycle() {}
 
-    // Set the current thread of RecyclerAdapterRunnable
+    // Set the current thread of ServiceRecyclerRunnable
     @Override
     public void setRecyclerAdapterThread(Thread thread) {
         setCurrentThread(thread); // defined in the super classs, ThreadTask.
     }
 
-    // Set the current thread of RecyclerServicedItemRunnable
+    // Set the current thread of ServiceStmtsRecyclerRunnable
     @Override
     public void setServicedItemThread(Thread thread) {
         setCurrentThread(thread);
@@ -67,18 +67,13 @@ public class RecyclerAdapterTask extends ThreadTask implements
     }
 
     @Override
-    public void setServiceItemName(String name) {
-        svcItemName = name;
+    public void setJsonServiceArray(JSONArray jsonArray) {
+        model.getJsonServiceArray().postValue(jsonArray);
     }
 
     @Override
     public void setServiceItemList(List<String> itemList) {
         model.getServicedItem().postValue(itemList);
-    }
-
-    @Override
-    public String getServiceItem(){
-        return svcItemName;
     }
 
     @Override
@@ -93,11 +88,11 @@ public class RecyclerAdapterTask extends ThreadTask implements
         log.i("handleRecyclerTask");
         int outstate = -1;
         switch(state) {
-            case RecyclerAdapterRunnable.TASK_COMPLETE:
+            case ServiceRecyclerRunnable.TASK_COMPLETE:
                 outstate = ThreadManager.RECYCLER_ADAPTER_SERVICE_COMPLETED;
                 break;
 
-            case RecyclerAdapterRunnable.TASK_FAIL:
+            case ServiceRecyclerRunnable.TASK_FAIL:
                 outstate = ThreadManager.RECYCLER_ADAPTER_SERVICE_FAILED;
                 break;
         }

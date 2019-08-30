@@ -10,9 +10,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 
-public class ViewPagerRunnable implements Runnable {
+public class TabPagerRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(ViewPagerRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(TabPagerRunnable.class);
 
 
     // Objects
@@ -28,7 +28,7 @@ public class ViewPagerRunnable implements Runnable {
 
 
     // Constructor
-    ViewPagerRunnable(ViewPagerMethods task) {
+    TabPagerRunnable(ViewPagerMethods task) {
         this.task = task;
         pagerAdapter = new ExpTabPagerAdapter(task.getFragmentManager());
     }

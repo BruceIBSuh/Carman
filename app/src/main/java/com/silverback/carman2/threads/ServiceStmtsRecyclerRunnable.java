@@ -3,8 +3,6 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.os.Process;
 
-import androidx.lifecycle.LiveData;
-
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -16,32 +14,25 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecyclerServicedItemRunnable implements Runnable {
+public class ServiceStmtsRecyclerRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(RecyclerServicedItemRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceStmtsRecyclerRunnable.class);
 
     // Objects
-    private Context context;
-    private CarmanDatabase mDB;
     private RecyclerServicedItemMethods task;
     private List<String> svcItemList;
-    private List<ServiceManagerDao.ServicedItemData> svcItemData;
 
     // Interface
     public interface RecyclerServicedItemMethods {
         void setServicedItemThread(Thread thread);
         void setServiceItemList(List<String> itemList);
-        String getServiceItem();
         String getServiceItems();
     }
 
     // Constructor
-    RecyclerServicedItemRunnable(Context context, RecyclerServicedItemMethods task) {
-        this.context = context;
+    ServiceStmtsRecyclerRunnable(Context context, RecyclerServicedItemMethods task) {
         this.task = task;
         svcItemList = new ArrayList<>(0);
-        mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
-        svcItemData = new ArrayList<>();
     }
 
     @Override
@@ -49,15 +40,16 @@ public class RecyclerServicedItemRunnable implements Runnable {
         task.setServicedItemThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-
-        String jsonItem = task.getServiceItems();
+        final String jsonItem = task.getServiceItems();
 
         try {
             JSONArray jsonSvcItemArray = new JSONArray(jsonItem);
-            for(int i = 0; i < jsonSvcItemArray.length(); i++) {
-                String itemName = jsonSvcItemArray.optJSONObject(i).optString("name");
-                log.i("Service Item: %s, %s", itemName, jsonSvcItemArray.optJSONObject(i).optString("mileage"));
-                svcItemList.add(itemName);
+
+            synchronized (this) {
+                for (int i = 0; i < jsonSvcItemArray.length(); i++) {
+                    String itemName = jsonSvcItemArray.optJSONObject(i).optString("name");
+                    svcItemList.add(itemName);
+                }
             }
 
             task.setServiceItemList(svcItemList);

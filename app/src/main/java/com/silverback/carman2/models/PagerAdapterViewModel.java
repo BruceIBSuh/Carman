@@ -8,6 +8,8 @@ import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import org.json.JSONArray;
+
 import java.util.List;
 
 public class PagerAdapterViewModel extends ViewModel {
@@ -17,6 +19,8 @@ public class PagerAdapterViewModel extends ViewModel {
     private MutableLiveData<ExpTabPagerAdapter> pagerAdapter;
     private MutableLiveData<ExpServiceItemAdapter> serviceAdapter;
     private MutableLiveData<List<String>> servicedItem;
+    private MutableLiveData<JSONArray> jsonServiceArray;
+    private MutableLiveData<Integer> progressValue;
 
     // Should conform to the Java Bean Convention when creating setter and getter.
     public MutableLiveData<ExpTabPagerAdapter> getPagerAdapter() {
@@ -36,12 +40,22 @@ public class PagerAdapterViewModel extends ViewModel {
         return serviceAdapter;
     }
 
+    public MutableLiveData<JSONArray> getJsonServiceArray() {
+        if(jsonServiceArray == null) jsonServiceArray = new MutableLiveData<>();
+        return jsonServiceArray;
+    }
+
     public MutableLiveData<List<String>> getServicedItem() {
         if(servicedItem == null) {
             servicedItem = new MutableLiveData<>();
         }
 
         return servicedItem;
+    }
+
+    public MutableLiveData<Integer> getProgressValue() {
+        if(progressValue == null) progressValue = new MutableLiveData<>();
+        return progressValue;
     }
 
 }

@@ -7,7 +7,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
@@ -30,9 +29,9 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.RecyclerAdapterTask;
+import com.silverback.carman2.threads.ServiceRecyclerTask;
+import com.silverback.carman2.threads.TabPagerTask;
 import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.threads.ViewPagerTask;
 import com.silverback.carman2.views.ExpenseViewPager;
 
 public class ExpenseActivity extends BaseActivity implements
@@ -49,7 +48,7 @@ public class ExpenseActivity extends BaseActivity implements
     //private CarmanDatabase mDB;
     private ViewPager tabPager;
     private PagerAdapterViewModel pagerAdapterViewModel;
-    private ViewPagerTask tabPagerTask;
+    private TabPagerTask tabPagerTask;
     private ExpTabPagerAdapter tabPagerAdapter;
     private ExpenseViewPager expensePager;
     private ExpRecentPagerAdapter recentPagerAdapter;
@@ -59,7 +58,7 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     private LocationTask locationTask;
-    private RecyclerAdapterTask recyclerTask;
+    private ServiceRecyclerTask recyclerTask;
 
     // Fields
     private boolean isFirst = true;
@@ -121,7 +120,7 @@ public class ExpenseActivity extends BaseActivity implements
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
 
-            // On finishing ViewPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
+            // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
             // attach it in the top FrameLayout.
             expensePager.setAdapter(recentPagerAdapter);
             expensePager.setCurrentItem(0);
@@ -255,8 +254,7 @@ public class ExpenseActivity extends BaseActivity implements
 
                 if(recyclerTask == null) {
                     log.i("RecyclerTask");
-                    recyclerTask = ThreadManager.startRecyclerAdapterTask(
-                            this, pagerAdapterViewModel, jsonServiceItems);
+                    recyclerTask = ThreadManager.startServiceRecyclerTask(pagerAdapterViewModel, jsonServiceItems);
                 }
 
                 break;

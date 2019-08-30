@@ -6,12 +6,14 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
+import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -88,6 +90,7 @@ public class ThreadManager {
     private final Queue<StationInfoTask> mStationInfoTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     //private final Queue<ClockTask> mClockTaskQueue;
+    private final Queue<ProgressBarAnimTask> mProgressBarAnimTaskQueue;
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -117,6 +120,7 @@ public class ThreadManager {
         mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
+        mProgressBarAnimTaskQueue = new LinkedBlockingQueue();
 
 
         // Instantiates ThreadPoolExecutor
@@ -273,7 +277,7 @@ public class ThreadManager {
                 break;
 
             case RECYCLER_ADAPTER_SERVICE_COMPLETED:
-                mDecodeThreadPool.execute(((RecyclerAdapterTask)task).getRecyclerServicedItemRunnable());
+                mDecodeThreadPool.execute(((ServiceRecyclerTask)task).getRecyclerServicedItemRunnable());
                 msg.sendToTarget();
                 break;
 
@@ -355,27 +359,26 @@ public class ThreadManager {
     }
 
 
-    public static ViewPagerTask startViewPagerTask(
+    public static TabPagerTask startViewPagerTask(
             PagerAdapterViewModel model, FragmentManager fragmentManager, String[] defaults){
 
-        ViewPagerTask viewPagerTask = (ViewPagerTask)sInstance.mDecodeWorkQueue.poll();
+        TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mDecodeWorkQueue.poll();
 
-        if(viewPagerTask == null) {
-            viewPagerTask = new ViewPagerTask();
+        if(tabPagerTask == null) {
+            tabPagerTask = new TabPagerTask();
         }
 
-        viewPagerTask.initViewPagerTask(model, fragmentManager, defaults);
-        sInstance.mDecodeThreadPool.execute(viewPagerTask.getViewPagerRunnable());
+        tabPagerTask.initViewPagerTask(model, fragmentManager, defaults);
+        sInstance.mDecodeThreadPool.execute(tabPagerTask.getViewPagerRunnable());
 
-        return viewPagerTask;
+        return tabPagerTask;
     }
 
-    public static RecyclerAdapterTask startRecyclerAdapterTask(
-            Context context, PagerAdapterViewModel model, String jsonItems) {
+    public static ServiceRecyclerTask startServiceRecyclerTask(PagerAdapterViewModel model, String jsonItems) {
 
-        RecyclerAdapterTask recyclerTask = (RecyclerAdapterTask)sInstance.mDecodeWorkQueue.poll();
+        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mDecodeWorkQueue.poll();
         if(recyclerTask == null) {
-            recyclerTask = new RecyclerAdapterTask(context);
+            recyclerTask = new ServiceRecyclerTask();
         }
 
         recyclerTask.initTask(model, jsonItems);
@@ -408,7 +411,7 @@ public class ThreadManager {
         StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
 
         if(stationListTask == null) {
-            stationListTask = new StationListTask(context);
+            stationListTask = new StationListTask();
         }
 
         stationListTask.initStationTask(model, location, params);
@@ -436,6 +439,22 @@ public class ThreadManager {
         sInstance.mDownloadThreadPool.execute(stationInfoTask.getStationMapInfoRunnable());
 
         return stationInfoTask;
+    }
+
+    public static ProgressBarAnimTask startProgressBarAnimTask(
+            ProgressBar progbar, int position, int period, PagerAdapterViewModel model) {
+
+        ProgressBarAnimTask pbAnimTask = sInstance.mProgressBarAnimTaskQueue.poll();
+
+        if(pbAnimTask == null) {
+            pbAnimTask = new ProgressBarAnimTask();
+        }
+
+        pbAnimTask.initAnimTask(progbar, position, period, model);
+        sInstance.mDecodeThreadPool.execute(pbAnimTask.getProgressBarAnimRunnable());
+
+        return pbAnimTask;
+
     }
 
     /*

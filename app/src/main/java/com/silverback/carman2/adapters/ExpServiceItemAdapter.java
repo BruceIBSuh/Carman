@@ -26,6 +26,9 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.PagerAdapterViewModel;
+import com.silverback.carman2.threads.ProgressBarAnimTask;
+import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,11 +42,13 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpServiceItemAdapter.class);
 
     // Objects
+    private ProgressBarAnimTask mTask;
+    private PagerAdapterViewModel model;
     private JSONArray jsonArray;
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
 
-    private SparseArray<ServiceManagerDao.ServicedItemData> sparseSvcDataArray;
+    private SparseArray<ServiceManagerDao.LatestServiceData> serviceData;
     public boolean[] arrCheckedState;
     public int[] arrItemCost;
     public String[] arrItemMemo;
@@ -54,8 +59,9 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     private ProgressBar progressBar;
 
     // Fields
-    private String format;
-    private int maxMileage, currentMileage, period;
+    private String format, unit, month;
+    private int curMileage;
+    private int lastMileage;
 
     // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein
     // to get the values from the service item recyclerview.
@@ -68,29 +74,32 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
     // Constructor
     //public ExpServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
-    public ExpServiceItemAdapter(JSONArray jsonArray) {
+    public ExpServiceItemAdapter(PagerAdapterViewModel model, JSONArray jsonArray, OnParentFragmentListener listener) {
 
         super();
 
+        this.model = model;
         this.jsonArray = jsonArray;
         df = BaseActivity.getDecimalFormatInstance();
         arrCheckedState = new boolean[jsonArray.length()];
         arrItemCost = new int[jsonArray.length()];
         arrItemMemo = new String[jsonArray.length()];
-        sparseSvcDataArray = new SparseArray<>();
-
-    }
-
-    public void setParentFragmentListener(OnParentFragmentListener listener) {
+        serviceData = new SparseArray<>();
         mListener = listener;
+
     }
+
 
     @NonNull
     @Override
     public ServiceItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_service_item, parent, false);
-        format = cardView.getContext().getResources().getString(R.string.date_format_2);
+
+        format = cardView.getResources().getString(R.string.date_format_2);
+        unit = cardView.getResources().getString(R.string.unit_km);
+        month = cardView.getResources().getString(R.string.unit_month);
+        curMileage = mListener.getCurrentMileage();
 
         return new ServiceItemViewHolder(cardView);
     }
@@ -99,27 +108,39 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int position) {
 
         JSONObject jsonObject = jsonArray.optJSONObject(position);
-        maxMileage = jsonObject.optInt("mileage");
+        final int maxMileage = jsonObject.optInt("mileage");
+        int lastMileage = 0;
 
         holder.tvItemName.setText(jsonObject.optString("name"));
         holder.cbServiceItem.setChecked(arrCheckedState[position]);
-        holder.tvMaxPeriod.setText(String.format("%s%s/%s%s", df.format(maxMileage), "km", "6", "개월"));
+        holder.tvMaxPeriod.setText(String.format("%s%s/%s%s",
+                df.format(maxMileage), unit, jsonObject.optInt("month"), month));
 
-        currentMileage = mListener.getCurrentMileage();
-        int lastMileage = (sparseSvcDataArray.get(position) != null)? sparseSvcDataArray.get(position).mileage : 0;
-        period = (currentMileage - lastMileage <= maxMileage)? currentMileage - lastMileage : maxMileage;
-        holder.pb.setMax(maxMileage);
 
-        final ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, 0, period);
-        pbAnim.setDuration(1000);
-        holder.pb.startAnimation(pbAnim);
+        if(serviceData.get(position) != null) {
+            log.i("service data: %s, %s", position, serviceData.get(position).itemName);
+            String date = BaseActivity.formatMilliseconds(format, serviceData.get(position).dateTime);
+            String mileage = df.format(serviceData.get(position).mileage);
+            holder.tvLastService.setText(String.format("%s %s%s", date, mileage, unit));
+        } else {
+            log.i("no serviced: %s, %s", position, jsonObject.optString("name"));
+        }
+
+        // Animate the ProgressBar
+        synchronized (this) {
+            log.i("ProgressBar animation: %s", position);
+            //int period = (curMileage - lastMileage <= maxMileage) ? curMileage - lastMileage : maxMileage;
+            //holder.pb.setMax(maxMileage);
+            final ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, lastMileage, maxMileage);
+            pbAnim.setDuration(1000);
+            holder.pb.startAnimation(pbAnim);
+        }
 
         // Retain the values of service cost and memo when rebound.
         if (arrCheckedState[position]) {
             holder.tvItemCost.setText(df.format(arrItemCost[position]));
             holder.tvItemMemo.setText(arrItemMemo[position]);
         }
-
     }
 
     /*
@@ -136,7 +157,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             super.onBindViewHolder(holder, pos, payloads);
 
         } else {
-            log.i("payload: %s", payloads.get(0));
+
             for(Object payload: payloads) {
                 if(payload instanceof SparseIntArray) {
                     SparseIntArray data = (SparseIntArray)payload;
@@ -148,13 +169,25 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
                     holder.tvItemMemo.setText(data.valueAt(0).toString());
                     arrItemMemo[pos] = data.valueAt(0).toString();
 
-                }else if(payload instanceof ServiceManagerDao.ServicedItemData) {
-                    ServiceManagerDao.ServicedItemData data = (ServiceManagerDao.ServicedItemData)payload;
+                }else if(payload instanceof ServiceManagerDao.LatestServiceData) {
+                    ServiceManagerDao.LatestServiceData data = (ServiceManagerDao.LatestServiceData)payload;
                     String date = BaseActivity.formatMilliseconds(format, data.dateTime);
-                    String mileage = df.format(data.mileage);
-                    holder.tvLastService.setText(String.format("%s%10s%s", date, mileage, "km"));
+                    String mileage = df.format(lastMileage = data.mileage);
 
-                    sparseSvcDataArray.put(pos, data);
+                    // Partial Binding
+                    holder.tvLastService.setText(String.format("%s %s%s", date, mileage, unit));
+
+                    JSONObject jsonObject = jsonArray.optJSONObject(pos);
+                    final int maxMileage = jsonObject.optInt("mileage");
+                    final int lastMileage = data.mileage;
+                    //int period = (curMileage - lastMileage <= maxMileage)? curMileage - lastMileage : maxMileage;
+                    //holder.pb.setMax(maxMileage);
+
+                    final ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, lastMileage, maxMileage);
+                    pbAnim.setDuration(1000);
+                    holder.pb.startAnimation(pbAnim);
+
+
 
                 }
             }
@@ -163,11 +196,15 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
     }
 
-
-
     @Override
     public int getItemCount() {
         return jsonArray.length();
+    }
+
+
+    public void setServiceData(int position, ServiceManagerDao.LatestServiceData data) {
+        log.i("service data in the adapter: %s, %s", position, data.itemName);
+        serviceData.put(position, data);
     }
 
     // RecyclerView.ViewHolder
@@ -236,12 +273,12 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 75);
                 /*
-                int currentMileage = mListener.getCurrentMileage();
+                int curMileage = mListener.getCurrentMileage();
                 int lastMileage = (sparseSvcDataArray.get(pos) != null)? sparseSvcDataArray.get(pos).mileage : 0;
                 //maxMileage = jsonArray.optJSONObject(pos).optInt("mileage");
-                period = (currentMileage - lastMileage <= maxMileage)? currentMileage - lastMileage : maxMileage;
+                period = (curMileage - lastMileage <= maxMileage)? curMileage - lastMileage : maxMileage;
                 pb.setMax(maxMileage);
-                log.i("onBindViewHolder: %s, %s, %s, %s", currentMileage, lastMileage, maxMileage, period);
+                log.i("onBindViewHolder: %s, %s, %s, %s", curMileage, lastMileage, maxMileage, period);
 
                 final ProgressBarAnimation pbAnim = new ProgressBarAnimation(pb, 0, period);
                 pbAnim.setDuration(1000);
@@ -286,19 +323,21 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     class ProgressBarAnimation extends Animation {
 
         private ProgressBar progressBar;
-        private float from;
         private float to;
 
-        ProgressBarAnimation(ProgressBar progressBar, float from, final float to) {
+        //ProgressBarAnimation(ProgressBar progressBar, float from, final float to) {
+        ProgressBarAnimation(ProgressBar progressBar, float lastMileage, float maxMileage) {
             super();
+
             this.progressBar = progressBar;
-            this.from = from;
-            this.to = to;
+            this.to = (curMileage - lastMileage <= maxMileage)? curMileage - lastMileage : maxMileage;
+            this.progressBar.setMax((int)maxMileage);
         }
 
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
             super.applyTransformation(interpolatedTime, t);
+            final float from = 0;
             float value = from + (to - from) * interpolatedTime;
             progressBar.setProgress((int)value);
         }

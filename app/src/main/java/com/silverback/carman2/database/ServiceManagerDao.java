@@ -33,7 +33,7 @@ public abstract class ServiceManagerDao {
             "WHERE item_name = :itemName ORDER BY date_time DESC LIMIT 1")
 
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
-    public abstract LiveData<ServicedItemData> loadServicedItem(String itemName);
+    public abstract LiveData<LatestServiceData> loadServicedItem(String itemName);
 
 
     // Insert
@@ -81,7 +81,7 @@ public abstract class ServiceManagerDao {
         public String svcName;
     }
 
-    public static class ServicedItemData {
+    public static class LatestServiceData {
         @ColumnInfo(name = "date_time")
         public long dateTime;
 

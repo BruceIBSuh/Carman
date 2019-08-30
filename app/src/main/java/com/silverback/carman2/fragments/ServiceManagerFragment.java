@@ -4,6 +4,7 @@ package com.silverback.carman2.fragments;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -35,9 +37,12 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.threads.ProgressBarAnimTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -60,6 +65,8 @@ public class ServiceManagerFragment extends Fragment implements
     private FragmentSharedModel fragmentSharedModel;
     private PagerAdapterViewModel adapterModel;
 
+    private ProgressBarAnimTask pbAnimTask;
+
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
 
@@ -67,6 +74,7 @@ public class ServiceManagerFragment extends Fragment implements
     //private Calendar calendar;
     private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
+    private JSONArray jsonServiceArray;
 
 
     // UIs
@@ -78,6 +86,7 @@ public class ServiceManagerFragment extends Fragment implements
     private ImageButton btnFavorite;
 
     // Fields
+    private int period, maxMileage;
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private int itemPos;
     private int totalExpense;
@@ -96,6 +105,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         adapterModel = ViewModelProviders.of(getActivity()).get(PagerAdapterViewModel.class);
 
@@ -104,31 +114,52 @@ public class ServiceManagerFragment extends Fragment implements
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
-        adapterModel.getServiceAdapter().observe(this, adapter -> {
-            log.i("AdapterModel observe: %s", adapter);
-            mAdapter = adapter;
+        adapterModel.getJsonServiceArray().observe(this, jsonServiceArray -> {
+
+            this.jsonServiceArray = jsonServiceArray;
+            mAdapter = new ExpServiceItemAdapter(adapterModel, jsonServiceArray, this);
+            recyclerServiceItems.setAdapter(mAdapter);
             progbar.setVisibility(View.GONE);
-            mAdapter.setParentFragmentListener(this);
-            recyclerServiceItems.setAdapter(adapter);
+
+            for(int i = 0; i < jsonServiceArray.length(); i++) {
+                try {
+                    final int pos = i;
+                    String name = jsonServiceArray.optJSONObject(pos).getString("name");
+                    mDB.serviceManagerModel().loadServicedItem(name).observe(this, data -> {
+                        if (data != null) {
+                            //recyclerServiceItems.setAdapter(mAdapter);
+                            mAdapter.setServiceData(pos, data);
+                            mAdapter.notifyItemChanged(pos, data);
+                        }
+                    });
+                } catch (JSONException e) {
+                    log.e("JSONException: %s", e.getMessage());
+                }
+            }
         });
 
-
+        /*
         adapterModel.getServicedItem().observe(this, checklist -> {
             log.i("Serviced Item: %s", checklist.size());
             serviceItemList = checklist;
 
             for(int i = 0; i < checklist.size(); i++) {
-                final int pos = i;
-
-                mDB.serviceManagerModel().loadServicedItem(checklist.get(pos)).observe(this, itemData -> {
-                    if(itemData != null) {
-                        log.i("Queried data: %s, %s", pos, itemData.itemName);
-                        mAdapter.notifyItemChanged(pos, itemData);
-                    }
-                });
-
+                synchronized (this) {
+                    final int pos = i;
+                    mDB.serviceManagerModel().loadServicedItem(checklist.get(pos)).observe(this, data -> {
+                        if (data != null) {
+                            //mAdapter.setServiceLatestData(pos, data);
+                            log.i("Query result: %s", data.itemName);
+                            serviceData.put(pos, data);
+                            mAdapter.setServiceData(pos, data);
+                            mAdapter.notifyItemChanged(pos, data);
+                        }
+                    });
+                }
             }
         });
+        */
+
 
 
         /*
@@ -292,9 +323,9 @@ public class ServiceManagerFragment extends Fragment implements
         tvTotalCost.setText(df.format(totalExpense));
     }
 
+
     @Override
     public int getCurrentMileage() {
-
         try {
             return df.parse(tvMileage.getText().toString()).intValue();
         } catch(ParseException e) {
@@ -303,7 +334,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         return -1;
     }
-
 
     // Invoked by OnOptions
     public boolean saveServiceData() {
@@ -337,8 +367,8 @@ public class ServiceManagerFragment extends Fragment implements
         for(int i = 0; i < mAdapter.arrCheckedState.length; i++) {
             if(mAdapter.arrCheckedState[i]) {
                 checkedItem = new ServicedItemEntity();
-                //checkedItem.itemName = jsonSvcItemArray.optJSONObject(i).optString("name");
-                checkedItem.itemName = serviceItemList.get(i);
+                checkedItem.itemName = jsonServiceArray.optJSONObject(i).optString("name");
+                //checkedItem.itemName = serviceItemList.get(i);
                 checkedItem.itemPrice = mAdapter.arrItemCost[i];
                 checkedItem.itemMemo = mAdapter.arrItemMemo[i];
                 log.i("Serviced Item: %s", checkedItem.itemName);
