@@ -48,7 +48,7 @@ public class FireStoreGetRunnable implements Runnable {
         // Bugs have occurred many times here. NullPointerException is brought about due to
         //for(Opinet.GasStnParcelable stn : stnList) {
         for(int i = 0; i < stnList.size(); i++) {
-            synchronized(this) {
+            //synchronized(this) {
                 final int pos = i;
                 final String stnId = stnList.get(pos).getStnId();
                 final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
@@ -84,9 +84,7 @@ public class FireStoreGetRunnable implements Runnable {
                         }
 
                     } else {
-
                         Map<String, Object> stnData = new HashMap<>();
-                        //stnData.put("stnId", stnList.get(pos).getStnId());
                         stnData.put("stnName", stnList.get(pos).getStnName());
                         stnData.put("stnCode", stnList.get(pos).getStnCode());
                         stnData.put("xCoord", stnList.get(pos).getLongitude());
@@ -103,7 +101,7 @@ public class FireStoreGetRunnable implements Runnable {
 
                     }
                 });
-            }
+            //}
         }
     }
 

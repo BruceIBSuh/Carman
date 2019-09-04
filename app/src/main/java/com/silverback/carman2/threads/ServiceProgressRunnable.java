@@ -1,39 +1,50 @@
 package com.silverback.carman2.threads;
 
+import android.content.Context;
 import android.os.Process;
+import android.util.SparseArray;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.ProgressBar;
 
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.lang.ref.WeakReference;
 
-public class ProgressBarAnimRunnable implements Runnable {
+public class ServiceProgressRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ProgressBarAnimRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceProgressRunnable.class);
 
     // Objects
+    private CarmanDatabase mDB;
     private ProgressBarAnimMethods mCallback;
+    private SparseArray<String> sparseSvcItemArray;
     private WeakReference<ProgressBar> weakProgressBarRef;
 
     // Interface
     public interface ProgressBarAnimMethods {
+        void setProgressBarAnimThread(Thread thread);
+        SparseArray<String> getSparseServiceItemArray();
+        /*
         int getServicePosition();
         int getServicePeriod();
         WeakReference<ProgressBar> getProgressBar();
-        void setProgressValue(int position, float value);
-        void setProgressBarAnimThread(Thread thread);
-        void handeProgressBarAnimTask(int state);
 
+        void setProgressValue(int position, float value);
+
+        void handeProgressBarAnimTask(int state);
+        */
     }
 
     // Constructor
-    ProgressBarAnimRunnable(ProgressBarAnimMethods callback) {
+    ServiceProgressRunnable(Context context, ProgressBarAnimMethods callback) {
+
         mCallback = callback;
+        mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
     }
 
     @Override
@@ -41,6 +52,11 @@ public class ProgressBarAnimRunnable implements Runnable {
         mCallback.setProgressBarAnimThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
+        sparseSvcItemArray = mCallback.getSparseServiceItemArray();
+
+
+
+        /*
         int pos = mCallback.getServicePosition();
         int period = mCallback.getServicePeriod();
 
@@ -48,6 +64,7 @@ public class ProgressBarAnimRunnable implements Runnable {
         anim.setDuration(1000);
         float value = anim.getProgressValue();
         log.i("Progress Value: %s", value);
+        */
     }
 
     // ProgressBar Animation class from StackOverflow

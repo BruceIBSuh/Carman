@@ -58,7 +58,7 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     private LocationTask locationTask;
-    private ServiceRecyclerTask recyclerTask;
+    private ServiceRecyclerTask serviceRecyclerTask;
 
     // Fields
     private boolean isFirst = true;
@@ -144,7 +144,7 @@ public class ExpenseActivity extends BaseActivity implements
 
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
-        if (recyclerTask != null) recyclerTask = null;
+        if (serviceRecyclerTask != null) serviceRecyclerTask = null;
 
         // Destroy the static CarmanDatabase instance.
         CarmanDatabase.destroyInstance();
@@ -226,15 +226,19 @@ public class ExpenseActivity extends BaseActivity implements
                 currentPage = 1;
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
+                
                 break;
 
             case 2:
                 currentPage = 2;
                 pageTitle = getString(R.string.exp_title_stat);
                 StatGraphFragment statGraphFragment = new StatGraphFragment();
-
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
+
+
+
+
                 break;
         }
 
@@ -245,28 +249,21 @@ public class ExpenseActivity extends BaseActivity implements
         log.i("onPageScrollStateChanged:%s", state);
         if(state != 0) return;
 
-        switch (currentPage) {
+        switch(currentPage) {
+            case 1:
+                /*
+                if(serviceRecyclerTask == null)
+                    serviceRecyclerTask = ThreadManager.startServiceRecyclerTask(
+                           this, pagerAdapterViewModel, jsonServiceItems);
 
-            case 0:
+                 */
                 break;
-
-            case 1: // Attach the Service Item RecyclerView to ServiceManagerFragment
-
-                if(recyclerTask == null) {
-                    log.i("RecyclerTask");
-                    recyclerTask = ThreadManager.startServiceRecyclerTask(pagerAdapterViewModel, jsonServiceItems);
-                }
-
-                break;
-            case 2: // Attach the RecyclerView of Statements to StatStmtsFragment
+            case 2:
                 log.i("onPageScrolledChanged: StatFragment");
                 StatStmtsFragment fragment = (StatStmtsFragment)tabPagerAdapter.getPagerFragments()[2];
                 fragment.queryExpense();
                 break;
-
         }
-
-
     }
 
 

@@ -33,15 +33,12 @@
 
             <TextView
                 android:id="@+id/tv_last_service"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
-                android:layout_marginEnd="8dp"
-                android:textAlignment="viewEnd"
                 android:textSize="@dimen/extraSmallText"
-                cardview:layout_constraintBottom_toBottomOf="@+id/tv_service_item"
                 cardview:layout_constraintEnd_toStartOf="@+id/chkbox"
-                cardview:layout_constraintStart_toEndOf="@+id/tv_service_item"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_service_item"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_service_item" />
 
             <CheckBox

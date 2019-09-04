@@ -1,19 +1,19 @@
 package com.silverback.carman2.threads;
 
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.widget.ProgressBar;
+import android.util.SparseArray;
 import android.widget.TextView;
 
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
-import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -87,10 +87,10 @@ public class ThreadManager {
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
 
     private final Queue<StationListTask> mStationListTaskQueue;
-    private final Queue<StationInfoTask> mStationInfoTaskQueue;
+    private final Queue<ServiceProgressTask> mServiceProgressTaskQueue;
+    //private final Queue<StationInfoTask> mStationInfoTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     //private final Queue<ClockTask> mClockTaskQueue;
-    private final Queue<ProgressBarAnimTask> mProgressBarAnimTaskQueue;
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -117,10 +117,10 @@ public class ThreadManager {
 
         // Queues of tasks, which is handed to ThreadPool.
         mStationListTaskQueue = new LinkedBlockingQueue<>();
-        mStationInfoTaskQueue = new LinkedBlockingQueue<>();
+        //mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mServiceProgressTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
-        mProgressBarAnimTaskQueue = new LinkedBlockingQueue();
 
 
         // Instantiates ThreadPoolExecutor
@@ -276,8 +276,16 @@ public class ThreadManager {
                 msg.sendToTarget();
                 break;
 
+
             case RECYCLER_ADAPTER_SERVICE_COMPLETED:
-                mDecodeThreadPool.execute(((ServiceRecyclerTask)task).getRecyclerServicedItemRunnable());
+                /*
+                SparseArray<String> sparseSvcItemArray = ((ServiceRecyclerTask)task).getSparseServiceItemArray();
+                for(int i = 0; i < sparseSvcItemArray.size(); i++) {
+                    startServiceProgressTask(i);
+                }
+
+                //mDecodeThreadPool.execute(((ServiceRecyclerTask)task).getProgbarAnimRunnable());
+                */
                 msg.sendToTarget();
                 break;
 
@@ -374,18 +382,7 @@ public class ThreadManager {
         return tabPagerTask;
     }
 
-    public static ServiceRecyclerTask startServiceRecyclerTask(PagerAdapterViewModel model, String jsonItems) {
 
-        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mDecodeWorkQueue.poll();
-        if(recyclerTask == null) {
-            recyclerTask = new ServiceRecyclerTask();
-        }
-
-        recyclerTask.initTask(model, jsonItems);
-        sInstance.mDecodeThreadPool.execute(recyclerTask.getRecyclerAdapterRunnable());
-        return recyclerTask;
-
-    }
 
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
@@ -420,13 +417,14 @@ public class ThreadManager {
         return stationListTask;
     }
 
+    /*
     public static StationInfoTask startStationInfoTask(StationListViewModel model, String stnName, String stnId) {
 
         StationInfoTask stationInfoTask = sInstance.mStationInfoTaskQueue.poll();
         if(stationInfoTask == null) stationInfoTask = new StationInfoTask();
 
         // Attach OnCompleteInfoTaskListener
-        /*
+
         if(sInstance.mStationInfoListener == null) {
             try {
                 sInstance.mStationInfoListener = (OnStationInfoListener) fragment;
@@ -434,28 +432,43 @@ public class ThreadManager {
                 throw new ClassCastException(fragment + " must implement OnStationInfoTaskListener");
             }
         }
-        */
+
         stationInfoTask.initStationTask(model, stnName, stnId);
         sInstance.mDownloadThreadPool.execute(stationInfoTask.getStationMapInfoRunnable());
 
         return stationInfoTask;
     }
+    */
 
-    public static ProgressBarAnimTask startProgressBarAnimTask(
-            ProgressBar progbar, int position, int period, PagerAdapterViewModel model) {
+    public static ServiceRecyclerTask startServiceRecyclerTask (
+            Context context, PagerAdapterViewModel model, String jsonItems) {
 
-        ProgressBarAnimTask pbAnimTask = sInstance.mProgressBarAnimTaskQueue.poll();
-
-        if(pbAnimTask == null) {
-            pbAnimTask = new ProgressBarAnimTask();
+        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mDecodeWorkQueue.poll();
+        if(recyclerTask == null) {
+            recyclerTask = new ServiceRecyclerTask(context);
         }
 
-        pbAnimTask.initAnimTask(progbar, position, period, model);
-        sInstance.mDecodeThreadPool.execute(pbAnimTask.getProgressBarAnimRunnable());
-
-        return pbAnimTask;
+        recyclerTask.initTask(model, jsonItems);
+        sInstance.mDecodeThreadPool.execute(recyclerTask.getRecyclerAdapterRunnable());
+        return recyclerTask;
 
     }
+
+    public static synchronized ServiceProgressTask startServiceProgressTask (
+            Activity activity, String name, int key) {
+
+        ServiceProgressTask progressTask = sInstance.mServiceProgressTaskQueue.poll();
+
+        if(progressTask == null) progressTask = new ServiceProgressTask(activity);
+
+        progressTask.initTask(name, key);
+        sInstance.mDecodeThreadPool.execute(progressTask.getServiceProgressRunnable());
+
+        return progressTask;
+    }
+
+
+
 
     /*
     public static StationInfoTask startStationInfoTask(Opinet.GasStnParcelable station) {
@@ -530,14 +543,17 @@ public class ThreadManager {
             mLocationTaskQueue.offer((LocationTask) task);
 
         }else if(task instanceof StationListTask) {
-            ((StationListTask)task).recycle();
-            mStationListTaskQueue.offer((StationListTask)task);
+            ((StationListTask) task).recycle();
+            mStationListTaskQueue.offer((StationListTask) task);
             //mStationTaskListener = null;
             //if(mCurrentStationListener != null) mCurrentStationListener = null;
 
+        }else if(task instanceof ServiceProgressTask) {
+            ((ServiceProgressTask)task).recycle();
+            mServiceProgressTaskQueue.offer((ServiceProgressTask) task);
         }else if(task instanceof StationInfoTask) {
             ((StationInfoTask)task).recycle();
-            mStationInfoTaskQueue.offer((StationInfoTask)task);
+            //mStationInfoTaskQueue.offer((StationInfoTask)task);
             //mStationInfoListener = null;
         }
 

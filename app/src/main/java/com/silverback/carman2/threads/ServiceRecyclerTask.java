@@ -1,19 +1,17 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
+import android.util.SparseArray;
 
-import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 
 import org.json.JSONArray;
 
-import java.util.List;
-
 public class ServiceRecyclerTask extends ThreadTask implements
         ServiceRecyclerRunnable.RecyclerAdapterMethods,
-        ServiceStmtsRecyclerRunnable.RecyclerServicedItemMethods {
+        ServiceProgressRunnable.ProgressBarAnimMethods {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceRecyclerTask.class);
 
@@ -22,17 +20,23 @@ public class ServiceRecyclerTask extends ThreadTask implements
     private PagerAdapterViewModel model;
     private String jsonServiceItems;
     private Runnable recyclerAdapterRunnable;
-    private Runnable recyclerServicedItemRunnable;
+    //private Runnable recyclerServicedItemRunnable;
+    private Runnable progbarAnimRunnable;
+    private SparseArray<String> sparseSvcItemArray;
 
     // Fields
+
+    private int svcItemPos;
     private String svcItemName;
 
 
     // Constructor
-    ServiceRecyclerTask() {
+    ServiceRecyclerTask(Context context) {
         super();
+        this.context = context;
         recyclerAdapterRunnable = new ServiceRecyclerRunnable(this);
-        recyclerServicedItemRunnable = new ServiceStmtsRecyclerRunnable(context, this);
+        //recyclerServicedItemRunnable = new ServiceStmtsRecyclerRunnable(context, this);
+        progbarAnimRunnable = new ServiceProgressRunnable(context, this);
     }
 
     void initTask(PagerAdapterViewModel model, String json) {
@@ -43,8 +47,15 @@ public class ServiceRecyclerTask extends ThreadTask implements
     Runnable getRecyclerAdapterRunnable() {
         return recyclerAdapterRunnable;
     }
+
+    /*
     Runnable getRecyclerServicedItemRunnable() {
         return recyclerServicedItemRunnable;
+    }
+    */
+
+    Runnable getProgbarAnimRunnable() {
+        return progbarAnimRunnable;
     }
 
     void recycle() {}
@@ -55,15 +66,9 @@ public class ServiceRecyclerTask extends ThreadTask implements
         setCurrentThread(thread); // defined in the super classs, ThreadTask.
     }
 
-    // Set the current thread of ServiceStmtsRecyclerRunnable
     @Override
-    public void setServicedItemThread(Thread thread) {
-        setCurrentThread(thread);
-    }
+    public void setProgressBarAnimThread(Thread thread) {
 
-    @Override
-    public void setRecyclerAdapter(ExpServiceItemAdapter adapter) {
-        model.getServiceAdapter().postValue(adapter);
     }
 
     @Override
@@ -72,16 +77,22 @@ public class ServiceRecyclerTask extends ThreadTask implements
     }
 
     @Override
-    public void setServiceItemList(List<String> itemList) {
-        model.getServicedItem().postValue(itemList);
+    public synchronized void setServiceItem(int pos, String name) {
+        log.i("set service item: %s, %s", pos, name);
+        SparseArray<String> sparseArray = new SparseArray<>();
+        sparseArray.put(pos, name);
+        sparseSvcItemArray = sparseArray;
     }
 
     @Override
-    public String getServiceItems() {
+    public String getJsonServiceItems() {
         return jsonServiceItems;
     }
 
-
+    @Override
+    public synchronized SparseArray<String> getSparseServiceItemArray() {
+        return sparseSvcItemArray;
+    }
 
     @Override
     public void handleRecyclerTask(int state) {
@@ -99,5 +110,6 @@ public class ServiceRecyclerTask extends ThreadTask implements
 
         sThreadManager.handleState(this, outstate);
     }
+
 
 }
