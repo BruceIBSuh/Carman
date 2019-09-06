@@ -2,6 +2,10 @@ package com.silverback.carman2.adapters;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -19,11 +23,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -32,7 +36,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAdapter.ServiceItemViewHolder> {
@@ -41,13 +44,12 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpServiceItemAdapter.class);
 
     // Objects
-    private CarmanDatabase mDB;
     private JSONArray jsonArray;
     private OnParentFragmentListener mListener;
     private DecimalFormat df;
 
     private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
-    private List<ServiceManagerDao.LatestServiceData> dataList;
+    private Drawable progressDrawable;
     public boolean[] arrCheckedState;
     public int[] arrItemCost;
     public String[] arrItemMemo;
@@ -55,6 +57,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     // Fields
     private String format, unit, month;
     private int curMileage;
+    private int safeColor, warningColor, progressColor;
 
     // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein
     // to get the values from the service item recyclerview.
@@ -67,7 +70,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     }
 
     // Constructor
-    //public ExpServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
     public ExpServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
 
         super();
@@ -81,8 +83,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         arrItemMemo = new String[jsonArray.length()];
 
         sparseServiceArray = new SparseArray<>();
-
-
     }
 
     @NonNull
@@ -95,6 +95,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         unit = cardView.getResources().getString(R.string.unit_km);
         month = cardView.getResources().getString(R.string.unit_month);
         curMileage = mListener.getCurrentMileage();
+        safeColor = cardView.getResources().getColor(R.color.pbSafe);
+        warningColor = cardView.getResources().getColor(R.color.pbWarning);
 
         return new ServiceItemViewHolder(cardView);
     }
@@ -119,29 +121,30 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
         // Full Binding: last service and ProgressBar
         if(sparseServiceArray.get(position) != null) {
-            log.i("Position: %s %s", position, holder.getAdapterPosition());
             lastMileage = sparseServiceArray.get(position).mileage;
             String date = BaseActivity.formatMilliseconds(format, sparseServiceArray.get(position).dateTime);
             String mileage = df.format(sparseServiceArray.get(position).mileage);
             holder.tvLastService.setText(String.format("%s %s%s", date, mileage, unit));
+
         } else {
             lastMileage = 0;
             holder.tvLastService.setText("");
         }
 
-
-
-        // Animate the ProgressBar
+        // Calculate the value of progress
         int period = (curMileage - lastMileage <= maxMileage) ? curMileage - lastMileage : maxMileage;
 
-        /*
+        // Set the progress color
+        int progressColor = (period >= (maxMileage * 0.8))? warningColor : safeColor;
+        Drawable progressDrawable = ((LayerDrawable)holder.pb.getProgressDrawable()).getDrawable(1);
+        progressDrawable.setColorFilter(progressColor, PorterDuff.Mode.SRC_IN);
+
+        // Animate the progress
         ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, 0, period);
-        pbAnim.setDuration(500);
+        pbAnim.setDuration(1000);
         holder.pb.setMax(maxMileage);
         holder.pb.startAnimation(pbAnim);
-        */
-        holder.pb.setMax(maxMileage);
-        holder.pb.setProgress(period);
+
     }
 
     /*
@@ -184,14 +187,16 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
                     // Partial Binding of the last service and the ProgressBar
                     holder.tvLastService.setText(String.format("%s %s%s", date, mileage, unit));
 
-                    /*
+                    // Set the progress color according to the period / maxMileage ratio.
+                    int progressColor = (period >= (maxMileage * 0.8))? warningColor : safeColor;
+                    Drawable progressDrawable = ((LayerDrawable)holder.pb.getProgressDrawable()).getDrawable(1);
+                    progressDrawable.setColorFilter(progressColor, PorterDuff.Mode.SRC_IN);
+
                     ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, 0, period);
                     pbAnim.setDuration(1000);
                     holder.pb.setMax(maxMileage);
                     holder.pb.startAnimation(pbAnim);
-                    */
-                    holder.pb.setMax(maxMileage);
-                    holder.pb.setProgress(period);
+
                 }
             }
 
@@ -206,8 +211,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
 
     public void setServiceData(int position, ServiceManagerDao.LatestServiceData data) {
-        if(data != null) log.i("Service data : %s %s", position, data.itemName);
         sparseServiceArray.put(position, data);
+        notifyDataSetChanged();
     }
 
     // RecyclerView.ViewHolder
@@ -239,6 +244,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             tvItemCost.setOnClickListener(this);
             tvItemMemo.setOnClickListener(this);
             cbServiceItem.setOnCheckedChangeListener(this);
+
         }
 
         @Override
@@ -273,19 +279,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             if(isChecked) {
                 layout.setVisibility(View.VISIBLE);
                 animSlideUpAndDown(layout, 0, 75);
-                /*
-                int curMileage = mListener.getCurrentMileage();
-                int lastMileage = (sparseSvcDataArray.get(pos) != null)? sparseSvcDataArray.get(pos).mileage : 0;
-                //maxMileage = jsonArray.optJSONObject(pos).optInt("mileage");
-                period = (curMileage - lastMileage <= maxMileage)? curMileage - lastMileage : maxMileage;
-                pb.setMax(maxMileage);
-                log.i("onBindViewHolder: %s, %s, %s, %s", curMileage, lastMileage, maxMileage, period);
-
-                final ProgressBarAnimation pbAnim = new ProgressBarAnimation(pb, 0, period);
-                pbAnim.setDuration(1000);
-                pb.startAnimation(pbAnim);
-                */
-
 
             } else {
                 animSlideUpAndDown(layout, 75, 0);
@@ -327,9 +320,9 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         private float from;
         private float to;
 
+        //ProgressBarAnimation(ProgressBar progressBar, float from, float to) {
         ProgressBarAnimation(ProgressBar progressBar, float from, float to) {
             super();
-            log.i("Period: %s, %s", from, to);
             this.from = from;
             this.to = to;
             this.progressBar = progressBar;
@@ -341,6 +334,13 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             float value = from + (to - from) * interpolatedTime;
             progressBar.setProgress((int)value);
         }
+
+    }
+
+    private void setProgressDrawableColor(ProgressBar progbar, int period, int maxMileage) {
+        //LayerDrawable progressBarDrawable = (LayerDrawable)progbar.getProgressDrawable();
+        Drawable progressDrawable = ((LayerDrawable)progbar.getProgressDrawable()).getDrawable(1);
+
     }
 
 }

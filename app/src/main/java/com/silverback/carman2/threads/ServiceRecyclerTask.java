@@ -10,33 +10,20 @@ import com.silverback.carman2.models.PagerAdapterViewModel;
 import org.json.JSONArray;
 
 public class ServiceRecyclerTask extends ThreadTask implements
-        ServiceRecyclerRunnable.RecyclerAdapterMethods,
-        ServiceProgressRunnable.ProgressBarAnimMethods {
+        ServiceRecyclerRunnable.RecyclerAdapterMethods {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceRecyclerTask.class);
 
     // Objects
-    private Context context;
     private PagerAdapterViewModel model;
     private String jsonServiceItems;
-    private Runnable recyclerAdapterRunnable;
-    //private Runnable recyclerServicedItemRunnable;
-    private Runnable progbarAnimRunnable;
-    private SparseArray<String> sparseSvcItemArray;
-
-    // Fields
-
-    private int svcItemPos;
-    private String svcItemName;
+    private Runnable serviceRecyclerRunnable;
 
 
     // Constructor
-    ServiceRecyclerTask(Context context) {
+    ServiceRecyclerTask() {
         super();
-        this.context = context;
-        recyclerAdapterRunnable = new ServiceRecyclerRunnable(this);
-        //recyclerServicedItemRunnable = new ServiceStmtsRecyclerRunnable(context, this);
-        progbarAnimRunnable = new ServiceProgressRunnable(context, this);
+        serviceRecyclerRunnable = new ServiceRecyclerRunnable(this);
     }
 
     void initTask(PagerAdapterViewModel model, String json) {
@@ -44,18 +31,8 @@ public class ServiceRecyclerTask extends ThreadTask implements
         jsonServiceItems = json;
     }
 
-    Runnable getRecyclerAdapterRunnable() {
-        return recyclerAdapterRunnable;
-    }
-
-    /*
-    Runnable getRecyclerServicedItemRunnable() {
-        return recyclerServicedItemRunnable;
-    }
-    */
-
-    Runnable getProgbarAnimRunnable() {
-        return progbarAnimRunnable;
+    Runnable getServiceRecyclerRunnable() {
+        return serviceRecyclerRunnable;
     }
 
     void recycle() {}
@@ -67,31 +44,13 @@ public class ServiceRecyclerTask extends ThreadTask implements
     }
 
     @Override
-    public void setProgressBarAnimThread(Thread thread) {
-
-    }
-
-    @Override
     public void setJsonServiceArray(JSONArray jsonArray) {
         model.getJsonServiceArray().postValue(jsonArray);
     }
 
     @Override
-    public synchronized void setServiceItem(int pos, String name) {
-        log.i("set service item: %s, %s", pos, name);
-        SparseArray<String> sparseArray = new SparseArray<>();
-        sparseArray.put(pos, name);
-        sparseSvcItemArray = sparseArray;
-    }
-
-    @Override
     public String getJsonServiceItems() {
         return jsonServiceItems;
-    }
-
-    @Override
-    public synchronized SparseArray<String> getSparseServiceItemArray() {
-        return sparseSvcItemArray;
     }
 
     @Override

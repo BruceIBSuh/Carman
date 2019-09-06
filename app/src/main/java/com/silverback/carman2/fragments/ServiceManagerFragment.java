@@ -37,8 +37,6 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.threads.ServiceProgressTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
 import org.json.JSONArray;
@@ -64,7 +62,6 @@ public class ServiceManagerFragment extends Fragment implements
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
     private PagerAdapterViewModel adapterModel;
-    private ServiceProgressTask progressTask;
 
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
@@ -85,8 +82,6 @@ public class ServiceManagerFragment extends Fragment implements
     private ImageButton btnFavorite;
 
     // Fields
-    private int period, maxMileage;
-    private TextView targetView; //reference to a clicked view which is used in ViewModel
     private int itemPos;
     private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
@@ -116,7 +111,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         //The service item data is saved in SharedPreferences as String type, which should be
         // converted to JSONArray.
-
+        /*
         try {
             String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
             jsonServiceArray = new JSONArray(json);
@@ -125,31 +120,6 @@ public class ServiceManagerFragment extends Fragment implements
             log.e("JSONException: %s", e.getMessage());
         }
 
-        /*
-        adapterModel.getJsonServiceArray().observe(this, jsonServiceArray -> {
-            this.jsonServiceArray = jsonServiceArray;
-            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
-            if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
-            progbar.setVisibility(View.GONE);
-
-            for(int i = 0; i < jsonServiceArray.length(); i++) {
-                try {
-                    final int pos = i;
-                    String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                    mDB.serviceManagerModel().loadServiceData(name).observe(this, data -> {
-                        if (data != null) {
-                            //recyclerServiceItems.setAdapter(mAdapter);
-                            log.i("Query: %s, %s", pos, data.itemName);
-
-                        }
-                    });
-
-                } catch (JSONException e) {
-                    log.e("JSONException: %s", e.getMessage());
-                }
-            }
-        });
-        */
 
         for(int i = 0; i < jsonServiceArray.length(); i++) {
             try {
@@ -169,7 +139,37 @@ public class ServiceManagerFragment extends Fragment implements
                 log.e("JSONException: %s", e.getMessage());
             }
         }
+        */
 
+
+
+        // Get the dataset of the item list from ServiceRecyclerTask, which intends to manage
+        // the loadweight of the memory
+        adapterModel.getJsonServiceArray().observe(this, jsonServiceArray -> {
+            this.jsonServiceArray = jsonServiceArray;
+            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
+            if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
+            //progbar.setVisibility(View.GONE);
+
+            for(int i = 0; i < jsonServiceArray.length(); i++) {
+                try {
+                    final int pos = i;
+                    final String name = jsonServiceArray.optJSONObject(pos).getString("name");
+                    mDB.serviceManagerModel().loadServiceData(name).observe(this, data -> {
+                        if(data != null) {
+                            log.i("Service Data: %s, %s", pos, data.itemName);
+                            mAdapter.setServiceData(pos, data);
+                            mAdapter.notifyItemChanged(pos, data);
+                        } else {
+                            log.i("No service data: %s, %s", pos, name);
+                            mAdapter.setServiceData(pos, null);
+                        }
+                    });
+                } catch(JSONException e) {
+                    log.e("JSONException: %s", e.getMessage());
+                }
+            }
+        });
 
         /*
          * ViewModel to share data b/w Fragments(this and NumberPadFragment)
@@ -210,8 +210,8 @@ public class ServiceManagerFragment extends Fragment implements
         View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
-        progbar = localView.findViewById(R.id.pb_checklist);
-        progbar.setVisibility(View.VISIBLE);
+        //progbar = localView.findViewById(R.id.pb_checklist);
+        //progbar.setVisibility(View.VISIBLE);
 
         relativeLayout = localView.findViewById(R.id.rl_service);
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
@@ -221,10 +221,7 @@ public class ServiceManagerFragment extends Fragment implements
         Button btnDate = localView.findViewById(R.id.btn_date);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_total_cost);
-        tvTotalCost.setText("0");
 
-        recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerServiceItems.setHasFixedSize(true);
 
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
@@ -233,35 +230,13 @@ public class ServiceManagerFragment extends Fragment implements
 
         String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
-
+        tvTotalCost.setText("0");
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
 
-        // Set the service item data to RecyclerView.Adapter.
-        /*
-        for(int i = 0; i < jsonServiceArray.length(); i++) {
-            try {
-                final int pos = i;
-                String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                mDB.serviceManagerModel().loadServiceData(name).observe(this, data -> {
-                    if (data != null) {
-                        log.i("Query: %s, %s", pos, data.itemName);
-                        mAdapter.setServiceData(pos, data);
-                        mAdapter.notifyItemChanged(pos, data);
-                    } else {
-                        log.i("Quried: no result");
-                    }
-                });
-
-            } catch (JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
-            }
-
-        }
-        */
-        recyclerServiceItems.setAdapter(mAdapter);
-        progbar.setVisibility(View.GONE);
-
+        recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerServiceItems.setHasFixedSize(true);
+        //recyclerServiceItems.setAdapter(mAdapter);
 
         // Inflate the layout for this fragment
         return localView;
@@ -275,11 +250,6 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        if(progressTask != null) progressTask = null;
-    }
 
     @SuppressWarnings("ConstantConditions")
     @Override

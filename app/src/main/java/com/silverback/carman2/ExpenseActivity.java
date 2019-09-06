@@ -108,6 +108,9 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+        expensePager.setAdapter(recentPagerAdapter);
+        expensePager.setCurrentItem(0);
+        topFrame.addView(expensePager);
 
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then lauch LocationTask to have
@@ -122,9 +125,12 @@ public class ExpenseActivity extends BaseActivity implements
 
             // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
             // attach it in the top FrameLayout.
+            /*
             expensePager.setAdapter(recentPagerAdapter);
             expensePager.setCurrentItem(0);
             topFrame.addView(expensePager);
+
+             */
         });
 
     }
@@ -251,13 +257,12 @@ public class ExpenseActivity extends BaseActivity implements
 
         switch(currentPage) {
             case 1:
-                /*
                 if(serviceRecyclerTask == null)
-                    serviceRecyclerTask = ThreadManager.startServiceRecyclerTask(
-                           this, pagerAdapterViewModel, jsonServiceItems);
+                    serviceRecyclerTask = ThreadManager.startServiceRecyclerTask(pagerAdapterViewModel, jsonServiceItems);
 
-                 */
                 break;
+
+
             case 2:
                 log.i("onPageScrolledChanged: StatFragment");
                 StatStmtsFragment fragment = (StatStmtsFragment)tabPagerAdapter.getPagerFragments()[2];

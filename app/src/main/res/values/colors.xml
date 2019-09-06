@@ -24,4 +24,6 @@
     <color name="graphLabelColor">#202020</color>
     <color name="graphAxisColor">#202020</color>
     <color name="bgRecentExp">#999900</color>
+    <color name="pbSafe">#66CC00</color>
+    <color name="pbWarning">#FF3333</color>
 </resources>

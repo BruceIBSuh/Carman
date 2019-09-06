@@ -1,13 +1,11 @@
 package com.silverback.carman2.threads;
 
 import android.app.Activity;
-import android.app.Service;
 import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.SparseArray;
 import android.widget.TextView;
 
 import androidx.fragment.app.FragmentManager;
@@ -87,7 +85,6 @@ public class ThreadManager {
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
 
     private final Queue<StationListTask> mStationListTaskQueue;
-    private final Queue<ServiceProgressTask> mServiceProgressTaskQueue;
     //private final Queue<StationInfoTask> mStationInfoTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     //private final Queue<ClockTask> mClockTaskQueue;
@@ -119,7 +116,6 @@ public class ThreadManager {
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         //mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
-        mServiceProgressTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
 
 
@@ -382,9 +378,6 @@ public class ThreadManager {
         return tabPagerTask;
     }
 
-
-
-
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
@@ -417,6 +410,19 @@ public class ThreadManager {
         return stationListTask;
     }
 
+    public static ServiceRecyclerTask startServiceRecyclerTask (PagerAdapterViewModel model, String json) {
+
+        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mDecodeWorkQueue.poll();
+        if(recyclerTask == null) {
+            recyclerTask = new ServiceRecyclerTask();
+        }
+
+        recyclerTask.initTask(model, json);
+        sInstance.mDecodeThreadPool.execute(recyclerTask.getServiceRecyclerRunnable());
+
+        return recyclerTask;
+    }
+
     /*
     public static StationInfoTask startStationInfoTask(StationListViewModel model, String stnName, String stnId) {
 
@@ -439,35 +445,6 @@ public class ThreadManager {
         return stationInfoTask;
     }
     */
-
-    public static ServiceRecyclerTask startServiceRecyclerTask (
-            Context context, PagerAdapterViewModel model, String jsonItems) {
-
-        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mDecodeWorkQueue.poll();
-        if(recyclerTask == null) {
-            recyclerTask = new ServiceRecyclerTask(context);
-        }
-
-        recyclerTask.initTask(model, jsonItems);
-        sInstance.mDecodeThreadPool.execute(recyclerTask.getRecyclerAdapterRunnable());
-        return recyclerTask;
-
-    }
-
-    public static synchronized ServiceProgressTask startServiceProgressTask (
-            Activity activity, String name, int key) {
-
-        ServiceProgressTask progressTask = sInstance.mServiceProgressTaskQueue.poll();
-
-        if(progressTask == null) progressTask = new ServiceProgressTask(activity);
-
-        progressTask.initTask(name, key);
-        sInstance.mDecodeThreadPool.execute(progressTask.getServiceProgressRunnable());
-
-        return progressTask;
-    }
-
-
 
 
     /*
@@ -548,9 +525,6 @@ public class ThreadManager {
             //mStationTaskListener = null;
             //if(mCurrentStationListener != null) mCurrentStationListener = null;
 
-        }else if(task instanceof ServiceProgressTask) {
-            ((ServiceProgressTask)task).recycle();
-            mServiceProgressTaskQueue.offer((ServiceProgressTask) task);
         }else if(task instanceof StationInfoTask) {
             ((StationInfoTask)task).recycle();
             //mStationInfoTaskQueue.offer((StationInfoTask)task);

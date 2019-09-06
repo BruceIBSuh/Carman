@@ -22,7 +22,6 @@ public class ServiceRecyclerRunnable implements Runnable {
     public interface RecyclerAdapterMethods {
         void setRecyclerAdapterThread(Thread thread);
         void setJsonServiceArray(JSONArray jsonArray);
-        void setServiceItem(int pos, String name);
         void handleRecyclerTask(int state);
         String getJsonServiceItems();
 
@@ -45,20 +44,6 @@ public class ServiceRecyclerRunnable implements Runnable {
         try {
             JSONArray jsonArray = new JSONArray(jsonItemsString);
             task.setJsonServiceArray(jsonArray);
-
-            /*
-            for(int i = 0; i < jsonArray.length(); i++) {
-                synchronized (this) {
-                    final String name = jsonArray.optJSONObject(i).getString("name");
-                    log.i("Item Name: %s", name);
-                    task.setServiceItem(i, name);
-                    task.handleRecyclerTask(TASK_COMPLETE);
-                }
-            }
-
-            */
-
-
 
         } catch(JSONException e) {
             log.i("JSONException: %s", e.getMessage());
