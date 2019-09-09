@@ -19,8 +19,6 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerDialogPreference.class);
 
-    // Objects
-    private String districtName;
 
     /*
      * When you replace the 0 in the second constructor with R.attr.dialogPreferenceStyle
@@ -50,15 +48,14 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
 
         setDialogLayoutResource(R.layout.dialog_setting_spinner);
         setOnPreferenceChangeListener(this);
-        /*
+
+
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
         try {
 
         } finally {
             typedArray.recycle();
         }
-        */
-
     }
 
     @Override
@@ -70,6 +67,7 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
         } catch(JSONException e) {
             log.e("JSONException");
         }
+
         return false;
     }
 }

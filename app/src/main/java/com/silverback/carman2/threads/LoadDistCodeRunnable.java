@@ -8,11 +8,13 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.SpinnerDistrictModel;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LoadDistCodeRunnable implements Runnable {
@@ -27,10 +29,11 @@ public class LoadDistCodeRunnable implements Runnable {
     // Objects
     private Context context;
     private DistCodeMethods task;
+    private SpinnerDistrictModel model;
 
     public interface DistCodeMethods {
         int getSidoCode();
-        DistrictSpinnerAdapter getSpinnerAdapter();
+        SpinnerDistrictModel getSpinnerDistrictModel();
         void setSpinnerDistCodeThread(Thread currentThread);
         void handleSpinnerDistCodeTask(int state);
     }
@@ -48,14 +51,9 @@ public class LoadDistCodeRunnable implements Runnable {
         task.setSpinnerDistCodeThread(Thread.currentThread());
         int code = task.getSidoCode();
 
-
         // Make int position to String sidoCode
         String sidoCode = convertCode(code);
-        log.i("SidoCode: %s", sidoCode);
-
-        //List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
-        DistrictSpinnerAdapter adapter = task.getSpinnerAdapter();
-        if(adapter.getCount() > 0) adapter.removeAll();
+        List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
 
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
         Uri uri = Uri.fromFile(file);
@@ -65,13 +63,13 @@ public class LoadDistCodeRunnable implements Runnable {
 
             for(Opinet.DistrictCode obj : (List<Opinet.DistrictCode>)ois.readObject()) {
                 if(obj.getDistrictCode().substring(0, 2).equals(sidoCode)) {
-                    //distCodeList.add(obj);
-                    //adapter.addItem(obj.getDistrictName());
-                    adapter.addItem(obj);
+                    distCodeList.add(obj);
                 }
             }
 
-            task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_COMPLETE);
+            // Post(Set) value in SpinnerDistriceModel, which is notified to the parent fragment,
+            // SpinnerPrefDlgFragment as LiveData.
+            task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
 
         } catch (IOException e) {
             log.w("IOException: %s", e.getMessage());
@@ -84,7 +82,7 @@ public class LoadDistCodeRunnable implements Runnable {
 
     // Converts a position set by SidoSpinner to a Sido string format.
     private String convertCode(int code) {
-        String sidoCode;
+        String sidoCode = "01";
         switch(code) {
             case 0: sidoCode = "01"; break; case 1: sidoCode = "02"; break;
             case 2: sidoCode = "03"; break; case 3: sidoCode = "04"; break;
@@ -94,7 +92,7 @@ public class LoadDistCodeRunnable implements Runnable {
             case 10: sidoCode = "11"; break; case 11: sidoCode = "14"; break;
             case 12: sidoCode = "15"; break; case 13: sidoCode = "16"; break;
             case 14: sidoCode = "17"; break; case 15: sidoCode = "18"; break;
-            case 16: sidoCode = "19"; break; default: sidoCode = "01"; break;
+            case 16: sidoCode = "19"; break;
         }
 
         return sidoCode;

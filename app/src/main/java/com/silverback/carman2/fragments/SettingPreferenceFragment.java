@@ -28,9 +28,10 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Objects
     private DecimalFormat df;
-    private SpinnerDialogPreference spinnerPref;
+    //private SpinnerDialogPreference spinnerPref;
     private LoadDistCodeTask mTask;
     private String sidoName, sigunName, sigunCode;
+    private String distCode;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -39,7 +40,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
-        // Indicates that this fragment may initialize the contents of the Activity's standard options menu.
+        // Indicates that the fragment may initialize the contents of the Activity's standard options menu.
         setHasOptionsMenu(true);
 
         df = BaseActivity.getDecimalFormatInstance();
@@ -96,6 +97,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             DialogFragment dlgFragment = SpinnerPrefDlgFragment.newInstance(pref.getKey(), sigunCode);
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), null);
+
+
         } else {
             super.onDisplayPreferenceDialog(pref);
         }

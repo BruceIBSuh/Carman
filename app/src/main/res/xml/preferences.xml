@@ -44,7 +44,6 @@
         <com.silverback.carman2.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
             app:key="pref_dialog_district"
-            app:dialogMessage="Hello World"
             app:dialogTitle="@string/pref_dialog_district_title"
             app:positiveButtonText="Confirm"
             app:negativeButtonText="Cancel" />

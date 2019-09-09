@@ -68,6 +68,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         Bundle args = new Bundle();
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
+        args.putString("distCode", convJSONArrayToList().get(2));
         args.putString("name", vehicleName);
         //args.putString(Constants.ODOMETER, mileage);
         settingFragment = new SettingPreferenceFragment();
@@ -164,13 +165,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case Constants.ODOMETER:
+                /*
                 EditTextPreference mileage = settingFragment.findPreference(key);
                 log.i("EditTextPref: %s", mileage.getText());
                 if(!TextUtils.isEmpty(mileage.getText())) {
                     //mileage.setSummary(mileage.getText() + "km");
                     //mSettings.edit().putString(Constants.ODOMETER, mileage.getText()).apply();
                 }
-
+                */
                 break;
 
             case Constants.DISTRICT:

@@ -391,7 +391,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_evaluation" />
 
-    <RatingBar
+    <RatingBar style="?android:attr/ratingBarStyleSmall"
         android:id="@+id/ratingBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -400,8 +400,6 @@
         android:numStars="5"
         android:rating="0"
         android:stepSize="1"
-        android:scaleX=".7"
-        android:scaleY=".7"
         android:isIndicator="false"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
         app:layout_constraintStart_toEndOf="@+id/tv_label_rating"
@@ -411,12 +409,12 @@
         android:id="@+id/btn_reset_ratingbar"
         android:layout_width="40dp"
         android:layout_height="30dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginEnd="3dp"
         android:padding="0dp"
         android:text="@string/gas_btn_reset"
         android:textSize="@dimen/extraSmallText"
         app:layout_constraintBottom_toBottomOf="@+id/ratingBar"
-        app:layout_constraintStart_toEndOf="@+id/ratingBar"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/ratingBar" />
 
     <TextView

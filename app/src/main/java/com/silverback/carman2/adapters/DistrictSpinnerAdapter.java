@@ -25,8 +25,11 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private SpinnerViewHolder viewHolder;
 
-    // Constructor
+    private static class SpinnerViewHolder {
+        TextView distName;
+    }
 
+    // Constructor
     public DistrictSpinnerAdapter(Context context){
         mDistrictCodeList = new ArrayList<>();
         inflater = LayoutInflater.from(context);
@@ -80,15 +83,10 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
         return dropdownView;
     }
 
-    private class SpinnerViewHolder {
-        TextView distName;
-    }
-
+    // The following 2 methods are invoked in the parent Fragment, SpinnerPrefDlgFragment.
     public void addItem(Opinet.DistrictCode obj) {
         mDistrictCodeList.add(obj);
     }
-
-    // Invoked by postExecute() of SigunListTask to clear the currently populated items.
     public void removeAll() {
         mDistrictCodeList.clear();
     }

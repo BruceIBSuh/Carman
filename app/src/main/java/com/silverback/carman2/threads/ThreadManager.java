@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -17,6 +18,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
+import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
 import java.util.Queue;
@@ -188,17 +190,6 @@ public class ThreadManager {
 
                         break;
 
-                    case LOAD_SPINNER_DIST_CODE_COMPLETE:
-                        loadDistCodeTask = (LoadDistCodeTask)msg.obj;
-
-                        SpinnerPrefDlgFragment fm = loadDistCodeTask.getPrefDlgFragment();
-                        fm.getSigunAdapter().notifyDataSetChanged();
-                        fm.onDistrictTaskComplete(); // callback to notify the task finished.
-
-                        loadDistCodeTask.recycle();
-
-                        break;
-
                     case DOWNLOAD_NEAR_STATIONS_COMPLETED:
                         log.i("DOWNLOAD_NEAR_STATIONS_COMPLETED");
                         break;
@@ -334,13 +325,15 @@ public class ThreadManager {
     }
 
     // Retrieves Sigun list with a sido code given in SettingPreferenceActivity
-    public static LoadDistCodeTask loadSpinnerDistCodeTask(SpinnerPrefDlgFragment fm, int code) {
+    public static LoadDistCodeTask loadSpinnerDistCodeTask(
+            Context context, SpinnerDistrictModel model, int code) {
 
         LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mDecodeWorkQueue.poll();
-        if(task == null) task = new LoadDistCodeTask(fm.getContext());
+        if(task == null) task = new LoadDistCodeTask(context);
 
-        task.initSpinnerDistCodeTask(ThreadManager.sInstance, fm, code);
+        task.initSpinnerDistCodeTask(model, code);
         sInstance.mDecodeThreadPool.execute(task.getLoadDistCodeRunnable());
+
         return task;
     }
 
