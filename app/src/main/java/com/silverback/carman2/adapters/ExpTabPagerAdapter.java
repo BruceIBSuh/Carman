@@ -25,18 +25,12 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
             new GasManagerFragment(),
             new ServiceManagerFragment(),
             new StatStmtsFragment()
-            //new DummyFragment(),
-            //new DummyFragment(),
-            //new DummyFragment()
-
     };
 
 
     @Override
     public int getCount(){
         return fragments.length;
-        //return NUM_PAGES;
-
     }
 
 
@@ -44,11 +38,6 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int pos) {
         return fragments[pos];
-        //return new DummyFragment();
-    }
-
-    public static class DummyFragment extends Fragment {
-        public DummyFragment(){}
     }
 
     public Fragment[] getPagerFragments() {

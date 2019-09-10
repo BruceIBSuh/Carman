@@ -15,16 +15,18 @@ public class TabPagerTask extends ThreadTask implements TabPagerRunnable.ViewPag
     private FragmentManager fragmentManager;
     private PagerAdapterViewModel pagerModel;
     private String[] defaults;
+    private String jsonDistrict;
 
     // Constructor
     TabPagerTask() {
         super();
     }
 
-    void initViewPagerTask(PagerAdapterViewModel viewModel, FragmentManager fm, String[] defaults) {
+    void initViewPagerTask(PagerAdapterViewModel viewModel, FragmentManager fm, String[] defaults, String json) {
         fragmentManager = fm;
         pagerModel = viewModel;
         this.defaults = defaults;
+        jsonDistrict = json;
     }
 
     Runnable getViewPagerRunnable() {
@@ -39,7 +41,6 @@ public class TabPagerTask extends ThreadTask implements TabPagerRunnable.ViewPag
 
     @Override
     public void setViewPagerAdapter(ExpTabPagerAdapter adapter) {
-        log.i("FragmentStatePagerAdapter in background thread: %s", adapter);
         pagerModel.getPagerAdapter().postValue(adapter);
     }
 
@@ -52,5 +53,11 @@ public class TabPagerTask extends ThreadTask implements TabPagerRunnable.ViewPag
     public String[] getDefaults() {
         return defaults;
     }
+
+    @Override
+    public String getJsonDistrict() {
+        return jsonDistrict;
+    }
+
 
 }

@@ -52,6 +52,7 @@
 
             <!-- Take care of minHeight -->
             <!-- layout_marginTop must be equal to the height of TabLayout-->
+            <!-- Because of StatGraphFragment, which does not need ViewPager, use FrameLayout instead of ViewPager-->
             <FrameLayout
                 android:id="@+id/frame_top_fragments"
                 android:layout_width="match_parent"

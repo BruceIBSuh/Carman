@@ -68,7 +68,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         Bundle args = new Bundle();
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
-        args.putString("distCode", convJSONArrayToList().get(2));
+        //args.putString("distCode", convJSONArrayToList().get(2));
         args.putString("name", vehicleName);
         //args.putString(Constants.ODOMETER, mileage);
         settingFragment = new SettingPreferenceFragment();

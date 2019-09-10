@@ -63,12 +63,13 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
     static SpinnerPrefDlgFragment newInstance(String key, String code) {
 
         final SpinnerPrefDlgFragment fm = new SpinnerPrefDlgFragment();
+
         final Bundle args = new Bundle(2);
         args.putString(ARG_KEY, key);
         args.putString("distCode", code);
         fm.setArguments(args);
-        return fm;
 
+        return fm;
     }
 
 

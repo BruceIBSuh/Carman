@@ -100,8 +100,6 @@ public class BaseActivity extends AppCompatActivity {
             jsonString = jsonArray.toString();
         }
 
-
-
         List<String> distCodeList = new ArrayList<>();
         try {
             JSONArray jsonArray = new JSONArray(jsonString);

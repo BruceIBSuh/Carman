@@ -48,17 +48,19 @@ public class ExpenseActivity extends BaseActivity implements
     //private CarmanDatabase mDB;
     private ViewPager tabPager;
     private PagerAdapterViewModel pagerAdapterViewModel;
-    private TabPagerTask tabPagerTask;
     private ExpTabPagerAdapter tabPagerAdapter;
     private ExpenseViewPager expensePager;
     private ExpRecentPagerAdapter recentPagerAdapter;
+
+    private TabPagerTask tabPagerTask;
+    private LocationTask locationTask;
+    private ServiceRecyclerTask serviceRecyclerTask;
+
+    // UIs
     private AppBarLayout appBar;
     private TabLayout expTabLayout;
     private FrameLayout topFrame;
 
-
-    private LocationTask locationTask;
-    private ServiceRecyclerTask serviceRecyclerTask;
 
     // Fields
     private boolean isFirst = true;
@@ -67,6 +69,7 @@ public class ExpenseActivity extends BaseActivity implements
     //private boolean isLocationTask = false;
     private String pageTitle;
     private String jsonServiceItems;
+    private String jsonDistrict;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -93,6 +96,7 @@ public class ExpenseActivity extends BaseActivity implements
         LocationViewModel locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        jsonDistrict = mSettings.getString(Constants.DISTRICT, "0101");
 
         // Instantiate LocationTask to get the currentLocation, which is passed back to GasManagerFragment
         // via LocationViewModel
@@ -100,7 +104,7 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
         tabPagerTask = ThreadManager.startViewPagerTask(
-                pagerAdapterViewModel, getSupportFragmentManager(), getDefaultParams());
+                pagerAdapterViewModel, getSupportFragmentManager(), getDefaultParams(), jsonDistrict);
 
         // Create ViewPager for last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
@@ -108,15 +112,16 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+        /*
         expensePager.setAdapter(recentPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
+        */
 
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then lauch LocationTask to have
         // any near station within MIN_RADIUS, if any.
         pagerAdapterViewModel.getPagerAdapter().observe(this, adapter -> {
-            log.i("PagerAdapterViewModel: %s", adapter.getItem(0));
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             expTabLayout.setupWithViewPager(tabPager);
@@ -125,12 +130,9 @@ public class ExpenseActivity extends BaseActivity implements
 
             // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
             // attach it in the top FrameLayout.
-            /*
             expensePager.setAdapter(recentPagerAdapter);
             expensePager.setCurrentItem(0);
             topFrame.addView(expensePager);
-
-             */
         });
 
     }

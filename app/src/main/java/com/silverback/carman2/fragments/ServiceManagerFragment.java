@@ -82,6 +82,7 @@ public class ServiceManagerFragment extends Fragment implements
     private ImageButton btnFavorite;
 
     // Fields
+    private String distCode;
     private int itemPos;
     private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
@@ -95,6 +96,11 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(getArguments() != null) {
+            distCode = getArguments().getString("distCode");
+            log.i("District Code in ServiceManagerFragment: %s",distCode);
+        }
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
@@ -286,7 +292,7 @@ public class ServiceManagerFragment extends Fragment implements
                     Toast.makeText(getActivity(), getString(R.string.toast_remove_favorite_service), Toast.LENGTH_SHORT).show();
 
                 } else {
-                    AddFavoriteDialogFragment.newInstance(serviceName, 2).show(getFragmentManager(), null);
+                    AddFavoriteDialogFragment.newInstance(serviceName, distCode, 2).show(getFragmentManager(), null);
                 }
 
                 break;
