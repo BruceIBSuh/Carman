@@ -8,12 +8,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.widget.TextView;
 
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
-import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
@@ -90,6 +88,7 @@ public class ThreadManager {
     //private final Queue<StationInfoTask> mStationInfoTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     //private final Queue<ClockTask> mClockTaskQueue;
+    private final Queue<ThreadTask> mTaskWorkQueue;
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -115,6 +114,8 @@ public class ThreadManager {
         mDecodeWorkQueue = new LinkedBlockingQueue<>();
 
         // Queues of tasks, which is handed to ThreadPool.
+        mTaskWorkQueue = new LinkedBlockingQueue<>();
+
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         //mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
@@ -313,7 +314,7 @@ public class ThreadManager {
     // time.
     public static SaveDistCodeTask downloadOpinetDistCodeTask(Context context) {
 
-        SaveDistCodeTask task = (SaveDistCodeTask)sInstance.mDownloadWorkQueue.poll();
+        SaveDistCodeTask task = (SaveDistCodeTask)sInstance.mTaskWorkQueue.poll();
 
         if(task == null) {
             task = new SaveDistCodeTask(context);
@@ -328,7 +329,7 @@ public class ThreadManager {
     public static LoadDistCodeTask loadSpinnerDistCodeTask(
             Context context, SpinnerDistrictModel model, int code) {
 
-        LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mDecodeWorkQueue.poll();
+        LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mTaskWorkQueue.poll();
         if(task == null) task = new LoadDistCodeTask(context);
 
         task.initSpinnerDistCodeTask(model, code);
@@ -341,7 +342,7 @@ public class ThreadManager {
     // file location.
     public static PriceTask startPriceTask(Activity activity, String distCode) {
 
-        PriceTask priceTask = (PriceTask)sInstance.mDownloadWorkQueue.poll();
+        PriceTask priceTask = (PriceTask)sInstance.mTaskWorkQueue.poll();
 
         if(priceTask == null) {
             priceTask = new PriceTask(activity);
@@ -359,7 +360,7 @@ public class ThreadManager {
     public static TabPagerTask startViewPagerTask(
             PagerAdapterViewModel model, FragmentManager fragmentManager, String[] defaults, String json){
 
-        TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mDecodeWorkQueue.poll();
+        TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mTaskWorkQueue.poll();
 
         if(tabPagerTask == null) {
             tabPagerTask = new TabPagerTask();
@@ -373,7 +374,7 @@ public class ThreadManager {
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
-        LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
+        LocationTask locationTask = (LocationTask)sInstance.mTaskWorkQueue.poll();
 
         if(locationTask == null) {
             locationTask = new LocationTask(context);
@@ -391,7 +392,7 @@ public class ThreadManager {
     public static StationListTask startStationListTask(
             Context context, StationListViewModel model, Location location, String[] params) {
 
-        StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
+        StationListTask stationListTask = (StationListTask)sInstance.mTaskWorkQueue.poll();
 
         if(stationListTask == null) {
             stationListTask = new StationListTask();
@@ -403,9 +404,30 @@ public class ThreadManager {
         return stationListTask;
     }
 
+    public static GeocoderReverseTask startReverseGeocoderTask(Context context, LocationViewModel model, Location location) {
+
+        GeocoderReverseTask geocoderReverseTask = (GeocoderReverseTask)sInstance.mTaskWorkQueue.poll();
+        if(geocoderReverseTask == null) geocoderReverseTask = new GeocoderReverseTask(context);
+
+        geocoderReverseTask.initGeocoderReverseTask(model, location);
+        sInstance.mDecodeThreadPool.execute(geocoderReverseTask.getGeocoderRunnable());
+        return geocoderReverseTask;
+    }
+
+    public static GeocoderTask startGeocoderTask(Context context, LocationViewModel model, String addrs) {
+        GeocoderTask geocoderTask = (GeocoderTask)sInstance.mTaskWorkQueue.poll();
+        if(geocoderTask == null) geocoderTask = new GeocoderTask(context);
+
+        geocoderTask.initGeocoderTask(model, addrs);
+        sInstance.mDownloadThreadPool.execute(geocoderTask.getGeocoderRunnable());
+
+        return geocoderTask;
+
+    }
+
     public static ServiceRecyclerTask startServiceRecyclerTask (PagerAdapterViewModel model, String json) {
 
-        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mDecodeWorkQueue.poll();
+        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mTaskWorkQueue.poll();
         if(recyclerTask == null) {
             recyclerTask = new ServiceRecyclerTask();
         }

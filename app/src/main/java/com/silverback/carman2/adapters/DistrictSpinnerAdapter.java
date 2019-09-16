@@ -43,7 +43,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
 
     @Override
     public Opinet.DistrictCode getItem(int position) {
-        return mDistrictCodeList.get(position) ;
+        return mDistrictCodeList.get(position);
     }
 
     @Override

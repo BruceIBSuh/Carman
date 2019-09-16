@@ -50,38 +50,70 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:text="@string/dialog_service_favorite_region"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_title" />
 
+    <TextView
+        android:id="@+id/tv_sido"
+        android:visibility="gone"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:gravity="center"
+        app:layout_constraintBottom_toTopOf="@+id/tv_label_address"
+        app:layout_constraintEnd_toStartOf="@+id/tv_sigun"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_region"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_region"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/tv_sigun"
+        android:visibility="gone"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_sido"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tv_sido"
+        app:layout_constraintTop_toTopOf="@+id/tv_sido" />
+
     <Spinner
         android:id="@+id/spinner_sido"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/smallText"
+        android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_region"
+        app:layout_constraintEnd_toStartOf="@+id/spinner_sigun"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_label_region"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_region" />
+        app:layout_constraintTop_toTopOf="@+id/tv_label_region"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Spinner
         android:id="@+id/spinner_sigun"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/spinner_sido"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/spinner_sido"
         app:layout_constraintTop_toTopOf="@+id/spinner_sido" />
 
     <TextView
         android:id="@+id/tv_label_address"
-        android:labelFor="@id/et_addrs_detail"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:labelFor="@id/et_addrs_detail"
         android:text="@string/dialog_service_favorite_address"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_region" />
@@ -90,17 +122,16 @@
         android:id="@+id/et_addrs_detail"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
-        android:padding="5dp"
         android:background="@drawable/bg_view_outfocus"
         android:ems="10"
         android:inputType="textPersonName"
+        android:padding="5dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_address"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/spinner_sido"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_address"
         app:layout_constraintTop_toTopOf="@+id/tv_label_address"
         app:layout_constraintVertical_bias="0.0"
         tools:ignore="autofill" />
@@ -110,9 +141,8 @@
         android:layout_width="60dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
         android:text="@string/dialog_service_favorite_name"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_address" />
@@ -124,36 +154,35 @@
         android:minWidth="100dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_brand"
-        app:layout_constraintStart_toStartOf="@+id/spinner_sido"
+        app:layout_constraintStart_toStartOf="@+id/et_addrs_detail"
         app:layout_constraintTop_toTopOf="@+id/tv_label_brand" />
 
     <TextView
         android:id="@+id/tv_label_rating"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="32dp"
         android:minWidth="80dp"
         android:text="@string/svc_label_evaluation"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_brand"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="@+id/tv_label_region"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_brand" />
 
     <RatingBar
         android:id="@+id/rb_service"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:padding="0dp"
-        android:numStars="5"
-        android:rating="0"
-        android:stepSize="1"
+        android:layout_width="242dp"
+        android:layout_height="55dp"
         android:isIndicator="false"
+        android:numStars="5"
+        android:padding="0dp"
+        android:rating="0"
         android:scaleX=".5"
         android:scaleY=".5"
+        android:stepSize="1"
         android:translationX="-50dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
+        app:layout_constraintEnd_toStartOf="@+id/btn_reset_ratingbar"
         app:layout_constraintStart_toEndOf="@+id/tv_label_rating"
         app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
 
@@ -161,25 +190,24 @@
         android:id="@+id/btn_reset_ratingbar"
         android:layout_width="40dp"
         android:layout_height="30dp"
-        android:layout_marginEnd="3dp"
+        android:layout_marginEnd="8dp"
         android:padding="0dp"
         android:text="@string/gas_btn_reset"
-        android:textSize="@dimen/extraSmallText"
-        app:layout_constraintTop_toTopOf="@+id/rb_service"
+        android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/rb_service"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/rb_service" />
 
     <TextView
         android:id="@+id/tv_comment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="8dp"
         android:labelFor="@id/et_comment"
         android:text="@string/tv_label_comment"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/largeText"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/tv_label_rating"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_rating" />
 
     <EditText
@@ -191,11 +219,11 @@
         android:gravity="start|top"
         android:inputType="textMultiLine"
         android:minHeight="100dp"
-        android:padding="5dp"
+        android:padding="0dp"
         android:textSize="@dimen/smallText"
-        app:layout_constraintTop_toBottomOf="@+id/tv_comment"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_comment"
         tools:ignore="AutoFill" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
