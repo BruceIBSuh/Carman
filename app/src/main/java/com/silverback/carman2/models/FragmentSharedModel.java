@@ -21,6 +21,8 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertResult = new MutableLiveData<>();
 
+    private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
+
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
@@ -70,6 +72,14 @@ public class FragmentSharedModel extends ViewModel {
     }
     public LiveData<Boolean> getAlert() {
         return alertResult;
+    }
+
+    // Commmunicate b/w AddFavoriteDialogFragment and ServiceManagerFragment
+    public void setServiceLocation(SparseArray sparseArray) {
+        svcLocation.setValue(sparseArray);
+    }
+    public LiveData<SparseArray> getServiceLocation() {
+        return svcLocation;
     }
 
 

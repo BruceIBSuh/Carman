@@ -60,8 +60,9 @@
         android:visibility="gone"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:gravity="center"
+        android:layout_marginStart="16dp"
+        android:gravity="start"
+        android:textSize="@dimen/largeText"
         app:layout_constraintBottom_toTopOf="@+id/tv_label_address"
         app:layout_constraintEnd_toStartOf="@+id/tv_sigun"
         app:layout_constraintHorizontal_bias="0.5"
@@ -75,7 +76,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:gravity="center"
+        android:gravity="start"
+        android:textSize="@dimen/largeText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_sido"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -86,7 +88,7 @@
         android:id="@+id/spinner_sido"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_region"
         app:layout_constraintEnd_toStartOf="@+id/spinner_sigun"
         app:layout_constraintHorizontal_bias="0.5"
@@ -171,8 +173,9 @@
 
     <RatingBar
         android:id="@+id/rb_service"
-        android:layout_width="242dp"
-        android:layout_height="55dp"
+        android:layout_width="wrap_content"
+        android:layout_height="45dp"
+        android:layout_marginStart="16dp"
         android:isIndicator="false"
         android:numStars="5"
         android:padding="0dp"
@@ -182,7 +185,6 @@
         android:stepSize="1"
         android:translationX="-50dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
-        app:layout_constraintEnd_toStartOf="@+id/btn_reset_ratingbar"
         app:layout_constraintStart_toEndOf="@+id/tv_label_rating"
         app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
 
@@ -203,7 +205,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:labelFor="@id/et_comment"
+        android:labelFor="@id/et_service_comment"
         android:text="@string/tv_label_comment"
         android:textSize="@dimen/largeText"
         android:textStyle="bold"
@@ -211,7 +213,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_label_rating" />
 
     <EditText
-        android:id="@+id/et_comment"
+        android:id="@+id/et_service_comment"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
@@ -219,7 +221,7 @@
         android:gravity="start|top"
         android:inputType="textMultiLine"
         android:minHeight="100dp"
-        android:padding="0dp"
+        android:padding="5dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

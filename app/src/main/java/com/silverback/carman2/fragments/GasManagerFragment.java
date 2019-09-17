@@ -168,7 +168,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvExtraPaid = localView.findViewById(R.id.tv_extra);
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
         ratingBar = localView.findViewById(R.id.ratingBar);
-        etComment = localView.findViewById(R.id.et_comment);
+        etComment = localView.findViewById(R.id.et_service_comment);
         btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
 
         tvDateTime.setText(date);
@@ -429,7 +429,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
 
-            // Upload the rating and comments to FireStore
+            // FireStore Process to upload the rating and comments with Station ID.
             if(ratingBar.getRating() > 0) {
                 log.i("RatingBar: %s", ratingBar.getRating());
                 Map<String, Object> ratingData = new HashMap<>();
@@ -451,7 +451,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
 
             // Add ranting or comments to the Firestore, if any.
-            if(!TextUtils.isEmpty(etComment.getText()   )) {
+            if(!TextUtils.isEmpty(etComment.getText())) {
                 Map<String, Object> commentData = new HashMap<>();
                 commentData.put("timestamp", FieldValue.serverTimestamp());
                 commentData.put("name", nickname);

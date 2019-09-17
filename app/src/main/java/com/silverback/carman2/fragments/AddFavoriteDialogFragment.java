@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.app.Dialog;
+import android.location.Location;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -11,10 +12,13 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -22,6 +26,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.SpinnerDistrictModel;
@@ -40,7 +45,15 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(AddFavoriteDialogFragment.class);
 
+    // Constants
+    static final int LOCATION = 0;
+    static final int ADDRESS = 1;
+    static final int RATING = 2;
+    static final int COMMENT = 3;
+
+
     // Objects
+    private FragmentSharedModel fragmentModel;
     private LoadDistCodeTask spinnerTask;
     private GeocoderReverseTask geocoderReverseTask;
     private GeocoderTask geocoderTask;
@@ -48,14 +61,17 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private SpinnerDistrictModel distModel;
     private LocationViewModel locationModel;
     private DistrictSpinnerAdapter sigunAdapter;
-
+    private AlertDialog dialog;
+    private Location mLocation;
+    private String mAddress;
     private String providerName;
     private String distCode;
 
     // UIs
     private Spinner sidoSpinner, sigunSpinner;
     private TextView tvSido, tvSigun;
-    private EditText etAddrs;
+    private EditText etAddrs, etServiceComment;
+    private RatingBar ratingBar;
 
     // Fields
     private int category;
@@ -89,6 +105,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         category = getArguments().getInt("category");
 
         // ViewModel to fetch the sigun list of a given sido name
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
 
@@ -105,6 +122,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // GeocoderReverseTask is initiated to get the current address.
         locationModel.getLocation().observe(this, location->{
             log.i("Current Location: %s", location);
+            mLocation = location;
             geocoderReverseTask = ThreadManager.startReverseGeocoderTask(getContext(), locationModel, location);
 
         });
@@ -114,9 +132,12 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // the remaining address names.
         locationModel.getAddress().observe(this, address -> {
             log.i("Address: %s", address);
+            mAddress = address;
+
             final String[] arrAddrs = TextUtils.split(address, "\\s+");
             final StringBuilder strbldr = new StringBuilder();
             for(int i = 2; i < arrAddrs.length; i++) strbldr.append(arrAddrs[i]).append(" ");
+
             tvSido.setText(arrAddrs[0]);
             tvSigun.setText(arrAddrs[1]);
             etAddrs.setText(strbldr.toString());
@@ -127,8 +148,16 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             sigunSpinner.setVisibility(View.GONE);
         });
 
+        // Fetch the Location based on a given address name by using Geocoder, then pass the value
+        // to ServiceManagerFragment and close the dialog.
         locationModel.getGeocoderLocation().observe(this, location -> {
-            log.i("Geocoder Location: %s, %s", location.getLatitude(), location.getLongitude());
+            mLocation = location;
+            // Pass the location and address of an service provider to ServiceManagerFragment
+            // using FragmentSharedModel which enables Fragments to communicate each other.
+            log.i("Geocoder Location: %s, %s", mLocation, mAddress);
+            sendServiceLocation();
+
+            dialog.dismiss();
         });
 
     }
@@ -138,8 +167,8 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         //LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View localView = View.inflate(getContext(), R.layout.dialog_add_favorite, null);
         //View localView = inflater.inflate(R.layout.dialog_add_favorite, null);
+        View localView = View.inflate(getContext(), R.layout.dialog_add_favorite, null);
         setCancelable(false);
 
         TextView tvTitle = localView.findViewById(R.id.tv_title);
@@ -149,6 +178,10 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         sidoSpinner = localView.findViewById(R.id.spinner_sido);
         sigunSpinner= localView.findViewById(R.id.spinner_sigun);
         etAddrs = localView.findViewById(R.id.et_addrs_detail);
+        ratingBar = localView.findViewById(R.id.rb_service);
+        Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
+        etServiceComment = localView.findViewById(R.id.et_service_comment);
+
 
         sidoSpinner.setOnItemSelectedListener(this);
         sigunSpinner.setOnItemSelectedListener(this);
@@ -156,6 +189,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             isCurrentLocation = true;
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
         });
+        resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
 
         tvTitle.setText(providerName);
 
@@ -175,32 +209,44 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
 
         // Sigun Spinner and Adapter
         sigunAdapter = new DistrictSpinnerAdapter(getContext());
-        //sigunSpinner.setAdapter(sigunAdapter);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(localView)
-                .setNegativeButton(R.string.dialog_btn_cancel, (dialog, which) -> {})
-                .setPositiveButton(R.string.dialog_btn_confirm, (dialog, which) -> {
+        dialog = new AlertDialog.Builder(getActivity())
+                .setView(localView)
+                .setPositiveButton(R.string.dialog_btn_confirm, null)
+                .setNegativeButton(R.string.dialog_btn_cancel, null)
+                .create();
 
-                    // Refactor required b/c the dialog closes before receiving the locaiton value.
-                    if(!isCurrentLocation) {
-                        StringBuilder strbldr = new StringBuilder();
+        // Separately handle the positive button for preventing the dialog from closing when pressed
+        // to receive the location by getGeocoderLocation of LocationViewModel. On fetching the value,
+        // close the dialog using dismiss();
+        dialog.setOnShowListener(dialogInterface -> {
+            Button btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            btn.setOnClickListener(view -> {
+                if(isCurrentLocation && mLocation != null && mAddress != null) {
+                    // Pass the location and address of an service provider to ServiceManagerFragment
+                    // using FragmentSharedModel which enables Fragments to communicate each other.
+                    log.i("Current Location process: %s, %s", mLocation, mAddress);
+                    sendServiceLocation();
+                    dialog.dismiss();
 
-                        strbldr.append(sidoSpinner.getSelectedItem()).append(" ")
-                                .append(sigunAdapter.getItem(tmpSigunPos).getDistrictName()).append(" ")
-                                .append(etAddrs.getText());
+                } else {
+                    mAddress = sidoSpinner.getSelectedItem() + " "
+                            + sigunAdapter.getItem(tmpSigunPos).getDistrictName() + " "
+                            + etAddrs.getText();
 
-                        geocoderTask = ThreadManager.startGeocoderTask(getContext(), locationModel, strbldr.toString());
-                    }
-                });
+                    // Initiate Geocoder to fetch Location based upon a given address name, the reuslt
+                    // of which is to be sent to getGeocoderLocation of LocationViewModel as a LiveData.
+                    geocoderTask = ThreadManager.startGeocoderTask(getContext(), locationModel, mAddress);
 
+                }
+            });
+        });
 
-        return builder.create();
+        return dialog;
     }
 
     @Override
     public void onStop() {
-        log.i("DialogFragment");
         if(spinnerTask != null) spinnerTask = null;
         if(locationTask != null) locationTask = null;
         if(geocoderReverseTask != null) geocoderReverseTask = null;
@@ -223,4 +269,16 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
+
+    private void sendServiceLocation() {
+
+        SparseArray<Object> sparseArray = new SparseArray<>();
+        sparseArray.put(LOCATION, mLocation);
+        sparseArray.put(ADDRESS, mAddress);
+        sparseArray.put(RATING, ratingBar.getRating());
+        sparseArray.put(COMMENT, etServiceComment.getText().toString());
+
+        fragmentModel.setServiceLocation(sparseArray);
+    }
+
 }

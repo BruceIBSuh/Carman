@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.SparseArray;
@@ -57,7 +58,7 @@ public class ServiceManagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
 
     // Objects
-    private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
+    //private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
@@ -71,9 +72,12 @@ public class ServiceManagerFragment extends Fragment implements
     private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
     private JSONArray jsonServiceArray;
+    private Location mLocation;
+    private String mAddress;
 
 
     // UIs
+    private View localView;
     private RelativeLayout relativeLayout;
     private RecyclerView recyclerServiceItems;
     private ProgressBar progbar;
@@ -87,6 +91,8 @@ public class ServiceManagerFragment extends Fragment implements
     private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isFavorite;
+    private float svcRating;
+    private String svcComment;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -113,7 +119,7 @@ public class ServiceManagerFragment extends Fragment implements
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
-        sparseServiceArray = new SparseArray<>();
+        //sparseServiceArray = new SparseArray<>();
 
         //The service item data is saved in SharedPreferences as String type, which should be
         // converted to JSONArray.
@@ -201,9 +207,17 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
-        // Communicate b/w RecyclerView.ViewHolder and item memo in MemoPadFragment
-        fragmentSharedModel.getSelectedMenu().observe(this, data ->
-                mAdapter.notifyItemChanged(itemPos, data));
+        // Communicate b/w RecyclerView.ViewHolder and the item memo in MemoPadFragment
+        fragmentSharedModel.getSelectedMenu().observe(this, data -> mAdapter.notifyItemChanged(itemPos, data));
+
+        // Communicate b/w AddFavoriteDialogFragment and ServiceManagerFragment.
+        fragmentSharedModel.getServiceLocation().observe(this, sparseArray -> {
+            mLocation = (Location)sparseArray.get(AddFavoriteDialogFragment.LOCATION);
+            mAddress = (String)sparseArray.get(AddFavoriteDialogFragment.ADDRESS);
+            svcRating = (Float)sparseArray.get(AddFavoriteDialogFragment.RATING);
+            svcComment = (String)sparseArray.get(AddFavoriteDialogFragment.COMMENT);
+            log.i("Service Locaiton: %s, %s, %s, %s", mLocation, mAddress, svcRating, svcComment);
+        });
 
     }
 
@@ -212,7 +226,7 @@ public class ServiceManagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
 
-        View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
+        localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
         View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
@@ -244,7 +258,6 @@ public class ServiceManagerFragment extends Fragment implements
         recyclerServiceItems.setHasFixedSize(true);
         //recyclerServiceItems.setAdapter(mAdapter);
 
-        // Inflate the layout for this fragment
         return localView;
     }
 
@@ -253,7 +266,6 @@ public class ServiceManagerFragment extends Fragment implements
         super.onResume();
         // Notify ExpensePagerFragment of this ServiceManagerFragment as the current fragment
         fragmentSharedModel.setCurrentFragment(this);
-
     }
 
 
@@ -304,7 +316,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    // ServiceItemList.OnParentFragmentListener invokes this method
+    // ExpServiceItemAdapter.OnParentFragmentListener invokes the following 4 methods
     // to pop up NumberPadFragment and input the amount of expense in a service item.
     @Override
     public void inputItemCost(String title, TextView targetView, int position) {
@@ -403,7 +415,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
-            Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+            Snackbar.make(localView, getString(R.string.toast_save_success), Snackbar.LENGTH_SHORT).show();
             return true;
         } else return false;
 
