@@ -124,7 +124,6 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             log.i("Current Location: %s", location);
             mLocation = location;
             geocoderReverseTask = ThreadManager.startReverseGeocoderTask(getContext(), locationModel, location);
-
         });
 
         // Fetch the current address and split it for inputting sido and sigun name respectively into
@@ -182,7 +181,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
         etServiceComment = localView.findViewById(R.id.et_service_comment);
 
-
+        tvTitle.setText(providerName);
         sidoSpinner.setOnItemSelectedListener(this);
         sigunSpinner.setOnItemSelectedListener(this);
         tvCurrentLocation.setOnClickListener(view -> {
@@ -190,8 +189,6 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
         });
         resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
-
-        tvTitle.setText(providerName);
 
         String sidoCode = distCode.substring(0, 2);
         String sigunCode = distCode.substring(2, 4);

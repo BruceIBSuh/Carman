@@ -83,6 +83,7 @@ public class ExpenseActivity extends BaseActivity implements
         expTabLayout = findViewById(R.id.tab_expense);
         topFrame = findViewById(R.id.frame_top_fragments);
         tabPager = findViewById(R.id.tabpager);
+
         // Set the toolbar as the working action bar
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -106,17 +107,12 @@ public class ExpenseActivity extends BaseActivity implements
         tabPagerTask = ThreadManager.startViewPagerTask(
                 pagerAdapterViewModel, getSupportFragmentManager(), getDefaultParams(), jsonDistrict);
 
-        // Create ViewPager for last 5 recent expense statements in the top frame.
+        // Create ViewPager for the last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
         // not ViewPager.
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
-        /*
-        expensePager.setAdapter(recentPagerAdapter);
-        expensePager.setCurrentItem(0);
-        topFrame.addView(expensePager);
-        */
 
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then lauch LocationTask to have
