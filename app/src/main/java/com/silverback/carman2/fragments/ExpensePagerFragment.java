@@ -101,7 +101,7 @@ public class ExpensePagerFragment extends Fragment {
                 log.i("GasManagerFragment");
                 mDB.gasManagerModel().loadRecentGasData().observe(this, data -> {
                     gasDataList = data;
-                    lastInfo = (data.size() > numPage)? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
+                    lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
                     log.i("Last Info: %s", lastInfo);
@@ -111,7 +111,7 @@ public class ExpensePagerFragment extends Fragment {
                 log.i("ServiceManagerFragment");
                 mDB.serviceManagerModel().loadRecentServiceData().observe(this, data -> {
                     serviceList = data;
-                    lastInfo = (data.size() > numPage)?displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
+                    lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
                 });

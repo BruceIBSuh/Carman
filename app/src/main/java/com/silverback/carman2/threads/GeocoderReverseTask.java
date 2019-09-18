@@ -31,6 +31,13 @@ public class GeocoderReverseTask extends ThreadTask implements GeocoderReverseRu
         return mGeocoderReverseRunnable;
     }
 
+    void recycle() {}
+
+    @Override
+    public Location getLocation() {
+        return location;
+    }
+
     @Override
     public void setGeocoderThread(Thread thread) {
         setCurrentThread(thread);
@@ -42,7 +49,20 @@ public class GeocoderReverseTask extends ThreadTask implements GeocoderReverseRu
     }
 
     @Override
-    public Location getLocation() {
-        return location;
+    public void handleGeocoderReverseTask(int state) {
+        int outstate = -1;
+        switch(state) {
+            case GeocoderReverseRunnable.GEOCODER_REVERSE_SUCCESS:
+                outstate = ThreadManager.GEOCODER_REVERSE_TASK_COMPLETED;
+                break;
+
+            case GeocoderReverseRunnable.GEOCODER_REVERSE_FAIL:
+                outstate = ThreadManager.GEOCODER_REVERSE_TASK_FAILED;
+                break;
+        }
+
+        sThreadManager.handleState(this, outstate);
     }
+
+
 }

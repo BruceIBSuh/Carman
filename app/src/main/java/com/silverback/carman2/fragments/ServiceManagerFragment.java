@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,13 +23,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -46,7 +48,9 @@ import org.json.JSONException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -61,6 +65,7 @@ public class ServiceManagerFragment extends Fragment implements
     //private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
+    private FirebaseFirestore fireStore;
     private FragmentSharedModel fragmentSharedModel;
     private PagerAdapterViewModel adapterModel;
 
@@ -68,16 +73,13 @@ public class ServiceManagerFragment extends Fragment implements
     private MemoPadFragment memoPad;
 
     private FavoriteGeofenceHelper geofenceHelper;
-    //private Calendar calendar;
     private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
     private JSONArray jsonServiceArray;
     private Location mLocation;
     private String mAddress;
 
-
     // UIs
-    private View localView;
     private RelativeLayout relativeLayout;
     private RecyclerView recyclerServiceItems;
     private ProgressBar progbar;
@@ -91,8 +93,10 @@ public class ServiceManagerFragment extends Fragment implements
     private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isFavorite;
+
     private float svcRating;
     private String svcComment;
+    private String svcDocumentId;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -110,7 +114,8 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        if(mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
 
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         adapterModel = ViewModelProviders.of(getActivity()).get(PagerAdapterViewModel.class);
@@ -119,6 +124,7 @@ public class ServiceManagerFragment extends Fragment implements
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
+
         //sparseServiceArray = new SparseArray<>();
 
         //The service item data is saved in SharedPreferences as String type, which should be
@@ -152,6 +158,8 @@ public class ServiceManagerFragment extends Fragment implements
             }
         }
         */
+
+
 
 
 
@@ -226,7 +234,7 @@ public class ServiceManagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
 
-        localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
+        View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
         View boxview = localView.findViewById(R.id.view_boxing);
         log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
@@ -264,7 +272,6 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        // Notify ExpensePagerFragment of this ServiceManagerFragment as the current fragment
         fragmentSharedModel.setCurrentFragment(this);
     }
 
@@ -409,14 +416,38 @@ public class ServiceManagerFragment extends Fragment implements
             log.i("ServicedItemEntity: %s", obj.itemName);
         }
 
+
         // Insert data into both ExpenseBaseEntity and ServiceManagerEntity at the same time
         // using @Transaction in ServiceManagerDao.
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
 
         if(rowId > 0) {
+            // Save the current mileage in the SharedPreferences to keep it in common.
             mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
-            Snackbar.make(localView, getString(R.string.toast_save_success), Snackbar.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+
+            // Upload the service provider data to Firestore.
+            Map<String, Object> svcData = new HashMap<>();
+            svcData.put("svcName", etStnName.getText().toString());
+            svcData.put("svcCode", "BluHands");
+            svcData.put("address", mAddress);
+            svcData.put("xCoord", mLocation.getLongitude());
+            svcData.put("yCoord", mLocation.getLatitude());
+
+            DocumentReference doc = fireStore.collection("svc_center").document();
+            doc.set(svcData).addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    log.i("upload service data completed");
+                    uploadRatingComment(doc.getId());
+
+                } else {
+                    log.i("upload service data failed");
+                }
+            });
+
+
             return true;
+
         } else return false;
 
     }
@@ -440,6 +471,42 @@ public class ServiceManagerFragment extends Fragment implements
         return true;
     }
 
+    @SuppressWarnings("ConstantConditions")
+    private void uploadRatingComment(String svcId) {
+        if(svcRating > 0) {
+            Map<String, Object> ratingData = new HashMap<>();
+            ratingData.put("eval_num", FieldValue.increment(1));
+            ratingData.put("eval_sum", FieldValue.increment(svcRating));
 
+            DocumentReference docRef = fireStore.collection("svc_eval").document(svcId);
+            docRef.get().addOnSuccessListener(snapshot -> {
+                if(snapshot.exists() && snapshot.get("eval_num") != null) {
+                    log.i("update rating");
+                    docRef.update(ratingData);
 
+                } else {
+                    log.i("set rating if no rating field exists");
+                    docRef.set(ratingData);
+                }
+            });
+        }
+
+        if(!svcComment.isEmpty()) {
+            Map<String, Object> commentData = new HashMap<>();
+            commentData.put("timestamp", FieldValue.serverTimestamp());
+            commentData.put("name", mSettings.getString(Constants.VEHICLE_NAME, null));
+            commentData.put("comments", svcComment);
+            commentData.put("rating", svcRating);
+
+            fireStore.collection("svc_eval").document(svcId).collection("comments").add(commentData)
+                    .addOnCompleteListener(task -> {
+                        if(task.isSuccessful()) {
+                            log.e("Commments successfully uploaded");
+                            //isCommentUploaded = true;
+                        } else {
+                            log.e("Comments upload failed: %s", task.getException());
+                        }
+                    });
+        }
+    }
 }

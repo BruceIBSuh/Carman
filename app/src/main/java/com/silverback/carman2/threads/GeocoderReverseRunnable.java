@@ -17,16 +17,19 @@ public class GeocoderReverseRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeocoderReverseRunnable.class);
 
+    static final int GEOCODER_REVERSE_SUCCESS = 1;
+    static final int GEOCODER_REVERSE_FAIL = -1;
+
     // Objects
     private Context context;
     private GeocoderMethods geocoderTask;
     private Location location;
 
     interface GeocoderMethods {
+        Location getLocation();
         void setGeocoderThread(Thread thread);
         void setAddress(String addrs);
-        Location getLocation();
-
+        void handleGeocoderReverseTask(int state);
     }
 
     GeocoderReverseRunnable(Context context, GeocoderMethods methods) {
@@ -36,25 +39,31 @@ public class GeocoderReverseRunnable implements Runnable {
 
     @Override
     public void run() {
+        log.i("GeocoderReverseRunnable");
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         geocoderTask.setGeocoderThread(Thread.currentThread());
         location = geocoderTask.getLocation();
 
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
-        List<Address> addressList = null;
+        List<Address> addressList;
+
 
         try {
-            addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 3);
+            for(Address addrs : addressList) {
+                if(addrs != null) {
+                    String address = addrs.getAddressLine(0).substring(5);
+                    geocoderTask.setAddress(address);
+                    break;
+                }
+            }
+
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         } catch(IllegalArgumentException e) {
             log.e("IllegalArgumentException: %s", e.getMessage());
         }
 
-        if(addressList != null && addressList.size() > 0) {
-            log.i("Address: %s", addressList.get(0));
-            String address = addressList.get(0).getAddressLine(0).substring(5);
-            geocoderTask.setAddress(address);
-        }
+
     }
 }

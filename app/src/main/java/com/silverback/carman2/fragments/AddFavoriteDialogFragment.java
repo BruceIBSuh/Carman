@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 
@@ -21,11 +22,15 @@ import android.widget.EditText;
 import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
@@ -53,6 +58,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
 
 
     // Objects
+    private SharedPreferences mSettings;
     private FragmentSharedModel fragmentModel;
     private LoadDistCodeTask spinnerTask;
     private GeocoderReverseTask geocoderReverseTask;
@@ -66,6 +72,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private String mAddress;
     private String providerName;
     private String distCode;
+    private String nickname;
 
     // UIs
     private Spinner sidoSpinner, sigunSpinner;
@@ -103,6 +110,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         providerName = getArguments().getString("favoriteName");
         distCode = getArguments().getString("distCode");
         category = getArguments().getInt("category");
+        mSettings = ((ExpenseActivity)getActivity()).getSettings();
 
         // ViewModel to fetch the sigun list of a given sido name
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
@@ -122,8 +130,9 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // GeocoderReverseTask is initiated to get the current address.
         locationModel.getLocation().observe(this, location->{
             log.i("Current Location: %s", location);
-            mLocation = location;
             geocoderReverseTask = ThreadManager.startReverseGeocoderTask(getContext(), locationModel, location);
+            mLocation = location;
+
         });
 
         // Fetch the current address and split it for inputting sido and sigun name respectively into
@@ -182,13 +191,31 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         etServiceComment = localView.findViewById(R.id.et_service_comment);
 
         tvTitle.setText(providerName);
+
+        // Event Handlers
         sidoSpinner.setOnItemSelectedListener(this);
         sigunSpinner.setOnItemSelectedListener(this);
         tvCurrentLocation.setOnClickListener(view -> {
             isCurrentLocation = true;
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
         });
+
+        nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
         resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
+        ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
+            if(nickname.isEmpty() && rating > 0) {
+                ratingBar.setRating(0f);
+                Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
+            }
+        });
+
+        etServiceComment.setOnFocusChangeListener((view, b) -> {
+            if(b && TextUtils.isEmpty(nickname)) {
+                Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
+                view.clearFocus();
+            }
+        });
+
 
         String sidoCode = distCode.substring(0, 2);
         String sigunCode = distCode.substring(2, 4);
@@ -218,6 +245,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // close the dialog using dismiss();
         dialog.setOnShowListener(dialogInterface -> {
             Button btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+
             btn.setOnClickListener(view -> {
                 if(isCurrentLocation && mLocation != null && mAddress != null) {
                     // Pass the location and address of an service provider to ServiceManagerFragment
