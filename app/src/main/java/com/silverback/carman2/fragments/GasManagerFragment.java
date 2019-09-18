@@ -89,7 +89,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // UIs
     private ConstraintLayout constraintLayout;
     private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
-    private EditText etUnitPrice, etExtraExpense, etComment;
+    private EditText etUnitPrice, etExtraExpense, etGasComment;
     private ImageButton btnFavorite;
     private Button btnResetRating;
     private RatingBar ratingBar;
@@ -168,7 +168,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvExtraPaid = localView.findViewById(R.id.tv_extra);
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
         ratingBar = localView.findViewById(R.id.ratingBar);
-        etComment = localView.findViewById(R.id.et_service_comment);
+        etGasComment = localView.findViewById(R.id.et_service_comment);
         btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
 
         tvDateTime.setText(date);
@@ -185,7 +185,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         btnFavorite.setOnClickListener(view -> registerFavorite());
         btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
 
-        etComment.setOnFocusChangeListener((view, b) -> {
+        etGasComment.setOnFocusChangeListener((view, b) -> {
             nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
             if(b && TextUtils.isEmpty(nickname)) {
                 log.i("Comment required to have nickname");
@@ -194,16 +194,22 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         });
 
-        /*
-         * ViewModel listeners to communicate w/ other components running on worker threads as a LiveData.
-         * 1. LocationViewModel:
-         * 2. FragmentSharedModel:
-         *    - getSelectedValue()
-         *    - getAlert()
-         * 3. StationListViewModel:
-         *    - getCurrentStationLiveData():
-         *    - getStationLiveData():
-         */
+        nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
+        btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
+        ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
+            if(nickname.isEmpty() && rating > 0) {
+                ratingBar.setRating(0f);
+                Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
+            }
+        });
+
+        etGasComment.setOnFocusChangeListener((view, b) -> {
+            if(b && TextUtils.isEmpty(nickname)) {
+                Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
+                view.clearFocus();
+            }
+        });
+
 
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
@@ -284,10 +290,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onResume() {
         super.onResume();
-
-        // ViewModels to notify ExpensePagerFragment of the current fragment
         fragmentSharedModel.setCurrentFragment(this);
-
     }
 
     @Override
@@ -451,11 +454,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
 
             // Add ranting or comments to the Firestore, if any.
-            if(!TextUtils.isEmpty(etComment.getText())) {
+            if(!TextUtils.isEmpty(etGasComment.getText())) {
                 Map<String, Object> commentData = new HashMap<>();
                 commentData.put("timestamp", FieldValue.serverTimestamp());
                 commentData.put("name", nickname);
-                commentData.put("comments", etComment.getText().toString());
+                commentData.put("comments", etGasComment.getText().toString());
                 commentData.put("rating", ratingBar.getRating());
 
                 fireStore.collection("gas_eval").document(stnId).collection("comments").add(commentData)
@@ -523,4 +526,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         }
     }
+
+
 }

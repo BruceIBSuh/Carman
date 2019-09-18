@@ -50,6 +50,9 @@ public class ThreadManager {
     static final int RECYCLER_ADAPTER_SERVICE_COMPLETED = 140;
     static final int RECYCLER_ADAPTER_SERVICE_FAILED = -141;
 
+    static final int GEOCODER_REVERSE_TASK_COMPLETED = 150;
+    static final int GEOCODER_REVERSE_TASK_FAILED = -150;
+
     static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
     static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
@@ -219,6 +222,16 @@ public class ThreadManager {
 
                     case DOWNLOAD_STATION_INFO_FAILED:
                         recycleTask((StationInfoTask)msg.obj);
+                        break;
+
+                    case GEOCODER_REVERSE_TASK_COMPLETED:
+                        log.i("GeocoderReverseTask completed");
+                        recycleTask((GeocoderReverseTask)msg.obj);
+                        break;
+
+                    case GEOCODER_REVERSE_TASK_FAILED:
+                        log.i("GeocoderReverseTask Failed");
+                        recycleTask((GeocoderReverseTask)msg.obj);
                         break;
 
                     default:
@@ -405,7 +418,7 @@ public class ThreadManager {
     }
 
     public static GeocoderReverseTask startReverseGeocoderTask(Context context, LocationViewModel model, Location location) {
-
+        log.i("ReverseGeocoderTask initiated");
         GeocoderReverseTask geocoderReverseTask = (GeocoderReverseTask)sInstance.mTaskWorkQueue.poll();
         if(geocoderReverseTask == null) geocoderReverseTask = new GeocoderReverseTask(context);
 
@@ -439,92 +452,6 @@ public class ThreadManager {
     }
 
     /*
-    public static StationInfoTask startStationInfoTask(StationListViewModel model, String stnName, String stnId) {
-
-        StationInfoTask stationInfoTask = sInstance.mStationInfoTaskQueue.poll();
-        if(stationInfoTask == null) stationInfoTask = new StationInfoTask();
-
-        // Attach OnCompleteInfoTaskListener
-
-        if(sInstance.mStationInfoListener == null) {
-            try {
-                sInstance.mStationInfoListener = (OnStationInfoListener) fragment;
-            } catch (ClassCastException e) {
-                throw new ClassCastException(fragment + " must implement OnStationInfoTaskListener");
-            }
-        }
-
-        stationInfoTask.initStationTask(model, stnName, stnId);
-        sInstance.mDownloadThreadPool.execute(stationInfoTask.getStationMapInfoRunnable());
-
-        return stationInfoTask;
-    }
-    */
-
-
-    /*
-    public static StationInfoTask startStationInfoTask(Opinet.GasStnParcelable station) {
-
-        StationInfoTask stationInfoTask = sInstance.mStationInfoTaskQueue.poll();
-
-        if(stationInfoTask == null) {
-            stationInfoTask = new StationInfoTask();
-        }
-
-        stationInfoTask.initDownloadInfoTask(ThreadManager.sInstance, station);
-        sInstance.mDecodeThreadPool.execute(stationInfoTask.getStationInfoRunnable());
-
-        return stationInfoTask;
-    }
-    */
-
-    /*
-    public static StationListTask sortNearStationsTask(
-            OpinetStationListFragment fm, StationListView view, List<Opinet.GasStnParcelable> stationList) {
-
-        StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
-
-        if(stationListTask == null) {
-            stationListTask = new StationListTask(view.getContext());
-        }
-
-        stationListTask.initSortTask(ThreadManager.sInstance, fm, view, stationList);
-        sInstance.mDownloadThreadPool.execute(stationListTask.getStationListRunnable());
-
-        return stationListTask;
-    }
-
-    */
-
-
-    /*
-    public static ClockTask startClockTask(Context context, View view) {
-        ClockTask clockTask = sInstance.mClockTaskQueue.poll();
-        if(clockTask == null) clockTask = new ClockTask(context);
-        clockTask.initClockTask(ThreadManager.sInstance, view);
-        sInstance.mDecodeThreadPool.execute(clockTask.getClockRunnable());
-
-
-        return clockTask;
-    }
-    */
-
-
-    /*
-    public static void startBitmapTask(Context context, Uri imageUri, int width, int height) {
-
-        CoverImageDecodeTask decodeTask = (CoverImageDecodeTask)sInstance.mThreadTaskWorkQueue.poll();
-
-        if(decodeTask == null) {
-            decodeTask = new CoverImageDecodeTask(context);
-        }
-
-        decodeTask.initImageDecodeTask(ThreadManager.sInstance, imageUri, width, height);
-        sInstance.mDownloadThreadPool.execute(decodeTask.getImageDecodeRunnable());
-    }
-    */
-
-    /*
      * Recycles tasks by calling their internal recycle() method and then putting them back into
      * the task queue.
      */
@@ -534,16 +461,19 @@ public class ThreadManager {
             ((LocationTask) task).recycle();
             mLocationTaskQueue.offer((LocationTask) task);
 
-        }else if(task instanceof StationListTask) {
+        } else if(task instanceof StationListTask) {
             ((StationListTask) task).recycle();
             mStationListTaskQueue.offer((StationListTask) task);
             //mStationTaskListener = null;
             //if(mCurrentStationListener != null) mCurrentStationListener = null;
 
-        }else if(task instanceof StationInfoTask) {
+        } else if(task instanceof StationInfoTask) {
             ((StationInfoTask)task).recycle();
             //mStationInfoTaskQueue.offer((StationInfoTask)task);
             //mStationInfoListener = null;
+        } else if(task instanceof GeocoderReverseTask) {
+            ((GeocoderReverseTask)task).recycle();
+            mTaskWorkQueue.offer(task);
         }
 
     }
