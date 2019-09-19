@@ -56,7 +56,11 @@ public class StationListHolder extends RecyclerView.ViewHolder {
         tvName.setText(data.getStnName());
         tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
         tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
-        tvWashValue.setText(String.valueOf(data.getIsWash()));
+
+        String strCarwash = (data.getIsWash())?
+                context.getString(R.string.general_carwash_yes):
+                context.getString(R.string.general_carwash_no);
+        tvWashValue.setText(strCarwash);
     }
 
     private static int getGasStationImage(String name) {

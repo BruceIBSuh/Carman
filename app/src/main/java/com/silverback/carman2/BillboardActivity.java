@@ -3,7 +3,6 @@ package com.silverback.carman2;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
@@ -33,7 +32,7 @@ public class BillboardActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_billboard);
 
-        Toolbar toolbar = findViewById(R.id.toolbar_expense);
+        Toolbar toolbar = findViewById(R.id.toolbar_main);
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);
         ViewPager boardPager = findViewById(R.id.viewpager_board);
         appBar = findViewById(R.id.appBar);

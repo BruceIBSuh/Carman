@@ -68,18 +68,6 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     /*
-     * Initiate StationListTask with the params passed from GeneralFragment.
-     * @param defaults fuel code, searching radius, sorting order.
-     * @param location fetched using LocationTask
-     * @param fragment parent fragment
-     */
-    public void initView(StationListViewModel model, Location location, String[] defaults) {
-        //defaultParams = defaults;
-        //this.location = location;
-        stationListTask = ThreadManager.startStationListTask(getContext(), model, location, defaults);
-    }
-
-    /*
      * This callback is invoke when the system attaches this view to a Window. This call back is
      * invoked before onDraw(), but may be invoked after onMeasure().
      */

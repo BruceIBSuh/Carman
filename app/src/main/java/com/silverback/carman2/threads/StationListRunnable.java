@@ -1,16 +1,9 @@
 package com.silverback.carman2.threads;
 
-import android.content.Context;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Process;
 
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -19,18 +12,12 @@ import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-
-import javax.annotation.Nullable;
 
 public class StationListRunnable implements Runnable{
 
@@ -129,21 +116,10 @@ public class StationListRunnable implements Runnable{
             if(mStationList.size() > 0) {
 
                 if(radius.matches(Constants.MIN_RADIUS)) {
-                    log.i("Current Station: %s", mStationList.get(0).getStnName());
-                    //mTask.setStationList(mStationList);
                     mTask.setCurrentStation(mStationList.get(0));
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
 
                 } else {
-                    /*
-                    Uri uri = saveNearStationList(mStationList);
-                    if (uri != null) {
-                        // Addition info from FireStore database in which station data have been accumulated.
-                        // THIS MUST BE TURNED OFF FOR PERFORMANCE UNTIL FIRESTORE completes to sync with Opinet.
-                        mTask.setStationList(mStationList);
-                        mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
-                    }
-                    */
                     mTask.setStationList(mStationList);
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
                 }

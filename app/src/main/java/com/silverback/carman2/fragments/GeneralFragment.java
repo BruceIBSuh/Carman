@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.SparseArray;
-import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,7 +15,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,7 +32,6 @@ import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
-import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.AvgPriceView;
@@ -49,10 +45,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
@@ -64,8 +57,6 @@ public class GeneralFragment extends Fragment implements
         RecyclerView.OnItemTouchListener,
         StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener {
-        //ThreadManager.OnStationTaskListener,
-        //ThreadManager.OnStationInfoListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
@@ -76,7 +67,6 @@ public class GeneralFragment extends Fragment implements
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
-    //private StationInfoTask stationInfoTask;
     private AvgPriceView avgPriceView;
     private SidoPriceView sidoPriceView;
     private SigunPriceView sigunPriceView;
@@ -87,6 +77,7 @@ public class GeneralFragment extends Fragment implements
     private List<Opinet.GasStnParcelable> mStationList;
 
     private Location mPrevLocation;
+    private Uri uriStnList;
 
     // UI's
     private TextView tvStationsOrder;
@@ -94,8 +85,7 @@ public class GeneralFragment extends Fragment implements
 
     // Fields
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
-    private boolean bStationsOrder = true;//true: distance order(value = 2) false: price order(value =1);
-    private static int count = 0;
+    private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -104,6 +94,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
@@ -111,6 +102,8 @@ public class GeneralFragment extends Fragment implements
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
         locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -162,6 +155,7 @@ public class GeneralFragment extends Fragment implements
         // button when scolling/idling
         fabLocation.setOnClickListener(this);
         fabLocation.setSize(FloatingActionButton.SIZE_AUTO);
+        // Change the size of the Floating Action Button on scolling
         stationRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -174,30 +168,18 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        /*
-         * ViewModels
-         * LocationViewModel: data as to the current location using LocationTask
-         * StationListViewModel: data as to the stations within a given radius using StationListTask
-         */
-
         // On fetching the current location, attempt to get the near station list based on the value.
         locationModel.getLocation().observe(this, location -> {
             // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
             // attempt to retreive a new station list based on the location.
-            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
-                mPrevLocation = location;
-                stationRecyclerView.initView(stnListModel, location, defaults);
-
             // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
             // the station recyclerView should not be refreshed, showing the snackbar message.
+            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
+                mPrevLocation = location;
+                stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
             } else {
-                CoordinatorLayout layout = getActivity().findViewById(R.id.vg_main);
-                Snackbar snackbar = Snackbar.make(
-                        layout, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT);
-                snackbar.setAction("Action", null);
-                snackbar.show();
+                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
-
         });
 
         // Receive the LiveData of station list within a given radius based on
@@ -212,14 +194,14 @@ public class GeneralFragment extends Fragment implements
             // Update the carwash info to StationList and notify the data change to Adapter.
             // Adapter should not assume that the payload will always be passed to onBindViewHolder()
             // e.g. when the view is not attached.
-            log.i("mStationList: %s", mStationList.size());
+            log.i("SparseArray: %s", sparseArray.size());
             for(int i = 0; i < sparseArray.size(); i++) {
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
 
-            //Uri uri = saveNearStationList(mStationList);
-            //log.i("Saved StationList: %s", uri);
+            // Save the station list with the car wash info done.
+            //uriStnList = saveNearStationList(mStationList);
 
         });
 
@@ -255,14 +237,13 @@ public class GeneralFragment extends Fragment implements
             case R.id.imgbtn_stations:
                 // Save the station list to prevent reordering from retasking the station list.
                 Uri uri = saveNearStationList(mStationList);
-                if(uri != null) {
-                    mAdapter.sortStationList(bStationsOrder);
-                    String sort = (bStationsOrder) ?
-                            getString(R.string.general_stations_price) : getString(R.string.general_stations_distance);
-                    tvStationsOrder.setText(sort);
-                    bStationsOrder = !bStationsOrder;
-                    mAdapter.notifyDataSetChanged();
-                }
+                if(uri == null) return;
+
+                bStationsOrder = !bStationsOrder;
+                String sort = (bStationsOrder) ? getString(R.string.general_stations_price):
+                        getString(R.string.general_stations_distance);
+                tvStationsOrder.setText(sort);
+                mStationList = mAdapter.sortStationList(bStationsOrder);
 
                 break;
 
@@ -337,8 +318,9 @@ public class GeneralFragment extends Fragment implements
             if(delete) log.i("cache cleared");
         }
 
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(list);
 
             return Uri.fromFile(file);

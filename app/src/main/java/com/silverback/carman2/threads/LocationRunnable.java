@@ -88,11 +88,10 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 } else {
                     task.handleLocationTask(CURRENT_LOCATION_FAIL);
                 }
-
             });
 
         } catch (SecurityException e) {
-            e.printStackTrace();
+            log.e("Location_SecurityException: %s", e.getMessage());
 
         } finally {
             mFusedLocationClient.removeLocationUpdates(locationCallback);

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -29,32 +28,24 @@ public class MainActivity extends BaseActivity implements
     // Objects
     private StationInfoTask mapInfoTask;
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = findViewById(R.id.toolbar_expense);
+        Toolbar toolbar = findViewById(R.id.toolbar_main);
+        setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
 
-        // Sets the toolbar used as ActionBar
-        setSupportActionBar(toolbar);
-
-        // Get Defaults from BaseActivity and sets it bundled for passing to GeneralFragment
-        //String[] defaults = getDefaultParams();
+        // Get the default value of fuel, searching radius, and listing order from BaseActivity
+        // and set it to be bundled to pass it to GeneralFragment
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
-
-        // Instantiates Fragments which FrameLayout adds, replaces or removes a Fragment by selecting
-        // a toolbar menu.
         Fragment generalFragment = new GeneralFragment();
-        Fragment boardFragment = new BillboardFragment();
-
+        //Fragment boardFragment = new BillboardFragment();
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.frameLayout, generalFragment, "general").addToBackStack(null).commit();
+                .replace(R.id.frame_main, generalFragment, "general").addToBackStack(null).commit();
 
         // Permission Check
         checkPermissions();
@@ -89,7 +80,7 @@ public class MainActivity extends BaseActivity implements
 
         switch(item.getItemId()) {
 
-            case R.id.action_carman:
+            case R.id.action_garage:
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
 

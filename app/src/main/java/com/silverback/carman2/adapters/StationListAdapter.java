@@ -85,20 +85,12 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
             super.onBindViewHolder(holder, position, payloads);
 
         }else{
-
-            for(Object obj : payloads) holder.tvWashValue.setText(obj.toString());
-            /*
             for(Object obj : payloads) {
-                if(obj instanceof Boolean) {
-                    log.i("isCarwash in StationListAdapter: %s, %s", position, obj);
-                    String isWash = obj.toString();
-                    holder.tvWashValue.setText(isWash);
-                } else if(obj == null) {
-                    holder.tvWashValue.setText("N/A");
-                }
+                String msg = ((boolean)obj)?
+                        context.getString(R.string.general_carwash_yes):
+                        context.getString(R.string.general_carwash_no);
+                holder.tvWashValue.setText(msg);
             }
-            */
-
         }
     }
 
@@ -112,35 +104,33 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
      * @param sort : true - price order, false - distance order
      */
     @SuppressWarnings("unchecked")
-    public void sortStationList(boolean sort) {
+    public List<Opinet.GasStnParcelable> sortStationList(boolean bStationOrder) {
 
-        File fStationList = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
-        Uri uri = Uri.fromFile(fStationList);
+        File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+        Uri uri = Uri.fromFile(file);
 
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
-
             stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
 
-            //if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
-            //else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
+            if(bStationOrder) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
+            else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
+
             notifyDataSetChanged();
 
+            return stationList;
+
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            log.e("FileNotFoundException: %s", e.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.e("IOException: %s", e.getMessage());
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            log.e("ClassNotFoundException: %s", e.getMessage());
+        } catch(ClassCastException e) {
+            log.e("ClassCastException: %s", e.getMessage());
         }
 
-
-        //stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
-
-        if(stationList.size() <= 0) return;
-
-        if(sort) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
-        else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
+        return null;
     }
 
 

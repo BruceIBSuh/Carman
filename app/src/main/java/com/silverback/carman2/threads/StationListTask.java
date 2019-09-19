@@ -68,7 +68,6 @@ public class StationListTask extends ThreadTask implements
 
     void recycle() {
         mStationList = null;
-        //if(sparseBooleanArray.size() > 0) sparseBooleanArray.clear();
     }
 
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
@@ -94,11 +93,12 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setCarWashInfo(int position, boolean isCarwash) {
         sparseBooleanArray.put(position, isCarwash);
+        // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
+        // incur a unexpectable result.
         if(sparseBooleanArray.size() == mStationList.size()) {
             log.i("Invoke CarWash viewmodel");
             viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
         }
-
     }
 
 
@@ -125,8 +125,6 @@ public class StationListTask extends ThreadTask implements
         log.i("Station Id: %s", stnId);
         return stnId;
     }
-
-
     // FireStoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
     @Override

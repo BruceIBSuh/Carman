@@ -206,9 +206,9 @@ public class XmlPullParserHandler {
             }
 
         } catch (XmlPullParserException e) {
-            //Log.w(TAG, e.getMessage());
+            log.e("XMLPullParserException: %s", e.getMessage());
         } catch (IOException e) {
-            //Log.w(TAG, e.getMessage());
+            log.e("IOException: %s", e.getMessage());
         }
 
         // Rearrange the original order(regular-premium-kerotine-diesel) to a new order(preminum-
@@ -275,9 +275,9 @@ public class XmlPullParserHandler {
             }
 
         } catch (XmlPullParserException e) {
-            //Log.w(TAG, e.getMessage());
+            log.e("XMLPullParserException: %s", e.getMessage());
         } catch (IOException e) {
-            //Log.w(TAG, e.getMessage());
+            log.e("IOException: %s", e.getMessage());
         }
 
         // Rearrange the original order(regular-premium-kerotine-diesel) to a new order(preminum-
@@ -345,9 +345,9 @@ public class XmlPullParserHandler {
             }
 
         } catch (XmlPullParserException e) {
-            //Log.w(TAG, e.getMessage());
+            log.e("XMLPullParserException: %s", e.getMessage());
         } catch (IOException e) {
-            //Log.w(TAG, e.getMessage());
+            log.e("IOException: %s", e.getMessage());
         }
 
         return gasStnParcelableList;

@@ -79,7 +79,7 @@ public class ExpenseActivity extends BaseActivity implements
         setContentView(R.layout.activity_expense);
 
         appBar = findViewById(R.id.appBar);
-        Toolbar toolbar = findViewById(R.id.toolbar_expense);
+        Toolbar toolbar = findViewById(R.id.toolbar_main);
         expTabLayout = findViewById(R.id.tab_expense);
         topFrame = findViewById(R.id.frame_top_fragments);
         tabPager = findViewById(R.id.tabpager);

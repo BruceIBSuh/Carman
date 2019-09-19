@@ -224,7 +224,6 @@ public class Opinet  {
         void setStationCode(String stationCode) { this.stationCode = stationCode; }
         public String getStationCode() { return stationCode; }
 
-
         public void setStationName(String stationName) { this.stationName = stationName; }
         public String getStationName() { return stationName; }
 
@@ -271,6 +270,7 @@ public class Opinet  {
 
         void setyCoord(String yCoord) { this.yCoord = yCoord; }
         public String getYcoord() { return yCoord; }
+
 
         /*
         @NonNull
@@ -349,7 +349,6 @@ public class Opinet  {
 
             // Handle boolean with byte
             isWash = in.readByte() != 0;
-            //hasVisited = in.readByte() != 0;
         }
 
         public String getStnId() { return stnId; }

@@ -25,12 +25,11 @@ public class FireStoreGetRunnable implements Runnable {
 
 
     public interface FireStoreGetMethods {
+        List<Opinet.GasStnParcelable> getStationList();
         void setStationTaskThread(Thread thread);
         void setStationId(String stnId);
         void setCarWashInfo(int position, boolean isCarwash);
         void handleStationTaskState(int state);
-        List<Opinet.GasStnParcelable> getStationList();
-
     }
 
     FireStoreGetRunnable(FireStoreGetMethods callback) {
