@@ -5,7 +5,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -16,37 +15,31 @@ import android.view.ViewGroup;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SettingFavoriteRecyclerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FavoritePagerGasFragment extends Fragment {
+public class FavoriteGasPagerFragment extends Fragment {
         //implements LoaderManager.LoaderCallbacks<Cursor> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoritePagerGasFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGasPagerFragment.class);
 
     // Objects
     private CarmanDatabase mDB;
-    private LiveData<List<FavoriteProviderEntity>> liveData;
     private SettingFavoriteRecyclerAdapter adapter;
 
     // Constructor
-    public FavoritePagerGasFragment() {
+    public FavoriteGasPagerFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDB = CarmanDatabase.getDatabaseInstance(getContext());
-
-
+        if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext());
     }
 
 
@@ -54,23 +47,18 @@ public class FavoritePagerGasFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        if(getActivity() != null) {
-            mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-            liveData = mDB.favoriteModel().loadAllFavoriteProvider();
-        }
-
         View localView = inflater.inflate(R.layout.fragment_pager_favorite_gas, container, false);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_favorite);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        liveData.observe(getActivity(), observer -> {
-            log.i("LiveData changed");
-            List<FavoriteProviderEntity> list = liveData.getValue();
-            adapter = new SettingFavoriteRecyclerAdapter(list);
+        mDB.favoriteModel().loadAllFavoriteProvider().observe(this, favorite -> {
+            for(int i = 0; i < favorite.size(); i++) {
+                log.i("Favorite: %s, %s", favorite.get(i).providerName, favorite.get(i).address);
+            }
+            adapter = new SettingFavoriteRecyclerAdapter(favorite);
             recyclerView.setAdapter(adapter);
         });
-
 
         // Inflate the layout for this fragment
         return localView;

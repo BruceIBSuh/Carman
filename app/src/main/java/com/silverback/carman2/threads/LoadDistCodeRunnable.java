@@ -68,7 +68,7 @@ public class LoadDistCodeRunnable implements Runnable {
             }
 
             // Post(Set) value in SpinnerDistriceModel, which is notified to the parent fragment,
-            // SpinnerPrefDlgFragment as LiveData.
+            // SettingSpinnerDlgFragment as LiveData.
             task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
 
         } catch (IOException e) {

@@ -36,43 +36,38 @@
 
     </PreferenceCategory>
 
-
     <PreferenceCategory
         app:title="@string/pref_category_location"
         app:key="pref_location">
-
         <com.silverback.carman2.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
             app:key="pref_dialog_district"
             app:dialogTitle="@string/pref_dialog_district_title"
             app:positiveButtonText="Confirm"
             app:negativeButtonText="Cancel" />
-
         <ListPreference
             app:title="@string/pref_location_radius"
             app:key="pref_searching_radius"
             app:entries="@array/list_station_radius_name"
             app:entryValues="@array/list_station_radius_value"
             app:defaultValue="2500"/>
-
         <SwitchPreferenceCompat
             app:key="pref_location_update"
             app:title="@string/pref_title_autoupdate"
             app:summary="@string/pref_summary_autoupdate" />
-
-
     </PreferenceCategory>
 
     <PreferenceCategory
         app:title="@string/pref_category_favorites"
         app:key="pref_favorites" >
+        <ListPreference
+            app:title="@string/pref_designated_station"
+            app:key="pref_designated_station"
+            app:summary="@string/pref_summary_designated_station"/>
         <Preference
-            app:fragment="com.silverback.carman2.fragments.SettingFavoriteFragment"
+            app:fragment="com.silverback.carman2.fragments.SettingFavoriteListFragment"
             app:title="@string/pref_favorite_station"
             app:key="pref_favorite_list" />
-        <Preference
-            app:title="@string/pref_favorite_carcenter"
-            app:key="pref_favorite_carcenter" />
     </PreferenceCategory>
 
     <PreferenceCategory

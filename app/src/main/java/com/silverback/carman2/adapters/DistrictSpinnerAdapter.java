@@ -83,7 +83,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
         return dropdownView;
     }
 
-    // The following 2 methods are invoked in the parent Fragment, SpinnerPrefDlgFragment.
+    // The following 2 methods are invoked in the parent Fragment, SettingSpinnerDlgFragment.
     public void addItem(Opinet.DistrictCode obj) {
         mDistrictCodeList.add(obj);
     }

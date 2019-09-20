@@ -2,17 +2,9 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 
-import androidx.fragment.app.Fragment;
-
-import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
-import com.silverback.carman2.fragments.SpinnerPrefDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.SpinnerDistrictModel;
-
-import java.lang.ref.WeakReference;
-import java.util.List;
 
 public class LoadDistCodeTask extends ThreadTask implements
         LoadDistCodeRunnable.DistCodeMethods {

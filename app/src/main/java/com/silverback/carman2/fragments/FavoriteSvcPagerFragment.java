@@ -14,10 +14,10 @@ import com.silverback.carman2.R;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FavoritePagerSvcFragment extends Fragment {
+public class FavoriteSvcPagerFragment extends Fragment {
 
 
-    public FavoritePagerSvcFragment() {
+    public FavoriteSvcPagerFragment() {
         // Required empty public constructor
     }
 

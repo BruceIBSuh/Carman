@@ -1,10 +1,8 @@
 package com.silverback.carman2.fragments;
 
 
-import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -26,20 +24,22 @@ import org.json.JSONArray;
 
 import java.util.Arrays;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
 /**
  * A simple {@link Fragment} subclass.
+ *
+ * preferenceDialogFragmentCompat containing SpinnerDialogPreference which is a custom dialog preference
+ * to create the input form of the sido and sigun code.
  */
-public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat implements
+public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat implements
         AdapterView.OnItemSelectedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SpinnerPrefDlgFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSpinnerDlgFragment.class);
 
     // Objects
     private SpinnerDistrictModel distModel;
@@ -55,14 +55,14 @@ public class SpinnerPrefDlgFragment extends PreferenceDialogFragmentCompat imple
 
 
 
-    public SpinnerPrefDlgFragment() {
+    public SettingSpinnerDlgFragment() {
         // Required empty public constructor
     }
 
     // Method for singleton instance
-    static SpinnerPrefDlgFragment newInstance(String key, String code) {
+    static SettingSpinnerDlgFragment newInstance(String key, String code) {
 
-        final SpinnerPrefDlgFragment fm = new SpinnerPrefDlgFragment();
+        final SettingSpinnerDlgFragment fm = new SettingSpinnerDlgFragment();
 
         final Bundle args = new Bundle(2);
         args.putString(ARG_KEY, key);

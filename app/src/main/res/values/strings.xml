@@ -131,7 +131,9 @@
     <string name="pref_title_autoupdate">위치 자동 업데이트</string>
     <string name="pref_summary_autoupdate">배터리 소모량이 다소 증가할 수 있습니다</string>
     <string name="pref_category_favorites">주유소/카센터 설정</string>
-    <string name="pref_favorite_station">자주 찾는 주유소</string>
+    <string name="pref_designated_station">단골 주유소 지정</string>
+    <string name="pref_summary_designated_station">지정된 주유소의 가격 정보가 제공됩니다</string>
+    <string name="pref_favorite_station">즐겨찾는 주유소/카센터</string>
     <string name="pref_favorite_carcenter">자주 찾는 카센터</string>
     <string name="pref_category_service">정비/점검 </string>
     <string name="pref_service_period">정비/점검 주기</string>

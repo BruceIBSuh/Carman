@@ -95,11 +95,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
 
-    /*
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
 
-
+        /*
         switch(item.getItemId()) {
             case android.R.id.home:
                 log.i("onOptionsItemSelected in SettingPreferenceActivity");
@@ -110,18 +111,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 //onBackPressed();
                 return true;
 
-            case R.id.menu_add:
-                log.i("onOptionsItemSelected: menu_add");
+            default:
+                return super.onOptionsItemSelected(item);
 
-                return true;
-            case R.id.menu_edit:
-                break;
 
         }
-
-        return super.onOptionsItemSelected(item);
+        */
     }
-    */
+
 
 
     /*
@@ -142,6 +139,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         fragment.setArguments(args);
         fragment.setTargetFragment(caller, 0);
         getSupportActionBar().setTitle(pref.getTitle());
+        getSupportActionBar().setDisplayShowHomeEnabled(false);
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)

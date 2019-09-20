@@ -1,8 +1,11 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -19,23 +22,25 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingFavoriteFragment extends Fragment implements
+public class SettingFavoriteListFragment extends Fragment implements
         ViewPager.OnPageChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteListFragment.class);
 
     // Objects
 
     // Constructor
-    public SettingFavoriteFragment() {
+    public SettingFavoriteListFragment() {
         // Required empty public constructor
+
     }
 
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         // Inflate the layout for this fragment
         View localView = inflater.inflate(R.layout.fragment_favorite_pager, container, false);
 
@@ -44,7 +49,6 @@ public class SettingFavoriteFragment extends Fragment implements
         TabLayout tabLayout = localView.findViewById(R.id.tab_favorite);
         tabLayout.addTab(tabLayout.newTab());
         tabLayout.addTab(tabLayout.newTab());
-
 
         // ViewPager
         ViewPager viewPager = localView.findViewById(R.id.viewpager_favorite);
@@ -55,7 +59,21 @@ public class SettingFavoriteFragment extends Fragment implements
         // onPageTitle() defined in FragmentPagerAdapter.
         tabLayout.setupWithViewPager(viewPager);
 
+        setHasOptionsMenu(true); // to call onOptionsItemSelected() in Fragment
+
         return localView;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == android.R.id.home && getActivity() != null) {
+            item.setEnabled(false);
+            getActivity().onBackPressed();
+            log.i("onOptionsItemSelected in Frgment");
+        }
+
+        return true;
     }
 
 
