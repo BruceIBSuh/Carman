@@ -3,10 +3,8 @@ package com.silverback.carman2.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,37 +14,38 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServiceItemAdapter.SettingServiceItemHolder> {
+public class SettingServiceItemAdapter
+        extends RecyclerView.Adapter<SettingServiceItemAdapter.SettingServiceItemHolder>
+        implements ItemTouchHelperCallback.RecyclerItemMoveListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemAdapter.class);
 
 
     // Objects & UIs
-    private OnServiceItemClickListener mListener;
-    private List<String> serviceItemsList;
+    private List<JSONObject> svcItemList;
     private JSONArray jsonSvcItemArray;
-    public EditText etMileage, etMonth;
-    private ImageButton btnUp, btnDown, btnDel;
 
     // Fields
     private String mileage, month;
     private boolean isEditMode;
 
-    public interface OnServiceItemClickListener {
-        void editServiceItem(int resId, int pos);
-    }
-
     // Constructor
     public SettingServiceItemAdapter(Fragment fm, JSONArray jsonArray) {
         jsonSvcItemArray = jsonArray;
-        mListener = (OnServiceItemClickListener)fm;
+        svcItemList = new ArrayList<>();
+        for(int i = 0; i < jsonSvcItemArray.length(); i++)
+            svcItemList.add(jsonSvcItemArray.optJSONObject(i));
     }
 
 
@@ -55,28 +54,13 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
     public SettingServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
 
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.view_setting_svc_items, parent, false);
+                .inflate(R.layout.cardview_setting_service, parent, false);
 
         return new SettingServiceItemHolder(itemView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull SettingServiceItemHolder holder, int position) {
-
-        if(isEditMode) {
-            //
-            holder.editLayout.setVisibility(View.VISIBLE);
-            holder.setLayout.setVisibility(View.GONE);
-
-            holder.btnDel.setOnClickListener(v -> mListener.editServiceItem(R.id.btn_setting_del, position));
-            holder.btnUp.setOnClickListener(v -> mListener.editServiceItem(R.id.btn_setting_up, position));
-            holder.btnDown.setOnClickListener(v -> mListener.editServiceItem(R.id.btn_setting_down, position));
-
-        } else {
-            holder.editLayout.setVisibility(View.GONE);
-            holder.setLayout.setVisibility(View.VISIBLE);
-        }
-
         try {
             holder.tvItemName.setText(jsonSvcItemArray.getJSONObject(position).getString("name"));
             holder.etMileage.setHint(jsonSvcItemArray.getJSONObject(position).getString("mileage"));
@@ -93,11 +77,26 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
         return jsonSvcItemArray.length();
     }
 
-    public void setEditMode(boolean b) {
-        isEditMode = b;
+    // The following 2 callback methods are invoked by ItemTouchHelperCallback.RecyclerItemMoveListener
+    // to drag or swipe of the RecycerView items.
+    @Override
+    public void onItemMove(int from, int to) {
+        if (from < to) {
+            for (int i = from; i < to; i++) {
+                Collections.swap(svcItemList, i, i + 1);
+            }
+        } else {
+            for (int i = from; i > to; i--) {
+                Collections.swap(svcItemList, i, i - 1);
+            }
+        }
+        notifyItemMoved(from, to);
     }
 
-
+    @Override
+    public void onItemRemove(int pos) {
+        log.i("onItemRemove: %s", pos);
+    }
 
 
     /**
@@ -107,20 +106,12 @@ public class SettingServiceItemAdapter extends RecyclerView.Adapter<SettingServi
 
         TextView tvItemName;
         EditText etMileage, etMonth;
-        RelativeLayout setLayout, editLayout;
-        Button btnUp, btnDown, btnDel;
 
         SettingServiceItemHolder(View v) {
             super(v);
-
-            editLayout = v.findViewById(R.id.layout_mode_edit);
-            setLayout = v.findViewById(R.id.layout_mode_set);
             tvItemName = v.findViewById(R.id.tv_service_item);
             etMileage = v.findViewById(R.id.et_default_mileage);
             etMonth = v.findViewById(R.id.et_default_month);
-            btnUp = v.findViewById(R.id.btn_setting_up);
-            btnDown = v.findViewById(R.id.btn_setting_down);
-            btnDel = v.findViewById(R.id.btn_setting_del);
         }
 
     }

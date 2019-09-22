@@ -6,6 +6,7 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -14,11 +15,17 @@ import com.silverback.carman2.R;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FavoriteSvcPagerFragment extends Fragment {
+public class SettingFavorServiceFragment extends Fragment {
 
 
-    public FavoriteSvcPagerFragment() {
+    public SettingFavorServiceFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
 
@@ -29,4 +36,14 @@ public class FavoriteSvcPagerFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_favorite, container, false);
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if(menuItem.getItemId() == android.R.id.home) {
+            getActivity().onBackPressed();
+            return true;
+        }
+
+        return false;
+    }
 }

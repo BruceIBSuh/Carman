@@ -32,6 +32,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceActivity.class);
 
     // Objects
+    private Fragment fragment;
     private MenuItem menuEdit, menuAdd;
     private PreferenceFragmentCompat caller;
     private SettingPreferenceFragment settingFragment;
@@ -76,6 +77,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
+                .addToBackStack(null)
                 .commit();
     }
 
@@ -98,6 +100,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         return super.onOptionsItemSelected(item);
 
         /*
@@ -133,7 +136,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         log.i("Preference tabbed: %s", pref);
         final Bundle args = pref.getExtras();
-        final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
+        Fragment fragment = getSupportFragmentManager().getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
 
         fragment.setArguments(args);

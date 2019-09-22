@@ -7,6 +7,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
@@ -25,21 +25,16 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceItemFragment extends Fragment implements
-        SettingServiceItemAdapter.OnServiceItemClickListener{
+public class SettingServiceItemFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
@@ -83,15 +78,14 @@ public class SettingServiceItemFragment extends Fragment implements
             log.e("JSONException: %s", e.getMessage());
         }
 
-
         // ViewModel to share data b/w SettingServiceItemFragment and SettingServiceDlgFragment.
         // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
         // which are passed here using FragmentSharedModel as the type of List<String>
         FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         sharedModel.getJsonServiceItemObject().observe(this, data -> {
             jsonSvcItemArray.put(data);
-            mAdapter.notifyItemInserted(jsonSvcItemArray.length() - 1);
             mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+            mAdapter.notifyItemInserted(jsonSvcItemArray.length());
         });
 
         // Fetch LiveData<Boolean> that indicates whch button to select in AlertDialogFragment when
@@ -99,8 +93,8 @@ public class SettingServiceItemFragment extends Fragment implements
         sharedModel.getAlert().observe(this, data -> {
             if(data) {
                 jsonSvcItemArray.remove(itemPos);
-                mAdapter.notifyDataSetChanged();
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+                mAdapter.notifyDataSetChanged();
             }
         });
     }
@@ -112,9 +106,13 @@ public class SettingServiceItemFragment extends Fragment implements
 
         View localView = inflater.inflate(R.layout.fragment_setting_chklist, container, false);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_chklist);
-
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        ItemTouchHelperCallback callback = new ItemTouchHelperCallback(mAdapter);
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+
         recyclerView.setAdapter(mAdapter);
 
         // Inflate the layout for this fragment
@@ -140,50 +138,10 @@ public class SettingServiceItemFragment extends Fragment implements
             case R.id.menu_add:
                 if(getFragmentManager() != null)
                     dlgFragment.show(getFragmentManager(), null);
-
-                return true;
-
-            case R.id.menu_edit:
-                bEditMode = !bEditMode;
-                mAdapter.setEditMode(bEditMode);
-                mAdapter.notifyDataSetChanged();
                 return true;
         }
 
         return false;
-    }
-
-    // Callback invoked by SettingServiceItemAdapter.OnServiceItemClickListener
-    @Override
-    public void editServiceItem(int resId, int pos) {
-
-        log.i("Edit Service Item: %s", pos);
-        switch(resId) {
-            case R.id.btn_setting_del:
-                //jsonSvcItemArray.remove(pos);
-                itemPos = pos;
-                AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", "Delete");
-                if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
-                break;
-
-            case R.id.btn_setting_up:
-                if(pos > 0) {
-                    swapJSONObject(pos, MOVEUP);
-                    mAdapter.notifyDataSetChanged();
-                    mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                }
-
-                break;
-
-            case R.id.btn_setting_down:
-                if(pos < (jsonSvcItemArray.length() -1)) {
-                    swapJSONObject(pos, MOVEDOWN);
-                    mAdapter.notifyDataSetChanged();
-                    mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                }
-                break;
-        }
-
     }
 
     // Method for switching the location of an service item using Up and Down button

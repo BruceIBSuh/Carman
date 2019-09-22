@@ -9,11 +9,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.SettingFavoriteRecyclerAdapter;
+import com.silverback.carman2.adapters.SettingFavoriteAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -21,24 +22,25 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FavoriteGasPagerFragment extends Fragment {
+public class SettingFavorGasFragment extends Fragment {
         //implements LoaderManager.LoaderCallbacks<Cursor> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGasPagerFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
 
     // Objects
     private CarmanDatabase mDB;
-    private SettingFavoriteRecyclerAdapter adapter;
+    private SettingFavoriteAdapter adapter;
 
     // Constructor
-    public FavoriteGasPagerFragment() {
+    public SettingFavorGasFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext());
     }
 
@@ -56,11 +58,22 @@ public class FavoriteGasPagerFragment extends Fragment {
             for(int i = 0; i < favorite.size(); i++) {
                 log.i("Favorite: %s, %s", favorite.get(i).providerName, favorite.get(i).address);
             }
-            adapter = new SettingFavoriteRecyclerAdapter(favorite);
+            adapter = new SettingFavoriteAdapter(favorite);
             recyclerView.setAdapter(adapter);
         });
 
         // Inflate the layout for this fragment
         return localView;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if(menuItem.getItemId() == android.R.id.home) {
+            getActivity().onBackPressed();
+            return true;
+        }
+
+        return false;
     }
 }

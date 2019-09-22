@@ -63,19 +63,25 @@
         <ListPreference
             app:title="@string/pref_designated_station"
             app:key="pref_designated_station"
-            app:summary="@string/pref_summary_designated_station"/>
+            app:useSimpleSummaryProvider="true"/>
         <Preference
-            app:fragment="com.silverback.carman2.fragments.SettingFavoriteListFragment"
+            app:fragment="com.silverback.carman2.fragments.SettingFavorGasFragment"
             app:title="@string/pref_favorite_station"
-            app:key="pref_favorite_list" />
+            app:key="pref_favorite_station" />
+        <Preference
+            app:fragment="com.silverback.carman2.fragments.SettingFavorServiceFragment"
+            app:title="@string/pref_favorite_carcenter"
+            app:key="pref_favorite_carcenter" />
     </PreferenceCategory>
 
     <PreferenceCategory
         app:title="@string/pref_category_service"
         app:key="pref_service" >
-        <Preference
+        <ListPreference
             app:title="@string/pref_service_period"
-            app:key="pref_service_period"/>
+            app:key="pref_service_period"
+            app:entries="@array/pref_svc_period"
+            app:entryValues="@array/pref_svc_period"/>
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingServiceItemFragment"
             app:title="@string/pref_service_chklist"

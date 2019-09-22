@@ -81,12 +81,11 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             searchingRadius.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
 
+
         // Designate the gas station which indicates the price information in the main activity using
         // Room and LiveData.
-        ListPreference designatedStation = findPreference("pref_designated_station");
-        if(designatedStation != null)
-            designatedStation.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
-        else designatedStation.setSummary(getString(R.string.pref_summary_designated_station));
+        ListPreference desigStn = findPreference("pref_designated_station");
+        desigStn.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
 
         mDB.favoriteModel().loadAllFavoriteProvider().observe(this, provider-> {
             List<String> stnList = new ArrayList<>();
@@ -97,8 +96,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
             String[] arrStn = new String[stnList.size()];
             for(int i = 0; i < stnList.size(); i++) arrStn[i] = stnList.get(i);
-            designatedStation.setEntries(arrStn);
-            designatedStation.setEntryValues(arrStn);
+            desigStn.setEntries(arrStn);
+            desigStn.setEntryValues(arrStn);
 
         });
 
@@ -133,5 +132,4 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
 
     }
-
 }

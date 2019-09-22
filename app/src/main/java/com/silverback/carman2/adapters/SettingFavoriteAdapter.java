@@ -16,18 +16,18 @@ import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
 import java.util.List;
 
-public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
+public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteRecyclerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteAdapter.class);
 
     // Objects
     private Context context;
     private List<FavoriteProviderEntity> favoriteList;
 
     // Constructor
-    public SettingFavoriteRecyclerAdapter(List<FavoriteProviderEntity> favorites) {
-        log.i("SettingFavoriteRecyclerAdapter constructor");
+    public SettingFavoriteAdapter(List<FavoriteProviderEntity> favorites) {
+        log.i("SettingFavoriteAdapter constructor");
         favoriteList = favorites;
     }
 
@@ -37,7 +37,7 @@ public class SettingFavoriteRecyclerAdapter extends RecyclerView.Adapter<Favorit
     public FavoriteItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         CardView cardView = (CardView) LayoutInflater.from(context)
-                .inflate(R.layout.view_card_favorite, parent, false);
+                .inflate(R.layout.cardview_setting_favorite, parent, false);
 
         return new FavoriteItemHolder(cardView);
     }

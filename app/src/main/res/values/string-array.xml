@@ -86,6 +86,11 @@
         <item>14</item><item>15</item><item>16</item><item>17</item><item>18</item><item>19</item>
     </string-array>
 
+    <string-array name="pref_svc_period">
+        <item>@string/pref_svc_period_mileage</item>
+        <item>@string/pref_svc_period_month</item>
+    </string-array>
+
     <!-- Default Service Item List -->
     <!-- Service item In ServiceManagerActivityvity -->
     <string-array name="service_item_list">

@@ -6,11 +6,11 @@
         android:id="@+id/menu_add"
         android:title="@string/setting_toolbar_menu_add"
         app:showAsAction="ifRoom|withText" />
-
+    <!--
     <item
         android:id="@+id/menu_edit"
         android:title="@string/setting_toolbar_menu_edit"
         app:showAsAction="ifRoom|withText" />
-
+    -->
 
 </menu>
