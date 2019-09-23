@@ -3,13 +3,8 @@ package com.silverback.carman2.database;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
-import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
-
-import com.silverback.carman2.models.Constants;
-
-import java.util.List;
 
 @Entity(foreignKeys = @ForeignKey(
         entity = ServiceManagerEntity.class, parentColumns = "service_id", childColumns = "svc_id"),

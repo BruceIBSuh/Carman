@@ -27,6 +27,7 @@ public class SettingFavorGasFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
+    private static final int GAS = 1;
 
     // Objects
     private CarmanDatabase mDB;
@@ -54,11 +55,11 @@ public class SettingFavorGasFragment extends Fragment {
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        mDB.favoriteModel().loadAllFavoriteProvider().observe(this, favorite -> {
-            for(int i = 0; i < favorite.size(); i++) {
-                log.i("Favorite: %s, %s", favorite.get(i).providerName, favorite.get(i).address);
+        mDB.favoriteModel().queryFavoriteGasStation(GAS).observe(this, favoriteList -> {
+            for(int i = 0; i < favoriteList.size(); i++) {
+                log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }
-            adapter = new SettingFavoriteAdapter(favorite);
+            adapter = new SettingFavoriteAdapter(favoriteList);
             recyclerView.setAdapter(adapter);
         });
 

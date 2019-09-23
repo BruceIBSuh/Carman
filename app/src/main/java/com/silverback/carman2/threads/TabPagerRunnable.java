@@ -8,7 +8,7 @@ import androidx.fragment.app.FragmentManager;
 import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;

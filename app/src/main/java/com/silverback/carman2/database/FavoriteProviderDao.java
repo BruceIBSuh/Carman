@@ -12,8 +12,13 @@ import java.util.List;
 @Dao
 public interface FavoriteProviderDao {
 
+
+
     @Query("SELECT * FROM FavoriteProviderEntity")
     LiveData<List<FavoriteProviderEntity>> loadAllFavoriteProvider();
+
+    @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category")
+    LiveData<List<FavoriteProviderEntity>> queryFavoriteGasStation(int category);
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);

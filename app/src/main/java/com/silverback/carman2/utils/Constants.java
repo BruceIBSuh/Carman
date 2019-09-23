@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.utils;
 
 public class Constants {
 

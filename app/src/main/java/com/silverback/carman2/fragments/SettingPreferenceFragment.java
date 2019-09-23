@@ -17,10 +17,9 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.views.SpinnerDialogPreference;
-import com.silverback.carman2.views.StationDesignatedPreference;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;

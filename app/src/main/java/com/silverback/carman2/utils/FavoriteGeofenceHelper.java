@@ -2,7 +2,6 @@ package com.silverback.carman2.utils;
 
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.widget.Toast;
@@ -16,7 +15,6 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +32,6 @@ public class FavoriteGeofenceHelper {
 
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
-    //private Geofence mGeofence;
     private PendingIntent mGeofencePendingIntent;
     private OnGeofenceListener mListener;
 
@@ -55,10 +52,9 @@ public class FavoriteGeofenceHelper {
     // Constructor for addFavorite()
     public FavoriteGeofenceHelper(Context context) {
         this.context = context;
-        mGeofencingClient = LocationServices.getGeofencingClient(context);
-
-        mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
-        favoriteModel = new FavoriteProviderEntity();
+        if(mGeofencingClient == null) mGeofencingClient = LocationServices.getGeofencingClient(context);
+        if(mDB == null) mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
+        //favoriteModel = new FavoriteProviderEntity();
     }
 
     public void setListener(OnGeofenceListener listener) {
@@ -67,18 +63,16 @@ public class FavoriteGeofenceHelper {
 
     // Set params required to create geofence objects
     public void setGeofenceParam(int category, String id, Location location) {
-
         this.category = category;
         geofenceId = id;
         geofenceLocation = location;
     }
 
-    // Create Geofence object
-    // Set the stationId or serviceId(registered time) as the key of Geofence.
+    // Create a geofence, setting the desired location, radius, duration and transition type.
+    // Set the stationId or the serviceId(registered time) respectively as the key of Geofence.
     private void createGeofence(){
 
         if(mGeofenceList == null) mGeofenceList = new ArrayList<>();
-
         mGeofenceList.add(new Geofence.Builder()
                 .setRequestId(geofenceId)
                 .setCircularRegion(geofenceLocation.getLatitude(), geofenceLocation.getLongitude(), Constants.GEOFENCE_RADIUS)
@@ -90,10 +84,12 @@ public class FavoriteGeofenceHelper {
         );
     }
 
-    // Specify geofences and initial trigers.
+    // Specify the geofences to monitor and to set how related geofence events are triggered.
     private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER|GeofencingRequest.INITIAL_TRIGGER_DWELL);
+        // Tell Location services that GEOFENCE_TRANSITION_ENTER should be triggerd if the device
+        // is already inside the geofence despite the triggers are made by entrance and exit.
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL);
         builder.addGeofences(mGeofenceList);
         return builder.build();
 
@@ -114,8 +110,8 @@ public class FavoriteGeofenceHelper {
 
     // Add a provider(gas station / service provider) to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
-    public void addFavoriteGeofence(final String name, final String providerCode, final String addrs) {
-
+    public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
+        log.i("GeofenceToFavorite: %s, %s, %s", name, providerCode, addrs);
         // Set Geofencing with a providerId passed to Geofence API as a identifier.
         createGeofence();
 

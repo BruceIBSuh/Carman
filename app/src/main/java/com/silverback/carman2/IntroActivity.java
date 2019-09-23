@@ -7,7 +7,7 @@ import android.widget.ProgressBar;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;

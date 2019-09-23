@@ -9,12 +9,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
-import com.silverback.carman2.fragments.BillboardFragment;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.StationInfoTask;
 
 import java.io.File;

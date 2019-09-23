@@ -1,11 +1,9 @@
 package com.silverback.carman2.database;
 
 import android.content.Context;
-
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
-
 
 @Database(entities = {
         ExpenseBaseEntity.class,
@@ -19,12 +17,13 @@ public abstract class CarmanDatabase extends RoomDatabase {
 
     private static CarmanDatabase INSTANCE;
 
+    // Abstract methods that has 0 arguments and returns the class that is annotated w/ @Dao.
     public abstract ExpenseBaseDao expenseBaseModel();
     public abstract GasManagerDao gasManagerModel();
     public abstract ServiceManagerDao serviceManagerModel();
     public abstract FavoriteProviderDao favoriteModel();
 
-    // Constructor as Singleton type
+    // Constructor as a Singleton type
     public static CarmanDatabase getDatabaseInstance(Context context) {
         if(INSTANCE == null) {
             //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)

@@ -26,6 +26,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -35,7 +36,7 @@ import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.StationListViewModel;
@@ -51,6 +52,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -64,7 +66,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
     // Constants
-    private static final int GasStation = 1; //favorite gas provider category
+    private static final int GAS = 1; //favorite gas provider category
 
     // Objects
     private CarmanDatabase mDB;
@@ -267,13 +269,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             stnAddrs = stnInfo.getNewAddrs();
             stnCode = stnInfo.getStationCode();
 
+            log.i("Station Code: %s", stnInfo.getStationCode());
+
             // Once a current station is fetched, retrieve the station info(station address) which
-            // is passed over to addFavoriteGeofence() in FavoriteGeofenceHelper.
-            geofenceHelper.setGeofenceParam(GasStation, stnId, location);
-            geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
+            // is passed over to addGeofenceToFavorite() in FavoriteGeofenceHelper.
+            geofenceHelper.setGeofenceParam(GAS, stnId, location);
+            geofenceHelper.addGeofenceToFavorite(stnName, stnCode, stnAddrs);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-
-
         });
 
         return localView;
@@ -375,9 +377,23 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         } else {
             // Initiate StationInfoTask to fetch an address of the current station.
             //stationInfoTask = ThreadManager.startStationInfoTask(stnListModel, stnName, stnId);
-            geofenceHelper.setGeofenceParam(GasStation, stnId, location);
-            geofenceHelper.addFavoriteGeofence(stnName, stnCode, stnAddrs);
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            DocumentReference doc = fireStore.collection("gas_station").document(stnId);
+            ListenerRegistration firestoreListener = doc.addSnapshotListener((snapshot, e) -> {
+                if(e != null) {
+                    log.e("SnapthoListener failed: %s", e.getMessage());
+                    return;
+                }
+
+                if(snapshot != null && snapshot.exists()) {
+                    log.i("Favorite Address: %s, %s", snapshot.getString("new_addrs"), snapshot.getString("stnCode"));
+                    geofenceHelper.addGeofenceToFavorite(stnName, snapshot.getString("stn_code"), snapshot.getString("new_addrs"));
+                    geofenceHelper.setGeofenceParam(GAS, stnId, location);
+                    btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                }
+
+            });
+
+            firestoreListener.remove();
         }
 
         isFavorite = !isFavorite;

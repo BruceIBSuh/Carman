@@ -6,6 +6,7 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -31,12 +32,13 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
     }
 
     public void bindToFavorite(FavoriteProviderEntity favorite) {
-        log.i("Address: %s", favorite.address);
+        log.i("Favorite: %s, %s, %s", favorite.address, favorite.providerName, favorite.providerCode);
         tvName.setText(favorite.providerName);
         tvAddress.setText(favorite.address);
 
-        //int imgResource = BaseActivity.getGasStationImage(favorite.providerCode);
-        log.i("image resource: %s", favorite.providerCode);
+
+        //int imgResource = BaseActivity.getGasStationImage(favorite.providerName);
         //imgLogo.setImageResource(imgResource);
+
     }
 }

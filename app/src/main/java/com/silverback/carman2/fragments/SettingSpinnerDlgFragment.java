@@ -13,7 +13,7 @@ import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.threads.LoadDistCodeTask;
@@ -24,7 +24,6 @@ import org.json.JSONArray;
 
 import java.util.Arrays;
 
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceDialogFragmentCompat;

@@ -27,7 +27,7 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 
 import java.util.ArrayList;

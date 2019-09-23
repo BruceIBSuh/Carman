@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.utils;
 
 import android.content.Context;
 import android.location.Location;

@@ -8,6 +8,11 @@ import com.silverback.carman2.adapters.SettingServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+/**
+ * Drag and Drop Helper class
+ */
+
+
 public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ItemTouchHelperCallback.class);

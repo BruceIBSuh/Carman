@@ -47,6 +47,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         log.i("onBindViewHolder");
 
         final FavoriteProviderEntity provider = favoriteList.get(position);
+        log.i("FavoriteProviderEntity in Adapter: %s, %s", provider.providerName, provider.address);
         holder.bindToFavorite(provider);
     }
 

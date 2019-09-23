@@ -3,10 +3,9 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.net.Uri;
 
-import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 

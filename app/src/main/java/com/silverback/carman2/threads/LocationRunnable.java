@@ -17,7 +17,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.CarmanLocationHelper;
+import com.silverback.carman2.utils.CarmanLocationHelper;
 
 import androidx.annotation.NonNull;
 

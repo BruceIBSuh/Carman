@@ -13,7 +13,7 @@ import android.util.TypedValue;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Constants;
+import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -341,6 +341,7 @@ public class BaseActivity extends AppCompatActivity {
         return -1;
     }
 
+    // Match the gas station with its logo image by the station code.
     public static int getGasStationImage(String name) {
 
         int resId = -1;
