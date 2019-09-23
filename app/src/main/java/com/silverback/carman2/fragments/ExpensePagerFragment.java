@@ -98,7 +98,6 @@ public class ExpensePagerFragment extends Fragment {
 
             // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
-                log.i("GasManagerFragment");
                 mDB.gasManagerModel().loadRecentGasData().observe(this, data -> {
                     gasDataList = data;
                     lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
@@ -108,7 +107,6 @@ public class ExpensePagerFragment extends Fragment {
                 });
 
             }else if(currentFragment instanceof ServiceManagerFragment) {
-                log.i("ServiceManagerFragment");
                 mDB.serviceManagerModel().loadRecentServiceData().observe(this, data -> {
                     serviceList = data;
                     lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);

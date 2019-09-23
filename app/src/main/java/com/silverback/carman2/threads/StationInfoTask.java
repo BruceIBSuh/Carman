@@ -52,7 +52,7 @@ public class StationInfoTask extends ThreadTask implements
     @Override
     public void setStationInfo(Opinet.GasStationInfo info) {
         stationInfo = info;
-        stnViewModel.getStationInfoLiveData().postValue(info);
+        //stnViewModel.getStationInfoLiveData().postValue(info);
     }
 
     // Referenced by FireStoreUpdateRunnable

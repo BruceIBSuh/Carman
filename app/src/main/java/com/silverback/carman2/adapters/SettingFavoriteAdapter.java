@@ -12,8 +12,10 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ItemTouchHelperCallback;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
+import java.util.Collections;
 import java.util.List;
 
 public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
@@ -56,4 +58,6 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     public int getItemCount() {
         return favoriteList.size();
     }
+
+
 }

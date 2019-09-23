@@ -294,7 +294,6 @@ public class Opinet  {
 
 
     public static class GasStnParcelable implements Parcelable, Serializable {
-
         private String stnId;
         private String stnCode;
         private String stnName;

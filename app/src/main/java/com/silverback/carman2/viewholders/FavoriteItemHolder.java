@@ -35,10 +35,11 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
         log.i("Favorite: %s, %s, %s", favorite.address, favorite.providerName, favorite.providerCode);
         tvName.setText(favorite.providerName);
         tvAddress.setText(favorite.address);
-
-
-        //int imgResource = BaseActivity.getGasStationImage(favorite.providerName);
-        //imgLogo.setImageResource(imgResource);
+        if(favorite.providerCode != null) {
+            int imgResource = BaseActivity.getGasStationImage(favorite.providerCode);
+            log.i("Image Resource: %s", imgResource);
+            if (imgResource != -1) imgLogo.setImageResource(imgResource);
+        }
 
     }
 }

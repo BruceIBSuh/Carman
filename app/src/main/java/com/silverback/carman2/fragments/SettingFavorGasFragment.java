@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,12 +19,12 @@ import com.silverback.carman2.adapters.SettingFavoriteAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class SettingFavorGasFragment extends Fragment {
-        //implements LoaderManager.LoaderCallbacks<Cursor> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);

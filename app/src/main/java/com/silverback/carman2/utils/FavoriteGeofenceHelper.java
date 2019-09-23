@@ -54,7 +54,7 @@ public class FavoriteGeofenceHelper {
         this.context = context;
         if(mGeofencingClient == null) mGeofencingClient = LocationServices.getGeofencingClient(context);
         if(mDB == null) mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
-        //favoriteModel = new FavoriteProviderEntity();
+        favoriteModel = new FavoriteProviderEntity();
     }
 
     public void setListener(OnGeofenceListener listener) {

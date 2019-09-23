@@ -41,6 +41,7 @@ public class StationListViewModel extends ViewModel {
     }
 
     // Retrieve the information of an station picked by clicking an item view of RecyclerView
+    /*
     public MutableLiveData<Opinet.GasStationInfo> getStationInfoLiveData() {
         if(stnInfo == null) {
             stnInfo = new MutableLiveData<>();
@@ -48,6 +49,7 @@ public class StationListViewModel extends ViewModel {
 
         return stnInfo;
     }
+    */
 
     public MutableLiveData<SparseBooleanArray> getStationCarWashInfo() {
         log.i("getStationCarWashInfo");
