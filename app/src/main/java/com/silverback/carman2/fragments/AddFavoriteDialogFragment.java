@@ -52,8 +52,9 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     // Constants
     static final int LOCATION = 0;
     static final int ADDRESS = 1;
-    static final int RATING = 2;
-    static final int COMMENT = 3;
+    static final int COMPANY = 2;
+    static final int RATING = 3;
+    static final int COMMENT = 4;
 
 
     // Objects
@@ -74,7 +75,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private String nickname;
 
     // UIs
-    private Spinner sidoSpinner, sigunSpinner;
+    private Spinner sidoSpinner, sigunSpinner, companySpinner;
     private TextView tvSido, tvSigun;
     private EditText etAddrs, etServiceComment;
     private RatingBar ratingBar;
@@ -185,6 +186,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         sidoSpinner = localView.findViewById(R.id.spinner_sido);
         sigunSpinner= localView.findViewById(R.id.spinner_sigun);
         etAddrs = localView.findViewById(R.id.et_addrs_detail);
+        companySpinner = localView.findViewById(R.id.spinner_company);
         ratingBar = localView.findViewById(R.id.rb_service);
         Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
         etServiceComment = localView.findViewById(R.id.et_service_comment);
@@ -244,7 +246,6 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // close the dialog using dismiss();
         dialog.setOnShowListener(dialogInterface -> {
             Button btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-
             btn.setOnClickListener(view -> {
                 if(isCurrentLocation && mLocation != null && mAddress != null) {
                     // Pass the location and address of an service provider to ServiceManagerFragment
@@ -294,11 +295,13 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
+    // Share the data of the dialog with ServiceManagerFragment via FragmentSharedModel;
     private void sendServiceLocation() {
 
         SparseArray<Object> sparseArray = new SparseArray<>();
         sparseArray.put(LOCATION, mLocation);
         sparseArray.put(ADDRESS, mAddress);
+        sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
         sparseArray.put(RATING, ratingBar.getRating());
         sparseArray.put(COMMENT, etServiceComment.getText().toString());
 

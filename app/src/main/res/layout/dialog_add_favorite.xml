@@ -151,9 +151,11 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_label_address" />
 
     <Spinner
-        android:id="@+id/spinner_brand_name"
+        android:id="@+id/spinner_company"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:entries="@array/svc_company"
+        android:entryValues="@array/svc_company"
         android:minWidth="150dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_brand"

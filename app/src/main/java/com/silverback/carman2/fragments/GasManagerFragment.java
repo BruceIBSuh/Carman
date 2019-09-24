@@ -64,7 +64,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
     // Constants
-    private static final int GAS = 1; //favorite gas provider category
+    public static final int GAS_STATION = 1; //favorite gas provider category
 
     // Objects
     private CarmanDatabase mDB;
@@ -188,7 +188,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // In case of writing the ratingbar and comment, it is required to have a registered nickname.
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
-            if(nickname.isEmpty() && rating > 0) {
+            if((nickname == null || nickname.isEmpty()) && rating > 0) {
                 ratingBar.setRating(0f);
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
             }
@@ -237,7 +237,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             if(curStn != null) {
                 stnName = curStn.getStnName();
                 stnId = curStn.getStnId();
-                stnCode = curStn.getStnCode();
+                //stnCode = curStn.getStnCode();
                 tvStnName.setText(stnName);
                 etUnitPrice.setText(String.valueOf(curStn.getStnPrice()));
                 //etStnName.setCursorVisible(false);
@@ -255,25 +255,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             imgRefresh.setVisibility(View.VISIBLE);
         });
 
-
-
-        // When fetching the address, the station is registered with Favorite passing detailed info
-        // to FavoriteGeofenceHelper as params
-        /*
-        stnListModel.getStationInfoLiveData().observe(this, stnInfo -> {
-
-            stnAddrs = stnInfo.getNewAddrs();
-            stnCode = stnInfo.getStationCode();
-
-            log.i("Station Code: %s", stnInfo.getStationCode());
-
-            // Once a current station is fetched, retrieve the station info(station address) which
-            // is passed over to addGeofenceToFavorite() in FavoriteGeofenceHelper.
-            geofenceHelper.setGeofenceParam(GAS, stnId, location);
-            geofenceHelper.addGeofenceToFavorite(stnName, stnCode, stnAddrs);
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-        });
-        */
 
         return localView;
     }
@@ -366,19 +347,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", msg);
             if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
 
-            //geofenceHelper.removeFavoriteGeofence(stnName, stnId);
-            //btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-        // Newly register with the favorite list
         } else {
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             // Query the data of a station from Firestore.
             firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
+                    log.i("queried");
                     DocumentSnapshot snapshot = task.getResult();
-                    if(snapshot.exists()) {
-                        log.i("station address: %s", snapshot.getString("new_addrs"));
-                        geofenceHelper.setGeofenceParam(GAS, stnId, location);
-                        geofenceHelper.addGeofenceToFavorite(stnName, stnCode, snapshot.getString("new_addrs"));
+                    if(snapshot != null && snapshot.exists()) {
+                        geofenceHelper.addFavoriteGeofence(snapshot, stnId, GAS_STATION);
+                        btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                     }
                 }
             });
