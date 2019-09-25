@@ -13,7 +13,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -24,6 +23,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
@@ -40,6 +44,9 @@ import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.ThreadManager;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -52,12 +59,14 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     // Constants
     static final int LOCATION = 0;
     static final int ADDRESS = 1;
-    static final int RATING = 2;
-    static final int COMMENT = 3;
+    static final int COMPANY = 2;
+    static final int RATING = 3;
+    static final int COMMENT = 4;
 
 
     // Objects
     private SharedPreferences mSettings;
+    private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentModel;
     private LoadDistCodeTask spinnerTask;
     private GeocoderReverseTask geocoderReverseTask;
@@ -69,14 +78,14 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private AlertDialog dialog;
     private Location mLocation;
     private String mAddress;
-    private String providerName;
+    private String serviceName;
     private String distCode;
     private String nickname;
 
     // UIs
-    private Spinner sidoSpinner, sigunSpinner;
+    private Spinner sidoSpinner, sigunSpinner, companySpinner;
     private TextView tvSido, tvSigun;
-    private EditText etAddrs, etServiceComment;
+    private EditText etAddrs, etPhone, etServiceComment;
     private RatingBar ratingBar;
 
     // Fields
@@ -106,16 +115,20 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        providerName = getArguments().getString("favoriteName");
+        serviceName = getArguments().getString("favoriteName");
         distCode = getArguments().getString("distCode");
         category = getArguments().getInt("category");
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
+
+        // Instantiate FirebaseFirestore
+        if(firestore == null) firestore = FirebaseFirestore.getInstance();
 
         // ViewModel to fetch the sigun list of a given sido name
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
 
+        // Enlist the sigun names in SigunSpinner based upon a given sigun name.
         distModel.getSpinnerDataList().observe(this, dataList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             for(Opinet.DistrictCode obj : dataList) {
@@ -162,7 +175,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             // Pass the location and address of an service provider to ServiceManagerFragment
             // using FragmentSharedModel which enables Fragments to communicate each other.
             log.i("Geocoder Location: %s, %s", mLocation, mAddress);
-            sendServiceLocation();
+            registerFavorite();
 
             dialog.dismiss();
         });
@@ -185,11 +198,13 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         sidoSpinner = localView.findViewById(R.id.spinner_sido);
         sigunSpinner= localView.findViewById(R.id.spinner_sigun);
         etAddrs = localView.findViewById(R.id.et_addrs_detail);
+        etPhone = localView.findViewById(R.id.et_phone);
+        companySpinner = localView.findViewById(R.id.spinner_company);
         ratingBar = localView.findViewById(R.id.rb_service);
         Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
         etServiceComment = localView.findViewById(R.id.et_service_comment);
 
-        tvTitle.setText(providerName);
+        tvTitle.setText(serviceName);
 
         // Event Handlers
         sidoSpinner.setOnItemSelectedListener(this);
@@ -199,9 +214,11 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
         });
 
+        // RatingBar and Comment are required to have a nickname set in SettingPreferenceActivity.
         nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
         resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
+            log.i("Nickname required: %s", nickname);
             if(nickname.isEmpty() && rating > 0) {
                 ratingBar.setRating(0f);
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
@@ -223,15 +240,20 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         mSigunItemPos = Integer.valueOf(sigunCode) -1;
 
 
-        // sidoSpinner and adapter
+        // Create the spinners for sido and sigun name.
         ArrayAdapter sidoAdapter = ArrayAdapter.createFromResource(
-                getContext(), R.array.sido_name, android.R.layout.simple_spinner_item);
-        sidoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                getContext(), R.array.sido_name, R.layout.spinner_svc_dialog);
+        sidoAdapter.setDropDownViewResource(R.layout.spinner_svc_dlg_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos);
 
-        // Sigun Spinner and Adapter
-        sigunAdapter = new DistrictSpinnerAdapter(getContext());
+        sigunAdapter = new DistrictSpinnerAdapter(getContext(), R.dimen.smallText);
+
+        // Create the spinner for Comany list.
+        ArrayAdapter companyAdapter = ArrayAdapter.createFromResource(
+                getContext(), R.array.svc_company, R.layout.spinner_svc_dialog);
+        companyAdapter.setDropDownViewResource(R.layout.spinner_svc_dlg_dropdown);
+        companySpinner.setAdapter(companyAdapter);
 
         dialog = new AlertDialog.Builder(getActivity())
                 .setView(localView)
@@ -244,13 +266,12 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // close the dialog using dismiss();
         dialog.setOnShowListener(dialogInterface -> {
             Button btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-
             btn.setOnClickListener(view -> {
                 if(isCurrentLocation && mLocation != null && mAddress != null) {
                     // Pass the location and address of an service provider to ServiceManagerFragment
                     // using FragmentSharedModel which enables Fragments to communicate each other.
                     log.i("Current Location process: %s, %s", mLocation, mAddress);
-                    sendServiceLocation();
+                    registerFavorite();
                     dialog.dismiss();
 
                 } else {
@@ -294,15 +315,70 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-    private void sendServiceLocation() {
+    // Share the data of the dialog with ServiceManagerFragment via FragmentSharedModel;
+    private void registerFavorite() {
 
+        Map<String, Object> svcData = new HashMap<>();
+        svcData.put("svcName", serviceName);
+        svcData.put("svcCode", companySpinner.getSelectedItem().toString());
+        svcData.put("address", mAddress);
+        svcData.put("phone", etPhone.getText().toString());
+        svcData.put("location", new GeoPoint(mLocation.getLatitude(), mLocation.getLongitude()));
+
+        Map<String, Object> svcEval = new HashMap<>();
+        svcEval.put("rating", ratingBar.getRating());
+        svcEval.put("comments", etServiceComment.getText().toString());
+        svcEval.put("username", nickname);
+        svcEval.put("timestamp", FieldValue.serverTimestamp());
+
+        firestore.collection("svc_center")
+                .whereEqualTo("svcName", serviceName)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if(snapshot != null && snapshot.size() > 0) {
+                        for(int i = 0; i < snapshot.size(); i++) {
+                            QueryDocumentSnapshot doc = (QueryDocumentSnapshot)snapshot.getDocuments().get(i);
+
+                            // Service center with the same name is located within Constants.UPDATE_DISTANCE
+                            if(checkLocationDistance(mLocation, doc.getGeoPoint("location"))){
+                                log.i("The same named center is alread located within 50 meters");
+                            } else {
+                                firestore.collection("svc_center").document().set(svcData);
+                            }
+                        }
+                    } else {
+                        firestore.collection("svc_center").document().set(svcData);
+                    }
+                }).addOnFailureListener(e -> {
+                    log.e("Query failed: %s", e.getMessage());
+                });
+
+        /*
         SparseArray<Object> sparseArray = new SparseArray<>();
         sparseArray.put(LOCATION, mLocation);
         sparseArray.put(ADDRESS, mAddress);
+        sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
         sparseArray.put(RATING, ratingBar.getRating());
         sparseArray.put(COMMENT, etServiceComment.getText().toString());
 
         fragmentModel.setServiceLocation(sparseArray);
+        */
+    }
+
+    // After querying the document with a service name, retrieve the geopoint to compare the current
+    // location, whatever it gets from the reverse geocoder or LocationServices, with the geopoint
+    // location. Then, if the distance is out of the preset distance, set the data to Firestore.
+    private boolean checkLocationDistance(Location location, GeoPoint geoPoint) {
+        if(location == null || geoPoint == null) {
+            log.e("Incorrect address or location data");
+            return false;
+        }
+
+        Location geoLocation = new Location("geopoint");
+        geoLocation.setLatitude(geoPoint.getLatitude());
+        geoLocation.setLongitude(geoPoint.getLongitude());
+
+        return location.distanceTo(geoLocation) < Constants.UPDATE_DISTANCE;
     }
 
 }

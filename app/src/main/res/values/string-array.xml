@@ -34,10 +34,19 @@
         <item>B034</item>
     </string-array>
 
-    <string-array name = "default_district">
+    <string-array name="default_district">
         <item>@string/general_def_sido</item>
         <item>@string/general_def_sigun</item>
         <item>@string/general_def_code</item>
+    </string-array>
+
+    <string-array name="svc_company">
+        <item>No Title</item>
+        <item>BluHands</item>
+        <item>SpeedMate</item>
+        <item>Auto Oasis</item>
+        <item>AutoQ</item>
+        <item>CarZen</item>
     </string-array>
 
     <string-array name="list_station_radius_name">

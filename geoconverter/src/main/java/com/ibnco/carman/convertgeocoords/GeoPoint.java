@@ -1,7 +1,4 @@
-package com.ibnco.carman.convertgeocoords; /**
- *
- */
-
+package com.ibnco.carman.convertgeocoords;
 /**
  * @author aquilegia. special thanks to this guy!!
  *

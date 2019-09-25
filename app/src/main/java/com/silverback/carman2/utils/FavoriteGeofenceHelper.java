@@ -10,9 +10,13 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.ibnco.carman.convertgeocoords.GeoPoint;
+import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
+import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -36,9 +40,9 @@ public class FavoriteGeofenceHelper {
     private OnGeofenceListener mListener;
 
     // Fields
-    private String geofenceId;
-    private String stnId, stnName;
-    private Location geofenceLocation;
+    //private String geofenceId;
+    //private String stnId, stnName;
+    //private Location geofenceLocation;
     private int category; // 1.gas station 2. service center 3. car wash....
     private Uri mNewUri;
     private int rowDeleted;
@@ -62,20 +66,22 @@ public class FavoriteGeofenceHelper {
     }
 
     // Set params required to create geofence objects
+    /*
     public void setGeofenceParam(int category, String id, Location location) {
         this.category = category;
         geofenceId = id;
         geofenceLocation = location;
     }
+    */
 
     // Create a geofence, setting the desired location, radius, duration and transition type.
     // Set the stationId or the serviceId(registered time) respectively as the key of Geofence.
-    private void createGeofence(){
+    private void createGeofence(String geofenceId, GeoPoint geoPoint){
 
         if(mGeofenceList == null) mGeofenceList = new ArrayList<>();
         mGeofenceList.add(new Geofence.Builder()
                 .setRequestId(geofenceId)
-                .setCircularRegion(geofenceLocation.getLatitude(), geofenceLocation.getLongitude(), Constants.GEOFENCE_RADIUS)
+                .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL)//bitwise OR only
                 .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
@@ -103,25 +109,28 @@ public class FavoriteGeofenceHelper {
 
         //Intent intent = new Intent(context, GeofenceTransitionService.class);
         //mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        log.i("PendingIntent Location Data: %s, %s", geofenceLocation.getLongitude(), geofenceLocation.getLatitude());
         return mGeofencePendingIntent;
         //return PendingIntent.getService(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     // Add a provider(gas station / service provider) to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
-    public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
-        log.i("GeofenceToFavorite: %s, %s, %s", name, providerCode, addrs);
-        // Set Geofencing with a providerId passed to Geofence API as a identifier.
-        createGeofence();
+    //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
+    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final String stnId, final int category) {
 
-        favoriteModel.providerName = name;
+        GeoPoint katecPoint = new GeoPoint((double)snapshot.get("xCoord"), (double)snapshot.get("yCoord"));
+        GeoPoint geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
+        log.i("Location: %s, %s", geoPoint.getX(), geoPoint.getY());
+
+        createGeofence(stnId, geoPoint);
+
+        favoriteModel.providerName = snapshot.getString("stnName");
         favoriteModel.category = category;
-        favoriteModel.providerId = geofenceId;
-        favoriteModel.providerCode = providerCode;
-        favoriteModel.address = addrs;
-        favoriteModel.longitude = geofenceLocation.getLongitude();
-        favoriteModel.latitude = geofenceLocation.getLatitude();
+        favoriteModel.providerId = stnId;
+        favoriteModel.providerCode = snapshot.getString("stnCode");
+        favoriteModel.address = snapshot.getString("new_addrs");
+        favoriteModel.longitude = geoPoint.getX();
+        favoriteModel.latitude = geoPoint.getY();
 
         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
 

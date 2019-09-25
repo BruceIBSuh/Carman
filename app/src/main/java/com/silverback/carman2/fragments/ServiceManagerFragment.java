@@ -77,6 +77,7 @@ public class ServiceManagerFragment extends Fragment implements
     private JSONArray jsonServiceArray;
     private Location mLocation;
     private String mAddress;
+    private String svcCompany;
 
     // UIs
     private RelativeLayout relativeLayout;
@@ -119,7 +120,7 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         adapterModel = ViewModelProviders.of(getActivity()).get(PagerAdapterViewModel.class);
 
-        geofenceHelper = new FavoriteGeofenceHelper(getContext());
+        if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
@@ -221,6 +222,7 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel.getServiceLocation().observe(this, sparseArray -> {
             mLocation = (Location)sparseArray.get(AddFavoriteDialogFragment.LOCATION);
             mAddress = (String)sparseArray.get(AddFavoriteDialogFragment.ADDRESS);
+            svcCompany = (String)sparseArray.get(AddFavoriteDialogFragment.COMPANY);
             svcRating = (Float)sparseArray.get(AddFavoriteDialogFragment.RATING);
             svcComment = (String)sparseArray.get(AddFavoriteDialogFragment.COMMENT);
             log.i("Service Locaiton: %s, %s, %s, %s", mLocation, mAddress, svcRating, svcComment);
@@ -370,6 +372,29 @@ public class ServiceManagerFragment extends Fragment implements
         return -1;
     }
 
+
+    // Upload the data of an service center to FireStore
+    private void registerFavorite() {
+        // Upload the auto service center data to FireStore.
+        Map<String, Object> svcData = new HashMap<>();
+        svcData.put("svcName", etStnName.getText().toString());
+        svcData.put("svcCode", "BluHands");
+        svcData.put("address", mAddress);
+        svcData.put("xCoord", mLocation.getLongitude());
+        svcData.put("yCoord", mLocation.getLatitude());
+
+        DocumentReference doc = fireStore.collection("svc_center").document();
+        doc.set(svcData).addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                log.i("upload service data completed");
+                uploadRatingComment(doc.getId());
+
+            } else {
+                log.i("upload service data failed");
+            }
+        });
+    }
+
     // Invoked by OnOptions
     public boolean saveServiceData() {
 
@@ -425,24 +450,6 @@ public class ServiceManagerFragment extends Fragment implements
             mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
 
-            // Upload the service provider data to Firestore.
-            Map<String, Object> svcData = new HashMap<>();
-            svcData.put("svcName", etStnName.getText().toString());
-            svcData.put("svcCode", "BluHands");
-            svcData.put("address", mAddress);
-            svcData.put("xCoord", mLocation.getLongitude());
-            svcData.put("yCoord", mLocation.getLatitude());
-
-            DocumentReference doc = fireStore.collection("svc_center").document();
-            doc.set(svcData).addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    log.i("upload service data completed");
-                    uploadRatingComment(doc.getId());
-
-                } else {
-                    log.i("upload service data failed");
-                }
-            });
 
 
             return true;

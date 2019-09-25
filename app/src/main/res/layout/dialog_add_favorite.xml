@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -49,9 +48,9 @@
         android:layout_width="60dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:text="@string/dialog_service_favorite_region"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/smallText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_title" />
@@ -59,53 +58,42 @@
     <TextView
         android:id="@+id/tv_sido"
         android:visibility="gone"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:gravity="start"
-        android:textSize="@dimen/largeText"
-        app:layout_constraintBottom_toTopOf="@+id/tv_label_address"
-        app:layout_constraintEnd_toStartOf="@+id/tv_sigun"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_region"
+        android:gravity="center_vertical"
+        android:textSize="@dimen/smallText"
         app:layout_constraintTop_toTopOf="@+id/tv_label_region"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_region"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_region" />
 
     <TextView
         android:id="@+id/tv_sigun"
         android:visibility="gone"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="32dp"
         android:gravity="start"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintTop_toTopOf="@+id/tv_sido"
         app:layout_constraintBottom_toBottomOf="@+id/tv_sido"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_sido"
-        app:layout_constraintTop_toTopOf="@+id/tv_sido" />
+        app:layout_constraintStart_toEndOf="@+id/tv_sido" />
 
     <Spinner
         android:id="@+id/spinner_sido"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_region"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_sigun"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_label_region"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_region"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="@+id/tv_label_region" />
 
     <Spinner
         android:id="@+id/spinner_sigun"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="32dp"
         app:layout_constraintBottom_toBottomOf="@+id/spinner_sido"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/spinner_sido"
         app:layout_constraintTop_toTopOf="@+id/spinner_sido" />
 
@@ -113,10 +101,10 @@
         android:id="@+id/tv_label_address"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:labelFor="@id/et_addrs_detail"
         android:text="@string/dialog_service_favorite_address"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/smallText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_region" />
@@ -128,10 +116,9 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
         android:background="@drawable/bg_view_outfocus"
-        android:ems="10"
         android:inputType="textPersonName"
-        android:padding="5dp"
-        android:textSize="@dimen/smallText"
+        android:padding="2dp"
+        android:textSize="@dimen/extraSmallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_address"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tv_label_address"
@@ -140,25 +127,50 @@
         tools:ignore="autofill" />
 
     <TextView
-        android:id="@+id/tv_label_brand"
+        android:id="@+id/tv_label_phone"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/dialog_service_favorite_name"
-        android:textSize="@dimen/largeText"
+        android:layout_marginTop="8dp"
+        android:labelFor="@id/et_phone"
+        android:text="@string/svc_dlg_label_phone"
+        android:textSize="@dimen/smallText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_address" />
 
+    <EditText
+        android:id="@+id/et_phone"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_view_outfocus"
+        android:inputType="phone"
+        android:padding="2dp"
+        android:textSize="@dimen/extraSmallText"
+        app:layout_constraintStart_toStartOf="@+id/et_addrs_detail"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_phone"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_phone"
+        tools:ignore="autofill" />
+
+
+    <TextView
+        android:id="@+id/tv_label_company"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/dialog_service_favorite_name"
+        android:textSize="@dimen/smallText"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_region"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_phone" />
+
     <Spinner
-        android:id="@+id/spinner_brand_name"
+        android:id="@+id/spinner_company"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="150dp"
-        android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_brand"
+        android:textSize="@dimen/extraSmallText"
         app:layout_constraintStart_toStartOf="@+id/et_addrs_detail"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_brand" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_company"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_company" />
 
     <TextView
         android:id="@+id/tv_label_rating"
@@ -167,10 +179,10 @@
         android:layout_marginTop="24dp"
         android:minWidth="80dp"
         android:text="@string/svc_label_evaluation"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/smallText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_brand" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_company" />
 
     <RatingBar
         android:id="@+id/rb_service"
@@ -205,10 +217,10 @@
         android:id="@+id/tv_comment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:labelFor="@id/et_service_comment"
         android:text="@string/tv_label_comment"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/smallText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_rating" />
@@ -217,11 +229,11 @@
         android:id="@+id/et_service_comment"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:minHeight="50dp"
         android:layout_margin="8dp"
         android:background="@drawable/state_view_focus"
         android:gravity="start|top"
         android:inputType="textMultiLine"
+        android:minHeight="50dp"
         android:padding="5dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintEnd_toEndOf="parent"
