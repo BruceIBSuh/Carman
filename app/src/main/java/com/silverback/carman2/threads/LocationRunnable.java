@@ -13,6 +13,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -74,6 +75,10 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
         log.i("LocationCallback invoked");
 
+        LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
+        if(locationStates.isGpsUsable()) log.i("GPS is working");
+        if(locationStates.isNetworkLocationUsable()) log.i("Network location is working");
+
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
         LocationCallback locationCallback = mLocationHelper.initLocationCallback();
@@ -83,6 +88,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
             mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                 if(location != null) {
+                    log.e("Current Location: %s", location);
                     task.setCurrentLocation(location);
                     task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
                 } else {
@@ -94,18 +100,13 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             log.e("Location_SecurityException: %s", e.getMessage());
 
         } finally {
+            log.e("Location finished");
             mFusedLocationClient.removeLocationUpdates(locationCallback);
         }
 
-        /*
-        LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
-        if(locationStates.isGpsUsable()) {
-            log.d("GPS is working");
-        }
-        if(locationStates.isNetworkLocationUsable()) {
-            log.d("Network location is working");
-        }
-        */
+
+
+
     }
 
     @Override
@@ -114,7 +115,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
         if(e instanceof ResolvableApiException) {
             // Location Settings are not satisfied, but this can be fixed by showing the user a dialog
             try {
-                //Log.e(LOG_TAG, "ResolvableApiException");
+                log.e("ResolvableApiException");
                 // Show the dialog by calling startResolutionForResult() and check the result in onActivityResult
                 ResolvableApiException resolvable = (ResolvableApiException) e;
                 resolvable.startResolutionForResult((Activity)context, REQUEST_CHECK_LOCATION_SETTINGS);
@@ -122,7 +123,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
 
             } catch (IntentSender.SendIntentException sendEx) {
                 // Ignore the error
-                //Log.e(TAG, "LocationSettings exceiption: " + e.getMessage());
+                log.e("LocationSettings exceiption: %s", e.getMessage());
             }
         }
     }

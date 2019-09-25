@@ -100,8 +100,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos);
 
+        sigunAdapter = new DistrictSpinnerAdapter(getContext(), R.dimen.largeText);
 
-        sigunAdapter = new DistrictSpinnerAdapter(getContext());
         distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         distModel.getSpinnerDataList().observe(this, dataList -> {
             log.i("DataList: %s", dataList.size());
