@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -26,7 +27,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -78,7 +78,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private AlertDialog dialog;
     private Location mLocation;
     private String mAddress;
-    private String serviceName;
+    private String providerName;
     private String distCode;
     private String nickname;
 
@@ -115,7 +115,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        serviceName = getArguments().getString("favoriteName");
+        providerName = getArguments().getString("favoriteName");
         distCode = getArguments().getString("distCode");
         category = getArguments().getInt("category");
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
@@ -204,7 +204,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
         etServiceComment = localView.findViewById(R.id.et_service_comment);
 
-        tvTitle.setText(serviceName);
+        tvTitle.setText(providerName);
 
         // Event Handlers
         sidoSpinner.setOnItemSelectedListener(this);
@@ -319,7 +319,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private void registerFavorite() {
 
         Map<String, Object> svcData = new HashMap<>();
-        svcData.put("svcName", serviceName);
+        svcData.put("svcName", providerName);
         svcData.put("svcCode", companySpinner.getSelectedItem().toString());
         svcData.put("address", mAddress);
         svcData.put("phone", etPhone.getText().toString());
@@ -332,13 +332,12 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         svcEval.put("timestamp", FieldValue.serverTimestamp());
 
         firestore.collection("svc_center")
-                .whereEqualTo("svcName", serviceName)
+                .whereEqualTo("svcName", providerName)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if(snapshot != null && snapshot.size() > 0) {
                         for(int i = 0; i < snapshot.size(); i++) {
                             QueryDocumentSnapshot doc = (QueryDocumentSnapshot)snapshot.getDocuments().get(i);
-
                             // Service center with the same name is located within Constants.UPDATE_DISTANCE
                             if(checkLocationDistance(mLocation, doc.getGeoPoint("location"))){
                                 log.i("The same named center is alread located within 50 meters");
@@ -353,16 +352,16 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
                     log.e("Query failed: %s", e.getMessage());
                 });
 
-        /*
+
         SparseArray<Object> sparseArray = new SparseArray<>();
         sparseArray.put(LOCATION, mLocation);
         sparseArray.put(ADDRESS, mAddress);
-        sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
-        sparseArray.put(RATING, ratingBar.getRating());
-        sparseArray.put(COMMENT, etServiceComment.getText().toString());
+        //sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
+        //sparseArray.put(RATING, ratingBar.getRating());
+        //sparseArray.put(COMMENT, etServiceComment.getText().toString());
 
         fragmentModel.setServiceLocation(sparseArray);
-        */
+
     }
 
     // After querying the document with a service name, retrieve the geopoint to compare the current

@@ -85,17 +85,28 @@
             android:id="@+id/et_service_provider"
             android:layout_width="0dp"
             android:layout_height="25dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="3dp"
             android:padding="3dp"
             android:background="@drawable/state_view_focus"
             android:inputType="textMultiLine"
-            android:minWidth="200dp"
             android:textSize="@dimen/smallText"
-            app:layout_constraintBottom_toBottomOf="@+id/imgbtn_favorite"
-            app:layout_constraintEnd_toEndOf="@+id/view_boxing"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_provider"
+            app:layout_constraintEnd_toStartOf="@+id/btn_register"
             app:layout_constraintStart_toStartOf="@+id/tv_service_date"
-            app:layout_constraintTop_toTopOf="@+id/imgbtn_favorite"
+            app:layout_constraintTop_toTopOf="@+id/tv_label_provider"
             tools:ignore="Autofill" />
+
+        <Button
+            android:id="@+id/btn_register"
+            android:layout_width="35dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="8dp"
+            android:padding="0dp"
+            android:text="@string/svc_btn_eval"
+            android:textSize="@dimen/extraSmallText"
+            app:layout_constraintTop_toTopOf="@+id/et_service_provider"
+            app:layout_constraintBottom_toBottomOf="@+id/et_service_provider"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <TextView
             android:id="@+id/tv_label_mileage"

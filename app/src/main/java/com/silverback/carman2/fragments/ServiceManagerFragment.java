@@ -95,6 +95,7 @@ public class ServiceManagerFragment extends Fragment implements
     private boolean isFavorite;
 
     private float svcRating;
+    private String svcName;
     private String svcComment;
     private String svcDocumentId;
 
@@ -222,10 +223,10 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel.getServiceLocation().observe(this, sparseArray -> {
             mLocation = (Location)sparseArray.get(AddFavoriteDialogFragment.LOCATION);
             mAddress = (String)sparseArray.get(AddFavoriteDialogFragment.ADDRESS);
-            svcCompany = (String)sparseArray.get(AddFavoriteDialogFragment.COMPANY);
-            svcRating = (Float)sparseArray.get(AddFavoriteDialogFragment.RATING);
-            svcComment = (String)sparseArray.get(AddFavoriteDialogFragment.COMMENT);
-            log.i("Service Locaiton: %s, %s, %s, %s", mLocation, mAddress, svcRating, svcComment);
+            //svcCompany = (String)sparseArray.get(AddFavoriteDialogFragment.COMPANY);
+            //svcRating = (Float)sparseArray.get(AddFavoriteDialogFragment.RATING);
+            //svcComment = (String)sparseArray.get(AddFavoriteDialogFragment.COMMENT);
+            //log.i("Service Locaiton: %s, %s, %s, %s", mLocation, mAddress, svcRating, svcComment);
         });
 
     }
@@ -248,20 +249,22 @@ public class ServiceManagerFragment extends Fragment implements
         etStnName = localView.findViewById(R.id.et_service_provider);
         tvMileage = localView.findViewById(R.id.tv_service_mileage);
         Button btnDate = localView.findViewById(R.id.btn_date);
+        Button btnReg = localView.findViewById(R.id.btn_register);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_total_cost);
 
-
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
-        btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+        btnReg.setOnClickListener(this);
         btnFavorite.setOnClickListener(this);
 
+        svcName = etStnName.getText().toString();
         String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
         tvDate.setText(date);
         tvTotalCost.setText("0");
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
+        btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
         recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerServiceItems.setHasFixedSize(true);
@@ -284,7 +287,6 @@ public class ServiceManagerFragment extends Fragment implements
         // via FragmentViewModel in the textview.
         switch(v.getId()) {
             case R.id.tv_service_mileage:
-                //targetView = (TextView)v;
                 Bundle args = new Bundle();
                 args.putString("title", getString(R.string.svc_label_mileage));
                 args.putString("initValue", tvMileage.getText().toString());
@@ -298,21 +300,38 @@ public class ServiceManagerFragment extends Fragment implements
                 // is within the registered one.
                 if(isGeofenceIntent) return;
 
-                String serviceName = etStnName.getText().toString();
-                String serivceId = BaseActivity.formatMilliseconds("yyMMddHHmm", System.currentTimeMillis());
+                svcName = etStnName.getText().toString();
+                String svcId = BaseActivity.formatMilliseconds("yyMMddHHmm", System.currentTimeMillis());
 
-                if(TextUtils.isEmpty(serviceName)) {
+                if(TextUtils.isEmpty(svcName)) {
                     Snackbar.make(relativeLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
                     return;
                 }
 
                 if(isFavorite) {
-                    geofenceHelper.removeFavoriteGeofence(serviceName, serivceId);
+                    geofenceHelper.removeFavoriteGeofence(svcName, svcId);
                     btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
                     Toast.makeText(getActivity(), getString(R.string.toast_remove_favorite_service), Toast.LENGTH_SHORT).show();
 
                 } else {
-                    AddFavoriteDialogFragment.newInstance(serviceName, distCode, 2).show(getFragmentManager(), null);
+                    //AddFavoriteDialogFragment.newInstance(svcName, distCode, 2).show(getFragmentManager(), null);
+                    // Instantiate FavoriteGeofenceHelper to register the service center with Favorite list.
+                }
+
+                break;
+
+            case R.id.btn_register:
+                svcName = etStnName.getText().toString();
+                if(etStnName.getText().toString().isEmpty()) {
+                    Snackbar.make(relativeLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if(isFavorite || mLocation != null) {
+                    Snackbar.make(relativeLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
+                    return;
+                } else {
+                    AddFavoriteDialogFragment.newInstance(svcName, distCode, 2).show(getFragmentManager(), null);
                 }
 
                 break;

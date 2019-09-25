@@ -105,6 +105,7 @@
     <string name="service_dialog_label_memo">메 모:</string>
     <string name="svc_msg_empty_name">서비스센터 이름을 입력해 주세요</string>
     <string name="svc_label_evaluation">서비스평가</string>
+    <string name="svc_btn_eval">등록</string>
     <!--ExpenseActivity$ServiceManagerFragment$AddFavoriteDialogFragment-->
     <string name="svc_dlg_label_phone">연락처</string>
 
