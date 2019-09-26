@@ -74,7 +74,7 @@ public class FragmentSharedModel extends ViewModel {
         return alertResult;
     }
 
-    // Commmunicate b/w AddFavoriteDialogFragment and ServiceManagerFragment
+    // Commmunicate b/w RegisterDialogFragment and ServiceManagerFragment
     public void setServiceLocation(SparseArray sparseArray) {
         svcLocation.setValue(sparseArray);
     }

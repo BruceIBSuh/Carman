@@ -4,6 +4,8 @@ import android.os.Process;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.ibnco.carman.convertgeocoords.GeoPoint;
+import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -20,7 +22,7 @@ public class FireStoreGetRunnable implements Runnable {
 
     // Objects
     private FireStoreGetMethods mCallback;
-    private FirebaseFirestore fireStore;
+    private FirebaseFirestore firestore;
     private List<Opinet.GasStnParcelable> stnList;
 
 
@@ -34,7 +36,7 @@ public class FireStoreGetRunnable implements Runnable {
 
     FireStoreGetRunnable(FireStoreGetMethods callback) {
         this.mCallback = callback;
-        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
+        if(firestore == null) firestore = FirebaseFirestore.getInstance();
     }
 
     @Override
@@ -50,7 +52,7 @@ public class FireStoreGetRunnable implements Runnable {
             //synchronized(this) {
                 final int pos = i;
                 final String stnId = stnList.get(pos).getStnId();
-                final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
+                final DocumentReference docRef = firestore.collection("gas_station").document(stnId);
 
                 docRef.addSnapshotListener((snapshot, e) -> {
                     if (e != null) {
@@ -83,13 +85,16 @@ public class FireStoreGetRunnable implements Runnable {
                         }
 
                     } else {
+
+                        uploadStationInfo(pos);
+                        /*
                         Map<String, Object> stnData = new HashMap<>();
                         stnData.put("stnName", stnList.get(pos).getStnName());
                         stnData.put("stnCode", stnList.get(pos).getStnCode());
                         stnData.put("xCoord", stnList.get(pos).getLongitude());
                         stnData.put("yCoord", stnList.get(pos).getLatitude());
 
-                        fireStore.collection("gas_station").document(stnId).set(stnData)
+                        firestore.collection("gas_station").document(stnId).set(stnData)
                                 .addOnSuccessListener(documentReference -> {
                                     log.i("successfully added data");
                                     // Start the task to retrieve addtional information
@@ -97,7 +102,7 @@ public class FireStoreGetRunnable implements Runnable {
                                     mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
                                 })
                                 .addOnFailureListener(error -> log.e("failed to add data"));
-
+                        */
                     }
                 });
             //}
@@ -106,13 +111,12 @@ public class FireStoreGetRunnable implements Runnable {
 
     private void uploadStationInfo(final int position) {
         Map<String, Object> stnData = new HashMap<>();
-        //stnData.put("stnId", stnList.get(pos).getStnId());
         stnData.put("stnName", stnList.get(position).getStnName());
         stnData.put("stnCode", stnList.get(position).getStnCode());
         stnData.put("xCoord", stnList.get(position).getLongitude());
         stnData.put("yCoord", stnList.get(position).getLatitude());
 
-        fireStore.collection("gas_station").document(stnList.get(position).getStnId()).set(stnData)
+        firestore.collection("gas_station").document(stnList.get(position).getStnId()).set(stnData)
                 .addOnSuccessListener(documentReference -> {
                     log.i("successfully added data");
                     // Start the task to retrieve addtional information
@@ -120,7 +124,6 @@ public class FireStoreGetRunnable implements Runnable {
                     mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
                 })
                 .addOnFailureListener(error -> log.e("failed to add data"));
-
     }
 
 }

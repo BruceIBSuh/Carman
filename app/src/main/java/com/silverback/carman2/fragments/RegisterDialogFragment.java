@@ -19,12 +19,12 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -50,18 +50,19 @@ import java.util.Map;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class AddFavoriteDialogFragment extends DialogFragment implements
+public class RegisterDialogFragment extends DialogFragment implements
         AdapterView.OnItemSelectedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(AddFavoriteDialogFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(RegisterDialogFragment.class);
 
     // Constants
-    static final int LOCATION = 0;
-    static final int ADDRESS = 1;
-    static final int COMPANY = 2;
-    static final int RATING = 3;
-    static final int COMMENT = 4;
+    static final int SVC_ID = 0;
+    static final int LOCATION = 1;
+    static final int ADDRESS = 2;
+    static final int COMPANY = 3;
+    static final int RATING = 4;
+    static final int COMMENT = 5;
 
 
     // Objects
@@ -92,15 +93,16 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     private int category;
     private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
     private boolean isCurrentLocation;
+    private boolean isRegistered;
 
     // Default constructor
-    private AddFavoriteDialogFragment() {
+    private RegisterDialogFragment() {
         // Required empty public constructor
     }
 
     // Instantiate DialogFragment as a SingleTon
-    static AddFavoriteDialogFragment newInstance(String name, String distCode, int category) {
-        AddFavoriteDialogFragment favoriteDialog = new AddFavoriteDialogFragment();
+    static RegisterDialogFragment newInstance(String name, String distCode, int category) {
+        RegisterDialogFragment favoriteDialog = new RegisterDialogFragment();
         Bundle args = new Bundle();
         args.putString("favoriteName", name);
         args.putString("distCode", distCode);
@@ -175,9 +177,9 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
             // Pass the location and address of an service provider to ServiceManagerFragment
             // using FragmentSharedModel which enables Fragments to communicate each other.
             log.i("Geocoder Location: %s, %s", mLocation, mAddress);
-            registerFavorite();
+            registerService();
 
-            dialog.dismiss();
+            //dialog.dismiss();
         });
 
     }
@@ -187,12 +189,12 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         //LayoutInflater inflater = requireActivity().getLayoutInflater();
-        //View localView = inflater.inflate(R.layout.dialog_add_favorite, null);
-        View localView = View.inflate(getContext(), R.layout.dialog_add_favorite, null);
+        //View localView = inflater.inflate(R.layout.dialog_register_provider, null);
+        View localView = View.inflate(getContext(), R.layout.dialog_register_provider, null);
         setCancelable(false);
 
         TextView tvTitle = localView.findViewById(R.id.tv_title);
-        TextView tvCurrentLocation = localView.findViewById(R.id.tv_label_location);
+        ImageButton btnLocation = localView.findViewById(R.id.btn_current_location);
         tvSido = localView.findViewById(R.id.tv_sido);
         tvSigun = localView.findViewById(R.id.tv_sigun);
         sidoSpinner = localView.findViewById(R.id.spinner_sido);
@@ -209,7 +211,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         // Event Handlers
         sidoSpinner.setOnItemSelectedListener(this);
         sigunSpinner.setOnItemSelectedListener(this);
-        tvCurrentLocation.setOnClickListener(view -> {
+        btnLocation.setOnClickListener(view -> {
             isCurrentLocation = true;
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
         });
@@ -271,8 +273,8 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
                     // Pass the location and address of an service provider to ServiceManagerFragment
                     // using FragmentSharedModel which enables Fragments to communicate each other.
                     log.i("Current Location process: %s, %s", mLocation, mAddress);
-                    registerFavorite();
-                    dialog.dismiss();
+                    registerService();
+                    //dialog.dismiss();
 
                 } else {
                     mAddress = sidoSpinner.getSelectedItem() + " "
@@ -316,7 +318,7 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
     public void onNothingSelected(AdapterView<?> parent) {}
 
     // Share the data of the dialog with ServiceManagerFragment via FragmentSharedModel;
-    private void registerFavorite() {
+    private void registerService() {
 
         Map<String, Object> svcData = new HashMap<>();
         svcData.put("svcName", providerName);
@@ -325,12 +327,6 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
         svcData.put("phone", etPhone.getText().toString());
         svcData.put("location", new GeoPoint(mLocation.getLatitude(), mLocation.getLongitude()));
 
-        Map<String, Object> svcEval = new HashMap<>();
-        svcEval.put("rating", ratingBar.getRating());
-        svcEval.put("comments", etServiceComment.getText().toString());
-        svcEval.put("username", nickname);
-        svcEval.put("timestamp", FieldValue.serverTimestamp());
-
         firestore.collection("svc_center")
                 .whereEqualTo("svcName", providerName)
                 .get()
@@ -338,36 +334,51 @@ public class AddFavoriteDialogFragment extends DialogFragment implements
                     if(snapshot != null && snapshot.size() > 0) {
                         for(int i = 0; i < snapshot.size(); i++) {
                             QueryDocumentSnapshot doc = (QueryDocumentSnapshot)snapshot.getDocuments().get(i);
-                            // Service center with the same name is located within Constants.UPDATE_DISTANCE
-                            if(checkLocationDistance(mLocation, doc.getGeoPoint("location"))){
-                                log.i("The same named center is alread located within 50 meters");
-                            } else {
-                                firestore.collection("svc_center").document().set(svcData);
-                            }
+                            // If a service center with the same name is queried and its location is within
+                            // Constants.UPDATE_DISTANCE. isRegistered is set to true, and if no service
+                            // center is queried or the same name is queried but the location is out of
+                            // Constant.UPDATE_DISTANCE, isRegistered is set to false.
+                            isRegistered = checkArea(mLocation, doc.getGeoPoint("location"));
+                            log.i("Registered: %s", isRegistered);
                         }
-                    } else {
-                        firestore.collection("svc_center").document().set(svcData);
+
+                    } else isRegistered = false;
+
+                    // In case isRegistered is set to false, add the service data, then pass the evaluation
+                    // data including the id as SparseArray to ServiceManagerFragment to upload.
+                    if(!isRegistered) {
+                        firestore.collection("svc_center").add(svcData)
+                                .addOnSuccessListener(docRef -> {
+
+                                    // Getting the ID, pass the data as SparseArray to ServiceManagerFragment
+                                    // to upload them to Firestore.`
+                                    String generatedId = docRef.getId();
+                                    log.i("Service ID: %s", generatedId);
+                                    SparseArray<Object> sparseArray = new SparseArray<>();
+                                    sparseArray.put(SVC_ID, generatedId);
+                                    sparseArray.put(LOCATION, mLocation);
+                                    sparseArray.put(ADDRESS, mAddress);
+                                    sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
+                                    sparseArray.put(RATING, ratingBar.getRating());
+                                    sparseArray.put(COMMENT, etServiceComment.getText().toString());
+
+                                    fragmentModel.setServiceLocation(sparseArray);
+                                    dialog.dismiss();
+
+                                })
+                                .addOnFailureListener(e -> log.e("Add service data failed: %s", e.getMessage()));
                     }
+
+
                 }).addOnFailureListener(e -> {
                     log.e("Query failed: %s", e.getMessage());
                 });
-
-
-        SparseArray<Object> sparseArray = new SparseArray<>();
-        sparseArray.put(LOCATION, mLocation);
-        sparseArray.put(ADDRESS, mAddress);
-        //sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
-        //sparseArray.put(RATING, ratingBar.getRating());
-        //sparseArray.put(COMMENT, etServiceComment.getText().toString());
-
-        fragmentModel.setServiceLocation(sparseArray);
-
     }
 
     // After querying the document with a service name, retrieve the geopoint to compare the current
     // location, whatever it gets from the reverse geocoder or LocationServices, with the geopoint
     // location. Then, if the distance is out of the preset distance, set the data to Firestore.
-    private boolean checkLocationDistance(Location location, GeoPoint geoPoint) {
+    private boolean checkArea(Location location, GeoPoint geoPoint) {
         if(location == null || geoPoint == null) {
             log.e("Incorrect address or location data");
             return false;

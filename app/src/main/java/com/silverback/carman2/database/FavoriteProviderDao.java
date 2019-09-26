@@ -21,9 +21,12 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
+    @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
+    LiveData<String> findFavoriteSvcName(String svcName, int category);
+
 
     @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
-    LiveData<String> findFavoriteName(String stnName, String stnId);
+    LiveData<String> findFavoriteGasName(String stnName, String stnId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertFavoriteProvider(FavoriteProviderEntity favorite);

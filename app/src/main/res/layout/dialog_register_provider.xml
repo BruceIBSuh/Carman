@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context=".fragments.AddFavoriteDialogFragment">
+    tools:context=".fragments.RegisterDialogFragment">
 
     <View
         android:id="@+id/view_title"
@@ -35,13 +36,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:text="@string/dialog_service_favorite_location"
+        android:text="@string/dialog_label_location"
         android:textColor="@android:color/white"
         android:textSize="@dimen/smallText"
         android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="@+id/tv_title"
         app:layout_constraintBottom_toBottomOf="@+id/tv_title"
-        app:layout_constraintEnd_toEndOf="@+id/view_title"
-        app:layout_constraintTop_toTopOf="@+id/tv_title" />
+        app:layout_constraintEnd_toStartOf="@+id/btn_current_location" />
+
+    <ImageButton
+        android:id="@+id/btn_current_location"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="@null"
+        android:background="@drawable/btn_current_location"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_location"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_location"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/tv_label_region"
@@ -49,8 +61,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="@string/dialog_service_favorite_region"
-        android:textSize="@dimen/smallText"
+        android:text="@string/dialog_label_district"
+        android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_title" />
@@ -62,7 +74,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:gravity="center_vertical"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/mediumText"
+        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="@+id/tv_label_region"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_region"
         app:layout_constraintStart_toEndOf="@+id/tv_label_region" />
@@ -74,7 +87,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:gravity="start"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/mediumText"
+        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="@+id/tv_sido"
         app:layout_constraintBottom_toBottomOf="@+id/tv_sido"
         app:layout_constraintStart_toEndOf="@+id/tv_sido" />
@@ -82,7 +96,7 @@
     <Spinner
         android:id="@+id/spinner_sido"
         android:layout_width="100dp"
-        android:layout_height="20dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_region"
         app:layout_constraintStart_toEndOf="@+id/tv_label_region"
@@ -91,7 +105,7 @@
     <Spinner
         android:id="@+id/spinner_sigun"
         android:layout_width="100dp"
-        android:layout_height="20dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         app:layout_constraintBottom_toBottomOf="@+id/spinner_sido"
         app:layout_constraintStart_toEndOf="@+id/spinner_sido"
@@ -101,10 +115,10 @@
         android:id="@+id/tv_label_address"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:labelFor="@id/et_addrs_detail"
-        android:text="@string/dialog_service_favorite_address"
-        android:textSize="@dimen/smallText"
+        android:text="@string/dialog_label_addrs"
+        android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_region" />
@@ -117,23 +131,22 @@
         android:layout_marginEnd="8dp"
         android:background="@drawable/bg_view_outfocus"
         android:inputType="textPersonName"
-        android:padding="2dp"
-        android:textSize="@dimen/extraSmallText"
+        android:padding="3dp"
+        android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_address"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tv_label_address"
         app:layout_constraintTop_toTopOf="@+id/tv_label_address"
-        app:layout_constraintVertical_bias="0.0"
         tools:ignore="autofill" />
 
     <TextView
         android:id="@+id/tv_label_phone"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:labelFor="@id/et_phone"
-        android:text="@string/svc_dlg_label_phone"
-        android:textSize="@dimen/smallText"
+        android:text="@string/dialog_label_phone"
+        android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_address" />
@@ -144,8 +157,8 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_view_outfocus"
         android:inputType="phone"
-        android:padding="2dp"
-        android:textSize="@dimen/extraSmallText"
+        android:padding="3dp"
+        android:textSize="@dimen/smallText"
         app:layout_constraintStart_toStartOf="@+id/et_addrs_detail"
         app:layout_constraintTop_toTopOf="@+id/tv_label_phone"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_phone"
@@ -156,9 +169,9 @@
         android:id="@+id/tv_label_company"
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/dialog_service_favorite_name"
-        android:textSize="@dimen/smallText"
+        android:layout_marginTop="16dp"
+        android:text="@string/dialog_label_company"
+        android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_phone" />
@@ -178,8 +191,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:minWidth="80dp"
-        android:text="@string/svc_label_evaluation"
-        android:textSize="@dimen/smallText"
+        android:text="@string/dialog_label_evaluation"
+        android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_company" />
@@ -220,7 +233,7 @@
         android:layout_marginTop="8dp"
         android:labelFor="@id/et_service_comment"
         android:text="@string/tv_label_comment"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
         app:layout_constraintTop_toBottomOf="@+id/tv_label_rating" />

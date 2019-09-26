@@ -104,10 +104,16 @@
     <string name="toast_add_favorite_service">즐겨찾는 서비스센터에 추가되었습니다</string>
     <string name="service_dialog_label_memo">메 모:</string>
     <string name="svc_msg_empty_name">서비스센터 이름을 입력해 주세요</string>
-    <string name="svc_label_evaluation">서비스평가</string>
+    <string name="svc_msg_registration">우선 서비스센터를 등록해 주세요</string>
     <string name="svc_btn_eval">등록</string>
-    <!--ExpenseActivity$ServiceManagerFragment$AddFavoriteDialogFragment-->
-    <string name="svc_dlg_label_phone">연락처</string>
+    <!--ExpenseActivity$RegisterDialogFragment-->
+    <string name="dialog_label_location">현재위치</string>
+    <string name="dialog_label_district">지 역</string>
+    <string name="dialog_label_addrs">상세주소</string>
+    <string name="dialog_label_company">회사이름</string>
+    <string name="dialog_label_phone">연락처</string>
+    <string name="dialog_label_evaluation">서비스평가</string>
+
 
     <!--StatStmtsFragment-->
     <string name="graph_x_axis_month">월</string>
@@ -176,10 +182,7 @@
     <string name="pref_spinner_sido_sejong">세종시</string>
 
     <!--DialogFragment-->
-    <string name="dialog_service_favorite_location">현재위치</string>
-    <string name="dialog_service_favorite_region">지 역</string>
-    <string name="dialog_service_favorite_address">상세주소</string>
-    <string name="dialog_service_favorite_name">업체이름</string>
+
     <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>
     <string name="dialog_btn_confirm">확인</string>
     <string name="dialog_btn_cancel">취소</string>

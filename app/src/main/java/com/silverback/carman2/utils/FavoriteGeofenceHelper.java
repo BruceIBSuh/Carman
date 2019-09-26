@@ -2,7 +2,6 @@ package com.silverback.carman2.utils;
 
 import android.app.PendingIntent;
 import android.content.Context;
-import android.location.Location;
 import android.net.Uri;
 import android.widget.Toast;
 
@@ -16,7 +15,6 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
-import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -118,12 +116,12 @@ public class FavoriteGeofenceHelper {
     //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
     public void addFavoriteGeofence(final DocumentSnapshot snapshot, final String stnId, final int category) {
 
+
         GeoPoint katecPoint = new GeoPoint((double)snapshot.get("xCoord"), (double)snapshot.get("yCoord"));
         GeoPoint geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
         log.i("Location: %s, %s", geoPoint.getX(), geoPoint.getY());
 
         createGeofence(stnId, geoPoint);
-
         favoriteModel.providerName = snapshot.getString("stnName");
         favoriteModel.category = category;
         favoriteModel.providerId = stnId;

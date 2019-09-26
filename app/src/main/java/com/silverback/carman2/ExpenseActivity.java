@@ -25,6 +25,7 @@ import com.silverback.carman2.fragments.StatGraphFragment;
 import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
@@ -47,6 +48,8 @@ public class ExpenseActivity extends BaseActivity implements
     // Objects
     //private CarmanDatabase mDB;
     private ViewPager tabPager;
+    private LocationViewModel locationModel;
+    private FragmentSharedModel fragmentSharedModel;
     private PagerAdapterViewModel pagerAdapterViewModel;
     private ExpTabPagerAdapter tabPagerAdapter;
     private ExpenseViewPager expensePager;
@@ -94,7 +97,8 @@ public class ExpenseActivity extends BaseActivity implements
 
 
         //mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
-        LocationViewModel locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+        fragmentSharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
         pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         jsonDistrict = mSettings.getString(Constants.DISTRICT, "0101");
@@ -322,9 +326,12 @@ public class ExpenseActivity extends BaseActivity implements
     }
     */
 
-    // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
+    // Getter to be Referenced by the containing fragments
     public SharedPreferences getSettings() {
         return mSettings;
     }
+    public LocationViewModel getLocationViewModel() { return locationModel; }
+    public FragmentSharedModel getFragmentSharedModel() { return fragmentSharedModel; }
+    public PagerAdapterViewModel getPagerAdapterViewModel() { return pagerAdapterViewModel; }
 
 }

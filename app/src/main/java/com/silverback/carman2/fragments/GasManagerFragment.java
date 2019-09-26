@@ -26,11 +26,9 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.ExpRecentPagerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.GasManagerEntity;
@@ -43,7 +41,6 @@ import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.utils.CustomPagerIndicator;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
@@ -117,8 +114,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         if(firestore == null) firestore = FirebaseFirestore.getInstance();
 
         // Instantiate the ViewModels
-        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        locationModel = ViewModelProviders.of(getActivity()).get(LocationViewModel.class);
+        fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
+        locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         stnListModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
 
 
@@ -140,8 +137,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         date = BaseActivity.formatMilliseconds(dateFormat, System.currentTimeMillis());
-
-
 
     }
 
@@ -179,7 +174,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvGasPaid.setOnClickListener(this);
         tvCarwashPaid.setOnClickListener(this);
         tvExtraPaid.setOnClickListener(this);
-        btnFavorite.setOnClickListener(view -> registerFavorite());
+        btnFavorite.setOnClickListener(view -> addGasFavoriteGeofence());
         btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
 
         // Manager the comment and the rating bar which should be allowed to make as far as the
@@ -245,7 +240,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
                 // Query Favorite with the fetched station name or station id to tell whether the station
                 // has registered with Favorite.
-                checkFavorite(stnName, stnId);
+                checkGasFavorite(stnName, stnId);
 
             } else {
                 tvStnName.setText(getString(R.string.gas_hint_no_station));
@@ -318,8 +313,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Query Favorite with the fetched station name or station id to tell whether the station
     // has registered with Favorite, and the result is notified as a LiveData.
-    private void checkFavorite(String name, String id) {
-        mDB.favoriteModel().findFavoriteName(name, id).observe(this, favorite -> {
+    private void checkGasFavorite(String name, String id) {
+        mDB.favoriteModel().findFavoriteGasName(name, id).observe(this, favorite -> {
             if (TextUtils.isEmpty(favorite)) {
                 isFavorite = false;
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
@@ -333,7 +328,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Method to register with or unregister from the favorite list which is invoked by
     // the favorite button.
-    private void registerFavorite() {
+    private void addGasFavoriteGeofence() {
 
         // Empth check for the station name.
         if(TextUtils.isEmpty(tvStnName.getText())) {
