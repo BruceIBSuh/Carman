@@ -32,7 +32,7 @@ public class AlertDialogFragment extends DialogFragment {
     private FragmentSharedModel fragmentSharedModel;
     private String title, message;
 
-    public AlertDialogFragment() {
+    private AlertDialogFragment() {
         // Required empty public constructor
     }
 
@@ -65,7 +65,8 @@ public class AlertDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
         LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View localView = inflater.inflate(R.layout.dialog_alert_general, null);
+        //View localView = inflater.inflate(R.layout.dialog_alert_general, null);
+        View localView = View.inflate(getContext(), R.layout.dialog_alert_general, null);
 
         TextView tvTitle = localView.findViewById(R.id.tv_title);
         TextView tvMessage = localView.findViewById(R.id.tv_message);

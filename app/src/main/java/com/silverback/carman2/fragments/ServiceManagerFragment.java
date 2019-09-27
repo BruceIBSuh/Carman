@@ -39,7 +39,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
-import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.models.ServiceCenterViewModel;
+import com.silverback.carman2.threads.ServiceCenterTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
@@ -73,7 +74,9 @@ public class ServiceManagerFragment extends Fragment implements
     private FragmentSharedModel fragmentSharedModel;
     private PagerAdapterViewModel adapterModel;
     private LocationViewModel locationModel;
-    private Location location;
+    private ServiceCenterViewModel svcCenterModel;
+    private ServiceCenterTask serviceCenterTask;
+    private Location location, currentLocation;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
 
@@ -81,8 +84,8 @@ public class ServiceManagerFragment extends Fragment implements
     private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
     private JSONArray jsonServiceArray;
-    private Location mLocation;
-    private String mAddress;
+    private Location svcLocation;
+    private String svcAddress;
     private String svcCompany;
 
     // UIs
@@ -92,6 +95,7 @@ public class ServiceManagerFragment extends Fragment implements
     private EditText etServiceName;
     private TextView tvDate, tvMileage, tvTotalCost;
     private ImageButton btnFavorite;
+
 
     // Fields
     private String distCode;
@@ -127,12 +131,13 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         adapterModel = ((ExpenseActivity)getActivity()).getPagerAdapterViewModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
+        svcCenterModel = ViewModelProviders.of(this).get(ServiceCenterViewModel.class);
+
 
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
-
         // The service item data is saved in SharedPreferences as String type, which should be
         // converted to JSONArray.
         /*
@@ -169,6 +174,8 @@ public class ServiceManagerFragment extends Fragment implements
         locationModel.getLocation().observe(this, location -> {
             log.i("Service Location: %s", location);
             this.location = location;
+            serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
+
         });
 
 
@@ -200,11 +207,13 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
-        /*
-         * ViewModel to share data b/w Fragments(this and NumberPadFragment)
-         * @param: getSelectedValue(): SparseArray<Integer>
-         * @param: getSelectedMemo(): SparseArray<String>
-         */
+        // Fetch the service name from the favorite list in DialogFragment
+        fragmentSharedModel.getFavoriteName().observe(this, name -> {
+            etServiceName.setText(name);
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            isFavorite = true;
+        });
+
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
@@ -231,12 +240,12 @@ public class ServiceManagerFragment extends Fragment implements
         // Retrieving the evaluation and the comment, set or update the data with the passed id.
         fragmentSharedModel.getServiceLocation().observe(this, sparseArray -> {
             svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
-            mLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
-            mAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
+            svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
+            svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
             svcCompany = (String)sparseArray.get(RegisterDialogFragment.COMPANY);
             svcRating = (Float)sparseArray.get(RegisterDialogFragment.RATING);
             svcComment = (String)sparseArray.get(RegisterDialogFragment.COMMENT);
-            log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, mLocation, mAddress, svcRating, svcComment);
+            log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
 
             uploadServiceEvaluation(svcId);
 
@@ -315,7 +324,7 @@ public class ServiceManagerFragment extends Fragment implements
                     return;
                 }
 
-                if(isFavorite || mLocation != null) {
+                if(isFavorite || svcLocation != null) {
                     Snackbar.make(relativeLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
                     return;
                 } else {
@@ -397,16 +406,24 @@ public class ServiceManagerFragment extends Fragment implements
     private void addSvcFavoriteGeofence() {
 
         if(isGeofenceIntent) return;
-        if(mLocation == null) {
-            Snackbar.make(relativeLayout, R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
+
+        // Retrieve a service center from the favorite list
+        if(TextUtils.isEmpty(etServiceName.getText())) {
+            //Snackbar.make(relativeLayout, R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
+            String title = "Favorite Service Center";
+            FavoriteListFragment favoriteListFragment = FavoriteListFragment.newInstance(title, 1);
+            if(getFragmentManager() != null) favoriteListFragment.show(getFragmentManager(), null);
+
             return;
         }
 
+        /*
         // Empth check for the station name.
         if(TextUtils.isEmpty(etServiceName.getText())) {
             Snackbar.make(relativeLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
             return;
         }
+        */
 
         // Already registered with the favorite list.
         if(isFavorite) {

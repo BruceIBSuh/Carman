@@ -1,6 +1,7 @@
 package com.silverback.carman2.database;
 
 import androidx.lifecycle.LiveData;
+import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -18,6 +19,9 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category")
     LiveData<List<FavoriteProviderEntity>> queryFavoriteGasStation(int category);
 
+    @Query("SELECT favorite_name, favorite_addrs FROM FAvoriteProviderentity WHERE category = :category")
+    LiveData<List<FavoriteNameAddrs>> findFavoriteNameAddrs(int category);
+
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
@@ -33,5 +37,13 @@ public interface FavoriteProviderDao {
 
     @Delete
     void deleteProvider(FavoriteProviderEntity provider);
+
+    public class FavoriteNameAddrs {
+        @ColumnInfo(name = "favorite_name")
+        public String favoriteName;
+
+        @ColumnInfo(name = "favorite_addrs")
+        public String favoriteAddrs;
+    }
 
 }

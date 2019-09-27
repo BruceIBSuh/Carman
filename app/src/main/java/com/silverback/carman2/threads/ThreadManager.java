@@ -16,6 +16,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
+import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
@@ -415,6 +416,21 @@ public class ThreadManager {
         sInstance.mDownloadThreadPool.execute(stationListTask.getStationListRunnable());
 
         return stationListTask;
+    }
+
+    // Locate a service center within a specific area with the current location and a geofence
+    // matched.
+    public static ServiceCenterTask startServiceCenterTask(
+            Context context, ServiceCenterViewModel model, Location location) {
+
+        ServiceCenterTask serviceCenterTask = (ServiceCenterTask)sInstance.mTaskWorkQueue.poll();
+        if(serviceCenterTask == null) serviceCenterTask = new ServiceCenterTask(context);
+
+        serviceCenterTask.initServiceTask(model, location);
+        sInstance.mDownloadThreadPool.execute(serviceCenterTask.getServiceCenterRunnable());
+
+        return serviceCenterTask;
+
     }
 
     public static GeocoderReverseTask startReverseGeocoderTask(Context context, LocationViewModel model, Location location) {
