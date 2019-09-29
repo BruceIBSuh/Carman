@@ -221,7 +221,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
             log.i("Nickname required: %s", nickname);
-            if(nickname.isEmpty() && rating > 0) {
+            if(TextUtils.isEmpty(nickname) && rating > 0) {
                 ratingBar.setRating(0f);
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
             }
@@ -321,11 +321,11 @@ public class RegisterDialogFragment extends DialogFragment implements
     private void registerService() {
 
         Map<String, Object> svcData = new HashMap<>();
-        svcData.put("svcName", providerName);
-        svcData.put("svcCode", companySpinner.getSelectedItem().toString());
+        svcData.put("svc_name", providerName);
+        svcData.put("svc_code", companySpinner.getSelectedItem().toString());
         svcData.put("address", mAddress);
         svcData.put("phone", etPhone.getText().toString());
-        svcData.put("location", new GeoPoint(mLocation.getLatitude(), mLocation.getLongitude()));
+        svcData.put("geopoint", new GeoPoint(mLocation.getLatitude(), mLocation.getLongitude()));
 
         firestore.collection("svc_center")
                 .whereEqualTo("svcName", providerName)

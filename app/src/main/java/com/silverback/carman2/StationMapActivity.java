@@ -95,13 +95,13 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
-                    tvName.setText(snapshot.getString("stnName"));
+                    tvName.setText(snapshot.getString("stn_name"));
                     tvAddrs.setText(String.format("%s%15s", snapshot.getString("new_addrs"), snapshot.getString("phone")));
                     tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), snapshot.getBoolean("carwash")));
                     tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), snapshot.getBoolean("service")));
                     tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), snapshot.getBoolean("cvs")));
-                    xCoord = snapshot.getDouble("xCoord");
-                    yCoord = snapshot.getDouble("yCoord");
+                    xCoord = snapshot.getDouble("katec_x");
+                    yCoord = snapshot.getDouble("katec_y");
 
                     // Convert KATEC to longitude and latitude
                     GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);

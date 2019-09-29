@@ -86,6 +86,8 @@
     <string name="gas_hint_no_station">주유소 위치가 아닙니다</string>
     <string name="gas_hint_extra_expense">지출내역</string>
     <string name="gas_msg_empty_name">주유소 이름을 입력해 주세요</string>
+    <string name="gas_msg_add_favorite">즐겨찾는 주유소에 추가합니다</string>
+    <string name="gas_msg_alert_remove_favorite">즐겨찾는 주유소에서 제외합니다</string>
 
     <!--ExpenseActivity$ServiceManagerFragment-->
     <string name="svc_toolbar_title">정비 점검 관리</string>

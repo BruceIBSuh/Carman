@@ -60,7 +60,9 @@ public class FireStoreGetRunnable implements Runnable {
                         return;
                     }
 
-                    String source = (snapshot != null && snapshot.getMetadata().hasPendingWrites())?"Local" : "Server";
+                    String source = (snapshot != null && snapshot.getMetadata().hasPendingWrites())?
+                            "Local" : "Server";
+                    log.i("source: %s", source);
 
                     /*
                      * Process to add new gas stations if no documents exists in FireStore, initiating
@@ -81,12 +83,12 @@ public class FireStoreGetRunnable implements Runnable {
                             log.e("carwash value is null:%s", snapshot.getString("stnName"));
                             mCallback.setCarWashInfo(pos, false);
                             // Error occurred here. Indefinite looping and required to switch set to update.
-                            uploadStationInfo(pos);
+                            setStationData(pos);
                         }
 
                     } else {
 
-                        uploadStationInfo(pos);
+                        setStationData(pos);
                         /*
                         Map<String, Object> stnData = new HashMap<>();
                         stnData.put("stnName", stnList.get(pos).getStnName());
@@ -109,12 +111,13 @@ public class FireStoreGetRunnable implements Runnable {
         }
     }
 
-    private void uploadStationInfo(final int position) {
+
+    private void setStationData(final int position) {
         Map<String, Object> stnData = new HashMap<>();
-        stnData.put("stnName", stnList.get(position).getStnName());
-        stnData.put("stnCode", stnList.get(position).getStnCode());
-        stnData.put("xCoord", stnList.get(position).getLongitude());
-        stnData.put("yCoord", stnList.get(position).getLatitude());
+        stnData.put("stn_name", stnList.get(position).getStnName());
+        stnData.put("stn_code", stnList.get(position).getStnCode());
+        stnData.put("katec_x", stnList.get(position).getLongitude());
+        stnData.put("katec_y", stnList.get(position).getLatitude());
 
         firestore.collection("gas_station").document(stnList.get(position).getStnId()).set(stnData)
                 .addOnSuccessListener(documentReference -> {

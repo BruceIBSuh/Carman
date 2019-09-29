@@ -3,6 +3,7 @@ package com.silverback.carman2.utils;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
@@ -23,8 +24,10 @@ import java.util.List;
 
 public class FavoriteGeofenceHelper {
 
-    // Logging
+    // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
+    public static final int GAS_STATION = 1;
+    public static final int SVC_CENTER = 2;
 
     // Objects
     private Context context;
@@ -114,24 +117,49 @@ public class FavoriteGeofenceHelper {
     // Add a provider(gas station / service provider) to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
     //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
-    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final String stnId, final int category) {
+    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final String providerId, final int category) {
 
+        GeoPoint geoPoint = null;
+        String providerName = null;
+        String providerCode = null;
+        String address = null;
 
-        GeoPoint katecPoint = new GeoPoint((double)snapshot.get("xCoord"), (double)snapshot.get("yCoord"));
-        GeoPoint geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
-        log.i("Location: %s, %s", geoPoint.getX(), geoPoint.getY());
+        switch(category) {
+            case GAS_STATION:
+                GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
+                geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
 
-        createGeofence(stnId, geoPoint);
-        favoriteModel.providerName = snapshot.getString("stnName");
+                providerName = snapshot.getString("stn_name");
+                providerCode = snapshot.getString("stn_code");
+                address = TextUtils.isEmpty(snapshot.getString("new_addrs"))?
+                        snapshot.getString("old_addrs"):snapshot.getString("new_addrs");
+                break;
+
+            case SVC_CENTER:
+                if(snapshot.getGeoPoint("geopoint") != null) {
+                    double latitude = snapshot.getGeoPoint("geopoint").getLatitude();
+                    double longitude = snapshot.getGeoPoint("geopoint").getLongitude();
+                    geoPoint = new GeoPoint(longitude, latitude);
+                }
+
+                providerName = snapshot.getString("svc_name");
+                providerCode = snapshot.getString("svc_code");
+                address = snapshot.getString("address");
+
+                break;
+        }
+
+        // Create Geofence with the id and the location data.
+        createGeofence(providerId, geoPoint);
+
+        //
+        favoriteModel.providerName = providerName;
         favoriteModel.category = category;
-        favoriteModel.providerId = stnId;
-        favoriteModel.providerCode = snapshot.getString("stnCode");
-        favoriteModel.address = snapshot.getString("new_addrs");
-        favoriteModel.longitude = geoPoint.getX();
-        favoriteModel.latitude = geoPoint.getY();
+        favoriteModel.providerId = providerId;
+        favoriteModel.providerCode = providerCode;
+        favoriteModel.address = address;
 
         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
-
 
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.
         // Then, geofences should be saved in the Favorite table as far as they successfully added to
@@ -139,7 +167,7 @@ public class FavoriteGeofenceHelper {
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
-                        mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
+                        //mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
                         Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());

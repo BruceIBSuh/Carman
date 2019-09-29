@@ -78,8 +78,6 @@ public class FavoriteListFragment extends DialogFragment {
         TextView tvTitle = localView.findViewById(R.id.tv_favorite_title);
         tvTitle.setText(title);
 
-
-
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mDB.favoriteModel().findFavoriteNameAddrs(1).observe(this, data -> {
             for (FavoriteProviderDao.FavoriteNameAddrs favorite : data) {
@@ -100,7 +98,6 @@ public class FavoriteListFragment extends DialogFragment {
             fragmentModel.getFavoriteName().setValue(nameAddrs.favoriteName);
             dismiss();
         });
-
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         return builder.setView(localView).create();

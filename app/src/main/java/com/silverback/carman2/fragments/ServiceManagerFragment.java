@@ -278,7 +278,7 @@ public class ServiceManagerFragment extends Fragment implements
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
         btnReg.setOnClickListener(this);
-        btnFavorite.setOnClickListener(view -> addSvcFavoriteGeofence());
+        btnFavorite.setOnClickListener(view -> addServiceFavorite());
 
         svcName = etServiceName.getText().toString();
         String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
@@ -403,35 +403,25 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Register the service center with the favorite list and the geofence.
-    private void addSvcFavoriteGeofence() {
+    private void addServiceFavorite() {
 
-        if(isGeofenceIntent) return;
+        if(isGeofenceIntent || getFragmentManager() == null) return;
 
         // Retrieve a service center from the favorite list
         if(TextUtils.isEmpty(etServiceName.getText())) {
-            //Snackbar.make(relativeLayout, R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
+            //
             String title = "Favorite Service Center";
-            FavoriteListFragment favoriteListFragment = FavoriteListFragment.newInstance(title, 1);
-            if(getFragmentManager() != null) favoriteListFragment.show(getFragmentManager(), null);
+            int category = FavoriteGeofenceHelper.SVC_CENTER;
+            FavoriteListFragment.newInstance(title, category).show(getFragmentManager(), null);
 
             return;
-        }
 
-        /*
-        // Empth check for the station name.
-        if(TextUtils.isEmpty(etServiceName.getText())) {
-            Snackbar.make(relativeLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-        */
-
-        // Already registered with the favorite list.
-        if(isFavorite) {
+        } else if(isFavorite) {
             String msg = "Your're about to remove the service center out of the favorite";
             AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", msg);
             if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
 
-        } else {
+        } else if(svcId != null){
             // Query the data of a station from Firestore.
             firestore.collection("svc_center").document(svcId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
@@ -440,12 +430,17 @@ public class ServiceManagerFragment extends Fragment implements
                     if(snapshot != null && snapshot.exists()) {
                         geofenceHelper.addFavoriteGeofence(snapshot, svcId, SVC_CENTER);
                         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                        isFavorite = !isFavorite;
+
                     }
                 }
             });
+
+        } else {
+            Toast.makeText(getActivity(), R.string.svc_msg_registration, Toast.LENGTH_SHORT).show();
         }
 
-        isFavorite = !isFavorite;
+
     }
 
     // Invoked by OnOptions
