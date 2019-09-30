@@ -2,7 +2,6 @@ package com.silverback.carman2.fragments;
 
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,7 +12,6 @@ import androidx.lifecycle.ViewModelProviders;
 
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
 
 import com.silverback.carman2.R;
@@ -24,22 +22,18 @@ import com.silverback.carman2.models.FragmentSharedModel;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceDlgFragment extends DialogFragment {
+public class SettingSvcDialogFragment extends DialogFragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceDlgFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcDialogFragment.class);
 
     // Objects
     private FragmentSharedModel sharedModel;
 
-    public SettingServiceDlgFragment() {
+    public SettingSvcDialogFragment() {
         // Required empty public constructor
     }
 

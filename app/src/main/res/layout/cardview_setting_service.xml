@@ -14,21 +14,13 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="10dp">
-
-        <TextView
-            android:id="@+id/tv_service_item"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            cardview:layout_constraintBottom_toBottomOf="parent"
-            cardview:layout_constraintStart_toStartOf="parent"
-            cardview:layout_constraintTop_toTopOf="parent" />
+        android:padding="5dp">
 
         <EditText
             android:id="@+id/et_default_mileage"
             android:layout_width="60dp"
             android:layout_height="30dp"
-            android:layout_marginEnd="8dp"
+            android:layout_marginEnd="3dp"
             android:background="@drawable/bg_view_outfocus"
             android:gravity="end|center_vertical"
             android:hint="@null"
@@ -40,38 +32,45 @@
             cardview:layout_constraintTop_toTopOf="@+id/tv_service_item"
             tools:ignore="AutoFill" />
 
-        <TextView
-            android:id="@+id/tv_unit_mileage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="24dp"
-            android:text="@string/unit_km"
-            android:textSize="@dimen/smallText"
-            cardview:layout_constraintBottom_toBottomOf="@+id/et_default_mileage"
-            cardview:layout_constraintEnd_toStartOf="@+id/et_default_month"
-            cardview:layout_constraintTop_toTopOf="@+id/et_default_mileage" />
-
         <EditText
             android:id="@+id/et_default_month"
             android:layout_width="60dp"
             android:layout_height="30dp"
-            android:layout_marginEnd="8dp"
-            android:padding="5dp"
-            android:gravity="end|center_vertical"
+            android:layout_marginEnd="3dp"
             android:background="@drawable/bg_view_outfocus"
+            android:gravity="end|center_vertical"
             android:hint="@null"
-            android:textSize="@dimen/smallText"
             android:inputType="numberDecimal"
+            android:padding="5dp"
+            android:textSize="@dimen/smallText"
             cardview:layout_constraintBottom_toBottomOf="@+id/et_default_mileage"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_unit_month"
             cardview:layout_constraintTop_toTopOf="@+id/et_default_mileage"
             tools:ignore="AutoFill" />
 
         <TextView
-            android:id="@+id/tv_unit_month"
+            android:id="@+id/tv_unit_mileage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
+            android:text="@string/unit_km"
+            android:textSize="@dimen/smallText"
+            cardview:layout_constraintBottom_toBottomOf="@+id/et_default_mileage"
+            cardview:layout_constraintEnd_toStartOf="@+id/et_default_month"
+            cardview:layout_constraintTop_toTopOf="@+id/et_default_mileage" />
+
+        <TextView
+            android:id="@+id/tv_service_item"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            cardview:layout_constraintBottom_toBottomOf="parent"
+            cardview:layout_constraintStart_toStartOf="parent"
+            cardview:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tv_unit_month"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="@string/unit_month"
             android:textSize="@dimen/smallText"
             cardview:layout_constraintBottom_toBottomOf="@+id/et_default_mileage"

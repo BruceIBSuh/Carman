@@ -26,8 +26,8 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
     public FavoriteItemHolder(CardView cardView) {
         super(cardView);
 
-        tvName = cardView.findViewById(R.id.tv_stnName);
-        tvAddress = cardView.findViewById(R.id.tv_stnAddrs);
+        tvName = cardView.findViewById(R.id.tv_providerName);
+        tvAddress = cardView.findViewById(R.id.tv_providerAddrs);
         imgLogo = cardView.findViewById(R.id.img_logo);
     }
 

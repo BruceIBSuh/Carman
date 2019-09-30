@@ -34,7 +34,7 @@ import org.json.JSONObject;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceItemFragment extends Fragment {
+public class SettingServiceItemFragment extends Fragment implements SettingServiceItemAdapter.OnAdapterCallback {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
@@ -47,12 +47,13 @@ public class SettingServiceItemFragment extends Fragment {
     // Objects
     private SharedPreferences mSettings;
     private SettingServiceItemAdapter mAdapter;
-    private SettingServiceDlgFragment dlgFragment;
+    private SettingSvcDialogFragment dlgFragment;
     private JSONArray jsonSvcItemArray;
+    private RecyclerView recyclerView;
 
     // Fields
     private boolean bEditMode = false;
-    private int itemPos;
+    private int removedPos;
 
     public SettingServiceItemFragment() {
         // Required empty public constructor
@@ -65,7 +66,7 @@ public class SettingServiceItemFragment extends Fragment {
 
         // Indicate the fragment has the option menu, invoking onCreateOptionsMenu()
         setHasOptionsMenu(true);
-        dlgFragment = new SettingServiceDlgFragment();
+        dlgFragment = new SettingSvcDialogFragment();
 
         // List.add() does not work if List is create by Arrays.asList().
         mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
@@ -73,12 +74,12 @@ public class SettingServiceItemFragment extends Fragment {
 
         try {
             jsonSvcItemArray = new JSONArray(json);
-            mAdapter = new SettingServiceItemAdapter(this, jsonSvcItemArray);
+            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, this);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
 
-        // ViewModel to share data b/w SettingServiceItemFragment and SettingServiceDlgFragment.
+        // ViewModel to share data b/w SettingServiceItemFragment and SettingSvcDialogFragment.
         // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
         // which are passed here using FragmentSharedModel as the type of List<String>
         FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
@@ -87,14 +88,20 @@ public class SettingServiceItemFragment extends Fragment {
             mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
             mAdapter.notifyItemInserted(jsonSvcItemArray.length());
         });
-
         // Fetch LiveData<Boolean> that indicates whch button to select in AlertDialogFragment when
         // a service item is removed.
         sharedModel.getAlert().observe(this, data -> {
             if(data) {
-                jsonSvcItemArray.remove(itemPos);
+                log.i("Item Removed:", data);
+                jsonSvcItemArray.remove(removedPos);
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                mAdapter.notifyDataSetChanged();
+                mAdapter.notifyItemRemoved(removedPos);
+            }else {
+                // TEST CODING : seems not working
+                log.i("Cancel");
+                mAdapter.notifyItemInserted(removedPos);
+                recyclerView.scrollToPosition(removedPos);
+
             }
         });
     }
@@ -105,7 +112,7 @@ public class SettingServiceItemFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.fragment_setting_chklist, container, false);
-        RecyclerView recyclerView = localView.findViewById(R.id.recycler_chklist);
+        recyclerView = localView.findViewById(R.id.recycler_chklist);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
@@ -144,6 +151,23 @@ public class SettingServiceItemFragment extends Fragment {
         return false;
     }
 
+    // The following 2 callback methods are invoked by SettingServiceItemAdapter.OnAdapterListener
+    // to notify dragging or removing an item of RecyclerView.
+    @Override
+    public void dragItem(int from, int to) {
+
+    }
+
+    @Override
+    public void removeItem(int position) {
+        String title = "ALERT";
+        String msg = "Remove the Service Item";
+        removedPos = position;
+        AlertDialogFragment alert = AlertDialogFragment.newInstance(title, msg, 3);
+        if(getFragmentManager() != null) alert.show(getFragmentManager(), null);
+    }
+
+
     // Method for switching the location of an service item using Up and Down button
     private void swapJSONObject(int index, int mode) {
         JSONObject obj = jsonSvcItemArray.optJSONObject(index);
@@ -166,4 +190,7 @@ public class SettingServiceItemFragment extends Fragment {
             log.e("JSONException: %s", e.getMessage());
         }
     }
+
+
+
 }

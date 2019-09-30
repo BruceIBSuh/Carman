@@ -1,14 +1,13 @@
 package com.silverback.carman2.adapters;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.R;
@@ -31,17 +30,26 @@ public class SettingServiceItemAdapter
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemAdapter.class);
 
-
     // Objects & UIs
+    private Context mContext;
     private List<JSONObject> svcItemList;
     private JSONArray jsonSvcItemArray;
+    private OnAdapterCallback mListener;
 
     // Fields
     private String mileage, month;
     private boolean isEditMode;
 
+
+    // Interface
+    public interface OnAdapterCallback {
+        void dragItem(int from, int to);
+        void removeItem(int position);
+    }
+
     // Constructor
-    public SettingServiceItemAdapter(Fragment fm, JSONArray jsonArray) {
+    public SettingServiceItemAdapter(JSONArray jsonArray, OnAdapterCallback listener) {
+        mListener = listener;
         jsonSvcItemArray = jsonArray;
         svcItemList = new ArrayList<>();
         for(int i = 0; i < jsonSvcItemArray.length(); i++)
@@ -96,6 +104,7 @@ public class SettingServiceItemAdapter
     @Override
     public void onItemRemove(int pos) {
         log.i("onItemRemove: %s", pos);
+        mListener.removeItem(pos);
     }
 
 

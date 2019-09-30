@@ -55,8 +55,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
 
-        if (mDB == null)
-            mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
+        if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
@@ -83,6 +82,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         // Designate the gas station which indicates the price information in the main activity using
         // Room and LiveData.
+        /*
         ListPreference desigStn = findPreference("pref_designated_station");
         desigStn.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
 
@@ -99,13 +99,12 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             desigStn.setEntryValues(arrStn);
 
         });
-
+        */
 
         SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
-
     }
 
     @Override
@@ -115,7 +114,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     }
 
 
-    // Interface definition of PreferenceManager.OnDisplayPreferenceDialogListener when a Preference
+    // Callback from PreferenceManager.OnDisplayPreferenceDialogListener when a Preference
     // requests to display a dialog.
     @SuppressWarnings("ConstantConditions")
     @Override

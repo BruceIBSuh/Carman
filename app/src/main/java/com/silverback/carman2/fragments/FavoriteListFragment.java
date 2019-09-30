@@ -79,7 +79,7 @@ public class FavoriteListFragment extends DialogFragment {
         tvTitle.setText(title);
 
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mDB.favoriteModel().findFavoriteNameAddrs(1).observe(this, data -> {
+        mDB.favoriteModel().findFavoriteNameAddrs(category).observe(this, data -> {
             for (FavoriteProviderDao.FavoriteNameAddrs favorite : data) {
                 log.i("Favorite List: %s, %s", favorite.favoriteName, favorite.favoriteAddrs);
             }

@@ -1,9 +1,12 @@
 package com.silverback.carman2.utils;
 
+import android.widget.BaseAdapter;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.silverback.carman2.adapters.SettingFavoriteAdapter;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -26,8 +29,10 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
     }
 
     // Constructor
-    public ItemTouchHelperCallback(SettingServiceItemAdapter listener) {
-        mListener = listener;
+    public ItemTouchHelperCallback(RecyclerView.Adapter listener) {
+       log.i("ItemTouchHelperCallback: %s", listener);
+       if(listener instanceof SettingServiceItemAdapter) mListener = (SettingServiceItemAdapter)listener;
+       else if(listener instanceof SettingFavoriteAdapter) mListener = (SettingFavoriteAdapter)listener;
     }
 
 

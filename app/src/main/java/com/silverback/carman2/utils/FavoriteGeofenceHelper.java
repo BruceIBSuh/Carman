@@ -26,8 +26,6 @@ public class FavoriteGeofenceHelper {
 
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
-    public static final int GAS_STATION = 1;
-    public static final int SVC_CENTER = 2;
 
     // Objects
     private Context context;
@@ -125,7 +123,7 @@ public class FavoriteGeofenceHelper {
         String address = null;
 
         switch(category) {
-            case GAS_STATION:
+            case Constants.GAS:
                 GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
                 geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
 
@@ -135,11 +133,13 @@ public class FavoriteGeofenceHelper {
                         snapshot.getString("old_addrs"):snapshot.getString("new_addrs");
                 break;
 
-            case SVC_CENTER:
+            case Constants.SVC:
                 if(snapshot.getGeoPoint("geopoint") != null) {
                     double latitude = snapshot.getGeoPoint("geopoint").getLatitude();
                     double longitude = snapshot.getGeoPoint("geopoint").getLongitude();
+                    log.i("Google GeoPoint: %s, %s", latitude, longitude);
                     geoPoint = new GeoPoint(longitude, latitude);
+
                 }
 
                 providerName = snapshot.getString("svc_name");

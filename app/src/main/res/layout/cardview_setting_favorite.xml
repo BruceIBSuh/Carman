@@ -20,51 +20,52 @@
             android:layout_margin="8dp"
             android:contentDescription="@null"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/guideline3"
+            app:layout_constraintEnd_toStartOf="@+id/guideline"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline3"
+            android:id="@+id/guideline"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_begin="60dp" />
+            app:layout_constraintGuide_begin="80dp" />
 
         <TextView
-            android:id="@+id/tv_stnName"
+            android:id="@+id/tv_providerName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:textSize="18sp"
-            app:layout_constraintStart_toStartOf="@+id/guideline3"
+            android:textSize="@dimen/mediumText"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="@+id/guideline"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Station" />
 
         <TextView
-            android:id="@+id/tv_stnAddrs"
+            android:id="@+id/tv_providerAddrs"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp"
-            android:text="Address"
+            android:textSize="@dimen/smallText"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/guideline3"
-            app:layout_constraintTop_toBottomOf="@+id/tv_stnName"
+            app:layout_constraintStart_toStartOf="@+id/guideline"
+            app:layout_constraintTop_toBottomOf="@+id/tv_providerName"
             app:layout_constraintVertical_bias="0.0" />
 
         <RatingBar
-            android:id="@+id/ratingBar2"
+            android:id="@+id/rb_favorite"
             style="?android:attr/ratingBarStyleSmall"
-            android:layout_width="86dp"
-            android:layout_height="18dp"
-            android:layout_marginEnd="3dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:isIndicator="true"
             android:numStars="5"
             android:rating="1"
-            app:layout_constraintBottom_toTopOf="@+id/tv_stnAddrs"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_providerName"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_stnName" />
+            app:layout_constraintTop_toTopOf="@+id/tv_providerName" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

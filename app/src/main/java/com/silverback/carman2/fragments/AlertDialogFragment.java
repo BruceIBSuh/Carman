@@ -18,6 +18,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -31,17 +32,19 @@ public class AlertDialogFragment extends DialogFragment {
     private static AlertDialogFragment alertDialogFragment;
     private FragmentSharedModel fragmentSharedModel;
     private String title, message;
+    private int category;
 
     private AlertDialogFragment() {
         // Required empty public constructor
     }
 
     // Singleton type constructor
-    static AlertDialogFragment newInstance(String title, String msg) {
+    public static AlertDialogFragment newInstance(String title, String msg, int category) {
         if(alertDialogFragment == null) alertDialogFragment = new AlertDialogFragment();
         Bundle args = new Bundle();
         args.putString("title", title);
         args.putString("message", msg);
+        args.putInt("category", category);
         alertDialogFragment.setArguments(args);
 
         return alertDialogFragment;
@@ -55,7 +58,7 @@ public class AlertDialogFragment extends DialogFragment {
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         title = getArguments().getString("title");
         message = getArguments().getString("message");
-
+        category = getArguments().getInt("category");
     }
 
 
@@ -64,7 +67,7 @@ public class AlertDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        //LayoutInflater inflater = requireActivity().getLayoutInflater();
         //View localView = inflater.inflate(R.layout.dialog_alert_general, null);
         View localView = View.inflate(getContext(), R.layout.dialog_alert_general, null);
 
@@ -76,8 +79,25 @@ public class AlertDialogFragment extends DialogFragment {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
-                .setPositiveButton("confirm", (dialog, which) -> fragmentSharedModel.setAlert(true))
-                .setNegativeButton("cancel", (dialog, which) -> fragmentSharedModel.setAlert(false));
+                .setPositiveButton("confirm", (dialog, which) -> {
+                    switch(category) {
+                        case Constants.GAS:
+                            fragmentSharedModel.getGasAlertResult().setValue(true);
+                            break;
+
+                        case Constants.SVC:
+                            fragmentSharedModel.getSvcAlertResult().setValue(true);
+                            break;
+
+                        case 3:
+                            fragmentSharedModel.setAlert(true);
+                            break;
+                    }
+                })
+                .setNegativeButton("cancel", (dialog, which) -> {
+                    fragmentSharedModel.setAlert(false);
+                    dismiss();
+                });
 
         return builder.create();
     }

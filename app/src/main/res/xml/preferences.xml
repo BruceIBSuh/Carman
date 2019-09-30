@@ -66,12 +66,12 @@
             app:useSimpleSummaryProvider="true"/>
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingFavorGasFragment"
-            app:title="@string/pref_favorite_station"
-            app:key="pref_favorite_station" />
+            app:title="@string/pref_favorite_gas"
+            app:key="pref_favorite_gas" />
         <Preference
-            app:fragment="com.silverback.carman2.fragments.SettingFavorServiceFragment"
-            app:title="@string/pref_favorite_carcenter"
-            app:key="pref_favorite_carcenter" />
+            app:fragment="com.silverback.carman2.fragments.SettingFavorSvcFragment"
+            app:title="@string/pref_favorite_svc"
+            app:key="pref_favorite_svc" />
     </PreferenceCategory>
 
     <PreferenceCategory

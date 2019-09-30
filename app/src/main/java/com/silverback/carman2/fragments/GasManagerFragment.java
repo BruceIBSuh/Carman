@@ -208,7 +208,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Clicking the favorite image button which pops up the AlertDialogFragment and when clicking
         // the confirm button, LiveData<Boolean> is notified here.
-        fragmentSharedModel.getAlert().observe(this, confirm -> {
+        fragmentSharedModel.getGasAlertResult().observe(this, confirm -> {
             if(confirm) {
                 geofenceHelper.removeFavoriteGeofence(stnName, stnId);
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
@@ -333,16 +333,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         if(TextUtils.isEmpty(tvStnName.getText())) {
             // In case of the empty name, show the favorite list in the dialogframent to pick it up.
-            String title = getString(R.string.exp_title_gas);
-            final int category = FavoriteGeofenceHelper.GAS_STATION;
-            FavoriteListFragment.newInstance(title, category).show(getFragmentManager(), null);
+            FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS)
+                    .show(getFragmentManager(), null);
             //Snackbar.make(constraintLayout, R.string.gas_msg_empty_name, Snackbar.LENGTH_SHORT).show();
             return;
 
         } else if(isFavorite) {
             // Already registered with Favorite
             String msg = getString(R.string.gas_msg_alert_remove_favorite);
-            AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", msg);
+            AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", msg, Constants.GAS);
             if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
 
 

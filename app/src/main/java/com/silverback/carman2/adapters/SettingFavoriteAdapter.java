@@ -18,7 +18,8 @@ import com.silverback.carman2.viewholders.FavoriteItemHolder;
 import java.util.Collections;
 import java.util.List;
 
-public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHolder> {
+public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHolder> implements
+        ItemTouchHelperCallback.RecyclerItemMoveListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteAdapter.class);
@@ -60,4 +61,23 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     }
 
 
+    @Override
+    public void onItemMove(int from, int to) {
+        if (from < to) {
+            for (int i = from; i < to; i++) {
+                Collections.swap(favoriteList, i, i + 1);
+            }
+        } else {
+            for (int i = from; i > to; i--) {
+                Collections.swap(favoriteList, i, i - 1);
+            }
+        }
+
+        notifyItemMoved(from, to);
+    }
+
+    @Override
+    public void onItemRemove(int pos) {
+
+    }
 }

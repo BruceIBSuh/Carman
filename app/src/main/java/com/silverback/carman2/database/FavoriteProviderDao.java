@@ -16,8 +16,9 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity")
     LiveData<List<FavoriteProviderEntity>> loadAllFavoriteProvider();
 
+    // Query ther favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category")
-    LiveData<List<FavoriteProviderEntity>> queryFavoriteGasStation(int category);
+    LiveData<List<FavoriteProviderEntity>> queryFavoriteProvider(int category);
 
     @Query("SELECT favorite_name, favorite_addrs FROM FAvoriteProviderentity WHERE category = :category")
     LiveData<List<FavoriteNameAddrs>> findFavoriteNameAddrs(int category);

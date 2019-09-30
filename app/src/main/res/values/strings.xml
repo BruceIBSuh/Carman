@@ -103,11 +103,12 @@
     <string name="toast_stn_name">정비 업체명을 입력해 주세요</string>
     <string name="toast_mileage">누적 운행거리를 입력해 주세요</string>
     <string name="toast_remove_favorite_service">즐겨찾는 서비스센터에서 제외되었습니다</string>
-    <string name="toast_add_favorite_service">즐겨찾는 서비스센터에 추가되었습니다</string>
+    <string name="svc_msg_add_favorite">즐겨찾는 서비스센터에 추가되었습니다</string>
     <string name="service_dialog_label_memo">메 모:</string>
     <string name="svc_msg_empty_name">서비스센터 이름을 입력해 주세요</string>
     <string name="svc_msg_registration">우선 서비스센터를 등록해 주세요</string>
     <string name="svc_btn_eval">등록</string>
+    <string name="svc_register_title">즐겨찾는 서비스센터</string>
     <!--ExpenseActivity$RegisterDialogFragment-->
     <string name="dialog_label_location">현재위치</string>
     <string name="dialog_label_district">지 역</string>
@@ -144,8 +145,8 @@
     <string name="pref_category_favorites">주유소/카센터 설정</string>
     <string name="pref_designated_station">단골 주유소 지정</string>
     <string name="pref_summary_designated_station">지정된 주유소의 가격 정보가 제공됩니다</string>
-    <string name="pref_favorite_station">즐겨찾는 주유소 목록</string>
-    <string name="pref_favorite_carcenter">즐겨찾는 카센터 목록</string>
+    <string name="pref_favorite_gas">즐겨찾는 주유소 목록</string>
+    <string name="pref_favorite_svc">즐겨찾는 카센터 목록</string>
     <string name="pref_category_service">정비/점검 </string>
     <string name="pref_service_period">정비/점검 주기</string>
     <string name="pref_svc_period_mileage">운행거리</string>

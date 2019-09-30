@@ -17,6 +17,10 @@ public class Constants {
     static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.
     static final int MAX_WAIT = 1000 * 30; //Mas latency to receive location info.
 
+    // Category
+    public static final int GAS = 1;
+    public static final int SVC = 2;
+
     // SQLite Database
     public static final int SERVICE_ITEM_COLUMNS = 5; // Max number of Service items to record
 

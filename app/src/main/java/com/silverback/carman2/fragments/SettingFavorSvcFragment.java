@@ -3,7 +3,6 @@ package com.silverback.carman2.fragments;
 
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,17 +24,17 @@ import com.silverback.carman2.utils.ItemTouchHelperCallback;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingFavorGasFragment extends Fragment  {
+public class SettingFavorSvcFragment extends Fragment {
 
-    // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
+    // Constants
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorSvcFragment.class);
 
     // Objects
     private CarmanDatabase mDB;
     private SettingFavoriteAdapter mAdapter;
 
-    // Constructor
-    public SettingFavorGasFragment() {
+
+    public SettingFavorSvcFragment() {
         // Required empty public constructor
     }
 
@@ -46,20 +45,22 @@ public class SettingFavorGasFragment extends Fragment  {
         if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext());
     }
 
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
 
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
         View localView = inflater.inflate(R.layout.fragment_setting_favorite, container, false);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_favorite);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        mDB.favoriteModel().queryFavoriteProvider(Constants.GAS).observe(this, favoriteList -> {
+        mDB.favoriteModel().queryFavoriteProvider(Constants.SVC).observe(this, favoriteList -> {
             for(int i = 0; i < favoriteList.size(); i++) {
                 log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }
-
+            mAdapter = new SettingFavoriteAdapter(favoriteList);
+            // Make the item drag by invoking ItemTouchHelperCallback
             mAdapter = new SettingFavoriteAdapter(favoriteList);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
@@ -68,7 +69,6 @@ public class SettingFavorGasFragment extends Fragment  {
             recyclerView.setAdapter(mAdapter);
         });
 
-        // Inflate the layout for this fragment
         return localView;
     }
 
