@@ -29,10 +29,12 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
         tvName = cardView.findViewById(R.id.tv_providerName);
         tvAddress = cardView.findViewById(R.id.tv_providerAddrs);
         imgLogo = cardView.findViewById(R.id.img_logo);
+
+
     }
 
     public void bindToFavorite(FavoriteProviderEntity favorite) {
-        log.i("Favorite: %s, %s, %s", favorite.address, favorite.providerName, favorite.providerCode);
+
         tvName.setText(favorite.providerName);
         tvAddress.setText(favorite.address);
         if(favorite.providerCode != null) {

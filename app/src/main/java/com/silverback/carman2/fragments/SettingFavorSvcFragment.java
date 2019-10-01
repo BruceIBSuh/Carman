@@ -62,7 +62,7 @@ public class SettingFavorSvcFragment extends Fragment {
             mAdapter = new SettingFavoriteAdapter(favoriteList);
             // Make the item drag by invoking ItemTouchHelperCallback
             mAdapter = new SettingFavoriteAdapter(favoriteList);
-            ItemTouchHelperCallback callback = new ItemTouchHelperCallback(mAdapter);
+            ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
 
@@ -82,4 +82,5 @@ public class SettingFavorSvcFragment extends Fragment {
 
         return false;
     }
+
 }

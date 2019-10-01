@@ -25,7 +25,7 @@ import com.silverback.carman2.utils.ItemTouchHelperCallback;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingFavorGasFragment extends Fragment  {
+public class SettingFavorGasFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
@@ -61,7 +61,7 @@ public class SettingFavorGasFragment extends Fragment  {
             }
 
             mAdapter = new SettingFavoriteAdapter(favoriteList);
-            ItemTouchHelperCallback callback = new ItemTouchHelperCallback(mAdapter);
+            ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
 
@@ -82,4 +82,5 @@ public class SettingFavorGasFragment extends Fragment  {
 
         return false;
     }
+
 }

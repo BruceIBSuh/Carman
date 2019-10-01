@@ -82,11 +82,11 @@ public class AlertDialogFragment extends DialogFragment {
                 .setPositiveButton("confirm", (dialog, which) -> {
                     switch(category) {
                         case Constants.GAS:
-                            fragmentSharedModel.getGasAlertResult().setValue(true);
+                            fragmentSharedModel.setAlertGasResult(true);
                             break;
 
                         case Constants.SVC:
-                            fragmentSharedModel.getSvcAlertResult().setValue(true);
+                            fragmentSharedModel.setAlertSvcResult(true);
                             break;
 
                         case 3:

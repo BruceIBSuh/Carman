@@ -88,7 +88,7 @@ public class SettingServiceItemAdapter
     // The following 2 callback methods are invoked by ItemTouchHelperCallback.RecyclerItemMoveListener
     // to drag or swipe of the RecycerView items.
     @Override
-    public void onItemMove(int from, int to) {
+    public void onDragItem(int from, int to) {
         if (from < to) {
             for (int i = from; i < to; i++) {
                 Collections.swap(svcItemList, i, i + 1);
@@ -102,8 +102,8 @@ public class SettingServiceItemAdapter
     }
 
     @Override
-    public void onItemRemove(int pos) {
-        log.i("onItemRemove: %s", pos);
+    public void onDeleteItem(int pos) {
+        log.i("onDeleteItem: %s", pos);
         mListener.removeItem(pos);
     }
 

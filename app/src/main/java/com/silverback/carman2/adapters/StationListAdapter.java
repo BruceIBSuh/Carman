@@ -86,9 +86,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
         }else{
             for(Object obj : payloads) {
-                String msg = ((boolean)obj)?
-                        context.getString(R.string.general_carwash_yes):
-                        context.getString(R.string.general_carwash_no);
+                String msg = ((boolean)obj)?context.getString(R.string.general_carwash_yes):context.getString(R.string.general_carwash_no);
                 holder.tvWashValue.setText(msg);
             }
         }

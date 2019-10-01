@@ -98,7 +98,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private String nickname;
     private boolean isCommentUploaded;
 
-    private boolean isGeofenceIntent, isFavorite;
+    private boolean isGeofenceIntent, isFavoriteGas;
 
 
     // Constructor
@@ -205,10 +205,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaultParams);
         });
 
+        // Communicate w/ FavoriteListFragment to retrieve a favorite station picked out of the
+        // dialogfragment.
+        fragmentSharedModel.getFavoriteGasName().observe(this, name -> {
+            tvStnName.setText(name);
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            isFavoriteGas = true;
+        });
 
         // Clicking the favorite image button which pops up the AlertDialogFragment and when clicking
         // the confirm button, LiveData<Boolean> is notified here.
-        fragmentSharedModel.getGasAlertResult().observe(this, confirm -> {
+        fragmentSharedModel.getAlertGasResult().observe(this, confirm -> {
             if(confirm) {
                 geofenceHelper.removeFavoriteGeofence(stnName, stnId);
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
@@ -315,10 +322,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private void checkGasFavorite(String name, String id) {
         mDB.favoriteModel().findFavoriteGasName(name, id).observe(this, favorite -> {
             if (TextUtils.isEmpty(favorite)) {
-                isFavorite = false;
+                isFavoriteGas = false;
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
             } else {
-                isFavorite = true;
+                isFavoriteGas = true;
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             }
         });
@@ -333,16 +340,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         if(TextUtils.isEmpty(tvStnName.getText())) {
             // In case of the empty name, show the favorite list in the dialogframent to pick it up.
-            FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS)
-                    .show(getFragmentManager(), null);
+            FavoriteListFragment favoriteFragment = FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS);
+            favoriteFragment.show(getFragmentManager(), null);
             //Snackbar.make(constraintLayout, R.string.gas_msg_empty_name, Snackbar.LENGTH_SHORT).show();
             return;
 
-        } else if(isFavorite) {
+        } else if(isFavoriteGas) {
             // Already registered with Favorite
             String msg = getString(R.string.gas_msg_alert_remove_favorite);
             AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", msg, Constants.GAS);
-            if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
+            alertFragment.show(getFragmentManager(), null);
 
 
         } else {
@@ -361,7 +368,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             });
         }
 
-        isFavorite = !isFavorite;
+        isFavoriteGas = !isFavoriteGas;
     }
 
     // Method for inserting data to SQLite database

@@ -116,7 +116,7 @@ public class SettingServiceItemFragment extends Fragment implements SettingServi
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        ItemTouchHelperCallback callback = new ItemTouchHelperCallback(mAdapter);
+        ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
 

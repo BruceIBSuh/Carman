@@ -20,26 +20,17 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<SparseArray> selectedMemo = new MutableLiveData<>();
     private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertResult = new MutableLiveData<>();
-    private MutableLiveData<Boolean> alertGasResult;
-    private MutableLiveData<Boolean> alertSvcResult;
-
-
-    private MutableLiveData<String> favoriteName;
-
+    private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
+
+    private MutableLiveData<String> favoriteGasName;
+    private MutableLiveData<String> favoriteSvcName;
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
 
-    /*
-     * Share data b/w fragments
-     * setSelectedValue(): defined in NumberPadFragment
-     * getSelectedValue(): defined in GasManagerFragment or ServiceManagerFragment
-     *
-     * Pass the values put in NumberPadFragment to GasManagerFragment or ServiceManagerFragment
-     * as the type of SparseIntArray, the key of which indicates the id of views in NumberPadFragment.
-     */
     public void setSelectedValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.
         sparsesArray.put(key, value);
@@ -88,18 +79,32 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    public MutableLiveData<String> getFavoriteName() {
-        if(favoriteName == null) favoriteName = new MutableLiveData<>();
-        return favoriteName;
+    public MutableLiveData<String> getFavoriteGasName() {
+        if(favoriteGasName == null) favoriteGasName = new MutableLiveData<>();
+        return favoriteGasName;
     }
 
-    public MutableLiveData<Boolean> getGasAlertResult() {
-        if(alertGasResult == null) alertGasResult = new MutableLiveData<>();
-        return alertSvcResult;
+    public MutableLiveData<String> getFavoriteSvcName() {
+        if(favoriteSvcName == null) favoriteSvcName = new MutableLiveData<>();
+        return favoriteSvcName;
     }
 
-    public MutableLiveData<Boolean> getSvcAlertResult() {
-        if(alertSvcResult == null) alertSvcResult = new MutableLiveData<>();
+    // Communicate GasManagerFragment or ServiceManagerFragment w/ AlertDidalogFragment when
+    // the favorite button clicks to remove a provider out of the favorite list.
+    public void setAlertGasResult(boolean b) {
+        alertGasResult.setValue(b);
+    }
+
+    public MutableLiveData<Boolean> getAlertGasResult() {
+        return alertGasResult;
+    }
+
+
+    public void setAlertSvcResult(boolean b) {
+        alertSvcResult.setValue(b);
+    }
+
+    public MutableLiveData<Boolean> getAlertSvcResult() {
         return alertSvcResult;
     }
 

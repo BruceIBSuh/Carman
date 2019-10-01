@@ -231,13 +231,13 @@ public class ServiceManagerFragment extends Fragment implements
 
 
         // Fetch the service name from FavoriteListFragment
-        fragmentSharedModel.getFavoriteName().observe(this, name -> {
+        fragmentSharedModel.getFavoriteSvcName().observe(this, name -> {
             etServiceName.setText(name);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             isSvcFavorite = true;
         });
 
-        fragmentSharedModel.getSvcAlertResult().observe(this, confirm -> {
+        fragmentSharedModel.getAlertSvcResult().observe(this, confirm -> {
             if(confirm) {
                 geofenceHelper.removeFavoriteGeofence(svcName, svcId);
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);

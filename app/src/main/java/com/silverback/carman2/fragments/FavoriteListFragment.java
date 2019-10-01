@@ -21,6 +21,7 @@ import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 
 import java.util.List;
 
@@ -95,7 +96,14 @@ public class FavoriteListFragment extends DialogFragment {
             log.i("Click event: %s, %s, %s, %s", parent, view, position, id);
             FavoriteProviderDao.FavoriteNameAddrs nameAddrs =
                     (FavoriteProviderDao.FavoriteNameAddrs)mAdapter.getItem(position);
-            fragmentModel.getFavoriteName().setValue(nameAddrs.favoriteName);
+            switch(category) {
+                case Constants.GAS:
+                    fragmentModel.getFavoriteGasName().setValue(nameAddrs.favoriteName);
+                    break;
+                case Constants.SVC:
+                    fragmentModel.getFavoriteSvcName().setValue(nameAddrs.favoriteName);
+                    break;
+            }
             dismiss();
         });
 
