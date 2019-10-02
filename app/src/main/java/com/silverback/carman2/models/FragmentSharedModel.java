@@ -8,6 +8,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.silverback.carman2.database.FavoriteProviderEntity;
+
 import org.json.JSONObject;
 
 import java.util.Arrays;

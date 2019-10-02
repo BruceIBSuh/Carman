@@ -10,7 +10,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
@@ -34,7 +36,9 @@ public class SettingServiceItemAdapter
     private Context mContext;
     private List<JSONObject> svcItemList;
     private JSONArray jsonSvcItemArray;
-    private OnAdapterCallback mListener;
+    //private OnAdapterCallback mListener;
+
+    private ViewGroup parent;
 
     // Fields
     private String mileage, month;
@@ -48,8 +52,8 @@ public class SettingServiceItemAdapter
     }
 
     // Constructor
-    public SettingServiceItemAdapter(JSONArray jsonArray, OnAdapterCallback listener) {
-        mListener = listener;
+    public SettingServiceItemAdapter(JSONArray jsonArray) {
+        //mListener = listener;
         jsonSvcItemArray = jsonArray;
         svcItemList = new ArrayList<>();
         for(int i = 0; i < jsonSvcItemArray.length(); i++)
@@ -60,7 +64,7 @@ public class SettingServiceItemAdapter
     @NonNull
     @Override
     public SettingServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-
+        this.parent = parent;
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_setting_service, parent, false);
 
@@ -89,22 +93,28 @@ public class SettingServiceItemAdapter
     // to drag or swipe of the RecycerView items.
     @Override
     public void onDragItem(int from, int to) {
-        if (from < to) {
-            for (int i = from; i < to; i++) {
-                Collections.swap(svcItemList, i, i + 1);
-            }
-        } else {
-            for (int i = from; i > to; i--) {
-                Collections.swap(svcItemList, i, i - 1);
-            }
-        }
+        if (from < to) for (int i = from; i < to; i++) Collections.swap(svcItemList, i, i + 1);
+        else for (int i = from; i > to; i--) Collections.swap(svcItemList, i, i - 1);
+
         notifyItemMoved(from, to);
     }
 
     @Override
     public void onDeleteItem(int pos) {
         log.i("onDeleteItem: %s", pos);
-        mListener.removeItem(pos);
+        final JSONObject deletedObj = svcItemList.get(pos);
+        svcItemList.remove(pos);
+        notifyItemRemoved(pos);
+
+        Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_INDEFINITE);
+        snackbar.setAction("UNDO", v -> {
+            svcItemList.add(pos, deletedObj);
+            notifyItemInserted(pos);
+            snackbar.dismiss();
+        });
+
+        snackbar.show();
+        //mListener.removeItem(pos);
     }
 
 

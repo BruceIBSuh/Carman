@@ -108,6 +108,9 @@ public class FavoriteListFragment extends DialogFragment {
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        return builder.setView(localView).create();
+        builder.setView(localView)
+                .setNegativeButton("CANCEL", null);
+
+        return builder.create();
     }
 }

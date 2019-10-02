@@ -34,7 +34,7 @@ import org.json.JSONObject;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceItemFragment extends Fragment implements SettingServiceItemAdapter.OnAdapterCallback {
+public class SettingServiceItemFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
@@ -74,7 +74,7 @@ public class SettingServiceItemFragment extends Fragment implements SettingServi
 
         try {
             jsonSvcItemArray = new JSONArray(json);
-            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, this);
+            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
@@ -151,6 +151,7 @@ public class SettingServiceItemFragment extends Fragment implements SettingServi
         return false;
     }
 
+    /*
     // The following 2 callback methods are invoked by SettingServiceItemAdapter.OnAdapterListener
     // to notify dragging or removing an item of RecyclerView.
     @Override
@@ -166,6 +167,7 @@ public class SettingServiceItemFragment extends Fragment implements SettingServi
         AlertDialogFragment alert = AlertDialogFragment.newInstance(title, msg, 3);
         if(getFragmentManager() != null) alert.show(getFragmentManager(), null);
     }
+    */
 
 
     // Method for switching the location of an service item using Up and Down button

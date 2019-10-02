@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.InputType;
 
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -17,6 +18,7 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.views.SpinnerDialogPreference;
@@ -35,6 +37,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private DecimalFormat df;
     //private SpinnerDialogPreference spinnerPref;
     private LoadDistCodeTask mTask;
+
     private String sidoName, sigunName, sigunCode;
     private String distCode;
 
@@ -47,15 +50,18 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         // Indicates that the fragment may initialize the contents of the Activity's standard options menu.
         setHasOptionsMenu(true);
+        if (mDB == null)
+            mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
 
         df = BaseActivity.getDecimalFormatInstance();
+
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
 
-        if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
+
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
@@ -80,31 +86,34 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
 
 
-        // Designate the gas station which indicates the price information in the main activity using
-        // Room and LiveData.
-        /*
-        ListPreference desigStn = findPreference("pref_designated_station");
-        desigStn.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
+        Preference favorite = findPreference("pref_favorite_provider");
+        // Retrieve the favorite gas station and the service station which are both set the placeholder
+        // to 0 as the designated provider.
+        mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+            log.i("First set Favorite: %s %s %s", data.providerName, data.address, data.category);
+            String station = (data != null && data.category == 1)?data.providerName:getString(R.string.pref_no_favorite);
+            String service = (data != null && data.category == 2)?data.providerName:getString(R.string.pref_no_favorite);
 
-        mDB.favoriteModel().loadAllFavoriteProvider().observe(this, provider-> {
-            List<String> stnList = new ArrayList<>();
-            for(FavoriteProviderEntity entity : provider) {
-                log.i("favorite list: %s, %s", entity.providerName, entity.address);
-                stnList.add(entity.providerName);
-            }
-
-            String[] arrStn = new String[stnList.size()];
-            for(int i = 0; i < stnList.size(); i++) arrStn[i] = stnList.get(i);
-            desigStn.setEntries(arrStn);
-            desigStn.setEntryValues(arrStn);
-
+            favorite.setSummary(String.format("%s / %s", station, service));
         });
-        */
+
+        Preference gasStation = findPreference("pref_favorite_gas");
+        gasStation.setSummary(R.string.pref_summary_gas);
+
+        Preference svcCenter = findPreference("pref_favorite_svc");
+        svcCenter.setSummary(R.string.pref_summary_svc);
 
         SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
     }
 
     @Override

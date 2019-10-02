@@ -60,10 +60,9 @@
     <PreferenceCategory
         app:title="@string/pref_category_favorites"
         app:key="pref_favorites" >
-        <ListPreference
-            app:title="@string/pref_designated_station"
-            app:key="pref_designated_station"
-            app:useSimpleSummaryProvider="true"/>
+        <Preference
+            app:title="@string/pref_designated_provider"
+            app:key="pref_favorite_provider" />
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingFavorGasFragment"
             app:title="@string/pref_favorite_gas"

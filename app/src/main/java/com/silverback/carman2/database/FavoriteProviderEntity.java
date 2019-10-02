@@ -16,6 +16,9 @@ public class FavoriteProviderEntity {
     @ColumnInfo(name = "category")
     public int category;
 
+    @ColumnInfo(name = "placeholder")
+    public int placeHolder;
+
     @ColumnInfo(name = "favorite_id")
     public String providerId;
 

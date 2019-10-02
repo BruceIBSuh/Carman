@@ -29,30 +29,50 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_begin="80dp" />
+            app:layout_constraintGuide_begin="90dp" />
 
         <TextView
             android:id="@+id/tv_providerName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:textSize="@dimen/mediumText"
+            android:textSize="@dimen/largeText"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="@+id/guideline"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Station" />
 
         <TextView
-            android:id="@+id/tv_providerAddrs"
+            android:id="@+id/tv_label_register"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="16dp"
+            android:text="@string/pref_favorite_label_register"
             android:textSize="@dimen/smallText"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guideline"
-            app:layout_constraintTop_toBottomOf="@+id/tv_providerName"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_providerName" />
+
+        <TextView
+            android:id="@+id/tv_value_register"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:text="0"
+            android:textSize="@dimen/smallText"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_register"
+            app:layout_constraintStart_toEndOf="@+id/tv_label_register"
+            app:layout_constraintTop_toTopOf="@+id/tv_label_register" />
+
+        <TextView
+            android:id="@+id/tv_label_rating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="3dp"
+            android:text="@string/pref_favorite_label_eval"
+            android:textSize="@dimen/smallText"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_register"
+            app:layout_constraintEnd_toStartOf="@+id/rb_favorite"
+            app:layout_constraintTop_toTopOf="@+id/tv_label_register" />
 
         <RatingBar
             android:id="@+id/rb_favorite"
@@ -63,9 +83,20 @@
             android:isIndicator="true"
             android:numStars="5"
             android:rating="1"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_providerName"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_providerName" />
+            app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
+
+        <TextView
+            android:id="@+id/tv_providerAddrs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:textSize="@dimen/smallText"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/guideline"
+            app:layout_constraintTop_toBottomOf="@+id/tv_label_register" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -143,10 +143,13 @@
     <string name="pref_title_autoupdate">위치 자동 업데이트</string>
     <string name="pref_summary_autoupdate">배터리 소모량이 다소 증가할 수 있습니다</string>
     <string name="pref_category_favorites">주유소/카센터 설정</string>
-    <string name="pref_designated_station">단골 주유소 지정</string>
+    <string name="pref_designated_provider">단골 주유소/카센터</string>
+    <string name="pref_no_favorite">지정 안함</string>
     <string name="pref_summary_designated_station">지정된 주유소의 가격 정보가 제공됩니다</string>
     <string name="pref_favorite_gas">즐겨찾는 주유소 목록</string>
     <string name="pref_favorite_svc">즐겨찾는 카센터 목록</string>
+    <string name="pref_summary_gas">첫번째 항목이 단골 주유소로 지정됩니다</string>
+    <string name="pref_summary_svc">첫번째 항목이 단골 카센터로 지정됩니다</string>
     <string name="pref_category_service">정비/점검 </string>
     <string name="pref_service_period">정비/점검 주기</string>
     <string name="pref_svc_period_mileage">운행거리</string>
@@ -160,6 +163,8 @@
     <string name="pref_app_coverimage">커버이미지 편집</string>
     <string name="pref_dialog_district">관심 지역</string>
     <string name="pref_dialog_district_title">관심지역 설정 </string>
+    <string name="pref_favorite_label_eval">누적 평가: </string>
+    <string name="pref_favorite_label_register">즐겨찾기 등록: </string>
     <string name="pref_radius_500">500미터</string>
     <string name="pref_radius_1000">1000미터</string>
     <string name="pref_radius_2500">2500미터</string>

@@ -14,6 +14,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
@@ -76,17 +77,19 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     }
 
 
+    // The following 2 callback methods
     @Override
     public void onDragItem(int from, int to) {
         if (from < to) for (int i = from; i < to; i++) Collections.swap(favoriteList, i, i + 1);
         else for (int i = from; i > to; i--) Collections.swap(favoriteList, i, i - 1);
         notifyItemMoved(from, to);
 
+        for(FavoriteProviderEntity entity : favoriteList) {
+            log.i("Entity : %s, %s", entity._id, entity.providerName);
+        }
+
         notifyItemChanged(from, null);
         notifyItemChanged(to, null);
-
-
-
     }
 
     @Override
@@ -105,5 +108,11 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         });
 
         snackbar.show();
+    }
+
+    // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPreferenceFragment
+    // and its price information is to display in the main page,
+    public List<FavoriteProviderEntity> getFavoriteList() {
+        return favoriteList;
     }
 }

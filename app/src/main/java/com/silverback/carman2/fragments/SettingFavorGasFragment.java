@@ -1,10 +1,12 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,12 +17,17 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingFavoriteAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
+
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -75,8 +82,22 @@ public class SettingFavorGasFragment extends Fragment {
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
+
         if(menuItem.getItemId() == android.R.id.home) {
-            getActivity().onBackPressed();
+            List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
+            int position = 0;
+
+            // Update the placeholder in FavoriteProviderEntity accroding to the position of
+            // reordered the favorite list.
+            for(FavoriteProviderEntity entity : favoriteList) {
+                log.i("Entity: %s, %s, %s", entity._id, entity.providerName, entity.placeHolder);
+                entity.placeHolder = position;
+                position++;
+            }
+
+            mDB.favoriteModel().updatePlaceHolder(favoriteList);
+            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+
             return true;
         }
 
