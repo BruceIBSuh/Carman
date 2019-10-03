@@ -87,6 +87,7 @@ public class SettingServiceItemFragment extends Fragment {
             jsonSvcItemArray.put(data);
             mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
             mAdapter.notifyItemInserted(jsonSvcItemArray.length());
+            mAdapter.notifyDataSetChanged();
         });
         // Fetch LiveData<Boolean> that indicates whch button to select in AlertDialogFragment when
         // a service item is removed.

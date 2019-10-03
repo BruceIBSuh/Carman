@@ -89,22 +89,6 @@ public class FireStoreGetRunnable implements Runnable {
                     } else {
 
                         setStationData(pos);
-                        /*
-                        Map<String, Object> stnData = new HashMap<>();
-                        stnData.put("stnName", stnList.get(pos).getStnName());
-                        stnData.put("stnCode", stnList.get(pos).getStnCode());
-                        stnData.put("xCoord", stnList.get(pos).getLongitude());
-                        stnData.put("yCoord", stnList.get(pos).getLatitude());
-
-                        firestore.collection("gas_station").document(stnId).set(stnData)
-                                .addOnSuccessListener(documentReference -> {
-                                    log.i("successfully added data");
-                                    // Start the task to retrieve addtional information
-                                    mCallback.setStationId(stnList.get(pos).getStnId());
-                                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
-                                })
-                                .addOnFailureListener(error -> log.e("failed to add data"));
-                        */
                     }
                 });
             //}

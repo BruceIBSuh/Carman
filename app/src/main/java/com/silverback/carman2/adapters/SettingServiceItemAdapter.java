@@ -74,6 +74,7 @@ public class SettingServiceItemAdapter
     @Override
     public void onBindViewHolder(@NonNull SettingServiceItemHolder holder, int position) {
         try {
+            holder.tvNumber.setText(String.valueOf(position + 1));
             holder.tvItemName.setText(jsonSvcItemArray.getJSONObject(position).getString("name"));
             holder.etMileage.setHint(jsonSvcItemArray.getJSONObject(position).getString("mileage"));
             holder.etMonth.setHint(jsonSvcItemArray.getJSONObject(position).getString("month"));
@@ -81,6 +82,14 @@ public class SettingServiceItemAdapter
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
+    }
+
+    @Override
+    public void onBindViewHolder(
+            @NonNull SettingServiceItemHolder holder, int position, @NonNull List<Object> payloads) {
+
+        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
+        else holder.tvNumber.setText(String.valueOf(position + 1));
 
     }
 
@@ -97,6 +106,7 @@ public class SettingServiceItemAdapter
         else for (int i = from; i > to; i--) Collections.swap(svcItemList, i, i - 1);
 
         notifyItemMoved(from, to);
+        notifyItemChanged(to, Math.abs(to - from));
     }
 
     @Override
@@ -123,11 +133,13 @@ public class SettingServiceItemAdapter
      */
     static class SettingServiceItemHolder extends RecyclerView.ViewHolder {
 
+        TextView tvNumber;
         TextView tvItemName;
         EditText etMileage, etMonth;
 
         SettingServiceItemHolder(View v) {
             super(v);
+            tvNumber = v.findViewById(R.id.tv_number);
             tvItemName = v.findViewById(R.id.tv_service_item);
             etMileage = v.findViewById(R.id.et_default_mileage);
             etMonth = v.findViewById(R.id.et_default_month);

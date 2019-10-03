@@ -58,7 +58,6 @@ public class FragmentSharedModel extends ViewModel {
     // service item list.
     public void setServiceItem(JSONObject jsonObject) {
         jsonServiceItemObj.setValue(jsonObject);
-
     }
     public LiveData<JSONObject> getJsonServiceItemObject() {
         return jsonServiceItemObj;
@@ -96,7 +95,6 @@ public class FragmentSharedModel extends ViewModel {
     public void setAlertGasResult(boolean b) {
         alertGasResult.setValue(b);
     }
-
     public MutableLiveData<Boolean> getAlertGasResult() {
         return alertGasResult;
     }

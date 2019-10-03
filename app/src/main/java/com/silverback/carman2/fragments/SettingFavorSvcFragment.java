@@ -18,6 +18,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingFavoriteAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
@@ -26,7 +27,8 @@ import com.silverback.carman2.utils.ItemTouchHelperCallback;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingFavorSvcFragment extends Fragment {
+public class SettingFavorSvcFragment extends Fragment implements
+        SettingFavoriteAdapter.OnFavoriteAdapterListener{
 
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorSvcFragment.class);
@@ -61,9 +63,8 @@ public class SettingFavorSvcFragment extends Fragment {
             for(int i = 0; i < favoriteList.size(); i++) {
                 log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }
-            mAdapter = new SettingFavoriteAdapter(favoriteList);
             // Make the item drag by invoking ItemTouchHelperCallback
-            mAdapter = new SettingFavoriteAdapter(favoriteList);
+            mAdapter = new SettingFavoriteAdapter(favoriteList, this);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
@@ -86,4 +87,15 @@ public class SettingFavorSvcFragment extends Fragment {
         return false;
     }
 
+    @Override
+    public void addFavorite(FavoriteProviderEntity entity) {
+        log.i("Listener: Add Favorite - %s", entity.providerName);
+        mDB.favoriteModel().insertFavoriteProvider(entity);
+    }
+
+    @Override
+    public void deleteFavorite(FavoriteProviderEntity entity) {
+        log.i("Listener: delete Favorite - %s", entity.providerName);
+        mDB.favoriteModel().deleteProvider(entity);
+    }
 }

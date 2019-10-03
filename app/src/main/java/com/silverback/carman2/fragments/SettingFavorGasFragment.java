@@ -32,7 +32,8 @@ import java.util.List;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingFavorGasFragment extends Fragment {
+public class SettingFavorGasFragment extends Fragment implements
+        SettingFavoriteAdapter.OnFavoriteAdapterListener{
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
@@ -63,11 +64,10 @@ public class SettingFavorGasFragment extends Fragment {
         recyclerView.setLayoutManager(layoutManager);
 
         mDB.favoriteModel().queryFavoriteProvider(Constants.GAS).observe(this, favoriteList -> {
-            for(int i = 0; i < favoriteList.size(); i++) {
-                log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
-            }
 
-            mAdapter = new SettingFavoriteAdapter(favoriteList);
+            log.i("FavoriteList: %s", favoriteList.size());
+
+            mAdapter = new SettingFavoriteAdapter(favoriteList, this);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
@@ -84,13 +84,13 @@ public class SettingFavorGasFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem menuItem) {
 
         if(menuItem.getItemId() == android.R.id.home) {
+
             List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
             int position = 0;
 
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
-            // reordered the favorite list.
+            // the edited fasvorte list.
             for(FavoriteProviderEntity entity : favoriteList) {
-                log.i("Entity: %s, %s, %s", entity._id, entity.providerName, entity.placeHolder);
                 entity.placeHolder = position;
                 position++;
             }
@@ -104,4 +104,15 @@ public class SettingFavorGasFragment extends Fragment {
         return false;
     }
 
+    @Override
+    public void addFavorite(FavoriteProviderEntity entity) {
+        log.i("Listener: Add Favorite - %s", entity.providerName);
+        mDB.favoriteModel().insertFavoriteProvider(entity);
+    }
+
+    @Override
+    public void deleteFavorite(FavoriteProviderEntity entity) {
+        log.i("Listener: delete Favorite - %s", entity.providerName);
+        mDB.favoriteModel().deleteProvider(entity);
+    }
 }
