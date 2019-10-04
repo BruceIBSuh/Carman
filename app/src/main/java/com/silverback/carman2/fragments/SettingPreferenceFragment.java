@@ -90,7 +90,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
-            log.i("First set Favorite: %s %s %s", data.providerName, data.address, data.category);
             String station = (data != null && data.category == 1)?data.providerName:getString(R.string.pref_no_favorite);
             String service = (data != null && data.category == 2)?data.providerName:getString(R.string.pref_no_favorite);
 
