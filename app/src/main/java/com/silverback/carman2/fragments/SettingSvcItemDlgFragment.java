@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,9 +16,11 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,24 +28,23 @@ import org.json.JSONObject;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingSvcDialogFragment extends DialogFragment {
+public class SettingSvcItemDlgFragment extends DialogFragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcDialogFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemDlgFragment.class);
 
     // Objects
     private FragmentSharedModel sharedModel;
+    private SharedPreferences mSettings;
 
-    public SettingSvcDialogFragment() {
+    public SettingSvcItemDlgFragment() {
         // Required empty public constructor
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null) {
-            sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        }
+        if(getActivity() != null) mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
     }
 
 
@@ -57,23 +59,41 @@ public class SettingSvcDialogFragment extends DialogFragment {
         EditText etMileage = localView.findViewById(R.id.et_period_km);
         EditText etMonth = localView.findViewById(R.id.et_period_month);
 
+        /*
+        etMileage.setOnFocusChangeListener((view, hasFocus) -> {
+            int month = 0;
+            int avgMileage = Integer.valueOf(mSettings.getString(Constants.AVERAGE, "10000"));
+            int itemMileage = 0;
+            if(hasFocus) {
+                itemMileage = Integer.valueOf(etMileage.getText().toString());
+
+            } else {
+                itemMileage = Integer.valueOf(etMileage.getText().toString());
+                if(avgMileage > 0 && itemMileage > 0) month = 12 / (itemMileage / avgMileage);
+                log.i("MONTH: %s", month);
+                etMonth.setText(String.valueOf(month));
+            }
+        });
+        */
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
                 .setPositiveButton("confirm", (dialog, which) -> {
+
                     JSONObject jsonObject = new JSONObject();
                     try {
                         jsonObject.put("name", etItemName.getText().toString());
                         jsonObject.put("mileage", etMileage.getText().toString());
                         jsonObject.put("month", etMonth.getText().toString());
-                        sharedModel.setServiceItem(jsonObject);
+
+                        ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class).setServiceItem(jsonObject);
+
                     } catch(JSONException e) {
                         log.e("JSONException: %s", e.getMessage());
                     }
 
 
-                })
-                .setNegativeButton("cancel", (dialog, which) -> {});
+                }).setNegativeButton("cancel", (dialog, which) -> {});
 
         return builder.create();
 

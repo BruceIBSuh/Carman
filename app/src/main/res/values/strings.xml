@@ -50,6 +50,10 @@
     <string name="map_cardview_cvs">편의점:</string>
     <string name="map_cardview_service">정 비:</string>
     <string name="map_cardview_wash">세 차:</string>
+    <string name="map_value_yes">있음</string>
+    <string name="map_value_no">없음</string>
+    <string name="map_value_ok">가능</string>
+    <string name="map_value_not_ok">불가</string>
 
     <!-- ExpenseActivity -->
     <string name="exp_toolbar_title">My Garage</string>

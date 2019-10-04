@@ -60,6 +60,7 @@ public class FireStoreSetRunnable implements Runnable {
             conn = (HttpURLConnection) url.openConnection();
             is = new BufferedInputStream(conn.getInputStream());
             Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
+
             final boolean isCarwash = stnInfo.getIsCarWash().equalsIgnoreCase("Y");
             final boolean isService = stnInfo.getIsService().equalsIgnoreCase("Y");
             final boolean isCVS = stnInfo.getIsCVS().equalsIgnoreCase("Y");

@@ -29,6 +29,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> favoriteGasName;
     private MutableLiveData<String> favoriteSvcName;
 
+
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
@@ -54,11 +55,10 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    // Communicate b/w SettingServiceItemFragment and SettingSvcDialogFragment to modify the
+    // Communicate b/w SettingServiceItemFragment and SettingSvcItemDlgFragment to modify the
     // service item list.
     public void setServiceItem(JSONObject jsonObject) {
         jsonServiceItemObj.setValue(jsonObject);
-
     }
     public LiveData<JSONObject> getJsonServiceItemObject() {
         return jsonServiceItemObj;
@@ -96,7 +96,6 @@ public class FragmentSharedModel extends ViewModel {
     public void setAlertGasResult(boolean b) {
         alertGasResult.setValue(b);
     }
-
     public MutableLiveData<Boolean> getAlertGasResult() {
         return alertGasResult;
     }

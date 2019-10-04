@@ -60,6 +60,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_station_map);
 
+        final String stnId = getIntent().getStringExtra("stationId");
+        fireStore = FirebaseFirestore.getInstance();
+
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
         setSupportActionBar(mapToolbar);
@@ -77,13 +80,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         recyclerComments = findViewById(R.id.recycler_stn_comments);
         recyclerComments.setLayoutManager(new LinearLayoutManager(this));
 
-        //stnName = getIntent().getStringExtra("stationName");
-        String stnId = getIntent().getStringExtra("stationId");
         //StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-
-        // Instantiate FireStore and define DocumentReference to retrieve the station information
-        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
-        DocumentReference docStation = fireStore.collection("gas_station").document(stnId);
 
         /*
          * Handling task results
@@ -91,15 +88,25 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
          * To be notified when the task fails, attach on an OnFailureListener
          * To handle success and failure in the same listener, attach an OnCompleteListener.
          */
-        docStation.get().addOnCompleteListener(task -> {
+        fireStore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
+                    // Translate the boolean values to Strings.
+                    String carwash = (snapshot.getBoolean("carwash"))?
+                            getString(R.string.map_value_ok):getString(R.string.map_value_not_ok);
+                    String service = (snapshot.getBoolean("service"))?
+                            getString(R.string.map_value_yes):getString(R.string.map_value_no);
+                    String cvs = (snapshot.getBoolean("cvs"))?
+                            getString(R.string.map_value_yes):getString(R.string.map_value_no);
+
+                    // Set the String values to TextViews
                     tvName.setText(snapshot.getString("stn_name"));
                     tvAddrs.setText(String.format("%s%15s", snapshot.getString("new_addrs"), snapshot.getString("phone")));
-                    tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), snapshot.getBoolean("carwash")));
-                    tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), snapshot.getBoolean("service")));
-                    tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), snapshot.getBoolean("cvs")));
+                    tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), carwash));
+                    tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), service));
+                    tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), cvs));
+
                     xCoord = snapshot.getDouble("katec_x");
                     yCoord = snapshot.getDouble("katec_y");
 
@@ -108,6 +115,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                     GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
                     longitude = in_pt.getX();
                     latitude = in_pt.getY();
+
 
                     // Obtain the SupportMapFragment and get notified when the map is ready to be used.
                     SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -123,19 +131,17 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         });
 
         // Read comments on gas stations
-        CollectionReference colRef = fireStore.collection("gas_eval").document(stnId).collection("comments");
         List<DocumentSnapshot> snapshotList = new ArrayList<>();
+        final CollectionReference colRef = fireStore.collection("gas_eval").document(stnId).collection("comments");
         colRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
+
                 for(DocumentSnapshot document : task.getResult()) {
                     log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
                     snapshotList.add(document);
                 }
-
                 commentAdapter = new CommentRecyclerAdapter(snapshotList);
                 recyclerComments.setAdapter(commentAdapter);
-
-
             } else {
                 log.e("task failed: %s", task.getException());
             }

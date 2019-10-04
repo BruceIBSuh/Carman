@@ -50,6 +50,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     private String initValue, itemTitle;
     private boolean isCurrency;
     private boolean isPlus;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

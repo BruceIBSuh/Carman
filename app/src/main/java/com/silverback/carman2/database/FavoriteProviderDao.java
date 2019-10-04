@@ -28,19 +28,20 @@ public interface FavoriteProviderDao {
 
     // Retrieve the favorite station with the placeholder set first in SettingFavorGasFragment and
     // SettingFavorSvcFragment.
-    @Query("SELECT * FROM FavoriteProviderEntity WHERE placeholder = 0")
-    LiveData<FavoriteProviderEntity> queryFirstSetFavorite();
+    @Query("SELECT favorite_name, category FROM FavoriteProviderEntity WHERE placeholder = 0")
+    LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
 
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
+
     @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
     LiveData<String> findFavoriteSvcName(String svcName, int category);
 
-
-    @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
-    LiveData<String> findFavoriteGasName(String stnName, String stnId);
+    @Query("SELECT favorite_name FROM FavoriteProviderEntity " +
+            "WHERE favorite_name = :stnName AND favorite_id = :stnId AND category = :category")
+    LiveData<String> findFavoriteGasName(String stnName, String stnId, int category);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertFavoriteProvider(FavoriteProviderEntity favorite);
@@ -59,4 +60,13 @@ public interface FavoriteProviderDao {
         public String favoriteAddrs;
     }
 
+    // class of the result subset which indicates what is the first set station and service in
+    // SettingPreferenceFragment
+    class FirstSetFavorite {
+        @ColumnInfo(name = "favorite_name")
+        public String favoriteName;
+
+        @ColumnInfo(name = "category")
+        public int category;
+    }
 }

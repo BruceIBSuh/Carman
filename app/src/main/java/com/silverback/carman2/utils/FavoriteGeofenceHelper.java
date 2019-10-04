@@ -112,7 +112,7 @@ public class FavoriteGeofenceHelper {
         //return PendingIntent.getService(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    // Add a provider(gas station / service provider) to Geofence and the Favorite table at the same time.
+    // Add a provider to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
     //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
     public void addFavoriteGeofence(final DocumentSnapshot snapshot, final String providerId, final int category) {

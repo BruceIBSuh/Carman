@@ -10,7 +10,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
@@ -29,7 +28,7 @@ public class AlertDialogFragment extends DialogFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(AlertDialogFragment.class);
 
     // Objects
-    private static AlertDialogFragment alertDialogFragment;
+    private static AlertDialogFragment alertFragment;
     private FragmentSharedModel fragmentSharedModel;
     private String title, message;
     private int category;
@@ -39,15 +38,15 @@ public class AlertDialogFragment extends DialogFragment {
     }
 
     // Singleton type constructor
-    public static AlertDialogFragment newInstance(String title, String msg, int category) {
-        if(alertDialogFragment == null) alertDialogFragment = new AlertDialogFragment();
+    static AlertDialogFragment newInstance(String title, String msg, int category) {
+        if(alertFragment == null) alertFragment = new AlertDialogFragment();
         Bundle args = new Bundle();
         args.putString("title", title);
         args.putString("message", msg);
         args.putInt("category", category);
-        alertDialogFragment.setArguments(args);
+        alertFragment.setArguments(args);
 
-        return alertDialogFragment;
+        return alertFragment;
     }
 
     @SuppressWarnings("ConstantConditions")

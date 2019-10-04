@@ -1,11 +1,14 @@
 package com.silverback.carman2;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
@@ -26,6 +29,7 @@ public class MainActivity extends BaseActivity implements
 
     // Objects
     private StationInfoTask mapInfoTask;
+    //private ActionBarDrawerToggle drawerToggle;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +37,11 @@ public class MainActivity extends BaseActivity implements
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
+
+        /*
+        DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);
+        */
 
         // Get the default value of fuel, searching radius, and listing order from BaseActivity
         // and set it to be bundled to pass it to GeneralFragment
@@ -64,6 +73,20 @@ public class MainActivity extends BaseActivity implements
         super.onPause();
         if(mapInfoTask != null) mapInfoTask = null;
     }
+
+    /*
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        drawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        drawerToggle.onConfigurationChanged(newConfig);
+    }
+    */
 
     /*
      * The following 2 overriding methods are invoked by Toolbar working as Appbar or ActionBar

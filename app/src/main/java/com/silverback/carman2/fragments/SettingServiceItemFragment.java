@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -31,10 +32,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceItemFragment extends Fragment {
+public class SettingServiceItemFragment extends Fragment implements
+        SettingServiceItemAdapter.OnServiceItemAdapterCallback {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
@@ -45,9 +50,10 @@ public class SettingServiceItemFragment extends Fragment {
 
 
     // Objects
+    private FragmentSharedModel fragmentSharedModel;
     private SharedPreferences mSettings;
     private SettingServiceItemAdapter mAdapter;
-    private SettingSvcDialogFragment dlgFragment;
+    private SettingSvcItemDlgFragment dlgFragment;
     private JSONArray jsonSvcItemArray;
     private RecyclerView recyclerView;
 
@@ -66,7 +72,7 @@ public class SettingServiceItemFragment extends Fragment {
 
         // Indicate the fragment has the option menu, invoking onCreateOptionsMenu()
         setHasOptionsMenu(true);
-        dlgFragment = new SettingSvcDialogFragment();
+        dlgFragment = new SettingSvcItemDlgFragment();
 
         // List.add() does not work if List is create by Arrays.asList().
         mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
@@ -74,36 +80,22 @@ public class SettingServiceItemFragment extends Fragment {
 
         try {
             jsonSvcItemArray = new JSONArray(json);
-            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray);
+            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, this);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
 
-        // ViewModel to share data b/w SettingServiceItemFragment and SettingSvcDialogFragment.
+        // ViewModel to share data b/w SettingServiceItemFragment and SettingSvcItemDlgFragment.
         // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
         // which are passed here using FragmentSharedModel as the type of List<String>
-        FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        sharedModel.getJsonServiceItemObject().observe(this, data -> {
-            jsonSvcItemArray.put(data);
-            mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-            mAdapter.notifyItemInserted(jsonSvcItemArray.length());
-        });
-        // Fetch LiveData<Boolean> that indicates whch button to select in AlertDialogFragment when
-        // a service item is removed.
-        sharedModel.getAlert().observe(this, data -> {
-            if(data) {
-                log.i("Item Removed:", data);
-                jsonSvcItemArray.remove(removedPos);
-                mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                mAdapter.notifyItemRemoved(removedPos);
-            }else {
-                // TEST CODING : seems not working
-                log.i("Cancel");
-                mAdapter.notifyItemInserted(removedPos);
-                recyclerView.scrollToPosition(removedPos);
+        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
-            }
+        fragmentSharedModel.getJsonServiceItemObject().observe(this, data -> {
+            log.i("JSONServiceItemObject Livedata: %s", data.optString("name"));
+            jsonSvcItemArray.put(data);
+            mAdapter.notifyItemChanged(jsonSvcItemArray.length(), true);
         });
+
     }
 
 
@@ -126,6 +118,12 @@ public class SettingServiceItemFragment extends Fragment {
         return localView;
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(fragmentSharedModel != null) fragmentSharedModel = null;
+    }
+
     // Create the Toolbar option menu when the fragment is instantiated.
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -139,16 +137,43 @@ public class SettingServiceItemFragment extends Fragment {
 
         switch(item.getItemId()) {
             case android.R.id.home:
-                getActivity().onBackPressed();
+                mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
+                startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
                 return true;
 
             case R.id.menu_add:
-                if(getFragmentManager() != null)
-                    dlgFragment.show(getFragmentManager(), null);
+                if(getFragmentManager() != null) dlgFragment.show(getFragmentManager(), null);
                 return true;
         }
 
         return false;
+    }
+
+    @Override
+    public void dragServiceItem(int from, int to) {
+
+        JSONObject fromObject = jsonSvcItemArray.optJSONObject(from);
+        JSONObject toObject = jsonSvcItemArray.optJSONObject(to);
+        try {
+            jsonSvcItemArray.put(from, toObject);
+            jsonSvcItemArray.put(to, fromObject);
+            mAdapter.notifyItemMoved(from, to);
+            // Partial Binding for changing the number ahead of each item when dragging the item.
+            if(from < to) mAdapter.notifyItemRangeChanged(from, Math.abs(from - to) + 1, true);
+            else mAdapter.notifyItemRangeChanged(to, Math.abs(from - to) + 1, true);
+
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
+
+    }
+
+    @Override
+    public void delServiceItem(int position) {
+        jsonSvcItemArray.remove(position);
+        mAdapter.notifyItemRemoved(position);
+        mAdapter.notifyItemRangeChanged(position, jsonSvcItemArray.length() - position, true);
     }
 
     /*
