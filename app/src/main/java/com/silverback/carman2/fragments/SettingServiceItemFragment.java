@@ -18,6 +18,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -72,12 +73,13 @@ public class SettingServiceItemFragment extends Fragment implements
 
         // Indicate the fragment has the option menu, invoking onCreateOptionsMenu()
         setHasOptionsMenu(true);
-        dlgFragment = new SettingSvcItemDlgFragment();
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         // List.add() does not work if List is create by Arrays.asList().
         mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
-        String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        dlgFragment = new SettingSvcItemDlgFragment();
 
+        String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
         try {
             jsonSvcItemArray = new JSONArray(json);
             mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, this);
@@ -90,10 +92,15 @@ public class SettingServiceItemFragment extends Fragment implements
         // which are passed here using FragmentSharedModel as the type of List<String>
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
-        fragmentSharedModel.getJsonServiceItemObject().observe(this, data -> {
-            log.i("JSONServiceItemObject Livedata: %s", data.optString("name"));
-            jsonSvcItemArray.put(data);
-            mAdapter.notifyItemChanged(jsonSvcItemArray.length(), true);
+        fragmentSharedModel.getJsonServiceItemObject().observe(this, jsonObject -> {
+            // When adding an new item, notify the adapter of adding the item to the end position, which
+            // must be subtracted by one because the new item has not yet been taken into
+            // the adater data list.
+            mAdapter.notifyItemChanged(jsonSvcItemArray.length() - 1, jsonObject);
+            recyclerView.scrollToPosition(jsonSvcItemArray.length());
+
+            // Add a new item to the service item list.
+            jsonSvcItemArray.put(jsonObject);
         });
 
     }
@@ -131,7 +138,6 @@ public class SettingServiceItemFragment extends Fragment implements
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 

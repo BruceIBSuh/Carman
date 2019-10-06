@@ -39,8 +39,8 @@
         <activity android:name=".MainActivity" />
 
         <activity android:name=".ExpenseActivity"
-            android:parentActivityName=".MainActivity"
-            android:windowSoftInputMode="adjustResize">
+            android:parentActivityName=".MainActivity" >
+            <!--android:windowSoftInputMode="adjustResize"> -->
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

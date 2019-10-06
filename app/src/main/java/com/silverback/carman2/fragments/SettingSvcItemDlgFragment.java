@@ -52,8 +52,9 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View localView = inflater.inflate(R.layout.dialog_setting_service, null);
+        //LayoutInflater inflater = requireActivity().getLayoutInflater();
+        //View localView = inflater.inflate(R.layout.dialog_setting_service, null);
+        View localView = View.inflate(getContext(), R.layout.dialog_setting_service, null);
 
         EditText etItemName = localView.findViewById(R.id.et_item_name);
         EditText etMileage = localView.findViewById(R.id.et_period_km);
@@ -86,7 +87,8 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
                         jsonObject.put("mileage", etMileage.getText().toString());
                         jsonObject.put("month", etMonth.getText().toString());
 
-                        ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class).setServiceItem(jsonObject);
+                        ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class)
+                                .setServiceItem(jsonObject);
 
                     } catch(JSONException e) {
                         log.e("JSONException: %s", e.getMessage());

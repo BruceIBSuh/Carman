@@ -74,6 +74,7 @@ public class SettingServiceItemAdapter
 
     @Override
     public void onBindViewHolder(@NonNull SettingServiceItemHolder holder, int position) {
+
         try {
             holder.tvNumber.setText(String.valueOf(position + 1));
             holder.tvItemName.setText(jsonSvcItemArray.getJSONObject(position).getString("name"));
@@ -89,12 +90,20 @@ public class SettingServiceItemAdapter
     public void onBindViewHolder(
             @NonNull SettingServiceItemHolder holder, int position, @NonNull List<Object> payloads) {
 
+        log.i("Partial Binding:%s", payloads.size());
         // Invalidte the textview for changing the number accroding to a new position as a result of
         // dragging.
         if(payloads.size() == 0) {
             super.onBindViewHolder(holder, position, payloads);
-        } else if((boolean)payloads.get(0)){
+
+        // When dragging, change the postion number betweein from and to position.
+        } else if(payloads.get(0) instanceof Boolean) {
+            log.i("partial binding - dragging: %s", position);
             holder.tvNumber.setText(String.valueOf((position + 1)));
+        // When adding a new item, add the item to the list.
+        } else if(payloads.get(0) instanceof JSONObject) {
+            log.i("partial binding - adding serviceItem: %s, %s", position, payloads.get(0));
+            svcItemList.add((JSONObject)payloads.get(0));
         }
 
     }
@@ -112,7 +121,13 @@ public class SettingServiceItemAdapter
         if (from < to) for (int i = from; i < to; i++) Collections.swap(svcItemList, i, i + 1);
         else for (int i = from; i > to; i--) Collections.swap(svcItemList, i, i - 1);
 
-        mCallback.dragServiceItem(from, to);
+        notifyItemMoved(from, to);
+
+        // Partial Binding for changing the number ahead of each item when dragging the item.
+        if(from < to) notifyItemRangeChanged(from, Math.abs(from - to) + 1, true);
+        else notifyItemRangeChanged(to, Math.abs(from - to) + 1, true);
+
+        //mCallback.dragServiceItem(from, to);
     }
 
     @Override
@@ -120,6 +135,11 @@ public class SettingServiceItemAdapter
         Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_LONG);
         snackbar.setAction("REMOVE", v -> {
             mCallback.delServiceItem(pos);
+            /*
+            svcItemList.remove(pos);
+            notifyItemRemoved(pos);
+            notifyItemRangeChanged(pos, svcItemList.size() - pos, true);
+            */
             snackbar.dismiss();
 
         }).addCallback(new Snackbar.Callback() {
