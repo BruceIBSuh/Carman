@@ -11,6 +11,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -59,6 +60,15 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
         EditText etItemName = localView.findViewById(R.id.et_item_name);
         EditText etMileage = localView.findViewById(R.id.et_period_km);
         EditText etMonth = localView.findViewById(R.id.et_period_month);
+
+        etMileage.setOnFocusChangeListener((v, hasFocus) -> {
+            if(!etMileage.getText().toString().isEmpty() && !hasFocus) {
+                int avgMileage = Integer.valueOf(mSettings.getString(Constants.AVERAGE, "5000"));
+                int calcMileage = (Integer.valueOf(etMileage.getText().toString()) / avgMileage) * 12;
+                etMonth.setText(String.valueOf(calcMileage));
+            }
+
+        });
 
         /*
         etMileage.setOnFocusChangeListener((view, hasFocus) -> {

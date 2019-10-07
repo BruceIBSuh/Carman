@@ -33,8 +33,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -93,14 +95,14 @@ public class SettingServiceItemFragment extends Fragment implements
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         fragmentSharedModel.getJsonServiceItemObject().observe(this, jsonObject -> {
-            // When adding an new item, notify the adapter of adding the item to the end position, which
-            // must be subtracted by one because the new item has not yet been taken into
-            // the adater data list.
-            mAdapter.notifyItemChanged(jsonSvcItemArray.length() - 1, jsonObject);
-            recyclerView.scrollToPosition(jsonSvcItemArray.length());
-
-            // Add a new item to the service item list.
+            // This is kind of an expedient code to invoke getItemCount() in which a new item is added
+            // to ArrayList(svcItemList). A right coding should be notifyItemChanged(position, payloads)
+            // which calls the partial binding to update the dataset but it seems not work here.
+            // It looks like the new item has not been added to the list before notifyItemChanged
+            // is called such that payloads shouldn't be passed.
             jsonSvcItemArray.put(jsonObject);
+            recyclerView.scrollToPosition(jsonSvcItemArray.length() - 1);
+            mAdapter.notifyItemChanged(mAdapter.getItemCount());
         });
 
     }
@@ -121,7 +123,8 @@ public class SettingServiceItemFragment extends Fragment implements
 
         recyclerView.setAdapter(mAdapter);
 
-        // Inflate the layout for this fragment
+
+
         return localView;
     }
 
