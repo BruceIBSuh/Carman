@@ -15,21 +15,28 @@ import java.util.List;
 @Dao
 public interface FavoriteProviderDao {
 
+    /*
     @Query("SELECT * FROM FavoriteProviderEntity")
     LiveData<List<FavoriteProviderEntity>> loadAllFavoriteProvider();
+    */
+
+    @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
+    int countFavoriteNumber(int category);
+
+
 
     // Query ther favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
     LiveData<List<FavoriteProviderEntity>> queryFavoriteProvider(int category);
 
-    @Query("SELECT favorite_name, favorite_addrs FROM FavoriteProviderEntity WHERE category = :category")
-    LiveData<List<FavoriteNameAddrs>> findFavoriteNameAddrs(int category);
-
-
     // Retrieve the favorite station with the placeholder set first in SettingFavorGasFragment and
     // SettingFavorSvcFragment.
     @Query("SELECT favorite_name, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
+
+
+    @Query("SELECT favorite_name, favorite_addrs FROM FavoriteProviderEntity WHERE category = :category")
+    LiveData<List<FavoriteNameAddrs>> findFavoriteNameAddrs(int category);
 
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")

@@ -115,12 +115,15 @@ public class FavoriteGeofenceHelper {
     // Add a provider to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
     //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
-    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final String providerId, final int category) {
+    public void addFavoriteGeofence(
+            final DocumentSnapshot snapshot, final String providerId, final int totalNumber, final int category) {
 
         GeoPoint geoPoint = null;
         String providerName = null;
         String providerCode = null;
         String address = null;
+
+
 
         switch(category) {
             case Constants.GAS:
@@ -158,6 +161,7 @@ public class FavoriteGeofenceHelper {
         favoriteModel.providerId = providerId;
         favoriteModel.providerCode = providerCode;
         favoriteModel.address = address;
+        favoriteModel.placeHolder = totalNumber;
 
         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
 

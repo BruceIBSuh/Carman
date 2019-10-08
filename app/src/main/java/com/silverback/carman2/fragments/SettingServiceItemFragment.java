@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,10 +20,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.TextView;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
@@ -53,6 +57,7 @@ public class SettingServiceItemFragment extends Fragment implements
 
 
     // Objects
+    private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
     private SharedPreferences mSettings;
     private SettingServiceItemAdapter mAdapter;
@@ -63,6 +68,7 @@ public class SettingServiceItemFragment extends Fragment implements
     // Fields
     private boolean bEditMode = false;
     private int removedPos;
+    private boolean isHistory;
 
     public SettingServiceItemFragment() {
         // Required empty public constructor
@@ -77,7 +83,7 @@ public class SettingServiceItemFragment extends Fragment implements
         setHasOptionsMenu(true);
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
-        // List.add() does not work if List is create by Arrays.asList().
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
         dlgFragment = new SettingSvcItemDlgFragment();
 
@@ -100,9 +106,30 @@ public class SettingServiceItemFragment extends Fragment implements
             // which calls the partial binding to update the dataset but it seems not work here.
             // It looks like the new item has not been added to the list before notifyItemChanged
             // is called such that payloads shouldn't be passed.
-            jsonSvcItemArray.put(jsonObject);
-            recyclerView.scrollToPosition(jsonSvcItemArray.length() - 1);
-            mAdapter.notifyItemChanged(mAdapter.getItemCount());
+            boolean isExist = false;
+
+            for(int i = 0; i < jsonSvcItemArray.length(); i++) {
+                // Compare Strings which is required to refactor with RegExp.
+                try {
+                    isExist = jsonSvcItemArray.optJSONObject(i).getString("name").contains(jsonObject.getString("name"));
+                    log.i("isExist: %s", isExist);
+                    if(isExist) break;
+                } catch (JSONException e) {
+                    log.e("JSONException: %s", e.getMessage());
+                }
+            }
+
+            if(!isExist) {
+                jsonSvcItemArray.put(jsonObject);
+                recyclerView.scrollToPosition(jsonSvcItemArray.length() - 1);
+                mAdapter.notifyItemChanged(mAdapter.getItemCount());
+
+            } else {
+                Snackbar snackbar = Snackbar.make(getView(), R.string.pref_snackbar_msg, Snackbar.LENGTH_SHORT);
+                TextView tvMessage = snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text);
+                tvMessage.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                snackbar.show();
+            }
         });
 
     }
@@ -179,10 +206,39 @@ public class SettingServiceItemFragment extends Fragment implements
     }
 
     @Override
-    public void delServiceItem(int position) {
-        jsonSvcItemArray.remove(position);
-        mAdapter.notifyItemRemoved(position);
-        mAdapter.notifyItemRangeChanged(position, jsonSvcItemArray.length() - position, true);
+    public void delServiceItem(final int position) {
+
+        // Check if any maintenance history exists with this item.
+        String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
+        int itemId = mDB.servicedItemModel().queryServicedItemByName(itemName);
+        isHistory = itemId > 0;
+
+        // Split the Snackbar message according to whehter the history exists or not.
+        String warning = (isHistory)?getString(R.string.pref_snackbar_delete_history)
+                :getString(R.string.pref_snackbar_delete_no_history);
+
+        // Set Snackbar action to remove the item from the list and the adapter should be rebound
+        // when clicking the confirm.
+        Snackbar snackbar = Snackbar.make(recyclerView, warning, Snackbar.LENGTH_LONG);
+        snackbar.setAction("REMOVE", v -> {
+            jsonSvcItemArray.remove(position);
+            mAdapter.notifyItemRemoved(position);
+            mAdapter.notifyItemRangeChanged(position, jsonSvcItemArray.length() - position, true);
+
+            snackbar.dismiss();
+
+        }).addCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar snackkbar, int event) {
+                if(event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
+                    mAdapter.notifyItemChanged(position);
+                }
+            }
+        });
+
+        snackbar.show();
+
+
     }
 
     /*

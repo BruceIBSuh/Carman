@@ -60,9 +60,10 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
         EditText etItemName = localView.findViewById(R.id.et_item_name);
         EditText etMileage = localView.findViewById(R.id.et_period_km);
         EditText etMonth = localView.findViewById(R.id.et_period_month);
+        boolean isMileage = false;
 
         etMileage.setOnFocusChangeListener((v, hasFocus) -> {
-            if(!etMileage.getText().toString().isEmpty() && !hasFocus) {
+            if(!TextUtils.isEmpty(etMileage.getText()) && !hasFocus) {
                 int avgMileage = Integer.valueOf(mSettings.getString(Constants.AVERAGE, "5000"));
                 int calcMileage = (Integer.valueOf(etMileage.getText().toString()) / avgMileage) * 12;
                 etMonth.setText(String.valueOf(calcMileage));
@@ -70,22 +71,6 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
 
         });
 
-        /*
-        etMileage.setOnFocusChangeListener((view, hasFocus) -> {
-            int month = 0;
-            int avgMileage = Integer.valueOf(mSettings.getString(Constants.AVERAGE, "10000"));
-            int itemMileage = 0;
-            if(hasFocus) {
-                itemMileage = Integer.valueOf(etMileage.getText().toString());
-
-            } else {
-                itemMileage = Integer.valueOf(etMileage.getText().toString());
-                if(avgMileage > 0 && itemMileage > 0) month = 12 / (itemMileage / avgMileage);
-                log.i("MONTH: %s", month);
-                etMonth.setText(String.valueOf(month));
-            }
-        });
-        */
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)

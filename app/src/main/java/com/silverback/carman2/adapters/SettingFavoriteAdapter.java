@@ -32,7 +32,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
 
     public interface OnFavoriteAdapterListener {
-        void addFavorite(FavoriteProviderEntity entity);
+        //void addFavorite(FavoriteProviderEntity entity);
         void deleteFavorite(FavoriteProviderEntity entity);
     }
 
@@ -64,7 +64,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     @Override
     public void onBindViewHolder(@NonNull FavoriteItemHolder holder, int position, @NonNull List<Object> payloads) {
         super.onBindViewHolder(holder, position, payloads);
-        if(position == 0) holder.itemView.setBackgroundColor(Color.RED);
+        if(position == 0) holder.itemView.setBackgroundColor(Color.parseColor("#99FF99"));
         else holder.itemView.setBackgroundColor(Color.WHITE);
 
     }
@@ -90,17 +90,23 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     @Override
     public void onDeleteItem(final int pos) {
-        final FavoriteProviderEntity deletedItem = favoriteList.get(pos);
-        favoriteList.remove(pos);
-        mListener.deleteFavorite(deletedItem);
-        notifyItemRemoved(pos);
 
-        Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_INDEFINITE);
-        snackbar.setAction("UNDO", v -> {
-            favoriteList.add(pos, deletedItem);
-            mListener.addFavorite(deletedItem);
-            notifyItemInserted(pos);
+        final FavoriteProviderEntity deletedItem = favoriteList.get(pos);
+
+        Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_SHORT);
+        snackbar.setAction("REMOVE", v -> {
+            favoriteList.remove(pos);
+            notifyItemRemoved(pos);
+            mListener.deleteFavorite(deletedItem);
             snackbar.dismiss();
+
+        }).addCallback(new Snackbar.Callback() {
+            @Override
+            public void onDismissed(Snackbar snackkbar, int event) {
+                if(event == Snackbar.Callback.DISMISS_EVENT_TIMEOUT) {
+                    notifyItemChanged(pos);
+                }
+            }
         });
 
         snackbar.show();

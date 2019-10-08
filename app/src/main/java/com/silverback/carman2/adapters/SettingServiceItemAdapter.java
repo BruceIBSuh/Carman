@@ -125,6 +125,8 @@ public class SettingServiceItemAdapter
 
     @Override
     public void onDeleteItem(final int pos) {
+        mCallback.delServiceItem(pos);
+        /*
         Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_LONG);
         snackbar.setAction("REMOVE", v -> {
             mCallback.delServiceItem(pos);
@@ -140,7 +142,7 @@ public class SettingServiceItemAdapter
         });
 
         snackbar.show();
-
+        */
     }
 
 

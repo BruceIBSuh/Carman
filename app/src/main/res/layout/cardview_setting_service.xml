@@ -14,14 +14,15 @@
         android:layout_height="match_parent"
         android:paddingStart="5dp"
         android:paddingEnd="5dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp">
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
         <TextView
             android:id="@+id/tv_number"
             android:layout_width="20dp"
             android:layout_height="wrap_content"
             android:textSize="@dimen/mediumText"
+            android:textStyle="bold"
             cardview:layout_constraintStart_toStartOf="parent"
             cardview:layout_constraintTop_toTopOf="parent"
             cardview:layout_constraintBottom_toBottomOf="parent" />
@@ -31,6 +32,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/mediumText"
+            android:textStyle="bold"
             cardview:layout_constraintBottom_toBottomOf="parent"
             cardview:layout_constraintStart_toEndOf="@+id/tv_number"
             cardview:layout_constraintTop_toTopOf="parent" />

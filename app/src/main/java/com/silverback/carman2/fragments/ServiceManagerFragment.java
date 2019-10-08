@@ -433,13 +433,21 @@ public class ServiceManagerFragment extends Fragment implements
         // Add the service center with the favorite list and geofence as far as it has been
         // already registered in RegisterDialogFragment.
         } else if(svcId != null){
-            // Query the data of a station from Firestore.
+            // Check if the totla number of the service favorites are out of the max limit.
+            final int totalFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
+            if(totalFavorite == Constants.MAX_FAVORITE) {
+                Snackbar.make(relativeLayout, getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+
+
+            // Query the data of a station from Firestore
             firestore.collection("svc_center").document(svcId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
                     log.i("queried");
                     DocumentSnapshot snapshot = task.getResult();
                     if(snapshot != null && snapshot.exists()) {
-                        geofenceHelper.addFavoriteGeofence(snapshot, svcId, SVC_CENTER);
+                        geofenceHelper.addFavoriteGeofence(snapshot, svcId, totalFavorite, SVC_CENTER);
                         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
 
                         isSvcFavorite = !isSvcFavorite;

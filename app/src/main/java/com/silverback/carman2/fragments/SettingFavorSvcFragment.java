@@ -24,6 +24,8 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
+import java.util.List;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -46,7 +48,7 @@ public class SettingFavorSvcFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
     }
 
 
@@ -79,6 +81,17 @@ public class SettingFavorSvcFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if(menuItem.getItemId() == android.R.id.home) {
+            List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
+            int position = 0;
+
+            // Update the placeholder in FavoriteProviderEntity accroding to the position of
+            // the edited fasvorte list.
+            for(FavoriteProviderEntity entity : favoriteList) {
+                entity.placeHolder = position;
+                position++;
+            }
+
+            mDB.favoriteModel().updatePlaceHolder(favoriteList);
             //getActivity().onBackPressed();
             startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
             return true;
@@ -87,11 +100,13 @@ public class SettingFavorSvcFragment extends Fragment implements
         return false;
     }
 
+    /*
     @Override
     public void addFavorite(FavoriteProviderEntity entity) {
         log.i("Listener: Add Favorite - %s", entity.providerName);
         mDB.favoriteModel().insertFavoriteProvider(entity);
     }
+    */
 
     @Override
     public void deleteFavorite(FavoriteProviderEntity entity) {

@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -26,6 +27,9 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -232,6 +236,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 geofenceHelper.removeFavoriteGeofence(stnName, stnId);
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
                 isFavoriteGas = false;
+
+                firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
             }
         });
 
@@ -346,22 +352,79 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         } else {
             // Newly register a gas station fetched by StationListTask with the data retrieving from
             // the firestore.
+
+            final int totalNumber = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+            if(totalNumber == Constants.MAX_FAVORITE) {
+                Snackbar.make(constraintLayout, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+
+            /*
+            DocumentReference stnRef = firestore.collection("gas_station").document(stnId);
+            DocumentReference evalRef = firestore.collection("gas_eval").document(stnId);
+
+            firestore.runTransaction(transaction -> {
+                DocumentSnapshot stnSnapshot = transaction.get(stnRef);
+                DocumentSnapshot evalSnapshot = transaction.get(evalRef);
+
+                if(stnSnapshot.exists()) {
+                    log.i("Station Snapshot");
+                    geofenceHelper.addFavoriteGeofence(stnSnapshot, stnId, totalNumber, GAS_STATION);
+                    btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+
+                    Snackbar.make(constraintLayout, R.string.gas_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
+                    isFavoriteGas = true;
+                }
+
+
+                if(evalSnapshot.exists()) {
+                    log.i("Station Eval Snapshot");
+                    evalRef.update("favorite_num", FieldValue.increment(1));
+                } else {
+                    log.i("Station EVal Snapshot set");
+                    Map<String, Integer> favoriteNum = new HashMap<>();
+                    favoriteNum.put("favorite_num", 1);
+                    evalRef.set(favoriteNum);
+                }
+
+                return null;
+
+            }).addOnSuccessListener(Void-> {
+
+
+            }).addOnFailureListener(e -> log.e("Transaction failed: %s", e.getMessage()));
+            */
+
+
             firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
-                    log.i("queried");
                     DocumentSnapshot snapshot = task.getResult();
                     if(snapshot != null && snapshot.exists()) {
-                        log.i("Snapshot: %s, %s", stnId, snapshot.getString("stn_name"));
-                        geofenceHelper.addFavoriteGeofence(snapshot, stnId, GAS_STATION);
+
+                        geofenceHelper.addFavoriteGeofence(snapshot, stnId, totalNumber, GAS_STATION);
                         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+
                         Snackbar.make(constraintLayout, R.string.gas_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
                         isFavoriteGas = true;
                     }
                 }
             });
+
+            firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    DocumentSnapshot snapshot = task.getResult();
+                    if(snapshot != null && snapshot.exists()) {
+                        firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(1));
+                    } else {
+                        Map<String, Integer> favorite = new HashMap<>();
+                        favorite.put("favorite_num", 1);
+                        firestore.collection("gas_eval").document(stnId).set(favorite);
+                    }
+                }
+            });
+
         }
 
-        //isFavoriteGas = !isFavoriteGas;
     }
 
     // Method for inserting data to SQLite database

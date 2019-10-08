@@ -62,6 +62,7 @@
     <string name="exp_title_stat">지출내역 보기</string>
     <string name="exp_label_odometer">운행거리</string>
     <string name="exp_menuitem_title_save">저장</string>
+    <string name="exp_snackbar_favorite_limit">즐겨찾기는 10개까지 지정할 수 있습니다</string>
 
     <!--ExpenseActivity$ExpensPagerFragment-->
     <string name="toast_expense_no_data">최근 데이터가 없습니다</string>
@@ -162,6 +163,9 @@
     <string name="pref_service_dlg_title">정비/점검 항목 추가</string>
     <string name="pref_service_dlg_name">항목 이름:</string>
     <string name="pref_service_dlg_period">점검 주기:</string>
+    <string name="pref_snackbar_msg">이미 등록된 정비 정검 아이템입니다</string>
+    <string name="pref_snackbar_delete_history">정비이력이 있습니다. 삭제하면 데이터는 복구할 수 없습니다. 삭제하시겠습니까?</string>
+    <string name="pref_snackbar_delete_no_history">정비/점검 리스트에서 삭제하시겠습니까?</string>
     <string name="pref_category_app_setting">앱 설정</string>
     <string name="pref_app_notification">알림 수신</string>
     <string name="pref_app_coverimage">커버이미지 편집</string>
@@ -173,7 +177,6 @@
     <string name="pref_radius_1000">1000미터</string>
     <string name="pref_radius_2500">2500미터</string>
     <string name="pref_radius_5000">5000미터</string>
-
 
     <string name="pref_spinner_sido_seoul">서울시</string>
     <string name="pref_spinner_sido_gyunggi">경기도</string>

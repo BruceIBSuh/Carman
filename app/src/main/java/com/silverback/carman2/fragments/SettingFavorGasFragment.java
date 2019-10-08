@@ -51,7 +51,7 @@ public class SettingFavorGasFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        if (mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
     }
 
     @Override
@@ -64,8 +64,6 @@ public class SettingFavorGasFragment extends Fragment implements
         recyclerView.setLayoutManager(layoutManager);
 
         mDB.favoriteModel().queryFavoriteProvider(Constants.GAS).observe(this, favoriteList -> {
-
-            log.i("FavoriteList: %s", favoriteList.size());
 
             mAdapter = new SettingFavoriteAdapter(favoriteList, this);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
@@ -104,11 +102,13 @@ public class SettingFavorGasFragment extends Fragment implements
         return false;
     }
 
+    /*
     @Override
     public void addFavorite(FavoriteProviderEntity entity) {
         log.i("Listener: Add Favorite - %s", entity.providerName);
         mDB.favoriteModel().insertFavoriteProvider(entity);
     }
+    */
 
     @Override
     public void deleteFavorite(FavoriteProviderEntity entity) {

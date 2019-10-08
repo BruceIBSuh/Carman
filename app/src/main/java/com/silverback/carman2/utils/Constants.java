@@ -20,6 +20,7 @@ public class Constants {
     // Category
     public static final int GAS = 1;
     public static final int SVC = 2;
+    public static final int MAX_FAVORITE = 10;
 
     // SQLite Database
     public static final int SERVICE_ITEM_COLUMNS = 5; // Max number of Service items to record
