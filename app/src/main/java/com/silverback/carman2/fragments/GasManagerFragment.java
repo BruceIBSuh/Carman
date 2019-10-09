@@ -395,12 +395,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }).addOnFailureListener(e -> log.e("Transaction failed: %s", e.getMessage()));
             */
 
-
             firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
                     DocumentSnapshot snapshot = task.getResult();
                     if(snapshot != null && snapshot.exists()) {
-
                         geofenceHelper.addFavoriteGeofence(snapshot, stnId, totalNumber, GAS_STATION);
                         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
 
@@ -482,8 +480,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                         docRef.update(ratingData);
 
                     } else {
-                        log.i("set rating if no rating field exists");
-                        docRef.set(ratingData);
+                        // In case of the favorite_num field existing, must set the option of
+                        // SetOPtions.merge(). Otherwise, it may remove the existing field.
+                        docRef.set(ratingData, SetOptions.merge());
                     }
 
                 });

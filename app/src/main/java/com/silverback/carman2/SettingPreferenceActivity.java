@@ -183,6 +183,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
             case "pref_location_autoupdate":
                 break;
+
+            case "pref_favorite_provider":
+                log.i("Favorite Provider changed");
+                break;
         }
 
     }

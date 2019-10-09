@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -62,6 +64,7 @@ public class GeneralFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
     // Objects
+    private SharedPreferences mSettings;
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
     private LocationTask locationTask;
@@ -84,6 +87,7 @@ public class GeneralFragment extends Fragment implements
     private FloatingActionButton fabLocation;
 
     // Fields
+    private String stnId;
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
 
@@ -94,6 +98,11 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Fetch the most favorite station id to display the price info in the main.
+        if(getActivity() != null) mSettings = ((MainActivity)getActivity()).getSettings();
+        String stnId = mSettings.getString("pref_favorite_provider", null);
+        log.i("Favorite ID: %s", stnId);
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
@@ -194,7 +203,6 @@ public class GeneralFragment extends Fragment implements
             // Update the carwash info to StationList and notify the data change to Adapter.
             // Adapter should not assume that the payload will always be passed to onBindViewHolder()
             // e.g. when the view is not attached.
-            log.i("SparseArray: %s", sparseArray.size());
             for(int i = 0; i < sparseArray.size(); i++) {
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));

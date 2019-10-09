@@ -20,10 +20,9 @@ public interface FavoriteProviderDao {
     LiveData<List<FavoriteProviderEntity>> loadAllFavoriteProvider();
     */
 
+    // The total number of the favorite stations and service centers
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
     int countFavoriteNumber(int category);
-
-
 
     // Query ther favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
@@ -31,7 +30,7 @@ public interface FavoriteProviderDao {
 
     // Retrieve the favorite station with the placeholder set first in SettingFavorGasFragment and
     // SettingFavorSvcFragment.
-    @Query("SELECT favorite_name, category FROM FavoriteProviderEntity WHERE placeholder = 0")
+    @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
 
 
@@ -75,5 +74,8 @@ public interface FavoriteProviderDao {
 
         @ColumnInfo(name = "category")
         public int category;
+
+        @ColumnInfo(name = "favorite_id")
+        public String providerId;
     }
 }

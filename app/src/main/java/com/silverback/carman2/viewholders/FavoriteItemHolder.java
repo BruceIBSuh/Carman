@@ -1,6 +1,7 @@
 package com.silverback.carman2.viewholders;
 
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
@@ -12,6 +13,8 @@ import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import java.util.List;
+
 public class FavoriteItemHolder extends RecyclerView.ViewHolder {
 
     // Logging
@@ -21,6 +24,8 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
     private TextView tvName;
     private TextView tvAddress;
     private ImageView imgLogo;
+    public TextView tvFavoriteNum;
+    public RatingBar rbFavorite;
 
     // Constructor
     public FavoriteItemHolder(CardView cardView) {
@@ -28,6 +33,8 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
 
         tvName = cardView.findViewById(R.id.tv_providerName);
         tvAddress = cardView.findViewById(R.id.tv_providerAddrs);
+        tvFavoriteNum = cardView.findViewById(R.id.tv_value_favorite);
+        rbFavorite = cardView.findViewById(R.id.rb_favorite);
         imgLogo = cardView.findViewById(R.id.img_logo);
 
 
@@ -39,9 +46,9 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
         tvAddress.setText(favorite.address);
         if(favorite.providerCode != null) {
             int imgResource = BaseActivity.getGasStationImage(favorite.providerCode);
-            log.i("Image Resource: %s", imgResource);
             if (imgResource != -1) imgLogo.setImageResource(imgResource);
         }
 
     }
+
 }

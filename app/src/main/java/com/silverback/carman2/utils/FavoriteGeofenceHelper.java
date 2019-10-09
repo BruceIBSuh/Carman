@@ -123,8 +123,6 @@ public class FavoriteGeofenceHelper {
         String providerCode = null;
         String address = null;
 
-
-
         switch(category) {
             case Constants.GAS:
                 GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
@@ -155,7 +153,7 @@ public class FavoriteGeofenceHelper {
         // Create Geofence with the id and the location data.
         createGeofence(providerId, geoPoint);
 
-        //
+
         favoriteModel.providerName = providerName;
         favoriteModel.category = category;
         favoriteModel.providerId = providerId;

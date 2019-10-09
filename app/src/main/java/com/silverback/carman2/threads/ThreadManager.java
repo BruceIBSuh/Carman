@@ -12,14 +12,17 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.IntroActivity;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -465,6 +468,18 @@ public class ThreadManager {
         sInstance.mDecodeThreadPool.execute(recyclerTask.getServiceRecyclerRunnable());
 
         return recyclerTask;
+    }
+
+    public static FirestoreTask startFirestoreFavoriteTask(
+            List<FavoriteProviderEntity> favoriteList, FirestoreViewModel model, int category) {
+
+        FirestoreTask firestoreTask = (FirestoreTask)sInstance.mTaskWorkQueue.poll();
+        if(firestoreTask == null) firestoreTask = new FirestoreTask();
+
+        firestoreTask.initFirestoreTask(favoriteList, model, category);
+        sInstance.mDownloadThreadPool.execute(firestoreTask.getFirestoreRunnable());
+
+        return firestoreTask;
     }
 
     /*

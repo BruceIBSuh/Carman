@@ -1,6 +1,7 @@
 package com.silverback.carman2.adapters;
 
 import android.graphics.Color;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -9,6 +10,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -16,6 +18,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +30,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     // Objects
     private List<FavoriteProviderEntity> favoriteList;
+    private SparseArray<DocumentSnapshot> snapshotArray;
     private OnFavoriteAdapterListener mListener;
     private ViewGroup parent;
 
@@ -42,6 +46,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
         mListener = listener;
         this.favoriteList = favoriteList;
+        snapshotArray = new SparseArray<>();
     }
 
 
@@ -61,12 +66,43 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         holder.bindToFavorite(provider);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
-    public void onBindViewHolder(@NonNull FavoriteItemHolder holder, int position, @NonNull List<Object> payloads) {
-        super.onBindViewHolder(holder, position, payloads);
-        if(position == 0) holder.itemView.setBackgroundColor(Color.parseColor("#99FF99"));
-        else holder.itemView.setBackgroundColor(Color.WHITE);
+    public void onBindViewHolder(
+            @NonNull FavoriteItemHolder holder, int position, @NonNull List<Object> payloads) {
 
+        // Indicate the first-row favorite with difference color.
+        if (position == 0) holder.itemView.setBackgroundColor(Color.parseColor("#99FF99"));
+        else holder.itemView.setBackgroundColor(Color.WHITE);
+        
+        if (payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+        }
+
+        for(Object obj : payloads) {
+            //if (obj instanceof DocumentSnapshot) {
+                DocumentSnapshot snapshot = (DocumentSnapshot) obj;
+                if(snapshot.getLong("favorite_num") != null || snapshot.getLong("eval_num") != null){
+                    snapshotArray.put(position, snapshot);
+                }
+
+                // Retrieve the number of registration with Favorite
+                if (snapshot.getLong("favorite_num") != null) {
+                    int value = snapshot.getLong("favorite_num").intValue();
+                    log.i("Favorite Number:%s", value);
+                    holder.tvFavoriteNum.setText(String.valueOf(value));
+                } //else log.w("Favorite field not existing");
+
+                // Retrieve the ratingbar data
+                if (snapshot.getLong("eval_num") != null) {
+                    int evalNum = snapshot.getLong("eval_num").intValue();
+                    int evalSum = snapshot.getLong("eval_sum").intValue();
+                    float avg = (float) (evalSum / evalNum);
+                    log.i("Rating average: %s", avg);
+                    holder.rbFavorite.setRating(avg);
+                } //else log.w("eval fields not existing");
+            //}
+        }
     }
 
     @Override
@@ -84,8 +120,14 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
         notifyItemMoved(from, to);
 
-        notifyItemChanged(from, null);
-        notifyItemChanged(to, null);
+        log.i("Snapshot: %s, %s", snapshotArray.valueAt(from), snapshotArray.valueAt(to));
+
+        // Retain the eval data when dragging.
+        notifyItemChanged(from, snapshotArray.valueAt(to));
+        notifyItemChanged(to, snapshotArray.valueAt(from));
+
+        snapshotArray.setValueAt(from, snapshotArray.valueAt(to));
+        snapshotArray.setValueAt(to, snapshotArray.valueAt(from));
     }
 
     @Override

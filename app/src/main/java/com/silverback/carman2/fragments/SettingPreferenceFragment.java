@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 
@@ -14,6 +15,7 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.database.FavoriteProviderEntity;
@@ -38,6 +40,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private DecimalFormat df;
     //private SpinnerDialogPreference spinnerPref;
     private LoadDistCodeTask mTask;
+    private SharedPreferences mSettings;
 
     private String sidoName, sigunName, sigunCode;
     private String distCode;
@@ -55,14 +58,13 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
 
         df = BaseActivity.getDecimalFormatInstance();
+        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
 
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
-
-
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
@@ -91,16 +93,24 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
-
             String station = getString(R.string.pref_no_favorite);
             String service = getString(R.string.pref_no_favorite);
+            String providerId = null;
 
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                if(provider.category == Constants.GAS) station = provider.favoriteName;
-                else if(provider.category == Constants.SVC) service = provider.favoriteName;
+                if(provider.category == Constants.GAS){
+                    station = provider.favoriteName;
+                    providerId = provider.providerId;
+                    log.i("ProviderId: %s", providerId);
+                } else if(provider.category == Constants.SVC) {
+                    service = provider.favoriteName;
+
+                }
+
             }
 
             favorite.setSummary(String.format("%s / %s", station, service));
+            mSettings.edit().putString("pref_favorite_provider", providerId).apply();
         });
 
         Preference gasStation = findPreference("pref_favorite_gas");
@@ -118,13 +128,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-
     }
 
     @Override

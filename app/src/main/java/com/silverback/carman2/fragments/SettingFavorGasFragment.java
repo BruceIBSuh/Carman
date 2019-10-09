@@ -11,11 +11,14 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingFavoriteAdapter;
@@ -23,11 +26,15 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -40,7 +47,9 @@ public class SettingFavorGasFragment extends Fragment implements
 
     // Objects
     private CarmanDatabase mDB;
+    private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
+    //private FirestoreViewModel firestoreViewModel;
 
     // Constructor
     public SettingFavorGasFragment() {
@@ -51,7 +60,13 @@ public class SettingFavorGasFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
+        if(firestore == null) firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        //firestoreViewModel = ViewModelProviders.of(this).get(FirestoreViewModel.class);
+
+
+
     }
 
     @Override
@@ -63,14 +78,44 @@ public class SettingFavorGasFragment extends Fragment implements
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
+        // Query the favorite gas stations from FavoriteProviderEntity
         mDB.favoriteModel().queryFavoriteProvider(Constants.GAS).observe(this, favoriteList -> {
 
             mAdapter = new SettingFavoriteAdapter(favoriteList, this);
+
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
 
             recyclerView.setAdapter(mAdapter);
+
+            /*
+            // Initiate the worker thread to query the favroite list.
+            ThreadManager.startFirestoreFavoriteTask(favoriteList, firestoreViewModel, Constants.GAS);
+
+            firestoreViewModel.getFavoriteSnapshot().observe(this, sparseArray -> {
+                log.i("Snapshot SparseArray: %s", sparseArray.size());
+            });
+            */
+
+            for(int i = 0; i < favoriteList.size(); i++) {
+                final int pos = i;
+                final String stnId = favoriteList.get(pos).providerId;
+
+                firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        DocumentSnapshot snapshot = task.getResult();
+                        if(snapshot != null && snapshot.exists()) {
+                            mAdapter.notifyItemChanged(pos, snapshot);
+                        } else {
+                            log.i("No documents exist");
+                        }
+
+                    } else {
+                        log.e("Task Exception: %s", task.getException());
+                    }
+                });
+            }
         });
 
         // Inflate the layout for this fragment
