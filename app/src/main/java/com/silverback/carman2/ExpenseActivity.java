@@ -96,7 +96,6 @@ public class ExpenseActivity extends BaseActivity implements
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
 
-        //mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         fragmentSharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
         pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);

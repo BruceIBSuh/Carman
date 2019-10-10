@@ -95,6 +95,19 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String station = getString(R.string.pref_no_favorite);
             String service = getString(R.string.pref_no_favorite);
+
+            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
+                if(provider.category == Constants.GAS) station = provider.favoriteName;
+                else if(provider.category == Constants.SVC) service = provider.favoriteName;
+            }
+
+            favorite.setSummary(String.format("%s / %s", station, service));
+        });
+
+        /*
+        mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+            String station = getString(R.string.pref_no_favorite);
+            String service = getString(R.string.pref_no_favorite);
             String providerId = null;
 
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
@@ -109,9 +122,10 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
             }
 
-            favorite.setSummary(String.format("%s / %s", station, service));
             mSettings.edit().putString("pref_favorite_provider", providerId).apply();
+            favorite.setSummary(String.format("%s / %s", station, service));
         });
+        */
 
         Preference gasStation = findPreference("pref_favorite_gas");
         gasStation.setSummary(R.string.pref_summary_gas);

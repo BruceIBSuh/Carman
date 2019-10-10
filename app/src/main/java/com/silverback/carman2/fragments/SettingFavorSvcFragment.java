@@ -9,11 +9,14 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingFavoriteAdapter;
@@ -37,6 +40,8 @@ public class SettingFavorSvcFragment extends Fragment implements
 
     // Objects
     private CarmanDatabase mDB;
+    private FirebaseFirestore firestore;
+    private SparseArray<DocumentSnapshot> snapshotArray;
     private SettingFavoriteAdapter mAdapter;
 
 
@@ -49,6 +54,8 @@ public class SettingFavorSvcFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        firestore = FirebaseFirestore.getInstance();
+        snapshotArray = new SparseArray<>();
     }
 
 
@@ -66,12 +73,30 @@ public class SettingFavorSvcFragment extends Fragment implements
                 log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }
             // Make the item drag by invoking ItemTouchHelperCallback
-            mAdapter = new SettingFavoriteAdapter(favoriteList, this);
+            mAdapter = new SettingFavoriteAdapter(favoriteList, snapshotArray, this);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
 
             recyclerView.setAdapter(mAdapter);
+
+            for(int i = 0; i < favoriteList.size(); i++) {
+
+                final int pos = i;
+                final String stnId = favoriteList.get(pos).providerId;
+                log.i("Station ID: %s", stnId);
+
+                firestore.collection("svc_eval").document(stnId).get().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        DocumentSnapshot snapshot = task.getResult();
+                        if(snapshot != null && snapshot.exists()) {
+                            mAdapter.addSnapshotList(pos, snapshot);
+                            mAdapter.notifyItemChanged(pos, snapshot);
+                        }
+
+                    }
+                });
+            }
         });
 
         return localView;

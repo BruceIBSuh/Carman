@@ -118,7 +118,7 @@ public class SettingServiceItemAdapter
 
         if (from < to) for (int i = from; i < to; i++) Collections.swap(svcItemList, i, i + 1);
         else for (int i = from; i > to; i--) Collections.swap(svcItemList, i, i - 1);
-        notifyItemRangeChanged(to, Math.abs(from - to) + 1, true);
+        //notifyItemRangeChanged(to, Math.abs(from - to) + 1, true);
 
         mCallback.dragServiceItem(from, to);
     }

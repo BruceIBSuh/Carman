@@ -26,6 +26,8 @@ import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
@@ -64,6 +66,7 @@ public class GeneralFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
     // Objects
+    private CarmanDatabase mDB;
     private SharedPreferences mSettings;
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
@@ -99,10 +102,14 @@ public class GeneralFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Fetch the most favorite station id to display the price info in the main.
-        if(getActivity() != null) mSettings = ((MainActivity)getActivity()).getSettings();
-        String stnId = mSettings.getString("pref_favorite_provider", null);
-        log.i("Favorite ID: %s", stnId);
+
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
+                if(provider.category == Constants.GAS) stnId = provider.providerId;
+                log.i("Station ID: %s", stnId);
+            }
+        });
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);

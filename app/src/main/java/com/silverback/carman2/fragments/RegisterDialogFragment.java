@@ -123,7 +123,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
 
         // Instantiate FirebaseFirestore
-        if(firestore == null) firestore = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
 
         // ViewModel to fetch the sigun list of a given sido name
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);

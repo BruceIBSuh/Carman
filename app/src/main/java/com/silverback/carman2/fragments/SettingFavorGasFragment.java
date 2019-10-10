@@ -49,6 +49,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
+    private SparseArray<DocumentSnapshot> snapshotList;
     //private FirestoreViewModel firestoreViewModel;
 
     // Constructor
@@ -64,6 +65,7 @@ public class SettingFavorGasFragment extends Fragment implements
         if(firestore == null) firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         //firestoreViewModel = ViewModelProviders.of(this).get(FirestoreViewModel.class);
+        snapshotList = new SparseArray<>();
 
 
 
@@ -81,7 +83,7 @@ public class SettingFavorGasFragment extends Fragment implements
         // Query the favorite gas stations from FavoriteProviderEntity
         mDB.favoriteModel().queryFavoriteProvider(Constants.GAS).observe(this, favoriteList -> {
 
-            mAdapter = new SettingFavoriteAdapter(favoriteList, this);
+            mAdapter = new SettingFavoriteAdapter(favoriteList, snapshotList, this);
 
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
@@ -89,33 +91,23 @@ public class SettingFavorGasFragment extends Fragment implements
 
             recyclerView.setAdapter(mAdapter);
 
-            /*
-            // Initiate the worker thread to query the favroite list.
-            ThreadManager.startFirestoreFavoriteTask(favoriteList, firestoreViewModel, Constants.GAS);
-
-            firestoreViewModel.getFavoriteSnapshot().observe(this, sparseArray -> {
-                log.i("Snapshot SparseArray: %s", sparseArray.size());
-            });
-            */
-
             for(int i = 0; i < favoriteList.size(); i++) {
                 final int pos = i;
                 final String stnId = favoriteList.get(pos).providerId;
+
 
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
                         if(snapshot != null && snapshot.exists()) {
+                            mAdapter.addSnapshotList(pos, snapshot);
                             mAdapter.notifyItemChanged(pos, snapshot);
-                        } else {
-                            log.i("No documents exist");
                         }
 
-                    } else {
-                        log.e("Task Exception: %s", task.getException());
                     }
                 });
             }
+
         });
 
         // Inflate the layout for this fragment

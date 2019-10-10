@@ -120,15 +120,12 @@ public class ServiceManagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(getArguments() != null) {
-            distCode = getArguments().getString("distCode");
-            log.i("District Code in ServiceManagerFragment: %s",distCode);
-        }
+        if(getArguments() != null) distCode = getArguments().getString("distCode");
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
-        if(mDB == null) mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        if(firestore == null) firestore = FirebaseFirestore.getInstance();
+        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        firestore = FirebaseFirestore.getInstance();
 
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         adapterModel = ((ExpenseActivity)getActivity()).getPagerAdapterViewModel();

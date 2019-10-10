@@ -11,10 +11,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
@@ -41,12 +43,14 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     }
 
     // Constructor
-    public SettingFavoriteAdapter(List<FavoriteProviderEntity> favoriteList,
-                                  OnFavoriteAdapterListener listener) {
+    public SettingFavoriteAdapter(
+            List<FavoriteProviderEntity> favoriteList,
+            SparseArray<DocumentSnapshot> snapshotArray,
+            OnFavoriteAdapterListener listener) {
 
         mListener = listener;
         this.favoriteList = favoriteList;
-        snapshotArray = new SparseArray<>();
+        this.snapshotArray = snapshotArray;
     }
 
 
@@ -63,7 +67,12 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     @Override
     public void onBindViewHolder(@NonNull FavoriteItemHolder holder, int position) {
         final FavoriteProviderEntity provider = favoriteList.get(position);
+
+        // Bind the favorite name and address
         holder.bindToFavorite(provider);
+
+        // Bind the favorite registration number and the rating if any.
+        if(snapshotArray.size() > 0 && snapshotArray.get(position) != null) holder.bindToEval(snapshotArray.get(position));
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -72,7 +81,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
             @NonNull FavoriteItemHolder holder, int position, @NonNull List<Object> payloads) {
 
         // Indicate the first-row favorite with difference color.
-        if (position == 0) holder.itemView.setBackgroundColor(Color.parseColor("#99FF99"));
+        if (position == 0) holder.itemView.setBackgroundColor(Color.parseColor("#B0C4DE"));
         else holder.itemView.setBackgroundColor(Color.WHITE);
         
         if (payloads.isEmpty()) {
@@ -80,28 +89,10 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         }
 
         for(Object obj : payloads) {
-            //if (obj instanceof DocumentSnapshot) {
-                DocumentSnapshot snapshot = (DocumentSnapshot) obj;
-                if(snapshot.getLong("favorite_num") != null || snapshot.getLong("eval_num") != null){
-                    snapshotArray.put(position, snapshot);
-                }
-
-                // Retrieve the number of registration with Favorite
-                if (snapshot.getLong("favorite_num") != null) {
-                    int value = snapshot.getLong("favorite_num").intValue();
-                    log.i("Favorite Number:%s", value);
-                    holder.tvFavoriteNum.setText(String.valueOf(value));
-                } //else log.w("Favorite field not existing");
-
-                // Retrieve the ratingbar data
-                if (snapshot.getLong("eval_num") != null) {
-                    int evalNum = snapshot.getLong("eval_num").intValue();
-                    int evalSum = snapshot.getLong("eval_sum").intValue();
-                    float avg = (float) (evalSum / evalNum);
-                    log.i("Rating average: %s", avg);
-                    holder.rbFavorite.setRating(avg);
-                } //else log.w("eval fields not existing");
-            //}
+            DocumentSnapshot snapshot = (DocumentSnapshot) obj;
+            if(snapshotArray.size() > 0 && snapshotArray.get(position) != null) {
+                holder.bindToEval(snapshot);
+            }
         }
     }
 
@@ -112,22 +103,29 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
 
     // The following 2 callback methods
+    // ATTENTION: REFACTOR REQUIRED.
     @Override
     public void onDragItem(int from, int to) {
 
+        // Swap the list elements of FavoriteProviderEntity
         if (from < to) for (int i = from; i < to; i++) Collections.swap(favoriteList, i, i + 1);
         else for (int i = from; i > to; i--) Collections.swap(favoriteList, i, i - 1);
 
+        // Change the SparseArray key of DocumentSnapshot.
+        DocumentSnapshot fromSnapshot = snapshotArray.get(from);
+        DocumentSnapshot toSnapshot = snapshotArray.get(to);
+        snapshotArray.remove(from);
+        snapshotArray.remove(to);
+
+        // Change a new key if the snapshot is not null.
+        if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
+        if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
+
         notifyItemMoved(from, to);
 
-        log.i("Snapshot: %s, %s", snapshotArray.valueAt(from), snapshotArray.valueAt(to));
-
         // Retain the eval data when dragging.
-        notifyItemChanged(from, snapshotArray.valueAt(to));
-        notifyItemChanged(to, snapshotArray.valueAt(from));
-
-        snapshotArray.setValueAt(from, snapshotArray.valueAt(to));
-        snapshotArray.setValueAt(to, snapshotArray.valueAt(from));
+        notifyItemChanged(from, toSnapshot);
+        notifyItemChanged(to, fromSnapshot);
     }
 
     @Override
@@ -154,6 +152,10 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         snackbar.show();
     }
 
+    private void swapSpaseArrayKey(int from, int to) {
+
+    }
+
     // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPreferenceFragment
     // and its price information is to display in the main page,
     public List<FavoriteProviderEntity> getFavoriteList() {
@@ -161,5 +163,9 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
             log.i("FavoriteList: %s", entity.providerName);
         }
         return favoriteList;
+    }
+
+    public void addSnapshotList(int position, DocumentSnapshot snapshot) {
+        snapshotArray.put(position, snapshot);
     }
 }

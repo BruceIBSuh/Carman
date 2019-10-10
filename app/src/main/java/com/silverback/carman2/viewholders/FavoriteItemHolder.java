@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
@@ -49,6 +50,23 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
             if (imgResource != -1) imgLogo.setImageResource(imgResource);
         }
 
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public void bindToEval(DocumentSnapshot snapshot) {
+        if(!snapshot.exists()) return;
+
+        if(snapshot.getLong("favorite_num") != null) {
+            tvFavoriteNum.setText(String.valueOf(snapshot.getLong("favorite_num")));
+        }
+
+        if(snapshot.getLong("eval_num") != null) {
+            long evalNum = snapshot.getLong("eval_num");
+            long evalSum = snapshot.getLong("eval_sum");
+
+            float rating = evalSum / evalNum;
+            rbFavorite.setRating(rating);
+        }
     }
 
 }
