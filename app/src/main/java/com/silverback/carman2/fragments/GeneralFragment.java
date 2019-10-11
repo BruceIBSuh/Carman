@@ -22,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -38,10 +37,10 @@ import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.views.AvgPriceView;
-import com.silverback.carman2.views.SidoPriceView;
-import com.silverback.carman2.views.SigunPriceView;
-import com.silverback.carman2.views.StationPriceView;
+import com.silverback.carman2.views.OpinetAvgPriceView;
+import com.silverback.carman2.views.OpinetSidoPriceView;
+import com.silverback.carman2.views.OpinetSigunPriceView;
+import com.silverback.carman2.views.OpinetStationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.io.File;
@@ -73,10 +72,10 @@ public class GeneralFragment extends Fragment implements
     private LocationTask locationTask;
     private PriceTask priceTask;
     private StationListTask stationListTask;
-    private AvgPriceView avgPriceView;
-    private SidoPriceView sidoPriceView;
-    private SigunPriceView sigunPriceView;
-    private StationPriceView stationPriceView;
+    private OpinetAvgPriceView opinetAvgPriceView;
+    private OpinetSidoPriceView opinetSidoPriceView;
+    private OpinetSigunPriceView opinetSigunPriceView;
+    private OpinetStationPriceView opinetStationPriceView;
 
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
@@ -102,7 +101,7 @@ public class GeneralFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
+        // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
@@ -131,10 +130,10 @@ public class GeneralFragment extends Fragment implements
         TextView tvDate = childView.findViewById(R.id.tv_today);
         Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
-        avgPriceView = childView.findViewById(R.id.avgPriceView);
-        sidoPriceView = childView.findViewById(R.id.sidoPriceView);
-        sigunPriceView = childView.findViewById(R.id.sigunPriceView);
-        stationPriceView = childView.findViewById(R.id.stationPriceView);
+        opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
+        opinetSidoPriceView = childView.findViewById(R.id.sidoPriceView);
+        opinetSigunPriceView = childView.findViewById(R.id.sigunPriceView);
+        opinetStationPriceView = childView.findViewById(R.id.stationPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
         fabLocation = childView.findViewById(R.id.fab_relocation);
 
@@ -184,7 +183,7 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        // On fetching the current location, attempt to get the near station list based on the value.
+        // On fetching the current location, attempt to get the near stations based on the value.
         locationModel.getLocation().observe(this, location -> {
             // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
             // attempt to retreive a new station list based on the location.
@@ -214,9 +213,6 @@ public class GeneralFragment extends Fragment implements
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
-
-            // Save the station list with the car wash info done.
-            //uriStnList = saveNearStationList(mStationList);
 
         });
 
@@ -255,8 +251,10 @@ public class GeneralFragment extends Fragment implements
                 if(uri == null) return;
 
                 bStationsOrder = !bStationsOrder;
-                String sort = (bStationsOrder) ? getString(R.string.general_stations_price):
+                String sort = (bStationsOrder)?
+                        getString(R.string.general_stations_price):
                         getString(R.string.general_stations_distance);
+
                 tvStationsOrder.setText(sort);
                 mStationList = mAdapter.sortStationList(bStationsOrder);
 
@@ -280,16 +278,16 @@ public class GeneralFragment extends Fragment implements
             case 1: defaults[0] = "D047"; break; // diesel
             case 2: defaults[0] = "K015"; break; // LPG
             case 3: defaults[0] = "B034"; break; // premium gasoline
-            case 4: defaults[0] = "B027"; break; // temporarily set to gasoline
+            //case 4: defaults[0] = "B027"; break; // temporarily set to gasoline
             default: break;
         }
 
         // Retrives the data respectively saved in the cache directory with a fuel selected by the
         // spinner.
-        avgPriceView.addPriceView(defaults[0]);
-        sidoPriceView.addPriceView(defaults[0]);
-        sigunPriceView.addPriceView(defaults[0]);
-        stationPriceView.addPriceView(defaults[0]);
+        opinetAvgPriceView.addPriceView(defaults[0]);
+        opinetSidoPriceView.addPriceView(defaults[0]);
+        opinetSigunPriceView.addPriceView(defaults[0]);
+        opinetStationPriceView.addPriceView(defaults[0]);
     }
 
     @Override

@@ -17,6 +17,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.models.OpinetPriceViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
@@ -175,14 +176,10 @@ public class ThreadManager {
                         saveDistCodeTask.recycle();
                         break;
 
+
                     case DOWNLOAD_PRICE_COMPLETE:
                         priceTask = (PriceTask)msg.obj;
-                        // Each callback method according to the caller activity.
-                        if(priceTask.getParentActivity() instanceof IntroActivity) {
-                            ((IntroActivity)priceTask.getParentActivity()).onPriceTaskComplete();
-                        } else if(priceTask.getParentActivity() instanceof SettingPreferenceActivity) {
-                            ((SettingPreferenceActivity) priceTask.getParentActivity()).onPriceTaskComplete();
-                        }
+                        recycleTask(priceTask);
 
                         break;
 
@@ -357,18 +354,20 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static PriceTask startPriceTask(Activity activity, String distCode) {
+    public static PriceTask startPriceTask(
+            Context context, OpinetPriceViewModel model, String distCode, String stnId) {
 
         PriceTask priceTask = (PriceTask)sInstance.mTaskWorkQueue.poll();
 
         if(priceTask == null) {
-            priceTask = new PriceTask(activity);
+            priceTask = new PriceTask(context);
         }
 
-        priceTask.initPriceTask(ThreadManager.sInstance, activity, distCode);
+        priceTask.initPriceTask(model, distCode, stnId);
         sInstance.mDownloadThreadPool.execute(priceTask.getAvgPriceRunnable());
         sInstance.mDownloadThreadPool.execute(priceTask.getSidoPriceRunnable());
         sInstance.mDownloadThreadPool.execute(priceTask.getSigunPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceTask.getStationPriceRunnable());
 
         return priceTask;
     }
@@ -470,6 +469,7 @@ public class ThreadManager {
         return recyclerTask;
     }
 
+    /*
     public static FirestoreTask startFirestoreFavoriteTask(
             List<FavoriteProviderEntity> favoriteList, FirestoreViewModel model, int category) {
 
@@ -481,6 +481,7 @@ public class ThreadManager {
 
         return firestoreTask;
     }
+    */
 
     /*
      * Recycles tasks by calling their internal recycle() method and then putting them back into

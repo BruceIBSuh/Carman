@@ -40,17 +40,6 @@ public class StationListViewModel extends ViewModel {
         return currentStation;
     }
 
-    // Retrieve the information of an station picked by clicking an item view of RecyclerView
-    /*
-    public MutableLiveData<Opinet.GasStationInfo> getStationInfoLiveData() {
-        if(stnInfo == null) {
-            stnInfo = new MutableLiveData<>();
-        }
-
-        return stnInfo;
-    }
-    */
-
     public MutableLiveData<SparseBooleanArray> getStationCarWashInfo() {
         log.i("getStationCarWashInfo");
         if(hasCarWash == null) {

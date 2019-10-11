@@ -29,6 +29,7 @@ public class Constants {
     public static final String FILE_CACHED_AVG_PRICE = "AvgPrice";
     public static final String FILE_CACHED_SIDO_PRICE = "SidoPrice";
     public static final String FILE_CACHED_SIGUN_PRICE = "SigunPrice";
+    public static final String FILE_CACHED_STATION_PRICE = "StationPrice";
     public static final String FILE_DISTRICT_CODE = "DistrictCode";
     public static final String FILE_CACHED_NEAR_STATIONS = "tmpStnList";
     public static final String OPINET_LAST_UPDATE = "com.ibnco.carman.UPDATE";

@@ -53,10 +53,10 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_providerName" />
 
         <TextView
-            android:id="@+id/tv_value_favorite"
+            android:id="@+id/tv_value_register_favorite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
+            android:layout_marginStart="8dp"
             android:textSize="@dimen/smallText"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_register"
             app:layout_constraintStart_toEndOf="@+id/tv_label_register"
@@ -70,8 +70,19 @@
             android:text="@string/pref_favorite_label_eval"
             android:textSize="@dimen/smallText"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_register"
+            app:layout_constraintEnd_toStartOf="@+id/tv_value_number"
+            app:layout_constraintTop_toTopOf="@+id/tv_label_register"
+            app:layout_constraintVertical_bias="1.0" />
+
+        <TextView
+            android:id="@+id/tv_value_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:textSize="@dimen/smallText"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
             app:layout_constraintEnd_toStartOf="@+id/rb_favorite"
-            app:layout_constraintTop_toTopOf="@+id/tv_label_register" />
+            app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
 
         <RatingBar
             android:id="@+id/rb_favorite"

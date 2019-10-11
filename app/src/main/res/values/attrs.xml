@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <declare-styleable name="avgPriceView">
+    <declare-styleable name="OpinetAvgPriceView">
         <attr name="avgPriceUp" format="color|reference" />
         <attr name="avgPriceDown" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="sidoPriceView">
+    <declare-styleable name="OpinetSidoPriceView">
         <attr name="sidoPriceUp" format="color|reference" />
         <attr name="sidoPriceDown" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="SigunPriceView">
+    <declare-styleable name="OpinetSigunPriceView">
         <attr name="sigunPriceUp" format="color|reference" />
         <attr name="sigunPriceDown" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="StationPriceView">
+    <declare-styleable name="OpinetStationPriceView">
         <attr name="stationPriceUp" format="color|reference" />
         <attr name="stationPriceDown" format="color|reference" />
     </declare-styleable>

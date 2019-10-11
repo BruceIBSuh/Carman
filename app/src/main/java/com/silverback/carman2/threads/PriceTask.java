@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.OpinetPriceViewModel;
 
 import java.lang.ref.WeakReference;
 
@@ -15,8 +16,10 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
 
     // Objects and Fields
     private WeakReference<Activity> mWeakActivity;
-    private Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable;
+    private OpinetPriceViewModel viewModel;
+    private Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable, mStationPriceRunnable;
     private String distCode;
+    private String stnId;
     private int index = 0;
 
     // Constructor: creates an PriceTask object containing PriceRunnable object.
@@ -25,13 +28,15 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
         mAvgPriceRunnable = new PriceRunnable(context, this, PriceRunnable.AVG);
         mSidoPriceRunnable = new PriceRunnable(context, this, PriceRunnable.SIDO);
         mSigunPriceRunnable = new PriceRunnable(context, this, PriceRunnable.SIGUN);
+        mStationPriceRunnable = new PriceRunnable(context, this, PriceRunnable.STATION);
+
     }
 
     // Initialize args for PriceRunnable
-    void initPriceTask(ThreadManager threadManager, Activity activity, String distCode) {
-        sThreadManager = threadManager;
-        mWeakActivity = new WeakReference<>(activity);
+    void initPriceTask(OpinetPriceViewModel viewModel, String distCode, String stnId) {
+        this.viewModel = viewModel;
         this.distCode = distCode;
+        this.stnId = stnId;
     }
 
     // Getter for the Runnable invoked by startPriceTask() in ThreadManager
@@ -44,6 +49,7 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
     Runnable getSigunPriceRunnable(){
         return mSigunPriceRunnable;
     }
+    Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
 
 
     // Callback methods defined in PriceRunnable.OpinentPriceListMethods
@@ -57,15 +63,22 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
         return distCode;
     }
 
+    @Override
+    public String getStationId() {
+        return stnId;
+    }
+
     // Check if the 3 Runnables successfully complte.
     @Override
-    public int getCount() {
+    public int getTaskCount() {
         return index;
     }
 
     @Override
-    public void addCount() {
+    public synchronized void setTaskCount() {
         index++;
+        log.i("Task count: %s", index);
+        if(index >= 4) viewModel.notifyPriceComplete().postValue(true);
     }
 
     @Override
@@ -85,8 +98,4 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
         sThreadManager.handleState(this, outstate);
     }
 
-    Activity getParentActivity(){
-        if(mWeakActivity != null) return mWeakActivity.get();
-        return null;
-    }
 }

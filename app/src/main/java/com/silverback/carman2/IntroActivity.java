@@ -5,8 +5,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import androidx.lifecycle.ViewModelProviders;
+
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.OpinetPriceViewModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.PriceTask;
 import com.silverback.carman2.threads.SaveDistCodeTask;
@@ -18,6 +23,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.security.AccessController.getContext;
+
 public class IntroActivity extends BaseActivity implements View.OnClickListener {
 
     // Logging
@@ -26,9 +33,13 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     // Objects
     private PriceTask priceTask;
     private SaveDistCodeTask saveDistCodeTask;
+    private OpinetPriceViewModel viewModel;
 
     // UI's
     private ProgressBar mProgBar;
+
+    // Fields
+    private String stnId;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -51,6 +62,23 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         // when initially running the app or finding the code changed later.
         File distCodePath = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
         if(!distCodePath.exists()) firstInitProcess();
+
+        CarmanDatabase.getDatabaseInstance(this).favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
+                if(provider.category == Constants.GAS) stnId = provider.providerId;
+                log.i("Station ID: %s", stnId);
+            }
+        });
+
+
+        viewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
+        viewModel.notifyPriceComplete().observe(this, isComplete -> {
+            log.i("PriceTask complete");
+            if(priceTask != null) priceTask = null;
+            mProgBar.setVisibility(View.GONE);
+            startActivity(new Intent(IntroActivity.this, MainActivity.class));
+            finish();
+        });
     }
 
     @Override
@@ -74,23 +102,23 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
         String distCode;
 
-        if(checkUpdateOilPrice() || !file.exists()) {
-
+        //if(checkUpdateOilPrice() || !file.exists()) {
             List<String> district = convJSONArrayToList();
             if(district == null) distCode = "0101";
             else distCode = district.get(2);
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
             // Consider whether the threads should be interrupted or not.
-            priceTask = ThreadManager.startPriceTask(IntroActivity.this, distCode);
+            log.i("Station ID: %s", stnId);
+            priceTask = ThreadManager.startPriceTask(this, viewModel, distCode, stnId);
 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
 
-        } else {
-            startActivity(new Intent(this, MainActivity.class));
-            finish();
-        }
+        //} else {
+            //startActivity(new Intent(this, MainActivity.class));
+            //finish();
+        //}
 
     }
 
@@ -116,6 +144,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     // Invoked by ThreadManager when the average, sido, and sigun oil prices have been retrieved
     // on working threads.
+    /*
     public void onPriceTaskComplete() {
         log.i("PriceTask complete");
         if(priceTask != null) priceTask = null;
@@ -123,5 +152,6 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         startActivity(new Intent(IntroActivity.this, MainActivity.class));
         finish();
     }
+    */
 
 }

@@ -23,10 +23,10 @@ import java.io.ObjectInputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class AvgPriceView extends OpinetPriceView {
+public class OpinetAvgPriceView extends OpinetPriceView {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(AvgPriceView.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(OpinetAvgPriceView.class);
 
     // Objects
     private WeakReference<View> mThisView;
@@ -36,16 +36,16 @@ public class AvgPriceView extends OpinetPriceView {
     //private int priceUpColor, priceDownColor; //Inherited from OpinetPriceView
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
-    public AvgPriceView(Context context) {
+    public OpinetAvgPriceView(Context context) {
         super(context);
     }
 
-    public AvgPriceView(Context context, AttributeSet attrs) {
+    public OpinetAvgPriceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
 
-    public AvgPriceView(Context context, AttributeSet attrs, int defaultStyle) {
+    public OpinetAvgPriceView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
         getAttributes(context, attrs);
     }
@@ -57,11 +57,11 @@ public class AvgPriceView extends OpinetPriceView {
         //linearLayout = (LinearLayout)inflater.inflate(R.layout.view_avg_price, this, true);
         LayoutInflater.from(context).inflate(R.layout.view_avg_price, this, true);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.avgPriceView);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetAvgPriceView);
 
         try {
-            priceUpColor = typedArray.getColor(R.styleable.avgPriceView_avgPriceUp, 0);
-            priceDownColor = typedArray.getColor(R.styleable.avgPriceView_avgPriceDown, 0);
+            priceUpColor = typedArray.getColor(R.styleable.OpinetAvgPriceView_avgPriceUp, 0);
+            priceDownColor = typedArray.getColor(R.styleable.OpinetAvgPriceView_avgPriceDown, 0);
             log.i("Color: %d, %d", priceUpColor, priceDownColor);
         } finally {
             typedArray.recycle();

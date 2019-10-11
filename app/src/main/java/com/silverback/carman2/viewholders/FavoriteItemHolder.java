@@ -14,8 +14,6 @@ import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-import java.util.List;
-
 public class FavoriteItemHolder extends RecyclerView.ViewHolder {
 
     // Logging
@@ -25,8 +23,9 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
     private TextView tvName;
     private TextView tvAddress;
     private ImageView imgLogo;
-    public TextView tvFavoriteNum;
-    public RatingBar rbFavorite;
+    private TextView tvFavoriteNum;
+    private TextView tvEvalNum;
+    private RatingBar rbFavorite;
 
     // Constructor
     public FavoriteItemHolder(CardView cardView) {
@@ -34,7 +33,8 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
 
         tvName = cardView.findViewById(R.id.tv_providerName);
         tvAddress = cardView.findViewById(R.id.tv_providerAddrs);
-        tvFavoriteNum = cardView.findViewById(R.id.tv_value_favorite);
+        tvFavoriteNum = cardView.findViewById(R.id.tv_value_register_favorite);
+        tvEvalNum = cardView.findViewById(R.id.tv_value_number);
         rbFavorite = cardView.findViewById(R.id.rb_favorite);
         imgLogo = cardView.findViewById(R.id.img_logo);
 
@@ -61,10 +61,13 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
         }
 
         if(snapshot.getLong("eval_num") != null) {
+            tvEvalNum.setText(String.valueOf(snapshot.getLong("eval_num")));
+
             long evalNum = snapshot.getLong("eval_num");
             long evalSum = snapshot.getLong("eval_sum");
 
             float rating = evalSum / evalNum;
+            rbFavorite.setStepSize(0.5f);
             rbFavorite.setRating(rating);
         }
     }

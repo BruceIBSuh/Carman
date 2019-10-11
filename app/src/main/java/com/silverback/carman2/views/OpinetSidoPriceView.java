@@ -20,41 +20,45 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.List;
 
-public class SigunPriceView extends OpinetPriceView {
+public class OpinetSidoPriceView extends OpinetPriceView {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SidoPriceView.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(OpinetSidoPriceView.class);
 
     // Objects
-    private TextView tvSigunName, tvSigunPrice;
+    private TextView tvSidoName, tvSidoPrice;
+
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
-    public SigunPriceView(Context context) {
+
+    public OpinetSidoPriceView(Context context) {
         super(context);
     }
-    public SigunPriceView(Context context, AttributeSet attrs) {
+
+    public OpinetSidoPriceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
-    public SigunPriceView(Context context, AttributeSet attrs, int defaultStyle) {
+
+    public OpinetSidoPriceView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
         getAttributes(context, attrs);
     }
 
-    @SuppressWarnings("ConstantConditions")
+
     protected void getAttributes(Context context, AttributeSet attrs) {
 
         //LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         //linearLayout = (LinearLayout)inflater.inflate(R.layout.view_avg_price, this, true);
-        LayoutInflater.from(context).inflate(R.layout.view_sigun_price, this, true);
-        tvSigunName = findViewById(R.id.tv_sigun_name);
-        tvSigunPrice = findViewById(R.id.tv_sigun_price);
+        LayoutInflater.from(context).inflate(R.layout.view_sido_price, this, true);
+        tvSidoName = findViewById(R.id.tv_sido_name);
+        tvSidoPrice = findViewById(R.id.tv_sido_price);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SigunPriceView);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetSidoPriceView);
 
         try {
-            priceUpColor = typedArray.getColor(R.styleable.SigunPriceView_sigunPriceUp, 0);
-            priceDownColor = typedArray.getColor(R.styleable.SigunPriceView_sigunPriceDown, 0);
+            priceUpColor = typedArray.getColor(R.styleable.OpinetSidoPriceView_sidoPriceUp, 0);
+            priceDownColor = typedArray.getColor(R.styleable.OpinetSidoPriceView_sidoPriceDown, 0);
             log.i("Color: %d, %d", priceUpColor, priceDownColor);
 
         } finally {
@@ -66,21 +70,21 @@ public class SigunPriceView extends OpinetPriceView {
     @SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
 
-        File sigunFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIGUN_PRICE);
-        Uri sigunUri = Uri.fromFile(sigunFile);
+        File sidoFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIDO_PRICE);
+        Uri uriSido = Uri.fromFile(sidoFile);
 
-        try(InputStream is = getContext().getContentResolver().openInputStream(sigunUri);
+        try(InputStream is = getContext().getContentResolver().openInputStream(uriSido);
             ObjectInputStream ois = new ObjectInputStream(is)){
-            List<Opinet.SigunPrice> sigunPrice = (List<Opinet.SigunPrice>)ois.readObject();
+            List<Opinet.SidoPrice> sidoPrice = (List<Opinet.SidoPrice>)ois.readObject();
 
-            for (Opinet.SigunPrice opinet : sigunPrice) {
+            for (Opinet.SidoPrice opinet : sidoPrice) {
                 if (opinet.getProductCd().matches(fuelCode)) {
-                    String sigunName = opinet.getSigunName();
+                    String sidoName = opinet.getSidoName();
                     float price = opinet.getPrice();
                     float diff = opinet.getDiff();
-                    log.i("SidoPriceView: %s, %s, %s", sigunName, price, diff);
-                    tvSigunName.setText(sigunName);
-                    setColoredTextView(tvSigunPrice, price, diff);
+                    log.i("SidoPriceView: %s, %s, %s", sidoName, price, diff);
+                    tvSidoName.setText(sidoName);
+                    setColoredTextView(tvSidoPrice, price, diff);
                     break;
                 }
             }
@@ -92,6 +96,6 @@ public class SigunPriceView extends OpinetPriceView {
         } catch(ClassNotFoundException e) {
             log.e("ClassNotFoundException: %s", e);
         }
-    }
 
+    }
 }

@@ -4,6 +4,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 
@@ -52,6 +54,7 @@ public class Opinet  {
         }
 
         // Overrided method for showing results.
+        @NonNull
         @Override
         public String toString() {
             return " tradeDate: " + getTradeDate()
@@ -164,6 +167,7 @@ public class Opinet  {
             this.diff = dist;
         }
 
+        @NonNull
         @Override
         public String toString(){
             return "sigunCode: " + getSigunCode()
@@ -172,6 +176,73 @@ public class Opinet  {
                     + "\nprice: " + getPrice()
                     + "\ndiff: " + getDiff();
         }
+    }
+
+    public static class StationPrice implements Serializable {
+
+        private String stnId;
+        private String stnCompany;
+        private String stnName;
+        private String productCd;
+        private Map<String, Float> mapPrice;
+
+        public StationPrice() {
+            mapPrice = new HashMap<>();
+        }
+
+        public String getStnId() {
+            return stnId;
+        }
+
+        public void setStnId(String stnId) {
+            this.stnId = stnId;
+        }
+
+        public String getStnCompany() {
+            return stnCompany;
+        }
+
+        public void setStnCompany(String stnCompany) {
+            this.stnCompany = stnCompany;
+        }
+
+        public String getStnName() {
+            return stnName;
+        }
+
+        public void setStnName(String stnName) {
+            this.stnName = stnName;
+        }
+
+        public String getProductCd() {
+            return productCd;
+        }
+
+        public void setProductCd(String productCd) {
+            this.productCd = productCd;
+        }
+
+        public Map<String, Float> getStnPrice() {
+            return mapPrice;
+        }
+
+        public void setStnPrice(String prodCd, float price) {
+            mapPrice.put(prodCd, price);
+        }
+
+
+
+        @NonNull
+        @Override
+        public String toString(){
+            return "stnId: " + getStnId()
+                    + "\nstnCompany: " + getStnCompany()
+                    + "\nstnName: " + getStnName()
+                    + "\nproductCd: " + getProductCd()
+                    + "\nprice: " + getStnPrice();
+        }
+
+
     }
 
 

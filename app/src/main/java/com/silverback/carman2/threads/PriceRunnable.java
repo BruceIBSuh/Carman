@@ -32,10 +32,13 @@ public class PriceRunnable implements Runnable {
     private static final String URLsido = OPINET + "avgSidoPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String URLsigun = OPINET + "avgSigunPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String SigunCode = "&sigun=";
+    private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
+
 
     static final int AVG = 0;
     static final int SIDO = 1;
     static final int SIGUN = 2;
+    static final int STATION = 3;
 
     static final int DOWNLOAD_PRICE_COMPLETE = 1;
     static final int DOWNLOAD_PRICE_FAILED = -1;
@@ -57,9 +60,10 @@ public class PriceRunnable implements Runnable {
     public interface OpinetPriceListMethods {
         void setPriceDownloadThread(Thread currentThread);
         void handlePriceTaskState(int state);
-        void addCount();
-        int getCount();
+        void setTaskCount();
+        int getTaskCount();
         String getDistrictCode();
+        String getStationId();
     }
 
     // Constructor
@@ -73,12 +77,11 @@ public class PriceRunnable implements Runnable {
     @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
-
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        log.i("Thread: %s", Thread.currentThread());
 
         String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
+        String stnId = task.getStationId();
 
         URL url;
         InputStream in = null;
@@ -91,7 +94,6 @@ public class PriceRunnable implements Runnable {
             switch(category) {
 
                 case AVG: // Average oil price
-                    log.i("avgPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLavg);
                     conn = (HttpURLConnection)url.openConnection();
@@ -105,19 +107,18 @@ public class PriceRunnable implements Runnable {
                     if(!avgList.isEmpty()) {
                         avgList.remove(avgList.get(3)); // Exclude Kerotene
                         //task.handlePriceTaskState(DOWNLOAD_AVG_PRICE_COMPLETE);
-                        task.addCount();
+                        task.setTaskCount();
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
-                        log.i("avgList: %d", avgList.size());
                     }
 
                     break;
 
                 case SIDO: // Sido price
-                    log.i("sidoPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLsido + sidoCode);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
+
 
                     if(Thread.interrupted()) {
                         throw new InterruptedException();
@@ -126,9 +127,8 @@ public class PriceRunnable implements Runnable {
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
                         //task.handlePriceTaskState(DOWNLOAD_SIDO_PRICE_COMPLETE);
-                        task.addCount();
+                        task.setTaskCount();
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
-                        log.i("sidoList: %d", sidoList.size());
                     }
 
                     break;
@@ -147,9 +147,26 @@ public class PriceRunnable implements Runnable {
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
                         //task.handlePriceTaskState(DOWNLOAD_SIGUN_PRICE_COMPLETE);
-                        task.addCount();
+                        task.setTaskCount();
                         savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
-                        log.i("sigunList.get(0): %s", sigunList.get(0).getPrice());
+                    }
+
+                    break;
+
+                case STATION:
+                    task.setPriceDownloadThread(Thread.currentThread());
+                    url = new URL(URLStn + stnId);
+                    conn = (HttpURLConnection)url.openConnection();
+                    in = conn.getInputStream();
+
+                    if(Thread.interrupted()) {
+                        throw new InterruptedException();
+                    }
+
+                    Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(in);
+                    if(stnPrice != null) {
+                        task.setTaskCount();
+                        savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
                     }
 
                     break;
@@ -170,8 +187,8 @@ public class PriceRunnable implements Runnable {
 
         } finally {
 
-            if(task.getCount() == 3) {
-                log.i("Runnable count: %s", task.getCount());
+            if(task.getTaskCount() == 3) {
+                log.i("Runnable count: %s", task.getTaskCount());
                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
             }
 
@@ -190,7 +207,7 @@ public class PriceRunnable implements Runnable {
 
     }
 
-    private synchronized void savePriceInfo(List<?> list, String fName) {
+    private synchronized void savePriceInfo(Object obj, String fName) {
 
         File file = new File(context.getApplicationContext().getCacheDir(), fName);
         FileOutputStream fos;
@@ -199,14 +216,15 @@ public class PriceRunnable implements Runnable {
         try {
             fos = new FileOutputStream(file);
             oos = new ObjectOutputStream(fos);
-            oos.writeObject(list);
+            oos.writeObject(obj);
             fos.close();
             oos.close();
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            log.e("FileNotFoundException: %s", e.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.e("IOException: %s", e.getMessage());
         }
     }
+
 }

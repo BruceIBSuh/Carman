@@ -33,6 +33,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     // Objects
     private List<FavoriteProviderEntity> favoriteList;
     private SparseArray<DocumentSnapshot> snapshotArray;
+    //private DocumentSnapshot fromSnapshot, toSnapshot;
     private OnFavoriteAdapterListener mListener;
     private ViewGroup parent;
 
@@ -103,23 +104,39 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
 
     // The following 2 callback methods
-    // ATTENTION: REFACTOR REQUIRED.
     @Override
     public void onDragItem(int from, int to) {
+        log.i("Dragging: %s, %s", from ,to);
+        DocumentSnapshot fromSnapshot;
+        DocumentSnapshot toSnapshot;
 
         // Swap the list elements of FavoriteProviderEntity
-        if (from < to) for (int i = from; i < to; i++) Collections.swap(favoriteList, i, i + 1);
-        else for (int i = from; i > to; i--) Collections.swap(favoriteList, i, i - 1);
+        if (from < to) {
+            fromSnapshot = snapshotArray.get(from);
+            toSnapshot = snapshotArray.get(to);
+            snapshotArray.remove(from);
+            snapshotArray.remove(to);
 
-        // Change the SparseArray key of DocumentSnapshot.
-        DocumentSnapshot fromSnapshot = snapshotArray.get(from);
-        DocumentSnapshot toSnapshot = snapshotArray.get(to);
-        snapshotArray.remove(from);
-        snapshotArray.remove(to);
+            for (int i = from; i < to; i++) {
+                Collections.swap(favoriteList, i, i + 1);
+                // Change a new key if the snapshot is not null.
+                if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
+                if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
+            }
 
-        // Change a new key if the snapshot is not null.
-        if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
-        if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
+        } else {
+            fromSnapshot = snapshotArray.get(from);
+            toSnapshot = snapshotArray.get(to);
+            snapshotArray.remove(from);
+            snapshotArray.remove(to);
+
+            for (int i = from; i > to; i--) {
+                Collections.swap(favoriteList, i, i - 1);
+                // Change a new key if the snapshot is not null.
+                if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
+                if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
+            }
+        }
 
         notifyItemMoved(from, to);
 
@@ -152,19 +169,14 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         snackbar.show();
     }
 
-    private void swapSpaseArrayKey(int from, int to) {
-
-    }
-
     // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPreferenceFragment
     // and its price information is to display in the main page,
     public List<FavoriteProviderEntity> getFavoriteList() {
-        for(FavoriteProviderEntity entity : favoriteList) {
-            log.i("FavoriteList: %s", entity.providerName);
-        }
         return favoriteList;
     }
 
+    // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
+    // any evaluation data frm Firestore.
     public void addSnapshotList(int position, DocumentSnapshot snapshot) {
         snapshotArray.put(position, snapshot);
     }

@@ -26,6 +26,9 @@ public class XmlPullParserHandler {
     private List<Opinet.SigunPrice> sigunPriceList;
     private Opinet.SigunPrice sigunPrice;
 
+    private List<Opinet.StationPrice> stnPriceList;
+    private Opinet.StationPrice stnPrice;
+
     private List<Opinet.DistrictCode> distCodeList;
     private Opinet.DistrictCode districtCode;
 
@@ -46,6 +49,9 @@ public class XmlPullParserHandler {
         sidoPriceList = new ArrayList<>();
         sigunPriceList = new ArrayList<>();
         distCodeList = new ArrayList<>();
+
+        stnPriceList = new ArrayList<>();
+
         gasStnParcelableList = new ArrayList<>();
         gasStationInfoList = new ArrayList<>();
     }
@@ -290,6 +296,103 @@ public class XmlPullParserHandler {
         */
 
         return sigunPriceList;
+    }
+
+    // Get Sigun Price
+    public Opinet.StationPrice parseStationPrice(InputStream is) {
+
+        try {
+
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser parser = factory.newPullParser();
+
+            parser.setInput(is, "utf-8");
+            int eventType = parser.getEventType();
+
+            while(eventType != XmlPullParser.END_DOCUMENT) {
+
+                String tagName = parser.getName();
+                String prodCd = null;
+
+                switch(eventType) {
+
+                    case XmlPullParser.START_TAG:
+                        if(tagName.equalsIgnoreCase("OIL")) {
+                            stnPrice = new Opinet.StationPrice();
+
+                        }else if(tagName.equalsIgnoreCase("OIL_PRICE")) {
+                            int nestedEventType = parser.next();
+                            while(nestedEventType != XmlPullParser.END_DOCUMENT) {
+                                String nestedTag = parser.getName();
+                                switch(nestedEventType) {
+                                    case XmlPullParser.START_TAG:
+                                        break;
+                                    case XmlPullParser.TEXT:
+                                        text = parser.getText();
+                                        break;
+                                    case XmlPullParser.END_TAG:
+                                        if(nestedTag.equalsIgnoreCase("PRODCD")) {
+                                            log.i("Product CD: %s", text);
+                                            prodCd = text;
+                                            stnPrice.setProductCd(text);
+                                        }else if(nestedTag.equalsIgnoreCase("PRICE")) {
+                                            log.i("Price: %s", text);
+                                            stnPrice.setStnPrice(prodCd, Float.valueOf(text));
+                                        }else if(nestedTag.equalsIgnoreCase("TRADE_DT")) {
+                                            log.i("Trade date: %s", text);
+                                        }else if(nestedTag.equalsIgnoreCase("TRADE_TM")) {
+                                            log.i("Trade Time: %s", text);
+                                        }
+                                        break;
+                                }
+
+                                nestedEventType = parser.next();
+                            }
+
+                        }
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        text = parser.getText();
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        if (tagName.equalsIgnoreCase("OIL")) {
+                            stnPriceList.add(stnPrice);
+                        } else if(tagName.equalsIgnoreCase("UNI_ID")) {
+                            stnPrice.setStnId(text);
+                        } else if (tagName.equalsIgnoreCase("POLL_DIV_CO")) {
+                            stnPrice.setStnCompany(text);
+                        } else if (tagName.equalsIgnoreCase("OS_NM")) {
+                            stnPrice.setStnName(text);
+                        } else if (tagName.equalsIgnoreCase("PRODCD")) {
+                            stnPrice.setProductCd(text);
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                eventType = parser.next();
+            }
+
+        } catch (XmlPullParserException e) {
+            log.e("XMLPullParserException: %s", e.getMessage());
+        } catch (IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
+
+        // Rearrange the original order(regular-premium-kerotine-diesel) to a new order(preminum-
+        // regular-diesel-kerotine)
+        /*
+        if(sigunPriceList.size() >= 4) {
+            //Collections.swap(sigunPriceList, 0, 1);
+            //Collections.swap(sigunPriceList, 2, 3);
+        }
+        */
+
+        return stnPrice;
     }
 
 
