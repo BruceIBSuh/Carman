@@ -1,6 +1,5 @@
 package com.silverback.carman2.fragments;
 
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -19,24 +18,30 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
+import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.OpinetPriceViewModel;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.PriceTask;
+import com.silverback.carman2.threads.PriceFavoriteTask;
+import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetAvgPriceView;
 import com.silverback.carman2.views.OpinetSidoPriceView;
 import com.silverback.carman2.views.OpinetSigunPriceView;
@@ -64,27 +69,32 @@ public class GeneralFragment extends Fragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
+    private static final int NUM_PAGES = 2;
+    private static String GAS_CODE;
+
     // Objects
     private CarmanDatabase mDB;
     private SharedPreferences mSettings;
+
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
+    private OpinetPriceViewModel priceViewModel;
+
     private LocationTask locationTask;
-    private PriceTask priceTask;
+    private PriceRegionalTask priceRegionalTask;
+    //private PriceFavoriteTask priceFavoriteTask;
     private StationListTask stationListTask;
     private OpinetAvgPriceView opinetAvgPriceView;
-    private OpinetSidoPriceView opinetSidoPriceView;
-    private OpinetSigunPriceView opinetSigunPriceView;
-    private OpinetStationPriceView opinetStationPriceView;
-
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
+    private PricePagerAdapter pricePagerAdapter;
     private List<Opinet.GasStnParcelable> mStationList;
-
     private Location mPrevLocation;
     private Uri uriStnList;
 
     // UI's
+    private View childView;
+    private ViewPager priceViewPager;
     private TextView tvStationsOrder;
     private FloatingActionButton fabLocation;
 
@@ -101,6 +111,7 @@ public class GeneralFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mSettings = ((MainActivity)getActivity()).getSettings();
         // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
@@ -113,10 +124,37 @@ public class GeneralFragment extends Fragment implements
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+        priceViewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
         locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+
+        // On fetching the current location, attempt to get the near stations based on the value.
+        locationModel.getLocation().observe(this, location -> {
+            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
+            // attempt to retreive a new station list based on the location.
+            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
+            // the station recyclerView should not be refreshed, showing the snackbar message.
+            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
+                mPrevLocation = location;
+                stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
+            } else {
+                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
+            }
+        });
+
+        //priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
+        // Invoked from SettingPreferenceActivity as a new region has set.
+        priceViewModel.notifyPriceComplete().observe(this, isComplete -> {
+            // Save the saving time to prevent the regional price data from frequently updating.
+            mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+            // Attach the pager adatepr with a fuel code set.
+            pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+            pricePagerAdapter.setFuelCode(defaults[0]);
+            priceViewPager.setAdapter(pricePagerAdapter);
+        });
+
 
 
     }
@@ -126,14 +164,12 @@ public class GeneralFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View childView = inflater.inflate(R.layout.fragment_general, container, false);
+        childView = inflater.inflate(R.layout.fragment_general, container, false);
         TextView tvDate = childView.findViewById(R.id.tv_today);
         Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
+        priceViewPager = childView.findViewById(R.id.pager_price);
         opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
-        opinetSidoPriceView = childView.findViewById(R.id.sidoPriceView);
-        opinetSigunPriceView = childView.findViewById(R.id.sigunPriceView);
-        opinetStationPriceView = childView.findViewById(R.id.stationPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
         fabLocation = childView.findViewById(R.id.fab_relocation);
 
@@ -157,6 +193,7 @@ public class GeneralFragment extends Fragment implements
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
         defaults = getArguments().getStringArray("defaults");
         log.i("Default fuel: %s, %s, %s", defaults[0], defaults[1], defaults[2]);
+
         // Set the initial spinner value with the default from SharedPreferences
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])){
@@ -183,19 +220,6 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        // On fetching the current location, attempt to get the near stations based on the value.
-        locationModel.getLocation().observe(this, location -> {
-            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
-            // attempt to retreive a new station list based on the location.
-            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
-            // the station recyclerView should not be refreshed, showing the snackbar message.
-            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
-                mPrevLocation = location;
-                stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
-            } else {
-                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
-            }
-        });
 
         // Receive the LiveData of station list within a given radius based on
         stnListModel.getStationListLiveData().observe(this, stnList -> {
@@ -234,8 +258,7 @@ public class GeneralFragment extends Fragment implements
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
-        if(priceTask != null) priceTask = null;
-        //if(stationInfoTask != null) stationInfoTask = null;
+        if(priceRegionalTask != null) priceRegionalTask = null;
     }
 
     @Override
@@ -272,7 +295,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
-        log.i("onItemSelected");
+        log.i("onItemSelected: %s", position);
         switch(position){
             case 0: defaults[0] = "B027"; break; // gasoline
             case 1: defaults[0] = "D047"; break; // diesel
@@ -282,12 +305,16 @@ public class GeneralFragment extends Fragment implements
             default: break;
         }
 
+
         // Retrives the data respectively saved in the cache directory with a fuel selected by the
         // spinner.
         opinetAvgPriceView.addPriceView(defaults[0]);
-        opinetSidoPriceView.addPriceView(defaults[0]);
-        opinetSigunPriceView.addPriceView(defaults[0]);
-        opinetStationPriceView.addPriceView(defaults[0]);
+
+        // Attach the pager adatepr with a fuel code set.
+        pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+        pricePagerAdapter.setFuelCode(defaults[0]);
+        priceViewPager.setAdapter(pricePagerAdapter);
+
     }
 
     @Override
@@ -348,6 +375,4 @@ public class GeneralFragment extends Fragment implements
 
         return null;
     }
-
-
 }

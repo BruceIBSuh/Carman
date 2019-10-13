@@ -39,7 +39,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
 
     public interface OnFavoriteAdapterListener {
-        //void addFavorite(FavoriteProviderEntity entity);
+        void changeFavorite(int category, String stnId);
         void deleteFavorite(FavoriteProviderEntity entity);
     }
 
@@ -73,10 +73,10 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         holder.bindToFavorite(provider);
 
         // Bind the favorite registration number and the rating if any.
-        if(snapshotArray.size() > 0 && snapshotArray.get(position) != null) holder.bindToEval(snapshotArray.get(position));
+        if(snapshotArray.size() > 0 && snapshotArray.get(position) != null)
+            holder.bindToEval(snapshotArray.get(position));
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onBindViewHolder(
             @NonNull FavoriteItemHolder holder, int position, @NonNull List<Object> payloads) {
@@ -106,7 +106,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     // The following 2 callback methods
     @Override
     public void onDragItem(int from, int to) {
-        log.i("Dragging: %s, %s", from ,to);
+
         DocumentSnapshot fromSnapshot;
         DocumentSnapshot toSnapshot;
 
@@ -118,8 +118,9 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
             snapshotArray.remove(to);
 
             for (int i = from; i < to; i++) {
+                // Swap the FavorteProviderEntity positioned at from with that positioned at to.
                 Collections.swap(favoriteList, i, i + 1);
-                // Change a new key if the snapshot is not null.
+                // Swap the DocumentSnapshot positioned at the key of from and the key of to.
                 if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
                 if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
             }
@@ -143,6 +144,10 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         // Retain the eval data when dragging.
         notifyItemChanged(from, toSnapshot);
         notifyItemChanged(to, fromSnapshot);
+
+        // Notify that the favorite positioned at the first, the price of which is to display
+        // in the MainActivity, has changed.
+        if(to == 0) mListener.changeFavorite(Constants.GAS, favoriteList.get(to).providerId);
     }
 
     @Override
@@ -176,7 +181,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     }
 
     // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
-    // any evaluation data frm Firestore.
+    // any evaluation data from Firestore.
     public void addSnapshotList(int position, DocumentSnapshot snapshot) {
         snapshotArray.put(position, snapshot);
     }

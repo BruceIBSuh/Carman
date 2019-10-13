@@ -18,7 +18,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -28,9 +27,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -249,7 +246,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Communicate w/ FavoriteListFragment to retrieve a favorite station picked out of the
         // dialogfragment.
-        fragmentSharedModel.getFavoriteGasName().observe(this, name -> {
+        fragmentSharedModel.getFavoriteStnName().observe(this, name -> {
             tvStnName.setText(name);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             isFavoriteGas = true;

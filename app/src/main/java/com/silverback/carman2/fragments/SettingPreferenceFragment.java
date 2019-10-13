@@ -60,7 +60,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
 
-
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
         String[] district = getArguments().getStringArray("district");
@@ -89,9 +88,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
 
 
-        Preference favorite = findPreference("pref_favorite_provider");
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
+        Preference favorite = findPreference("pref_favorite_provider");
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String station = getString(R.string.pref_no_favorite);
             String service = getString(R.string.pref_no_favorite);
@@ -101,35 +100,11 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
                 else if(provider.category == Constants.SVC) service = provider.favoriteName;
             }
 
+            log.i("favorite change: %s", station);
             favorite.setSummary(String.format("%s / %s", station, service));
         });
-
-        /*
-        mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
-            String station = getString(R.string.pref_no_favorite);
-            String service = getString(R.string.pref_no_favorite);
-            String providerId = null;
-
-            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                if(provider.category == Constants.GAS){
-                    station = provider.favoriteName;
-                    providerId = provider.providerId;
-                    log.i("ProviderId: %s", providerId);
-                } else if(provider.category == Constants.SVC) {
-                    service = provider.favoriteName;
-
-                }
-
-            }
-
-            mSettings.edit().putString("pref_favorite_provider", providerId).apply();
-            favorite.setSummary(String.format("%s / %s", station, service));
-        });
-        */
-
         Preference gasStation = findPreference("pref_favorite_gas");
         gasStation.setSummary(R.string.pref_summary_gas);
-
         Preference svcCenter = findPreference("pref_favorite_svc");
         svcCenter.setSummary(R.string.pref_summary_svc);
 
@@ -142,6 +117,13 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
+
+        Preference editImage = findPreference("pref_edit_image");
+        editImage.setOnPreferenceClickListener(view -> {
+            log.i("Edit Image Preference clicked");
+            return true;
+        });
+
     }
 
     @Override
@@ -157,12 +139,15 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
 
+        log.i("onDisplayPreferenceDialog");
+        
         if (pref instanceof SpinnerDialogPreference) {
             DialogFragment dlgFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             dlgFragment.setTargetFragment(this, 0);
             dlgFragment.show(getFragmentManager(), null);
 
         } else {
+
             super.onDisplayPreferenceDialog(pref);
         }
 

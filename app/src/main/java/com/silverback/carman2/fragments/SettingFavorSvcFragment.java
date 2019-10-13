@@ -102,7 +102,6 @@ public class SettingFavorSvcFragment extends Fragment implements
         return localView;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if(menuItem.getItemId() == android.R.id.home) {
@@ -127,11 +126,16 @@ public class SettingFavorSvcFragment extends Fragment implements
 
     /*
     @Override
-    public void addFavorite(FavoriteProviderEntity entity) {
+    public void changeFavorite(FavoriteProviderEntity entity) {
         log.i("Listener: Add Favorite - %s", entity.providerName);
         mDB.favoriteModel().insertFavoriteProvider(entity);
     }
     */
+
+    @Override
+    public void changeFavorite(int category, String svcId) {
+
+    }
 
     @Override
     public void deleteFavorite(FavoriteProviderEntity entity) {

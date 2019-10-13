@@ -8,8 +8,7 @@
         android:id="@+id/tv_station_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/largeText"
-        android:textStyle="bold"/>
+        android:textSize="@dimen/mediumText" />
 
     <TextView
         android:id="@+id/tv_station_price"

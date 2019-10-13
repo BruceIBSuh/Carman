@@ -8,14 +8,13 @@
         android:id="@+id/tv_sigun_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/largeText"
-        android:textStyle="bold"/>
+        android:textSize="@dimen/mediumText" />
 
     <TextView
         android:id="@+id/tv_sigun_price"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:textSize="12sp" />
+        android:textSize="@dimen/smallText" />
 
 </LinearLayout>

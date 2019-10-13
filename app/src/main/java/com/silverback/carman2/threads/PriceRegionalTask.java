@@ -1,45 +1,42 @@
 package com.silverback.carman2.threads;
 
-import android.app.Activity;
 import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetPriceViewModel;
 
-import java.lang.ref.WeakReference;
-
-public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceListMethods {
+public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnable.OpinetPriceListMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PriceRegionalTask.class);
 
     // Objects and Fields
-    private WeakReference<Activity> mWeakActivity;
     private OpinetPriceViewModel viewModel;
     private Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable, mStationPriceRunnable;
     private String distCode;
     private String stnId;
     private int index = 0;
 
-    // Constructor: creates an PriceTask object containing PriceRunnable object.
-    PriceTask(Context context) {
+    // Constructor: creates an PriceRegionalTask object containing PriceRegionalRunnable object.
+    PriceRegionalTask(Context context) {
         super();
-        mAvgPriceRunnable = new PriceRunnable(context, this, PriceRunnable.AVG);
-        mSidoPriceRunnable = new PriceRunnable(context, this, PriceRunnable.SIDO);
-        mSigunPriceRunnable = new PriceRunnable(context, this, PriceRunnable.SIGUN);
-        mStationPriceRunnable = new PriceRunnable(context, this, PriceRunnable.STATION);
+        mAvgPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.AVG);
+        mSidoPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.SIDO);
+        mSigunPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.SIGUN);
+        mStationPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.STATION);
 
     }
 
-    // Initialize args for PriceRunnable
+    // Initialize args for PriceRegionalRunnable
     void initPriceTask(OpinetPriceViewModel viewModel, String distCode, String stnId) {
+    //void initPriceTask(OpinetPriceViewModel viewModel, String distCode) {
         this.viewModel = viewModel;
         this.distCode = distCode;
         this.stnId = stnId;
     }
 
-    // Getter for the Runnable invoked by startPriceTask() in ThreadManager
+    // Getter for the Runnable invoked by startRegionalPriceTask() in ThreadManager
     Runnable getAvgPriceRunnable() {
         return mAvgPriceRunnable;
     }
@@ -52,7 +49,7 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
     Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
 
 
-    // Callback methods defined in PriceRunnable.OpinentPriceListMethods
+    // Callback methods defined in PriceRegionalRunnable.OpinentPriceListMethods
     @Override
     public void setPriceDownloadThread(Thread currentThread) {
         setCurrentThread(currentThread);
@@ -86,11 +83,11 @@ public class PriceTask extends ThreadTask implements PriceRunnable.OpinetPriceLi
         int outstate = -1;
 
         switch(state) {
-            case PriceRunnable.DOWNLOAD_PRICE_COMPLETE:
+            case PriceRegionalRunnable.DOWNLOAD_PRICE_COMPLETE:
                 outstate = ThreadManager.DOWNLOAD_PRICE_COMPLETE;
                 break;
 
-            case PriceRunnable.DOWNLOAD_PRICE_FAILED:
+            case PriceRegionalRunnable.DOWNLOAD_PRICE_FAILED:
                 outstate = ThreadManager.DOWNLOAD_PRICE_FAILED;
                 break;
         }

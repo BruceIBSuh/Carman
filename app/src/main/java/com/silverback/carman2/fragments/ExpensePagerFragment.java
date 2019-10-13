@@ -38,8 +38,6 @@ public class ExpensePagerFragment extends Fragment {
     private Fragment currentFragment;
     private List<GasManagerDao.RecentGasData> gasDataList;
     private List<ServiceManagerDao.RecentServiceData> serviceList;
-
-
     // UIs
     private TextView tvLastInfo, tvPage;
 
@@ -94,7 +92,7 @@ public class ExpensePagerFragment extends Fragment {
         // fragment attached in order to separately do actions according to the fragment.
         fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
             currentFragment = fragment;
-            if(getArguments() != null) numPage = (getArguments().getInt("page"));
+            if(getArguments() != null) numPage = getArguments().getInt("page");
 
             // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
@@ -119,13 +117,6 @@ public class ExpensePagerFragment extends Fragment {
 
         return localView;
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
     @SuppressWarnings("ConstantConditions")

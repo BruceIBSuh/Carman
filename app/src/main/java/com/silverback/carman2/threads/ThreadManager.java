@@ -1,6 +1,5 @@
 package com.silverback.carman2.threads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
@@ -10,12 +9,8 @@ import android.widget.TextView;
 
 import androidx.fragment.app.FragmentManager;
 
-import com.silverback.carman2.SettingPreferenceActivity;
-import com.silverback.carman2.IntroActivity;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetPriceViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
@@ -23,7 +18,6 @@ import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -155,7 +149,7 @@ public class ThreadManager {
             public void handleMessage(Message msg) {
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
                 ClockTask clockTask;
-                PriceTask priceTask;
+                PriceRegionalTask priceRegionalTask;
                 LocationTask locationTask;
                 //LoadPriceListTask loadPriceTask;
                 StationListTask stationListTask;
@@ -178,8 +172,8 @@ public class ThreadManager {
 
 
                     case DOWNLOAD_PRICE_COMPLETE:
-                        priceTask = (PriceTask)msg.obj;
-                        recycleTask(priceTask);
+                        priceRegionalTask = (PriceRegionalTask)msg.obj;
+                        recycleTask(priceRegionalTask);
 
                         break;
 
@@ -354,22 +348,37 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static PriceTask startPriceTask(
+    public static PriceRegionalTask startRegionalPriceTask(
             Context context, OpinetPriceViewModel model, String distCode, String stnId) {
+            //Context context, OpinetPriceViewModel model, String distCode) {
 
-        PriceTask priceTask = (PriceTask)sInstance.mTaskWorkQueue.poll();
+        PriceRegionalTask priceRegionalTask = (PriceRegionalTask)sInstance.mTaskWorkQueue.poll();
 
-        if(priceTask == null) {
-            priceTask = new PriceTask(context);
+        if(priceRegionalTask == null) {
+            priceRegionalTask = new PriceRegionalTask(context);
         }
 
-        priceTask.initPriceTask(model, distCode, stnId);
-        sInstance.mDownloadThreadPool.execute(priceTask.getAvgPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceTask.getSidoPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceTask.getSigunPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceTask.getStationPriceRunnable());
+        priceRegionalTask.initPriceTask(model, distCode, stnId);
+        //priceRegionalTask.initPriceTask(model, distCode);
 
-        return priceTask;
+        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getAvgPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getSidoPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getSigunPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getStationPriceRunnable());
+
+        return priceRegionalTask;
+    }
+
+    public static PriceFavoriteTask startFavoritePriceTask(
+            Context context, OpinetPriceViewModel model, String stnId) {
+
+        PriceFavoriteTask stnPriceTask = (PriceFavoriteTask)sInstance.mTaskWorkQueue.poll();
+        if(stnPriceTask == null) stnPriceTask = new PriceFavoriteTask(context);
+
+        stnPriceTask.initTask(model, stnId);
+        sInstance.mDownloadThreadPool.execute(stnPriceTask.getPriceRunnableStation());
+
+        return stnPriceTask;
     }
 
 

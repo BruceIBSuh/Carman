@@ -7,6 +7,7 @@ import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -14,9 +15,10 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.threads.PriceTask;
+import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -31,10 +33,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     // Objects
     private Fragment fragment;
+    private OpinetPriceViewModel viewModel;
     private MenuItem menuEdit, menuAdd;
     private PreferenceFragmentCompat caller;
     private SettingPreferenceFragment settingFragment;
-    private PriceTask priceTask;
+    private PriceRegionalTask priceRegionalTask;
     private String distCode;
     private DecimalFormat df;
 
@@ -53,6 +56,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // it, the parent activity receives a call to onOptionsItemSelected().
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        viewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
         // DecimalFormat singleton instance from BaseActivity
         df = getDecimalFormatInstance();
 
@@ -90,7 +94,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onPause() {
         super.onPause();
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
-        if(priceTask != null) priceTask = null;
+        if(priceRegionalTask != null) priceRegionalTask = null;
     }
 
 
@@ -177,7 +181,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
-                //priceTask = ThreadManager.startPriceTask(this, distCode);
+                priceRegionalTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
 
@@ -191,7 +195,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    // Callback by ThreadManager.startPriceTask when the task has the price info completed.
+    // Callback by ThreadManager.startRegionalPriceTask when the task has the price info completed.
     public void onPriceTaskComplete() {
         //mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
     }

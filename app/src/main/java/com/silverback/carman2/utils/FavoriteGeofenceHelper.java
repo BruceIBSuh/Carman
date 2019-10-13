@@ -52,7 +52,7 @@ public class FavoriteGeofenceHelper {
         void notifyAddGeofenceFailed();
     }
 
-    // Constructor for addFavorite()
+    // Constructor for changeFavorite()
     public FavoriteGeofenceHelper(Context context) {
         this.context = context;
         if(mGeofencingClient == null) mGeofencingClient = LocationServices.getGeofencingClient(context);

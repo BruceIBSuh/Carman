@@ -26,15 +26,13 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
-import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.threads.PriceFavoriteTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -50,7 +48,8 @@ public class SettingFavorGasFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
     private SparseArray<DocumentSnapshot> snapshotList;
-    //private FirestoreViewModel firestoreViewModel;
+    private PriceFavoriteTask priceFavoriteTask;
+    private OpinetPriceViewModel priceViewModel;
 
     // Constructor
     public SettingFavorGasFragment() {
@@ -62,13 +61,11 @@ public class SettingFavorGasFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
 
-        if(firestore == null) firestore = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        priceViewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
         //firestoreViewModel = ViewModelProviders.of(this).get(FirestoreViewModel.class);
         snapshotList = new SparseArray<>();
-
-
-
     }
 
     @Override
@@ -95,7 +92,6 @@ public class SettingFavorGasFragment extends Fragment implements
                 final int pos = i;
                 final String stnId = favoriteList.get(pos).providerId;
 
-
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
@@ -114,7 +110,12 @@ public class SettingFavorGasFragment extends Fragment implements
         return localView;
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(priceFavoriteTask != null) priceFavoriteTask = null;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
 
@@ -141,11 +142,20 @@ public class SettingFavorGasFragment extends Fragment implements
 
     /*
     @Override
-    public void addFavorite(FavoriteProviderEntity entity) {
+    public void changeFavorite(FavoriteProviderEntity entity) {
         log.i("Listener: Add Favorite - %s", entity.providerName);
         mDB.favoriteModel().insertFavoriteProvider(entity);
     }
     */
+
+    // Callback invoked from SettingFwhen the first-set favorite station has changed in
+    @Override
+    public void changeFavorite(int category, String stnId) {
+        if(category == Constants.GAS && !stnId.isEmpty()) {
+            log.i("The favorite changed: %s", stnId);
+            priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
+        }
+    }
 
     @Override
     public void deleteFavorite(FavoriteProviderEntity entity) {

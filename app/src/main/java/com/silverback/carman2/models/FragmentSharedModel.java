@@ -8,12 +8,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.silverback.carman2.database.FavoriteProviderEntity;
-
 import org.json.JSONObject;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class FragmentSharedModel extends ViewModel {
 
@@ -26,8 +21,9 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
 
-    private MutableLiveData<String> favoriteGasName;
+    private MutableLiveData<String> favoriteStnName;
     private MutableLiveData<String> favoriteSvcName;
+    private MutableLiveData<String> favoriteStnId;
 
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
@@ -81,14 +77,19 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    public MutableLiveData<String> getFavoriteGasName() {
-        if(favoriteGasName == null) favoriteGasName = new MutableLiveData<>();
-        return favoriteGasName;
+    public MutableLiveData<String> getFavoriteStnName() {
+        if(favoriteStnName == null) favoriteStnName = new MutableLiveData<>();
+        return favoriteStnName;
     }
 
     public MutableLiveData<String> getFavoriteSvcName() {
         if(favoriteSvcName == null) favoriteSvcName = new MutableLiveData<>();
         return favoriteSvcName;
+    }
+
+    public MutableLiveData<String> getFavoriteStnId() {
+        if(favoriteStnId == null) favoriteStnId = new MutableLiveData<>();
+        return favoriteStnId;
     }
 
     // Communicate GasManagerFragment or ServiceManagerFragment w/ AlertDidalogFragment when

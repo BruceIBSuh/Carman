@@ -1,11 +1,8 @@
 package com.silverback.carman2.fragments;
 
-import android.app.ActionBar;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -98,7 +95,7 @@ public class FavoriteListFragment extends DialogFragment {
                     (FavoriteProviderDao.FavoriteNameAddrs)mAdapter.getItem(position);
             switch(category) {
                 case Constants.GAS:
-                    fragmentModel.getFavoriteGasName().setValue(nameAddrs.favoriteName);
+                    fragmentModel.getFavoriteStnName().setValue(nameAddrs.favoriteName);
                     break;
                 case Constants.SVC:
                     fragmentModel.getFavoriteSvcName().setValue(nameAddrs.favoriteName);

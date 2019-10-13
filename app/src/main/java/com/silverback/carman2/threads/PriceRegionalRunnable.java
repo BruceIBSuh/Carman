@@ -20,10 +20,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-public class PriceRunnable implements Runnable {
+public class PriceRegionalRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PriceRegionalRunnable.class);
 
     // constants
     private static final String API_KEY = "F186170711";
@@ -53,8 +53,8 @@ public class PriceRunnable implements Runnable {
 
     /*
      * An interface that defines methods that ThreadTask implements. An instance of
-     * ThreadTask passes itself to an PriceRunnable instance through the
-     * PriceRunnable constructor, after which the two instances can access each other's
+     * ThreadTask passes itself to an PriceRegionalRunnable instance through the
+     * PriceRegionalRunnable constructor, after which the two instances can access each other's
      * variables.
      */
     public interface OpinetPriceListMethods {
@@ -67,14 +67,13 @@ public class PriceRunnable implements Runnable {
     }
 
     // Constructor
-    PriceRunnable(Context context, OpinetPriceListMethods task, int category) {
+    PriceRegionalRunnable(Context context, OpinetPriceListMethods task, int category) {
         this.context = context;
         this.category = category;
         this.task = task;
         xmlHandler = new XmlPullParserHandler();
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
@@ -88,12 +87,12 @@ public class PriceRunnable implements Runnable {
         HttpURLConnection conn = null;
 
         try {
-
             if(Thread.interrupted()) throw new InterruptedException();
 
             switch(category) {
 
                 case AVG: // Average oil price
+                    log.i("AvgPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLavg);
                     conn = (HttpURLConnection)url.openConnection();
@@ -114,6 +113,7 @@ public class PriceRunnable implements Runnable {
                     break;
 
                 case SIDO: // Sido price
+                    log.i("SidoPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLsido + sidoCode);
                     conn = (HttpURLConnection)url.openConnection();
@@ -154,6 +154,7 @@ public class PriceRunnable implements Runnable {
                     break;
 
                 case STATION:
+                    log.i("Station price thread:%s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLStn + stnId);
                     conn = (HttpURLConnection)url.openConnection();
@@ -165,6 +166,7 @@ public class PriceRunnable implements Runnable {
 
                     Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(in);
                     if(stnPrice != null) {
+                        log.i("Station Price: %s", stnPrice.getStnName());
                         task.setTaskCount();
                         savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
                     }
