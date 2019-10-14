@@ -165,6 +165,7 @@ public class GeneralFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         childView = inflater.inflate(R.layout.fragment_general, container, false);
+
         TextView tvDate = childView.findViewById(R.id.tv_today);
         Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);

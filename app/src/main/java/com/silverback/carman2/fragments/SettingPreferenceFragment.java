@@ -1,8 +1,10 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.SharedPreferences;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.InputType;
 
 import androidx.fragment.app.DialogFragment;
@@ -13,37 +15,33 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.LoadDistCodeTask;
+import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
+import static android.app.Activity.RESULT_OK;
 
 public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
+
+
     // Objects
     private CarmanDatabase mDB;
-    private DecimalFormat df;
-    //private SpinnerDialogPreference spinnerPref;
+    private FragmentSharedModel sharedModel;
     private LoadDistCodeTask mTask;
-    private SharedPreferences mSettings;
 
-    private String sidoName, sigunName, sigunCode;
-    private String distCode;
+    private String sigunCode;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -57,8 +55,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         if (mDB == null)
             mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
 
-        df = BaseActivity.getDecimalFormatInstance();
-        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        //df = BaseActivity.getDecimalFormatInstance();
+        //mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
@@ -118,11 +117,19 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
+        // Image Editor which pops up the dialog to select which resource location to find an image.
         Preference editImage = findPreference("pref_edit_image");
         editImage.setOnPreferenceClickListener(view -> {
             log.i("Edit Image Preference clicked");
+            DialogFragment dialogFragment = new EditImageDialogFragment();
+            dialogFragment.show(getFragmentManager(), null);
+
             return true;
         });
+
+
+
+
 
     }
 
@@ -152,4 +159,15 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
 
     }
+
+
+
+    /*
+    private void cropProfileImage(Uri uri) {
+        Intent intent = new Intent(this, CropImageActivity.class);
+        intent.setData(uri);
+        //intent.putExtra("orientation", orientation);
+        startActivityForResult(intent, REQUEST_CODE_CROP);
+    }
+    */
 }

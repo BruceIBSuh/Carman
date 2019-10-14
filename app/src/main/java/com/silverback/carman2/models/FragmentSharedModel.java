@@ -24,6 +24,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> favoriteStnName;
     private MutableLiveData<String> favoriteSvcName;
     private MutableLiveData<String> favoriteStnId;
+    private MutableLiveData<Integer> imageItemSelected;
 
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
@@ -108,6 +109,11 @@ public class FragmentSharedModel extends ViewModel {
 
     public MutableLiveData<Boolean> getAlertSvcResult() {
         return alertSvcResult;
+    }
+
+    public MutableLiveData<Integer> getImageItemSelected() {
+        if(imageItemSelected == null) imageItemSelected = new MutableLiveData<>();
+        return imageItemSelected;
     }
 
 

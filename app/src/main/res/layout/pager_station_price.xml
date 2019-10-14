@@ -18,4 +18,14 @@
         app:stationPriceDown="@color/priceDown"
         app:stationPriceUp="@color/priceUp" />
 
+    <ImageView
+        android:id="@+id/img_arrow"
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:src="@drawable/arrow_left"
+        android:contentDescription="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

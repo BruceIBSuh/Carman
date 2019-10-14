@@ -153,6 +153,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Inflate the layout for this fragment
         final View localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
+
         constraintLayout = localView.findViewById(R.id.constraint_gas);
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         tvStnName = localView.findViewById(R.id.tv_station_name);

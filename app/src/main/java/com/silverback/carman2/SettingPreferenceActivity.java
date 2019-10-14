@@ -1,7 +1,14 @@
 package com.silverback.carman2;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
 
@@ -12,16 +19,24 @@ import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.silverback.carman2.fragments.EditImageFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.OpinetPriceViewModel;
 import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
+
+import static androidx.core.content.FileProvider.getUriForFile;
 
 
 public class SettingPreferenceActivity extends BaseActivity implements
@@ -31,9 +46,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceActivity.class);
 
+    // Constants
+    private static final int REQUEST_CODE_GALLERY = 1;
+    private static final int REQUEST_CODE_CAMERA = 2;
+
     // Objects
-    private Fragment fragment;
-    private OpinetPriceViewModel viewModel;
+    private OpinetPriceViewModel priceModel;
+    private FragmentSharedModel sharedModel;
+
     private MenuItem menuEdit, menuAdd;
     private PreferenceFragmentCompat caller;
     private SettingPreferenceFragment settingFragment;
@@ -56,7 +76,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // it, the parent activity receives a call to onOptionsItemSelected().
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        viewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
+        priceModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
+        sharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
         // DecimalFormat singleton instance from BaseActivity
         df = getDecimalFormatInstance();
 
@@ -81,6 +102,29 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 .replace(R.id.frame_setting, settingFragment)
                 .addToBackStack(null)
                 .commit();
+
+        // FragmentSharedModel to retrieve the data from
+        sharedModel.getImageItemSelected().observe(this, which -> {
+            log.i("FragmentSharedModel: %s", which);
+            switch(which) {
+                case 0: // Gallery
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                    if (galleryIntent.resolveActivity(getPackageManager()) != null)
+                        log.i("galleryIntent: %s", galleryIntent);
+                    //galleryIntent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                    startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                    break;
+                case 1: // Camera
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+
+                    if(cameraIntent.resolveActivity(getPackageManager()) != null) {
+                        startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                    }
+                    break;
+                case 2: // Delete
+            }
+        });
     }
 
 
@@ -181,7 +225,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
-                priceRegionalTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode, null);
+                priceRegionalTask = ThreadManager.startRegionalPriceTask(this, priceModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
 
@@ -195,13 +239,77 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    // Callback by ThreadManager.startRegionalPriceTask when the task has the price info completed.
-    public void onPriceTaskComplete() {
-        //mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        EditImageHelper imageHelper = new EditImageHelper(this);
+        int orientation;
+        if(resultCode != RESULT_OK) return;
+
+        switch(requestCode) {
+
+            case REQUEST_CODE_GALLERY:
+                Uri galleryUri = data.getData();
+                orientation = imageHelper.getImageOrientation(galleryUri);
+                if(orientation != 0) galleryUri = imageHelper.rotateBitmapUri(galleryUri, orientation);
+
+                EditImageFragment editImageFragment = new EditImageFragment();
+                Bundle arg = new Bundle();
+                arg.putString("uri", galleryUri.toString());
+                editImageFragment.setArguments(arg);
+
+                getSupportFragmentManager().beginTransaction()
+                        .addToBackStack(null)
+                        .replace(R.id.frame_setting, editImageFragment)
+                        .commit();
+
+                break;
+
+            case REQUEST_CODE_CAMERA:
+                Uri cameraUri = data.getData();
+                /*
+                if(cameraUri != null) {
+                    // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
+                    orientation = getImageOrientation(cameraUri);
+                    if(orientation != 0) cameraUri = rotateBitmapUri(cameraUri, orientation);
+
+                } else {
+                    //Log.i(LOG_TAG, "cameraUri is null");
+                }
+
+
+                if(cameraUri != null) cropProfileImage(cameraUri);
+                */
+                break;
+
+            /*
+            case REQUEST_CODE_CROP:
+
+                Uri croppedImageUri = data.getData();
+                applyGlideForCroppedImage(this, croppedImageUri, null, imgProfile);
+
+                // Create the bitmap based on the Uri which is passed from CropImageActivity.
+                try {
+                    Bitmap croppedBitmap =
+                            MediaStore.Images.Media.getBitmap(getContentResolver(), croppedImageUri);
+                    // Encode the bitmap to String based on Base64 format
+                    encodeBitmap = encodeBitmapToBase64(croppedBitmap);
+                } catch(IOException e) {
+                    Log.e(LOG_TAG, "IOException e: " + e.getMessage());
+                }
+
+                break;
+
+             */
+        }
+
     }
+
 
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
 }

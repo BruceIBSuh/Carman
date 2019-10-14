@@ -52,15 +52,14 @@ public class PricePagerFragment extends Fragment {
         if(getArguments() != null) {
             page = getArguments().getInt("page");
             fuelCode = getArguments().getString("fuelCode");
-            log.i("Arguments: %s, %s", page, fuelCode);
         }
 
-        final int REGIONAL_PRICE = 0;
+        final int DISTRICT_PRICE = 0;
         final int STATION_PRICE = 1;
 
         switch(page) {
-            case REGIONAL_PRICE:
-                View firstPage = inflater.inflate(R.layout.pager_regional_price, container,false);
+            case DISTRICT_PRICE:
+                View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
                 OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);
                 OpinetSigunPriceView sigunView = firstPage.findViewById(R.id.sigunPriceView);
 

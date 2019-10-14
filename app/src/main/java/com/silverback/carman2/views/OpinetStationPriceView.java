@@ -49,8 +49,6 @@ public class OpinetStationPriceView extends LinearLayout {
         getAttributes(context, attrs);
     }
 
-
-    @SuppressWarnings("ConstantConditions")
     private void getAttributes(Context context, AttributeSet attrs) {
 
         //LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
