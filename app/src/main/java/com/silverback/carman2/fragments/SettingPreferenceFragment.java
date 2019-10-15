@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.TextUtils;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
@@ -131,13 +132,14 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Set the image for the icon by getting the image Uri which saved in SharedPreferences
         // in SettingPreverenceActivity.
         String imageUri = mSettings.getString("croppedImageUri", null);
-        if(imageUri.isEmpty()) return;
-        try {
-            RoundedBitmapDrawable drawable = ((SettingPreferenceActivity) getActivity())
-                    .drawRoundedBitmap(Uri.parse(imageUri));
-            cropImagePreference.setIcon(drawable);
-        } catch(IOException e) {
-            log.e("IOException: %s", e.getMessage());
+        if(!TextUtils.isEmpty(imageUri)) {
+            try {
+                RoundedBitmapDrawable drawable = ((SettingPreferenceActivity) getActivity())
+                        .drawRoundedBitmap(Uri.parse(imageUri));
+                cropImagePreference.setIcon(drawable);
+            } catch (IOException e) {
+                log.e("IOException: %s", e.getMessage());
+            }
         }
 
 
