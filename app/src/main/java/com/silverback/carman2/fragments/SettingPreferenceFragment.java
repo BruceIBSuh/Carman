@@ -1,12 +1,12 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.InputType;
 
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
@@ -24,10 +24,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
-import static android.app.Activity.RESULT_OK;
+import java.io.IOException;
 
 public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
@@ -38,8 +37,11 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Objects
     private CarmanDatabase mDB;
+    private SharedPreferences mSettings;
     private FragmentSharedModel sharedModel;
     private LoadDistCodeTask mTask;
+
+    private Preference cropImagePreference;
 
     private String sigunCode;
 
@@ -56,8 +58,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
 
         //df = BaseActivity.getDecimalFormatInstance();
-        //mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-        sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
@@ -118,17 +119,26 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
-        Preference editImage = findPreference("pref_edit_image");
-        editImage.setOnPreferenceClickListener(view -> {
+        cropImagePreference = findPreference("pref_edit_image");
+        cropImagePreference.setOnPreferenceClickListener(view -> {
             log.i("Edit Image Preference clicked");
-            DialogFragment dialogFragment = new EditImageDialogFragment();
+            DialogFragment dialogFragment = new CropImageDialogFragment();
             dialogFragment.show(getFragmentManager(), null);
 
             return true;
         });
 
-
-
+        // Set the image for the icon by getting the image Uri which saved in SharedPreferences
+        // in SettingPreverenceActivity.
+        String imageUri = mSettings.getString("croppedImageUri", null);
+        if(imageUri.isEmpty()) return;
+        try {
+            RoundedBitmapDrawable drawable = ((SettingPreferenceActivity) getActivity())
+                    .drawRoundedBitmap(Uri.parse(imageUri));
+            cropImagePreference.setIcon(drawable);
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
 
 
     }
@@ -160,7 +170,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     }
 
-
+    public Preference getCropImagePreference() {
+        return cropImagePreference;
+    }
 
     /*
     private void cropProfileImage(Uri uri) {

@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
-
+        <activity android:name=".CropImageActivity"></activity>
         <activity
             android:name=".StationMapActivity"
             android:label="@string/title_activity_maps"
@@ -32,22 +32,24 @@
         <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".BaseActivity" />
         <activity android:name=".MainActivity" />
-
-        <activity android:name=".ExpenseActivity"
+        <activity
+            android:name=".ExpenseActivity"
             android:parentActivityName=".MainActivity"
-            android:windowSoftInputMode="adjustPan" >
+            android:windowSoftInputMode="adjustPan">
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
-        <activity android:name=".SettingPreferenceActivity"
+        <activity
+            android:name=".SettingPreferenceActivity"
             android:label="@string/setting_toolbar_title"
             android:parentActivityName=".MainActivity">
 
@@ -56,14 +58,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
+        <activity
+            android:name=".BillboardActivity"
+            android:parentActivityName=".MainActivity">
 
-        <activity android:name=".BillboardActivity" android:parentActivityName=".MainActivity" >
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -78,7 +81,6 @@
         <meta-data
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_app_key" />
-
         <!--
         <provider android:name=".database.DataProvider"
             android:authorities="com.silverback.carman2.models.provider"
@@ -86,7 +88,6 @@
             android:grantUriPermissions="true"
             android:permission="true" />
         -->
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.silverback.carman2.fileprovider"

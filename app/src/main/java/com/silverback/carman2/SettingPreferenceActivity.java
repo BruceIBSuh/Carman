@@ -2,24 +2,26 @@ package com.silverback.carman2;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.silverback.carman2.fragments.EditImageFragment;
+import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -28,27 +30,26 @@ import com.silverback.carman2.models.OpinetPriceViewModel;
 import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
+import com.silverback.carman2.utils.CropImageHelper;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
 
-import static androidx.core.content.FileProvider.getUriForFile;
-
 
 public class SettingPreferenceActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
+        CropImageDialogFragment.OnSelectImageMediumListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceActivity.class);
 
     // Constants
-    private static final int REQUEST_CODE_GALLERY = 1;
-    private static final int REQUEST_CODE_CAMERA = 2;
+    private static final int REQUEST_CODE_GALLERY = 10;
+    private static final int REQUEST_CODE_CAMERA = 11;
+    private static final int REQUEST_CODE_CROP = 12;
 
     // Objects
     private OpinetPriceViewModel priceModel;
@@ -60,6 +61,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private PriceRegionalTask priceRegionalTask;
     private String distCode;
     private DecimalFormat df;
+
+    // UIs
+    private FrameLayout frameLayout;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -75,6 +79,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Enable the Up button which enables it as an action button such that when the user presses
         // it, the parent activity receives a call to onOptionsItemSelected().
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        frameLayout = findViewById(R.id.frame_setting);
 
         priceModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
         sharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
@@ -98,33 +104,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
         settingFragment = new SettingPreferenceFragment();
         settingFragment.setArguments(args);
 
+        // Attach SettingPreferencFragment in the FrameLayout
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
                 .addToBackStack(null)
                 .commit();
-
-        // FragmentSharedModel to retrieve the data from
-        sharedModel.getImageItemSelected().observe(this, which -> {
-            log.i("FragmentSharedModel: %s", which);
-            switch(which) {
-                case 0: // Gallery
-                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-                    if (galleryIntent.resolveActivity(getPackageManager()) != null)
-                        log.i("galleryIntent: %s", galleryIntent);
-                    //galleryIntent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-                    startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
-                    break;
-                case 1: // Camera
-                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
-
-                    if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-                        startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
-                    }
-                    break;
-                case 2: // Delete
-            }
-        });
     }
 
 
@@ -146,29 +130,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         return super.onOptionsItemSelected(item);
-
-        /*
-        switch(item.getItemId()) {
-            case android.R.id.home:
-                log.i("onOptionsItemSelected in SettingPreferenceActivity");
-                Intent mainIntent = new Intent(this, MainActivity.class);
-                startActivity(mainIntent);
-                finish();
-
-                //onBackPressed();
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
-
-
-        }
-        */
     }
-
-
 
     /*
      * Invoked when a Preference with an associated Fragment is tabbed.
@@ -235,81 +198,141 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case "pref_favorite_provider":
                 log.i("Favorite Provider changed");
                 break;
+
+            case "pref_edit_image":
+                log.i("EditImage");
+                break;
         }
 
     }
 
     @Override
+    public void onSelectImageMedia(int which) {
+
+        switch(which) {
+            case 0: // Gallery
+                Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                if (galleryIntent.resolveActivity(getPackageManager()) != null) {
+                    log.i("galleryIntent: %s", galleryIntent);
+                    //galleryIntent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                }
+
+                startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                break;
+
+            case 1: // Camera
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+
+                if(cameraIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                }
+                break;
+
+            case 2: // Delete
+                String uriString = mSettings.getString("croppedImageUri", null);
+                log.i("Delete: %s", uriString);
+
+                // BUG: it can't found the file.
+                if(!TextUtils.isEmpty(uriString)) {
+                    File file = new File(Uri.parse(uriString).getPath());
+                    if(file.exists()) {
+                        log.i("File exists");
+                        mSettings.edit().putString("croppedImageUri", null).apply();
+
+                    }
+
+                    settingFragment.getCropImagePreference().setIcon(null);
+                    if(file.delete()) Snackbar.make(frameLayout, "Deleted!", Snackbar.LENGTH_SHORT).show();
+                }
+
+                break;
+
+        }
+    }
+
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        EditImageHelper imageHelper = new EditImageHelper(this);
-        int orientation;
         if(resultCode != RESULT_OK) return;
+
+        CropImageHelper imageHelper = new CropImageHelper(this);
+        int orientation;
 
         switch(requestCode) {
 
             case REQUEST_CODE_GALLERY:
+
                 Uri galleryUri = data.getData();
+                if(galleryUri == null) return;
+
                 orientation = imageHelper.getImageOrientation(galleryUri);
                 if(orientation != 0) galleryUri = imageHelper.rotateBitmapUri(galleryUri, orientation);
 
-                EditImageFragment editImageFragment = new EditImageFragment();
-                Bundle arg = new Bundle();
-                arg.putString("uri", galleryUri.toString());
-                editImageFragment.setArguments(arg);
+                Intent galleryIntent = new Intent(this, CropImageActivity.class);
+                galleryIntent.setData(galleryUri);
+                startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
 
-                getSupportFragmentManager().beginTransaction()
-                        .addToBackStack(null)
-                        .replace(R.id.frame_setting, editImageFragment)
-                        .commit();
 
                 break;
 
             case REQUEST_CODE_CAMERA:
                 Uri cameraUri = data.getData();
-                /*
-                if(cameraUri != null) {
-                    // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
-                    orientation = getImageOrientation(cameraUri);
-                    if(orientation != 0) cameraUri = rotateBitmapUri(cameraUri, orientation);
+                if(cameraUri == null) return;
 
-                } else {
-                    //Log.i(LOG_TAG, "cameraUri is null");
-                }
+                // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
+                orientation = imageHelper.getImageOrientation(cameraUri);
+                if(orientation != 0) cameraUri = imageHelper.rotateBitmapUri(cameraUri, orientation);
 
+                Intent cameraIntent = new Intent(this, CropImageActivity.class);
+                cameraIntent.setData(cameraUri);
+                startActivityForResult(cameraIntent, REQUEST_CODE_CROP);
 
-                if(cameraUri != null) cropProfileImage(cameraUri);
-                */
                 break;
 
-            /*
+
             case REQUEST_CODE_CROP:
 
-                Uri croppedImageUri = data.getData();
-                applyGlideForCroppedImage(this, croppedImageUri, null, imgProfile);
+                final Uri croppedImageUri = data.getData();
+                if(croppedImageUri != null)
+                    mSettings.edit().putString("croppedImageUri", croppedImageUri.toString()).apply();
+
+                //imageHelper.applyGlideForCroppedImage(this, croppedImageUri, null, imageView);
 
                 // Create the bitmap based on the Uri which is passed from CropImageActivity.
                 try {
-                    Bitmap croppedBitmap =
-                            MediaStore.Images.Media.getBitmap(getContentResolver(), croppedImageUri);
+
+                    RoundedBitmapDrawable roundedBitmap = drawRoundedBitmap(croppedImageUri);
+                    settingFragment.getCropImagePreference().setIcon(roundedBitmap);
                     // Encode the bitmap to String based on Base64 format
-                    encodeBitmap = encodeBitmapToBase64(croppedBitmap);
+                    //String encodedBitmap = imageHelper.encodeBitmapToBase64(croppedBitmap);
+
+
                 } catch(IOException e) {
-                    Log.e(LOG_TAG, "IOException e: " + e.getMessage());
+                    //Log.e(LOG_TAG, "IOException e: " + e.getMessage());
                 }
 
                 break;
 
-             */
+
         }
+
 
     }
 
+    public RoundedBitmapDrawable drawRoundedBitmap(Uri uri) throws IOException {
+        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+        RoundedBitmapDrawable roundedBitmap = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+        roundedBitmap.setCircular(true);
+
+        return roundedBitmap;
+    }
 
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+
 
 }

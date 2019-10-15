@@ -1,17 +1,19 @@
-package com.silverback.carman2.fragments;
+package com.silverback.carman2;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
-import androidx.fragment.app.Fragment;
-
-import com.silverback.carman2.R;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.views.DrawImageView;
 
 import java.io.BufferedOutputStream;
@@ -22,45 +24,51 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class EditImageFragment extends Fragment implements View.OnClickListener {
+import static androidx.core.content.FileProvider.getUriForFile;
 
+public class CropImageActivity extends AppCompatActivity implements View.OnClickListener{
+
+    private static final LoggingHelper log = LoggingHelperFactory.create(CropImageActivity.class);
 
     // Objects
-    private DisplayMetrics metrics;
     private Uri mUri;
+    private DrawImageView drawView;
 
     // UIs
     private ImageView mImageView;
-    private DrawImageView drawView;
 
-    public EditImageFragment() {
-
-    }
-
-    @SuppressWarnings("ConstantConditions")
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_crop_image);
 
-        if(getArguments() != null) mUri = Uri.parse(getArguments().getString("uri"));
-        metrics = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        Toolbar cropImageToolbar = findViewById(R.id.toolbar_crop_Image);
+        setSupportActionBar(cropImageToolbar);
+
+
+        if(getIntent() != null) mUri = getIntent().getData();
+        log.i("URI: %s", mUri);
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+        mImageView = findViewById(R.id.img_profile);
+        drawView = findViewById(R.id.view_custom_drawImageView);
+        findViewById(R.id.btn_editor_confirm).setOnClickListener(this);
+        findViewById(R.id.btn_editor_cancel).setOnClickListener(this);
+
+        mImageView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                drawView.setScaleMatrix(metrics, mUri, mImageView);
+                mImageView.getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View localView = inflater.inflate(R.layout.fragment_setting_editimg, container, false);
-        mImageView = localView.findViewById(R.id.img_profile);
-        drawView = localView.findViewById(R.id.drawView);
-
-        localView.findViewById(R.id.btn_editor_confirm).setOnClickListener(this);
-        localView.findViewById(R.id.btn_editor_cancel).setOnClickListener(this);
-
-
-        return localView;
-    }
-
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onClick(View v) {
 
@@ -72,7 +80,7 @@ public class EditImageFragment extends Fragment implements View.OnClickListener 
                 if(croppedBitmap == null) return;
 
                 // Save the cropped image in the cache directory, which is removed on exiting the app.
-                File imagePath = new File(getContext().getCacheDir(), "images/");
+                File imagePath = new File(getCacheDir(), "images/");
                 if(!imagePath.exists()) imagePath.mkdir();
 
                 SimpleDateFormat sdf = new SimpleDateFormat("hhmmss", Locale.US);
@@ -92,9 +100,8 @@ public class EditImageFragment extends Fragment implements View.OnClickListener 
                     //Log.e(LOG_TAG, "IOException: " + e.getMessage());
 
                 } finally {
-                    /*
-                    Uri cropUri = getUriForFile(this, "com.hjkim.soccerplan.fileprovider", fCropImage);
-                    //Log.i(LOG_TAG, "contentUri: " + cropUri);
+
+                    Uri cropUri = getUriForFile(this, "com.silverback.carman2.fileprovider", fCropImage);
 
                     Intent resultIntent = new Intent();
                     resultIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -102,16 +109,15 @@ public class EditImageFragment extends Fragment implements View.OnClickListener 
                     setResult(RESULT_OK, resultIntent);
 
                     finish();
-
-                     */
                 }
 
 
                 break;
 
             case R.id.btn_editor_cancel:
-                if(getActivity() != null) getActivity().getSupportFragmentManager().popBackStackImmediate();
+                finish();
                 break;
         }
+
     }
 }

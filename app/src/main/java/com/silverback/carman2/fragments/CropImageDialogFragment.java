@@ -1,31 +1,27 @@
 package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
 
-public class EditImageDialogFragment extends DialogFragment {
+public class CropImageDialogFragment extends DialogFragment {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(EditImageDialogFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(CropImageDialogFragment.class);
 
     // Objects
-    private FragmentSharedModel sharedModel;
+    private OnSelectImageMediumListener mListener;
     private int selected;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if(getActivity() != null)
-            sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+    public interface OnSelectImageMediumListener {
+        void onSelectImageMedia(int position);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -38,11 +34,20 @@ public class EditImageDialogFragment extends DialogFragment {
                     selected = which;
                 })
                 .setPositiveButton("Confirm", (didalog, which) -> {
-                    sharedModel.getImageItemSelected().setValue(selected);
+                    mListener.onSelectImageMedia(selected);
                 })
                 .setNegativeButton("Cancel", (dialog, id) -> {});
 
         return builder.create();
+    }
 
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        try {
+            mListener = (OnSelectImageMediumListener) context;
+        } catch(ClassCastException e) {
+            log.i("ClassCastException: %s", e.getMessage());
+        }
     }
 }

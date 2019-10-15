@@ -6,11 +6,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.view.Surface;
 import android.widget.ImageView;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
@@ -27,20 +24,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class EditImageHelper {
+public class CropImageHelper {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(EditImageHelper.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(CropImageHelper.class);
 
     // Objects
     private Context mContext;
     private BitmapTypeRequest<?> bitmapTypeReq;
 
-    public EditImageHelper(Context context) {
+    public CropImageHelper(Context context) {
         mContext = context;
     }
 
-    private void applyGlideForCroppedImage(Uri uri, byte[] byteArray, ImageView view) {
+    public void applyGlideForCroppedImage(Uri uri, byte[] byteArray, ImageView view) {
 
         if(uri != null) {
             bitmapTypeReq = Glide.with(mContext).load(uri).asBitmap();
