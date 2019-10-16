@@ -4,18 +4,17 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
 import android.hardware.camera2.CameraAccessException;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
-import android.widget.ImageView;
 
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
-import com.bumptech.glide.BitmapTypeRequest;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -31,12 +30,13 @@ public class CropImageHelper {
 
     // Objects
     private Context mContext;
-    private BitmapTypeRequest<?> bitmapTypeReq;
+    //private BitmapTypeRequest<?> bitmapTypeReq;
 
     public CropImageHelper(Context context) {
         mContext = context;
     }
 
+    /*
     public void applyGlideForCroppedImage(Uri uri, byte[] byteArray, ImageView view) {
 
         if(uri != null) {
@@ -56,6 +56,27 @@ public class CropImageHelper {
             }
         });
     }
+    */
+
+    // Make the cropped image be circular.
+    public RoundedBitmapDrawable drawRoundedBitmap(Uri uri) throws IOException {
+
+        Bitmap srcBitmap;
+
+        if(android.os.Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            // This method was deprecated in API level 29.
+            // Loading of images should be performed through ImageDecoder#createSource(ContentResolver, Uri)
+            srcBitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
+        } else {
+            ImageDecoder.Source source = ImageDecoder.createSource(mContext.getContentResolver(), uri);
+            srcBitmap = ImageDecoder.decodeBitmap(source);
+        }
+
+        RoundedBitmapDrawable roundedBitmap = RoundedBitmapDrawableFactory.create(mContext.getResources(), srcBitmap);
+        roundedBitmap.setCircular(true);
+
+        return roundedBitmap;
+    }
 
     // Rotate Bitmap as appropriate when taken by camera.
     // Use ExifInterface to get meta-data on image taken by camera and Metrix to rotate
@@ -66,7 +87,7 @@ public class CropImageHelper {
                 null, null, null);
 
         if(cursor == null || cursor.getCount() != 1) {
-            cursor.close();
+            //cursor.close();
             return -1;
         }
 
@@ -78,10 +99,12 @@ public class CropImageHelper {
 
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public Uri rotateBitmapUri(Uri uri, int orientation) {
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
+
         try {
             BitmapFactory.decodeStream(mContext.getContentResolver().openInputStream(uri), null, options);
         } catch(IOException e) {
@@ -99,24 +122,20 @@ public class CropImageHelper {
         }
 
         // Save the rotated image in the cache directory, which will be erased on exiting
-        // programatially in onBackPressed in MainActivity.
+        // programatically in onBackPressed in MainActivity.
         File imagePath = new File(mContext.getCacheDir(), "images/");
         if(!imagePath.exists()) imagePath.mkdir();
         File fRotated = new File(imagePath, "tmpRotated.jpg");
-        Bitmap rotatedBitmap = null;
+        Bitmap rotatedBitmap;
 
         // try-resources statement
         try (FileOutputStream fos = new FileOutputStream(fRotated) ){
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
             rotatedBitmap = Bitmap.createBitmap(
                     bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
-
             rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
 
-
-            // Required to make FILE_PROVIDER to make this work.
-            //return getUriForFile(this, "com.hjkim.soccerplan.fileprovider", fRotated);
-            return null;
+            return FileProvider.getUriForFile(mContext, "com.silverback.carman2.fileprovider", fRotated);
 
         } catch(IOException e) {
             //Log.e(LOG_TAG, "IOException: " + e.getMessage());
@@ -159,7 +178,8 @@ public class CropImageHelper {
                 break;
             }
         }
-        */
+         */
+
     }
 
     public String encodeBitmapToBase64(Bitmap bitmap) {

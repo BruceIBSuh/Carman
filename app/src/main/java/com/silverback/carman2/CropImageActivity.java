@@ -10,11 +10,12 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.widget.Button;
 import android.widget.ImageView;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.views.DrawImageView;
+import com.silverback.carman2.views.DrawEditorView;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -32,31 +33,36 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
 
     // Objects
     private Uri mUri;
-    private DrawImageView drawView;
+    private DrawEditorView drawView;
 
     // UIs
+    private Toolbar cropImageToolbar;
     private ImageView mImageView;
+    private Button btnConfirm;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crop_image);
 
-        Toolbar cropImageToolbar = findViewById(R.id.toolbar_crop_Image);
+        cropImageToolbar = findViewById(R.id.toolbar_crop_Image);
         setSupportActionBar(cropImageToolbar);
 
-
         if(getIntent() != null) mUri = getIntent().getData();
-        log.i("URI: %s", mUri);
 
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
         mImageView = findViewById(R.id.img_profile);
-        drawView = findViewById(R.id.view_custom_drawImageView);
-        findViewById(R.id.btn_editor_confirm).setOnClickListener(this);
-        findViewById(R.id.btn_editor_cancel).setOnClickListener(this);
+        drawView = findViewById(R.id.view_custom_drawEditorView);
+        Button btnConfirm = findViewById(R.id.btn_editor_confirm);
+        Button btnCancel = findViewById(R.id.btn_editor_cancel);
+        btnConfirm.setOnClickListener(this);
+        btnCancel.setOnClickListener(this);
 
+
+        drawView.setToolbarHeight(cropImageToolbar.getMinimumHeight() + 100);
         mImageView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -84,8 +90,7 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
                 if(!imagePath.exists()) imagePath.mkdir();
 
                 SimpleDateFormat sdf = new SimpleDateFormat("hhmmss", Locale.US);
-                Calendar calendar = Calendar.getInstance();
-                String filename = sdf.format(calendar.getTimeInMillis());
+                String filename = sdf.format(Calendar.getInstance().getTimeInMillis());
 
                 File fCropImage = new File(imagePath, filename + ".jpg");
                 if(fCropImage.exists()) {

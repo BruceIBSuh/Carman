@@ -15,7 +15,6 @@ import android.graphics.Xfermode;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -29,14 +28,14 @@ import com.silverback.carman2.utils.EdgeDots;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class DrawImageView extends View {
+public class DrawEditorView extends View {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(DrawImageView.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(DrawEditorView.class);
 
     // Constants
     private static final int CROP_MODE_RECTANGLE = 1;
     private static final int CROP_MODE_CIRCLE = 2;
-    private static final int INIT_SIZE = 200;
+    private static final int INIT_SIZE = 200; //deault size of EdgeDots
 
     // Objects
     private Context context;
@@ -55,7 +54,6 @@ public class DrawImageView extends View {
     private float imgViewWidth, imgViewHeight;
     private float offsetX, offsetY;
     private float scale;
-    private float cx, cy;
     private int radius;
     private int groupId = 2;
     private int dotId = -1;
@@ -64,23 +62,29 @@ public class DrawImageView extends View {
     private int cropMode = CROP_MODE_CIRCLE;
 
     private boolean isBoundary;
+    private int toolbarHeight;
 
 
-    public DrawImageView(Context context) {
+    public DrawEditorView(Context context) {
         super(context);
         this.context = context;
         init();
     }
 
-    public DrawImageView(Context context, AttributeSet attrs, int defStyle) {
+    public DrawEditorView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         this.context = context;
         init();
     }
-    public DrawImageView(Context context, AttributeSet attrs) {
+    public DrawEditorView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         init();
+    }
+
+    // Set the offset of the toolbar height invoked in CropImageActivity. Refac required.
+    public void setToolbarHeight(int height) {
+        toolbarHeight = height;
     }
 
     private void init() {
@@ -118,10 +122,11 @@ public class DrawImageView extends View {
     @Override
     public void onSizeChanged(int newX, int newY, int oldX, int oldY) {
         //rectPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        log.i("Toolbar height: %s", toolbarHeight);
 
         // Set the initial points of each dotRds dots.
         p1.x = (newX - INIT_SIZE) / 2;
-        p1.y = (newY - INIT_SIZE) / 2;
+        p1.y = (newY - toolbarHeight - INIT_SIZE) / 2;
         p2.x = p1.x + INIT_SIZE;
         p2.y = p1.y;
         p3.x = p1.x + INIT_SIZE;
@@ -135,13 +140,15 @@ public class DrawImageView extends View {
         arrDots.add(1, new EdgeDots(context, R.drawable.reddot, p2, 1));
         arrDots.add(2, new EdgeDots(context, R.drawable.reddot, p3, 2));
         arrDots.add(3, new EdgeDots(context, R.drawable.reddot, p4, 3));
+
+        super.onSizeChanged(newX, newY, oldX, oldY);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
 
         canvas.drawPaint(canvasPaint);
-
+        int cx, cy;
         // Draw the 4 dots on every dotRds surrounding the circle.
         for(EdgeDots dot : arrDots) canvas.drawBitmap(dot.getBitmap(), dot.getX(), dot.getY(), null);
 
@@ -328,6 +335,7 @@ public class DrawImageView extends View {
     public boolean performClick() {
         return super.performClick();
     }
+
 
 
     /**

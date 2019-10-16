@@ -18,7 +18,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".CropImageActivity"></activity>
+        <activity android:name=".CropImageActivity" />
         <activity
             android:name=".StationMapActivity"
             android:label="@string/title_activity_maps"

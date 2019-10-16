@@ -16,6 +16,10 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
@@ -25,6 +29,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.CropImageHelper;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import java.io.IOException;
@@ -33,8 +38,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
-
-
 
     // Objects
     private CarmanDatabase mDB;
@@ -55,9 +58,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         // Indicates that the fragment may initialize the contents of the Activity's standard options menu.
         setHasOptionsMenu(true);
-        if (mDB == null)
-            mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
 
+        mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         //df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
 
@@ -129,13 +131,14 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             return true;
         });
 
-        // Set the image for the icon by getting the image Uri which saved in SharedPreferences
-        // in SettingPreverenceActivity.
+        // Set the circle image for the icon by getting the image Uri which has been saved at
+        // SharedPreferences defined in SettingPreverenceActivity.
         String imageUri = mSettings.getString("croppedImageUri", null);
+
         if(!TextUtils.isEmpty(imageUri)) {
             try {
-                RoundedBitmapDrawable drawable = ((SettingPreferenceActivity) getActivity())
-                        .drawRoundedBitmap(Uri.parse(imageUri));
+                CropImageHelper cropHelper = new CropImageHelper(getContext());
+                RoundedBitmapDrawable drawable = cropHelper.drawRoundedBitmap(Uri.parse(imageUri));
                 cropImagePreference.setIcon(drawable);
             } catch (IOException e) {
                 log.e("IOException: %s", e.getMessage());

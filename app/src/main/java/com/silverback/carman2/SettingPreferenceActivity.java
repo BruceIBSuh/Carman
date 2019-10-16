@@ -3,8 +3,11 @@ package com.silverback.carman2;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.ImageDecoder;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -12,6 +15,7 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NavUtils;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.fragment.app.Fragment;
@@ -21,6 +25,9 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -35,7 +42,9 @@ import com.silverback.carman2.utils.CropImageHelper;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class SettingPreferenceActivity extends BaseActivity implements
@@ -52,6 +61,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private static final int REQUEST_CODE_CROP = 12;
 
     // Objects
+    private FirebaseFirestore firestore;
     private OpinetPriceViewModel priceModel;
     private FragmentSharedModel sharedModel;
 
@@ -79,9 +89,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Enable the Up button which enables it as an action button such that when the user presses
         // it, the parent activity receives a call to onOptionsItemSelected().
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
         frameLayout = findViewById(R.id.frame_setting);
 
+        firestore = FirebaseFirestore.getInstance();
         priceModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
         sharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
         // DecimalFormat singleton instance from BaseActivity
@@ -126,7 +136,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
 
-
+    @Override
+    public void onBackPressed() {
+        NavUtils.navigateUpFromSameTask(this);
+        //finish();
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -167,11 +181,28 @@ public class SettingPreferenceActivity extends BaseActivity implements
         switch(key) {
             case Constants.VEHICLE_NAME:
                 EditTextPreference pref = settingFragment.findPreference(key);
-                log.i("EditTextPref: %s", pref.getText());
-                if(!TextUtils.isEmpty(pref.getText())) {
-                    //pref.setSummary(pref.getText());
-                    //mSettings.edit().putString(Constants.VEHICLE_NAME, pref.getText()).apply();
-                }
+                if(pref == null || TextUtils.isEmpty(pref.getText())) return;
+
+                CollectionReference colRef = firestore.collection("users");
+                colRef.whereEqualTo("user_nickname", pref.getText())
+                        .get()
+                        .addOnCompleteListener(task -> {
+                            if(task.isSuccessful()) {
+                                if(task.getResult().size() > 0) {
+                                    log.i("name exists");
+                                    Snackbar.make(frameLayout, "The same nickname is occupied", Snackbar.LENGTH_SHORT).show();
+                                } else {
+                                    log.i("no name found");
+                                    Map<String, Object> data = new HashMap<>();
+                                    data.put("user_name", pref.getText());
+                                    colRef.add(data).addOnSuccessListener(docRef -> log.i("added: %s", docRef.getId()))
+                                            .addOnFailureListener(e -> log.e("failed to add "));
+                                }
+                            }else{
+                                log.i("no name found");
+                            }
+                        });
+
                 break;
 
             case Constants.ODOMETER:
@@ -206,30 +237,38 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
+    // Callback by CropImageDialogFragment.OnSelectImageMediumListener to be notified of which
+    // image media to select in the dialog.
     @Override
     public void onSelectImageMedia(int which) {
 
         switch(which) {
             case 0: // Gallery
+                Intent galleryIntent = new Intent();
+                galleryIntent.setType("image/*");
+                galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+                /*
                 Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
                 if (galleryIntent.resolveActivity(getPackageManager()) != null) {
                     log.i("galleryIntent: %s", galleryIntent);
                     //galleryIntent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
                 }
-
+                */
                 startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                //startActivityForResult(Intent.createChooser(galleryIntent, "Select Image"), REQUEST_CODE_GALLERY);
                 break;
 
             case 1: // Camera
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+                Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
 
                 if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                    startActivityForResult(chooser, REQUEST_CODE_CAMERA);
                 }
                 break;
 
             case 2: // Delete
+
                 String uriString = mSettings.getString("croppedImageUri", null);
                 log.i("Delete: %s", uriString);
 
@@ -239,7 +278,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     if(file.exists()) {
                         log.i("File exists");
                         mSettings.edit().putString("croppedImageUri", null).apply();
-
                     }
 
                     settingFragment.getCropImagePreference().setIcon(null);
@@ -251,27 +289,37 @@ public class SettingPreferenceActivity extends BaseActivity implements
         }
     }
 
+    // Callback by startActivityForResult defined in OnSelectImageMedia, receiving the uri of
+    // a selected image back from Gallery or Camera with REQUEST_CODE_GALLERY OR REQUEST_CODE_CAMERA,
+    // then creating an intent w/ the Uri to instantiate CropImageActivity to edit the image,
+    // the result of which is sent to REQUEST_CROP_IMAGE.
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode != RESULT_OK) return;
 
-        CropImageHelper imageHelper = new CropImageHelper(this);
+        CropImageHelper cropHelper = new CropImageHelper(this);
         int orientation;
 
         switch(requestCode) {
 
             case REQUEST_CODE_GALLERY:
-
                 Uri galleryUri = data.getData();
                 if(galleryUri == null) return;
 
-                orientation = imageHelper.getImageOrientation(galleryUri);
-                if(orientation != 0) galleryUri = imageHelper.rotateBitmapUri(galleryUri, orientation);
+                orientation = cropHelper.getImageOrientation(galleryUri);
+                if(orientation != 0) galleryUri = cropHelper.rotateBitmapUri(galleryUri, orientation);
+
+                log.i("galleryUri: %s", galleryUri);
 
                 Intent galleryIntent = new Intent(this, CropImageActivity.class);
                 galleryIntent.setData(galleryUri);
                 startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
+
+                File tmpRotated = new File(galleryUri.getPath());
+                log.i("tmpRoated file Path: %s", tmpRotated);
+                if(tmpRotated.exists() && tmpRotated.delete()) log.i("Deleted");
 
 
                 break;
@@ -281,8 +329,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 if(cameraUri == null) return;
 
                 // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
-                orientation = imageHelper.getImageOrientation(cameraUri);
-                if(orientation != 0) cameraUri = imageHelper.rotateBitmapUri(cameraUri, orientation);
+                orientation = cropHelper.getImageOrientation(cameraUri);
+                if(orientation != 0) cameraUri = cropHelper.rotateBitmapUri(cameraUri, orientation);
 
                 Intent cameraIntent = new Intent(this, CropImageActivity.class);
                 cameraIntent.setData(cameraUri);
@@ -294,22 +342,21 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case REQUEST_CODE_CROP:
 
                 final Uri croppedImageUri = data.getData();
-                if(croppedImageUri != null)
+                if(croppedImageUri != null) {
                     mSettings.edit().putString("croppedImageUri", croppedImageUri.toString()).apply();
-
-                //imageHelper.applyGlideForCroppedImage(this, croppedImageUri, null, imageView);
+                }
 
                 // Create the bitmap based on the Uri which is passed from CropImageActivity.
                 try {
 
-                    RoundedBitmapDrawable roundedBitmap = drawRoundedBitmap(croppedImageUri);
+                    RoundedBitmapDrawable roundedBitmap = cropHelper.drawRoundedBitmap(croppedImageUri);
                     settingFragment.getCropImagePreference().setIcon(roundedBitmap);
                     // Encode the bitmap to String based on Base64 format
                     //String encodedBitmap = imageHelper.encodeBitmapToBase64(croppedBitmap);
 
 
                 } catch(IOException e) {
-                    //Log.e(LOG_TAG, "IOException e: " + e.getMessage());
+                    log.e("IOException: %s", e.getMessage());
                 }
 
                 break;
@@ -319,15 +366,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
     }
-
-    public RoundedBitmapDrawable drawRoundedBitmap(Uri uri) throws IOException {
-        Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-        RoundedBitmapDrawable roundedBitmap = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
-        roundedBitmap.setCircular(true);
-
-        return roundedBitmap;
-    }
-
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {
         return mSettings;
