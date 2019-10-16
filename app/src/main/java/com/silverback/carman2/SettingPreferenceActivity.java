@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -39,8 +40,13 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.CropImageHelper;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -179,30 +185,26 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
         switch(key) {
+
             case Constants.VEHICLE_NAME:
                 EditTextPreference pref = settingFragment.findPreference(key);
                 if(pref == null || TextUtils.isEmpty(pref.getText())) return;
 
-                CollectionReference colRef = firestore.collection("users");
-                colRef.whereEqualTo("user_nickname", pref.getText())
+
+                firestore.collection("users").whereEqualTo("user_name", pref.getText())
                         .get()
                         .addOnCompleteListener(task -> {
                             if(task.isSuccessful()) {
-                                if(task.getResult().size() > 0) {
-                                    log.i("name exists");
-                                    Snackbar.make(frameLayout, "The same nickname is occupied", Snackbar.LENGTH_SHORT).show();
-                                } else {
-                                    log.i("no name found");
-                                    Map<String, Object> data = new HashMap<>();
-                                    data.put("user_name", pref.getText());
-                                    colRef.add(data).addOnSuccessListener(docRef -> log.i("added: %s", docRef.getId()))
-                                            .addOnFailureListener(e -> log.e("failed to add "));
+                                for(QueryDocumentSnapshot document : task.getResult()) {
+                                    log.i("Queried document: %s", document.getId());
+                                    if(!TextUtils.isEmpty(document.getId())) return;
                                 }
-                            }else{
-                                log.i("no name found");
-                            }
+
+                                addUserToFirestore(pref.getText());
+                            } else log.e("Query failed");
                         });
 
+                //addUserToFirestore(pref.getText());
                 break;
 
             case Constants.ODOMETER:
@@ -366,10 +368,50 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
     }
+
+    private void addUserToFirestore(String nickname) {
+
+
+        File fName = new File(getFilesDir(), "user_id");
+        if(!fName.exists()) {
+            Map<String, String> userData = new HashMap<>();
+            userData.put("user_name", nickname);
+
+            firestore.collection("users").add(userData).addOnSuccessListener( docref -> {
+                final String id = docref.getId();
+                try(final FileOutputStream fos = openFileOutput("user_id", Context.MODE_PRIVATE)){
+                    fos.write(id.getBytes());
+                } catch(IOException e) {
+                    log.e("IOException: %s", e.getMessage());
+                }
+
+            }).addOnFailureListener(e -> log.e("Add user failed: 5s", e.getMessage()));
+
+        } else {
+            // In case thre exists the same id, update a new nickname under the same id.
+            try(FileInputStream fis = openFileInput("user_id")) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+                final String id = br.readLine();
+                firestore.collection("users").document(id).update("user_name", nickname)
+                        .addOnSuccessListener(aVoid -> log.i("Update done"))
+                        .addOnFailureListener(e -> log.e("Update failed"));
+
+            } catch(FileNotFoundException e) {
+                log.e("FileNOtFoundExcpetion: %s", e.getMessage());
+            } catch(IOException e) {
+                log.e("IOException: %s", e.getMessage());
+            }
+        }
+
+    }
+
+
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+
 
 
 
