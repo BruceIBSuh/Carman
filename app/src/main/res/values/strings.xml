@@ -208,6 +208,7 @@
     <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>
     <string name="dialog_btn_confirm">확인</string>
     <string name="dialog_btn_cancel">취소</string>
+    <string name="dialog_btn_verify">인증</string>
 
 
     <!--GeofenceTransitionService-->

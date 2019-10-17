@@ -9,17 +9,13 @@ import android.text.TextUtils;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
@@ -40,6 +36,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
     // Objects
+    private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
     private SharedPreferences mSettings;
     private FragmentSharedModel sharedModel;
@@ -48,6 +45,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private Preference cropImagePreference;
 
     private String sigunCode;
+    private String vehicleName;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -59,6 +57,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Indicates that the fragment may initialize the contents of the Activity's standard options menu.
         setHasOptionsMenu(true);
 
+        firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         //df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
@@ -67,6 +66,51 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // of JSONArray
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
+
+        Preference editNamePreference = findPreference(Constants.VEHICLE_NAME);
+        if(editNamePreference != null) {
+            editNamePreference.setSummary(mSettings.getString(Constants.VEHICLE_NAME, null));
+        }
+        editNamePreference.setOnPreferenceClickListener(view -> {
+            String username = view.getSummary().toString().trim();
+            DialogFragment editFragment = SettingEditNameFragment.newInstance(username);
+            //editFragment.setTargetFragment(this, 1);
+            editFragment.show(getFragmentManager(), null);
+            return true;
+        });
+        log.i("Summary: %s", editNamePreference.getSummary());
+
+
+        /*
+        EditTextPreference etUserName = findPreference(Constants.VEHICLE_NAME);
+        if(etUserName != null) {
+            etUserName.setSummaryProvider(preference -> {
+                final String name = ((EditTextPreference)preference).getText().trim();
+
+
+                if (TextUtils.isEmpty(name)) {
+                    Snackbar.make(getView(), "Enter a nickname", Snackbar.LENGTH_SHORT).show();
+                    return null;
+
+                } else {
+                    Query queryName = firestore.collection("users").whereEqualTo("user_name", name);
+                    queryName.get().addOnSuccessListener(snapshot -> {
+                        Snackbar.make(getView(), "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
+                        for(QueryDocumentSnapshot document : snapshot) {
+                            log.i("Queried: %s", document.getId());
+                        }
+
+                    }).addOnFailureListener(e -> {
+                        log.e("Query failed");
+
+                    });
+
+                    return name;
+                }
+            });
+        }
+        */
+
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
@@ -134,7 +178,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Set the circle image for the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
         String imageUri = mSettings.getString("croppedImageUri", null);
-
         if(!TextUtils.isEmpty(imageUri)) {
             try {
                 CropImageHelper cropHelper = new CropImageHelper(getContext());
@@ -156,7 +199,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
 
     // Callback from PreferenceManager.OnDisplayPreferenceDialogListener when a Preference
-    // requests to display a dialog.
+    // requests to display a CUSTOM dialog
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
@@ -164,9 +207,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         log.i("onDisplayPreferenceDialog");
         
         if (pref instanceof SpinnerDialogPreference) {
-            DialogFragment dlgFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
-            dlgFragment.setTargetFragment(this, 0);
-            dlgFragment.show(getFragmentManager(), null);
+            DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
+            spinnerFragment.setTargetFragment(this, 0);
+            spinnerFragment.show(getFragmentManager(), null);
 
         } else {
 

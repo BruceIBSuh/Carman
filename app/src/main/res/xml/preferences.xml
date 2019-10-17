@@ -5,11 +5,18 @@
     <PreferenceCategory
         app:title="@string/pref_category_basic_info"
         app:key="pref_basic_info" >
-
+        <!--
         <EditTextPreference
             app:key="pref_nickname"
             app:title="@string/setting_nickname"
             app:useSimpleSummaryProvider="true"/>
+        -->
+        <Preference
+            app:key="pref_nickname"
+            app:title="@string/setting_nickname"
+            app:dialogTitle="@string/setting_nickname"
+            app:positiveButtonText="Confirm"
+            app:negativeButtonText="Cancel" />
 
         <EditTextPreference
             app:key="pref_model"

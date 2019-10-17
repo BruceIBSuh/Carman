@@ -161,13 +161,4 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     }
 
 
-    public DistrictSpinnerAdapter getSigunAdapter() {
-        return sigunAdapter;
-    }
-
-    // Callback invoked from ThreadManager when the task has been completed.
-    public void onDistrictTaskComplete() {
-        sigunSpinner.setAdapter(sigunAdapter);
-        sigunSpinner.setSelection(mSigunItemPos);
-    }
 }

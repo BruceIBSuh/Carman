@@ -3,22 +3,17 @@ package com.silverback.carman2;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.ImageDecoder;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NavUtils;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
@@ -26,9 +21,10 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -184,29 +180,36 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
-        switch(key) {
+        final File file = new File(getFilesDir(), "user_id");
 
+        switch(key) {
+            /*
             case Constants.VEHICLE_NAME:
                 EditTextPreference pref = settingFragment.findPreference(key);
                 if(pref == null || TextUtils.isEmpty(pref.getText())) return;
 
+                Query queryUserName = firestore.collection("users").whereEqualTo("user_name", pref.getText().trim());
+                queryUserName.get().addOnSuccessListener(snapshot -> {
 
-                firestore.collection("users").whereEqualTo("user_name", pref.getText())
-                        .get()
-                        .addOnCompleteListener(task -> {
-                            if(task.isSuccessful()) {
-                                for(QueryDocumentSnapshot document : task.getResult()) {
-                                    log.i("Queried document: %s", document.getId());
-                                    if(!TextUtils.isEmpty(document.getId())) return;
-                                }
+                    for(QueryDocumentSnapshot document : snapshot) {
+                        log.i("Queried: %s", document.getId());
+                    }
 
-                                addUserToFirestore(pref.getText());
-                            } else log.e("Query failed");
-                        });
+                    // Check if this right!!!
+                    Snackbar.make(frameLayout, "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
 
-                //addUserToFirestore(pref.getText());
+
+                }).addOnFailureListener(e -> {
+                    log.e("Name query failed");
+                    if(!file.exists()) addUserDataToFirestore(pref.getText());
+                    else updateUserDataToFirestore("user_name", pref.getText().trim());
+                });
+
                 break;
 
+            case Constants.VHEICLE_MODEL:
+                break;
+            */
             case Constants.ODOMETER:
                 /*
                 EditTextPreference mileage = settingFragment.findPreference(key);
@@ -369,40 +372,35 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    private void addUserToFirestore(String nickname) {
+    private void addUserDataToFirestore(String nickname) {
 
+        Map<String, String> userData = new HashMap<>();
+        userData.put("user_name", nickname);
 
-        File fName = new File(getFilesDir(), "user_id");
-        if(!fName.exists()) {
-            Map<String, String> userData = new HashMap<>();
-            userData.put("user_name", nickname);
-
-            firestore.collection("users").add(userData).addOnSuccessListener( docref -> {
-                final String id = docref.getId();
-                try(final FileOutputStream fos = openFileOutput("user_id", Context.MODE_PRIVATE)){
-                    fos.write(id.getBytes());
-                } catch(IOException e) {
-                    log.e("IOException: %s", e.getMessage());
-                }
-
-            }).addOnFailureListener(e -> log.e("Add user failed: 5s", e.getMessage()));
-
-        } else {
-            // In case thre exists the same id, update a new nickname under the same id.
-            try(FileInputStream fis = openFileInput("user_id")) {
-                BufferedReader br = new BufferedReader(new InputStreamReader(fis));
-                final String id = br.readLine();
-                firestore.collection("users").document(id).update("user_name", nickname)
-                        .addOnSuccessListener(aVoid -> log.i("Update done"))
-                        .addOnFailureListener(e -> log.e("Update failed"));
-
-            } catch(FileNotFoundException e) {
-                log.e("FileNOtFoundExcpetion: %s", e.getMessage());
+        firestore.collection("users").add(userData).addOnSuccessListener( docref -> {
+            final String id = docref.getId();
+            try(final FileOutputStream fos = openFileOutput("user_id", Context.MODE_PRIVATE)){
+                fos.write(id.getBytes());
             } catch(IOException e) {
                 log.e("IOException: %s", e.getMessage());
             }
-        }
 
+        }).addOnFailureListener(e -> log.e("Add user failed: 5s", e.getMessage()));
+
+    }
+
+    private void updateUserDataToFirestore(final String field, final String data) {
+
+        try (FileInputStream fis = openFileInput("user_id");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
+            final String id = br.readLine();
+            firestore.collection("users").document(id).update(field, data)
+                    .addOnSuccessListener(aVoid -> log.i("Successfully updated"))
+                    .addOnFailureListener(e -> log.e("Update failed"));
+        } catch(IOException e) {
+            log.e("IOException occrurred when updating: %s", e.getMessage());
+        }
     }
 
 
