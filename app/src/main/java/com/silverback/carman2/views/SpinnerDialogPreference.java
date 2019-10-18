@@ -1,6 +1,7 @@
 package com.silverback.carman2.views;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 
@@ -23,7 +24,7 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
     /*
      * When you replace the 0 in the second constructor with R.attr.dialogPreferenceStyle
      * (for a DialogPreference) or R.attr.preferenceStyle (For any other preference) you
-     * won’t face any design issues later. Thanks Ivan Soriano
+     * won’t face any design issues later. Thanks to Ivan Soriano
      */
 
     // Constructors
@@ -48,7 +49,8 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
 
         setDialogLayoutResource(R.layout.dialog_setting_spinner);
         setOnPreferenceChangeListener(this);
-
+        setPositiveButtonText("CONFIRM");
+        setNegativeButtonText("CANCEL");
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
         try {
@@ -63,11 +65,12 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
         log.i("onPreferenceChange");
         JSONArray json = (JSONArray)newValue;
         try {
-            setSummary(String.format("%s %s", json.get(0).toString(), json.get(1).toString()));
+            setSummary(String.format("%s %s", json.get(0).toString(), json.get(14).toString()));
         } catch(JSONException e) {
             log.e("JSONException");
         }
 
         return false;
     }
+
 }

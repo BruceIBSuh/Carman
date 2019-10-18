@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -24,6 +25,7 @@ import org.json.JSONArray;
 
 import java.util.Arrays;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceDialogFragmentCompat;
@@ -111,7 +113,6 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
             }
             sigunSpinner.setAdapter(sigunAdapter);
         });
-
     }
 
     @Override
@@ -159,6 +160,5 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
             mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
         }
     }
-
 
 }

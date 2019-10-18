@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <ListPreference
+        app:key="pref_auto_maker"
+        app:title="AutoMaker"
+        app:entries="@array/pref_automaker"
+        app:entryValues="@array/pref_automaker"/>
+
+    <ListPreference
+        app:key="pref_auto_model"
+        app:title="Auto Model"
+        app:entries="@array/pref_automaker"
+        app:entryValues="@array/pref_automaker"/>
+
+</PreferenceScreen>

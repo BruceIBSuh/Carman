@@ -107,6 +107,23 @@
         <item>@string/pref_edit_image_delete</item>
     </string-array>
 
+    <string-array name="pref_automaker">
+        <item>Hyundai</item>
+        <item>Kia</item>
+        <item>Genesis</item>
+        <item>Toyoda</item>
+        <item>Nissan</item>
+        <item>Ford</item>
+        <item>Honda</item>
+        <item>Benz</item>
+        <item>Audi</item>
+        <item>Volkswagen</item>
+        <item>Volvo</item>
+        <item>Porche</item>
+        <item>Bentley</item>
+        <item>Jaguar</item>
+    </string-array>
+
     <!-- Default Service Item List -->
     <!-- Service item In ServiceManagerActivityvity -->
     <string-array name="service_item_list">

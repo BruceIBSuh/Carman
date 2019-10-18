@@ -27,6 +27,8 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<Integer> imageItemSelected;
 
 
+    private MutableLiveData<String> strData;
+
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
@@ -114,6 +116,11 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<Integer> getImageItemSelected() {
         if(imageItemSelected == null) imageItemSelected = new MutableLiveData<>();
         return imageItemSelected;
+    }
+
+    public MutableLiveData<String> getFragmentStringData() {
+        if(strData == null) strData = new MutableLiveData<>();
+        return strData;
     }
 
 

@@ -1,8 +1,10 @@
 package com.silverback.carman2.fragments;
 
-import android.app.Dialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,84 +12,88 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.DialogFragment;
+import androidx.preference.PreferenceDialogFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.views.NameDialogPreference;
 
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 
-public class SettingEditNameFragment extends DialogFragment {
+public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingEditNameFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
 
-    // UIs
+    // Objects
     private FirebaseFirestore firestore;
-    private SharedPreferences mSettings;
+    private NameDialogPreference namePreference;
+    // UIs
     private ConstraintLayout rootView;
     private EditText etName;
-    private Button btnPositive, btnVerify;
+    private Button btnVerify;
 
     // Fields
+    private boolean isVerified = false;
     private String username;
     private boolean isNameExist;
 
 
     // Default constructor
-    public SettingEditNameFragment() {
+    public SettingNameDlgFragment() {
 
     }
 
     // Method for singleton instance
-    static SettingEditNameFragment newInstance(String summary) {
+    static SettingNameDlgFragment newInstance(String key, String summary) {
 
-        final SettingEditNameFragment fm = new SettingEditNameFragment();
+        final SettingNameDlgFragment fm = new SettingNameDlgFragment();
         final Bundle args = new Bundle(2);
-        //args.putString("key", key); // ARG_KEY internally defined in onBindDialogView()
+        args.putString("key", key); // ARG_KEY internally defined in onBindDialogView()
         args.putString("username", summary);
         fm.setArguments(args);
 
         return fm;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         firestore = FirebaseFirestore.getInstance();
-        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-
     }
 
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
+    public View onCreateDialogView(Context context) {
+        log.i("onCreateDialogView");
         View localView = View.inflate(getContext(), R.layout.dialog_setting_edit_name, null);
         etName = localView.findViewById(R.id.et_user_name);
         rootView = localView.findViewById(R.id.rootview);
         btnVerify = localView.findViewById(R.id.btn_verify);
+
+        namePreference = (NameDialogPreference)getPreference();
+
         etName.setText(getArguments().getString("username"));
 
         btnVerify.setOnClickListener(v -> {
-
             String name = etName.getText().toString().trim();
-            log.i("Clicked: %s", name);
+            isVerified = true;
 
             // Query the name to check if there exists the same name in Firestore
             Query queryName = firestore.collection("users").whereEqualTo("user_name", name);
             queryName.get().addOnSuccessListener(snapshot -> {
+                // A given name already exists
                 if(snapshot.size() > 0) {
                     isNameExist = true;
                     ((AlertDialog)getDialog()).getButton(BUTTON_POSITIVE).setEnabled(false);
+                    btnVerify.setEnabled(false);
+
                     Snackbar.make(rootView, "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
 
                 } else {
@@ -99,19 +105,39 @@ public class SettingEditNameFragment extends DialogFragment {
             }).addOnFailureListener(e -> log.e("Query failed"));
         });
 
-
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("user(vehicle) nickname")
-                .setView(localView)
-                .setPositiveButton("confirm", (dialog, which) -> {
-                    mSettings.edit().putString(Constants.VEHICLE_NAME, etName.getText().toString()).apply();
-                })
-
-                .setNegativeButton("cancel", (dialog, which) -> dismiss());
-
-        return builder.create();
+        return localView;
 
     }
+
+
+    @Override
+    protected void onBindDialogView(View view) {
+        super.onBindDialogView(view);
+        log.i("onBindDialogView: %s", view);
+
+        etName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                btnVerify.setEnabled(true);
+                ((AlertDialog)getDialog()).getButton(BUTTON_POSITIVE).setEnabled(true);
+            }
+        });
+    }
+
+
+
+    @Override
+    public void onDialogClosed(boolean positiveResult) {
+
+        if(positiveResult) {
+            log.i("onDialogClosed");
+            namePreference.callChangeListener(etName.getText());
+        }
+    }
+
 
 }

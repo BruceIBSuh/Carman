@@ -9,6 +9,7 @@ import android.text.TextUtils;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -26,6 +27,7 @@ import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.CropImageHelper;
+import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import java.io.IOException;
@@ -61,55 +63,31 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         //df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
         String[] district = getArguments().getStringArray("district");
         sigunCode = district[2];
 
+        // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
+        // in order to receive a user name which is verified to a new one by querying.
+        /*
         Preference editNamePreference = findPreference(Constants.VEHICLE_NAME);
         if(editNamePreference != null) {
             editNamePreference.setSummary(mSettings.getString(Constants.VEHICLE_NAME, null));
         }
         editNamePreference.setOnPreferenceClickListener(view -> {
             String username = view.getSummary().toString().trim();
-            DialogFragment editFragment = SettingEditNameFragment.newInstance(username);
-            //editFragment.setTargetFragment(this, 1);
+            DialogFragment editFragment = SettingNameDlgFragment.newInstance(username);
+            editFragment.setTargetFragment(this, 1);
             editFragment.show(getFragmentManager(), null);
             return true;
         });
-        log.i("Summary: %s", editNamePreference.getSummary());
-
-
-        /*
-        EditTextPreference etUserName = findPreference(Constants.VEHICLE_NAME);
-        if(etUserName != null) {
-            etUserName.setSummaryProvider(preference -> {
-                final String name = ((EditTextPreference)preference).getText().trim();
-
-
-                if (TextUtils.isEmpty(name)) {
-                    Snackbar.make(getView(), "Enter a nickname", Snackbar.LENGTH_SHORT).show();
-                    return null;
-
-                } else {
-                    Query queryName = firestore.collection("users").whereEqualTo("user_name", name);
-                    queryName.get().addOnSuccessListener(snapshot -> {
-                        Snackbar.make(getView(), "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
-                        for(QueryDocumentSnapshot document : snapshot) {
-                            log.i("Queried: %s", document.getId());
-                        }
-
-                    }).addOnFailureListener(e -> {
-                        log.e("Query failed");
-
-                    });
-
-                    return name;
-                }
-            });
-        }
+        sharedModel.getFragmentStringData().observe(getActivity(), s -> editNamePreference.setSummary(s));
         */
+
+        NameDialogPreference namePreference = findPreference(Constants.VEHICLE_NAME);
 
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
@@ -211,6 +189,10 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             spinnerFragment.setTargetFragment(this, 0);
             spinnerFragment.show(getFragmentManager(), null);
 
+        } else if(pref instanceof NameDialogPreference) {
+            DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), "TEST");
+            nameFragment.setTargetFragment(this, 1);
+            nameFragment.show(getFragmentManager(), null);
         } else {
 
             super.onDisplayPreferenceDialog(pref);
