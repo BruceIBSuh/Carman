@@ -87,7 +87,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         sharedModel.getFragmentStringData().observe(getActivity(), s -> editNamePreference.setSummary(s));
         */
 
-        NameDialogPreference namePreference = findPreference(Constants.VEHICLE_NAME);
+        NameDialogPreference namePref = findPreference(Constants.VEHICLE_NAME);
+        namePref.setSummary(vehicleName = mSettings.getString(Constants.VEHICLE_NAME, null));
 
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
@@ -190,7 +191,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             spinnerFragment.show(getFragmentManager(), null);
 
         } else if(pref instanceof NameDialogPreference) {
-            DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), "TEST");
+            DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), vehicleName);
             nameFragment.setTargetFragment(this, 1);
             nameFragment.show(getFragmentManager(), null);
         } else {
