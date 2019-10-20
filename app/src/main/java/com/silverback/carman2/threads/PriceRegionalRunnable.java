@@ -87,8 +87,6 @@ public class PriceRegionalRunnable implements Runnable {
         HttpURLConnection conn = null;
 
         try {
-            if(Thread.interrupted()) throw new InterruptedException();
-
             switch(category) {
 
                 case AVG: // Average oil price
@@ -98,9 +96,7 @@ public class PriceRegionalRunnable implements Runnable {
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
 
-                    if(Thread.interrupted()) {
-                        throw new InterruptedException();
-                    }
+                    if(Thread.interrupted()) throw new InterruptedException();
 
                     List<Opinet.OilPrice> avgList = xmlHandler.parseOilPrice(in);
                     if(!avgList.isEmpty()) {
@@ -119,10 +115,7 @@ public class PriceRegionalRunnable implements Runnable {
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
 
-
-                    if(Thread.interrupted()) {
-                        throw new InterruptedException();
-                    }
+                    if(Thread.interrupted()) throw new InterruptedException();
 
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
@@ -140,9 +133,7 @@ public class PriceRegionalRunnable implements Runnable {
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
 
-                    if(Thread.interrupted()) {
-                        throw new InterruptedException();
-                    }
+                    if(Thread.interrupted()) throw new InterruptedException();
 
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
@@ -160,9 +151,7 @@ public class PriceRegionalRunnable implements Runnable {
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
 
-                    if(Thread.interrupted()) {
-                        throw new InterruptedException();
-                    }
+                    if(Thread.interrupted()) throw new InterruptedException();
 
                     Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(in);
                     if(stnPrice != null) {

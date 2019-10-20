@@ -23,7 +23,7 @@ import java.util.List;
 public class SaveDistCodeRunnable implements Runnable {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(SaveDistCodeTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(SaveDistCodeRunnable.class);
 
     // Constants
     private static final String API_KEY = "F186170711";
@@ -42,6 +42,7 @@ public class SaveDistCodeRunnable implements Runnable {
     // Interface
     public interface OpinetDistCodeMethods {
         void setDistCodeDownloadThread(Thread currentThread);
+        void notifySaved(boolean b);
         void handleDistCodeTask(int state);
     }
 
@@ -65,7 +66,6 @@ public class SaveDistCodeRunnable implements Runnable {
         try {
             // Get all siguncodes at a time with all sido codes given
             for(String code : sido) {
-
                 if(Thread.interrupted()) {
                     throw new InterruptedException();
                 }
@@ -87,10 +87,9 @@ public class SaveDistCodeRunnable implements Runnable {
 
             if(saveDistCode(distCodeList)){
                 log.d("Sigun Numbers: %d", distCodeList.size());
-
-                // Notify SaveDistCodeTask of getting the district code finished downloading
+                mTask.notifySaved(true);
                 mTask.handleDistCodeTask(DOWNLOAD_DISTCODE_SUCCEED);
-            }
+            } else mTask.notifySaved(false);
 
         } catch (IOException e) {
             log.e("InputStream failed: " + e);
@@ -116,16 +115,18 @@ public class SaveDistCodeRunnable implements Runnable {
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(list);
 
+            /*
             for(Opinet.DistrictCode code : list) {
                 log.i("Save District Code: %s, %s", code.getDistrictCode(), code.getDistrictName());
             }
+             */
 
             return true;
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            log.e("FileNotFoundException: %s", e.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.e("IOException: %s", e.getMessage());
         }
 
         return false;

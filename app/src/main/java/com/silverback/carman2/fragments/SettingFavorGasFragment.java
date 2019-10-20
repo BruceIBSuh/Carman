@@ -26,7 +26,7 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.PriceFavoriteTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -49,7 +49,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private SettingFavoriteAdapter mAdapter;
     private SparseArray<DocumentSnapshot> snapshotList;
     private PriceFavoriteTask priceFavoriteTask;
-    private OpinetPriceViewModel priceViewModel;
+    private OpinetViewModel priceViewModel;
 
     // Constructor
     public SettingFavorGasFragment() {
@@ -63,7 +63,7 @@ public class SettingFavorGasFragment extends Fragment implements
 
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        priceViewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
+        priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
         //firestoreViewModel = ViewModelProviders.of(this).get(FirestoreViewModel.class);
         snapshotList = new SparseArray<>();
     }

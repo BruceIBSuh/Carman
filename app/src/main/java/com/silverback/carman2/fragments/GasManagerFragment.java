@@ -188,7 +188,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Manager the comment and the rating bar which should be allowed to make as far as the
         // nick name(vehicle name) has been created.
-        nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
+        nickname = mSettings.getString(Constants.USER_NAME, null);
         // In case of writing the ratingbar and comment, it is required to have a registered nickname.
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
             if((nickname == null || nickname.isEmpty()) && rating > 0) {

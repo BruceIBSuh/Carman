@@ -62,7 +62,7 @@ public class MainActivity extends BaseActivity implements
     public void onResume(){
         super.onResume();
 
-        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
+        String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
     }
 

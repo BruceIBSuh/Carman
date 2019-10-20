@@ -24,7 +24,6 @@ import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.CropImageHelper;
 import com.silverback.carman2.views.NameDialogPreference;
@@ -42,12 +41,13 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private CarmanDatabase mDB;
     private SharedPreferences mSettings;
     private FragmentSharedModel sharedModel;
-    private LoadDistCodeTask mTask;
+    //private LoadDistCodeTask mTask;
 
     private Preference cropImagePreference;
+    private NameDialogPreference namePref;
 
     private String sigunCode;
-    private String vehicleName;
+    private String nickname;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -57,7 +57,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
         // Indicates that the fragment may initialize the contents of the Activity's standard options menu.
-        setHasOptionsMenu(true);
+        //setHasOptionsMenu(true);
 
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
@@ -72,23 +72,16 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
-        /*
-        Preference editNamePreference = findPreference(Constants.VEHICLE_NAME);
-        if(editNamePreference != null) {
-            editNamePreference.setSummary(mSettings.getString(Constants.VEHICLE_NAME, null));
-        }
-        editNamePreference.setOnPreferenceClickListener(view -> {
-            String username = view.getSummary().toString().trim();
-            DialogFragment editFragment = SettingNameDlgFragment.newInstance(username);
-            editFragment.setTargetFragment(this, 1);
-            editFragment.show(getFragmentManager(), null);
-            return true;
-        });
-        sharedModel.getFragmentStringData().observe(getActivity(), s -> editNamePreference.setSummary(s));
-        */
+        NameDialogPreference namePref = findPreference(Constants.USER_NAME);
+        namePref.setSummary(mSettings.getString(Constants.USER_NAME, null));
+        if(mSettings.getString(Constants.USER_NAME, null) != null)
+            nickname = namePref.getSummary().toString();
 
-        NameDialogPreference namePref = findPreference(Constants.VEHICLE_NAME);
-        namePref.setSummary(vehicleName = mSettings.getString(Constants.VEHICLE_NAME, null));
+        Preference autoPref = findPreference(Constants.VEHICLE);
+        String autoMaker = mSettings.getString("pref_auto_maker", null);
+        String autoModel = mSettings.getString("pref_auto_model", null);
+        String autoYear = mSettings.getString("pref_auto_year", null);
+        autoPref.setSummary(String.format("%s, %s, %s", autoMaker, autoModel, autoYear));
 
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
@@ -120,15 +113,13 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String station = getString(R.string.pref_no_favorite);
             String service = getString(R.string.pref_no_favorite);
-
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) station = provider.favoriteName;
                 else if(provider.category == Constants.SVC) service = provider.favoriteName;
             }
-
-            log.i("favorite change: %s", station);
             favorite.setSummary(String.format("%s / %s", station, service));
         });
+
         Preference gasStation = findPreference("pref_favorite_gas");
         gasStation.setSummary(R.string.pref_summary_gas);
         Preference svcCenter = findPreference("pref_favorite_svc");
@@ -147,15 +138,20 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Image Editor which pops up the dialog to select which resource location to find an image.
         cropImagePreference = findPreference("pref_edit_image");
         cropImagePreference.setOnPreferenceClickListener(view -> {
-            log.i("Edit Image Preference clicked");
             DialogFragment dialogFragment = new CropImageDialogFragment();
             dialogFragment.show(getFragmentManager(), null);
+            return true;
+        });
 
+        //
+        cropImagePreference.setOnPreferenceChangeListener((preference, newValue) -> {
+            log.i("corpImagePreference updated:%s", newValue);
             return true;
         });
 
         // Set the circle image for the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
+
         String imageUri = mSettings.getString("croppedImageUri", null);
         if(!TextUtils.isEmpty(imageUri)) {
             try {
@@ -166,51 +162,40 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
                 log.e("IOException: %s", e.getMessage());
             }
         }
-
-
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mTask != null) mTask = null;
+        //if (mTask != null) mTask = null;
     }
 
 
-    // Callback from PreferenceManager.OnDisplayPreferenceDialogListener when a Preference
-    // requests to display a CUSTOM dialog
+    // Callback from PreferenceManager.OnDisplayPreferenceDialogListener when the preference
+    // requests to display a CUSTOM DIALOG
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
-
         log.i("onDisplayPreferenceDialog");
-        
         if (pref instanceof SpinnerDialogPreference) {
             DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             spinnerFragment.setTargetFragment(this, 0);
             spinnerFragment.show(getFragmentManager(), null);
 
         } else if(pref instanceof NameDialogPreference) {
-            DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), vehicleName);
+            DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), nickname);
             nameFragment.setTargetFragment(this, 1);
             nameFragment.show(getFragmentManager(), null);
         } else {
-
             super.onDisplayPreferenceDialog(pref);
         }
 
     }
 
+    // Referenced by OnSelectImageMedia callback when selecting the deletion item in order to remove
+    // the profile image icon.
     public Preference getCropImagePreference() {
         return cropImagePreference;
     }
 
-    /*
-    private void cropProfileImage(Uri uri) {
-        Intent intent = new Intent(this, CropImageActivity.class);
-        intent.setData(uri);
-        //intent.putExtra("orientation", orientation);
-        startActivityForResult(intent, REQUEST_CODE_CROP);
-    }
-    */
 }

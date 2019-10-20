@@ -1,5 +1,6 @@
 package com.silverback.carman2.fragments;
 
+import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -18,31 +19,34 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.NameDialogPreference;
+
+import java.io.File;
 
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 
-public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
+public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat implements View.OnClickListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
 
     // Objects
+    private SharedPreferences mSettings;
     private FirebaseFirestore firestore;
     private NameDialogPreference namePreference;
+
     // UIs
     private ConstraintLayout rootView;
     private EditText etName;
     private Button btnVerify;
 
     // Fields
-    private boolean isVerified = false;
-    private String username;
-    private boolean isNameExist;
-
+    private String userName;
 
     // Default constructor
     public SettingNameDlgFragment() {
@@ -61,83 +65,86 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
         return fm;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firestore = FirebaseFirestore.getInstance();
+        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        userName = getArguments().getString("username");
     }
 
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
-    public View onCreateDialogView(Context context) {
-        log.i("onCreateDialogView");
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        super.onCreateDialog(savedInstanceState);
         View localView = View.inflate(getContext(), R.layout.dialog_setting_edit_name, null);
         etName = localView.findViewById(R.id.et_user_name);
         rootView = localView.findViewById(R.id.rootview);
         btnVerify = localView.findViewById(R.id.btn_verify);
 
-        namePreference = (NameDialogPreference)getPreference();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setView(localView)
+                .setTitle(R.string.setting_nickname)
+                .setPositiveButton("Confirm", this)
+                .setNegativeButton("Cancel", this);
 
-        etName.setText(getArguments().getString("username"));
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Initial state of the buttons.
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+
+        namePreference = (NameDialogPreference)getPreference();
+        etName.setText(userName);
+        etName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                btnVerify.setEnabled(true);
+                //dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
+            }
+        });
 
         btnVerify.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
-            isVerified = true;
-
             // Query the name to check if there exists the same name in Firestore
             Query queryName = firestore.collection("users").whereEqualTo("user_name", name);
             queryName.get().addOnSuccessListener(snapshot -> {
                 // A given name already exists
                 if(snapshot.size() > 0) {
-                    isNameExist = true;
-                    ((AlertDialog)getDialog()).getButton(BUTTON_POSITIVE).setEnabled(false);
+                    dialog.getButton(BUTTON_POSITIVE).setEnabled(false);
                     btnVerify.setEnabled(false);
-
                     Snackbar.make(rootView, "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
 
                 } else {
-                    isNameExist = false;
-                    ((AlertDialog)getDialog()).getButton(BUTTON_POSITIVE).setEnabled(true);
+                    dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
                     Snackbar.make(rootView, "Available", Snackbar.LENGTH_SHORT).show();
                 }
 
             }).addOnFailureListener(e -> log.e("Query failed"));
         });
 
-        return localView;
 
+
+        return dialog;
     }
-
-
-    @Override
-    protected void onBindDialogView(View view) {
-        super.onBindDialogView(view);
-        log.i("onBindDialogView: %s", view);
-
-        etName.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override
-            public void afterTextChanged(Editable s) {
-                btnVerify.setEnabled(true);
-                ((AlertDialog)getDialog()).getButton(BUTTON_POSITIVE).setEnabled(true);
-            }
-        });
-    }
-
-
 
     @Override
     public void onDialogClosed(boolean positiveResult) {
-
         if(positiveResult) {
             log.i("onDialogClosed");
+            //mSettings.edit().putString(Constants.USER_NAME, etName.getText().toString()).apply();
             namePreference.callChangeListener(etName.getText());
         }
     }
 
 
+    @Override
+    public void onClick(View v) {
+    }
 }

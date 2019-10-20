@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 
 public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnable.OpinetPriceListMethods {
 
@@ -12,7 +12,7 @@ public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnab
     private static final LoggingHelper log = LoggingHelperFactory.create(PriceRegionalTask.class);
 
     // Objects and Fields
-    private OpinetPriceViewModel viewModel;
+    private OpinetViewModel viewModel;
     private Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable, mStationPriceRunnable;
     private String distCode;
     private String stnId;
@@ -29,8 +29,8 @@ public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnab
     }
 
     // Initialize args for PriceRegionalRunnable
-    void initPriceTask(OpinetPriceViewModel viewModel, String distCode, String stnId) {
-    //void initPriceTask(OpinetPriceViewModel viewModel, String distCode) {
+    void initPriceTask(OpinetViewModel viewModel, String distCode, String stnId) {
+    //void initPriceTask(OpinetViewModel viewModel, String distCode) {
         this.viewModel = viewModel;
         this.distCode = distCode;
         this.stnId = stnId;

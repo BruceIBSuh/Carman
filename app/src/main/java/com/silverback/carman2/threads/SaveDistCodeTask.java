@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.OpinetViewModel;
 
 import java.lang.ref.WeakReference;
 
@@ -15,13 +16,15 @@ public class SaveDistCodeTask extends ThreadTask
     private final LoggingHelper log = LoggingHelperFactory.create(SaveDistCodeTask.class);
 
     // Objects
-    private WeakReference<Activity> mWeakActivity;
+    //private WeakReference<Activity> mWeakActivity;
+    private OpinetViewModel model;
     private Runnable opinetDistCodeRunnable;
 
     // Constructor
-    SaveDistCodeTask(Context context) {
+    SaveDistCodeTask(Context context, OpinetViewModel model) {
         super(); // ThreadTask
-        mWeakActivity = new WeakReference<>((Activity)context);
+        //mWeakActivity = new WeakReference<>((Activity)context);
+        this.model = model;
         opinetDistCodeRunnable = new SaveDistCodeRunnable(context, this);
     }
 
@@ -31,10 +34,12 @@ public class SaveDistCodeTask extends ThreadTask
     }
 
     void recycle() {
+        /*
         if(mWeakActivity != null) {
             mWeakActivity.clear();
             mWeakActivity = null;
         }
+         */
     }
 
     @Override
@@ -42,6 +47,12 @@ public class SaveDistCodeTask extends ThreadTask
         log.i("Current Thread: " + currentThread);
         // Inheritedd from the parent class of ThreadTask
         setCurrentThread(currentThread);
+    }
+
+    @Override
+    public void notifySaved(boolean b) {
+        if(b) model.notifyDistCodeComplete().postValue(true);
+        else log.e("Saving the DistrictCode failed");
     }
 
     @Override

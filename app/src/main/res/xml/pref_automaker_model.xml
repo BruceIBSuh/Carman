@@ -6,12 +6,24 @@
         app:key="pref_auto_maker"
         app:title="AutoMaker"
         app:entries="@array/pref_automaker"
-        app:entryValues="@array/pref_automaker"/>
+        app:entryValues="@array/pref_automaker"
+        app:useSimpleSummaryProvider="true"/>
+
+    <ListPreference
+        app:key="pref_auto_type"
+        app:title="Vehicle Type"
+        app:useSimpleSummaryProvider="true" />
 
     <ListPreference
         app:key="pref_auto_model"
         app:title="Auto Model"
         app:entries="@array/pref_automaker"
-        app:entryValues="@array/pref_automaker"/>
+        app:entryValues="@array/pref_automaker"
+        app:useSimpleSummaryProvider="true"/>
+
+    <ListPreference
+        app:key="pref_auto_year"
+        app:title="Auto Manufacturing Year"
+        app:useSimpleSummaryProvider="true"/>
 
 </PreferenceScreen>

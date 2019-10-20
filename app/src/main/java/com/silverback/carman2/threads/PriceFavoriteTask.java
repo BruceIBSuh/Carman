@@ -2,13 +2,12 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 
 public class PriceFavoriteTask extends ThreadTask implements PriceFavoriteRunnable.StationPriceMethods {
 
     // Objects
-    private OpinetPriceViewModel viewModel;
+    private OpinetViewModel viewModel;
     private Runnable mPriceRunnableStation;
     private String stnId;
 
@@ -17,7 +16,7 @@ public class PriceFavoriteTask extends ThreadTask implements PriceFavoriteRunnab
         mPriceRunnableStation = new PriceFavoriteRunnable(context, this);
     }
 
-    void initTask(OpinetPriceViewModel model, String stnId) {
+    void initTask(OpinetViewModel model, String stnId) {
         viewModel = model;
         this.stnId = stnId;
     }

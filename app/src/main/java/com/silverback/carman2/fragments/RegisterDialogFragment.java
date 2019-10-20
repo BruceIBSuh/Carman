@@ -217,7 +217,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         });
 
         // RatingBar and Comment are required to have a nickname set in SettingPreferenceActivity.
-        nickname = mSettings.getString(Constants.VEHICLE_NAME, null);
+        nickname = mSettings.getString(Constants.USER_NAME, null);
         resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
             log.i("Nickname required: %s", nickname);

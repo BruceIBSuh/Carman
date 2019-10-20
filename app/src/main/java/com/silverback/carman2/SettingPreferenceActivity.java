@@ -10,27 +10,27 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NavUtils;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
-import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -39,11 +39,9 @@ import com.silverback.carman2.utils.CropImageHelper;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,15 +62,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private OpinetPriceViewModel priceModel;
-    private FragmentSharedModel sharedModel;
-
-    private MenuItem menuEdit, menuAdd;
-    private PreferenceFragmentCompat caller;
+    private FirebaseStorage storage;
+    private OpinetViewModel priceModel;
     private SettingPreferenceFragment settingFragment;
     private PriceRegionalTask priceRegionalTask;
     private String distCode;
-    private DecimalFormat df;
 
     // UIs
     private FrameLayout frameLayout;
@@ -94,11 +88,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
         frameLayout = findViewById(R.id.frame_setting);
 
         firestore = FirebaseFirestore.getInstance();
-        priceModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
-        sharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
-        // DecimalFormat singleton instance from BaseActivity
-        df = getDecimalFormatInstance();
+        storage = FirebaseStorage.getInstance();
 
+        priceModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
@@ -106,7 +98,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         List<String> district = convJSONArrayToList();
         if(district == null) distCode = "0101";
         else distCode = district.get(2);
-        String vehicleName = mSettings.getString(Constants.VEHICLE_NAME, null);
+        String vehicleName = mSettings.getString(Constants.USER_NAME, null);
 
         Bundle args = new Bundle();
         args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
@@ -119,7 +111,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Attach SettingPreferencFragment in the FrameLayout
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
-                .addToBackStack(null)
+                //.addToBackStack(null)
                 .commit();
     }
 
@@ -166,8 +158,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         fragment.setArguments(args);
         fragment.setTargetFragment(caller, 0);
+
         getSupportActionBar().setTitle(pref.getTitle());
-        getSupportActionBar().setDisplayShowHomeEnabled(false);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)
@@ -180,45 +173,49 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
-        final File file = new File(getFilesDir(), "user_id");
-
+        log.i("onSharedPreferenceChanged");
+        File userIdFile = new File(getFilesDir(), "user_id");
         switch(key) {
-            /*
-            case Constants.VEHICLE_NAME:
-                EditTextPreference pref = settingFragment.findPreference(key);
-                if(pref == null || TextUtils.isEmpty(pref.getText())) return;
 
-                Query queryUserName = firestore.collection("users").whereEqualTo("user_name", pref.getText().trim());
-                queryUserName.get().addOnSuccessListener(snapshot -> {
-
-                    for(QueryDocumentSnapshot document : snapshot) {
-                        log.i("Queried: %s", document.getId());
-                    }
-
-                    // Check if this right!!!
-                    Snackbar.make(frameLayout, "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
-
-
-                }).addOnFailureListener(e -> {
-                    log.e("Name query failed");
-                    if(!file.exists()) addUserDataToFirestore(pref.getText());
-                    else updateUserDataToFirestore("user_name", pref.getText().trim());
-                });
+            case Constants.USER_NAME:
+                // Change the nickname after verifying it, then upload it to the Firestore.
+                String username = mSettings.getString(key, null);
+                // Check first if the user id file exists. If so, set the user data or update the
+                // data, otherwise.
+                if(!userIdFile.exists()) addUserDataToFirestore("user_name", username);
+                else updateUserAutoToFirestore("user_name", username);
 
                 break;
 
-            case Constants.VHEICLE_MODEL:
+            case Constants.AUTO_MAKER:
+                String autoMaker = mSettings.getString(key, null);
+                if(!userIdFile.exists()) addUserDataToFirestore("auto_maker", autoMaker);
+                else updateUserAutoToFirestore("auto_maker", autoMaker);
+
                 break;
-            */
-            case Constants.ODOMETER:
-                /*
-                EditTextPreference mileage = settingFragment.findPreference(key);
-                log.i("EditTextPref: %s", mileage.getText());
-                if(!TextUtils.isEmpty(mileage.getText())) {
-                    //mileage.setSummary(mileage.getText() + "km");
-                    //mSettings.edit().putString(Constants.ODOMETER, mileage.getText()).apply();
-                }
-                */
+
+            case Constants.AUTO_MODEL:
+                String autoModel = mSettings.getString(key, null);
+                if(!userIdFile.exists()) addUserDataToFirestore("auto_model", autoModel);
+                else updateUserAutoToFirestore("auto_model", autoModel);
+                break;
+
+            case Constants.AUTO_TYPE:
+                String autoType = mSettings.getString(key, null);
+                if(!userIdFile.exists()) addUserDataToFirestore("auto_type", autoType);
+                else updateUserAutoToFirestore("auto_type", autoType);
+                break;
+
+            case Constants.AUTO_YEAR:
+                String year = mSettings.getString(key, null);
+                int autoYear = -1;
+                if(year != null) autoYear  = Integer.valueOf(year);
+                if(!userIdFile.exists()) addUserDataToFirestore("auto_year", autoYear);
+                else updateUserAutoToFirestore("auto_year", autoYear);
+                break;
+
+            case Constants.EDIT_IMAGE:
+                log.i("Edit image");
                 break;
 
             case Constants.DISTRICT:
@@ -227,22 +224,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 priceRegionalTask = ThreadManager.startRegionalPriceTask(this, priceModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
-
-            case "pref_location_autoupdate":
-                break;
-
-            case "pref_favorite_provider":
-                log.i("Favorite Provider changed");
-                break;
-
-            case "pref_edit_image":
-                log.i("EditImage");
-                break;
         }
+
 
     }
 
-    // Callback by CropImageDialogFragment.OnSelectImageMediumListener to be notified of which
+    // Callback by CropImageDialogFragment.OnSelectImageMediumListener to notify which
     // image media to select in the dialog.
     @Override
     public void onSelectImageMedia(int which) {
@@ -298,7 +285,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // a selected image back from Gallery or Camera with REQUEST_CODE_GALLERY OR REQUEST_CODE_CAMERA,
     // then creating an intent w/ the Uri to instantiate CropImageActivity to edit the image,
     // the result of which is sent to REQUEST_CROP_IMAGE.
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -347,19 +333,40 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case REQUEST_CODE_CROP:
 
                 final Uri croppedImageUri = data.getData();
+                log.i("REQUEST_CODE_CROP: %s", croppedImageUri);
                 if(croppedImageUri != null) {
                     mSettings.edit().putString("croppedImageUri", croppedImageUri.toString()).apply();
+
+                    String imageName;
+                    try (FileInputStream fis = openFileInput("user_id");
+                         BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
+                        final String id = br.readLine();
+                        log.i("User id: %s", id);
+                        imageName = id + ".jpg";
+                        // Upload the image uri to Firestorage here.
+                        StorageReference storageRef = storage.getReference();
+                        StorageReference profileImagesRef = storageRef.child("images/" + imageName);
+                        profileImagesRef.putFile(croppedImageUri)
+                                .addOnSuccessListener(task -> log.i("Upload successfully done"))
+                                .addOnFailureListener(e -> log.e("Upload failed"));
+
+
+                    } catch(IOException e) {
+                        log.e("IOException: %s", e.getMessage());
+                    }
+
+
+
+
                 }
 
                 // Create the bitmap based on the Uri which is passed from CropImageActivity.
                 try {
-
                     RoundedBitmapDrawable roundedBitmap = cropHelper.drawRoundedBitmap(croppedImageUri);
                     settingFragment.getCropImagePreference().setIcon(roundedBitmap);
                     // Encode the bitmap to String based on Base64 format
                     //String encodedBitmap = imageHelper.encodeBitmapToBase64(croppedBitmap);
-
-
                 } catch(IOException e) {
                     log.e("IOException: %s", e.getMessage());
                 }
@@ -372,13 +379,13 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    private void addUserDataToFirestore(String nickname) {
+    private void addUserDataToFirestore(String fieldName, Object data) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put(fieldName, data);
 
-        Map<String, String> userData = new HashMap<>();
-        userData.put("user_name", nickname);
-
-        firestore.collection("users").add(userData).addOnSuccessListener( docref -> {
+        firestore.collection("users").add(userData).addOnSuccessListener(docref -> {
             final String id = docref.getId();
+            // Get the document id generated by Firestore and save it in the internal storage.
             try(final FileOutputStream fos = openFileOutput("user_id", Context.MODE_PRIVATE)){
                 fos.write(id.getBytes());
             } catch(IOException e) {
@@ -389,28 +396,35 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    private void updateUserDataToFirestore(final String field, final String data) {
+    private void updateUserAutoToFirestore(String field, Object data) {
 
         try (FileInputStream fis = openFileInput("user_id");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
             final String id = br.readLine();
-            firestore.collection("users").document(id).update(field, data)
-                    .addOnSuccessListener(aVoid -> log.i("Successfully updated"))
-                    .addOnFailureListener(e -> log.e("Update failed"));
+            final DocumentReference docRef = firestore.collection("users").document(id);
+            firestore.runTransaction(transaction -> {
+                DocumentSnapshot snapshot = transaction.get(docRef);
+                if(snapshot.getString(field) == null) {
+                    log.i("Set merge");
+                    transaction.set(docRef, data, SetOptions.merge());
+                } else {
+                    log.i("Update");
+                    transaction.update(docRef, field, data);
+                }
+
+                return null;
+
+            }).addOnSuccessListener(aVoid -> log.i("Transaction successful")
+            ).addOnFailureListener(e -> log.e("Exception: %s", e.getMessage()));
+
         } catch(IOException e) {
             log.e("IOException occrurred when updating: %s", e.getMessage());
         }
     }
 
-
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {
         return mSettings;
     }
-
-
-
-
-
 }

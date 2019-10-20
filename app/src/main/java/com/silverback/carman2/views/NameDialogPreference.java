@@ -3,6 +3,7 @@ package com.silverback.carman2.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
+import android.widget.EditText;
 
 import androidx.preference.DialogPreference;
 import androidx.preference.Preference;
@@ -15,6 +16,9 @@ public class NameDialogPreference extends DialogPreference implements Preference
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(NameDialogPreference.class);
+
+    // Objects
+    private EditText etName;
 
     // Constructors
     public NameDialogPreference(Context context) {
@@ -47,12 +51,13 @@ public class NameDialogPreference extends DialogPreference implements Preference
         }
     }
 
+
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         log.i("onPreferenceChange");
-        String strSummary = String.valueOf(newValue);
-        setSummary(strSummary);
-
+        String nickname = String.valueOf(newValue);
+        persistString(nickname);
+        setSummary(nickname);
         return false;
     }
 }

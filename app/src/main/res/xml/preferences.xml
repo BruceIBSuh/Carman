@@ -12,15 +12,10 @@
             app:dialogTitle="@string/setting_nickname"
             app:positiveButtonText="Confirm"
             app:negativeButtonText="Cancel" />
-        <!--
-        <EditTextPreference
-            app:key="pref_model"
-            app:title="@string/setting_model"
-            app:useSimpleSummaryProvider="true" />
-        -->
+
         <Preference
-            app:fragment="com.silverback.carman2.fragments.SettingPrefAutoFragment"
-            app:key="pref_model"
+            app:fragment="com.silverback.carman2.fragments.SettingAutoFragment"
+            app:key="pref_auto"
             app:title="@string/setting_model" />
 
         <ListPreference

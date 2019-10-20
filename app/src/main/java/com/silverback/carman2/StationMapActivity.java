@@ -19,7 +19,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
@@ -202,7 +201,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     public void onResume() {
         super.onResume();
 
-        String title = mSettings.getString(Constants.VEHICLE_NAME, null);
+        String title = mSettings.getString(Constants.USER_NAME, null);
         //if(title != null) getSupportActionBar().setTitle(title);
 
         // When returning from the navigation, the navigation instance should be killed and garbage

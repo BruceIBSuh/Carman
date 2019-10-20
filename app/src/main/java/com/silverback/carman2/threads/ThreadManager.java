@@ -12,7 +12,7 @@ import androidx.fragment.app.FragmentManager;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
-import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
@@ -320,12 +320,12 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static SaveDistCodeTask downloadOpinetDistCodeTask(Context context) {
+    public static SaveDistCodeTask saveOpinetDistCodeTask(Context context, OpinetViewModel model) {
 
         SaveDistCodeTask task = (SaveDistCodeTask)sInstance.mTaskWorkQueue.poll();
 
         if(task == null) {
-            task = new SaveDistCodeTask(context);
+            task = new SaveDistCodeTask(context, model);
         }
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
@@ -349,8 +349,8 @@ public class ThreadManager {
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
     public static PriceRegionalTask startRegionalPriceTask(
-            Context context, OpinetPriceViewModel model, String distCode, String stnId) {
-            //Context context, OpinetPriceViewModel model, String distCode) {
+            Context context, OpinetViewModel model, String distCode, String stnId) {
+            //Context context, OpinetViewModel model, String distCode) {
 
         PriceRegionalTask priceRegionalTask = (PriceRegionalTask)sInstance.mTaskWorkQueue.poll();
 
@@ -370,7 +370,7 @@ public class ThreadManager {
     }
 
     public static PriceFavoriteTask startFavoritePriceTask(
-            Context context, OpinetPriceViewModel model, String stnId) {
+            Context context, OpinetViewModel model, String stnId) {
 
         PriceFavoriteTask stnPriceTask = (PriceFavoriteTask)sInstance.mTaskWorkQueue.poll();
         if(stnPriceTask == null) stnPriceTask = new PriceFavoriteTask(context);

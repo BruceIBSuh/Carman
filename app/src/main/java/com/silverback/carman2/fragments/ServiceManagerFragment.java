@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
@@ -9,7 +8,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -566,7 +564,7 @@ public class ServiceManagerFragment extends Fragment implements
         if(!svcComment.isEmpty()) {
             Map<String, Object> commentData = new HashMap<>();
             commentData.put("timestamp", FieldValue.serverTimestamp());
-            commentData.put("name", mSettings.getString(Constants.VEHICLE_NAME, null));
+            commentData.put("name", mSettings.getString(Constants.USER_NAME, null));
             commentData.put("comments", svcComment);
             commentData.put("rating", svcRating);
 

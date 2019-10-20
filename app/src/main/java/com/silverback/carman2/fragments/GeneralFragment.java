@@ -31,21 +31,16 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.OpinetPriceViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.PriceFavoriteTask;
 import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetAvgPriceView;
-import com.silverback.carman2.views.OpinetSidoPriceView;
-import com.silverback.carman2.views.OpinetSigunPriceView;
-import com.silverback.carman2.views.OpinetStationPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.io.File;
@@ -78,7 +73,7 @@ public class GeneralFragment extends Fragment implements
 
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
-    private OpinetPriceViewModel priceViewModel;
+    private OpinetViewModel priceViewModel;
 
     private LocationTask locationTask;
     private PriceRegionalTask priceRegionalTask;
@@ -124,7 +119,7 @@ public class GeneralFragment extends Fragment implements
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        priceViewModel = ViewModelProviders.of(this).get(OpinetPriceViewModel.class);
+        priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
