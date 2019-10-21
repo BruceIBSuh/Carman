@@ -13,8 +13,8 @@ import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.threads.PriceDistrictTask;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.threads.PriceRegionalTask;
 import com.silverback.carman2.threads.SaveDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
@@ -31,7 +31,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     // Objects
     private FirebaseAuth mAuth;
-    private PriceRegionalTask priceRegionalTask;
+    private PriceDistrictTask priceDistrictTask;
     private SaveDistCodeTask saveDistCodeTask;
     private OpinetViewModel viewModel;
 
@@ -64,30 +64,33 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         if(!distCodePath.exists()) firstInitProcess();
         */
 
-        CarmanDatabase.getDatabaseInstance(this).favoriteModel()
-                .queryFirstSetFavorite().observe(this, data -> {
-                    for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                        if(provider.category == Constants.GAS) stnId = provider.providerId;
-                        log.i("Station ID: %s", stnId);
-                    }
-        });
 
         viewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
         // On finishing saving the district code which was downloaded and saved,
         viewModel.notifyDistCodeComplete().observe(this, isCompete -> {
             log.i("District code task finished");
+            mProgBar.setVisibility(View.INVISIBLE);
             initProcess();
         });
 
-        // Being notified of the opinet price data on the worker thread of PriceRegionalTask,
+        // Being notified of the opinet price data on the worker thread of PriceDistrictTask,
         // start MainActivity and finish the progressbar
         viewModel.notifyPriceComplete().observe(this, isComplete -> {
-            log.i("PriceRegionalTask complete");
-            if(priceRegionalTask != null) priceRegionalTask = null;
+            log.i("PriceDistrictTask complete");
+            if(priceDistrictTask != null) priceDistrictTask = null;
             mProgBar.setVisibility(View.GONE);
             startActivity(new Intent(IntroActivity.this, MainActivity.class));
             finish();
         });
+
+        CarmanDatabase.getDatabaseInstance(this).favoriteModel()
+                .queryFirstSetFavorite().observe(this, data -> {
+            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
+                if(provider.category == Constants.GAS) stnId = provider.providerId;
+                log.i("Station ID: %s", stnId);
+            }
+        });
+
     }
 
     @Override
@@ -100,14 +103,14 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     public void onPause() {
         super.onPause();
         if(saveDistCodeTask != null) saveDistCodeTask = null;
-        if(priceRegionalTask != null) priceRegionalTask = null;
+        if(priceDistrictTask != null) priceDistrictTask = null;
     }
 
     @Override
     public void onStop() {
         super.onStop();
         if(saveDistCodeTask != null) saveDistCodeTask = null;
-        if(priceRegionalTask != null) priceRegionalTask = null;
+        if(priceDistrictTask != null) priceDistrictTask = null;
     }
 
     @Override
@@ -119,10 +122,12 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     // The single-time process at the first launching
     @SuppressWarnings("ConstantConditions")
     private void firstInitProcess() {
-
+        mProgBar.setVisibility(View.VISIBLE);
         // Anonymous Authentication with Firebase.Auth
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
+
             if(task.isSuccessful()) {
+
                 File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
                 if(!distCode.exists()) ThreadManager.saveOpinetDistCodeTask(this, viewModel);
 
@@ -143,6 +148,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     }
 
     private void initProcess() {
+
         mProgBar.setVisibility(View.VISIBLE);
         File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
         String distCode;
@@ -155,8 +161,8 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
             // Consider whether the threads should be interrupted or not.
-            priceRegionalTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode, stnId);
-            //priceRegionalTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode);
+            priceDistrictTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode, stnId);
+            //priceDistrictTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode);
 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();

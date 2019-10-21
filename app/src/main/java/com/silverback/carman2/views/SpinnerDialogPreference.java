@@ -62,15 +62,10 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
-        log.i("onPreferenceChange");
         JSONArray json = (JSONArray)newValue;
-        try {
-            setSummary(String.format("%s %s", json.get(0).toString(), json.get(14).toString()));
-        } catch(JSONException e) {
-            log.e("JSONException");
-        }
+        setSummary(String.format("%s %s", json.optString(0), json.optString(1)));
 
-        return false;
+        return true;
     }
 
 }

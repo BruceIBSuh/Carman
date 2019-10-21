@@ -3,6 +3,8 @@ package com.silverback.carman2.fragments;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -55,8 +57,11 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        //getFragmentManager().popBackStack();
+        getAutoDataList();
         return super.onOptionsItemSelected(item);
+
     }
 
     private void createYearEntries() {
@@ -70,6 +75,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         dataList.add(autoMaker.getSummary().toString());
         dataList.add(autoModel.getSummary().toString());
         dataList.add(autoYear.getSummary().toString());
+
         for(String str : dataList) log.i("Summaries: %s", str);
         return dataList;
 

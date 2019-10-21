@@ -1,6 +1,11 @@
 package com.silverback.carman2.threads;
 
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
+
 public class ThreadTask {
+
+    private static final LoggingHelper log = LoggingHelperFactory.create(ThreadTask.class);
 
     // Objects
     static ThreadManager sThreadManager;
@@ -20,8 +25,8 @@ public class ThreadTask {
      */
     public Thread getCurrentThread() {
         //synchronized(sThreadManager) {
-        //Log.d(LOG_TAG, "ThreadTask current Thread: " + mCurrentThread);
-        return mCurrentThread;
+            log.d("ThreadTask current Thread: %s", mCurrentThread);
+            return mCurrentThread;
         //}
     }
     /*
@@ -30,8 +35,8 @@ public class ThreadTask {
      */
     void setCurrentThread(Thread thread) {
         //synchronized(sThreadManager) {
-        //Log.d(LOG_TAG, "ThreadTask current Thread: " + mCurrentThread);
-        mCurrentThread = thread;
+            mCurrentThread = thread;
+            log.d("ThreadTask current Thread: %s", mCurrentThread);
         //}
     }
 

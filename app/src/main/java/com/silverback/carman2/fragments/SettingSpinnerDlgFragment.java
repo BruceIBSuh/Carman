@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -9,32 +8,32 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.preference.PreferenceDialogFragmentCompat;
+
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.threads.LoadDistCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
 
 import java.util.Arrays;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.preference.PreferenceDialogFragmentCompat;
-
 /**
  * A simple {@link Fragment} subclass.
  *
- * preferenceDialogFragmentCompat containing SpinnerDialogPreference which is a custom dialog preference
+ * PreferenceDialogFragmentCompat containing SpinnerDialogPreference which is a custom dialog preference
  * to create the input form of the sido and sigun code.
+ *
  */
 public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat implements
         AdapterView.OnItemSelectedListener {
@@ -50,8 +49,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     private ArrayAdapter sidoAdapter;
     private DistrictSpinnerAdapter sigunAdapter;
     private SharedPreferences mSettings;
+
     // Fields
-    private String sidoName, sigunName, distCode;
     private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
 
 
@@ -154,7 +153,11 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
             log.i("District info: %s %s %s", sidoName, sigunName, distCode);
 
             JSONArray jsonArray = new JSONArray(Arrays.asList(sidoName, sigunName, distCode));
-            spinnerPref.callChangeListener(jsonArray);
+            for(int i = 0; i < jsonArray.length(); i++) {
+                log.i("JSONArray: %s", jsonArray.optString(i));
+            }
+
+            spinnerPref.callChangeListener(jsonArray); // invoke OnPreferenceChange()
 
             // Save values in SharedPreferences
             mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();

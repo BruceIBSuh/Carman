@@ -89,6 +89,7 @@ public class SaveDistCodeRunnable implements Runnable {
                 log.d("Sigun Numbers: %d", distCodeList.size());
                 mTask.notifySaved(true);
                 mTask.handleDistCodeTask(DOWNLOAD_DISTCODE_SUCCEED);
+
             } else mTask.notifySaved(false);
 
         } catch (IOException e) {

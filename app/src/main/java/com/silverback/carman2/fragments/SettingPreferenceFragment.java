@@ -16,6 +16,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -28,6 +29,9 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.CropImageHelper;
 import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.IOException;
 
@@ -46,6 +50,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private Preference cropImagePreference;
     private NameDialogPreference namePref;
 
+    private JSONArray jsonDistrict;
     private String sigunCode;
     private String nickname;
 
@@ -67,8 +72,16 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
-        String[] district = getArguments().getStringArray("district");
-        sigunCode = district[2];
+        //String[] district = getArguments().getStringArray("district");
+        //sigunCode = district[2];
+        String district = mSettings.getString(Constants.DISTRICT, null);
+        try {
+            jsonDistrict = new JSONArray(district);
+            sigunCode = jsonDistrict.getString(2);
+        }catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -130,28 +143,27 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             svcPeriod.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
 
+
         SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
-        spinnerPref.setSummary(String.format("%s %s", district[0], district[1]));
+        spinnerPref.setSummary(String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
 
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
         cropImagePreference = findPreference("pref_edit_image");
         cropImagePreference.setOnPreferenceClickListener(view -> {
+            if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
+                Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
+                return false;
+            }
+
             DialogFragment dialogFragment = new CropImageDialogFragment();
             dialogFragment.show(getFragmentManager(), null);
             return true;
         });
 
-        //
-        cropImagePreference.setOnPreferenceChangeListener((preference, newValue) -> {
-            log.i("corpImagePreference updated:%s", newValue);
-            return true;
-        });
-
         // Set the circle image for the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
-
         String imageUri = mSettings.getString("croppedImageUri", null);
         if(!TextUtils.isEmpty(imageUri)) {
             try {

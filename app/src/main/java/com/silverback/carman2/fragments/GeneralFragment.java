@@ -36,7 +36,7 @@ import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.PriceRegionalTask;
+import com.silverback.carman2.threads.PriceDistrictTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -76,7 +76,7 @@ public class GeneralFragment extends Fragment implements
     private OpinetViewModel priceViewModel;
 
     private LocationTask locationTask;
-    private PriceRegionalTask priceRegionalTask;
+    private PriceDistrictTask priceDistrictTask;
     //private PriceFavoriteTask priceFavoriteTask;
     private StationListTask stationListTask;
     private OpinetAvgPriceView opinetAvgPriceView;
@@ -254,7 +254,7 @@ public class GeneralFragment extends Fragment implements
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
-        if(priceRegionalTask != null) priceRegionalTask = null;
+        if(priceDistrictTask != null) priceDistrictTask = null;
     }
 
     @Override

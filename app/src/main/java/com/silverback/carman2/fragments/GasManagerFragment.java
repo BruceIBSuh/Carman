@@ -46,6 +46,10 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -494,21 +498,32 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
             // Add ranting or comments to the Firestore, if any.
             if(!TextUtils.isEmpty(etGasComment.getText())) {
-                Map<String, Object> commentData = new HashMap<>();
-                commentData.put("timestamp", FieldValue.serverTimestamp());
-                commentData.put("name", nickname);
-                commentData.put("comments", etGasComment.getText().toString());
-                commentData.put("rating", ratingBar.getRating());
+                try (FileInputStream fis = getActivity().openFileInput("user_id");
+                     BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
-                firestore.collection("gas_eval").document(stnId).collection("comments").add(commentData)
-                        .addOnCompleteListener(task -> {
-                            if(task.isSuccessful()) {
-                                log.e("Commments successfully uploaded");
-                                isCommentUploaded = true;
-                            } else {
-                                log.e("Comments upload failed: %s", task.getException());
-                            }
-                        });
+                    final String userid = br.readLine();
+                    Map<String, Object> commentData = new HashMap<>();
+                    commentData.put("timestamp", FieldValue.serverTimestamp());
+                    commentData.put("name", nickname);
+                    commentData.put("comments", etGasComment.getText().toString());
+                    commentData.put("rating", ratingBar.getRating());
+
+                    firestore.collection("gas_eval").document(stnId).collection("comments")
+                            .document(userid)
+                            .set(commentData)
+                            .addOnCompleteListener(task -> {
+                                if(task.isSuccessful()) {
+                                    log.e("Commments successfully uploaded");
+                                    isCommentUploaded = true;
+                                } else {
+                                    log.e("Comments upload failed: %s", task.getException());
+                                }
+                            });
+
+                } catch (IOException e) {
+                    log.e("IOException: %s", e.getMessage());
+                }
+
             }
 
             return true;

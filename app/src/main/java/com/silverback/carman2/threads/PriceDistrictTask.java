@@ -6,10 +6,10 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
 
-public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnable.OpinetPriceListMethods {
+public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnable.OpinetPriceListMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceRegionalTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PriceDistrictTask.class);
 
     // Objects and Fields
     private OpinetViewModel viewModel;
@@ -18,17 +18,17 @@ public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnab
     private String stnId;
     private int index = 0;
 
-    // Constructor: creates an PriceRegionalTask object containing PriceRegionalRunnable object.
-    PriceRegionalTask(Context context) {
+    // Constructor: creates an PriceDistrictTask object containing PriceDistrictRunnable object.
+    PriceDistrictTask(Context context) {
         super();
-        mAvgPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.AVG);
-        mSidoPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.SIDO);
-        mSigunPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.SIGUN);
-        mStationPriceRunnable = new PriceRegionalRunnable(context, this, PriceRegionalRunnable.STATION);
+        mAvgPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.AVG);
+        mSidoPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.SIDO);
+        mSigunPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.SIGUN);
+        mStationPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.STATION);
 
     }
 
-    // Initialize args for PriceRegionalRunnable
+    // Initialize args for PriceDistrictRunnable
     void initPriceTask(OpinetViewModel viewModel, String distCode, String stnId) {
     //void initPriceTask(OpinetViewModel viewModel, String distCode) {
         this.viewModel = viewModel;
@@ -49,7 +49,7 @@ public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnab
     Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
 
 
-    // Callback methods defined in PriceRegionalRunnable.OpinentPriceListMethods
+    // Callback methods defined in PriceDistrictRunnable.OpinentPriceListMethods
     @Override
     public void setPriceDownloadThread(Thread currentThread) {
         setCurrentThread(currentThread);
@@ -74,8 +74,10 @@ public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnab
     @Override
     public synchronized void setTaskCount() {
         index++;
-        log.i("Task count: %s", index);
-        if(index >= 4) viewModel.notifyPriceComplete().postValue(true);
+        // When initiating the app first time, the station id doesn't exist. Thus, no price info
+        // of the favorite station shouldn't be provided. Other than this case, the price info should
+        // be provided 4 times(avg, sido, sigun, station).
+        if(index >= ((stnId == null)? 3 : 4)) viewModel.notifyPriceComplete().postValue(true);
     }
 
     @Override
@@ -83,11 +85,11 @@ public class PriceRegionalTask extends ThreadTask implements PriceRegionalRunnab
         int outstate = -1;
 
         switch(state) {
-            case PriceRegionalRunnable.DOWNLOAD_PRICE_COMPLETE:
-                outstate = ThreadManager.DOWNLOAD_PRICE_COMPLETE;
+            case PriceDistrictRunnable.DOWNLOAD_PRICE_COMPLETE:
+                outstate = ThreadManager.DOWNLOAD_PRICE_COMPLETED;
                 break;
 
-            case PriceRegionalRunnable.DOWNLOAD_PRICE_FAILED:
+            case PriceDistrictRunnable.DOWNLOAD_PRICE_FAILED:
                 outstate = ThreadManager.DOWNLOAD_PRICE_FAILED;
                 break;
         }

@@ -2,10 +2,10 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp"
-    android:background="#CCCC00"
+    android:layout_margin="2dp"
     cardview:cardCornerRadius="2dp" >
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -13,28 +13,40 @@
         android:layout_height="match_parent"
         android:padding="10dp">
 
-        <TextView
-            android:id="@+id/tv_nickname"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageView
+            android:id="@+id/img_profile"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="3dp"
+            android:contentDescription="@null"
             cardview:layout_constraintStart_toStartOf="parent"
-            cardview:layout_constraintTop_toTopOf="parent" />
+            cardview:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/avatars[0]" />
 
         <TextView
-            android:id="@+id/tv_comments"
-            android:layout_width="wrap_content"
+            android:id="@+id/tv_nickname"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            cardview:layout_constraintStart_toStartOf="parent"
-            cardview:layout_constraintTop_toBottomOf="@+id/tv_nickname" />
+            android:layout_marginStart="32dp"
+            cardview:layout_constraintStart_toEndOf="@+id/img_profile"
+            cardview:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_timestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            cardview:layout_constraintStart_toStartOf="@+id/tv_nickname"
+            cardview:layout_constraintTop_toBottomOf="@+id/tv_nickname" />
+
+        <TextView
+            android:id="@+id/tv_comments"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             cardview:layout_constraintEnd_toEndOf="parent"
-            cardview:layout_constraintTop_toBottomOf="@+id/tv_comments"/>
+            cardview:layout_constraintStart_toStartOf="@+id/img_profile"
+            cardview:layout_constraintTop_toBottomOf="@+id/tv_timestamp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

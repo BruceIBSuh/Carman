@@ -30,7 +30,7 @@ public class ThreadManager {
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager.class);
 
     // Constants
-    static final int DOWNLOAD_PRICE_COMPLETE = 100;
+    static final int DOWNLOAD_PRICE_COMPLETED = 100;
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 200;
@@ -56,7 +56,7 @@ public class ThreadManager {
     static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
     static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
 
-    static final int DOWNLOAD_PRICE_FAILED = -200;
+    static final int DOWNLOAD_PRICE_FAILED = -100;
     static final int DOWNLOAD_NEAR_STATIONS_FAILED = -2;
     static final int DOWNLOAD_CURRENT_STATION_FAILED = -4;
     static final int POPULATE_STATION_LIST_FAILED = -3;
@@ -149,7 +149,7 @@ public class ThreadManager {
             public void handleMessage(Message msg) {
                 //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
                 ClockTask clockTask;
-                PriceRegionalTask priceRegionalTask;
+                PriceDistrictTask priceDistrictTask;
                 LocationTask locationTask;
                 //LoadPriceListTask loadPriceTask;
                 StationListTask stationListTask;
@@ -171,9 +171,9 @@ public class ThreadManager {
                         break;
 
 
-                    case DOWNLOAD_PRICE_COMPLETE:
-                        priceRegionalTask = (PriceRegionalTask)msg.obj;
-                        recycleTask(priceRegionalTask);
+                    case DOWNLOAD_PRICE_COMPLETED:
+                        priceDistrictTask = (PriceDistrictTask)msg.obj;
+                        recycleTask(priceDistrictTask);
 
                         break;
 
@@ -348,25 +348,25 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static PriceRegionalTask startRegionalPriceTask(
+    public static PriceDistrictTask startRegionalPriceTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
             //Context context, OpinetViewModel model, String distCode) {
 
-        PriceRegionalTask priceRegionalTask = (PriceRegionalTask)sInstance.mTaskWorkQueue.poll();
+        PriceDistrictTask priceDistrictTask = (PriceDistrictTask)sInstance.mTaskWorkQueue.poll();
 
-        if(priceRegionalTask == null) {
-            priceRegionalTask = new PriceRegionalTask(context);
+        if(priceDistrictTask == null) {
+            priceDistrictTask = new PriceDistrictTask(context);
         }
 
-        priceRegionalTask.initPriceTask(model, distCode, stnId);
-        //priceRegionalTask.initPriceTask(model, distCode);
+        priceDistrictTask.initPriceTask(model, distCode, stnId);
+        //priceDistrictTask.initPriceTask(model, distCode);
 
-        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getAvgPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getSidoPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getSigunPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceRegionalTask.getStationPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getAvgPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getSidoPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getSigunPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getStationPriceRunnable());
 
-        return priceRegionalTask;
+        return priceDistrictTask;
     }
 
     public static PriceFavoriteTask startFavoritePriceTask(
@@ -399,7 +399,7 @@ public class ThreadManager {
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
-        LocationTask locationTask = (LocationTask)sInstance.mTaskWorkQueue.poll();
+        LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
 
         if(locationTask == null) {
             locationTask = new LocationTask(context);
@@ -417,7 +417,7 @@ public class ThreadManager {
     public static StationListTask startStationListTask(
             Context context, StationListViewModel model, Location location, String[] params) {
 
-        StationListTask stationListTask = (StationListTask)sInstance.mTaskWorkQueue.poll();
+        StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
 
         if(stationListTask == null) {
             stationListTask = new StationListTask();
@@ -498,13 +498,21 @@ public class ThreadManager {
      */
     private void recycleTask(ThreadTask task) {
 
-        if(task instanceof LocationTask) {
+        if(task instanceof PriceDistrictTask) {
+            log.i("PriceDistrictTask thread: %s", task.getCurrentThread());
+            if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
+            mTaskWorkQueue.offer(task);
+
+        } else if(task instanceof LocationTask) {
             ((LocationTask) task).recycle();
+            if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
             mLocationTaskQueue.offer((LocationTask) task);
 
         } else if(task instanceof StationListTask) {
             ((StationListTask) task).recycle();
-            mStationListTaskQueue.offer((StationListTask) task);
+            if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
+            mStationListTaskQueue.offer((StationListTask)task);
+
             //mStationTaskListener = null;
             //if(mCurrentStationListener != null) mCurrentStationListener = null;
 
@@ -515,6 +523,7 @@ public class ThreadManager {
         } else if(task instanceof GeocoderReverseTask) {
             ((GeocoderReverseTask)task).recycle();
             mTaskWorkQueue.offer(task);
+
         }
 
     }

@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -21,6 +22,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.CommentRecyclerAdapter;
@@ -38,7 +42,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
-    private FirebaseFirestore fireStore;
     //private StationInfoTask stationInfoTask;
     private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
@@ -60,7 +63,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         setContentView(R.layout.activity_station_map);
 
         final String stnId = getIntent().getStringExtra("stationId");
-        fireStore = FirebaseFirestore.getInstance();
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        FirebaseStorage storage = FirebaseStorage.getInstance();
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
@@ -87,7 +91,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
          * To be notified when the task fails, attach on an OnFailureListener
          * To handle success and failure in the same listener, attach an OnCompleteListener.
          */
-        fireStore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
+        firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
@@ -131,19 +135,39 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         // Read comments on gas stations
         List<DocumentSnapshot> snapshotList = new ArrayList<>();
-        final CollectionReference colRef = fireStore.collection("gas_eval").document(stnId).collection("comments");
-        colRef.get().addOnCompleteListener(task -> {
-            if(task.isSuccessful()) {
+        List<Uri> imageList = new ArrayList<>();
+        firestore.collection("gas_eval").document(stnId)
+                .collection("comments")
+                .orderBy("timestamp", Query.Direction.DESCENDING) //descending ordered query based on timestamp.
+                .get().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        for(DocumentSnapshot document : task.getResult()) {
+                            log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
+                            snapshotList.add(document);
+                            log.i("user id: %s", document.getId());
 
-                for(DocumentSnapshot document : task.getResult()) {
-                    log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
-                    snapshotList.add(document);
-                }
-                commentAdapter = new CommentRecyclerAdapter(snapshotList);
-                recyclerComments.setAdapter(commentAdapter);
-            } else {
-                log.e("task failed: %s", task.getException());
-            }
+                            // Download the profile image from the storage with the user id.
+                            /*
+                            final String userid = document.getId();
+                            StorageReference pathRef = storage.getReference().child(userid + "/images/profile.jpg");
+                            pathRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                                log.i("Image uri: %s", uri);
+                                imageList.add(uri);
+
+                            }).addOnFailureListener(e -> {
+                                imageList.add(null);
+                                log.e("Download image failed");
+                            });
+                            */
+
+                        }
+
+                        commentAdapter = new CommentRecyclerAdapter(snapshotList);
+                        recyclerComments.setAdapter(commentAdapter);
+
+                    } else {
+                        log.e("task failed: %s", task.getException());
+                    }
         });
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and

@@ -1,7 +1,9 @@
 package com.silverback.carman2.adapters;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,16 +25,21 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
 
     // Objects
     private List<DocumentSnapshot> snapshotList;
+    private List<Uri> imgList;
 
     // UIs
     private TextView tvComment;
+    private ImageView imgProfile;
 
     // Constructor
     public CommentRecyclerAdapter(List<DocumentSnapshot> snapshotList) {
         this.snapshotList = snapshotList;
+
         for(DocumentSnapshot snapshot : snapshotList) {
             log.i("Comment Adapter snapshot: %s, %s", snapshot.getString("comments"), snapshot.getString("name"));
         }
+
+
     }
 
 
@@ -42,14 +49,16 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_comments, parent, false);
 
-        tvComment = cardView.findViewById(R.id.tv_comments);
+        //tvComment = cardView.findViewById(R.id.tv_comments);
+        imgProfile = cardView.findViewById(R.id.img_profile);
 
         return new CommentListHolder(cardView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull CommentListHolder holder, int position) {
-        holder.bindToComments(snapshotList.get(position));
+        holder.bindToComments(snapshotList.get(position), imgList.get(position));
+
     }
 
     @Override

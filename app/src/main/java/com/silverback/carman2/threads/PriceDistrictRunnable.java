@@ -20,10 +20,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-public class PriceRegionalRunnable implements Runnable {
+public class PriceDistrictRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceRegionalRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PriceDistrictRunnable.class);
 
     // constants
     private static final String API_KEY = "F186170711";
@@ -53,8 +53,8 @@ public class PriceRegionalRunnable implements Runnable {
 
     /*
      * An interface that defines methods that ThreadTask implements. An instance of
-     * ThreadTask passes itself to an PriceRegionalRunnable instance through the
-     * PriceRegionalRunnable constructor, after which the two instances can access each other's
+     * ThreadTask passes itself to an PriceDistrictRunnable instance through the
+     * PriceDistrictRunnable constructor, after which the two instances can access each other's
      * variables.
      */
     public interface OpinetPriceListMethods {
@@ -67,7 +67,7 @@ public class PriceRegionalRunnable implements Runnable {
     }
 
     // Constructor
-    PriceRegionalRunnable(Context context, OpinetPriceListMethods task, int category) {
+    PriceDistrictRunnable(Context context, OpinetPriceListMethods task, int category) {
         this.context = context;
         this.category = category;
         this.task = task;
@@ -193,9 +193,6 @@ public class PriceRegionalRunnable implements Runnable {
 
             if(conn != null) conn.disconnect();
         }
-
-
-
     }
 
     private synchronized void savePriceInfo(Object obj, String fName) {
