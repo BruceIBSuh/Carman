@@ -11,9 +11,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.BitmapTypeRequest;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.silverback.carman2.R;
@@ -35,6 +40,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
 
     // Objects
     private Context context;
+    private FirebaseFirestore firestore;
     private FirebaseStorage storage;
     private LoadImageViewModel viewModel;
     private StorageReference storageRef;
@@ -52,6 +58,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
         this.context = context;
         this.snapshotList = snapshotList;
         this.viewModel = viewModel;
+        firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         storageRef = storage.getReference();
     }
@@ -74,13 +81,27 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
         holder.bindToComments(snapshotList.get(position), drawable);
 
         final String userid = snapshotList.get(position).getId();
+
         storage.getReference().child("images/" + userid + "/profile.jpg").getDownloadUrl()
                 .addOnSuccessListener(uri -> {
                     log.i("Image Uri: %s", uri);
                     ThreadManager.downloadImageTask(context, position, uri.toString(), viewModel);
                     //Picasso.with(context).load(uri).into(imgProfile);
+                    //applyGlideForCroppedImage(context, uri, null, imgProfile);
                 }).addOnFailureListener(e -> log.e("Download failed"));
+        /*
+        firestore.collection("users").document(userid).get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if(document.exists()) {
+                    Uri uri = Uri.parse(document.getString("user_image"));
+                    log.i("Image Uri: %s", uri);
+                    applyGlideForCroppedImage(context, uri, null, imgProfile);
+                }
+            }
+        });
 
+         */
 
 
     }
@@ -105,5 +126,30 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
         //log.i("snapshotlist: %s", snapshotList.size());
         return snapshotList.size();
     }
+
+    private void applyGlideForCroppedImage(Context context, Uri uri, byte[] byteArray, ImageView view){
+
+        BitmapTypeRequest<?> bitmapTypeReq = null;
+
+        if(uri != null) {
+            bitmapTypeReq = Glide.with(context).load(uri).asBitmap();
+        } else if(byteArray.length > 0) {
+            bitmapTypeReq = Glide.with(context).load(byteArray).asBitmap();
+        }
+
+
+
+        bitmapTypeReq.into(new BitmapImageViewTarget(view){
+            @Override
+            protected void setResource(Bitmap resource) {
+                RoundedBitmapDrawable circularBitmapDrawable =
+                        RoundedBitmapDrawableFactory.create(context.getResources(), resource);
+                circularBitmapDrawable.setCircular(true);
+                view.setImageDrawable(circularBitmapDrawable);
+            }
+        });
+
+    }
+
 
 }

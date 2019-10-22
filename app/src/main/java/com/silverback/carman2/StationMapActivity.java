@@ -158,7 +158,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                 .orderBy("timestamp", Query.Direction.DESCENDING) //descending ordered query based on timestamp.
                 .get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
-
                         for(DocumentSnapshot document : task.getResult()) {
                             log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
                             snapshotList.add(document);
