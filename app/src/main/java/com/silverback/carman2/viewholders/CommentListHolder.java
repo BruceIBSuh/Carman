@@ -5,6 +5,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.cardview.widget.CardView;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -14,7 +15,7 @@ public class CommentListHolder extends RecyclerView.ViewHolder {
 
     // UIs
     private TextView tvNickname, tvComments, tvTimestamp;
-    private ImageView imgProfile;
+    public ImageView imgProfile;
     public CommentListHolder(CardView cardView) {
         super(cardView);
         imgProfile = cardView.findViewById(R.id.img_profile);
@@ -24,9 +25,8 @@ public class CommentListHolder extends RecyclerView.ViewHolder {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public void bindToComments(DocumentSnapshot snapshot, Uri uri) {
-        if(uri != null) imgProfile.setImageURI(uri);
-
+    public void bindToComments(DocumentSnapshot snapshot, RoundedBitmapDrawable drawable) {
+        imgProfile.setImageDrawable(drawable);
         tvNickname.setText(snapshot.getString("name"));
         tvComments.setText(snapshot.getString("comments"));
         tvTimestamp.setText(snapshot.getTimestamp("timestamp").toDate().toString());

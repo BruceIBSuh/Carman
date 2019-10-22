@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.LoadImageViewModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
@@ -34,6 +35,8 @@ public class ThreadManager {
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 200;
+
+    static final int DOWNLOAD_IMAGE_FINISH = 201;
 
     static final int SERVICE_ITEM_LIST_COMPLETED = 109;
     static final int FETCH_LOCATION_COMPLETED = 110;
@@ -90,7 +93,9 @@ public class ThreadManager {
     //private final Queue<StationInfoTask> mStationInfoTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     //private final Queue<ClockTask> mClockTaskQueue;
-    private final Queue<ThreadTask> mTaskWorkQueue;
+    private Queue<ThreadTask> mTaskWorkQueue;
+    private Queue<DownloadImageTask> mDownloadImageTaskQueue;
+
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -122,6 +127,8 @@ public class ThreadManager {
         //mStationInfoTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
+        mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
+
 
 
         // Instantiates ThreadPoolExecutor
@@ -179,13 +186,13 @@ public class ThreadManager {
 
                     case FETCH_LOCATION_COMPLETED:
                         locationTask = (LocationTask)msg.obj;
-                        recycleTask(locationTask);
+                        //recycleTask(locationTask);
 
                         break;
 
                     case FETCH_LOCATION_FAILED:
                         locationTask = (LocationTask)msg.obj;
-                        locationTask.recycle();
+                        //locationTask.recycle();
 
                         break;
 
@@ -195,7 +202,7 @@ public class ThreadManager {
 
                     case DOWNLOAD_NEAR_STATIONS_FAILED:
                         //mStationTaskListener.onTaskFailure();
-                        recycleTask((StationListTask)msg.obj);
+                        //recycleTask((StationListTask)msg.obj);
                         break;
 
                     case DOWNLOAD_CURRENT_STATION_FAILED:
@@ -217,6 +224,10 @@ public class ThreadManager {
 
                     case DOWNLOAD_STATION_INFO_FAILED:
                         recycleTask((StationInfoTask)msg.obj);
+                        break;
+
+                    case DOWNLOAD_IMAGE_FINISH:
+                        //recycleTask((DownloadImageTask)msg.obj);
                         break;
 
                     case GEOCODER_REVERSE_TASK_COMPLETED:
@@ -478,6 +489,17 @@ public class ThreadManager {
         return recyclerTask;
     }
 
+    public static DownloadImageTask downloadImageTask(
+            Context context, int position, String url, LoadImageViewModel model) {
+
+        DownloadImageTask imageTask = sInstance.mDownloadImageTaskQueue.poll();
+        if(imageTask == null) imageTask = new DownloadImageTask(context, model);
+        imageTask.initTask(position, url);
+        sInstance.mDownloadThreadPool.execute(imageTask.getDownloadImageRunnable());
+
+        return imageTask;
+    }
+
     /*
     public static FirestoreTask startFirestoreFavoriteTask(
             List<FavoriteProviderEntity> favoriteList, FirestoreViewModel model, int category) {
@@ -524,6 +546,8 @@ public class ThreadManager {
             ((GeocoderReverseTask)task).recycle();
             mTaskWorkQueue.offer(task);
 
+        } else if(task instanceof DownloadImageTask) {
+            mTaskWorkQueue.offer(task);
         }
 
     }

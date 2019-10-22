@@ -2,11 +2,13 @@ package com.silverback.carman2;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.SparseArray;
 import android.view.MenuItem;
 import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -30,6 +32,8 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.LoadImageViewModel;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 
@@ -43,6 +47,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Objects
     //private StationInfoTask stationInfoTask;
+    private FirebaseStorage storage;
     private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
     private double longitude, latitude;
@@ -54,6 +59,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Fields
     private String stnName;
+    private int imgPos;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -63,8 +69,10 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         setContentView(R.layout.activity_station_map);
 
         final String stnId = getIntent().getStringExtra("stationId");
+
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-        FirebaseStorage storage = FirebaseStorage.getInstance();
+        storage = FirebaseStorage.getInstance();
+        LoadImageViewModel imageModel = ViewModelProviders.of(this).get(LoadImageViewModel.class);
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
@@ -82,6 +90,15 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         recyclerComments = findViewById(R.id.recycler_stn_comments);
         recyclerComments.setLayoutManager(new LinearLayoutManager(this));
+        //recyclerComments.setItemViewCacheSize(20);
+        //recyclerComments.setDrawingCacheEnabled(true);
+
+        // When the fab is clicked, connect to a navigation which is opted between Tmap and
+        // KakaoNavi as an installed app is first applied.
+        fabNavi.setOnClickListener(view ->
+                naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
+        );
+
 
         //StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
 
@@ -135,46 +152,44 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         // Read comments on gas stations
         List<DocumentSnapshot> snapshotList = new ArrayList<>();
-        List<Uri> imageList = new ArrayList<>();
+        imgPos = 0;
         firestore.collection("gas_eval").document(stnId)
                 .collection("comments")
                 .orderBy("timestamp", Query.Direction.DESCENDING) //descending ordered query based on timestamp.
                 .get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
+
                         for(DocumentSnapshot document : task.getResult()) {
                             log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
                             snapshotList.add(document);
-                            log.i("user id: %s", document.getId());
 
-                            // Download the profile image from the storage with the user id.
                             /*
                             final String userid = document.getId();
-                            StorageReference pathRef = storage.getReference().child(userid + "/images/profile.jpg");
-                            pathRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                                log.i("Image uri: %s", uri);
-                                imageList.add(uri);
+                            storage.getReference().child("images/" + userid + "/profile.jpg").getDownloadUrl()
+                                    .addOnSuccessListener(uri -> {
+                                        log.i("Image Uri: %s", uri);
+                                        ThreadManager.downloadImageTask(this, imgPos, uri.toString(), imageModel);
 
-                            }).addOnFailureListener(e -> {
-                                imageList.add(null);
-                                log.e("Download image failed");
-                            });
+
+                                    }).addOnFailureListener(e -> log.e("Download failed"));
+
+                            imgPos++;
                             */
-
                         }
 
-                        commentAdapter = new CommentRecyclerAdapter(snapshotList);
+                        commentAdapter = new CommentRecyclerAdapter(this, snapshotList, imageModel);
                         recyclerComments.setAdapter(commentAdapter);
 
                     } else {
                         log.e("task failed: %s", task.getException());
                     }
+
+
         });
 
-        // When the fab is clicked, connect to a navigation which is opted between Tmap and
-        // KakaoNavi as an installed app is first applied.
-        fabNavi.setOnClickListener(view ->
-                naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
-        );
+        imageModel.getDownloadImage().observe(this, sparseArray -> {
+            commentAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray.valueAt(0));
+        });
 
 
         /*
@@ -218,6 +233,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                 naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
         );
         */
+
+
     }
 
     @SuppressWarnings("ConstantConditions")
