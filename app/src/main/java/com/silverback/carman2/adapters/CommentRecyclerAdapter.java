@@ -82,6 +82,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
 
         final String userid = snapshotList.get(position).getId();
 
+        /*
         storage.getReference().child("images/" + userid + "/profile.jpg").getDownloadUrl()
                 .addOnSuccessListener(uri -> {
                     log.i("Image Uri: %s", uri);
@@ -89,19 +90,20 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
                     //Picasso.with(context).load(uri).into(imgProfile);
                     //applyGlideForCroppedImage(context, uri, null, imgProfile);
                 }).addOnFailureListener(e -> log.e("Download failed"));
-        /*
+        */
         firestore.collection("users").document(userid).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if(document.exists()) {
                     Uri uri = Uri.parse(document.getString("user_image"));
                     log.i("Image Uri: %s", uri);
-                    applyGlideForCroppedImage(context, uri, null, imgProfile);
+                    ThreadManager.downloadImageTask(context, position, uri.toString(), viewModel);
+                    //applyGlideForCroppedImage(context, uri, null, imgProfile);
                 }
             }
         });
 
-         */
+
 
 
     }
