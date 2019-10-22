@@ -34,7 +34,6 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
     private static final LoggingHelper log = LoggingHelperFactory.create(CommentRecyclerAdapter.class);
 
     // Objects
-    private DownloadImageTask downloadTask;
     private Context context;
     private FirebaseStorage storage;
     private LoadImageViewModel viewModel;
@@ -103,11 +102,8 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentListHold
 
     @Override
     public int getItemCount() {
-        log.i("snapshotlist: %s", snapshotList.size());
+        //log.i("snapshotlist: %s", snapshotList.size());
         return snapshotList.size();
     }
 
-    public void setProfileImage(int position, RoundedBitmapDrawable drawable) {
-
-    }
 }
