@@ -20,19 +20,20 @@
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fitsSystemWindows="true"
+
             app:contentScrim="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:titleEnabled="false" >
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/tb_map"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="@android:color/holo_blue_dark"
+                android:background="@color/bgToolbar"
                 android:elevation="3dp"
                 android:fitsSystemWindows="true"
                 app:layout_collapseMode="pin"
-                app:titleTextColor="#fb9000" />
+                app:titleTextColor="#F5F5F5" />
 
             <fragment
                 android:id="@+id/google_map"
@@ -64,7 +65,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:background="#FF9900">
+                android:background="#CC778899">
 
                 <TextView
                     android:id="@+id/tv_service_item"
@@ -81,6 +82,8 @@
                     android:id="@+id/tv_address"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textSize="@dimen/smallText"
+                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_service_item" />
 
@@ -89,6 +92,7 @@
                     android:id="@+id/tv_price_info"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_address" />
 
@@ -96,6 +100,7 @@
                     android:id="@+id/tv_carwash"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_price_info" />
 
@@ -104,6 +109,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
+                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toEndOf="@+id/tv_carwash"
                     app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash"/>
 
@@ -112,6 +118,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
+                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toEndOf="@+id/tv_service"
                     app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash" />
 

@@ -2,6 +2,7 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="2dp"
@@ -47,6 +48,16 @@
             cardview:layout_constraintEnd_toEndOf="parent"
             cardview:layout_constraintStart_toStartOf="@+id/img_profile"
             cardview:layout_constraintTop_toBottomOf="@+id/tv_timestamp" />
+
+        <RatingBar style="?android:attr/ratingBarStyleSmall"
+            android:id="@+id/rb_comments_rating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:isIndicator="true"
+            android:numStars="5"
+            cardview:layout_constraintBottom_toBottomOf="@+id/tv_nickname"
+            cardview:layout_constraintEnd_toEndOf="parent"
+            cardview:layout_constraintTop_toTopOf="@+id/tv_nickname" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

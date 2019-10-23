@@ -10,7 +10,6 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.squareup.picasso.Picasso;
 
 import java.io.InputStream;
 

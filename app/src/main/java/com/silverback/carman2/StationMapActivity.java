@@ -1,8 +1,6 @@
 package com.silverback.carman2;
 
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.SparseArray;
 import android.view.MenuItem;
 import android.widget.TextView;
 
@@ -21,21 +19,19 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LoadImageViewModel;
-import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ConnectNaviHelper;
+import com.silverback.carman2.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -151,13 +147,14 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         });
 
         // Read comments on gas stations
-        List<DocumentSnapshot> snapshotList = new ArrayList<>();
-        imgPos = 0;
-        firestore.collection("gas_eval").document(stnId)
+
+        firestore.collection("gas_eval")
+                .document(stnId)
                 .collection("comments")
                 .orderBy("timestamp", Query.Direction.DESCENDING) //descending ordered query based on timestamp.
                 .get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
+                        List<DocumentSnapshot> snapshotList = new ArrayList<>();
                         for(DocumentSnapshot document : task.getResult()) {
                             log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
                             snapshotList.add(document);
@@ -176,7 +173,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                             */
                         }
 
-                        commentAdapter = new CommentRecyclerAdapter(this, snapshotList, imageModel);
+                        commentAdapter = new CommentRecyclerAdapter(this, snapshotList);
                         recyclerComments.setAdapter(commentAdapter);
 
                     } else {
@@ -186,10 +183,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         });
 
+        /*
         imageModel.getDownloadImage().observe(this, sparseArray -> {
             commentAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray.valueAt(0));
         });
-
+        */
 
         /*
          * RETRIEVE THE DETAILED STATION INFO DIRECTLY FROM OPINET, WHICH HAS BEEN ALREADY PERFORMED

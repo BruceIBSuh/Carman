@@ -95,10 +95,12 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
-
+        // Define ViewModels.
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         fragmentSharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
         pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
+
+        // Fetch the values from SharedPreferences
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         jsonDistrict = mSettings.getString(Constants.DISTRICT, "0101");
 
@@ -283,6 +285,7 @@ public class ExpenseActivity extends BaseActivity implements
             else if(Math.abs(scroll) == appBar.getTotalScrollRange())
                 getSupportActionBar().setTitle(pageTitle);
         });
+
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
         /*
@@ -308,6 +311,7 @@ public class ExpenseActivity extends BaseActivity implements
         isTabVisible = !isTabVisible;
 
     }
+
     // Measures the size of an android attribute based on ?attr/actionBarSize
     /*
     private float getActionbarHeight() {

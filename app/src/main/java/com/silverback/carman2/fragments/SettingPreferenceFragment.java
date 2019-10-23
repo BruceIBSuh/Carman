@@ -34,6 +34,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
@@ -94,6 +98,12 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         String autoMaker = mSettings.getString("pref_auto_maker", null);
         String autoModel = mSettings.getString("pref_auto_model", null);
         String autoYear = mSettings.getString("pref_auto_year", null);
+        String autoType = mSettings.getString("pref_auto_type", null);
+
+        String[] autoProfile = new String[] {autoMaker, autoType, autoModel, autoYear};
+        String jsonAutoData = new JSONArray(Arrays.asList(autoProfile)).toString();
+        log.i("josn auto data: %s", jsonAutoData);
+        mSettings.edit().putString(Constants.VEHICLE, jsonAutoData).apply();
         autoPref.setSummary(String.format("%s, %s, %s", autoMaker, autoModel, autoYear));
 
 
@@ -162,7 +172,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             return true;
         });
 
-        // Set the circle image for the icon by getting the image Uri which has been saved at
+        // Set the circle image to the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
         String imageUri = mSettings.getString("croppedImageUri", null);
         if(!TextUtils.isEmpty(imageUri)) {
