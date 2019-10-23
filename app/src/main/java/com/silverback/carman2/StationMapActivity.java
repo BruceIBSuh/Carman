@@ -147,7 +147,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         });
 
         // Read comments on gas stations
-
         firestore.collection("gas_eval")
                 .document(stnId)
                 .collection("comments")

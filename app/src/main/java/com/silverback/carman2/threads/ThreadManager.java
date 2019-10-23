@@ -527,7 +527,7 @@ public class ThreadManager {
 
         } else if(task instanceof LocationTask) {
             ((LocationTask) task).recycle();
-            if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
+            //if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
             mLocationTaskQueue.offer((LocationTask) task);
 
         } else if(task instanceof StationListTask) {

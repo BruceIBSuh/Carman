@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -13,14 +12,13 @@
         android:id="@+id/appBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="false"
+        android:fitsSystemWindows="true"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
             app:contentScrim="?attr/colorPrimary"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:titleEnabled="false" >
@@ -50,10 +48,10 @@
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:scrollbars="vertical"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-        app:behavior_overlapTop="100dp" >
+        app:behavior_overlapTop="95dp" >
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -65,7 +63,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:background="#CC778899">
+                android:background="#DDB0C4DE">
 
                 <TextView
                     android:id="@+id/tv_service_item"
@@ -83,7 +81,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/smallText"
-                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_service_item" />
 
@@ -92,7 +89,6 @@
                     android:id="@+id/tv_price_info"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_address" />
 
@@ -100,7 +96,6 @@
                     android:id="@+id/tv_carwash"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/tv_price_info" />
 
@@ -109,7 +104,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
-                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toEndOf="@+id/tv_carwash"
                     app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash"/>
 
@@ -118,7 +112,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
-                    android:textColor="#F5F5F5"
                     app:layout_constraintStart_toEndOf="@+id/tv_service"
                     app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash" />
 
@@ -144,7 +137,5 @@
         android:layout_margin="5dp"
         app:layout_anchor="@+id/vg_constraint"
         app:layout_anchorGravity="end|top"/>
-
-
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
