@@ -28,7 +28,7 @@ public class SaveDistCodeTask extends ThreadTask
         opinetDistCodeRunnable = new SaveDistCodeRunnable(context, this);
     }
 
-    // Getter for the Runnable invoked by startRegionalPriceTask() in ThreadManager
+    // Getter for the Runnable invoked by startPriceDistrictTask() in ThreadManager
     Runnable getOpinetDistCodeRunnable() {
         return opinetDistCodeRunnable;
     }

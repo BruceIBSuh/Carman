@@ -41,6 +41,9 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
+    @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_id = :providerId")
+    LiveData<FavoriteProviderEntity> queryGeofenceFavorite(String providerId);
+
 
     @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
     LiveData<String> findFavoriteSvcName(String svcName, int category);
@@ -48,6 +51,7 @@ public interface FavoriteProviderDao {
     @Query("SELECT favorite_name FROM FavoriteProviderEntity " +
             "WHERE favorite_name = :stnName AND favorite_id = :stnId AND category = :category")
     LiveData<String> findFavoriteGasName(String stnName, String stnId, int category);
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertFavoriteProvider(FavoriteProviderEntity favorite);
@@ -58,6 +62,7 @@ public interface FavoriteProviderDao {
     @Delete
     void deleteProvider(FavoriteProviderEntity provider);
 
+    // Subclasses to have query results.
     class FavoriteNameAddrs {
         @ColumnInfo(name = "favorite_name")
         public String favoriteName;

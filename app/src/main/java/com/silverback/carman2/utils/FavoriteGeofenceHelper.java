@@ -2,7 +2,9 @@ package com.silverback.carman2.utils;
 
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -14,6 +16,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.R;
+import com.silverback.carman2.backgrounds.GeofenceTransitionService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -55,8 +58,9 @@ public class FavoriteGeofenceHelper {
     // Constructor for changeFavorite()
     public FavoriteGeofenceHelper(Context context) {
         this.context = context;
-        if(mGeofencingClient == null) mGeofencingClient = LocationServices.getGeofencingClient(context);
-        if(mDB == null) mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
+        mGeofencingClient = LocationServices.getGeofencingClient(context);
+        mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
+
         favoriteModel = new FavoriteProviderEntity();
     }
 
@@ -94,34 +98,36 @@ public class FavoriteGeofenceHelper {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         // Tell Location services that GEOFENCE_TRANSITION_ENTER should be triggerd if the device
         // is already inside the geofence despite the triggers are made by entrance and exit.
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_DWELL);
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
 
     }
 
-    // Define an intent(PendingIntent) for geofence transition
-    private PendingIntent getGeofencePendingIntent() {
+    // PendingIntent is to be handed to GeofencingClient of LocationServices and thus,
+    // Geofencingclient calls the explicit service at a later time.
+    private PendingIntent getGeofencePendingIntent(String id) {
 
         // Reuse the PendingIntent if we have already have it
         if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
 
-        //Intent intent = new Intent(context, GeofenceTransitionService.class);
-        //mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent intent = new Intent(context, GeofenceTransitionService.class);
+        intent.putExtra("providerId", id);
+
+        mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
-        //return PendingIntent.getService(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    // Add a provider to Geofence and the Favorite table at the same time.
+    // Add a station to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
     //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
     public void addFavoriteGeofence(
             final DocumentSnapshot snapshot, final String providerId, final int totalNumber, final int category) {
 
         GeoPoint geoPoint = null;
-        String providerName = null;
-        String providerCode = null;
-        String address = null;
+        String providerName;
+        String providerCode;
+        String address;
 
         switch(category) {
             case Constants.GAS:
@@ -148,12 +154,15 @@ public class FavoriteGeofenceHelper {
                 address = snapshot.getString("address");
 
                 break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + category);
         }
 
-        // Create Geofence with the id and the location data.
+        log.i("GeoPoint: %s, %s", geoPoint.getX(), geoPoint.getY());
+        // Add the station to Geofence.
         createGeofence(providerId, geoPoint);
 
-
+        // Add the station to FavoriteProviderEntity(Room Database)
         favoriteModel.providerName = providerName;
         favoriteModel.category = category;
         favoriteModel.providerId = providerId;
@@ -161,15 +170,19 @@ public class FavoriteGeofenceHelper {
         favoriteModel.address = address;
         favoriteModel.placeHolder = totalNumber;
 
-        mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
+        //mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
+
+
+
 
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.
         // Then, geofences should be saved in the Favorite table as far as they successfully added to
         // geofences. Otherwise, show the error messages using GeofenceStatusCodes
         try {
-            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+            log.i("ID: %s", providerId);
+            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent(providerId))
                     .addOnSuccessListener(aVoid -> {
-                        //mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
+                        mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
                         Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
                     }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());

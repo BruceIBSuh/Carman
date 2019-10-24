@@ -129,7 +129,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
             if(task.isSuccessful()) {
 
                 File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
-                if(!distCode.exists()) ThreadManager.saveOpinetDistCodeTask(this, viewModel);
+                if(!distCode.exists()) ThreadManager.saveDistCodeTask(this, viewModel);
 
                 // Retrieve the default district values of sido, sigun and sigun code, then save them in
                 // SharedPreferences.
@@ -161,8 +161,8 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
             // Consider whether the threads should be interrupted or not.
-            priceDistrictTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode, stnId);
-            //priceDistrictTask = ThreadManager.startRegionalPriceTask(this, viewModel, distCode);
+            priceDistrictTask = ThreadManager.startPriceDistrictTask(this, viewModel, distCode, stnId);
+            //priceDistrictTask = ThreadManager.startPriceDistrictTask(this, viewModel, distCode);
 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();

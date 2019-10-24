@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.security.keystore.KeyGenParameterSpec;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
@@ -237,7 +236,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
-                priceDistrictTask = ThreadManager.startRegionalPriceTask(this, priceModel, distCode, null);
+                priceDistrictTask = ThreadManager.startPriceDistrictTask(this, priceModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
         }

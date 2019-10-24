@@ -75,10 +75,16 @@ public class ThreadManager {
     // Sets the Time Unit to seconds
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT;
     // Sets the initial threadpool size to 4
-    private static final int CORE_POOL_SIZE = 2;
+    private static final int CORE_POOL_SIZE = 4;
     // Sets the maximum threadpool size to 4
-    //private static final int MAXIMUM_POOL_SIZE = 4;
-    private static final int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+    private static final int MAXIMUM_POOL_SIZE = 4;
+    /*
+     * NOTE: This is the number of total available cores. On current versions of
+     * Android, with devices that use plug-and-play cores, this will return less
+     * than the total number of cores. The total number of cores is not
+     * available in current Android implementations.
+     */
+    private static int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
 
 
     // A queue of Runnables
@@ -89,12 +95,15 @@ public class ThreadManager {
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
 
-    private final Queue<StationListTask> mStationListTaskQueue;
-    //private final Queue<StationInfoTask> mStationInfoTaskQueue;
-    private final Queue<LocationTask> mLocationTaskQueue;
-    //private final Queue<ClockTask> mClockTaskQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
-    private Queue<DownloadImageTask> mDownloadImageTaskQueue;
+    private final Queue<SaveDistCodeTask> mSaveDistCodeTaskQueue;
+    private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
+    private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
+    private final Queue<TabPagerTask> mTabPagerTaskQueue;
+    private final Queue<StationListTask> mStationListTaskQueue;
+    private final Queue<LocationTask> mLocationTaskQueue;
+    private final Queue<PriceDistrictTask> mPriceDistrictTaskQueue;
+    private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
 
 
     // A managed pool of background download threads
@@ -115,7 +124,6 @@ public class ThreadManager {
 
     // Private constructor for Singleton instance of ThreadManager
     private ThreadManager() {
-
         // Runnable work queues
         mDownloadWorkQueue = new LinkedBlockingQueue<>();
         mDecodeWorkQueue = new LinkedBlockingQueue<>();
@@ -123,8 +131,13 @@ public class ThreadManager {
         // Queues of tasks, which is handed to ThreadPool.
         mTaskWorkQueue = new LinkedBlockingQueue<>();
 
+        mSaveDistCodeTaskQueue = new LinkedBlockingQueue<>();
+        mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
+        mPriceDistrictTaskQueue = new LinkedBlockingQueue<>();
+        mTabPagerTaskQueue = new LinkedBlockingQueue<>();
+        mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
-        //mStationInfoTaskQueue = new LinkedBlockingQueue<>();
+
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
@@ -133,11 +146,11 @@ public class ThreadManager {
 
         // Instantiates ThreadPoolExecutor
         //Log.i(LOG_TAG, "NUMBER_OF_CORES: " + NUMBER_OF_CORES);
-        mDownloadThreadPool = new ThreadPoolExecutor(NUMBER_OF_CORES, NUMBER_OF_CORES,
+        mDownloadThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE,
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDownloadWorkQueue);
 
 
-        mDecodeThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, NUMBER_OF_CORES,
+        mDecodeThreadPool = new ThreadPoolExecutor(NUMBER_OF_CORES, NUMBER_OF_CORES,
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDecodeWorkQueue);
 
 
@@ -331,9 +344,9 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static SaveDistCodeTask saveOpinetDistCodeTask(Context context, OpinetViewModel model) {
+    public static SaveDistCodeTask saveDistCodeTask(Context context, OpinetViewModel model) {
 
-        SaveDistCodeTask task = (SaveDistCodeTask)sInstance.mTaskWorkQueue.poll();
+        SaveDistCodeTask task = sInstance.mSaveDistCodeTaskQueue.poll();
 
         if(task == null) {
             task = new SaveDistCodeTask(context, model);
@@ -348,7 +361,7 @@ public class ThreadManager {
     public static LoadDistCodeTask loadSpinnerDistCodeTask(
             Context context, SpinnerDistrictModel model, int code) {
 
-        LoadDistCodeTask task = (LoadDistCodeTask)sInstance.mTaskWorkQueue.poll();
+        LoadDistCodeTask task = sInstance.mLoadDistCodeTaskQueue.poll();
         if(task == null) task = new LoadDistCodeTask(context);
 
         task.initSpinnerDistCodeTask(model, code);
@@ -359,18 +372,16 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static PriceDistrictTask startRegionalPriceTask(
+    public static PriceDistrictTask startPriceDistrictTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
-            //Context context, OpinetViewModel model, String distCode) {
 
-        PriceDistrictTask priceDistrictTask = (PriceDistrictTask)sInstance.mTaskWorkQueue.poll();
+        PriceDistrictTask priceDistrictTask = sInstance.mPriceDistrictTaskQueue.poll();
 
         if(priceDistrictTask == null) {
             priceDistrictTask = new PriceDistrictTask(context);
         }
 
         priceDistrictTask.initPriceTask(model, distCode, stnId);
-        //priceDistrictTask.initPriceTask(model, distCode);
 
         sInstance.mDownloadThreadPool.execute(priceDistrictTask.getAvgPriceRunnable());
         sInstance.mDownloadThreadPool.execute(priceDistrictTask.getSidoPriceRunnable());
@@ -396,7 +407,7 @@ public class ThreadManager {
     public static TabPagerTask startViewPagerTask(
             PagerAdapterViewModel model, FragmentManager fragmentManager, String[] defaults, String json){
 
-        TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mTaskWorkQueue.poll();
+        TabPagerTask tabPagerTask = sInstance.mTabPagerTaskQueue.poll();
 
         if(tabPagerTask == null) {
             tabPagerTask = new TabPagerTask();
@@ -418,6 +429,7 @@ public class ThreadManager {
 
         locationTask.initLocationTask(model);
         sInstance.mDownloadThreadPool.execute(locationTask.getLocationRunnable());
+
         return locationTask;
 
     }
@@ -523,7 +535,7 @@ public class ThreadManager {
         if(task instanceof PriceDistrictTask) {
             log.i("PriceDistrictTask thread: %s", task.getCurrentThread());
             if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
-            mTaskWorkQueue.offer(task);
+            mPriceDistrictTaskQueue.offer((PriceDistrictTask)task);
 
         } else if(task instanceof LocationTask) {
             ((LocationTask) task).recycle();

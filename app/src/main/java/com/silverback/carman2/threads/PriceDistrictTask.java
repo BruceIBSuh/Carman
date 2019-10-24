@@ -36,7 +36,7 @@ public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnab
         this.stnId = stnId;
     }
 
-    // Getter for the Runnable invoked by startRegionalPriceTask() in ThreadManager
+    // Getter for the Runnable invoked by startPriceDistrictTask() in ThreadManager
     Runnable getAvgPriceRunnable() {
         return mAvgPriceRunnable;
     }
