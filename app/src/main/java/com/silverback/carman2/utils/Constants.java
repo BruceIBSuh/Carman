@@ -6,6 +6,7 @@ public class Constants {
      * Global Setting Constants for Geofence, Opinet download interval, near station radius.
      */
     public static final String MIN_RADIUS = "250"; //Current station locating radius
+
     public static final int GEOFENCE_RADIUS = 100; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 60; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
@@ -33,6 +34,7 @@ public class Constants {
     public static final String FILE_DISTRICT_CODE = "DistrictCode";
     public static final String FILE_CACHED_NEAR_STATIONS = "tmpStnList";
     public static final String OPINET_LAST_UPDATE = "com.ibnco.carman.UPDATE";
+
 
 
     // SharedPreferences key name, which is the key name of each preference.xml
@@ -65,6 +67,8 @@ public class Constants {
     public static final String CoverImageHeight = "com.ibnco.carman.coverimage.height";
     public static final String CODE = "carman_pref_district_code";
     public static final String SERVICE_ITEMS = "carman_service_checklist";
+
+    public static final String GEOFENCE_LIST = "geofence_list_for_reboot";
 
     // Notification Channel ID
     public static final String CHANNEL_ID = "com.ibnco.carman";

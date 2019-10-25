@@ -27,6 +27,7 @@ public class TabPagerRunnable implements Runnable {
         void setViewPagerAdapter(ExpTabPagerAdapter adapter);
         String[] getDefaults();
         String getJsonDistrict();
+        String getUserId();
         FragmentManager getFragmentManager();
     }
 
@@ -46,6 +47,7 @@ public class TabPagerRunnable implements Runnable {
         task.getDefaults()[1] = Constants.MIN_RADIUS;
         Bundle gasArgs = new Bundle();
         gasArgs.putStringArray("defaultParams", task.getDefaults());
+        gasArgs.putString("userId", task.getUserId());
         pagerAdapter.getItem(0).setArguments(gasArgs);
 
         // Pass the district code to ServiceManagerFragment in TabPagerAdapter
@@ -54,12 +56,12 @@ public class TabPagerRunnable implements Runnable {
             String distCode = (String)jsonArray.get(2);
             Bundle svcArgs = new Bundle();
             svcArgs.putString("distCode", distCode);
+            svcArgs.putString("userId", task.getUserId());
             pagerAdapter.getItem(1).setArguments(svcArgs);
 
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
-
 
         task.setViewPagerAdapter(pagerAdapter);
 

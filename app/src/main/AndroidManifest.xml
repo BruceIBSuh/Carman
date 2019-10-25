@@ -9,6 +9,8 @@
          location permissions for the 'MyLocation' functionality.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!--Required for Android 10 or above -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCAITON" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -26,17 +28,7 @@
         <receiver
             android:name=".backgrounds.GeofenceRebootReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
-
-        <service
-            android:name=".backgrounds.GeofenceResetService"
-            android:enabled="false"
-            android:exported="false" />
-        <service
-            android:name=".backgrounds.GeofenceTransitionService"
-            android:exported="false" />
-
-        <receiver android:name=".backgrounds.GeofenceReceiver">
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
@@ -45,6 +37,14 @@
             </intent-filter>
         </receiver>
 
+        <service
+            android:name=".backgrounds.GeofenceResetService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <service
+            android:name=".backgrounds.GeofenceTransitionService"
+            android:exported="false" />
 
         <!-- <activity android:name=".BaseActivity" /> -->
         <activity android:name=".IntroActivity">

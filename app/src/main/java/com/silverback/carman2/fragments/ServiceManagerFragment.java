@@ -22,6 +22,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.location.Geofence;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -108,6 +109,7 @@ public class ServiceManagerFragment extends Fragment implements
     private float svcRating;
     private String svcName;
     private String svcComment;
+    private String userId;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -118,7 +120,11 @@ public class ServiceManagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(getArguments() != null) distCode = getArguments().getString("distCode");
+        if(getArguments() != null) {
+            distCode = getArguments().getString("distCode");
+            userId = getArguments().getString("userId");
+            log.i("userid: %s", userId);
+        }
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
@@ -236,7 +242,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         fragmentSharedModel.getAlertSvcResult().observe(this, confirm -> {
             if(confirm) {
-                geofenceHelper.removeFavoriteGeofence(svcName, svcId);
+                geofenceHelper.removeFavoriteGeofence(userId, svcName, svcId);
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
             }
         });
@@ -254,6 +260,29 @@ public class ServiceManagerFragment extends Fragment implements
 
             uploadServiceEvaluation(svcId);
 
+        });
+
+        // Callback invoked when addGeofence or removeGeofence
+        geofenceHelper.setListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
+            @Override
+            public void notifyAddGeofenceCompleted() {
+                isSvcFavorite = !isSvcFavorite;
+                Snackbar.make(relativeLayout, R.string.svc_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
+
+                // Add a new geofence to Geofence list saved in SharedPreferences
+                // as type of JSONString in order to reload in GeofenceResetService when rebooting.
+            }
+
+            @Override
+            public void notifyRemoveGeofenceCompleted() {
+                isSvcFavorite = !isSvcFavorite;
+                Snackbar.make(relativeLayout, "Successfully removed", Snackbar.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void notifyAddGeofenceFailed() {
+                log.e("Failed to add the service center to Geofence");
+            }
         });
 
     }
@@ -429,8 +458,8 @@ public class ServiceManagerFragment extends Fragment implements
         // already registered in RegisterDialogFragment.
         } else if(svcId != null){
             // Check if the totla number of the service favorites are out of the max limit.
-            final int totalFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
-            if(totalFavorite == Constants.MAX_FAVORITE) {
+            final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
+            if(placeholder == Constants.MAX_FAVORITE) {
                 Snackbar.make(relativeLayout, getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
                 return;
             }
@@ -442,14 +471,17 @@ public class ServiceManagerFragment extends Fragment implements
                     log.i("queried");
                     DocumentSnapshot snapshot = task.getResult();
                     if(snapshot != null && snapshot.exists()) {
-                        geofenceHelper.addFavoriteGeofence(snapshot, svcId, totalFavorite, SVC_CENTER);
                         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                        geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, SVC_CENTER);
 
-                        isSvcFavorite = !isSvcFavorite;
-                        Snackbar.make(relativeLayout, R.string.svc_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
+
+
+
                     }
                 }
             });
+
+
         // Requires ther registration process in RegisterDialogFragment before adding the favorite
         // list and the geofence.
         } else {

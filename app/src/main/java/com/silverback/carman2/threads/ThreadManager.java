@@ -405,7 +405,9 @@ public class ThreadManager {
 
 
     public static TabPagerTask startViewPagerTask(
-            PagerAdapterViewModel model, FragmentManager fragmentManager, String[] defaults, String json){
+            FragmentManager fragmentManager,
+            PagerAdapterViewModel model,
+            String[] defaults, String json, final String userId){
 
         TabPagerTask tabPagerTask = sInstance.mTabPagerTaskQueue.poll();
 
@@ -413,7 +415,7 @@ public class ThreadManager {
             tabPagerTask = new TabPagerTask();
         }
 
-        tabPagerTask.initViewPagerTask(model, fragmentManager, defaults, json);
+        tabPagerTask.initViewPagerTask(fragmentManager, model, defaults, json, userId);
         sInstance.mDecodeThreadPool.execute(tabPagerTask.getViewPagerRunnable());
 
         return tabPagerTask;

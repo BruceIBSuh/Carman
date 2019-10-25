@@ -8,8 +8,10 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.TypedValue;
 
+import com.google.android.gms.location.Geofence;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -17,6 +19,7 @@ import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -388,6 +391,5 @@ public class BaseActivity extends AppCompatActivity {
 
         return null;
     }
-
 
 }

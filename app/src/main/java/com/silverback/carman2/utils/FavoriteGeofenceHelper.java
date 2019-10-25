@@ -6,13 +6,18 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.SetOptions;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.R;
@@ -22,8 +27,14 @@ import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FavoriteGeofenceHelper {
 
@@ -33,6 +44,7 @@ public class FavoriteGeofenceHelper {
     // Objects
     private Context context;
 
+    private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
     private FavoriteProviderEntity favoriteModel;
 
@@ -52,18 +64,22 @@ public class FavoriteGeofenceHelper {
     // Interface for parent activities
     public interface OnGeofenceListener {
         void notifyAddGeofenceCompleted();
+        void notifyRemoveGeofenceCompleted();
         void notifyAddGeofenceFailed();
     }
 
-    // Constructor for changeFavorite()
+    // Constructor
     public FavoriteGeofenceHelper(Context context) {
         this.context = context;
         mGeofencingClient = LocationServices.getGeofencingClient(context);
         mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
-
+        firestore = FirebaseFirestore.getInstance();
         favoriteModel = new FavoriteProviderEntity();
+
     }
 
+    // Attach the listener to GasManagerFragment and ServiceManagerFragment for notifying them
+    // of whether to add the provider to Geofence and the DB successfully or not.
     public void setListener(OnGeofenceListener listener) {
         mListener = listener;
     }
@@ -86,8 +102,8 @@ public class FavoriteGeofenceHelper {
                 .setRequestId(geofenceId)
                 .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL)//bitwise OR only
-                .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)//bitwise OR only
+                //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
                 //.setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
                 .build()
         );
@@ -106,13 +122,15 @@ public class FavoriteGeofenceHelper {
 
     // PendingIntent is to be handed to GeofencingClient of LocationServices and thus,
     // Geofencingclient calls the explicit service at a later time.
-    private PendingIntent getGeofencePendingIntent(String id) {
+    private PendingIntent getGeofencePendingIntent(String id, String name, int category) {
 
         // Reuse the PendingIntent if we have already have it
         if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
 
         Intent intent = new Intent(context, GeofenceTransitionService.class);
         intent.putExtra("providerId", id);
+        intent.putExtra("providerName", name);
+        intent.putExtra("category", category);
 
         mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
@@ -122,8 +140,9 @@ public class FavoriteGeofenceHelper {
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
     //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
     public void addFavoriteGeofence(
-            final DocumentSnapshot snapshot, final String providerId, final int totalNumber, final int category) {
+            final String userId, final DocumentSnapshot snapshot, final int placeHolder, final int category) {
 
+        final String providerId = snapshot.getId();
         GeoPoint geoPoint = null;
         String providerName;
         String providerCode;
@@ -168,25 +187,34 @@ public class FavoriteGeofenceHelper {
         favoriteModel.providerId = providerId;
         favoriteModel.providerCode = providerCode;
         favoriteModel.address = address;
-        favoriteModel.placeHolder = totalNumber;
-
-        //mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
-
-
+        favoriteModel.placeHolder = placeHolder;
 
 
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.
         // Then, geofences should be saved in the Favorite table as far as they successfully added to
         // geofences. Otherwise, show the error messages using GeofenceStatusCodes
         try {
-            log.i("ID: %s", providerId);
-            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent(providerId))
+            mGeofencingClient
+                    .addGeofences(getGeofencingRequest(), getGeofencePendingIntent(providerId, providerName, category))
                     .addOnSuccessListener(aVoid -> {
+                        // Insert the provider into FavoriteProviderEntity of the db.
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
-                        Toast.makeText(context, R.string.geofence_toast_add_favorite, Toast.LENGTH_SHORT).show();
+
+                        // Upload the geofence to Firestore for purpose of reloading on rebooting.
+                        Map<String, Object> geofence = new HashMap<>();
+                        geofence.put("geofencing", getGeofencingRequest());
+
+                        firestore.collection("users").document(userId).collection("geofence").document(providerId)
+                                .set(geofence, SetOptions.merge())
+                                .addOnCompleteListener(task -> {
+                                   if(task.isSuccessful()) log.i("Geofence added to Firestore");
+                                });
+
+                        mListener.notifyAddGeofenceCompleted();
+
                     }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());
-                        //mListener.notifyAddGeofenceFailed();
+                        mListener.notifyAddGeofenceFailed();
                     });
 
         } catch(SecurityException e) {
@@ -199,7 +227,7 @@ public class FavoriteGeofenceHelper {
     // Delete the current station from DB and Geofence. To remove a favorite from Geofence, use
     // removeGeofences() with its requestId which has been already set by setGeofenceParam() and
     // provided when adding it to Favorite.
-    public void removeFavoriteGeofence(final String name, final String id) {
+    public void removeFavoriteGeofence(final String userId, final String name, final String id) {
 
         // Create the list which contains requestId's to remove.
         List<String> geofenceId = new ArrayList<>();
@@ -210,9 +238,19 @@ public class FavoriteGeofenceHelper {
                     FavoriteProviderEntity provider = mDB.favoriteModel().findFavoriteProvider(name, id);
                     if(provider != null) {
                         mDB.favoriteModel().deleteProvider(provider);
-                        Toast.makeText(context, R.string.toast_remove_favorite, Toast.LENGTH_SHORT).show();
+
+                        // Remove the geofence out of Firestore with the providerId;
+                        firestore.collection("users").document(userId)
+                                .collection("geofence").document(id).delete()
+                                .addOnSuccessListener(bVoid -> log.i("Successfully deleted the geofence"));
+
+                        mListener.notifyRemoveGeofenceCompleted();
+
                     }
-                }).addOnFailureListener(e -> log.i("failed to remove"));
+                }).addOnFailureListener(e -> {
+                    log.i("failed to remove");
+                    mListener.notifyAddGeofenceFailed();
+                });
 
     }
 

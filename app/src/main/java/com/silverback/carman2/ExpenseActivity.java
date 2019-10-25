@@ -35,6 +35,11 @@ import com.silverback.carman2.threads.TabPagerTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.views.ExpenseViewPager;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 public class ExpenseActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
@@ -109,8 +114,21 @@ public class ExpenseActivity extends BaseActivity implements
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
-        tabPagerTask = ThreadManager.startViewPagerTask(
-                pagerAdapterViewModel, getSupportFragmentManager(), getDefaultParams(), jsonDistrict);
+        // Fetch the user id from Firestore, which is requred to set the data when the evaluation
+        // and Geofence list
+        try (FileInputStream fis = openFileInput("user_id");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
+            String userId = br.readLine();
+            tabPagerTask = ThreadManager.startViewPagerTask(
+                    getSupportFragmentManager(),
+                    pagerAdapterViewModel,
+                    getDefaultParams(), jsonDistrict, userId);
+
+        } catch(IOException e) {
+            log.e("IOException when retrieving user id: %s", e.getMessage());
+        }
+
 
         // Create ViewPager for the last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
