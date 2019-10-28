@@ -443,6 +443,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
             }).addOnFailureListener(e -> log.e("Transaction failed: %s", e.getMessage()));
             */
+
             // Then, retrieve the station data to pass to FavoriteGeofenceHelper to register with
             // Geofence.
             firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
@@ -454,14 +455,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                         btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                         geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, GAS_STATION);
 
-
-
-
-
                     }
                 }
             });
 
+            // Increase the number of the favorite registration.
             firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
                     DocumentSnapshot snapshot = task.getResult();

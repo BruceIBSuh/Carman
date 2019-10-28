@@ -228,6 +228,10 @@
     <string name="notification_ch_name">geofence_carman</string>
     <string name="notification_ch_description">frequently_visited_station</string>
 
+    <!-- NoTIFICATION -->
+    <string name="noti_label_mileage">주행거리</string>
+    <string name="noti_label_pay">주유금액</string>
+
 
     <!--Formatter-->
     <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>

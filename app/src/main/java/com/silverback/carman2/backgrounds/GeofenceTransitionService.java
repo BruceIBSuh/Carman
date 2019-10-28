@@ -3,27 +3,23 @@ package com.silverback.carman2.backgrounds;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.IntentService;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
-import android.os.Bundle;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.RemoteInput;
 import androidx.core.app.TaskStackBuilder;
 
-import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
@@ -32,8 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-
-import static com.silverback.carman2.fragments.GasManagerFragment.GAS_STATION;
 
 
 /**
@@ -45,18 +39,19 @@ import static com.silverback.carman2.fragments.GasManagerFragment.GAS_STATION;
 public class GeofenceTransitionService extends IntentService {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceTransitionService.class);
+    private static final String REPLY_KEY_MILEAGE = "noti_key_reply_mileage";
+    private static final String REPLY_KEY_PAY = "noti_key_replay_pay";
+    private static final String REPLY_LABEL_MILEAGE = "MILEAGE";
+    private static final String REPLY_LABEL_PAY = "PAYMENT";
 
     // Objects
-    private CarmanDatabase mDB;
     private Location geofenceLocation;
     private NotificationManagerCompat notificationManager;
 
     // Fields
     private String providerId, providerName;
-    private int category;
-    private String geofenceId, geofenceName;
     private long geofenceTime;
-
+    private int category;
 
 
     public GeofenceTransitionService() {
@@ -81,6 +76,7 @@ public class GeofenceTransitionService extends IntentService {
         }
 
         int geofencingTransition = geofencingEvent.getGeofenceTransition();
+        /*
         switch(geofencingTransition) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
 
@@ -95,6 +91,7 @@ public class GeofenceTransitionService extends IntentService {
 
             default:
         }
+         */
 
 
         geofenceLocation = geofencingEvent.getTriggeringLocation();
@@ -131,6 +128,30 @@ public class GeofenceTransitionService extends IntentService {
         String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geofenceTime);
         String multiText = String.format("%s%1s%s%s%s", providerName, "", strTime, "\n\n", extendedText);
 
+
+        // Create RemotInput(s) to pass into Action
+        RemoteInput remoteInputMileage = new RemoteInput.Builder(REPLY_KEY_MILEAGE)
+                .setLabel(REPLY_LABEL_MILEAGE)
+                .build();
+
+        RemoteInput remoteInputPay = new RemoteInput.Builder(REPLY_KEY_PAY)
+                .setLabel(REPLY_LABEL_PAY)
+                .build();
+        PendingIntent replyPendingIntent = PendingIntent.getService(
+                getApplicationContext(), 0 , new Intent(), PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Create Action(s) to pass into addAction of NotificationCompat.Builder
+        NotificationCompat.Action actionMileage = new NotificationCompat.Action.Builder(
+                R.drawable.ic_gas, getString(R.string.noti_label_mileage), replyPendingIntent)
+                .addRemoteInput(remoteInputMileage)
+                .setAllowGeneratedReplies(true)
+                .build();
+        NotificationCompat.Action actionPay = new NotificationCompat.Action.Builder(
+                R.drawable.ic_gas, getString(R.string.noti_label_pay), replyPendingIntent)
+                .addRemoteInput(remoteInputPay)
+                .setAllowGeneratedReplies(true)
+                .build();
+
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setShowWhen(true)
@@ -139,11 +160,11 @@ public class GeofenceTransitionService extends IntentService {
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(multiText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(resultPendingIntent)
-                .setAutoCancel(true);
-                /*
-                .addAction(R.drawable.ic_snooze,
-                        getString(R.string.geofence_notification_snooze), createSnoozePendingIntent());
-                */
+                .setAutoCancel(true)
+                .addAction(actionMileage)
+                .addAction(actionPay);
+
+
 
         // Set Vibrator to Notification by Build version
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

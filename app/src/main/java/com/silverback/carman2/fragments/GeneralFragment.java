@@ -63,21 +63,17 @@ public class GeneralFragment extends Fragment implements
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
-
-    private static final int NUM_PAGES = 2;
-    private static String GAS_CODE;
+    //private static final int NUM_PAGES = 2;
+    //private static String GAS_CODE;
 
     // Objects
-    private CarmanDatabase mDB;
     private SharedPreferences mSettings;
 
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
-    private OpinetViewModel priceViewModel;
 
     private LocationTask locationTask;
     private PriceDistrictTask priceDistrictTask;
-    //private PriceFavoriteTask priceFavoriteTask;
     private StationListTask stationListTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
@@ -85,7 +81,7 @@ public class GeneralFragment extends Fragment implements
     private PricePagerAdapter pricePagerAdapter;
     private List<Opinet.GasStnParcelable> mStationList;
     private Location mPrevLocation;
-    private Uri uriStnList;
+    //private Uri uriStnList;
 
     // UI's
     private View childView;
@@ -102,13 +98,14 @@ public class GeneralFragment extends Fragment implements
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mSettings = ((MainActivity)getActivity()).getSettings();
         // Retrieve the Station ID of the favroite station to show the price.
-        mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) stnId = provider.providerId;
@@ -119,7 +116,7 @@ public class GeneralFragment extends Fragment implements
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        OpinetViewModel priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
@@ -339,7 +336,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onItemClicked(final int position) {
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putExtra("stationId", mStationList.get(position).getStnId());
+        intent.putExtra("stnId", mStationList.get(position).getStnId());
         startActivity(intent);
     }
 

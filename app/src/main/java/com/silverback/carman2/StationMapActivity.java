@@ -64,11 +64,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_station_map);
 
-        final String stnId = getIntent().getStringExtra("stationId");
+        final String stnId = getIntent().getStringExtra("stnId");
+        log.i("Station ID: %s", stnId);
 
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-        LoadImageViewModel imageModel = ViewModelProviders.of(this).get(LoadImageViewModel.class);
+        //LoadImageViewModel imageModel = ViewModelProviders.of(this).get(LoadImageViewModel.class);
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
@@ -91,10 +92,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
         // KakaoNavi as an installed app is first applied.
+        /*
         fabNavi.setOnClickListener(view ->
                 naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
         );
-
+        */
 
         //StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
 
@@ -280,7 +282,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         }
 
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(dest, 15);
-        //googleMap.moveCamera(cameraUpdate);
+        googleMap.moveCamera(cameraUpdate);
         googleMap.animateCamera(cameraUpdate);
     }
 

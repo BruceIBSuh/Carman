@@ -4,33 +4,23 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
-import com.silverback.carman2.R;
 import com.silverback.carman2.backgrounds.GeofenceTransitionService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -178,6 +168,7 @@ public class FavoriteGeofenceHelper {
         }
 
         log.i("GeoPoint: %s, %s", geoPoint.getX(), geoPoint.getY());
+
         // Add the station to Geofence.
         createGeofence(providerId, geoPoint);
 
@@ -201,9 +192,9 @@ public class FavoriteGeofenceHelper {
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
 
                         // Upload the geofence to Firestore for purpose of reloading on rebooting.
+                        // Seems not working, then refactor requried.
                         Map<String, Object> geofence = new HashMap<>();
                         geofence.put("geofencing", getGeofencingRequest());
-
                         firestore.collection("users").document(userId).collection("geofence").document(providerId)
                                 .set(geofence, SetOptions.merge())
                                 .addOnCompleteListener(task -> {
