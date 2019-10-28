@@ -79,12 +79,20 @@ public class ExpenseActivity extends BaseActivity implements
     private String jsonServiceItems;
     private String jsonDistrict;
 
+    private boolean isGeofencing;
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
+
+        // Activity get started by GeofenceTransitionService.
+        if(getIntent() != null) {
+            isGeofencing = getIntent().getBooleanExtra(Constants.GEO_INTENT, false);
+        }
+
 
         appBar = findViewById(R.id.appBar);
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -138,11 +146,12 @@ public class ExpenseActivity extends BaseActivity implements
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
-        // finished to instantiate the fragments to display, then lauch LocationTask to have
+        // finished to instantiate the fragments to display, then launch LocationTask to have
         // any near station within MIN_RADIUS, if any.
         pagerAdapterViewModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
+            tabPager.setCurrentItem(0);
             expTabLayout.setupWithViewPager(tabPager);
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
@@ -262,9 +271,6 @@ public class ExpenseActivity extends BaseActivity implements
                 StatGraphFragment statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
-
-
-
 
                 break;
         }

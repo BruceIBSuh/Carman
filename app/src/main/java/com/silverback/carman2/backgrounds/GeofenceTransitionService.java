@@ -17,8 +17,11 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.RemoteInput;
 import androidx.core.app.TaskStackBuilder;
 
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.silverback.carman2.BaseActivity;
+import com.silverback.carman2.ExpenseActivity;
+import com.silverback.carman2.NotificationActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -76,22 +79,20 @@ public class GeofenceTransitionService extends IntentService {
         }
 
         int geofencingTransition = geofencingEvent.getGeofenceTransition();
-        /*
         switch(geofencingTransition) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
-
                 break;
 
             case Geofence.GEOFENCE_TRANSITION_EXIT:
-                sendNotification(category);
                 break;
 
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 break;
 
             default:
+                break;
         }
-         */
+
 
 
         geofenceLocation = geofencingEvent.getTriggeringLocation();
@@ -99,23 +100,22 @@ public class GeofenceTransitionService extends IntentService {
 
     }
 
+
     private void sendNotification(int category) {
 
         int notificationId = createID();
         geofenceTime = System.currentTimeMillis();
         String title = null;
         String extendedText = null;
-        PendingIntent resultPendingIntent = null;
+        PendingIntent resultPendingIntent = createResultPendingIntent(ExpenseActivity.class);
 
         switch(category) {
             case Constants.GAS: // gas station
-                //resultPendingIntent = createResultPendingIntent(GasManagerActivity.class);
                 title = getString(R.string.geofence_notification_gas);
                 extendedText = getResources().getString(R.string.geofence_notification_gas_open);
                 break;
 
             case Constants.SVC: // car center
-                //resultPendingIntent = createResultPendingIntent(ServiceManagerActivity.class);
                 title = getString(R.string.geofence_notification_service);
                 extendedText = getResources().getString(R.string.geofence_notification_service_open);
                 break;
@@ -126,45 +126,37 @@ public class GeofenceTransitionService extends IntentService {
 
 
         String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geofenceTime);
-        String multiText = String.format("%s%1s%s%s%s", providerName, "", strTime, "\n\n", extendedText);
+        String multiText = String.format("%s\n%s", strTime, extendedText);
 
+        // Direct Reply action
+        /*
+        RemoteInput remoteInput = new RemoteInput.Builder("key_mileage_reply")
+                .setLabel("current mileage")
+                .build();
+        Intent replyIntent = new Intent();
+        PendingIntent replyPendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
+                replyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(R.drawable.ic_gas, "Mileage", replyPendingIntent)
+                .addRemoteInput(remoteInput)
+                .build();
+         */
 
-        // Create RemotInput(s) to pass into Action
-        RemoteInput remoteInputMileage = new RemoteInput.Builder(REPLY_KEY_MILEAGE)
-                .setLabel(REPLY_LABEL_MILEAGE)
-                .build();
-
-        RemoteInput remoteInputPay = new RemoteInput.Builder(REPLY_KEY_PAY)
-                .setLabel(REPLY_LABEL_PAY)
-                .build();
-        PendingIntent replyPendingIntent = PendingIntent.getService(
-                getApplicationContext(), 0 , new Intent(), PendingIntent.FLAG_UPDATE_CURRENT);
-
-        // Create Action(s) to pass into addAction of NotificationCompat.Builder
-        NotificationCompat.Action actionMileage = new NotificationCompat.Action.Builder(
-                R.drawable.ic_gas, getString(R.string.noti_label_mileage), replyPendingIntent)
-                .addRemoteInput(remoteInputMileage)
-                .setAllowGeneratedReplies(true)
-                .build();
-        NotificationCompat.Action actionPay = new NotificationCompat.Action.Builder(
-                R.drawable.ic_gas, getString(R.string.noti_label_pay), replyPendingIntent)
-                .addRemoteInput(remoteInputPay)
-                .setAllowGeneratedReplies(true)
-                .build();
+        // Set up a special activity PendingIntent
+        Intent notifyIntent = new Intent(this, NotificationActivity.class);
+        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent notifyPendingIntent = PendingIntent.getActivity(this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setShowWhen(true)
                 .setContentTitle(title)
-                .setContentText(multiText)
+                .setContentText(providerName)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(multiText))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setContentIntent(resultPendingIntent)
-                .setAutoCancel(true)
-                .addAction(actionMileage)
-                .addAction(actionPay);
-
-
+                .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
+                //.setContentIntent(resultPendingIntent)
+                .setContentIntent(notifyPendingIntent)
+                .setAutoCancel(true);
+                //.addAction(action);
 
         // Set Vibrator to Notification by Build version
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -182,9 +174,6 @@ public class GeofenceTransitionService extends IntentService {
 
     // Create PendingIntent which is to be sent to the param Activity with
     private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
-
-        //Log.d(LOG_TAG, "ResultPendingIntent");
-
         // Create an Intent for the activity you want to start
         Intent resultIntent = new Intent(this, cls);
 
@@ -203,12 +192,12 @@ public class GeofenceTransitionService extends IntentService {
 
     }
 
-    // Create a unique notification id.
+    // Create a unique notification id. Refactor considered!!
     private int createID() {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
+        //calendar.setTimeInMillis(System.currentTimeMillis());
 
-        return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.KOREA).format(calendar.getTime()));
+        return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
 
     }
 

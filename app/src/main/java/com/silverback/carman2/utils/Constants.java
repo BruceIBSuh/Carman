@@ -7,7 +7,7 @@ public class Constants {
      */
     public static final String MIN_RADIUS = "250"; //Current station locating radius
 
-    public static final int GEOFENCE_RADIUS = 100; //Geofence zoning radius
+    public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 60; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
     //public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
@@ -22,9 +22,6 @@ public class Constants {
     public static final int GAS = 1;
     public static final int SVC = 2;
     public static final int MAX_FAVORITE = 10;
-
-    // SQLite Database
-    public static final int SERVICE_ITEM_COLUMNS = 5; // Max number of Service items to record
 
     // File names
     public static final String FILE_CACHED_AVG_PRICE = "AvgPrice";
@@ -71,7 +68,7 @@ public class Constants {
     public static final String GEOFENCE_LIST = "geofence_list_for_reboot";
 
     // Notification Channel ID
-    public static final String CHANNEL_ID = "com.ibnco.carman";
+    public static final String CHANNEL_ID = "com.silverback.carman2";
 
     // Geofence Keys
     public static final String GEO_INTENT = "com.ibnco.carman.geofence.pendingintent";
