@@ -126,7 +126,7 @@ public class GeofenceTransitionService extends IntentService {
 
 
         String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geofenceTime);
-        String multiText = String.format("%s\n%s", strTime, extendedText);
+        String multiText = String.format("%s %s\n%s", providerName, strTime, extendedText);
 
         // Direct Reply action
         /*
@@ -142,19 +142,21 @@ public class GeofenceTransitionService extends IntentService {
          */
 
         // Set up a special activity PendingIntent
+        /*
         Intent notifyIntent = new Intent(this, NotificationActivity.class);
         notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent notifyPendingIntent = PendingIntent.getActivity(this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        */
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setShowWhen(true)
                 .setContentTitle(title)
-                .setContentText(providerName)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(multiText))
+                .setContentText(multiText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(extendedText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
-                //.setContentIntent(resultPendingIntent)
-                .setContentIntent(notifyPendingIntent)
+                .setContentIntent(resultPendingIntent)
+                //.setContentIntent(notifyPendingIntent)
                 .setAutoCancel(true);
                 //.addAction(action);
 

@@ -11,14 +11,16 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 public class GeofenceRebootReceiver extends BroadcastReceiver {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceRebootReceiver.class);
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        if(intent.getAction() == null) return;
 
+        if(intent.getAction() == null) return;
         if(intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED) ||
                 intent.getAction().equalsIgnoreCase(Intent.ACTION_LOCKED_BOOT_COMPLETED)) {
 
             Intent geoIntent = new Intent(context, GeofenceResetService.class);
+            log.i("Geo Intent: %s", geoIntent);
 
             // startService in the background is not allowed in Android 26+ except for some specific cases.
             // JobScheduler or startForeground has to be used instead.

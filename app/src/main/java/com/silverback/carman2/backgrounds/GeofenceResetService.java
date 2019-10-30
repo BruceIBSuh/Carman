@@ -1,19 +1,15 @@
 package com.silverback.carman2.backgrounds;
 
 import android.app.IntentService;
-import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.threads.ThreadManager;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -27,6 +23,7 @@ public class GeofenceResetService extends IntentService {
 
     // Objects
     private FirebaseFirestore firestore;
+
     // Constructor
     public GeofenceResetService() {
         super("GeofenceResetService");
