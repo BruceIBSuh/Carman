@@ -153,7 +153,7 @@ public class SettingFavorGasFragment extends Fragment implements
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
-            priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
+            priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId, true);
         }
     }
 

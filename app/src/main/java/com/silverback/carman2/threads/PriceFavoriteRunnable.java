@@ -18,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 public class PriceFavoriteRunnable implements Runnable {
 
@@ -32,11 +33,15 @@ public class PriceFavoriteRunnable implements Runnable {
     private StationPriceMethods mCallback;
     private XmlPullParserHandler xmlHandler;
 
+    private boolean isFirst;
+
 
     // Interface
     interface StationPriceMethods {
         String getStationId();
+        boolean getIsFirst();
         void setStnPriceThread(Thread thread);
+        void setFavoritePrice(Map<String, Float> data);
         void saveStationPriceData();
     }
 
@@ -69,8 +74,13 @@ public class PriceFavoriteRunnable implements Runnable {
 
             Opinet.StationPrice stnPriceData = xmlHandler.parseStationPrice(in);
             if(stnPriceData != null) {
-                savePriceInfo(stnPriceData, Constants.FILE_CACHED_STATION_PRICE);
-                mCallback.saveStationPriceData();
+
+                if(mCallback.getIsFirst()) {
+                    savePriceInfo(stnPriceData);
+                    mCallback.saveStationPriceData();
+
+                } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());
+
             }
 
         } catch(MalformedURLException e) {
@@ -92,8 +102,8 @@ public class PriceFavoriteRunnable implements Runnable {
         }
     }
 
-    private void savePriceInfo(Object obj, String fName) {
-
+    private void savePriceInfo(Object obj) {
+        final String fName = Constants.FILE_CACHED_STATION_PRICE;
         File file = new File(mContext.getApplicationContext().getCacheDir(), fName);
         FileOutputStream fos;
         ObjectOutputStream oos;

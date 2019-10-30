@@ -14,7 +14,7 @@ import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.FavoriteListAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderDao;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
@@ -31,7 +31,7 @@ public class FavoriteListFragment extends DialogFragment {
     private FavoriteListAdapter mAdapter;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentModel;
-    private List<FavoriteProviderDao.FavoriteNameAddrs> favoriteList;
+    private List<FavoriteProviderEntity> favoriteList;
 
 
     // Fields
@@ -77,30 +77,29 @@ public class FavoriteListFragment extends DialogFragment {
         tvTitle.setText(title);
 
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mDB.favoriteModel().findFavoriteNameAddrs(category).observe(this, data -> {
-            for (FavoriteProviderDao.FavoriteNameAddrs favorite : data) {
-                log.i("Favorite List: %s, %s", favorite.favoriteName, favorite.favoriteAddrs);
-            }
 
+
+        mDB.favoriteModel().queryFavoriteProvider(category).observe(this, data -> {
             favoriteList = data;
-            mAdapter = new FavoriteListAdapter(data);
+            mAdapter = new FavoriteListAdapter(favoriteList);
             listView.setAdapter(mAdapter);
 
         });
 
+
         // ListView item click event handler
         listView.setOnItemClickListener((parent, view, position, id) -> {
             log.i("Click event: %s, %s, %s, %s", parent, view, position, id);
-            FavoriteProviderDao.FavoriteNameAddrs nameAddrs =
-                    (FavoriteProviderDao.FavoriteNameAddrs)mAdapter.getItem(position);
+            FavoriteProviderEntity entity = (FavoriteProviderEntity)mAdapter.getItem(position);
             switch(category) {
                 case Constants.GAS:
-                    fragmentModel.getFavoriteStnName().setValue(nameAddrs.favoriteName);
+                    fragmentModel.getFavoriteGasEntity().setValue(entity);
                     break;
                 case Constants.SVC:
-                    fragmentModel.getFavoriteSvcName().setValue(nameAddrs.favoriteName);
+                    fragmentModel.getFavoriteSvcEntity().setValue(entity);
                     break;
             }
+
             dismiss();
         });
 

@@ -8,6 +8,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.silverback.carman2.database.FavoriteProviderEntity;
+
 import org.json.JSONObject;
 
 public class FragmentSharedModel extends ViewModel {
@@ -21,8 +23,8 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
 
-    private MutableLiveData<String> favoriteStnName;
-    private MutableLiveData<String> favoriteSvcName;
+    private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
+    private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
     private MutableLiveData<String> favoriteStnId;
     private MutableLiveData<Integer> imageItemSelected;
 
@@ -80,14 +82,14 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    public MutableLiveData<String> getFavoriteStnName() {
-        if(favoriteStnName == null) favoriteStnName = new MutableLiveData<>();
-        return favoriteStnName;
+    public MutableLiveData<FavoriteProviderEntity> getFavoriteGasEntity() {
+        if(favoriteGasEntity == null) favoriteGasEntity = new MutableLiveData<>();
+        return favoriteGasEntity;
     }
 
-    public MutableLiveData<String> getFavoriteSvcName() {
-        if(favoriteSvcName == null) favoriteSvcName = new MutableLiveData<>();
-        return favoriteSvcName;
+    public MutableLiveData<FavoriteProviderEntity> getFavoriteSvcEntity() {
+        if(favoriteSvcEntity == null) favoriteSvcEntity = new MutableLiveData<>();
+        return favoriteSvcEntity;
     }
 
     public MutableLiveData<String> getFavoriteStnId() {

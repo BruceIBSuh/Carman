@@ -41,7 +41,7 @@ public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSel
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() == null) return; //prevent Nullpointer exception.
+        if(getActivity() == null) return;
 
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
@@ -67,6 +67,11 @@ public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSel
 
         recyclerExpense.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerExpense.setHasFixedSize(true);
+
+        mDB.expenseBaseModel().loadExpenseByCategory(1, 2).observe(this, data -> {
+            log.i("All Expenses: %s", data.size());
+            recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data));
+        });
 
         return localView;
     }

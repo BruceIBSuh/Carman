@@ -391,25 +391,29 @@ public class ThreadManager {
         return priceDistrictTask;
     }
 
+    // Retrieve the price of a favorite station or service.
+    // boolean isFirst indicates that when it is set to true, it is the first favorite which shows
+    // the price info in the main activity as the data is saved in the cache directory.
+    // Otherwise, it just fetches the price of a favorite when selected out the list.
     public static PriceFavoriteTask startFavoritePriceTask(
-            Context context, OpinetViewModel model, String stnId) {
+            Context context, OpinetViewModel model, String stnId, boolean isFirst) {
 
         PriceFavoriteTask stnPriceTask = (PriceFavoriteTask)sInstance.mTaskWorkQueue.poll();
         if(stnPriceTask == null) stnPriceTask = new PriceFavoriteTask(context);
 
-        stnPriceTask.initTask(model, stnId);
+        stnPriceTask.initTask(model, stnId, isFirst);
         sInstance.mDownloadThreadPool.execute(stnPriceTask.getPriceRunnableStation());
 
         return stnPriceTask;
     }
 
 
-    public static TabPagerTask startViewPagerTask(
+    public static TabPagerTask startTabPagerTask(
             FragmentManager fragmentManager,
             PagerAdapterViewModel model,
             String[] defaults, String json, final String userId){
 
-        TabPagerTask tabPagerTask = sInstance.mTabPagerTaskQueue.poll();
+        TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mTaskWorkQueue.poll();
 
         if(tabPagerTask == null) {
             tabPagerTask = new TabPagerTask();

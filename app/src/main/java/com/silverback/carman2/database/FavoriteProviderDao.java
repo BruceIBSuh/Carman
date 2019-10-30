@@ -33,13 +33,14 @@ public interface FavoriteProviderDao {
     @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
 
-
+    /*
     @Query("SELECT favorite_name, favorite_addrs FROM FavoriteProviderEntity WHERE category = :category")
     LiveData<List<FavoriteNameAddrs>> findFavoriteNameAddrs(int category);
-
+    */
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
+
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_id = :providerId")
     LiveData<FavoriteProviderEntity> queryGeofenceFavorite(String providerId);
@@ -63,6 +64,7 @@ public interface FavoriteProviderDao {
     void deleteProvider(FavoriteProviderEntity provider);
 
     // Subclasses to have query results.
+    /*
     class FavoriteNameAddrs {
         @ColumnInfo(name = "favorite_name")
         public String favoriteName;
@@ -70,6 +72,8 @@ public interface FavoriteProviderDao {
         @ColumnInfo(name = "favorite_addrs")
         public String favoriteAddrs;
     }
+    */
+
 
     // class of the result subset which indicates what is the first set station and service in
     // SettingPreferenceFragment

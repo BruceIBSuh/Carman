@@ -91,8 +91,11 @@
     <string name="gas_hint_no_station">주유소 위치가 아닙니다</string>
     <string name="gas_hint_extra_expense">지출내역</string>
     <string name="gas_msg_empty_name">주유소 이름을 입력해 주세요</string>
-    <string name="gas_msg_add_favorite">즐겨찾는 주유소에 추가합니다</string>
-    <string name="gas_msg_alert_remove_favorite">즐겨찾는 주유소에서 제외합니다</string>
+    <string name="gas_snackbar_add_favorite">즐겨찾는 주유소에 추가합니다</string>
+    <string name="gas_snackbar_favorite_added">즐겨찾는 주유소로 등록되었습니다</string>
+    <string name="gas_snackbar_alert_remove_favorite">즐겨찾는 주유소에서 제외합니다</string>
+    <string name="gas_snackbar_favorite_removed">즐겨찾는 주유소에서 제외되었습니다</string>
+    <string name="gas_snackbar_action_confirm">확인</string>
 
     <!--ExpenseActivity$ServiceManagerFragment-->
     <string name="svc_toolbar_title">정비 점검 관리</string>
@@ -216,8 +219,8 @@
     <string name="geofence_notification_gas">주유정보</string>
     <string name="geofence_notification_service">서비스정보</string>
     <string name="geofence_notification_snooze">나중에 알림</string>
-    <string name="geofence_notification_gas_open">알림창을 클릭해서 주유정보를 입력해주세요</string>
-    <string name="geofence_notification_service_open">알림창을 클릭해서 서비스정보를 입력해주세요</string>
+    <string name="geofence_notification_gas_open">알림창을 누르시면 주유 정보 페이지로 이동합니다.\n나중에 입력할려면 Snooze를 선택하세요.</string>
+    <string name="geofence_notification_service_open">알림창을 누리시면 서비스정보 페이지로 이동합니다.\n나중에 입력하려면 Snnoze를 선택하세요</string>
     <string name="geofence_notification_dismiss">그냥 닫기</string>
     <string name="geofence_enter">에 진입하였습니다. 주유정보를 입력해 주세요</string>
     <string name="geofence_exit">단골주유소를 벗어났습니다</string>

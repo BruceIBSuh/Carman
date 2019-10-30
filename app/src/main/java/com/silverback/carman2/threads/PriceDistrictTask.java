@@ -77,7 +77,7 @@ public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnab
         // When initiating the app first time, the station id doesn't exist. Thus, no price info
         // of the favorite station shouldn't be provided. Other than this case, the price info should
         // be provided 4 times(avg, sido, sigun, station).
-        if(index >= ((stnId == null)? 3 : 4)) viewModel.notifyPriceComplete().postValue(true);
+        if(index >= ((stnId == null)? 3 : 4)) viewModel.districtPriceComplete().postValue(true);
     }
 
     @Override

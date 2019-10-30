@@ -71,6 +71,7 @@ public class Constants {
     public static final String CHANNEL_ID = "com.silverback.carman2";
 
     // Geofence Keys
+    public static final String GEO_CATEGORY = "com.silverback.carman2.geofence.category";
     public static final String GEO_INTENT = "com.ibnco.carman.geofence.pendingintent";
     public static final String GEO_NAME = "com.ibnco.carman.geofence.name";
     public static final String GEO_ID = "com.ibnco.carman.geofence.id";
