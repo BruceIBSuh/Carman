@@ -478,11 +478,15 @@ public class ServiceManagerFragment extends Fragment implements
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
             isSvcFavorite = false;
 
+            firestore.collection("svc_eval").document(svcId).update("favorite_num", FieldValue.increment(-1));
+            /*
             DocumentReference favorite = firestore.collection("svc_eval").document(svcId);
             favorite.get().addOnSuccessListener(snapshot -> {
                 if((int)snapshot.get("favorite_num") > 0)
                     favorite.update("favorite_num", "favorite_num", FieldValue.increment(-1));
             });
+
+             */
 
         // Add the service center with the favorite list and geofence as far as it has been
         // already registered in RegisterDialogFragment.

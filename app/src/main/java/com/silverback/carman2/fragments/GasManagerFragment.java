@@ -411,13 +411,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
             firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
 
-            DocumentReference favorite = firestore.collection("gas_eval").document(stnId);
-            favorite.get().addOnSuccessListener(snapshot -> {
-                if((int)snapshot.get("favorite_num") > 0)
-                    favorite.update("favorite_num", "favorite_num", FieldValue.increment(-1));
-            });
-
-
         } else {
             // First, check if the favorite is up to the limit.
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
