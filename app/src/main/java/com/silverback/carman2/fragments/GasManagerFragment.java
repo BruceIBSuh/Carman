@@ -394,22 +394,33 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Method to register with or unregister from the favorite list which is invoked by
     // the favorite button.
+    @SuppressWarnings("ConstantConditions")
     private void addGasFavorite() {
+        // In case the fragment is called up by GeofenceTransitionService, which should take a
+        // separate process.
+        if(isGeofenceIntent) return;
 
-        if(isGeofenceIntent || getFragmentManager() == null) return;
+        // Alert for Must create a user name first
+        if(TextUtils.isEmpty(userId)) {
+            Snackbar.make(constraintLayout, "Nickname first", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
 
+        // Pop up the dialog to select a favorite station out of the list with the empty TextView,
+        // the result of which is handled in FragmentSharedModel.getFavoriteGasEntity(),
+        // initiating the task to fetch the oil proce at the same time.
         if(TextUtils.isEmpty(tvStnName.getText())) {
-            // In case of the empty name, pop up the dialog to show the favorite list and pick a station.
             FavoriteListFragment favoriteFragment = FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS);
             favoriteFragment.show(getFragmentManager(), null);
 
+        // Remove the station both from the local db and Firestore, the result of which is notified
+        // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
         } else if(isFavoriteGas) {
             //Snackbar.make(constraintLayout, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_LONG).show();
-            geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId);
+            geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId, Constants.GAS);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-            isFavoriteGas = false;
 
-            firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
+            //firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
 
         } else {
             // First, check if the favorite is up to the limit.
@@ -418,7 +429,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 Snackbar.make(constraintLayout, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
 
             } else {
-                //Snackbar.make(constraintLayout, R.string.gas_snackbar_add_favorite, Snackbar.LENGTH_LONG).show();
                 // Then, retrieve the station data which pass to FavoriteGeofenceHelper to register with
                 // Geofence.
                 firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
@@ -434,7 +444,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                     }
                 });
 
-                // Increase the number of the favorite registration.
+                // Increase the registration number of the favorite by set initially or update if the field
+                // exists
+                /*
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
@@ -447,6 +459,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                         }
                     }
                 });
+
+                 */
             }
         }
 

@@ -19,8 +19,8 @@ public class Constants {
     static final int MAX_WAIT = 1000 * 30; //Mas latency to receive location info.
 
     // Category
-    public static final int GAS = 1;
-    public static final int SVC = 2;
+    public static final int GAS = 0;
+    public static final int SVC = 1;
     public static final int MAX_FAVORITE = 10;
 
     // File names

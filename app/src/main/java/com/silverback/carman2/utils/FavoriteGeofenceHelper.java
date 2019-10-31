@@ -10,7 +10,9 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
@@ -38,6 +40,7 @@ public class FavoriteGeofenceHelper {
     private CarmanDatabase mDB;
     private FavoriteProviderEntity favoriteModel;
 
+    private DocumentReference evalDocument;//Set or update the "favorite_num" by category.
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
     private PendingIntent mGeofencePendingIntent;
@@ -139,6 +142,7 @@ public class FavoriteGeofenceHelper {
         String address;
 
         switch(category) {
+
             case Constants.GAS:
                 GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
                 geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
@@ -147,6 +151,8 @@ public class FavoriteGeofenceHelper {
                 providerCode = snapshot.getString("stn_code");
                 address = TextUtils.isEmpty(snapshot.getString("new_addrs"))?
                         snapshot.getString("old_addrs"):snapshot.getString("new_addrs");
+
+                evalDocument = firestore.collection("gas_eval").document(providerId);
                 break;
 
             case Constants.SVC:
@@ -162,6 +168,7 @@ public class FavoriteGeofenceHelper {
                 providerCode = snapshot.getString("svc_code");
                 address = snapshot.getString("address");
 
+                evalDocument = firestore.collection("svc_eval").document(providerId);
                 break;
 
             default:
@@ -173,7 +180,7 @@ public class FavoriteGeofenceHelper {
         // Add the station to Geofence.
         createGeofence(providerId, geoPoint);
 
-        // Add the station to FavoriteProviderEntity(Room Database)
+        // Set the fields in FavoriteProviderEntity of the local db
         favoriteModel.providerName = providerName;
         favoriteModel.category = category;
         favoriteModel.providerId = providerId;
@@ -199,12 +206,29 @@ public class FavoriteGeofenceHelper {
                         geofence.put("providerName", providerName);
                         geofence.put("category", category);
 
+                        // Upload the Geofence data to "users" for downloading the data when rebooting.
                         firestore.collection("users").document(userId).collection("geofence").document(providerId)
                                 .set(geofence, SetOptions.merge())
                                 .addOnCompleteListener(task -> {
                                    if(task.isSuccessful()) log.i("Geofence added to Firestore");
                                 });
 
+                        // Update the favorite_num field of the evaluation collection
+                        evalDocument.get().addOnCompleteListener(task -> {
+                            if(task.isSuccessful()) {
+                                DocumentSnapshot doc = task.getResult();
+                                if(doc != null && doc.exists()) {
+                                    evalDocument.update("favorite_num", FieldValue.increment(1));
+                                } else {
+                                    Map<String, Integer> favorite = new HashMap<>();
+                                    favorite.put("favorite_num", 1);
+                                    evalDocument.set(favorite);
+                                }
+                            }
+                        });
+
+                        // Notify GasManagerFragment ro ServiceManagerFragment of the completion of
+                        // geofencing.
                         mListener.notifyAddGeofenceCompleted();
 
                     }).addOnFailureListener(e -> {
@@ -222,22 +246,42 @@ public class FavoriteGeofenceHelper {
     // Delete the current station from DB and Geofence. To remove a favorite from Geofence, use
     // removeGeofences() with its requestId which has been already set by setGeofenceParam() and
     // provided when adding it to Favorite.
-    public void removeFavoriteGeofence(final String userId, final String name, final String id) {
+    @SuppressWarnings("ConstantConditions")
+    public void removeFavoriteGeofence(String userId, String name, String id, int category) {
 
         // Create the list which contains requestId's to remove.
         List<String> geofenceId = new ArrayList<>();
         geofenceId.add(id);
 
+        switch(category) {
+            case Constants.GAS:
+                evalDocument = firestore.collection("gas_eval").document(id);
+                break;
+            case Constants.SVC:
+                evalDocument = firestore.collection("svc_eval").document(id);
+                break;
+        }
+
         mGeofencingClient.removeGeofences(geofenceId)
                 .addOnSuccessListener(aVoid -> {
+
                     FavoriteProviderEntity provider = mDB.favoriteModel().findFavoriteProvider(name, id);
                     if(provider != null) {
+                        // Delete the favorite provider out of the local db.
                         mDB.favoriteModel().deleteProvider(provider);
 
                         // Remove the geofence out of Firestore with the providerId;
                         firestore.collection("users").document(userId)
                                 .collection("geofence").document(id).delete()
                                 .addOnSuccessListener(bVoid -> log.i("Successfully deleted the geofence"));
+
+                        evalDocument.get().addOnCompleteListener(task -> {
+                            if(task.isSuccessful()) {
+                                DocumentSnapshot doc = task.getResult();
+                                if(doc.getDouble("favorite_num") > 0)
+                                    evalDocument.update("favorite_num", FieldValue.increment(-1));
+                            }
+                        });
 
                         mListener.notifyRemoveGeofenceCompleted();
 

@@ -177,18 +177,17 @@ public class ExpenseActivity extends BaseActivity implements
         });
         */
 
-        ExpTabPagerAdapter tabPagerAdapter = new ExpTabPagerAdapter(getSupportFragmentManager());
+        tabPagerAdapter = new ExpTabPagerAdapter(getSupportFragmentManager());
+
+        // Set args to each fragments in the tap adapter
         Bundle gasArgs = new Bundle();
         Bundle svcArgs = new Bundle();
-
         String[] defaults = getDefaultParams();
         defaults[1] = Constants.MIN_RADIUS;
-
 
         gasArgs.putStringArray("defaultParams", defaults);
         gasArgs.putString("userId", userId);
         tabPagerAdapter.getItem(0).setArguments(gasArgs);
-
 
         svcArgs.putString("distCode", distCode);
         svcArgs.putString("userId", userId);
@@ -201,6 +200,7 @@ public class ExpenseActivity extends BaseActivity implements
         addTabIconAndTitle(this, expTabLayout); // defined in BaseActivity as static
         animSlideTabLayout();
 
+        // Set the adapter to the last 5 expenses in the top frame.
         expensePager.setAdapter(recentPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
@@ -209,12 +209,15 @@ public class ExpenseActivity extends BaseActivity implements
         // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
 
+        /*
         if(getIntent() != null) {
             log.i("Intent extras: %s", getIntent().getIntExtra(Constants.GEO_CATEGORY, 0));
             log.i("Intent Extras: %s", getIntent().getStringExtra(Constants.GEO_NAME));
             int category = getIntent().getIntExtra(Constants.GEO_CATEGORY, 0);
-            tabPager.setCurrentItem(category - 1);
+            tabPager.setCurrentItem(category);
         }
+
+         */
 
 
     }
@@ -265,6 +268,7 @@ public class ExpenseActivity extends BaseActivity implements
 
             case MENU_ITEM_ID:
                 Fragment fragment = tabPagerAdapter.getItem(currentPage);
+                log.i("Current Page: %s, %s", currentPage, fragment);
                 boolean isSaved = false;
 
                 if(fragment instanceof GasManagerFragment) {

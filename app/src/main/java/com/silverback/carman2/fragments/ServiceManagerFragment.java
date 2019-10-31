@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -31,25 +33,24 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.ExpServiceItemAdapter;
-import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.database.ServicedItemEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.threads.ServiceCenterTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -189,7 +190,7 @@ public class ServiceManagerFragment extends Fragment implements
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             @Override
             public void notifyAddGeofenceCompleted() {
-                isSvcFavorite = !isSvcFavorite;
+                isSvcFavorite = true;
                 Snackbar.make(relativeLayout, R.string.svc_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
 
                 // Add a new geofence to Geofence list saved in SharedPreferences
@@ -198,7 +199,7 @@ public class ServiceManagerFragment extends Fragment implements
 
             @Override
             public void notifyRemoveGeofenceCompleted() {
-                isSvcFavorite = !isSvcFavorite;
+                isSvcFavorite = false;
                 Snackbar.make(relativeLayout, "Successfully removed", Snackbar.LENGTH_SHORT).show();
             }
 
@@ -216,8 +217,6 @@ public class ServiceManagerFragment extends Fragment implements
 
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
-        View boxview = localView.findViewById(R.id.view_boxing);
-        log.i("BoxView height: %s %s", boxview.getHeight(), boxview.getMeasuredHeight());
 
         progbar = localView.findViewById(R.id.pb_service_items);
         progbar.setVisibility(View.VISIBLE);
@@ -293,6 +292,10 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
+        // Codes should be added in accordance to the progress of the service center db as like
+        // in the gas station db.
+        svcCenterModel.getCurrentSVC().observe(this, svcData -> {});
+
         // Communcate w/ NumberPadFragment
         fragmentSharedModel.getSelectedValue().observe(this, data -> {
             final int viewId = data.keyAt(0);
@@ -344,15 +347,13 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        // ******** MORE RESEARCH REQUIRED ********
         // Must define FragmentSharedModel.setCurrentFragment() in onCreate , not onActivityCreated()
         // because the value of ragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
         fragmentSharedModel.setCurrentFragment(this);
 
-
     }
-
-
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -455,9 +456,10 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Register the service center with the favorite list and the geofence.
+    @SuppressWarnings("ConstantConditions")
     private void addServiceFavorite() {
 
-        if(isGeofenceIntent || getFragmentManager() == null) return;
+        if(isGeofenceIntent) return;
 
         // Retrieve a service center from the favorite list, the value of which is sent via
         // fragmentSharedModel.getFavoriteName()
@@ -467,72 +469,42 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Remove the center out of the favorite list and the geofence
         } else if(isSvcFavorite) {
-            /*
-            String title = getString(R.string.svc_register_title);
-            String msg = "Your're about to remove the service center out of the favorite";
-            AlertDialogFragment alertFragment = AlertDialogFragment.newInstance("Alert", msg, Constants.SVC);
-            if(getFragmentManager() != null) alertFragment.show(getFragmentManager(), null);
-            */
-            Snackbar.make(relativeLayout, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_LONG).show();
-            geofenceHelper.removeFavoriteGeofence(userId, svcName, svcId);
+
+            geofenceHelper.removeFavoriteGeofence(userId, svcName, svcId, Constants.SVC);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-            isSvcFavorite = false;
-
-            firestore.collection("svc_eval").document(svcId).update("favorite_num", FieldValue.increment(-1));
-            /*
-            DocumentReference favorite = firestore.collection("svc_eval").document(svcId);
-            favorite.get().addOnSuccessListener(snapshot -> {
-                if((int)snapshot.get("favorite_num") > 0)
-                    favorite.update("favorite_num", "favorite_num", FieldValue.increment(-1));
-            });
-
-             */
+            //firestore.collection("svc_eval").document(svcId).update("favorite_num", FieldValue.increment(-1));
 
         // Add the service center with the favorite list and geofence as far as it has been
         // already registered in RegisterDialogFragment.
-        } else if(svcId != null){
-            // Check if the totla number of the service favorites are out of the max limit.
-            final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
-            if(placeholder == Constants.MAX_FAVORITE) {
-                Snackbar.make(relativeLayout, getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
-            } else {
-                // Query the data of a station from Firestore
-                firestore.collection("svc_center").document(svcId).get().addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        DocumentSnapshot snapshot = task.getResult();
-                        if (snapshot != null && snapshot.exists()) {
-                            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-                            geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, SVC_CENTER);
-
-
-                        }
-                    }
-                });
-
-                // Increase the number of the favorite registration.
-                firestore.collection("svc_eval").document(svcId).get().addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
-                        DocumentSnapshot snapshot = task.getResult();
-                        if(snapshot != null && snapshot.exists()) {
-                            firestore.collection("svc_eval").document(svcId).update("favorite_num", FieldValue.increment(1));
-                        } else {
-                            Map<String, Integer> favorite = new HashMap<>();
-                            favorite.put("favorite_num", 1);
-                            firestore.collection("gas_eval").document(svcId).set(favorite);
-                        }
-                    }
-                });
-            }
-
-
-        // Requires ther registration process in RegisterDialogFragment before adding the favorite
-        // list and the geofence.
         } else {
-            //Toast.makeText(getActivity(), R.string.svc_msg_registration, Toast.LENGTH_SHORT).show();
-            etServiceName.clearFocus();
-            Snackbar.make(relativeLayout, R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
-        }
 
+            if (TextUtils.isEmpty(svcId)) {
+                InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(etServiceName.getWindowToken(), 0);
+                etServiceName.clearFocus();
+                Snackbar.make(relativeLayout, R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
+
+            } else {
+                // Check if the totla number of the service favorites are out of the max limit.
+                final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
+                if (placeholder == Constants.MAX_FAVORITE) {
+                    Snackbar.make(relativeLayout, getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
+                } else {
+                    // Query the data of a station from Firestore and pass the data to FavoriteGeofenceHelper
+                    // for adding the favoirte list to the local db and Firestore as well.
+                    firestore.collection("svc_center").document(svcId).get().addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot snapshot = task.getResult();
+                            if (snapshot != null && snapshot.exists()) {
+                                btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                                geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, Constants.SVC);
+                            }
+                        }
+                    });
+
+                }
+            }
+        }
 
     }
 
