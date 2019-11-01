@@ -196,13 +196,11 @@ public class ServiceManagerFragment extends Fragment implements
                 // Add a new geofence to Geofence list saved in SharedPreferences
                 // as type of JSONString in order to reload in GeofenceResetService when rebooting.
             }
-
             @Override
             public void notifyRemoveGeofenceCompleted() {
                 isSvcFavorite = false;
                 Snackbar.make(relativeLayout, "Successfully removed", Snackbar.LENGTH_SHORT).show();
             }
-
             @Override
             public void notifyAddGeofenceFailed() {
                 log.e("Failed to add the service center to Geofence");
@@ -255,10 +253,12 @@ public class ServiceManagerFragment extends Fragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-
+        /*
+         *********** getViewLifeCycle() / getViewLifeCycleLiveData()
+         */
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
-        locationModel.getLocation().observe(this, location -> {
+        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             log.i("Service Location: %s", location);
             this.location = location;
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);

@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -8,6 +9,7 @@ import android.widget.ProgressBar;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -15,14 +17,18 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.PriceDistrictTask;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.threads.SaveDistCodeTask;
+import com.silverback.carman2.threads.DistrictCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class IntroActivity extends BaseActivity implements View.OnClickListener {
 
@@ -31,9 +37,10 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
     // Objects
     private FirebaseAuth mAuth;
+    private FirebaseFirestore firestore;
     private PriceDistrictTask priceDistrictTask;
-    private SaveDistCodeTask saveDistCodeTask;
-    private OpinetViewModel viewModel;
+    private DistrictCodeTask districtCodeTask;
+    private OpinetViewModel opinetViewModel;
 
     // UI's
     private ProgressBar mProgBar;
@@ -49,6 +56,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         //getSupportActionBar().hide();
         setContentView(R.layout.activity_intro);
         mAuth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         // Permission Check
         checkPermissions();
 
@@ -64,10 +72,9 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
         if(!distCodePath.exists()) firstInitProcess();
         */
 
-
-        viewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
         // On finishing saving the district code which was downloaded and saved,
-        viewModel.districtCodeComplete().observe(this, isCompete -> {
+        opinetViewModel.districtCodeComplete().observe(this, isCompete -> {
             log.i("District code task finished");
             mProgBar.setVisibility(View.INVISIBLE);
             initProcess();
@@ -75,7 +82,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         // Being notified of the opinet price data on the worker thread of PriceDistrictTask,
         // start MainActivity and finish the progressbar
-        viewModel.districtPriceComplete().observe(this, isComplete -> {
+        opinetViewModel.districtPriceComplete().observe(this, isComplete -> {
             log.i("PriceDistrictTask complete");
             if(priceDistrictTask != null) priceDistrictTask = null;
             mProgBar.setVisibility(View.GONE);
@@ -83,8 +90,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
             finish();
         });
 
-        CarmanDatabase.getDatabaseInstance(this).favoriteModel()
-                .queryFirstSetFavorite().observe(this, data -> {
+        CarmanDatabase.getDatabaseInstance(this).favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) stnId = provider.providerId;
                 log.i("Station ID: %s", stnId);
@@ -102,19 +108,20 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
     @Override
     public void onPause() {
         super.onPause();
-        if(saveDistCodeTask != null) saveDistCodeTask = null;
+        if(districtCodeTask != null) districtCodeTask = null;
         if(priceDistrictTask != null) priceDistrictTask = null;
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if(saveDistCodeTask != null) saveDistCodeTask = null;
+        if(districtCodeTask != null) districtCodeTask = null;
         if(priceDistrictTask != null) priceDistrictTask = null;
     }
 
     @Override
     public void onClick(View view) {
+        // Fork the process into the first and regular based on whether the anonymous
         if(mAuth.getCurrentUser() == null) firstInitProcess();
         else initProcess();
     }
@@ -128,16 +135,40 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
             if(task.isSuccessful()) {
 
+                // Create "users" collection and the fields with temporary null values in Firestore,
+                // retrieving the generated id, which is saved in the internal storage.
+                Map<String, Object> autoData = new HashMap<>();
+                autoData.put("user_name", null);
+                autoData.put("auto_maker", null);
+                autoData.put("auto_type", null);
+                autoData.put("auto_model", null);
+                autoData.put("auto_year", null);
+                firestore.collection("users").add(autoData).addOnSuccessListener(docref -> {
+                    final String id = docref.getId();
+                    // Get the document id generated by Firestore and save it in the internal storage.
+                    try (final FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
+                        fos.write(id.getBytes());
+                    } catch (IOException e) {
+                        log.e("IOException: %s", e.getMessage());
+                    }
+                }).addOnFailureListener(e -> log.e("Add user failed: %s", e.getMessage()));
+
+                // Initiate the task to get the district codes provided by Opinet and save them in
+                // the internal storage, which may be downloaded every time the app starts to
+                // decrease the app size.
                 File distCode = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
-                if(!distCode.exists()) ThreadManager.saveDistCodeTask(this, viewModel);
+                if(!distCode.exists())
+                    districtCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
 
                 // Retrieve the default district values of sido, sigun and sigun code, then save them in
                 // SharedPreferences.
                 JSONArray jsonDistrictArray = new JSONArray(
                         Arrays.asList(getResources().getStringArray(R.array.default_district)));
-                JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
-
                 mSettings.edit().putString(Constants.DISTRICT, jsonDistrictArray.toString()).apply();
+
+                // Retrive the default service items as JSONArray defined in BaseActvitiy and save
+                // them in SharedPreferences
+                JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
             } else {
@@ -161,8 +192,8 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
             // Starts multi-threads(ThreadPoolExecutor) to download the opinet price info.
             // Consider whether the threads should be interrupted or not.
-            priceDistrictTask = ThreadManager.startPriceDistrictTask(this, viewModel, distCode, stnId);
-            //priceDistrictTask = ThreadManager.startPriceDistrictTask(this, viewModel, distCode);
+            priceDistrictTask = ThreadManager.startPriceDistrictTask(this, opinetViewModel, distCode, stnId);
+            //priceDistrictTask = ThreadManager.startPriceDistrictTask(this, opinetViewModel, distCode);
 
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();

@@ -23,9 +23,11 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -66,37 +68,25 @@ public class GeofenceTransitionService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-
+        log.i("GeofenceTransitionService");
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         notificationManager = NotificationManagerCompat.from(this);
-
+        /*
         providerId = intent.getStringExtra("providerId");
         providerName = intent.getStringExtra("providerName");
         category = intent.getIntExtra("category", Constants.GAS);
-        log.i("Intent extras: %s, %s, %s", providerId, providerName, category);
+        log.i("PendingIntent extra: %s", providerName);
+        */
 
         if(geofencingEvent.hasError()) {
             log.e("GeofencingEvent error occurred: %s", geofencingEvent.getErrorCode());
             return;
         }
 
-        int geofencingTransition = geofencingEvent.getGeofenceTransition();
-        switch(geofencingTransition) {
-            case Geofence.GEOFENCE_TRANSITION_ENTER:
-                break;
+        final int geofencingTransition = geofencingEvent.getGeofenceTransition();
+        final Location geofenceLocation = geofencingEvent.getTriggeringLocation();
+        log.i("Geofence Intent: %s, %s", geofencingTransition, geofenceLocation);
 
-            case Geofence.GEOFENCE_TRANSITION_EXIT:
-                break;
-
-            case Geofence.GEOFENCE_TRANSITION_DWELL:
-                break;
-
-            default:
-                break;
-        }
-
-
-        geofenceLocation = geofencingEvent.getTriggeringLocation();
         sendNotification(category);
 
     }

@@ -53,6 +53,9 @@ public interface FavoriteProviderDao {
             "WHERE favorite_name = :stnName AND favorite_id = :stnId AND category = :category")
     LiveData<String> findFavoriteGasName(String stnName, String stnId, int category);
 
+    @Query("SELECT * FROM FavoriteProviderEntity WHERE geo_longitude = :x AND geo_latitude = :y")
+    LiveData<FavoriteProviderEntity> queryGeofence(double x, double y);
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertFavoriteProvider(FavoriteProviderEntity favorite);

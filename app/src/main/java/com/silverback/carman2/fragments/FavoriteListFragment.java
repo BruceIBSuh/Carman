@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -33,11 +34,9 @@ public class FavoriteListFragment extends DialogFragment {
     private FragmentSharedModel fragmentModel;
     private List<FavoriteProviderEntity> favoriteList;
 
-
     // Fields
     private String title;
     private int category;
-
 
     // private Constructor
     private FavoriteListFragment () {}
@@ -53,12 +52,12 @@ public class FavoriteListFragment extends DialogFragment {
         return favoriteFragment;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         if(getActivity() != null) fragmentModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
-
     }
 
     @SuppressWarnings("ConstantConditions")

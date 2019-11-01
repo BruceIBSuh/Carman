@@ -96,7 +96,7 @@ public class ThreadManager {
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
 
     private Queue<ThreadTask> mTaskWorkQueue;
-    private final Queue<SaveDistCodeTask> mSaveDistCodeTaskQueue;
+    private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
     private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
@@ -131,7 +131,7 @@ public class ThreadManager {
         // Queues of tasks, which is handed to ThreadPool.
         mTaskWorkQueue = new LinkedBlockingQueue<>();
 
-        mSaveDistCodeTaskQueue = new LinkedBlockingQueue<>();
+        mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
         mPriceDistrictTaskQueue = new LinkedBlockingQueue<>();
         mTabPagerTaskQueue = new LinkedBlockingQueue<>();
@@ -174,7 +174,7 @@ public class ThreadManager {
                 //LoadPriceListTask loadPriceTask;
                 StationListTask stationListTask;
                 StationInfoTask stationInfoTask;
-                SaveDistCodeTask saveDistCodeTask;
+                DistrictCodeTask districtCodeTask;
                 LoadDistCodeTask loadDistCodeTask;
 
                 switch(msg.what) {
@@ -186,8 +186,8 @@ public class ThreadManager {
                         break;
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        saveDistCodeTask = (SaveDistCodeTask)msg.obj;
-                        saveDistCodeTask.recycle();
+                        districtCodeTask = (DistrictCodeTask)msg.obj;
+                        districtCodeTask.recycle();
                         break;
 
 
@@ -344,12 +344,12 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static SaveDistCodeTask saveDistCodeTask(Context context, OpinetViewModel model) {
+    public static DistrictCodeTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
 
-        SaveDistCodeTask task = sInstance.mSaveDistCodeTaskQueue.poll();
+        DistrictCodeTask task = sInstance.mDistrictCodeTaskQueue.poll();
 
         if(task == null) {
-            task = new SaveDistCodeTask(context, model);
+            task = new DistrictCodeTask(context, model);
         }
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());

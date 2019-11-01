@@ -6,11 +6,11 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
 
-public class SaveDistCodeTask extends ThreadTask
-        implements SaveDistCodeRunnable.OpinetDistCodeMethods {
+public class DistrictCodeTask extends ThreadTask
+        implements DistrictCodeRunnable.OpinetDistCodeMethods {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(SaveDistCodeTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistrictCodeTask.class);
 
     // Objects
     //private WeakReference<Activity> mWeakActivity;
@@ -18,11 +18,11 @@ public class SaveDistCodeTask extends ThreadTask
     private Runnable opinetDistCodeRunnable;
 
     // Constructor
-    SaveDistCodeTask(Context context, OpinetViewModel model) {
+    DistrictCodeTask(Context context, OpinetViewModel model) {
         super(); // ThreadTask
         //mWeakActivity = new WeakReference<>((Activity)context);
         this.model = model;
-        opinetDistCodeRunnable = new SaveDistCodeRunnable(context, this);
+        opinetDistCodeRunnable = new DistrictCodeRunnable(context, this);
     }
 
     // Getter for the Runnable invoked by startPriceDistrictTask() in ThreadManager
@@ -57,11 +57,11 @@ public class SaveDistCodeTask extends ThreadTask
         int outstate = -1;
 
         switch(state) {
-            case SaveDistCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
+            case DistrictCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLTETED;
                 break;
 
-            case SaveDistCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
+            case DistrictCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_FAILED;
                 break;
         }
