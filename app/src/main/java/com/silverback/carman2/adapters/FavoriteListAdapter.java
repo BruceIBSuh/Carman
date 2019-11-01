@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderDao;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -20,10 +21,10 @@ public class FavoriteListAdapter extends BaseAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteListAdapter.class);
 
     // Objects
-    private List<FavoriteProviderDao.FavoriteNameAddrs> favoriteList;
+    private List<FavoriteProviderEntity> favoriteList;
 
     // Constructor
-    public FavoriteListAdapter(List<FavoriteProviderDao.FavoriteNameAddrs> list) {
+    public FavoriteListAdapter(List<FavoriteProviderEntity> list) {
         favoriteList = list;
     }
 
@@ -59,8 +60,8 @@ public class FavoriteListAdapter extends BaseAdapter {
 
         } else viewHolder = (ListViewHolder)convertView.getTag();
 
-        viewHolder.tvFavoriteName.setText(favoriteList.get(position).favoriteName);
-        viewHolder.tvFavoriteAddrs.setText(favoriteList.get(position).favoriteAddrs);
+        viewHolder.tvFavoriteName.setText(favoriteList.get(position).providerName);
+        viewHolder.tvFavoriteAddrs.setText(favoriteList.get(position).address);
 
         return convertView;
     }

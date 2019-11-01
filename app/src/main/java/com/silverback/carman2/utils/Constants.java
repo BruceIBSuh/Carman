@@ -19,8 +19,8 @@ public class Constants {
     static final int MAX_WAIT = 1000 * 30; //Mas latency to receive location info.
 
     // Category
-    public static final int GAS = 1;
-    public static final int SVC = 2;
+    public static final int GAS = 0;
+    public static final int SVC = 1;
     public static final int MAX_FAVORITE = 10;
 
     // File names
@@ -71,6 +71,7 @@ public class Constants {
     public static final String CHANNEL_ID = "com.silverback.carman2";
 
     // Geofence Keys
+    public static final String GEO_CATEGORY = "com.silverback.carman2.geofence.category";
     public static final String GEO_INTENT = "com.ibnco.carman.geofence.pendingintent";
     public static final String GEO_NAME = "com.ibnco.carman.geofence.name";
     public static final String GEO_ID = "com.ibnco.carman.geofence.id";

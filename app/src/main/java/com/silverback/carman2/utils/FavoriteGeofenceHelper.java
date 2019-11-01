@@ -70,7 +70,7 @@ public class FavoriteGeofenceHelper {
 
     // Attach the listener to GasManagerFragment and ServiceManagerFragment for notifying them
     // of whether to add the provider to Geofence and the DB successfully or not.
-    public void setListener(OnGeofenceListener listener) {
+    public void setGeofenceListener(OnGeofenceListener listener) {
         mListener = listener;
     }
 
@@ -128,9 +128,11 @@ public class FavoriteGeofenceHelper {
 
     // Add a station to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
-    //public void addGeofenceToFavorite(final String name, final String providerCode, final String addrs) {
+    @SuppressWarnings("ConstantConditions")
     public void addFavoriteGeofence(
             final String userId, final DocumentSnapshot snapshot, final int placeHolder, final int category) {
+
+        log.i("category: %s", category);
 
         final String providerId = snapshot.getId();
         GeoPoint geoPoint = null;
@@ -163,6 +165,7 @@ public class FavoriteGeofenceHelper {
                 address = snapshot.getString("address");
 
                 break;
+
             default:
                 throw new IllegalStateException("Unexpected value: " + category);
         }
@@ -188,13 +191,16 @@ public class FavoriteGeofenceHelper {
             mGeofencingClient
                     .addGeofences(getGeofencingRequest(), getGeofencePendingIntent(providerId, providerName, category))
                     .addOnSuccessListener(aVoid -> {
-                        // Insert the provider into FavoriteProviderEntity of the db.
+                        // Insert the provider into the local db(FavoriteProviderEntity)
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
 
                         // Upload the geofence to Firestore for purpose of reloading on rebooting.
                         // Seems not working, then refactor requried.
                         Map<String, Object> geofence = new HashMap<>();
                         geofence.put("geofencing", getGeofencingRequest());
+                        geofence.put("providerName", providerName);
+                        geofence.put("category", category);
+
                         firestore.collection("users").document(userId).collection("geofence").document(providerId)
                                 .set(geofence, SetOptions.merge())
                                 .addOnCompleteListener(task -> {

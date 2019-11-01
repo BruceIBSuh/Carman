@@ -1,13 +1,10 @@
 package com.silverback.carman2.threads;
 
-import android.app.Activity;
 import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
-
-import java.lang.ref.WeakReference;
 
 public class SaveDistCodeTask extends ThreadTask
         implements SaveDistCodeRunnable.OpinetDistCodeMethods {
@@ -51,7 +48,7 @@ public class SaveDistCodeTask extends ThreadTask
 
     @Override
     public void notifySaved(boolean b) {
-        if(b) model.notifyDistCodeComplete().postValue(true);
+        if(b) model.districtCodeComplete().postValue(true);
         else log.e("Saving the DistrictCode failed");
     }
 

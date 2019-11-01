@@ -17,7 +17,6 @@ public class TabPagerRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(TabPagerRunnable.class);
 
-
     // Objects
     private ViewPagerMethods task;
     private ExpTabPagerAdapter pagerAdapter;

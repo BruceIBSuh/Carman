@@ -101,12 +101,13 @@ public class RegisterDialogFragment extends DialogFragment implements
     }
 
     // Instantiate DialogFragment as a SingleTon
-    static RegisterDialogFragment newInstance(String name, String distCode, int category) {
+    static RegisterDialogFragment newInstance(String name, String distCode) {
+
         RegisterDialogFragment favoriteDialog = new RegisterDialogFragment();
         Bundle args = new Bundle();
         args.putString("favoriteName", name);
         args.putString("distCode", distCode);
-        args.putInt("category", category);
+        //args.putInt("category", category);
         favoriteDialog.setArguments(args);
 
         return favoriteDialog;
@@ -119,7 +120,7 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         providerName = getArguments().getString("favoriteName");
         distCode = getArguments().getString("distCode");
-        category = getArguments().getInt("category");
+        //category = getArguments().getInt("category");
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
 
         // Instantiate FirebaseFirestore
@@ -130,57 +131,6 @@ public class RegisterDialogFragment extends DialogFragment implements
         distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
 
-        // Enlist the sigun names in SigunSpinner based upon a given sigun name.
-        distModel.getSpinnerDataList().observe(this, dataList -> {
-            if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
-            for(Opinet.DistrictCode obj : dataList) {
-                sigunAdapter.addItem(obj);
-            }
-            sigunSpinner.setAdapter(sigunAdapter);
-            sigunSpinner.setSelection(mSigunItemPos);
-        });
-
-        // Fetch the current location using LocationTask and LocationViewModel, with which
-        // GeocoderReverseTask is initiated to get the current address.
-        locationModel.getLocation().observe(this, location->{
-            log.i("Current Location: %s", location);
-            geocoderReverseTask = ThreadManager.startReverseGeocoderTask(getContext(), locationModel, location);
-            mLocation = location;
-
-        });
-
-        // Fetch the current address and split it for inputting sido and sigun name respectively into
-        // its TextViews which replace the Spinners. Using StringBuffer, insert the space between
-        // the remaining address names.
-        locationModel.getAddress().observe(this, address -> {
-            log.i("Address: %s", address);
-            mAddress = address;
-
-            final String[] arrAddrs = TextUtils.split(address, "\\s+");
-            final StringBuilder strbldr = new StringBuilder();
-            for(int i = 2; i < arrAddrs.length; i++) strbldr.append(arrAddrs[i]).append(" ");
-
-            tvSido.setText(arrAddrs[0]);
-            tvSigun.setText(arrAddrs[1]);
-            etAddrs.setText(strbldr.toString());
-
-            tvSido.setVisibility(View.VISIBLE);
-            tvSigun.setVisibility(View.VISIBLE);
-            sidoSpinner.setVisibility(View.GONE);
-            sigunSpinner.setVisibility(View.GONE);
-        });
-
-        // Fetch the Location based on a given address name by using Geocoder, then pass the value
-        // to ServiceManagerFragment and close the dialog.
-        locationModel.getGeocoderLocation().observe(this, location -> {
-            mLocation = location;
-            // Pass the location and address of an service provider to ServiceManagerFragment
-            // using FragmentSharedModel which enables Fragments to communicate each other.
-            log.i("Geocoder Location: %s, %s", mLocation, mAddress);
-            registerService();
-
-            //dialog.dismiss();
-        });
 
     }
 
@@ -263,7 +213,7 @@ public class RegisterDialogFragment extends DialogFragment implements
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
 
-        // Separately handle the positive button for preventing the dialog from closing when pressed
+        // Separately handle the button actions to prevent the dialog from closing when pressed
         // to receive the location by getGeocoderLocation of LocationViewModel. On fetching the value,
         // close the dialog using dismiss();
         dialog.setOnShowListener(dialogInterface -> {
@@ -290,6 +240,64 @@ public class RegisterDialogFragment extends DialogFragment implements
         });
 
         return dialog;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        // Enlist the sigun names in SigunSpinner based upon a given sigun name.
+        distModel.getSpinnerDataList().observe(this, dataList -> {
+            if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
+            for(Opinet.DistrictCode obj : dataList) {
+                sigunAdapter.addItem(obj);
+            }
+            sigunSpinner.setAdapter(sigunAdapter);
+            sigunSpinner.setSelection(mSigunItemPos);
+        });
+
+        // Fetch the current location using LocationTask and LocationViewModel, with which
+        // GeocoderReverseTask is initiated to get the current address.
+        locationModel.getLocation().observe(this, location->{
+            log.i("Current Location: %s", location);
+            geocoderReverseTask = ThreadManager.startReverseGeocoderTask(getContext(), locationModel, location);
+            mLocation = location;
+
+        });
+
+        // Fetch the current address and split it for inputting sido and sigun name respectively into
+        // its TextViews which replace the Spinners. Using StringBuffer, insert the space between
+        // the remaining address names.
+        locationModel.getAddress().observe(this, address -> {
+            mAddress = address;
+
+            final String[] arrAddrs = TextUtils.split(address, "\\s+");
+            final StringBuilder strbldr = new StringBuilder();
+            for(int i = 2; i < arrAddrs.length; i++) strbldr.append(arrAddrs[i]).append(" ");
+
+            tvSido.setText(arrAddrs[0]);
+            tvSigun.setText(arrAddrs[1]);
+            etAddrs.setText(strbldr.toString());
+
+            tvSido.setVisibility(View.VISIBLE);
+            tvSigun.setVisibility(View.VISIBLE);
+            sidoSpinner.setVisibility(View.GONE);
+            sigunSpinner.setVisibility(View.GONE);
+        });
+
+        // Fetch the Location based on a given address name by using Geocoder, then pass the value
+        // to ServiceManagerFragment and close the dialog.
+        locationModel.getGeocoderLocation().observe(this, location -> {
+            mLocation = location;
+            // Pass the location and address of an service provider to ServiceManagerFragment
+            // using FragmentSharedModel which enables Fragments to communicate each other.
+            log.i("Geocoder Location: %s, %s", mLocation, mAddress);
+            registerService();
+
+            //dialog.dismiss();
+        });
+
+
     }
 
     @Override

@@ -22,7 +22,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.google.android.gms.location.Geofence;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -37,6 +36,9 @@ import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.PriceFavoriteTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
@@ -47,19 +49,11 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -71,15 +65,14 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
-    // Constants
-    public static final int GAS_STATION = 1; //favorite gas provider category
-
     // Objects
+    private LocationTask locationTask;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
     private FragmentSharedModel fragmentSharedModel;
+    private OpinetViewModel opinetViewModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
     private StationListTask stationListTask;
@@ -93,11 +86,14 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private Location location;
 
     // UIs
+    private View localView;
     private ConstraintLayout constraintLayout;
     private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
     private EditText etUnitPrice, etExtraExpense, etGasComment;
     private ImageButton btnFavorite;
     private RatingBar ratingBar;
+    private ProgressBar pbStation;
+    private ImageButton imgRefresh;
 
     // Fields
     private String[] defaultParams;
@@ -125,14 +121,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         if(getArguments() != null) {
             defaultParams = getArguments().getStringArray("defaultParams");
             userId = getArguments().getString("userId");
-            log.i("userid: %s", userId);
         }
 
         firestore = FirebaseFirestore.getInstance();
+
         // Instantiate the ViewModels
+        // Refactor required using getViewLifecyclerOwnerLiveData()
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         stnListModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
+        opinetViewModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
+
 
 
         // Entity to retrieve list of favorite station to compare with a fetched current station
@@ -162,9 +161,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         } catch(IOException e) {
             log.e("IOException when retrieving user id: %s", e.getMessage());
         }
-
-         */
-
+        */
 
     }
 
@@ -176,13 +173,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         // Inflate the layout for this fragment
-        final View localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
+        localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
 
         constraintLayout = localView.findViewById(R.id.constraint_gas);
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         tvStnName = localView.findViewById(R.id.tv_station_name);
-        ProgressBar pbStation = localView.findViewById(R.id.pb_search_station);
-        ImageButton imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
+        pbStation = localView.findViewById(R.id.pb_search_station);
+        imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
         tvOdometer = localView.findViewById(R.id.tv_gas_mileage);
@@ -229,9 +226,39 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         });
 
 
+        // FavoriteGeofenceHelper.OnGeofenceListener().
+        // FavoriteGeofenceHelper class notifies whether a specific station is successfully added to
+        // or removed out of the favorite list.
+        geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
+            @Override
+            public void notifyAddGeofenceCompleted() {
+                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
+                isFavoriteGas = true;
+            }
+
+            @Override
+            public void notifyRemoveGeofenceCompleted() {
+                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+                isFavoriteGas = false;
+            }
+
+            @Override
+            public void notifyAddGeofenceFailed() {
+                log.i("Failed to add the gas station to Geofence");
+            }
+        });
+
+        return localView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
         locationModel.getLocation().observe(this, location -> {
+            log.i("Location fetched: %s", location);
             this.location = location;
             stationListTask = ThreadManager.startStationListTask(
                     getContext(), stnListModel, location, defaultParams);
@@ -242,6 +269,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // its address, completion of which is notified by the same ViewModel.
         stnListModel.getCurrentStationLiveData().observe(this, curStn -> {
             if(curStn != null) {
+                log.i("Current Station");
                 stnName = curStn.getStnName();
                 stnId = curStn.getStnId();
                 tvStnName.setText(stnName);
@@ -257,24 +285,23 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             imgRefresh.setVisibility(View.VISIBLE);
         });
 
-
-        // Remove a station from the favorite list when AlertDialogFragment pops up and click confirm.
-        fragmentSharedModel.getAlertGasResult().observe(this, confirm -> {
-            if(confirm) {
-                geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId);
-                btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-                isFavoriteGas = false;
-
-                firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
-            }
-        });
-
         // Communicate w/ FavoriteListFragment to retrieve a favorite station picked out of the
         // dialogfragment.
-        fragmentSharedModel.getFavoriteStnName().observe(this, name -> {
-            tvStnName.setText(name);
+        fragmentSharedModel.getFavoriteGasEntity().observe(this, entity -> {
+            tvStnName.setText(entity.providerName);
             btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            stnId = entity.providerId;
             isFavoriteGas = true;
+
+            PriceFavoriteTask mTask = ThreadManager.startFavoritePriceTask(
+                    getActivity(), opinetViewModel, entity.providerId, false);
+        });
+
+        // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
+        opinetViewModel.getFavoritePriceData().observe(this, data -> {
+            log.i("Map data: %s", data.get(defaultParams[0]));
+            etUnitPrice.setText(String.valueOf(data.get(defaultParams[0])));
+            etUnitPrice.setCursorVisible(false);
         });
 
         // ViewModels to share data b/w fragments(GasManager, ServiceManager, and NumberPadFragment)
@@ -287,32 +314,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         });
 
-        geofenceHelper.setListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
-            @Override
-            public void notifyAddGeofenceCompleted() {
-                Snackbar.make(constraintLayout, R.string.gas_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
-                isFavoriteGas = true;
-            }
 
-            @Override
-            public void notifyRemoveGeofenceCompleted() {
-                Snackbar.make(constraintLayout, "successfully removed", Snackbar.LENGTH_SHORT).show();
-                isFavoriteGas = false;
-            }
-
-            @Override
-            public void notifyAddGeofenceFailed() {
-                log.i("Failed to add the gas station to Geofence");
-            }
-        });
-
-        return localView;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        // Must define FragmentSharedModel.setCurrentFragment() in onResume() , not onActivityCreated()
+        // because the value of ragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
+        // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
         fragmentSharedModel.setCurrentFragment(this);
+
     }
 
     @Override
@@ -365,8 +377,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     }
 
-
-
     // Query Favorite with the fetched station name or station id to tell whether the station
     // has registered with Favorite, and the result is notified as a LiveData.
     private void checkGasFavorite(String name, String id) {
@@ -394,85 +404,49 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             favoriteFragment.show(getFragmentManager(), null);
 
         } else if(isFavoriteGas) {
-            // In case of the station registered with the favorite, pop up the alert dialog to confirm
-            // to remove out of it, the process of it is made by fragmentSharedModel.getAlertGasResult()
-            String msg = getString(R.string.gas_msg_alert_remove_favorite);
-            AlertDialogFragment alert = AlertDialogFragment.newInstance("Alert", msg, Constants.GAS);
-            alert.show(getFragmentManager(), null);
+            //Snackbar.make(constraintLayout, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_LONG).show();
+            geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId);
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            isFavoriteGas = false;
+
+            firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
 
         } else {
             // First, check if the favorite is up to the limit.
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
             if(placeholder == Constants.MAX_FAVORITE) {
                 Snackbar.make(constraintLayout, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
-                return;
+
+            } else {
+                //Snackbar.make(constraintLayout, R.string.gas_snackbar_add_favorite, Snackbar.LENGTH_LONG).show();
+                // Then, retrieve the station data which pass to FavoriteGeofenceHelper to register with
+                // Geofence.
+                firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        DocumentSnapshot snapshot = task.getResult();
+
+                        if(snapshot != null && snapshot.exists()) {
+                            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                            geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, Constants.GAS);
+
+                        }
+                    }
+                });
+
+                // Increase the number of the favorite registration.
+                firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        DocumentSnapshot snapshot = task.getResult();
+                        if(snapshot != null && snapshot.exists()) {
+                            firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(1));
+                        } else {
+                            Map<String, Integer> favorite = new HashMap<>();
+                            favorite.put("favorite_num", 1);
+                            firestore.collection("gas_eval").document(stnId).set(favorite);
+                        }
+                    }
+                });
             }
-
-            /*
-            DocumentReference stnRef = firestore.collection("gas_station").document(stnId);
-            DocumentReference evalRef = firestore.collection("gas_eval").document(stnId);
-
-            firestore.runTransaction(transaction -> {
-                DocumentSnapshot stnSnapshot = transaction.get(stnRef);
-                DocumentSnapshot evalSnapshot = transaction.get(evalRef);
-
-                if(stnSnapshot.exists()) {
-                    log.i("Station Snapshot");
-                    geofenceHelper.addFavoriteGeofence(stnSnapshot, stnId, totalNumber, GAS_STATION);
-                    btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-
-                    Snackbar.make(constraintLayout, R.string.gas_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
-                    isFavoriteGas = true;
-                }
-
-
-                if(evalSnapshot.exists()) {
-                    log.i("Station Eval Snapshot");
-                    evalRef.update("favorite_num", FieldValue.increment(1));
-                } else {
-                    log.i("Station EVal Snapshot set");
-                    Map<String, Integer> favoriteNum = new HashMap<>();
-                    favoriteNum.put("favorite_num", 1);
-                    evalRef.set(favoriteNum);
-                }
-
-                return null;
-
-            }).addOnSuccessListener(Void-> {
-
-
-            }).addOnFailureListener(e -> log.e("Transaction failed: %s", e.getMessage()));
-            */
-
-            // Then, retrieve the station data to pass to FavoriteGeofenceHelper to register with
-            // Geofence.
-            firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    DocumentSnapshot snapshot = task.getResult();
-
-                    if(snapshot != null && snapshot.exists()) {
-                        log.i("register w/ geofence: %s", stnId);
-                        btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-                        geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, GAS_STATION);
-
-                    }
-                }
-            });
-
-            // Increase the number of the favorite registration.
-            firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    DocumentSnapshot snapshot = task.getResult();
-                    if(snapshot != null && snapshot.exists()) {
-                        firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(1));
-                    } else {
-                        Map<String, Integer> favorite = new HashMap<>();
-                        favorite.put("favorite_num", 1);
-                        firestore.collection("gas_eval").document(stnId).set(favorite);
-                    }
-                }
-            });
-
         }
 
     }
@@ -496,7 +470,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;
         gasEntity.extraExpense = etExtraExpense.getText().toString();
-        //gasEntity.basicId = basicEntity.serviceId;
 
         try {
             basicEntity.mileage = df.parse(tvOdometer.getText().toString()).intValue();
@@ -560,33 +533,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                                 log.e("Comments upload failed: %s", task.getException());
                             }
                         });
-                /*
-                try (FileInputStream fis = getActivity().openFileInput("user_id");
-                     BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
-                    final String userid = br.readLine();
-                    Map<String, Object> commentData = new HashMap<>();
-                    commentData.put("timestamp", FieldValue.serverTimestamp());
-                    commentData.put("name", nickname);
-                    commentData.put("comments", etGasComment.getText().toString());
-                    commentData.put("rating", ratingBar.getRating());
-
-                    firestore.collection("gas_eval").document(stnId).collection("comments")
-                            .document(userid)
-                            .set(commentData)
-                            .addOnCompleteListener(task -> {
-                                if(task.isSuccessful()) {
-                                    log.e("Commments successfully uploaded");
-                                    isCommentUploaded = true;
-                                } else {
-                                    log.e("Comments upload failed: %s", task.getException());
-                                }
-                            });
-
-                } catch (IOException e) {
-                    log.e("IOException: %s", e.getMessage());
-                }
-                */
             }
 
             return true;

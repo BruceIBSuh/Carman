@@ -67,7 +67,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         viewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
         // On finishing saving the district code which was downloaded and saved,
-        viewModel.notifyDistCodeComplete().observe(this, isCompete -> {
+        viewModel.districtCodeComplete().observe(this, isCompete -> {
             log.i("District code task finished");
             mProgBar.setVisibility(View.INVISIBLE);
             initProcess();
@@ -75,7 +75,7 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
 
         // Being notified of the opinet price data on the worker thread of PriceDistrictTask,
         // start MainActivity and finish the progressbar
-        viewModel.notifyPriceComplete().observe(this, isComplete -> {
+        viewModel.districtPriceComplete().observe(this, isComplete -> {
             log.i("PriceDistrictTask complete");
             if(priceDistrictTask != null) priceDistrictTask = null;
             mProgBar.setVisibility(View.GONE);

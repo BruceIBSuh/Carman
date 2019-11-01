@@ -1,6 +1,8 @@
 package com.silverback.carman2;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -387,6 +389,26 @@ public class BaseActivity extends AppCompatActivity {
             return  new JSONArray(jsonServiceItem);
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
+        }
+
+        return null;
+    }
+
+    public NotificationChannel createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            CharSequence name = getString(R.string.notification_ch_name);
+            String description = getString(R.string.notification_ch_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(Constants.CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            if (notificationManager != null) notificationManager.createNotificationChannel(channel);
+
+            return channel;
         }
 
         return null;

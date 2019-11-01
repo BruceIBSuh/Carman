@@ -213,17 +213,15 @@
         android:textSize="@dimen/subtitle"
         android:textStyle="bold" />
 
-    <!--
     <ProgressBar style="?android:attr/progressBarStyle"
-        android:id="@+id/pb_checklist"
-        android:visibility="gone"
+        android:id="@+id/pb_service_items"
+        android:visibility="invisible"
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_alignParentStart="true"
         android:layout_below="@id/tv_subtitle_stmts"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"/>
-    -->
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_service"

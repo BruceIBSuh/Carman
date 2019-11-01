@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.silverback.carman2">
+
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
@@ -38,9 +39,10 @@
         <service
             android:name=".backgrounds.GeofenceResetService"
             android:enabled="true" />
+
         <service
             android:name=".backgrounds.GeofenceTransitionService"
-            android:exported="false" /> <!-- <activity android:name=".BaseActivity" /> -->
+            android:exported="false" />
 
         <activity android:name=".IntroActivity">
             <intent-filter>
@@ -65,6 +67,7 @@
         <activity
             android:name=".BillboardActivity"
             android:parentActivityName=".MainActivity">
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -86,6 +89,7 @@
             android:name=".StationMapActivity"
             android:label="@string/map_toolbar_title"
             android:parentActivityName=".MainActivity">
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -93,14 +97,6 @@
         </activity>
 
         <activity android:name=".CropImageActivity" />
-
-        <activity
-            android:name=".NotificationActivity"
-            android:launchMode="singleTask"
-            android:taskAffinity=""
-            android:excludeFromRecents="true" />
-
-
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -131,6 +127,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
     </application>
 
 </manifest>

@@ -138,7 +138,7 @@ public class GeneralFragment extends Fragment implements
 
         //priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
         // Invoked from SettingPreferenceActivity as a new region has set.
-        priceViewModel.notifyPriceComplete().observe(this, isComplete -> {
+        priceViewModel.favoritePriceComplete().observe(this, isComplete -> {
             // Save the saving time to prevent the regional price data from frequently updating.
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             // Attach the pager adatepr with a fuel code set.
