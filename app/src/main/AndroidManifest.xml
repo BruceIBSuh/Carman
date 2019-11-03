@@ -23,7 +23,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:ignore="GoogleAppIndexingWarning">
-
+        <receiver
+            android:name=".backgrounds.SnoozeBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true" />
         <receiver
             android:name=".backgrounds.GeofenceRebootReceiver"
             android:enabled="true"
@@ -39,7 +42,6 @@
         <service
             android:name=".backgrounds.GeofenceResetService"
             android:enabled="true" />
-
         <service
             android:name=".backgrounds.GeofenceTransitionService"
             android:exported="false" />
@@ -47,12 +49,11 @@
         <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity android:name=".MainActivity" />
-
         <activity
             android:name=".ExpenseActivity"
             android:parentActivityName=".MainActivity"
@@ -63,7 +64,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity
             android:name=".BillboardActivity"
             android:parentActivityName=".MainActivity">
@@ -73,7 +73,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity
             android:name=".SettingPreferenceActivity"
             android:label="@string/setting_toolbar_title"
@@ -84,7 +83,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity
             android:name=".StationMapActivity"
             android:label="@string/map_toolbar_title"
@@ -95,7 +93,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity android:name=".CropImageActivity" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -127,7 +124,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 
 </manifest>

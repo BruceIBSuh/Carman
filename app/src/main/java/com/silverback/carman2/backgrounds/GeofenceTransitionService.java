@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -23,14 +24,18 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executors;
 
 import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
@@ -44,74 +49,95 @@ import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 public class GeofenceTransitionService extends IntentService {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceTransitionService.class);
-    private static final String REPLY_KEY_MILEAGE = "noti_key_reply_mileage";
-    private static final String REPLY_KEY_PAY = "noti_key_replay_pay";
-    private static final String REPLY_LABEL_MILEAGE = "MILEAGE";
-    private static final String REPLY_LABEL_PAY = "PAYMENT";
 
     // Objects
-    private Location geofenceLocation;
     private NotificationManagerCompat notificationManager;
 
     // Fields
-    private String providerId, providerName;
-    private long geofenceTime;
+    private long geoTime;
+    private String providerName;
     private int category;
+    private int notificationId;
 
 
     public GeofenceTransitionService() {
         super("GeofenceTransitionService");
-
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this);
         notificationManager = NotificationManagerCompat.from(this);
+        geoTime = System.currentTimeMillis();
 
-        providerId = intent.getStringExtra("providerId");
-        providerName = intent.getStringExtra("providerName");
-        category = intent.getIntExtra("category", Constants.GAS);
-        log.i("Intent extras: %s, %s, %s", providerId, providerName, category);
+        String action = intent.getAction();
+        if(action == null) return;
 
-        if(geofencingEvent.hasError()) {
-            log.e("GeofencingEvent error occurred: %s", geofencingEvent.getErrorCode());
-            return;
+        switch(action) {
+            case Constants.NOTI_GEOFENCE:
+                GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+                if(geofencingEvent.hasError()) return;
+
+                //final int geofencingTransition = geofencingEvent.getGeofenceTransition();
+                final Location geofenceLocation = geofencingEvent.getTriggeringLocation();
+                Location favLocation = new Location("@null");
+
+
+                // Retrieve all the favorite list.
+                List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
+                for(FavoriteProviderEntity entity : entities) {
+
+                    favLocation.setLongitude(entity.longitude);
+                    favLocation.setLatitude(entity.latitude);
+
+                    if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
+                        providerName = entity.providerName;
+                        category = entity.category;
+                        break;
+                    }
+                }
+
+
+                log.i("Noti ID: %s", notificationId);
+                sendNotification(providerName, category);
+                break;
+
+            case Constants.NOTI_SNOOZE:
+                log.i("Snooze Intent");
+                providerName = intent.getStringExtra("providerName");
+                category = intent.getIntExtra("category", 0);
+                int id = intent.getIntExtra("notiId", -1);
+                log.i("snooze extras: %s, %s, %s", providerName, notificationId, id);
+
+
+                /*
+                try {
+                    Thread.sleep(10000);
+                } catch(InterruptedException e) {
+                    log.e("sleep() interrupted", e.getMessage());
+                }
+                 */
+                sendNotification(providerName, category);
+                break;
+
+            case Constants.NOTI_DISMISS:
+                log.i("Dismiss clicked");
+                log.i("noti id: %s", notificationId);
+                notificationManager.cancel(notificationId);
+                break;
         }
 
-        int geofencingTransition = geofencingEvent.getGeofenceTransition();
-        switch(geofencingTransition) {
-            case Geofence.GEOFENCE_TRANSITION_ENTER:
-                break;
-
-            case Geofence.GEOFENCE_TRANSITION_EXIT:
-                break;
-
-            case Geofence.GEOFENCE_TRANSITION_DWELL:
-                break;
-
-            default:
-                break;
-        }
-
-
-        geofenceLocation = geofencingEvent.getTriggeringLocation();
-        sendNotification(category);
-
+        //sendNotification(category);
     }
 
-
-    private void sendNotification(int category) {
-
-        int notificationId = createID();
-        geofenceTime = System.currentTimeMillis();
+    private void sendNotification(String name, int category) {
+        notificationId = createID();
         String title = null;
         String extendedText = null;
 
-
-        String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geofenceTime);
-        String contentText = String.format("%s %s", providerName, strTime);
+        String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
+        String contentText = String.format("%s %s", name, strTime);
 
         switch(category) {
             case Constants.GAS: // gas station
@@ -128,7 +154,25 @@ public class GeofenceTransitionService extends IntentService {
                 break;
         }
 
-        // Create PendingIntent to call up ExpenseActivity and the relevant fragment according to
+        // Create the Snooze PendingIntent
+        Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
+        snoozeIntent.setAction(Constants.NOTI_SNOOZE);
+
+        snoozeIntent.putExtra("providerName", providerName);
+        snoozeIntent.putExtra("category", 20);
+        snoozeIntent.putExtra("notiId", 35353);
+
+        PendingIntent snoozePendingIntent = PendingIntent.getBroadcast(this, 0, snoozeIntent, 0);
+
+
+        Intent dismissIntent = new Intent(this, GeofenceTransitionService.class);
+        dismissIntent.setAction(Constants.NOTI_DISMISS);
+        log.i("Noti extra: %s", notificationId);
+        //dismissIntent.putExtra("notificationId", notificationId);
+        PendingIntent dismissPendingIntent = PendingIntent.getService(this, 0, dismissIntent, 0);
+
+
+        // Create the PendingIntent to start ExpenseActivity and the relevant fragment according to
         // its extra.
         //PendingIntent resultPendingIntent = createResultPendingIntent(ExpenseActivity.class);
         PendingIntent resultPendingIntent = createResultPendingIntent();
@@ -141,9 +185,11 @@ public class GeofenceTransitionService extends IntentService {
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText + "\n\n" + extendedText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
                 .setContentIntent(resultPendingIntent)
-                .setAutoCancel(true);
+                .setAutoCancel(true)
+                .addAction(R.drawable.ic_snooze_foreground, "Snooze", snoozePendingIntent)
+                .addAction(R.drawable.ic_snooze_foreground, "Dismiss", dismissPendingIntent);
 
-        // Set Vibrator to Notification by Build version
+        // Set an vibrator to the notification by the build version
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = createNotificationChannel();
             if(channel != null) channel.setVibrationPattern(new long[]{0, 500, 500, 500});
@@ -158,8 +204,9 @@ public class GeofenceTransitionService extends IntentService {
     }
 
     // Create PendingIntent which is to be sent to the param Activity with
-    //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
+
     private PendingIntent createResultPendingIntent() {
+    //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
         // Create an Intent for the activity you want to start
         //Intent resultIntent = new Intent(this, cls);
         Intent resultIntent = new Intent(this, ExpenseActivity.class);
@@ -182,7 +229,7 @@ public class GeofenceTransitionService extends IntentService {
     // Create a unique notification id. Refactor considered!!
     private int createID() {
         Calendar calendar = Calendar.getInstance();
-        //calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.setTimeInMillis(System.currentTimeMillis());
 
         return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
 

@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData;
 import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Delete;
-import androidx.room.Ignore;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -15,10 +14,9 @@ import java.util.List;
 @Dao
 public interface FavoriteProviderDao {
 
-    /*
+
     @Query("SELECT * FROM FavoriteProviderEntity")
-    LiveData<List<FavoriteProviderEntity>> loadAllFavoriteProvider();
-    */
+    List<FavoriteProviderEntity> loadAllFavoriteProvider();
 
     // The total number of the favorite stations and service centers
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
@@ -33,17 +31,9 @@ public interface FavoriteProviderDao {
     @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
 
-    /*
-    @Query("SELECT favorite_name, favorite_addrs FROM FavoriteProviderEntity WHERE category = :category")
-    LiveData<List<FavoriteNameAddrs>> findFavoriteNameAddrs(int category);
-    */
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
-
-
-    @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_id = :providerId")
-    LiveData<FavoriteProviderEntity> queryGeofenceFavorite(String providerId);
 
 
     @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
@@ -52,7 +42,6 @@ public interface FavoriteProviderDao {
     @Query("SELECT favorite_name FROM FavoriteProviderEntity " +
             "WHERE favorite_name = :stnName AND favorite_id = :stnId AND category = :category")
     LiveData<String> findFavoriteGasName(String stnName, String stnId, int category);
-
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertFavoriteProvider(FavoriteProviderEntity favorite);
@@ -73,7 +62,6 @@ public interface FavoriteProviderDao {
         public String favoriteAddrs;
     }
     */
-
 
     // class of the result subset which indicates what is the first set station and service in
     // SettingPreferenceFragment

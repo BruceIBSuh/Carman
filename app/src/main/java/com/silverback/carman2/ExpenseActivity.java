@@ -95,6 +95,9 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
+        // Activity get started by GeofenceTransitionService.
+
+
         appBar = findViewById(R.id.appBar);
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         expTabLayout = findViewById(R.id.tab_expense);
@@ -125,20 +128,18 @@ public class ExpenseActivity extends BaseActivity implements
         // Fetch the user id from Firestore, which is requred to set the data when the evaluation
         // and Geofence list
 
-        try (FileInputStream fis = openFileInput("user_id");
+        try (FileInputStream fis = openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
             userId = br.readLine();
-
             JSONArray jsonArray = new JSONArray(jsonDistrict);
             distCode = (String)jsonArray.get(2);
 
-            /*
             tabPagerTask = ThreadManager.startTabPagerTask(
                     getSupportFragmentManager(),
                     pagerAdapterViewModel,
                     getDefaultParams(), jsonDistrict, userId);
-            */
+
         } catch(IOException e) {
             log.e("IOException when retrieving user id: %s", e.getMessage());
         } catch(JSONException e) {
@@ -149,19 +150,13 @@ public class ExpenseActivity extends BaseActivity implements
         // Create ViewPager for the last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
         // not ViewPager.
-
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
-        expensePager.setAdapter(recentPagerAdapter);
-        expensePager.setCurrentItem(0);
-        topFrame.addView(expensePager);
-
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then launch LocationTask to have
         // any near station within MIN_RADIUS, if any.
-        /*
         pagerAdapterViewModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
@@ -176,20 +171,20 @@ public class ExpenseActivity extends BaseActivity implements
             expensePager.setCurrentItem(0);
             topFrame.addView(expensePager);
         });
-        */
 
-        ExpTabPagerAdapter tabPagerAdapter = new ExpTabPagerAdapter(getSupportFragmentManager());
+
+        /*
+        tabPagerAdapter = new ExpTabPagerAdapter(getSupportFragmentManager());
+
+        // Set args to each fragments in the tap adapter
         Bundle gasArgs = new Bundle();
         Bundle svcArgs = new Bundle();
-
         String[] defaults = getDefaultParams();
         defaults[1] = Constants.MIN_RADIUS;
-
 
         gasArgs.putStringArray("defaultParams", defaults);
         gasArgs.putString("userId", userId);
         tabPagerAdapter.getItem(0).setArguments(gasArgs);
-
 
         svcArgs.putString("distCode", distCode);
         svcArgs.putString("userId", userId);
@@ -202,15 +197,23 @@ public class ExpenseActivity extends BaseActivity implements
         addTabIconAndTitle(this, expTabLayout); // defined in BaseActivity as static
         animSlideTabLayout();
 
+        // Set the adapter to the last 5 expenses in the top frame.
+        expensePager.setAdapter(recentPagerAdapter);
+        expensePager.setCurrentItem(0);
+        topFrame.addView(expensePager);
+        */
 
         // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
 
-        // Initially initiated by GeofenceTransionService
+        /*
         if(getIntent() != null) {
+            log.i("Intent extras: %s", getIntent().getIntExtra(Constants.GEO_CATEGORY, 0));
+            log.i("Intent Extras: %s", getIntent().getStringExtra(Constants.GEO_NAME));
             int category = getIntent().getIntExtra(Constants.GEO_CATEGORY, 0);
             tabPager.setCurrentItem(category);
         }
+         */
 
 
     }
@@ -261,6 +264,7 @@ public class ExpenseActivity extends BaseActivity implements
 
             case MENU_ITEM_ID:
                 Fragment fragment = tabPagerAdapter.getItem(currentPage);
+                log.i("Current Page: %s, %s", currentPage, fragment);
                 boolean isSaved = false;
 
                 if(fragment instanceof GasManagerFragment) {

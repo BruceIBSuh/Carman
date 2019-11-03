@@ -72,7 +72,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         //df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-        FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         // Retrvie the district info saved in SharedPreferences from the parent activity as a type
         // of JSONArray
@@ -91,6 +90,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // in order to receive a user name which is verified to a new one by querying.
         NameDialogPreference namePref = findPreference(Constants.USER_NAME);
         namePref.setSummary(mSettings.getString(Constants.USER_NAME, null));
+        if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.setting_null));
         if(mSettings.getString(Constants.USER_NAME, null) != null)
             nickname = namePref.getSummary().toString();
 
@@ -102,7 +102,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         String[] autoProfile = new String[] {autoMaker, autoType, autoModel, autoYear};
         String jsonAutoData = new JSONArray(Arrays.asList(autoProfile)).toString();
-        log.i("josn auto data: %s", jsonAutoData);
+        log.i("json auto data: %s", jsonAutoData);
         mSettings.edit().putString(Constants.VEHICLE, jsonAutoData).apply();
         autoPref.setSummary(String.format("%s, %s, %s", autoMaker, autoModel, autoYear));
 

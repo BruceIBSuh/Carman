@@ -114,7 +114,7 @@
     <string name="svc_msg_add_favorite">즐겨찾는 서비스센터에 추가되었습니다</string>
     <string name="service_dialog_label_memo">메 모:</string>
     <string name="svc_msg_empty_name">서비스센터 이름을 입력해 주세요</string>
-    <string name="svc_msg_registration">우선 서비스센터를 등록해 주세요</string>
+    <string name="svc_msg_registration">서비스센터를 먼저 등록해 주세요</string>
     <string name="svc_btn_eval">등록</string>
     <string name="svc_register_title">즐겨찾는 서비스센터</string>
     <!--ExpenseActivity$RegisterDialogFragment-->
@@ -206,6 +206,7 @@
     <string name="pref_spinner_sido_daejeon">대전시</string>
     <string name="pref_spinner_sido_ulsan">울산시</string>
     <string name="pref_spinner_sido_sejong">세종시</string>
+    <string name="setting_null">지정안함</string>
 
     <!--DialogFragment-->
 

@@ -8,19 +8,23 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
 import android.util.SparseArray;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -145,6 +149,7 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         TextView tvTitle = localView.findViewById(R.id.tv_title);
         ImageButton btnLocation = localView.findViewById(R.id.btn_current_location);
+        //pbRegister = localView.findViewById(R.id.pb_register);
         tvSido = localView.findViewById(R.id.tv_sido);
         tvSigun = localView.findViewById(R.id.tv_sigun);
         sidoSpinner = localView.findViewById(R.id.spinner_sido);
@@ -155,6 +160,17 @@ public class RegisterDialogFragment extends DialogFragment implements
         ratingBar = localView.findViewById(R.id.rb_service);
         Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
         etServiceComment = localView.findViewById(R.id.et_service_comment);
+
+        // Create ProgressBar
+        ConstraintLayout layout = localView.findViewById(R.id.rootview_register);
+        ProgressBar pbRegister = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleSmall);
+        pbRegister.setIndeterminate(true);
+        pbRegister.setVisibility(View.VISIBLE);
+        ConstraintLayout.LayoutParams  params = new ConstraintLayout.LayoutParams(20, 20);
+        params.horizontalBias = 0.5f;
+        params.verticalBias = 0.5f;
+        layout.addView(pbRegister, params);
+
 
         tvTitle.setText(providerName);
 
@@ -219,9 +235,8 @@ public class RegisterDialogFragment extends DialogFragment implements
         dialog.setOnShowListener(dialogInterface -> {
             Button btn = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
             btn.setOnClickListener(view -> {
+
                 if(isCurrentLocation && mLocation != null && mAddress != null) {
-                    // Pass the location and address of an service provider to ServiceManagerFragment
-                    // using FragmentSharedModel which enables Fragments to communicate each other.
                     log.i("Current Location process: %s, %s", mLocation, mAddress);
                     registerService();
                     //dialog.dismiss();
@@ -293,8 +308,6 @@ public class RegisterDialogFragment extends DialogFragment implements
             // using FragmentSharedModel which enables Fragments to communicate each other.
             log.i("Geocoder Location: %s, %s", mLocation, mAddress);
             registerService();
-
-            //dialog.dismiss();
         });
 
 
@@ -397,6 +410,10 @@ public class RegisterDialogFragment extends DialogFragment implements
         geoLocation.setLongitude(geoPoint.getLongitude());
 
         return location.distanceTo(geoLocation) < Constants.UPDATE_DISTANCE;
+    }
+
+    private void handleProgressDialog() {
+
     }
 
 }

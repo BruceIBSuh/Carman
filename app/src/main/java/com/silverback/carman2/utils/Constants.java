@@ -67,8 +67,11 @@ public class Constants {
 
     public static final String GEOFENCE_LIST = "geofence_list_for_reboot";
 
-    // Notification Channel ID
+    // Notification
     public static final String CHANNEL_ID = "com.silverback.carman2";
+    public static final String NOTI_GEOFENCE= "com.silverback.carman2.geofencetranstionservice.geofencing";
+    public static final String NOTI_SNOOZE = "com.silverback.carman2.geofencetransitionservice.snooze";
+    public static final String NOTI_DISMISS = "com.silverback.carman2.geofencetransitionservice.dismiss";
 
     // Geofence Keys
     public static final String GEO_CATEGORY = "com.silverback.carman2.geofence.category";
@@ -77,6 +80,8 @@ public class Constants {
     public static final String GEO_ID = "com.ibnco.carman.geofence.id";
     public static final String GEO_TIME = "com.ibnco.carman.geofence.time";
     public static final String GEO_LOCATION = "com.ibnco.carman.geofence.location";
+
+
 
     // FetchAddrsIntentService resultCode
     public static final String GEOCODER_ADDRS_DATA_KEY = "com.ibnco.carman.geocoder_addrs";

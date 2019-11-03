@@ -20,10 +20,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
-public class SaveDistCodeRunnable implements Runnable {
+public class DistrictCodeRunnable implements Runnable {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(SaveDistCodeRunnable.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistrictCodeRunnable.class);
 
     // Constants
     private static final String API_KEY = "F186170711";
@@ -47,7 +47,7 @@ public class SaveDistCodeRunnable implements Runnable {
     }
 
     // Constructor
-    SaveDistCodeRunnable(Context context, OpinetDistCodeMethods task) {
+    DistrictCodeRunnable(Context context, OpinetDistCodeMethods task) {
         mTask = task;
         this.context = context;
         sido = context.getResources().getStringArray(R.array.sido_code);

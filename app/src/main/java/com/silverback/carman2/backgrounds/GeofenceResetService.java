@@ -52,12 +52,13 @@ public class GeofenceResetService extends IntentService {
 
         GeofencingClient geofencingClient = LocationServices.getGeofencingClient(this);
 
-
+        /*
         try (FileInputStream fis = openFileInput("user_id");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
             final String userId = br.readLine();
             firestore = FirebaseFirestore.getInstance();
+
             firestore.collection("users").document(userId).collection("geofence").get()
                     .addOnSuccessListener(snapshot -> {
                         for(DocumentSnapshot document : snapshot) {
@@ -78,6 +79,8 @@ public class GeofenceResetService extends IntentService {
         } catch(IOException e) {
             log.e("IOException when retrieving user id: %s", e.getMessage());
         }
+
+         */
 
 
     }
