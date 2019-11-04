@@ -85,9 +85,11 @@ public class GeofenceTransitionService extends IntentService {
 
 
                 // Retrieve all the favorite list.
+                // Refactor required in case there are neighboring providers closely within the
+                // radius.
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
                 for(FavoriteProviderEntity entity : entities) {
-
+                    log.i("providerName: %s", entity.providerName);
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
 
