@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.IntentService;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -57,8 +58,7 @@ public class GeofenceTransitionService extends IntentService {
     private long geoTime;
     private String providerName;
     private int category;
-    private int notificationId;
-
+    private int notiId;
 
     public GeofenceTransitionService() {
         super("GeofenceTransitionService");
@@ -69,7 +69,7 @@ public class GeofenceTransitionService extends IntentService {
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this);
         notificationManager = NotificationManagerCompat.from(this);
-        geoTime = System.currentTimeMillis();
+
 
         String action = intent.getAction();
         if(action == null) return;
@@ -94,45 +94,31 @@ public class GeofenceTransitionService extends IntentService {
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
                         providerName = entity.providerName;
                         category = entity.category;
+                        geoTime = System.currentTimeMillis();
                         break;
                     }
                 }
 
-
-                log.i("Noti ID: %s", notificationId);
                 sendNotification(providerName, category);
                 break;
 
             case Constants.NOTI_SNOOZE:
                 log.i("Snooze Intent");
                 providerName = intent.getStringExtra("providerName");
-                category = intent.getIntExtra("category", 0);
+                category = intent.getIntExtra("category", -1);
+                geoTime = intent.getLongExtra("geoTime", -1);
                 int id = intent.getIntExtra("notiId", -1);
-                log.i("snooze extras: %s, %s, %s", providerName, notificationId, id);
+                log.i("snooze extras: %s, %s, %s, %s", providerName, category, id, geoTime);
 
-
-                /*
-                try {
-                    Thread.sleep(10000);
-                } catch(InterruptedException e) {
-                    log.e("sleep() interrupted", e.getMessage());
-                }
-                 */
                 sendNotification(providerName, category);
                 break;
 
-            case Constants.NOTI_DISMISS:
-                log.i("Dismiss clicked");
-                log.i("noti id: %s", notificationId);
-                notificationManager.cancel(notificationId);
-                break;
         }
-
-        //sendNotification(category);
     }
 
     private void sendNotification(String name, int category) {
-        notificationId = createID();
+
+        notiId = createID();
         String title = null;
         String extendedText = null;
 
@@ -157,20 +143,12 @@ public class GeofenceTransitionService extends IntentService {
         // Create the Snooze PendingIntent
         Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
         snoozeIntent.setAction(Constants.NOTI_SNOOZE);
-
+        log.i("Snooze putExtra: %s, %s, %s", providerName, category, notiId);
         snoozeIntent.putExtra("providerName", providerName);
-        snoozeIntent.putExtra("category", 20);
-        snoozeIntent.putExtra("notiId", 35353);
-
+        snoozeIntent.putExtra("category", category);
+        snoozeIntent.putExtra("geoTime", geoTime);
+        snoozeIntent.putExtra("notiId",  notiId);
         PendingIntent snoozePendingIntent = PendingIntent.getBroadcast(this, 0, snoozeIntent, 0);
-
-
-        Intent dismissIntent = new Intent(this, GeofenceTransitionService.class);
-        dismissIntent.setAction(Constants.NOTI_DISMISS);
-        log.i("Noti extra: %s", notificationId);
-        //dismissIntent.putExtra("notificationId", notificationId);
-        PendingIntent dismissPendingIntent = PendingIntent.getService(this, 0, dismissIntent, 0);
-
 
         // Create the PendingIntent to start ExpenseActivity and the relevant fragment according to
         // its extra.
@@ -186,20 +164,23 @@ public class GeofenceTransitionService extends IntentService {
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
                 .setContentIntent(resultPendingIntent)
                 .setAutoCancel(true)
-                .addAction(R.drawable.ic_snooze_foreground, "Snooze", snoozePendingIntent)
-                .addAction(R.drawable.ic_snooze_foreground, "Dismiss", dismissPendingIntent);
+                .addAction(R.drawable.ic_snooze_foreground, "Snooze", snoozePendingIntent);
+
 
         // Set an vibrator to the notification by the build version
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = createNotificationChannel();
             if(channel != null) channel.setVibrationPattern(new long[]{0, 500, 500, 500});
+
         } else {
             mBuilder.setVibrate(new long[]{0, 500, 500, 500}); //Vibarate on receiving notification
         }
 
+        Notification notification = mBuilder.build();
+
         // As far as Carman is not running in the foreground, start GasManagerActivity with Location
         // being passed to it.
-        notificationManager.notify(Constants.CHANNEL_ID, notificationId, mBuilder.build());
+        notificationManager.notify(Constants.NOTI_TAG,  notiId, notification);
 
     }
 

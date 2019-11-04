@@ -69,6 +69,7 @@ public class Constants {
 
     // Notification
     public static final String CHANNEL_ID = "com.silverback.carman2";
+    public static final String NOTI_TAG = "com.silverback.carman2.notification";
     public static final String NOTI_GEOFENCE= "com.silverback.carman2.geofencetranstionservice.geofencing";
     public static final String NOTI_SNOOZE = "com.silverback.carman2.geofencetransitionservice.snooze";
     public static final String NOTI_DISMISS = "com.silverback.carman2.geofencetransitionservice.dismiss";
