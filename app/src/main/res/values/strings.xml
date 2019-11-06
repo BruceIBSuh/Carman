@@ -217,24 +217,14 @@
 
 
     <!--GeofenceTransitionService-->
-    <string name="geofence_notification_gas">주유정보</string>
-    <string name="geofence_notification_service">서비스정보</string>
-    <string name="geofence_notification_snooze">나중에 알림</string>
-    <string name="geofence_notification_gas_open">알림창을 누르시면 주유 정보 페이지로 이동합니다.\n나중에 입력할려면 Snooze를 선택하세요.</string>
-    <string name="geofence_notification_service_open">알림창을 누리시면 서비스정보 페이지로 이동합니다.\n나중에 입력하려면 Snnoze를 선택하세요</string>
-    <string name="geofence_notification_dismiss">그냥 닫기</string>
-    <string name="geofence_enter">에 진입하였습니다. 주유정보를 입력해 주세요</string>
-    <string name="geofence_exit">단골주유소를 벗어났습니다</string>
-    <string name="geofence_dwell">단골주유소에 있습니다</string>
-    <string name="geofence_transition_title">카르맨 주유정보</string>
-    <string name="geofence_toast_add_favorite">즐겨찾기에 추가하였습니다</string>
-    <string name="toast_remove_favorite">즐겨찾기에서 제외되었습니다</string>
-    <string name="notification_ch_name">geofence_carman</string>
-    <string name="notification_ch_description">frequently_visited_station</string>
-
-    <!-- NoTIFICATION -->
-    <string name="noti_label_mileage">주행거리</string>
-    <string name="noti_label_pay">주유금액</string>
+    <string name="noti_geofence_title_gas">주유정보</string>
+    <string name="noti_geofence_title_svc">서비스정보</string>
+    <string name="noti_geofence_content_gas">알림창을 누르시면 주유정보 페이지로 이동합니다.\n나중에 입력할려면 Snooze를 선택하세요.</string>
+    <string name="noti_geofence_content_svc">알림창을 누리시면 서비스정보 페이지로 이동합니다.\n나중에 입력하려면 Snooze를 선택하세요</string>
+    <string name="noti_action_snooze">나중에 알림</string>
+    <string name="noti_action_dismis">그냥 닫기</string>
+    <string name="noti_ch_name">geofence_carman</string>
+    <string name="noti_ch_description">frequently_visited_station</string>
 
 
     <!--Formatter-->

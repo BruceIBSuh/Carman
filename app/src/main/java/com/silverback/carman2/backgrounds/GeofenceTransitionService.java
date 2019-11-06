@@ -1,6 +1,5 @@
 package com.silverback.carman2.backgrounds;
 
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.IntentService;
 
@@ -12,33 +11,23 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
-import android.os.Bundle;
-import android.text.TextUtils;
+import android.util.SparseArray;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.TaskStackBuilder;
 
-import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
-import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.Executors;
-
-import static android.app.Notification.EXTRA_NOTIFICATION_ID;
 
 
 /**
@@ -47,18 +36,23 @@ import static android.app.Notification.EXTRA_NOTIFICATION_ID;
  * <p>
  * TODO: Customize class - update intent actions and extra parameters.
  */
+
 public class GeofenceTransitionService extends IntentService {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceTransitionService.class);
 
-    // Objects
-    private NotificationManagerCompat notificationManager;
+    // Constants
+    final int SUMMARY_ID = 0;
+    private final String GROUP_KEY_NOTIFICATION = "com.silverback.carman2.groupnoti";
 
-    // Fields
+    // Objects
+    private NotificationManagerCompat notiManager;
+    private SparseArray<Notification> sparseNotiArray;
     private long geoTime;
     private String providerName;
     private int category;
     private int notiId;
+
 
     public GeofenceTransitionService() {
         super("GeofenceTransitionService");
@@ -68,8 +62,7 @@ public class GeofenceTransitionService extends IntentService {
     protected void onHandleIntent(Intent intent) {
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this);
-        notificationManager = NotificationManagerCompat.from(this);
-
+        notiManager = NotificationManagerCompat.from(this);
 
         String action = intent.getAction();
         if(action == null) return;
@@ -85,88 +78,116 @@ public class GeofenceTransitionService extends IntentService {
 
 
                 // Retrieve all the favorite list.
-                // Refactor required in case there are neighboring providers closely within the
-                // radius.
+                // What if multiple providers are closely located within the radius?
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
+                sparseNotiArray = new SparseArray<>();
+                geoTime = System.currentTimeMillis();
+                notiId = 1;
+
                 for(FavoriteProviderEntity entity : entities) {
-                    log.i("providerName: %s", entity.providerName);
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
 
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
                         providerName = entity.providerName;
                         category = entity.category;
-                        geoTime = System.currentTimeMillis();
-                        break;
+                        createNotification(notiId++, providerName, category);
+                        //sparseNotiArray.put(notiId++, createNotification(notiId++, providerName, category));
                     }
                 }
 
-                sendNotification(providerName, category);
+
                 break;
 
             case Constants.NOTI_SNOOZE:
-                log.i("Snooze Intent");
                 providerName = intent.getStringExtra("providerName");
                 category = intent.getIntExtra("category", -1);
                 geoTime = intent.getLongExtra("geoTime", -1);
-                int id = intent.getIntExtra("notiId", -1);
-                log.i("snooze extras: %s, %s, %s, %s", providerName, category, id, geoTime);
+                //int id = intent.getIntExtra("notiId", -1);
 
-                sendNotification(providerName, category);
+                createNotification(notiId++, providerName, category);
+                //Notification notiSnooze = createNotification(notiId++, providerName, category);
+                //notiManager.notify(notiId++, notiSnooze);
                 break;
-
         }
+
+        // Check if the notification is in a group or single based upon how many providers are located
+        // within the geofence radius, then handle to send notification in a diffenrent way by
+        // the build version.
+        /*
+        if(sparseNotiArray == null) return;
+        if(sparseNotiArray.size() > 1) {
+            //if(Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                Notification summaryNoti = new NotificationCompat.Builder(this, Constants.CHANNEL_ID)
+                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setContentTitle("Multi Providers")
+                        .setContentText("Multi providers are located within the radius")
+                        .setGroup(GROUP_KEY_NOTIFICATION)
+                        .setGroupSummary(true)
+                        .build();
+
+                for(int i = 0; i < sparseNotiArray.size(); i++) {
+                    notiManager.notify(sparseNotiArray.keyAt(i), sparseNotiArray.valueAt(i));
+                }
+
+                notiManager.notify(SUMMARY_ID, summaryNoti);
+
+
+            } else {
+
+                    notiManager.notify(sparseNotiArray.keyAt(i), sparseNotiArray.valueAt(i));
+
+            }
+
+        } else {
+            notiManager.notify(sparseNotiArray.keyAt(0), sparseNotiArray.valueAt(0));
+        }
+        */
+
+
+
     }
 
-    private void sendNotification(String name, int category) {
+    private void createNotification(int notiId, String name, int category) {
 
-        notiId = createID();
         String title = null;
         String extendedText = null;
 
-        String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
-        String contentText = String.format("%s %s", name, strTime);
+        final String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
+        final String contentText = String.format("%s %s", name, strTime);
+        log.i("Content Text: %s", contentText);
 
         switch(category) {
             case Constants.GAS: // gas station
-                title = getString(R.string.geofence_notification_gas);
-                extendedText = getResources().getString(R.string.geofence_notification_gas_open);
+                title = getString(R.string.noti_geofence_title_gas);
+                extendedText = getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                title = getString(R.string.geofence_notification_service);
-                extendedText = getResources().getString(R.string.geofence_notification_service_open);
+                title = getString(R.string.noti_geofence_title_svc);
+                extendedText = getResources().getString(R.string.noti_geofence_content_svc);
                 break;
 
             default:
                 break;
         }
 
-        // Create the Snooze PendingIntent
-        Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
-        snoozeIntent.setAction(Constants.NOTI_SNOOZE);
-        log.i("Snooze putExtra: %s, %s, %s", providerName, category, notiId);
-        snoozeIntent.putExtra("providerName", providerName);
-        snoozeIntent.putExtra("category", category);
-        snoozeIntent.putExtra("geoTime", geoTime);
-        snoozeIntent.putExtra("notiId",  notiId);
-        PendingIntent snoozePendingIntent = PendingIntent.getBroadcast(this, 0, snoozeIntent, 0);
-
-        // Create the PendingIntent to start ExpenseActivity and the relevant fragment according to
-        // its extra.
-        //PendingIntent resultPendingIntent = createResultPendingIntent(ExpenseActivity.class);
+        // Create PendingIntents for setContentIntent and addAction(Snooze)
         PendingIntent resultPendingIntent = createResultPendingIntent();
+        PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, category);
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID);
+        mBuilder.setSmallIcon(R.mipmap.ic_launcher)
                 .setShowWhen(true)
                 .setContentTitle(title)
                 .setContentText(contentText)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText + "\n\n" + extendedText))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText + "\n" + extendedText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
                 .setContentIntent(resultPendingIntent)
                 .setAutoCancel(true)
-                .addAction(R.drawable.ic_snooze_foreground, "Snooze", snoozePendingIntent);
+                //.setGroup(GROUP_KEY_NOTIFICATION)
+                .addAction(-1, "Snooze", snoozePendingIntent)
+                .build();
 
 
         // Set an vibrator to the notification by the build version
@@ -180,13 +201,26 @@ public class GeofenceTransitionService extends IntentService {
 
         Notification notification = mBuilder.build();
 
-        // As far as Carman is not running in the foreground, start GasManagerActivity with Location
-        // being passed to it.
-        notificationManager.notify(Constants.NOTI_TAG,  notiId, notification);
+        // With the Noti tag, NotificationManager.cancel(id) does not work.
+        //String tag = (category == Constants.GAS)? "noti_gas" : "noti_svc";
+        //notiManager.notify(tag, notiId, notification);
+        notiManager.notify(notiId, notification);
 
     }
 
-    // Create PendingIntent which is to be sent to the param Activity with
+
+
+    private PendingIntent createSnoozePendingIntent(int notiId, int category) {
+        Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
+        snoozeIntent.setAction(Constants.NOTI_SNOOZE);
+        snoozeIntent.putExtra("providerName", providerName);
+        snoozeIntent.putExtra("category", category);
+        snoozeIntent.putExtra("geoTime", geoTime);
+        snoozeIntent.putExtra("notiId",  notiId);
+
+        return PendingIntent.getBroadcast(this, notiId, snoozeIntent, 0);
+    }
+
 
     private PendingIntent createResultPendingIntent() {
     //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
@@ -205,19 +239,9 @@ public class GeofenceTransitionService extends IntentService {
 
 
         // Get the PendingIntent containing the entire back stack
-        return stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        return stackBuilder.getPendingIntent(notiId, PendingIntent.FLAG_UPDATE_CURRENT);
 
     }
-
-    // Create a unique notification id. Refactor considered!!
-    private int createID() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-
-        return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
-
-    }
-
 
     // Create Notification Channel only for Android 8+
     private NotificationChannel createNotificationChannel() {
@@ -225,8 +249,8 @@ public class GeofenceTransitionService extends IntentService {
         // the NotificationChannel class is new and not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-            CharSequence name = getString(R.string.notification_ch_name);
-            String description = getString(R.string.notification_ch_description);
+            CharSequence name = getString(R.string.noti_ch_name);
+            String description = getString(R.string.noti_ch_description);
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(Constants.CHANNEL_ID, name, importance);
             channel.setDescription(description);
@@ -262,7 +286,4 @@ public class GeofenceTransitionService extends IntentService {
 
         return false;
     }
-
-
-
 }

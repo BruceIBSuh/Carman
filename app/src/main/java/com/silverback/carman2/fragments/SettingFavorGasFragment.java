@@ -140,15 +140,8 @@ public class SettingFavorGasFragment extends Fragment implements
         return false;
     }
 
-    /*
-    @Override
-    public void changeFavorite(FavoriteProviderEntity entity) {
-        log.i("Listener: Add Favorite - %s", entity.providerName);
-        mDB.favoriteModel().insertFavoriteProvider(entity);
-    }
-    */
 
-    // Callback invoked from SettingFwhen the first-set favorite station has changed in
+    // Callback invoked bwhen the first-set favorite station has changed in
     @Override
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {

@@ -8,10 +8,15 @@ import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.lifecycle.ViewModelProviders;
+
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.threads.PriceFavoriteTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.File;
@@ -26,9 +31,6 @@ public class OpinetStationPriceView extends LinearLayout {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(OpinetStationPriceView.class);
-
-    // Objects
-    private int priceUpColor, priceDownColor;
 
     // UIs
     private TextView tvStnName, tvStnPrice;
@@ -60,8 +62,8 @@ public class OpinetStationPriceView extends LinearLayout {
         tvStnPrice = findViewById(R.id.tv_station_price);
 
         try {
-            priceUpColor = typedArray.getColor(R.styleable.OpinetStationPriceView_stationPriceUp, 0);
-            priceDownColor = typedArray.getColor(R.styleable.OpinetStationPriceView_stationPriceDown, 0);
+            int priceUpColor = typedArray.getColor(R.styleable.OpinetStationPriceView_stationPriceUp, 0);
+            int priceDownColor = typedArray.getColor(R.styleable.OpinetStationPriceView_stationPriceDown, 0);
             log.i("Color: %d, %d", priceUpColor, priceDownColor);
 
         } finally {
@@ -73,19 +75,17 @@ public class OpinetStationPriceView extends LinearLayout {
     public void addPriceView(String fuelCode) {
 
         File stnFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
-        Uri sigunUri = Uri.fromFile(stnFile);
+        Uri stnUri = Uri.fromFile(stnFile);
 
-        try(InputStream is = getContext().getContentResolver().openInputStream(sigunUri);
+        try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)){
             Opinet.StationPrice stnPrice = (Opinet.StationPrice)ois.readObject();
 
-            //if (stnPrice.getProductCd().matches(fuelCode)) {
-                String stnName = stnPrice.getStnName();
-                Map<String, Float> price = stnPrice.getStnPrice();
-                log.i("Station: %s %s", stnName, price.get("B027"));
-                tvStnName.setText(stnName);
-                tvStnPrice.setText(String.valueOf(price.get(fuelCode)));
-            //}
+            String stnName = stnPrice.getStnName();
+            Map<String, Float> price = stnPrice.getStnPrice();
+            log.i("Station: %s %s", stnName, price.get("B027"));
+            tvStnName.setText(stnName);
+            tvStnPrice.setText(String.valueOf(price.get(fuelCode)));
 
         } catch(FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e);
@@ -94,6 +94,12 @@ public class OpinetStationPriceView extends LinearLayout {
         } catch(ClassNotFoundException e) {
             log.e("ClassNotFoundException: %s", e);
         }
+    }
+
+    // Set the station price views to be void when the favorite is left empty.
+    public void removePriceView() {
+        tvStnName.setText("");
+        tvStnPrice.setText("");
     }
 
 }

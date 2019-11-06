@@ -49,6 +49,7 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
+import java.io.File;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -77,6 +78,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FavoriteGeofenceHelper geofenceHelper;
     private StationListTask stationListTask;
     private StationInfoTask stationInfoTask;
+    private PriceFavoriteTask priceFavoriteTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
 
@@ -131,6 +133,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         stnListModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
         opinetViewModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
+
 
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.
@@ -277,8 +280,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             stnId = entity.providerId;
             isFavoriteGas = true;
 
-            PriceFavoriteTask mTask = ThreadManager.startFavoritePriceTask(
-                    getActivity(), opinetViewModel, entity.providerId, false);
+            priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, entity.providerId, false);
         });
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
@@ -314,8 +316,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onPause() {
         super.onPause();
+
+    }
+
+    @Override
+    public void onDestroy() {
+        if(priceFavoriteTask != null) priceFavoriteTask = null;
         if(stationListTask != null) stationListTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
+
+        super.onDestroy();
     }
 
     // InputNumPad handler
@@ -403,6 +413,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         } else {
             // First, check if the favorite is up to the limit.
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+
             if(placeholder == Constants.MAX_FAVORITE) {
                 Snackbar.make(constraintLayout, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
 
@@ -415,10 +426,18 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                         if(snapshot != null && snapshot.exists()) {
                             btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                             geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, Constants.GAS);
-
                         }
                     }
                 });
+
+                // Registered first time and no data is saved in the cache.
+                if(placeholder == 1) {
+                    final String fName = Constants.FILE_CACHED_STATION_PRICE;
+                    File file = new File(getContext().getApplicationContext().getCacheDir(), fName);
+                    if(!file.exists()) {
+                        priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
+                    }
+                }
 
             }
         }

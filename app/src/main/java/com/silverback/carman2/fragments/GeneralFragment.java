@@ -67,6 +67,7 @@ public class GeneralFragment extends Fragment implements
     //private static String GAS_CODE;
 
     // Objects
+    private CarmanDatabase mDB;
     private SharedPreferences mSettings;
 
     private LocationViewModel locationModel;
@@ -105,7 +106,9 @@ public class GeneralFragment extends Fragment implements
 
         mSettings = ((MainActivity)getActivity()).getSettings();
         // Retrieve the Station ID of the favroite station to show the price.
-        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) stnId = provider.providerId;
@@ -142,13 +145,10 @@ public class GeneralFragment extends Fragment implements
             // Save the saving time to prevent the regional price data from frequently updating.
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             // Attach the pager adatepr with a fuel code set.
-            pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+            //pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
             pricePagerAdapter.setFuelCode(defaults[0]);
             priceViewPager.setAdapter(pricePagerAdapter);
         });
-
-
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -241,6 +241,13 @@ public class GeneralFragment extends Fragment implements
         super.onResume();
         // Update the current time using worker thread every 1 minute.
         //clockTask = ThreadManager.startClockTask(getContext(), tvDate);
+
+        // ********** Refactor Required ************
+        int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+        if(numFavorite == 0 || numFavorite == 1) {
+            log.i("Special case");
+            pricePagerAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override

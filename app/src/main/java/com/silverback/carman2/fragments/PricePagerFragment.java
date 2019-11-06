@@ -7,10 +7,14 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetSidoPriceView;
 import com.silverback.carman2.views.OpinetSigunPriceView;
 import com.silverback.carman2.views.OpinetStationPriceView;
@@ -21,6 +25,8 @@ public class PricePagerFragment extends Fragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(PricePagerFragment.class);
 
     // Objects
+    private CarmanDatabase mDB;
+    private OpinetViewModel opinetModel;
     private int page;
     private String fuelCode;
 
@@ -43,6 +49,8 @@ public class PricePagerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        opinetModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
     }
 
     @Override
@@ -58,6 +66,7 @@ public class PricePagerFragment extends Fragment {
         final int STATION_PRICE = 1;
 
         switch(page) {
+
             case DISTRICT_PRICE:
                 View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
                 OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);
@@ -71,7 +80,19 @@ public class PricePagerFragment extends Fragment {
             case STATION_PRICE:
                 View secondPage = inflater.inflate(R.layout.pager_station_price, container, false);
                 OpinetStationPriceView stnPriceView = secondPage.findViewById(R.id.stationPriceView);
-                stnPriceView.addPriceView(fuelCode);
+
+                // Handle the station price view when the favorite is registered first time or
+                // becomes void.
+                mDB.favoriteModel().firstFavRegLiveData(Constants.GAS)
+                        .observe(getViewLifecycleOwner(), count -> {
+                            if( count == 0) {
+                                log.i("First set favorite void");
+                                stnPriceView.removePriceView();
+                            } else {
+                                stnPriceView.addPriceView(fuelCode);
+                            }
+
+                        });
 
                 return secondPage;
         }

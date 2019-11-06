@@ -22,6 +22,9 @@ public interface FavoriteProviderDao {
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
     int countFavoriteNumber(int category);
 
+    @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
+    LiveData<Integer> firstFavRegLiveData(int category);
+
     // Query ther favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
     LiveData<List<FavoriteProviderEntity>> queryFavoriteProvider(int category);

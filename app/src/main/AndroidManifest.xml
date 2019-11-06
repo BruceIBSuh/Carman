@@ -48,6 +48,7 @@
             android:name=".backgrounds.GeofenceTransitionService"
             android:exported="false" />
 
+        <activity android:name=".BaseActivity" />
         <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
