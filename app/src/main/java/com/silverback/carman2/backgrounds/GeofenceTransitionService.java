@@ -103,9 +103,9 @@ public class GeofenceTransitionService extends IntentService {
                 providerName = intent.getStringExtra("providerName");
                 category = intent.getIntExtra("category", -1);
                 geoTime = intent.getLongExtra("geoTime", -1);
-                //int id = intent.getIntExtra("notiId", -1);
+                int snoozeNotiId = intent.getIntExtra("notiId", -1);
 
-                createNotification(notiId++, providerName, category);
+                createNotification(snoozeNotiId, providerName, category);
                 //Notification notiSnooze = createNotification(notiId++, providerName, category);
                 //notiManager.notify(notiId++, notiSnooze);
                 break;
@@ -149,7 +149,7 @@ public class GeofenceTransitionService extends IntentService {
     }
 
     private void createNotification(int notiId, String name, int category) {
-
+        log.i("notification ID: %s", notiId);
         String title = null;
         String extendedText = null;
 
@@ -173,7 +173,7 @@ public class GeofenceTransitionService extends IntentService {
         }
 
         // Create PendingIntents for setContentIntent and addAction(Snooze)
-        PendingIntent resultPendingIntent = createResultPendingIntent();
+        PendingIntent resultPendingIntent = createResultPendingIntent(name, category);
         PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, category);
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID);
@@ -222,13 +222,14 @@ public class GeofenceTransitionService extends IntentService {
     }
 
 
-    private PendingIntent createResultPendingIntent() {
+    private PendingIntent createResultPendingIntent(String name, int category) {
     //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
         // Create an Intent for the activity you want to start
         //Intent resultIntent = new Intent(this, cls);
         Intent resultIntent = new Intent(this, ExpenseActivity.class);
+        resultIntent.setAction(Constants.NOTI_GEOFENCE);
         resultIntent.putExtra(Constants.GEO_CATEGORY, category);
-        resultIntent.putExtra(Constants.GEO_NAME, providerName);
+        resultIntent.putExtra(Constants.GEO_NAME, name);
 
         // Create the TaskStackBuilder and add the intent, which inflates the back stack.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);

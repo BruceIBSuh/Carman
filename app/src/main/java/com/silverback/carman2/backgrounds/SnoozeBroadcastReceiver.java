@@ -41,6 +41,10 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
         int notiId = intent.getIntExtra("notiId", -1);
         long geoTime = intent.getLongExtra("geoTime", -1);
         log.i("Extras in Receiver: %s, %s, %s, %s", providerName, category, notiId, geoTime);
+
+        NotificationManagerCompat.from(context).cancel(notiId);
+
+
         /*
         Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
         geoIntent.setAction(Constants.NOTI_SNOOZE);
@@ -57,7 +61,7 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
             PendingIntent.getService(context, 100, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
         */
-        NotificationManagerCompat.from(context).cancel(notiId);
+
 
         // Create WorkRequest
         Constraints constraints = new Constraints.Builder().build();
@@ -75,7 +79,6 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
                 .build();
 
         WorkManager.getInstance(context).enqueue(snoozeWorkRequest);
-
     }
 
 }

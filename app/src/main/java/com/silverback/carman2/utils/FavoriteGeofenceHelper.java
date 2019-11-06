@@ -114,8 +114,6 @@ public class FavoriteGeofenceHelper {
 
         // Reuse the PendingIntent if we have already have it
         if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
-
-        log.i("pendingintent extras: %s, %s, %s", id, name, category);
         Intent intent = new Intent(context, GeofenceTransitionService.class);
         intent.setAction(Constants.NOTI_GEOFENCE);
 

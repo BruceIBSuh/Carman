@@ -1,8 +1,6 @@
 package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
-import android.app.PendingIntent;
-import android.app.TaskStackBuilder;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
@@ -24,7 +22,6 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
-import com.silverback.carman2.fragments.StatStmtsFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
@@ -58,11 +55,13 @@ public class ExpenseActivity extends BaseActivity implements
     // Objects
     //private CarmanDatabase mDB;
     private ViewPager tabPager;
+    private ExpenseViewPager expensePager;
+
     private LocationViewModel locationModel;
     private FragmentSharedModel fragmentSharedModel;
-    private PagerAdapterViewModel pagerAdapterViewModel;
+    private PagerAdapterViewModel pagerModel;
+
     private ExpTabPagerAdapter tabPagerAdapter;
-    private ExpenseViewPager expensePager;
     private ExpRecentPagerAdapter recentPagerAdapter;
 
     private TabPagerTask tabPagerTask;
@@ -95,8 +94,12 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
-        // Activity get started by GeofenceTransitionService.
-
+        /*
+        if(getIntent() != null) {
+            log.i("getIntent(): %s, %s", getIntent().getAction(), getIntent().getStringExtra(Constants.GEO_NAME));
+            if(getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) isGeofencing = true;
+        }
+         */
 
         appBar = findViewById(R.id.appBar);
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -115,29 +118,36 @@ public class ExpenseActivity extends BaseActivity implements
         // Define ViewModels.
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         fragmentSharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
-        pagerAdapterViewModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
+        pagerModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
 
         // Fetch the values from SharedPreferences
         jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         log.i("json_district: %s", jsonDistrict);
 
-
+        // Retrieve the userId saved in the internal storage.
+        try (FileInputStream fis = openFileInput("userId");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+            userId = br.readLine();
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
 
         // Create ViewPager to hold the tab fragments and add it in FrameLayout
         // Fetch the user id from Firestore, which is requred to set the data when the evaluation
         // and Geofence list
-
+        /*
         try (FileInputStream fis = openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
             userId = br.readLine();
+
             JSONArray jsonArray = new JSONArray(jsonDistrict);
             distCode = (String)jsonArray.get(2);
 
             tabPagerTask = ThreadManager.startTabPagerTask(
                     getSupportFragmentManager(),
-                    pagerAdapterViewModel,
+                    pagerModel,
                     getDefaultParams(), jsonDistrict, userId);
 
         } catch(IOException e) {
@@ -145,7 +155,6 @@ public class ExpenseActivity extends BaseActivity implements
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
-
 
         // Create ViewPager for the last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
@@ -157,7 +166,7 @@ public class ExpenseActivity extends BaseActivity implements
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then launch LocationTask to have
         // any near station within MIN_RADIUS, if any.
-        pagerAdapterViewModel.getPagerAdapter().observe(this, adapter -> {
+        pagerModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             tabPager.setCurrentItem(0);
@@ -171,17 +180,17 @@ public class ExpenseActivity extends BaseActivity implements
             expensePager.setCurrentItem(0);
             topFrame.addView(expensePager);
         });
+        */
 
 
-        /*
         tabPagerAdapter = new ExpTabPagerAdapter(getSupportFragmentManager());
 
         // Set args to each fragments in the tap adapter
         Bundle gasArgs = new Bundle();
         Bundle svcArgs = new Bundle();
+
         String[] defaults = getDefaultParams();
         defaults[1] = Constants.MIN_RADIUS;
-
         gasArgs.putStringArray("defaultParams", defaults);
         gasArgs.putString("userId", userId);
         tabPagerAdapter.getItem(0).setArguments(gasArgs);
@@ -190,18 +199,27 @@ public class ExpenseActivity extends BaseActivity implements
         svcArgs.putString("userId", userId);
         tabPagerAdapter.getItem(1).setArguments(svcArgs);
 
-
         tabPager.setAdapter(tabPagerAdapter);
         tabPager.setCurrentItem(0);
         expTabLayout.setupWithViewPager(tabPager);
         addTabIconAndTitle(this, expTabLayout); // defined in BaseActivity as static
         animSlideTabLayout();
 
+        // Create ViewPager for the last 5 recent expense statements in the top frame.
+        // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
+        // not ViewPager.
+        expensePager = new ExpenseViewPager(this);
+        expensePager.setId(View.generateViewId());
+        recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+
         // Set the adapter to the last 5 expenses in the top frame.
         expensePager.setAdapter(recentPagerAdapter);
         expensePager.setCurrentItem(0);
         topFrame.addView(expensePager);
-        */
+
+
+        // Prepare the service items in the backgorund
+        serviceRecyclerTask = ThreadManager.startServiceRecyclerTask(pagerModel, jsonServiceItems);
 
         // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
@@ -340,8 +358,10 @@ public class ExpenseActivity extends BaseActivity implements
 
         switch(currentPage) {
             case 1:
+                /*
                 if(serviceRecyclerTask == null)
-                    serviceRecyclerTask = ThreadManager.startServiceRecyclerTask(pagerAdapterViewModel, jsonServiceItems);
+                    serviceRecyclerTask = ThreadManager.startServiceRecyclerTask(pagerModel, jsonServiceItems);
+                */
 
                 break;
 
@@ -414,6 +434,6 @@ public class ExpenseActivity extends BaseActivity implements
     }
     public LocationViewModel getLocationViewModel() { return locationModel; }
     public FragmentSharedModel getFragmentSharedModel() { return fragmentSharedModel; }
-    public PagerAdapterViewModel getPagerAdapterViewModel() { return pagerAdapterViewModel; }
+    public PagerAdapterViewModel getPagerModel() { return pagerModel; }
 
 }

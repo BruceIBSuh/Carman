@@ -25,6 +25,9 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
             new GasManagerFragment(),
             new ServiceManagerFragment(),
             new StatStmtsFragment()
+            //new DummyFragment(),
+            //new DummyFragment()
+
     };
 
 
@@ -43,5 +46,14 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
     public Fragment[] getPagerFragments() {
         return fragments;
     }
+
+    public void setFragment(Fragment fragment, int position) {
+        fragments[position] = fragment;
+    }
+
+    public static class DummyFragment extends Fragment {
+        public DummyFragment(){}
+    }
+
 
 }

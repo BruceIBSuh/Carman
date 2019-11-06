@@ -40,8 +40,8 @@ public class NotificationSnoozeWorker extends Worker {
         String providerName = getInputData().getString("providerName");
         int category = getInputData().getInt("category", -1);
         long geoTime = getInputData().getLong("geoTime", 0L);
-
         log.i("Worker input data: %s, %s, %s", providerName, category, geoTime);
+
         Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
         geoIntent.setAction(Constants.NOTI_SNOOZE);
         geoIntent.putExtra("providerName", providerName);

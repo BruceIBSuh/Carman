@@ -40,7 +40,6 @@ public class ServiceRecyclerRunnable implements Runnable {
 
         String jsonItemsString = task.getJsonServiceItems();
 
-
         try {
             JSONArray jsonArray = new JSONArray(jsonItemsString);
             task.setJsonServiceArray(jsonArray);

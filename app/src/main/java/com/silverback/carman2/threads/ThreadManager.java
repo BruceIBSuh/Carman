@@ -494,7 +494,7 @@ public class ThreadManager {
 
     }
 
-    public static ServiceRecyclerTask startServiceRecyclerTask (PagerAdapterViewModel model, String json) {
+    public static ServiceRecyclerTask startServiceRecyclerTask(PagerAdapterViewModel model, String json) {
 
         ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mTaskWorkQueue.poll();
         if(recyclerTask == null) {

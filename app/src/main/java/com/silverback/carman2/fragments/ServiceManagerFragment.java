@@ -144,7 +144,7 @@ public class ServiceManagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
 
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
-        adapterModel = ((ExpenseActivity)getActivity()).getPagerAdapterViewModel();
+        adapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         svcCenterModel = ViewModelProviders.of(this).get(ServiceCenterViewModel.class);
 
@@ -216,8 +216,8 @@ public class ServiceManagerFragment extends Fragment implements
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
 
-        progbar = localView.findViewById(R.id.pb_service_items);
-        progbar.setVisibility(View.VISIBLE);
+        //progbar = localView.findViewById(R.id.pb_service_items);
+        //progbar.setVisibility(View.VISIBLE);
 
         relativeLayout = localView.findViewById(R.id.rl_service);
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
@@ -262,7 +262,6 @@ public class ServiceManagerFragment extends Fragment implements
             log.i("Service Location: %s", location);
             this.location = location;
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
-
         });
 
         // Get the dataset of the item list using ServiceRecyclerTask, which intends to manage the
@@ -271,7 +270,7 @@ public class ServiceManagerFragment extends Fragment implements
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
             if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
-            progbar.setVisibility(View.GONE);
+            //progbar.setVisibility(View.GONE);
 
             for(int i = 0; i < jsonServiceArray.length(); i++) {
                 try {
