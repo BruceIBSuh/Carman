@@ -35,26 +35,29 @@ public class NotificationSnoozeWorker extends Worker {
          * More research is required.
          */
         AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        final long delay = 1000 * 60;
+        final long delay = 1000 * 60 * 5;
 
-        String providerName = getInputData().getString("providerName");
-        int category = getInputData().getInt("category", -1);
-        long geoTime = getInputData().getLong("geoTime", 0L);
+        String providerName = getInputData().getString(Constants.GEO_NAME);
+        String providerId = getInputData().getString(Constants.GEO_ID);
+        int category = getInputData().getInt(Constants.GEO_CATEGORY, -1);
+        long geoTime = getInputData().getLong(Constants.GEO_TIME, 0L);
+        int notiId = getInputData().getInt(Constants.NOTI_ID, -1);
+
         log.i("Worker input data: %s, %s, %s", providerName, category, geoTime);
 
         Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
         geoIntent.setAction(Constants.NOTI_SNOOZE);
-        geoIntent.putExtra("providerName", providerName);
-        geoIntent.putExtra("category", category);
-        geoIntent.putExtra("geoTime", geoTime);
-        PendingIntent pendingIntent = PendingIntent.getService(context, 0, geoIntent, PendingIntent.FLAG_ONE_SHOT);
+        geoIntent.putExtra(Constants.GEO_ID, providerId);
+        geoIntent.putExtra(Constants.GEO_NAME, providerName);
+        geoIntent.putExtra(Constants.GEO_CATEGORY, category);
+        geoIntent.putExtra(Constants.GEO_TIME, geoTime);
+        PendingIntent pendingIntent = PendingIntent.getService(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);
         } else {
             alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);
         }
-
 
         return Result.success();
     }

@@ -1,5 +1,6 @@
 package com.silverback.carman2.threads;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Process;
 
@@ -13,56 +14,69 @@ import com.silverback.carman2.utils.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 public class TabPagerRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(TabPagerRunnable.class);
 
     // Objects
-    private ViewPagerMethods task;
-    private ExpTabPagerAdapter pagerAdapter;
+    private Context context;
+    private TabPagerMethods task;
 
-    public interface ViewPagerMethods {
-        void setViewPagerTaskThread(Thread thread);
-        void setViewPagerAdapter(ExpTabPagerAdapter adapter);
+    public interface TabPagerMethods {
+        void setTabPagerTaskThread(Thread thread);
+        void setTabPagerAdapter(ExpTabPagerAdapter adapter);
         String[] getDefaults();
         String getJsonDistrict();
-        String getUserId();
         FragmentManager getFragmentManager();
     }
 
-
     // Constructor
-    TabPagerRunnable(ViewPagerMethods task) {
+    TabPagerRunnable(Context context, TabPagerMethods task) {
+        this.context = context;
         this.task = task;
-        pagerAdapter = new ExpTabPagerAdapter(task.getFragmentManager());
     }
 
     @Override
     public void run() {
-        task.setViewPagerTaskThread(Thread.currentThread());
+
+        task.setTabPagerTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        // Pass the default params to GasManagerFragment in TabPagerAdapter
-        task.getDefaults()[1] = Constants.MIN_RADIUS;
-        Bundle gasArgs = new Bundle();
-        gasArgs.putStringArray("defaultParams", task.getDefaults());
-        gasArgs.putString("userId", task.getUserId());
-        pagerAdapter.getItem(0).setArguments(gasArgs);
+        try (FileInputStream fis = context.openFileInput("userId");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+            // Retrieve the user id saved in the internal stoage.
+            final String userId = br.readLine();
 
-        // Pass the district code to ServiceManagerFragment in TabPagerAdapter
-        try {
+            // Create the adapter
+            ExpTabPagerAdapter pagerAdapter = new ExpTabPagerAdapter(task.getFragmentManager());
+
+            // Set args to GasManagerFragment
+            task.getDefaults()[1] = Constants.MIN_RADIUS;
+            Bundle gasArgs = new Bundle();
+            gasArgs.putStringArray("defaultParams", task.getDefaults());
+            gasArgs.putString("userId", userId);
+            pagerAdapter.getItem(0).setArguments(gasArgs);
+
+            // Set args to ServiceManagerFragment
             JSONArray jsonArray = new JSONArray(task.getJsonDistrict());
             String distCode = (String)jsonArray.get(2);
             Bundle svcArgs = new Bundle();
             svcArgs.putString("distCode", distCode);
-            svcArgs.putString("userId", task.getUserId());
+            svcArgs.putString("userId", userId);
             pagerAdapter.getItem(1).setArguments(svcArgs);
 
+            task.setTabPagerAdapter(pagerAdapter);
+
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }
-
-        task.setViewPagerAdapter(pagerAdapter);
 
     }
 }

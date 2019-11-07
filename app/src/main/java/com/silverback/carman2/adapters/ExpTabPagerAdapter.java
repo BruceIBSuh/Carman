@@ -43,14 +43,6 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
         return fragments[pos];
     }
 
-    public Fragment[] getPagerFragments() {
-        return fragments;
-    }
-
-    public void setFragment(Fragment fragment, int position) {
-        fragments[position] = fragment;
-    }
-
     public static class DummyFragment extends Fragment {
         public DummyFragment(){}
     }

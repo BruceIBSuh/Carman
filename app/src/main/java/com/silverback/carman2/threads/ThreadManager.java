@@ -298,14 +298,7 @@ public class ThreadManager {
 
 
             case RECYCLER_ADAPTER_SERVICE_COMPLETED:
-                /*
-                SparseArray<String> sparseSvcItemArray = ((ServiceRecyclerTask)task).getSparseServiceItemArray();
-                for(int i = 0; i < sparseSvcItemArray.size(); i++) {
-                    startServiceProgressTask(i);
-                }
 
-                //mDecodeThreadPool.execute(((ServiceRecyclerTask)task).getProgbarAnimRunnable());
-                */
                 msg.sendToTarget();
                 break;
 
@@ -409,18 +402,21 @@ public class ThreadManager {
 
 
     public static TabPagerTask startTabPagerTask(
+            Context context,
             FragmentManager fragmentManager,
             PagerAdapterViewModel model,
-            String[] defaults, String json, final String userId){
+            String[] defaults, String jsonDistrict, String jsonSvcItem){
 
         TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mTaskWorkQueue.poll();
 
         if(tabPagerTask == null) {
-            tabPagerTask = new TabPagerTask();
+            tabPagerTask = new TabPagerTask(context);
         }
 
-        tabPagerTask.initViewPagerTask(fragmentManager, model, defaults, json, userId);
-        sInstance.mDecodeThreadPool.execute(tabPagerTask.getViewPagerRunnable());
+        tabPagerTask.initViewPagerTask(fragmentManager, model, defaults, jsonDistrict, jsonSvcItem);
+
+        sInstance.mDecodeThreadPool.execute(tabPagerTask.getTabPagerRunnable());
+        sInstance.mDecodeThreadPool.execute(tabPagerTask.getServiceItemsRunnable());
 
         return tabPagerTask;
     }
@@ -492,19 +488,6 @@ public class ThreadManager {
 
         return geocoderTask;
 
-    }
-
-    public static ServiceRecyclerTask startServiceRecyclerTask(PagerAdapterViewModel model, String json) {
-
-        ServiceRecyclerTask recyclerTask = (ServiceRecyclerTask)sInstance.mTaskWorkQueue.poll();
-        if(recyclerTask == null) {
-            recyclerTask = new ServiceRecyclerTask();
-        }
-
-        recyclerTask.initTask(model, json);
-        sInstance.mDecodeThreadPool.execute(recyclerTask.getServiceRecyclerRunnable());
-
-        return recyclerTask;
     }
 
     public static DownloadImageTask downloadImageTask(

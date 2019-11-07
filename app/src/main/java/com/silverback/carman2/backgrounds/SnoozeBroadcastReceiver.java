@@ -36,10 +36,11 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        String providerName = intent.getStringExtra("providerName");
-        int category = intent.getIntExtra("category", -1);
-        int notiId = intent.getIntExtra("notiId", -1);
-        long geoTime = intent.getLongExtra("geoTime", -1);
+        String providerId = intent.getStringExtra(Constants.GEO_ID);
+        String providerName = intent.getStringExtra(Constants.GEO_NAME);
+        int category = intent.getIntExtra(Constants.GEO_CATEGORY, -1);
+        int notiId = intent.getIntExtra(Constants.NOTI_ID, -1);
+        long geoTime = intent.getLongExtra(Constants.GEO_TIME, -1);
         log.i("Extras in Receiver: %s, %s, %s, %s", providerName, category, notiId, geoTime);
 
         NotificationManagerCompat.from(context).cancel(notiId);
@@ -66,9 +67,10 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
         // Create WorkRequest
         Constraints constraints = new Constraints.Builder().build();
         Data geoData = new Data.Builder()
-                .putString("providerName", providerName)
-                .putInt("category", category)
-                .putLong("geoTime", geoTime)
+                .putString(Constants.GEO_ID, providerId)
+                .putString(Constants.GEO_NAME, providerName)
+                .putInt(Constants.GEO_CATEGORY, category)
+                .putLong(Constants.GEO_TIME, geoTime)
                 .build();
 
         OneTimeWorkRequest snoozeWorkRequest = new OneTimeWorkRequest.Builder(NotificationSnoozeWorker.class)

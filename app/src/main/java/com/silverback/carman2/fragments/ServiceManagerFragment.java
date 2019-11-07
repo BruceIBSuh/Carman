@@ -253,9 +253,6 @@ public class ServiceManagerFragment extends Fragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        /*
-         *********** getViewLifeCycle() / getViewLifeCycleLiveData()
-         */
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
@@ -264,13 +261,12 @@ public class ServiceManagerFragment extends Fragment implements
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
 
-        // Get the dataset of the item list using ServiceRecyclerTask, which intends to manage the
-        // loadweight of the memory
+        // Notified by TabPagerTask, ServiceItemRunnable of which converts JSONString to JSONArray
+        // of the service items in backgorund,
         adapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
             if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
-            //progbar.setVisibility(View.GONE);
 
             for(int i = 0; i < jsonServiceArray.length(); i++) {
                 try {

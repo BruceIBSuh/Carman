@@ -27,6 +27,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -47,11 +48,8 @@ public class GeofenceTransitionService extends IntentService {
 
     // Objects
     private NotificationManagerCompat notiManager;
-    private SparseArray<Notification> sparseNotiArray;
+    //private SparseArray<Notification> sparseNotiArray;
     private long geoTime;
-    private String providerName;
-    private int category;
-    private int notiId;
 
 
     public GeofenceTransitionService() {
@@ -80,19 +78,22 @@ public class GeofenceTransitionService extends IntentService {
                 // Retrieve all the favorite list.
                 // What if multiple providers are closely located within the radius?
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
-                sparseNotiArray = new SparseArray<>();
+                //sparseNotiArray = new SparseArray<>();
                 geoTime = System.currentTimeMillis();
-                notiId = 1;
+                int notiId = 0;
 
                 for(FavoriteProviderEntity entity : entities) {
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
 
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
-                        providerName = entity.providerName;
-                        category = entity.category;
-                        createNotification(notiId++, providerName, category);
+                        final String name = entity.providerName;
+                        final String id = entity.providerId;
+                        final int category = entity.category;
+
+                        createNotification(notiId, id, name, category);
                         //sparseNotiArray.put(notiId++, createNotification(notiId++, providerName, category));
+                        notiId++;
                     }
                 }
 
@@ -100,12 +101,13 @@ public class GeofenceTransitionService extends IntentService {
                 break;
 
             case Constants.NOTI_SNOOZE:
-                providerName = intent.getStringExtra("providerName");
-                category = intent.getIntExtra("category", -1);
-                geoTime = intent.getLongExtra("geoTime", -1);
-                int snoozeNotiId = intent.getIntExtra("notiId", -1);
+                String providerId = intent.getStringExtra(Constants.GEO_ID);
+                String providerName = intent.getStringExtra(Constants.GEO_NAME);
+                int category = intent.getIntExtra(Constants.GEO_CATEGORY, -1);
+                int snoozeNotiId = intent.getIntExtra(Constants.NOTI_ID, -1);
+                geoTime = intent.getLongExtra(Constants.GEO_TIME, -1);
 
-                createNotification(snoozeNotiId, providerName, category);
+                createNotification(snoozeNotiId, providerId, providerName, category);
                 //Notification notiSnooze = createNotification(notiId++, providerName, category);
                 //notiManager.notify(notiId++, notiSnooze);
                 break;
@@ -125,20 +127,13 @@ public class GeofenceTransitionService extends IntentService {
                         .setGroup(GROUP_KEY_NOTIFICATION)
                         .setGroupSummary(true)
                         .build();
-
                 for(int i = 0; i < sparseNotiArray.size(); i++) {
                     notiManager.notify(sparseNotiArray.keyAt(i), sparseNotiArray.valueAt(i));
                 }
-
                 notiManager.notify(SUMMARY_ID, summaryNoti);
-
-
             } else {
-
                     notiManager.notify(sparseNotiArray.keyAt(i), sparseNotiArray.valueAt(i));
-
             }
-
         } else {
             notiManager.notify(sparseNotiArray.keyAt(0), sparseNotiArray.valueAt(0));
         }
@@ -148,7 +143,7 @@ public class GeofenceTransitionService extends IntentService {
 
     }
 
-    private void createNotification(int notiId, String name, int category) {
+    private void createNotification(int notiId, String providerId, String name, int category) {
         log.i("notification ID: %s", notiId);
         String title = null;
         String extendedText = null;
@@ -173,8 +168,8 @@ public class GeofenceTransitionService extends IntentService {
         }
 
         // Create PendingIntents for setContentIntent and addAction(Snooze)
-        PendingIntent resultPendingIntent = createResultPendingIntent(name, category);
-        PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, category);
+        PendingIntent resultPendingIntent = createResultPendingIntent(notiId, providerId, name, category);
+        PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, providerId, name, category);
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID);
         mBuilder.setSmallIcon(R.mipmap.ic_launcher)
@@ -210,26 +205,29 @@ public class GeofenceTransitionService extends IntentService {
 
 
 
-    private PendingIntent createSnoozePendingIntent(int notiId, int category) {
+    private PendingIntent createSnoozePendingIntent(int notiId, String providerId, String name, int category) {
         Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
         snoozeIntent.setAction(Constants.NOTI_SNOOZE);
-        snoozeIntent.putExtra("providerName", providerName);
-        snoozeIntent.putExtra("category", category);
-        snoozeIntent.putExtra("geoTime", geoTime);
-        snoozeIntent.putExtra("notiId",  notiId);
+        snoozeIntent.putExtra(Constants.GEO_ID, providerId);
+        snoozeIntent.putExtra(Constants.GEO_NAME, name);
+        snoozeIntent.putExtra(Constants.GEO_CATEGORY, category);
+        snoozeIntent.putExtra(Constants.GEO_TIME, geoTime);
+        snoozeIntent.putExtra(Constants.NOTI_ID,  notiId);
 
         return PendingIntent.getBroadcast(this, notiId, snoozeIntent, 0);
     }
 
 
-    private PendingIntent createResultPendingIntent(String name, int category) {
-    //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
+    private PendingIntent createResultPendingIntent(int notiId, String providerId, String name, int category) {
+        //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
         // Create an Intent for the activity you want to start
         //Intent resultIntent = new Intent(this, cls);
         Intent resultIntent = new Intent(this, ExpenseActivity.class);
         resultIntent.setAction(Constants.NOTI_GEOFENCE);
+        resultIntent.putExtra(Constants.GEO_ID, providerId);
         resultIntent.putExtra(Constants.GEO_CATEGORY, category);
         resultIntent.putExtra(Constants.GEO_NAME, name);
+        resultIntent.putExtra(Constants.GEO_TIME, geoTime);
 
         // Create the TaskStackBuilder and add the intent, which inflates the back stack.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);

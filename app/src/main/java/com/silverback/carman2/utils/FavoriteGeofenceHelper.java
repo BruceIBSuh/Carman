@@ -3,6 +3,7 @@ package com.silverback.carman2.utils;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.text.TextUtils;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -110,7 +111,7 @@ public class FavoriteGeofenceHelper {
 
     // PendingIntent is to be handed to GeofencingClient of LocationServices and thus,
     // Geofencingclient calls the explicit service at a later time.
-    private PendingIntent getGeofencePendingIntent(String id, String name, int category) {
+    private PendingIntent getGeofencePendingIntent() {
 
         // Reuse the PendingIntent if we have already have it
         if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
@@ -197,7 +198,7 @@ public class FavoriteGeofenceHelper {
         // geofences. Otherwise, show the error messages using GeofenceStatusCodes
         try {
             mGeofencingClient
-                    .addGeofences(getGeofencingRequest(), getGeofencePendingIntent(providerId, providerName, category))
+                    .addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
                         // Insert the provider into the local db(FavoriteProviderEntity)
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
