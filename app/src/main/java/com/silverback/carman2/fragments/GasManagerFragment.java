@@ -120,6 +120,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // In case the activity is initiated by tabbing the notification, which sent the intent w/
+        // action
+        if(getActivity().getIntent() != null && getActivity().getIntent().getAction() != null) {
+            isGeofenceIntent = true;
+            log.i("isGeofenceIntent: %s", isGeofenceIntent);
+        }
+
         if(getArguments() != null) {
             defaultParams = getArguments().getStringArray("defaultParams");
             userId = getArguments().getString("userId");
@@ -245,10 +252,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            log.i("Location fetched: %s", location);
             this.location = location;
-            stationListTask = ThreadManager.startStationListTask(
-                    getContext(), stnListModel, location, defaultParams);
+            if(!isGeofenceIntent) {
+                stationListTask = ThreadManager.startStationListTask(
+                        getContext(), stnListModel, location, defaultParams);
+            }
         });
 
         // Check if a fetched current station has registered with Favorite right after StationListModel

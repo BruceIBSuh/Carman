@@ -80,9 +80,13 @@ public class ExpenseActivity extends BaseActivity implements
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action
         if(getIntent() != null && getIntent().getAction() != null) {
-            currentPage = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
-            isGeofencing = true;
-            log.i("Extras from Geofencing: %s, %s", currentPage, getIntent().getStringExtra(Constants.GEO_NAME));
+        //if(getIntent() != null) {
+            String action = getIntent().getAction();
+            log.i("Intent Action: %s", action);
+            if(action.equals(Constants.NOTI_GEOFENCE)) {
+                currentPage = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
+                isGeofencing = true;
+            }
         }
 
         appBar = findViewById(R.id.appBar);
@@ -107,8 +111,6 @@ public class ExpenseActivity extends BaseActivity implements
         // Fetch the values from SharedPreferences
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
-        log.i("json_district: %s", jsonDistrict);
-
         // Start the thread to create ExpTabpagerAdapter and pass arguments to GasManagerFragment
         // and ServiceManagerFragment respectively and, at the same time, convert JSONServiceItems
         // to JSONArray in advance for the recyclerview in ServiceManager
@@ -129,6 +131,7 @@ public class ExpenseActivity extends BaseActivity implements
         // finished to instantiate the fragments to display, then launch LocationTask to have
         // any near station within MIN_RADIUS, if any.
         pagerModel.getPagerAdapter().observe(this, adapter -> {
+
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             tabPager.setCurrentItem(currentPage);
@@ -141,34 +144,26 @@ public class ExpenseActivity extends BaseActivity implements
             // attach it in the top FrameLayout.
             expensePager.setAdapter(recentPagerAdapter);
             expensePager.setCurrentItem(0);
-            if(!isGeofencing) topFrame.addView(expensePager);
-            else {
-                topFrame.removeAllViews();
-                topFrame.addView(expensePager);
-            }
-
+            if(isGeofencing) topFrame.removeAllViews();
+            topFrame.addView(expensePager);
         });
 
 
     }
-
-    @SuppressWarnings("ConstantConditions")
+    /*
     @Override
     public void onResume(){
         super.onResume();
-
         String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
     }
+     */
 
     @Override
     public void onPause() {
         super.onPause();
-
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
-
-
         // Destroy the static CarmanDatabase instance.
         CarmanDatabase.destroyInstance();
     }

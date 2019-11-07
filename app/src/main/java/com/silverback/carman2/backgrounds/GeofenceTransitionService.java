@@ -27,8 +27,11 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 
 /**
@@ -42,13 +45,8 @@ public class GeofenceTransitionService extends IntentService {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceTransitionService.class);
 
-    // Constants
-    final int SUMMARY_ID = 0;
-    private final String GROUP_KEY_NOTIFICATION = "com.silverback.carman2.groupnoti";
-
     // Objects
     private NotificationManagerCompat notiManager;
-    //private SparseArray<Notification> sparseNotiArray;
     private long geoTime;
 
 
@@ -80,20 +78,20 @@ public class GeofenceTransitionService extends IntentService {
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
                 //sparseNotiArray = new SparseArray<>();
                 geoTime = System.currentTimeMillis();
-                int notiId = 0;
+                //int notiId = 0;
 
                 for(FavoriteProviderEntity entity : entities) {
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
 
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
+                        final int notiId = createID();
                         final String name = entity.providerName;
                         final String id = entity.providerId;
                         final int category = entity.category;
 
                         createNotification(notiId, id, name, category);
                         //sparseNotiArray.put(notiId++, createNotification(notiId++, providerName, category));
-                        notiId++;
                     }
                 }
 
@@ -112,35 +110,6 @@ public class GeofenceTransitionService extends IntentService {
                 //notiManager.notify(notiId++, notiSnooze);
                 break;
         }
-
-        // Check if the notification is in a group or single based upon how many providers are located
-        // within the geofence radius, then handle to send notification in a diffenrent way by
-        // the build version.
-        /*
-        if(sparseNotiArray == null) return;
-        if(sparseNotiArray.size() > 1) {
-            //if(Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                Notification summaryNoti = new NotificationCompat.Builder(this, Constants.CHANNEL_ID)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("Multi Providers")
-                        .setContentText("Multi providers are located within the radius")
-                        .setGroup(GROUP_KEY_NOTIFICATION)
-                        .setGroupSummary(true)
-                        .build();
-                for(int i = 0; i < sparseNotiArray.size(); i++) {
-                    notiManager.notify(sparseNotiArray.keyAt(i), sparseNotiArray.valueAt(i));
-                }
-                notiManager.notify(SUMMARY_ID, summaryNoti);
-            } else {
-                    notiManager.notify(sparseNotiArray.keyAt(i), sparseNotiArray.valueAt(i));
-            }
-        } else {
-            notiManager.notify(sparseNotiArray.keyAt(0), sparseNotiArray.valueAt(0));
-        }
-        */
-
-
-
     }
 
     private void createNotification(int notiId, String providerId, String name, int category) {
@@ -180,7 +149,6 @@ public class GeofenceTransitionService extends IntentService {
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
                 .setContentIntent(resultPendingIntent)
                 .setAutoCancel(true)
-                //.setGroup(GROUP_KEY_NOTIFICATION)
                 .addAction(-1, "Snooze", snoozePendingIntent)
                 .build();
 
@@ -197,7 +165,6 @@ public class GeofenceTransitionService extends IntentService {
         Notification notification = mBuilder.build();
 
         // With the Noti tag, NotificationManager.cancel(id) does not work.
-        //String tag = (category == Constants.GAS)? "noti_gas" : "noti_svc";
         //notiManager.notify(tag, notiId, notification);
         notiManager.notify(notiId, notification);
 
@@ -236,9 +203,17 @@ public class GeofenceTransitionService extends IntentService {
         //stackBuilder.addNextIntent(resultIntent);
 
 
-
         // Get the PendingIntent containing the entire back stack
         return stackBuilder.getPendingIntent(notiId, PendingIntent.FLAG_UPDATE_CURRENT);
+
+    }
+
+    // Create a unique notification id.
+    private int createID() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+
+        return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
 
     }
 
