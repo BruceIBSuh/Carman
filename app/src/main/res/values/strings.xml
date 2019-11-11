@@ -26,8 +26,8 @@
     <string name="general_spinner_diesel">Diesel</string>
     <string name="general_spinner_lpg">LPG</string>
     <string name="general_spinner_premium">Premium</string>
-    <string name="general_expense_gas">[ 주유 ]</string>
-    <string name="general_expense_service">[ 정비 ]</string>
+    <string name="general_expense_gas">[ 주유지출 ]</string>
+    <string name="general_expense_service">[ 서비스지출 ]</string>
     <string name="general_stations_distance">[ 거리순 ]</string>
     <string name="general_stations_price">[ 가격순 ]</string>
     <!--GneralFragment$Opinet Custom Views-->
@@ -124,9 +124,7 @@
     <string name="dialog_label_company">회사이름</string>
     <string name="dialog_label_phone">연락처</string>
     <string name="dialog_label_evaluation">서비스평가</string>
-
-
-    <!--StatStmtsFragment-->
+    <!--ExpenseActivity$StatStmtsFragment-->
     <string name="graph_x_axis_month">월</string>
     <string name="graph_y_axis_unit">천원</string>
     <string name="stat_subtitle">지출 내역</string>
@@ -209,7 +207,6 @@
     <string name="setting_null">지정안함</string>
 
     <!--DialogFragment-->
-
     <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>
     <string name="dialog_btn_confirm">확인</string>
     <string name="dialog_btn_cancel">취소</string>
@@ -235,6 +232,7 @@
     <string name="date_format_5">MM월dd일</string>
     <string name="date_format_6">MM월dd일(E) HH시mm분</string>
     <string name="date_format_7">yy/MM/dd(E)HH:mm</string>
+    <string name="date_format_8">yy.MM.dd</string>
     <string name="time_format_1">%d시%d분</string>
 
     <!--Miscellany-->

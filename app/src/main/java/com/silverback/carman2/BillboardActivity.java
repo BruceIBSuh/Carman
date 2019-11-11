@@ -3,18 +3,21 @@ package com.silverback.carman2;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BillboardPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 public class BillboardActivity extends BaseActivity implements
-        ViewPager.OnPageChangeListener, AppBarLayout.OnOffsetChangedListener {
+        ViewPager.OnPageChangeListener,
+        AppBarLayout.OnOffsetChangedListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BillboardActivity.class);
@@ -23,6 +26,7 @@ public class BillboardActivity extends BaseActivity implements
     private AppBarLayout appBar;
     private TabLayout boardTabLayout;
     private ViewPager boardPager;
+    private FloatingActionButton fabWrite;
 
     // Fields
     private boolean isTabVisible = false;
@@ -37,9 +41,13 @@ public class BillboardActivity extends BaseActivity implements
         ViewPager boardPager = findViewById(R.id.viewpager_board);
         appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
+        fabWrite = findViewById(R.id.fab_write);
 
         // Add an listener to AppBarLayout
         appBar.addOnOffsetChangedListener(this);
+        fabWrite.setOnClickListener(view -> {
+            log.i("Writing activity");
+        });
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
@@ -57,6 +65,8 @@ public class BillboardActivity extends BaseActivity implements
         animSlideTabLayout();
 
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -115,4 +125,6 @@ public class BillboardActivity extends BaseActivity implements
         isTabVisible = !isTabVisible;
 
     }
+
+
 }

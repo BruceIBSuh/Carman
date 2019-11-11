@@ -17,16 +17,16 @@ import androidx.recyclerview.widget.RecyclerView;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BillboardFragment extends Fragment {
+public class BoardInfoTipsFragment extends Fragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BillboardFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardInfoTipsFragment.class);
 
     // Objects
     private BillboardRecyclerAdapter mAdapter;
     private RecyclerView recyclerView;
 
-    public BillboardFragment() {
+    public BoardInfoTipsFragment() {
         // Required empty public constructor
     }
 

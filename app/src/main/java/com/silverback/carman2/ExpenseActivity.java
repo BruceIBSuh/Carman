@@ -80,7 +80,6 @@ public class ExpenseActivity extends BaseActivity implements
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action
         if(getIntent() != null && getIntent().getAction() != null) {
-        //if(getIntent() != null) {
             String action = getIntent().getAction();
             log.i("Intent Action: %s", action);
             if(action.equals(Constants.NOTI_GEOFENCE)) {

@@ -19,7 +19,7 @@ public class ExpenseStatHolder extends RecyclerView.ViewHolder {
     public ExpenseStatHolder(CardView cardView) {
         super(cardView);
 
-        dateFormat = cardView.getResources().getString(R.string.date_format_4);
+        dateFormat = cardView.getResources().getString(R.string.date_format_8);
 
         tvDate = cardView.findViewById(R.id.tv_stat_date);
         tvMileage = cardView.findViewById(R.id.tv_stat_mileage);

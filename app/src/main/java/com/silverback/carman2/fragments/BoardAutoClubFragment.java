@@ -14,10 +14,10 @@ import com.silverback.carman2.R;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BillboardPopularFragment extends Fragment {
+public class BoardAutoClubFragment extends Fragment {
 
 
-    public BillboardPopularFragment() {
+    public BoardAutoClubFragment() {
         // Required empty public constructor
     }
 
@@ -26,7 +26,7 @@ public class BillboardPopularFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_billboard_popular, container, false);
+        return inflater.inflate(R.layout.fragment_board_auto_club, container, false);
     }
 
 }

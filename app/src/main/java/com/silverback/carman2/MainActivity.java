@@ -29,12 +29,16 @@ public class MainActivity extends BaseActivity implements
     private StationInfoTask mapInfoTask;
     //private ActionBarDrawerToggle drawerToggle;
 
+    @SuppressWarnings("ConstantConditions")
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
+        String title = mSettings.getString(Constants.USER_NAME, null);
+        if(title != null) getSupportActionBar().setTitle(title);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
@@ -46,7 +50,7 @@ public class MainActivity extends BaseActivity implements
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
         Fragment generalFragment = new GeneralFragment();
-        //Fragment boardFragment = new BillboardFragment();
+        //Fragment boardFragment = new BoardInfoTipsFragment();
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
@@ -61,9 +65,8 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onResume(){
         super.onResume();
-
-        String title = mSettings.getString(Constants.USER_NAME, null);
-        if(title != null) getSupportActionBar().setTitle(title);
+        //String title = mSettings.getString(Constants.USER_NAME, null);
+        //if(title != null) getSupportActionBar().setTitle(title);
     }
 
     @Override

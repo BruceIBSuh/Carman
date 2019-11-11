@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 import com.silverback.carman2.fragments.ExpensePagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 
 public class ExpRecentPagerAdapter extends FragmentStatePagerAdapter {
 
@@ -15,7 +16,7 @@ public class ExpRecentPagerAdapter extends FragmentStatePagerAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpRecentPagerAdapter.class);
 
     // Constants
-    private static final int NUM_PAGES = 5;
+    //private static final int NUM_PAGES = 5;
 
 
     public ExpRecentPagerAdapter(FragmentManager fm) {
@@ -31,6 +32,6 @@ public class ExpRecentPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        return NUM_PAGES;
+        return Constants.NUM_RECENT_PAGES;
     }
 }

@@ -23,6 +23,9 @@ public class Constants {
     public static final int SVC = 1;
     public static final int MAX_FAVORITE = 10;
 
+    // ExpensePagerFragment max pages of ExpRecentPagerAdapter
+    public static final int NUM_RECENT_PAGES = 5;
+
     // File names
     public static final String FILE_CACHED_AVG_PRICE = "AvgPrice";
     public static final String FILE_CACHED_SIDO_PRICE = "SidoPrice";

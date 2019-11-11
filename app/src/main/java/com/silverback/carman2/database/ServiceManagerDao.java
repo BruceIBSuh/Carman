@@ -11,6 +11,7 @@ import androidx.room.Transaction;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 
 import java.util.List;
 
@@ -20,10 +21,15 @@ public abstract class ServiceManagerDao {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerDao.class);
 
-    @Query("SELECT date_time, mileage, total_expense, service_center FROM ServiceManagerEntity " +
+    @Query("SELECT date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity " +
             "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
-            "ORDER BY service_id DESC LIMIT 5")
+            "ORDER BY service_id DESC LIMIT " + Constants.NUM_RECENT_PAGES)
     public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
+
+    @Query("SELECT date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity  " +
+            "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "ORDER BY service_id DESC LIMIT 1")
+    public abstract LiveData<RecentServiceData> loadLastSvcData();
 
 
     // Query the last service history for each item with item name as keyword in ServicedItemEntity
@@ -79,6 +85,8 @@ public abstract class ServiceManagerDao {
         public int totalExpense;
         @ColumnInfo(name = "service_center")
         public String svcName;
+        @ColumnInfo(name="service_addrs")
+        public String svcAddrs;
     }
 
     public static class LatestServiceData {

@@ -5,9 +5,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import com.silverback.carman2.fragments.BillboardFragment;
-import com.silverback.carman2.fragments.BillboardPopularFragment;
-import com.silverback.carman2.fragments.BillboardRecentFragment;
+import com.silverback.carman2.fragments.BoardAutoClubFragment;
+import com.silverback.carman2.fragments.BoardInfoTipsFragment;
+import com.silverback.carman2.fragments.BoardPopularFragment;
+import com.silverback.carman2.fragments.BoardRecentFragment;
 
 public class BillboardPagerAdapter extends FragmentPagerAdapter {
 
@@ -30,8 +31,9 @@ public class BillboardPagerAdapter extends FragmentPagerAdapter {
     }
 
     private final Fragment[] boardFragments = new Fragment[] {
-            new BillboardFragment(),
-            new BillboardRecentFragment(),
-            new BillboardPopularFragment()
+            new BoardRecentFragment(),
+            new BoardPopularFragment(),
+            new BoardInfoTipsFragment(),
+            new BoardAutoClubFragment()
     };
 }

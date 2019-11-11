@@ -17,6 +17,7 @@ import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;

@@ -106,6 +106,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private String nickname;
     private String userId;
     private boolean isCommentUploaded;
+    private String geoStnName, geoStnId;
+    private long geoTime;
+
 
     private boolean isGeofenceIntent, isFavoriteGas;
 
@@ -121,19 +124,25 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         super.onCreate(savedInstanceState);
 
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
-        // action
+        // action and extras for the geofance data.
         if(getActivity().getIntent() != null && getActivity().getIntent().getAction() != null) {
-            isGeofenceIntent = true;
-            log.i("isGeofenceIntent: %s", isGeofenceIntent);
+            String action = getActivity().getIntent().getAction();
+            if(action.equals(Constants.NOTI_GEOFENCE)) {
+                isGeofenceIntent = true;
+                geoStnName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
+                geoStnId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
+                geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
+                log.i("isGeofenceIntent: %s, %s, %s", isGeofenceIntent, geoStnName, geoStnId);
+            }
         }
 
+        // args from the parent activity which are passed in TapPagerRunnable
         if(getArguments() != null) {
             defaultParams = getArguments().getStringArray("defaultParams");
             userId = getArguments().getString("userId");
         }
 
         firestore = FirebaseFirestore.getInstance();
-
         // Instantiate the ViewModels
         // Refactor required using getViewLifecyclerOwnerLiveData()
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
@@ -152,20 +161,40 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new NumberPadFragment();
 
-        // Fetch the current location using worker thread, the result of which is returned to
-        // getLocation() of ViewModel.LocationViewModel as a LiveData
-        //locationTask = ThreadManager.fetchLocationTask(this);
+        // Get the time that you have visited to the station. In case the parent activity gets started
+        // by the stack builder, the time should be the time passed in the intent.
         dateFormat = getString(R.string.date_format_1);
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
-        date = BaseActivity.formatMilliseconds(dateFormat, System.currentTimeMillis());
+        long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
+        date = BaseActivity.formatMilliseconds(dateFormat, visitTime);
+
+        // FavoriteGeofenceHelper.OnGeofenceListener().
+        // FavoriteGeofenceHelper class notifies whether a specific station is successfully added to
+        // or removed out of the favorite list.
+        geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
+            @Override
+            public void notifyAddGeofenceCompleted() {
+                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
+                isFavoriteGas = true;
+            }
+            @Override
+            public void notifyRemoveGeofenceCompleted() {
+                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+                isFavoriteGas = false;
+            }
+            @Override
+            public void notifyAddGeofenceFailed() {
+                log.i("Failed to add the gas station to Geofence");
+            }
+        });
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
+        // Check if it's possible to change the soft input mode on the fragment basis. Seems not work.
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         // Inflate the layout for this fragment
@@ -186,6 +215,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
         ratingBar = localView.findViewById(R.id.ratingBar);
         etGasComment = localView.findViewById(R.id.et_service_comment);
+        Button btnChangeDate = localView.findViewById(R.id.btn_gas_date);
         Button btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
 
         tvDateTime.setText(date);
@@ -208,7 +238,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         nickname = mSettings.getString(Constants.USER_NAME, null);
         // In case of writing the ratingbar and comment, it is required to have a registered nickname.
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
-            if((nickname == null || nickname.isEmpty()) && rating > 0) {
+            if(TextUtils.isEmpty(nickname) && rating > 0) {
                 ratingBar.setRating(0f);
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
             }
@@ -222,25 +252,24 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         });
 
 
-        // FavoriteGeofenceHelper.OnGeofenceListener().
-        // FavoriteGeofenceHelper class notifies whether a specific station is successfully added to
-        // or removed out of the favorite list.
-        geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
-            @Override
-            public void notifyAddGeofenceCompleted() {
-                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
-                isFavoriteGas = true;
-            }
-            @Override
-            public void notifyRemoveGeofenceCompleted() {
-                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
-                isFavoriteGas = false;
-            }
-            @Override
-            public void notifyAddGeofenceFailed() {
-                log.i("Failed to add the gas station to Geofence");
-            }
-        });
+
+
+        // In case the activity and this fragment get started by tabbing the geofence notification,
+        // the pendingintent of which passes the name, id, time.
+        if(isGeofenceIntent) {
+            tvStnName.setText(geoStnName);
+            stnId = geoStnId;
+            isFavoriteGas = true;
+
+            // Hanldinthe UIs
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            pbStation.setVisibility(View.GONE);
+            btnChangeDate.setVisibility(View.GONE);
+
+            // Task to fetch the gas price of a station with the station ID.
+            priceFavoriteTask = ThreadManager.startFavoritePriceTask(
+                    getContext(), opinetViewModel, geoStnId, false);
+        }
 
         return localView;
     }
@@ -250,7 +279,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         super.onActivityCreated(savedInstanceState);
 
         // Attach an observer to fetch a current location from LocationTask, then initiate
-        // StationListTask based on the value.
+        // StationListTask based on the value unless the fragment is initiated by the geo noti.
+        // BTW, the location task is initiated in the parent activity.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             this.location = location;
             if(!isGeofenceIntent) {
@@ -288,7 +318,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             stnId = entity.providerId;
             isFavoriteGas = true;
 
-            priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, entity.providerId, false);
+            priceFavoriteTask = ThreadManager.startFavoritePriceTask(
+                    getContext(), opinetViewModel, entity.providerId, false);
         });
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
@@ -307,8 +338,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 calculateGasAmount();
             }
         });
-
-
     }
 
     @Override
@@ -466,7 +495,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         GasManagerEntity gasEntity = new GasManagerEntity();
 
         basicEntity.dateTime = milliseconds;
-        basicEntity.category = 1;
+        basicEntity.category = Constants.SVC;
         gasEntity.stnName = tvStnName.getText().toString();
         gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;

@@ -48,7 +48,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
     <Button
-        android:id="@+id/padButton2"
+        android:id="@+id/btn_gas_date"
         android:layout_width="40dp"
         android:layout_height="30dp"
         android:layout_marginStart="8dp"

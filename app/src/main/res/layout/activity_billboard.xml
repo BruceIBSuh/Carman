@@ -43,7 +43,7 @@
                 android:elevation="2dp"
                 android:padding="0dp"
                 app:layout_collapseMode="pin"
-                app:tabBackground="@color/colorAccent"
+                app:tabBackground="@color/boardTabColor"
                 app:tabIndicatorColor="@android:color/holo_orange_dark"
                 app:tabIndicatorHeight="5dp"
                 app:tabSelectedTextColor="@android:color/holo_orange_dark"
@@ -68,5 +68,19 @@
             android:layout_height="wrap_content" />
 
     </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_write"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:src="@android:drawable/ic_menu_mylocation"
+        app:backgroundTint="@color/colorAccent"
+        app:borderWidth="0dp"
+        app:elevation="6dp"
+        app:layout_anchor="@id/viewpager_board"
+        app:layout_anchorGravity="right|bottom"
+        app:rippleColor="@color/colorPrimary" />
+
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

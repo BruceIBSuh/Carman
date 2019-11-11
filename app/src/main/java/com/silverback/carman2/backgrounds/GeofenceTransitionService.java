@@ -211,7 +211,7 @@ public class GeofenceTransitionService extends IntentService {
     // Create a unique notification id.
     private int createID() {
         Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
+        //calendar.setTimeInMillis(System.currentTimeMillis());
 
         return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
 

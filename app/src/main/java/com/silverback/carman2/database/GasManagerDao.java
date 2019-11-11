@@ -11,6 +11,7 @@ import androidx.room.Transaction;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 
 import java.util.List;
 
@@ -22,8 +23,15 @@ public abstract class GasManagerDao {
 
     @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
             "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
-            "ORDER BY gas_id DESC LIMIT 5")
+            "ORDER BY gas_id DESC LIMIT " + Constants.NUM_RECENT_PAGES)
     public abstract LiveData<List<RecentGasData>> loadRecentGasData();
+
+    @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "ORDER BY gas_id DESC LIMIT 1")
+    public abstract LiveData<RecentGasData> loadLastGaaData();
+
+
 
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
     public abstract GasManagerEntity findGasManagerByNameOrId(String stnName, String stnId);

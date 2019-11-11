@@ -22,6 +22,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.StationMapActivity;
@@ -72,6 +73,7 @@ public class GeneralFragment extends Fragment implements
 
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
+    private OpinetViewModel priceViewModel;
 
     private LocationTask locationTask;
     private PriceDistrictTask priceDistrictTask;
@@ -87,13 +89,15 @@ public class GeneralFragment extends Fragment implements
     // UI's
     private View childView;
     private ViewPager priceViewPager;
-    private TextView tvStationsOrder;
+    private TextView tvRecentExp;
+    private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
 
     // Fields
     private String stnId;
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
+    private boolean bExpenseSort;
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -109,46 +113,15 @@ public class GeneralFragment extends Fragment implements
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
-        mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
-            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                if(provider.category == Constants.GAS) stnId = provider.providerId;
-                log.i("Station ID: %s", stnId);
-            }
-        });
-
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        OpinetViewModel priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
         locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
 
-        // On fetching the current location, attempt to get the near stations based on the value.
-        locationModel.getLocation().observe(this, location -> {
-            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
-            // attempt to retreive a new station list based on the location.
-            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
-            // the station recyclerView should not be refreshed, showing the snackbar message.
-            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
-                mPrevLocation = location;
-                stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
-            } else {
-                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
-            }
-        });
-
-        //priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
-        // Invoked from SettingPreferenceActivity as a new region has set.
-        priceViewModel.favoritePriceComplete().observe(this, isComplete -> {
-            // Save the saving time to prevent the regional price data from frequently updating.
-            mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-            // Attach the pager adatepr with a fuel code set.
-            //pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
-            pricePagerAdapter.setFuelCode(defaults[0]);
-            priceViewPager.setAdapter(pricePagerAdapter);
-        });
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -160,6 +133,8 @@ public class GeneralFragment extends Fragment implements
 
         TextView tvDate = childView.findViewById(R.id.tv_today);
         Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
+        tvRecentExp = childView.findViewById(R.id.tv_recent_exp);
+        tvExpenseSort = childView.findViewById(R.id.tv_expenses_sort);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
         priceViewPager = childView.findViewById(R.id.pager_price);
         opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
@@ -214,15 +189,72 @@ public class GeneralFragment extends Fragment implements
         });
 
 
+        return childView;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityCreated(Bundle savedStateInstance) {
+        super.onActivityCreated(savedStateInstance);
+
+        mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
+            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
+                if(provider.category == Constants.GAS) stnId = provider.providerId;
+                log.i("Station ID: %s", stnId);
+            }
+        });
+
+        // Retrieve the last gas data set in tvRecentExp.
+        mDB.gasManagerModel().loadLastGaaData().observe(getViewLifecycleOwner(), data -> {
+           log.i("Last gas data: %s, %s", data.stnName, data.dateTime);
+            String format = getContext().getResources().getString(R.string.date_format_1);
+            String won = getString(R.string.unit_won);
+            String liter = getString(R.string.unit_liter);
+
+            String strDate = BaseActivity.formatMilliseconds(format, data.dateTime);
+            String name = data.stnName;
+            int mileage = data.mileage;
+            int amount = data.gasAmount;
+            int payment = data.gasPayment;
+            String lastData = strDate + "\n" + name + "\n" + mileage + "\n" + amount + liter + "\n" + payment + won;
+            tvRecentExp.setText(lastData);
+        });
+
+
+        // On fetching the current location, attempt to get the near stations based on the value.
+        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
+            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
+            // attempt to retreive a new station list based on the location.
+            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
+            // the station recyclerView should not be refreshed, showing the snackbar message.
+            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
+                mPrevLocation = location;
+                stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
+            } else {
+                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
+            }
+        });
+
+        //priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
+        // Invoked from SettingPreferenceActivity as a new region has set.
+        priceViewModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isComplete -> {
+            // Save the saving time to prevent the regional price data from frequently updating.
+            mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+            // Attach the pager adatepr with a fuel code set.
+            //pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+            pricePagerAdapter.setFuelCode(defaults[0]);
+            priceViewPager.setAdapter(pricePagerAdapter);
+        });
+
         // Receive the LiveData of station list within a given radius based on
-        stnListModel.getStationListLiveData().observe(this, stnList -> {
+        stnListModel.getStationListLiveData().observe(getViewLifecycleOwner(), stnList -> {
             mStationList = stnList;
             mAdapter = new StationListAdapter(mStationList, this);
             stationRecyclerView.showStationListRecyclerView();
             stationRecyclerView.setAdapter(mAdapter);
         });
 
-        stnListModel.getStationCarWashInfo().observe(this, sparseArray -> {
+        stnListModel.getStationCarWashInfo().observe(getViewLifecycleOwner(), sparseArray -> {
             // Update the carwash info to StationList and notify the data change to Adapter.
             // Adapter should not assume that the payload will always be passed to onBindViewHolder()
             // e.g. when the view is not attached.
@@ -232,8 +264,6 @@ public class GeneralFragment extends Fragment implements
             }
 
         });
-
-        return childView;
     }
 
     @Override
@@ -241,7 +271,6 @@ public class GeneralFragment extends Fragment implements
         super.onResume();
         // Update the current time using worker thread every 1 minute.
         //clockTask = ThreadManager.startClockTask(getContext(), tvDate);
-
         // ********** Refactor Required ************
         int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
         if(numFavorite == 0 || numFavorite == 1) {
@@ -266,6 +295,22 @@ public class GeneralFragment extends Fragment implements
         switch(view.getId()) {
 
             case R.id.imgbtn_expense:
+                bExpenseSort = !bExpenseSort;
+                String sort = (bExpenseSort)? getString(R.string.general_expense_service) :
+                        getString(R.string.general_expense_gas);
+                tvExpenseSort.setText(sort);
+
+                if(!bExpenseSort) {
+                    mDB.gasManagerModel().loadLastGaaData().observe(getViewLifecycleOwner(), data -> {
+                        tvRecentExp.setText(data.stnName);
+                    });
+                } else {
+                    mDB.serviceManagerModel().loadLastSvcData().observe(getViewLifecycleOwner(), data -> {
+                        log.i("Last Service Data: %s, %s, %s, %s, %s",
+                                data.dateTime, data.mileage, data.svcName, data.totalExpense, data.svcAddrs);
+                        tvRecentExp.setText(data.svcName);
+                    });
+                }
                 break;
 
             case R.id.imgbtn_stations:
@@ -274,11 +319,11 @@ public class GeneralFragment extends Fragment implements
                 if(uri == null) return;
 
                 bStationsOrder = !bStationsOrder;
-                String sort = (bStationsOrder)?
+                String order = (bStationsOrder)?
                         getString(R.string.general_stations_price):
                         getString(R.string.general_stations_distance);
 
-                tvStationsOrder.setText(sort);
+                tvStationsOrder.setText(order);
                 mStationList = mAdapter.sortStationList(bStationsOrder);
 
                 break;
@@ -295,7 +340,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
-        log.i("onItemSelected: %s", position);
         switch(position){
             case 0: defaults[0] = "B027"; break; // gasoline
             case 1: defaults[0] = "D047"; break; // diesel

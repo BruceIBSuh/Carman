@@ -71,7 +71,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
     // Constructor
     public ExpServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
-
         super();
 
         this.jsonArray = jsonArray;
@@ -144,7 +143,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         pbAnim.setDuration(1000);
         holder.pb.setMax(maxMileage);
         holder.pb.startAnimation(pbAnim);
-
     }
 
     /*

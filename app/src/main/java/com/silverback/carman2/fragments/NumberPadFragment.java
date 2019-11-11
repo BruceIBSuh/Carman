@@ -82,7 +82,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         tvUnit = localView.findViewById(R.id.unit);
         btnSign = localView.findViewById(R.id.btn_sign);
         btn1 = localView.findViewById(R.id.padButton1);
-        btn2 = localView.findViewById(R.id.padButton2);
+        btn2 = localView.findViewById(R.id.btn_gas_date);
         btn3 = localView.findViewById(R.id.padButton3);
         btn4 = localView.findViewById(R.id.padButton4);
 
@@ -175,7 +175,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
                 number = (isCurrency)?50000:100;
                 break;
 
-            case R.id.padButton2:
+            case R.id.btn_gas_date:
                 number = (isCurrency)?10000:50;
                 break;
 

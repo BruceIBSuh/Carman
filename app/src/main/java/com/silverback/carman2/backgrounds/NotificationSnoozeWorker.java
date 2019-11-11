@@ -35,7 +35,7 @@ public class NotificationSnoozeWorker extends Worker {
          * More research is required.
          */
         AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        final long delay = 1000 * 60 * 5;
+        final long delay = 1000 * 60 * 10;
 
         String providerName = getInputData().getString(Constants.GEO_NAME);
         String providerId = getInputData().getString(Constants.GEO_ID);

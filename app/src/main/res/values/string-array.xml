@@ -12,6 +12,7 @@
         <item>Recent</item>
         <item>Popular</item>
         <item>Info n Tips</item>
+        <item>Auto Club</item>
     </string-array>
 
     <string-array name="tap_board_title">

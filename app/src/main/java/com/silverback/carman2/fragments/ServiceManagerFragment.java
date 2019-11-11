@@ -78,7 +78,7 @@ public class ServiceManagerFragment extends Fragment implements
     private LocationViewModel locationModel;
     private ServiceCenterViewModel svcCenterModel;
     private ServiceCenterTask serviceCenterTask;
-    private Location location, currentLocation;
+    private Location location;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
 
@@ -111,6 +111,8 @@ public class ServiceManagerFragment extends Fragment implements
     private String svcName;
     private String svcComment;
     private String userId;
+    private String geoSvcName, geoSvcId;
+    private long geoTime;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -120,6 +122,19 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // In case the activity is initiated by tabbing the notification, which sent the intent w/
+        // action and extras for the geofance data.
+        if(getActivity().getIntent() != null && getActivity().getIntent().getAction() != null) {
+            String action = getActivity().getIntent().getAction();
+            if(action.equals(Constants.NOTI_GEOFENCE)) {
+                isGeofenceIntent = true;
+                geoSvcName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
+                //geoSvcId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
+                geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
+                log.i("isGeofenceIntent: %s", isGeofenceIntent);
+            }
+        }
 
         if(getArguments() != null) {
             distCode = getArguments().getString("distCode");
@@ -213,18 +228,14 @@ public class ServiceManagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
-
-        //progbar = localView.findViewById(R.id.pb_service_items);
-        //progbar.setVisibility(View.VISIBLE);
 
         relativeLayout = localView.findViewById(R.id.rl_service);
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etServiceName = localView.findViewById(R.id.et_service_provider);
         tvMileage = localView.findViewById(R.id.tv_service_mileage);
-        Button btnDate = localView.findViewById(R.id.btn_date);
+        Button btnDate = localView.findViewById(R.id.btn_svc_date);
         Button btnReg = localView.findViewById(R.id.btn_register);
         btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_total_cost);
@@ -235,7 +246,9 @@ public class ServiceManagerFragment extends Fragment implements
         btnFavorite.setOnClickListener(view -> addServiceFavorite());
 
         svcName = etServiceName.getText().toString();
-        String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
+
+        long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
+        String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), visitTime);
         tvDate.setText(date);
         tvTotalCost.setText("0");
         // Set the mileage value retrieved from SharedPreferences first
@@ -245,6 +258,18 @@ public class ServiceManagerFragment extends Fragment implements
         recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerServiceItems.setHasFixedSize(true);
         //recyclerServiceItems.setAdapter(mAdapter);
+
+        // In case the activity and this fragment are invoked by tabbing the notification
+        if(isGeofenceIntent) {
+            log.i("Handling isGeofenceIntent");
+            etServiceName.setText(geoSvcName);
+            etServiceName.clearFocus();
+            isSvcFavorite = true;
+
+            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            btnDate.setVisibility(View.GONE);
+
+        }
 
         return localView;
     }
@@ -261,8 +286,8 @@ public class ServiceManagerFragment extends Fragment implements
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
 
-        // Notified by TabPagerTask, ServiceItemRunnable of which converts JSONString to JSONArray
-        // of the service items in backgorund,
+        // Notified of the service items by TabPagerTask, ServiceItemRunnable of which converts
+        // JSONString to JSONArray in backgorund,
         adapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
@@ -289,7 +314,9 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Codes should be added in accordance to the progress of the service center db as like
         // in the gas station db.
-        svcCenterModel.getCurrentSVC().observe(getViewLifecycleOwner(), svcData -> {});
+        svcCenterModel.getCurrentSVC().observe(getViewLifecycleOwner(), svcData -> {
+            //checkSvcFavorite(svcData, Constants.SVC);
+        });
 
         // Communcate w/ NumberPadFragment
         fragmentSharedModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
@@ -384,7 +411,7 @@ public class ServiceManagerFragment extends Fragment implements
 
                 break;
 
-            case R.id.btn_date:
+            case R.id.btn_svc_date:
                 break;
 
         }

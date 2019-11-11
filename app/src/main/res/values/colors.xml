@@ -17,6 +17,8 @@
     <color name="settingThemeColor">#009900</color>
     <color name="settingItemThemeColor">#999900</color>
 
+    <color name="boardTabColor">#ADD8E6</color>
+
     <color name="etBorderColor">#A0A0A0</color>
     <color name="etBorderColorFocused">#1EA4FF</color>
 
