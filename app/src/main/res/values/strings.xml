@@ -136,6 +136,9 @@
     <string name="stat_spinner_gas">주유비</string>
     <string name="stat_spinner_service">서비스</string>
 
+    <!--BoardWriteActivity -->
+    <string name="boardwrite_label_title">제 목:</string>
+
     <!--SettingPreferenceActivity-->
     <string name="setting_toolbar_title">차량정보/앱 설정</string>
     <string name="setting_toolbar_menu_add">추가</string>

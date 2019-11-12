@@ -205,19 +205,20 @@ public class GeneralFragment extends Fragment implements
         });
 
         // Retrieve the last gas data set in tvRecentExp.
-        mDB.gasManagerModel().loadLastGaaData().observe(getViewLifecycleOwner(), data -> {
-           log.i("Last gas data: %s, %s", data.stnName, data.dateTime);
+        mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
+            //log.i("Last gas data: %s, %s", data.stnName, data.dateTime);
             String format = getContext().getResources().getString(R.string.date_format_1);
             String won = getString(R.string.unit_won);
             String liter = getString(R.string.unit_liter);
-
-            String strDate = BaseActivity.formatMilliseconds(format, data.dateTime);
-            String name = data.stnName;
-            int mileage = data.mileage;
-            int amount = data.gasAmount;
-            int payment = data.gasPayment;
-            String lastData = strDate + "\n" + name + "\n" + mileage + "\n" + amount + liter + "\n" + payment + won;
-            tvRecentExp.setText(lastData);
+            if(data != null) {
+                String strDate = BaseActivity.formatMilliseconds(format, data.dateTime);
+                String name = data.stnName;
+                int mileage = data.mileage;
+                int amount = data.gasAmount;
+                int payment = data.gasPayment;
+                String lastData = strDate + "\n" + name + "\n" + mileage + "\n" + amount + liter + "\n" + payment + won;
+                tvRecentExp.setText(lastData);
+            }
         });
 
 
@@ -301,7 +302,7 @@ public class GeneralFragment extends Fragment implements
                 tvExpenseSort.setText(sort);
 
                 if(!bExpenseSort) {
-                    mDB.gasManagerModel().loadLastGaaData().observe(getViewLifecycleOwner(), data -> {
+                    mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
                         tvRecentExp.setText(data.stnName);
                     });
                 } else {

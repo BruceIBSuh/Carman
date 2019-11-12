@@ -1,7 +1,9 @@
 package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -47,6 +49,8 @@ public class BillboardActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
         fabWrite.setOnClickListener(view -> {
             log.i("Writing activity");
+            startActivityForResult(new Intent(this, BoardWriteActivity.class), 1000);
+
         });
 
         // Set Toolbar and its title as AppBar
@@ -60,13 +64,16 @@ public class BillboardActivity extends BaseActivity implements
         boardPager.addOnPageChangeListener(this);
         boardTabLayout.setupWithViewPager(boardPager);
 
-
         addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
-
     }
 
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_options_board, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

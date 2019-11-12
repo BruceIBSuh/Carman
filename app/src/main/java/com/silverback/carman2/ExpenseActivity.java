@@ -42,7 +42,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
 
     // Constants
-    private static final int MENU_ITEM_ID = 100;
+    private static final int MENU_ITEM_ID = 1000;
 
     // Objects
     private ViewPager tabPager;
@@ -126,6 +126,13 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setId(View.generateViewId());
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
+        // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
+        // attach it in the top FrameLayout.
+        expensePager.setAdapter(recentPagerAdapter);
+        expensePager.setCurrentItem(0);
+        if(isGeofencing) topFrame.removeAllViews();
+        topFrame.addView(expensePager);
+
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then launch LocationTask to have
         // any near station within MIN_RADIUS, if any.
@@ -138,13 +145,6 @@ public class ExpenseActivity extends BaseActivity implements
 
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
-
-            // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
-            // attach it in the top FrameLayout.
-            expensePager.setAdapter(recentPagerAdapter);
-            expensePager.setCurrentItem(0);
-            if(isGeofencing) topFrame.removeAllViews();
-            topFrame.addView(expensePager);
         });
 
 

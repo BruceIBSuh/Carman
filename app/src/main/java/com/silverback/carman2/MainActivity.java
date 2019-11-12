@@ -50,7 +50,7 @@ public class MainActivity extends BaseActivity implements
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
         Fragment generalFragment = new GeneralFragment();
-        //Fragment boardFragment = new BoardInfoTipsFragment();
+
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         generalFragment.setArguments(bundle);
@@ -108,7 +108,7 @@ public class MainActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_board:
-                startActivity(new Intent(MainActivity.this, BillboardActivity.class));
+                startActivity(new Intent(this, BillboardActivity.class));
                 return true;
 
             case R.id.action_login:
