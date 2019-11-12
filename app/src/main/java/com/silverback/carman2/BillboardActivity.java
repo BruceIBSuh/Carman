@@ -33,6 +33,7 @@ public class BillboardActivity extends BaseActivity implements
     // Fields
     private boolean isTabVisible = false;
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,9 +56,8 @@ public class BillboardActivity extends BaseActivity implements
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle("Hello Billboard");
+        getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
 
         BillboardPagerAdapter pagerAdapter = new BillboardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);

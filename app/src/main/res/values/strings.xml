@@ -136,6 +136,8 @@
     <string name="stat_spinner_gas">주유비</string>
     <string name="stat_spinner_service">서비스</string>
 
+    <!--BillboardActivity-->
+    <string name="billboard_title">카르맨 광장</string>
     <!--BoardWriteActivity -->
     <string name="boardwrite_label_title">제 목:</string>
 
@@ -189,7 +191,7 @@
     <string name="pref_dialog_item_camera">카메라</string>
     <string name="pref_dialog_item_delete">이미지 삭제</string>
     <string name="pref_snackbar_edit_image">먼저 내차 이름을 정해주세요</string>
-
+    <!--SettingPreferenceActivity$DistrictCode-->
     <string name="pref_spinner_sido_seoul">서울시</string>
     <string name="pref_spinner_sido_gyunggi">경기도</string>
     <string name="pref_spinner_sido_gwangwon">강원도</string>

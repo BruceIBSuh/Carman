@@ -75,7 +75,7 @@
         <activity
             android:name=".BoardWriteActivity"
             android:parentActivityName=".BillboardActivity"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustPan|adjustResize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.BillboardActivity" />

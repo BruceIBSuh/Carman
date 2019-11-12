@@ -116,8 +116,7 @@ public class ExpenseActivity extends BaseActivity implements
         tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
 
-        // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
-        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+
 
         // Create ViewPager for the last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
@@ -126,18 +125,10 @@ public class ExpenseActivity extends BaseActivity implements
         expensePager.setId(View.generateViewId());
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
-        // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
-        // attach it in the top FrameLayout.
-        expensePager.setAdapter(recentPagerAdapter);
-        expensePager.setCurrentItem(0);
-        if(isGeofencing) topFrame.removeAllViews();
-        topFrame.addView(expensePager);
-
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then launch LocationTask to have
         // any near station within MIN_RADIUS, if any.
         pagerModel.getPagerAdapter().observe(this, adapter -> {
-
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             tabPager.setCurrentItem(currentPage);
@@ -145,18 +136,27 @@ public class ExpenseActivity extends BaseActivity implements
 
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
+
+            // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
+            // attach it in the top FrameLayout.
+            expensePager.setAdapter(recentPagerAdapter);
+            expensePager.setCurrentItem(0);
+            if(isGeofencing) topFrame.removeAllViews();
+            topFrame.addView(expensePager);
+
+
         });
 
 
     }
-    /*
+
     @Override
     public void onResume(){
         super.onResume();
-        String title = mSettings.getString(Constants.USER_NAME, null);
-        if(title != null) getSupportActionBar().setTitle(title);
+        // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
+        // The task has been suspended by the completion of UIs for lessening the initial loading.
+        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
-     */
 
     @Override
     public void onPause() {

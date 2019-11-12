@@ -5,13 +5,11 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -36,7 +34,7 @@ public class BoardWriteActivity extends BaseActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_board_write);
+        setContentView(R.layout.activity_billboard_write);
 
         Toolbar toolbar = findViewById(R.id.toolbar_board_write);
         statusLayout = findViewById(R.id.vg_status);
@@ -90,23 +88,8 @@ public class BoardWriteActivity extends BaseActivity {
     }
 
     private void animateStatusTitleViews(float actionbarHeight) {
-
-        AnimatorSet animSet = new AnimatorSet();
-
         ObjectAnimator animStatusView = ObjectAnimator.ofFloat(statusLayout, "Y", actionbarHeight);
+        animStatusView.setDuration(1000);
         animStatusView.start();
-        ObjectAnimator animClub = ObjectAnimator.ofFloat(tvClubStatus, "Y", actionbarHeight + 10);
-        /*
-        ObjectAnimator animTitleView = ObjectAnimator.ofFloat(titleView, "Y", titleViewHeight);
-        ObjectAnimator animTitleLabel = ObjectAnimator.ofFloat(tvBoardTitle, "Y", titleViewHeight + 10);
-        ObjectAnimator animTitle = ObjectAnimator.ofFloat(etBoardTitle, "Y", titleViewHeight + 10);
-        animSet.play(animStatusView).with(animClub);
-        animSet.play(animTitleView).with(animTitleLabel).with(animTitle);
-        animSet.play(animStatusView).with(animTitleView);
-
-        animSet.start();
-
-         */
-
     }
 }
