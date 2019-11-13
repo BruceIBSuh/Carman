@@ -4,9 +4,7 @@ import android.os.Bundle;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.preference.ListPreference;
-import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.silverback.carman2.R;
@@ -36,7 +34,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
-        setPreferencesFromResource(R.xml.pref_automaker_model, rootKey);
+        setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
 
         yearList = new ArrayList<>();
@@ -70,7 +68,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         entries = yearList.toArray(new String[LONGEVITY]);
     }
 
-    public List<String> getAutoDataList() {
+    private  List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
         dataList.add(autoMaker.getSummary().toString());
         dataList.add(autoModel.getSummary().toString());

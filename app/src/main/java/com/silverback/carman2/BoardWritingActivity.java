@@ -8,11 +8,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.animation.ObjectAnimator;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,12 +26,24 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman2.adapters.AttachImagesAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BoardWritingActivity extends BaseActivity {
 
@@ -50,7 +64,7 @@ public class BoardWritingActivity extends BaseActivity {
     private View statusView, titleView;
     private TextView tvAutoMaker, tvAutoModel, tvAutoYear;
     private TextView tvBoardTitle, tvClubStatus;
-    private EditText etBoardTitle;
+    private EditText etPostTitle, etPostBody;
     private RecyclerView recyclerImageView;
 
 
@@ -62,24 +76,26 @@ public class BoardWritingActivity extends BaseActivity {
         root = findViewById(R.id.coordinatorLayout);
         Toolbar toolbar = findViewById(R.id.toolbar_board_write);
         statusLayout = findViewById(R.id.vg_status);
-        //statusView = findViewById(R.id.tv_status_automaker);
-        //titleView = findViewById(R.id.view_title);
-        //tvAutoMaker = findViewById(R.id.tv_status_automaker);
-        //tvAutoModel = findViewById(R.id.tv_status_model);
-        //tvAutoYear = findViewById(R.id.tv_status_year);
+        TextView tvAutoMaker = findViewById(R.id.tv_status_automaker);
+        TextView tvAutoModel = findViewById(R.id.tv_status_model);
+        TextView tvAutoYear = findViewById(R.id.tv_status_year);
         TextView tvAttach = findViewById(R.id.btn_attach_image);
-        EditText etTitle = findViewById(R.id.et_board_title);
-        EditText etContent = findViewById(R.id.et_board_body);
+
+        etPostTitle = findViewById(R.id.et_board_title);
+        etPostBody = findViewById(R.id.et_board_body);
         recyclerImageView = findViewById(R.id.vg_recycler_images);
 
-        etTitle.requestFocus();
+        // Animate the status bar
+        animateStatusTitleViews(getActionbarHeight());
+
+        etPostTitle.requestFocus();
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
         tvAttach.setOnClickListener(view -> {
             ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE))
-                    .hideSoftInputFromWindow(etTitle.getWindowToken(), 0);
+                    .hideSoftInputFromWindow(etPostTitle.getWindowToken(), 0);
 
             attachImage();
         });
@@ -90,17 +106,14 @@ public class BoardWritingActivity extends BaseActivity {
             getSupportActionBar().setTitle("");
         }
 
-        // Instantiate the objects
+        // Set the strings fetched from SharedPreferences to the TextViews
+        tvAutoMaker.setText(mSettings.getString("pref_auto_maker", null));
+        tvAutoModel.setText(mSettings.getString("pref_auto_model", null));
+        tvAutoYear.setText(mSettings.getString("pref_auto_year", null));
+
         uriImageList = new ArrayList<>();
-
-
-        animateStatusTitleViews(getActionbarHeight());
-
-
         recyclerImageView.setLayoutManager(new GridLayoutManager(this, 3));
         recyclerImageView.setHasFixedSize(true);
-
-
     }
 
     @Override
@@ -124,6 +137,9 @@ public class BoardWritingActivity extends BaseActivity {
             finish();
 
             return true;
+        } else if(item.getItemId() == MENU_ITEM_ID) {
+            log.i("save button clicked");
+            uploadPost();
         }
 
         return super.onOptionsItemSelected(item);
@@ -225,4 +241,47 @@ public class BoardWritingActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
     }
+
+
+    private void uploadPost() {
+
+        if(!doEmptyCheck()) return;
+
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        String userId = null;
+
+        try (FileInputStream fis = openFileInput("userId");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+            userId = br.readLine();
+            log.i("userID: %s", userId);
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
+
+        if(TextUtils.isEmpty(userId)) return;
+
+
+        Map<String, Object> post = new HashMap<>();
+        post.put("title", etPostTitle.getText().toString());
+        post.put("body", etPostBody.getText().toString());
+        post.put("timestamp", FieldValue.serverTimestamp());
+
+        firestore.collection("board_general").add(post)
+                .addOnSuccessListener(docref -> log.i("upload completed"))
+                .addOnFailureListener(e -> log.e("upload failed: %s", e.getMessage()));
+
+    }
+
+    private boolean doEmptyCheck() {
+        if(TextUtils.isEmpty(etPostTitle.getText())) {
+            Snackbar.make(root, "Title is empty", Snackbar.LENGTH_SHORT).show();
+            return false;
+        } else if(TextUtils.isEmpty(etPostBody.getText())){
+            Snackbar.make(root, "Title is empty", Snackbar.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+
 }
