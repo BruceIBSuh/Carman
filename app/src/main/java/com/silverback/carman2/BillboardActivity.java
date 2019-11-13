@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.viewpager.widget.ViewPager;
@@ -50,7 +49,7 @@ public class BillboardActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
         fabWrite.setOnClickListener(view -> {
             log.i("Writing activity");
-            startActivityForResult(new Intent(this, BoardWriteActivity.class), 1000);
+            startActivityForResult(new Intent(this, BoardWritingActivity.class), 1000);
 
         });
 
@@ -120,9 +119,8 @@ public class BillboardActivity extends BaseActivity implements
 
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
-        log.i("anim:%s", tabEndValue);
 
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEndValue);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "Y", tabEndValue);
         //ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         //slideViewPager.setDuration(1000);

@@ -6,7 +6,7 @@
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.silverback.carman2.BoardWriteActivity">
+    tools:context="com.silverback.carman2.BoardWritingActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_board_write"
@@ -76,7 +76,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/vg_constraint_body"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:padding="8dp">
 
             <TextView
@@ -84,7 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:labelFor="@id/et_write_title"
+                android:labelFor="@id/et_board_title"
                 android:text="@string/boardwrite_label_title"
                 android:textSize="@dimen/mediumText"
                 android:textStyle="bold"
@@ -92,7 +92,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <EditText
-                android:id="@+id/et_write_title"
+                android:id="@+id/et_board_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
@@ -107,10 +107,10 @@
                 tools:ignore="autofill" />
 
             <EditText
-                android:id="@+id/et_wirte_body"
+                android:id="@+id/et_board_body"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:minHeight="150dp"
+                android:minHeight="100dp"
                 android:layout_marginTop="16dp"
                 android:background="@null"
                 android:ems="10"
@@ -119,37 +119,42 @@
                 android:inputType="textMultiLine"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_write_title"
+                app:layout_constraintTop_toBottomOf="@+id/et_board_title"
                 tools:ignore="autofill" />
 
-            <HorizontalScrollView
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/vg_recycler_images"
                 android:layout_width="0dp"
-                android:layout_height="100dp"
-                android:background="#C8C8C8"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_wirte_body" >
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical" />
-            </HorizontalScrollView>
+                app:layout_constraintTop_toBottomOf="@+id/et_board_body" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
 
-    <View
-        android:id="@+id/view"
+    <RelativeLayout
+        android:id="@+id/vg_relative_attach"
         android:layout_width="match_parent"
         android:layout_height="35dp"
-        android:background="#FB9900"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:gravity="center_vertical"
+        android:background="#E0FFFF"
         app:layout_anchor="@id/nestedScrollView"
-        app:layout_anchorGravity="bottom|end" />
+        app:layout_anchorGravity="bottom|end">
+
+        <Button
+            android:id="@+id/btn_attach_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="8dp"
+            android:text="Attach Image"
+            android:textStyle="bold"
+            android:textSize="@dimen/smallText" />
+
+    </RelativeLayout>
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -138,7 +138,7 @@
 
     <!--BillboardActivity-->
     <string name="billboard_title">카르맨 광장</string>
-    <!--BoardWriteActivity -->
+    <!--BoardWritingActivity -->
     <string name="boardwrite_label_title">제 목:</string>
 
     <!--SettingPreferenceActivity-->
