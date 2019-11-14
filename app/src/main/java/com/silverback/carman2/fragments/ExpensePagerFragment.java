@@ -53,7 +53,7 @@ public class ExpensePagerFragment extends Fragment {
     }
     */
 
-    public ExpensePagerFragment(){
+    private ExpensePagerFragment(){
         // Default Constructor. Leave this empty!
     }
 

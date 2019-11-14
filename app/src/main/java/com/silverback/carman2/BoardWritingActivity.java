@@ -3,15 +3,18 @@ package com.silverback.carman2;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.animation.ObjectAnimator;
 import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -21,31 +24,31 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman2.adapters.AttachImagesAdapter;
+import com.silverback.carman2.fragments.BoardChooserDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BoardWritingActivity extends BaseActivity {
+public class BoardWritingActivity extends BaseActivity implements BoardChooserDlgFragment.OnMediaSelectListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWritingActivity.class);
 
@@ -53,6 +56,10 @@ public class BoardWritingActivity extends BaseActivity {
     private static final int MENU_ITEM_ID = 1001;
     private static final int REQUEST_CODE_CAMERA = 1002;
     private static final int REQUEST_CODE_GALLERY = 1003;
+    private static final int REQUEST_CODE_SAMSUNG = 1004;
+
+    public static final int GALLERY = 1;
+    public static final int CAMERA = 2;
 
     // Objects
     private List<Uri> uriImageList;
@@ -97,7 +104,12 @@ public class BoardWritingActivity extends BaseActivity {
             ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE))
                     .hideSoftInputFromWindow(etPostTitle.getWindowToken(), 0);
 
-            attachImage();
+            log.i("Phone maker: %s, %s", Build.MANUFACTURER, Build.MODEL);
+
+            // Pop up the dialog to select which media to use bewteen the camera and gallery, then
+            // create an intent by the selection.
+            DialogFragment dialog = new BoardChooserDlgFragment();
+            dialog.show(getSupportFragmentManager(), "@null");
         });
 
         setSupportActionBar(toolbar);
@@ -139,7 +151,7 @@ public class BoardWritingActivity extends BaseActivity {
             return true;
         } else if(item.getItemId() == MENU_ITEM_ID) {
             log.i("save button clicked");
-            uploadPost();
+            uploadPostToFirestore();
         }
 
         return super.onOptionsItemSelected(item);
@@ -151,40 +163,104 @@ public class BoardWritingActivity extends BaseActivity {
         animStatusView.start();
     }
 
-    private void attachImage() {
-        log.i("Attach Image clicked");
+    // Implements BoardChooserDlgFragment.OnMediaSelectListener that notifies which media
+    // to use for picking images b/w camera and gallery.
+    @Override
+    public void selectMedia(int which) {
+        switch(which) {
+            case GALLERY: // Gallery
+                // Handle SAMSUNG for multi-selection
+                if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
+                    Intent samsungIntent = new Intent("android.intent.action.MULTIPLE_PICK");
+                    samsungIntent.setType("image/*");
+                    PackageManager manager = getApplicationContext().getPackageManager();
+                    List<ResolveInfo> infos = manager.queryIntentActivities(samsungIntent, 0);
+                    if(infos.size() > 0){
+                        samsungIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        startActivityForResult(samsungIntent, REQUEST_CODE_SAMSUNG);
+                    }
+                // General phones other than SAMSUNG
+                } else {
+                    Intent galleryIntent = new Intent();
+                    galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+                    galleryIntent.setType("image/*");
+                    galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                }
 
-        Intent galleryIntent = new Intent();
-        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-        galleryIntent.setType("image/*");
-        galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
 
-        /*
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+                break;
 
-        if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-            log.i("Camera Intent");
-            startActivityForResult(chooser, REQUEST_CODE_CAMERA);
+
+            case CAMERA: // Camera
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+
+                if(cameraIntent.resolveActivity(getPackageManager()) != null) {
+                    log.i("Camera Intent");
+                    startActivityForResult(chooser, REQUEST_CODE_CAMERA);
+                }
+                break;
         }
-
-         */
     }
 
+    /**
+     * Required to make the multi-selection restricted for preventing the DB from overflowing.
+     */
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        /*
+        if(resultCode != RESULT_OK || data == null) return;
+
+        if(requestCode == REQUEST_CODE_SAMSUNG) {
+
+            final Bundle extras = data.getExtras();
+            //int count = extras.getInt("selectedCount");
+            //log.i("Item Count: %s", count);
+            List<String> objList = extras.getStringArrayList("selectedItems");
+
+            // android.net.Uri$HierarchicalUri cannot be cast to java.lang.String
+            // data provided as the content scheme with which you have to use ContentProvider to
+            // access to images
+            for(int i = 0; i < objList.size(); i++) {
+                log.i("Uri of SAMSUNG: %s", objList.get(i));
+                //Uri uri = (Uri)objList.get(i);
+                //uriImageList.add((uri));
+            }
+
+        } else if(requestCode == REQUEST_CODE_GALLERY) {
+
+            if(data.getData() != null) {
+                //Uri uri = data.getData();
+                //log.i("Uri of other phones: %s", uri);
+                //uriImageList.add(uri);
+            } else {
+                ClipData clip = data.getClipData();
+                if(clip != null) {
+                    for(int i = 0; i < clip.getItemCount(); i++) {
+                        ClipData.Item item = clip.getItemAt(i);
+                        uriImageList.add(item.getUri());
+                    }
+                }
+            }
+        }
+
+        imageAdapter = new AttachImagesAdapter(uriImageList);
+        recyclerImageView.setAdapter(imageAdapter);
+        */
 
 
-        log.i("intent data: %s", data);
         try {
             if(requestCode == REQUEST_CODE_GALLERY && resultCode == RESULT_OK && data != null) {
 
+                log.i("Intent: %s", data);
                 String[] filePathColumns = {MediaStore.Images.Media.DATA};
                 List<String> imgEncodedList = new ArrayList<>();
                 String imgEncoded = null;
 
                 // Single selection out of the gallery
+                /*
                 if(data.getData() != null) {
                     log.i("getData");
                     Uri imageUri = data.getData();
@@ -201,54 +277,71 @@ public class BoardWritingActivity extends BaseActivity {
 
                 // Multiple selection out of the gallery
                 } else {
-                    if(data.getClipData() == null) return;
-                    ClipData clipData = data.getClipData();
 
-                    log.i("ClipData: %s", clipData.getItemCount());
-                    for(int i = 0; i < clipData.getItemCount(); i++) {
-                        ClipData.Item item = clipData.getItemAt(i);
-                        Uri imageUri = item.getUri();
-                        log.i("Multiple Uris: %s", imageUri);
-                        uriImageList.add(imageUri);
+                 */
+                //if(data.getClipData() == null) return;
+                ClipData clipData = data.getClipData();
 
-                        Cursor cursor = getContentResolver().query(imageUri, filePathColumns, null, null, null);
-                        if(cursor == null) return;
-                        cursor.moveToFirst();
-
-                        int colIndex = cursor.getColumnIndex(filePathColumns[0]);
-                        imgEncoded = cursor.getString(colIndex);
-                        imgEncodedList.add(imgEncoded);
-                        cursor.close();
-
-                    }
+                log.i("ClipData: %s", clipData.getItemCount());
+                for (int i = 0; i < clipData.getItemCount(); i++) {
+                    ClipData.Item item = clipData.getItemAt(i);
+                    Uri imageUri = item.getUri();
+                    log.i("Multiple Uris: %s", imageUri);
+                    uriImageList.add(imageUri);
                 }
 
+                    /*
+                    Cursor cursor = getContentResolver().query(imageUri, filePathColumns, null, null, null);
+                    if(cursor == null) return;
+                    cursor.moveToFirst();
 
-                imageAdapter = new AttachImagesAdapter(uriImageList);
-                recyclerImageView.setAdapter(imageAdapter);
+                    int colIndex = cursor.getColumnIndex(filePathColumns[0]);
+                    imgEncoded = cursor.getString(colIndex);
+                    imgEncodedList.add(imgEncoded);
+                    cursor.close();
+                    */
+                //}
 
 
+
+            } else if(requestCode == REQUEST_CODE_SAMSUNG && resultCode == RESULT_OK && data != null) {
+
+                final Bundle extras = data.getExtras();
+                //int count = extras.getInt("selectedCount");
+                //log.i("Item Count: %s", count);
+                //List<String> objList = extras.getStringArrayList("selectedItems");
+                log.i("Data: %s", data);
 
             } else {
                 Snackbar.make(root, " Selected no images", Snackbar.LENGTH_SHORT).show();
             }
 
+
+            imageAdapter = new AttachImagesAdapter(uriImageList);
+            recyclerImageView.setAdapter(imageAdapter);
+
         } catch(Exception e) {
             log.e("Exception occurred: %s", e.getMessage());
         }
-
 
         super.onActivityResult(requestCode, resultCode, data);
 
     }
 
 
-    private void uploadPost() {
+    private void uploadPostToFirestore() {
 
         if(!doEmptyCheck()) return;
 
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         String userId = null;
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user != null) {
+            String fireUserId = user.getUid();
+            log.i("User ID: %s", fireUserId);
+
+        }
 
         try (FileInputStream fis = openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
@@ -283,5 +376,7 @@ public class BoardWritingActivity extends BaseActivity {
 
         return true;
     }
+
+
 
 }

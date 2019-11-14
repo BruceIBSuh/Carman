@@ -38,8 +38,6 @@ public class BoardInfoTipsFragment extends Fragment {
         View localView = inflater.inflate(R.layout.fragment_billboard, container, false);
         recyclerView = localView.findViewById(R.id.recycler_billboard);
 
-        mAdapter = new BillboardRecyclerAdapter();
-        recyclerView.setAdapter(mAdapter);
 
         return localView;
     }
