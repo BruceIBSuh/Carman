@@ -12,7 +12,6 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,18 +30,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman2.adapters.AttachImagesAdapter;
+import com.silverback.carman2.adapters.AttachImageAdapter;
 import com.silverback.carman2.fragments.BoardChooserDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +59,7 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
 
     // Objects
     private List<Uri> uriImageList;
-    private AttachImagesAdapter imageAdapter;
+    private AttachImageAdapter imageAdapter;
 
     // UIs
     private CoordinatorLayout root;
@@ -246,7 +242,7 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
             }
         }
 
-        imageAdapter = new AttachImagesAdapter(uriImageList);
+        imageAdapter = new AttachImageAdapter(uriImageList);
         recyclerImageView.setAdapter(imageAdapter);
         */
 
@@ -317,7 +313,7 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
             }
 
 
-            imageAdapter = new AttachImagesAdapter(uriImageList);
+            imageAdapter = new AttachImageAdapter(uriImageList);
             recyclerImageView.setAdapter(imageAdapter);
 
         } catch(Exception e) {

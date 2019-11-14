@@ -12,7 +12,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.adapters.BillboardPagerAdapter;
+import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -28,6 +28,7 @@ public class BillboardActivity extends BaseActivity implements
     private TabLayout boardTabLayout;
     private ViewPager boardPager;
     private FloatingActionButton fabWrite;
+    private BoardPagerAdapter pagerAdapter;
 
     // Fields
     private boolean isTabVisible = false;
@@ -58,7 +59,7 @@ public class BillboardActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        BillboardPagerAdapter pagerAdapter = new BillboardPagerAdapter(getSupportFragmentManager());
+        BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);
         boardPager.addOnPageChangeListener(this);
         boardTabLayout.setupWithViewPager(boardPager);
@@ -98,6 +99,7 @@ public class BillboardActivity extends BaseActivity implements
     }
     @Override
     public void onPageSelected(int position) {
+        log.i("onPageSelected position: %s", position);
         switch(position) {
             case 0:
                 break;

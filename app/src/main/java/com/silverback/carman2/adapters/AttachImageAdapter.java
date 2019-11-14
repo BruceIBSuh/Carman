@@ -5,10 +5,7 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.GridLayout;
-import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
@@ -21,16 +18,16 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
 
-public class AttachImagesAdapter extends RecyclerView.Adapter<AttachImagesAdapter.ImageViewHolder> {
+public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.ImageViewHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(AttachImagesAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(AttachImageAdapter.class);
 
     // Objects
     private Context context;
     private List<Uri> uriImageList;
 
     // Constructor
-    public AttachImagesAdapter(List<Uri> uriList) {
+    public AttachImageAdapter(List<Uri> uriList) {
         uriImageList = uriList;
     }
 
