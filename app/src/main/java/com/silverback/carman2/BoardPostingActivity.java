@@ -16,12 +16,12 @@ import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class BillboardActivity extends BaseActivity implements
+public class BoardPostingActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BillboardActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingActivity.class);
 
     // Objects
     private AppBarLayout appBar;
@@ -37,7 +37,7 @@ public class BillboardActivity extends BaseActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_billboard);
+        setContentView(R.layout.activity_board_posting);
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);

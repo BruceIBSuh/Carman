@@ -347,13 +347,15 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
             log.e("IOException: %s", e.getMessage());
         }
 
-        if(TextUtils.isEmpty(userId)) return;
+        //if(TextUtils.isEmpty(userId)) return;
+        if(userId == null || userId.isEmpty()) return;
 
 
         Map<String, Object> post = new HashMap<>();
         post.put("title", etPostTitle.getText().toString());
         post.put("body", etPostBody.getText().toString());
         post.put("timestamp", FieldValue.serverTimestamp());
+        post.put("userid", userId);
 
         firestore.collection("board_general").add(post)
                 .addOnSuccessListener(docref -> log.i("upload completed"))

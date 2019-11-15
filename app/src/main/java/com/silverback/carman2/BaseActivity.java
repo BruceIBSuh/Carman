@@ -13,8 +13,6 @@ import android.os.Bundle;
 import android.util.TypedValue;
 
 import com.google.android.material.tabs.TabLayout;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
@@ -22,10 +20,6 @@ import com.silverback.carman2.utils.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -303,7 +297,7 @@ public class BaseActivity extends AppCompatActivity {
 
             tabIconList = Arrays.asList(icons);
 
-        } else if(context instanceof BillboardActivity) {
+        } else if(context instanceof BoardPostingActivity) {
 
             log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_billboard_title));
