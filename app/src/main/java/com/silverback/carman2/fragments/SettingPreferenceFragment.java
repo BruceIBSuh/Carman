@@ -39,7 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SettingPreferenceFragment extends PreferenceFragmentCompat {
+public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
@@ -102,9 +102,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         String[] autoProfile = new String[] {autoMaker, autoType, autoModel, autoYear};
         String jsonAutoData = new JSONArray(Arrays.asList(autoProfile)).toString();
-        log.i("json auto data: %s", jsonAutoData);
+        // ShredPreferences doesn't supprot the string array.
         mSettings.edit().putString(Constants.VEHICLE, jsonAutoData).apply();
-        autoPref.setSummary(String.format("%s, %s, %s", autoMaker, autoModel, autoYear));
+        autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
 
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
@@ -214,7 +214,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     }
 
-    // Referenced by OnSelectImageMedia callback when selecting the deletion item in order to remove
+    // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon.
     public Preference getCropImagePreference() {
         return cropImagePreference;

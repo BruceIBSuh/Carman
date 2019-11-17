@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -34,6 +36,7 @@ public class BoardPostDialogFragment extends DialogFragment {
 
     // Objects
     private FirebaseFirestore firestore;
+    private FirestoreViewModel firestoreModel;
     private SimpleDateFormat sdf;
     private String userId;
 
@@ -41,13 +44,17 @@ public class BoardPostDialogFragment extends DialogFragment {
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firestore = FirebaseFirestore.getInstance();
+        firestoreModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -56,26 +63,25 @@ public class BoardPostDialogFragment extends DialogFragment {
         ImageButton btn = localView.findViewById(R.id.imgbtn_dismiss);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
         TextView tvUserName = localView.findViewById(R.id.tv_username);
+        TextView tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
         TextView tvContent = localView.findViewById(R.id.tv_posting_body);
         btn.setOnClickListener(view -> dismiss());
 
-        if(getArguments() != null) {
-            tvTitle.setText(getArguments().getString("title"));
-            tvDate.setText(getArguments().getString("postDate"));
-            tvContent.setText(getArguments().getString("body"));
-            userId = getArguments().getString("userId");
-        }
+        // Get the post result queried from the board_general collection in Firestore
+        firestoreModel.getPostSnapshot().observe(getViewLifecycleOwner(), snapshot -> {
+            log.i("FirestoreViewModel snapshot: %s", snapshot.getString("title"));
+            tvTitle.setText(snapshot.getString("title"));
+            tvContent.setText(snapshot.getString("body"));
+            tvDate.setText(sdf.format(snapshot.getDate("timestamp")));
+        });
 
-        // Query the username and auto info from the users collection with the user id
-        firestore.collection("users").document(userId).get().addOnSuccessListener(snapshot -> {
-            String username = snapshot.getString("user_name");
-            tvUserName.setText(username);
+        // Get the user result queried from the "users" collection in Firestore.
+        firestoreModel.getUserSnapshot().observe(getViewLifecycleOwner(), snapshot -> {
+            tvUserName.setText(snapshot.getString("user_name"));
+            tvAutoInfo.setText(snapshot.getString("auto_maker"));
+        });
 
-        }).addOnFailureListener(e -> {});
-
-
-        // Inflate the layout for this fragment
         return localView;
     }
 

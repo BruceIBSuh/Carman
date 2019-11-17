@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.LoadImageViewModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
@@ -141,8 +142,6 @@ public class ThreadManager {
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
-
-
 
         // Instantiates ThreadPoolExecutor
         //Log.i(LOG_TAG, "NUMBER_OF_CORES: " + NUMBER_OF_CORES);
@@ -301,6 +300,7 @@ public class ThreadManager {
 
                 msg.sendToTarget();
                 break;
+
 
             default:
                 msg.sendToTarget();
@@ -501,21 +501,8 @@ public class ThreadManager {
         return imageTask;
     }
 
-    /*
-    public static FirestoreTask startFirestoreFavoriteTask(
-            List<FavoriteProviderEntity> favoriteList, FirestoreViewModel model, int category) {
 
-        FirestoreTask firestoreTask = (FirestoreTask)sInstance.mTaskWorkQueue.poll();
-        if(firestoreTask == null) firestoreTask = new FirestoreTask();
-
-        firestoreTask.initFirestoreTask(favoriteList, model, category);
-        sInstance.mDownloadThreadPool.execute(firestoreTask.getFirestoreRunnable());
-
-        return firestoreTask;
-    }
-    */
-
-    /*
+        /*
      * Recycles tasks by calling their internal recycle() method and then putting them back into
      * the task queue.
      */

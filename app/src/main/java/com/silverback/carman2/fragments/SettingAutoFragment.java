@@ -57,7 +57,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         //getFragmentManager().popBackStack();
-        getAutoDataList();
+        //getAutoDataList();
         return super.onOptionsItemSelected(item);
 
     }
@@ -71,6 +71,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     private  List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
         dataList.add(autoMaker.getSummary().toString());
+        dataList.add(autoType.getSummary().toString());
         dataList.add(autoModel.getSummary().toString());
         dataList.add(autoYear.getSummary().toString());
 

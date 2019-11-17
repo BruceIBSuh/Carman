@@ -324,20 +324,13 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
 
     }
 
-
+    @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
-
         if(!doEmptyCheck()) return;
 
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         String userId = null;
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if(user != null) {
-            String fireUserId = user.getUid();
-            log.i("User ID: %s", fireUserId);
-
-        }
 
         try (FileInputStream fis = openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
@@ -350,16 +343,29 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
         //if(TextUtils.isEmpty(userId)) return;
         if(userId == null || userId.isEmpty()) return;
 
-
         Map<String, Object> post = new HashMap<>();
         post.put("title", etPostTitle.getText().toString());
         post.put("body", etPostBody.getText().toString());
         post.put("timestamp", FieldValue.serverTimestamp());
-        post.put("userid", userId);
+        post.put("cnt_comment", 0);
+        post.put("cnt_compathy", 0);
+        post.put("user_id", userId);
 
-        firestore.collection("board_general").add(post)
-                .addOnSuccessListener(docref -> log.i("upload completed"))
-                .addOnFailureListener(e -> log.e("upload failed: %s", e.getMessage()));
+        // Query the user data with the retrieved user id.
+        firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
+            String userName = document.getString("user_name");
+            String userPic = document.getString("user_pic");
+            if(!userName.isEmpty()) post.put("user_name", userName);
+            if(!userPic.isEmpty()) post.put("user_pic", userPic);
+
+            // Upload the post along with the queried user data, which may prevent latency to load
+            // the user data if the post retrieves the user data from different collection.
+            firestore.collection("board_general").add(post)
+                    .addOnSuccessListener(docref -> log.i("upload completed"))
+                    .addOnFailureListener(e -> log.e("upload failed: %s", e.getMessage()));
+        });
+
+
 
     }
 

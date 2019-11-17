@@ -23,6 +23,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
@@ -30,6 +31,8 @@ import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LoadImageViewModel;
+import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ConnectNaviHelper;
 import com.silverback.carman2.utils.Constants;
 
@@ -42,7 +45,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
-    //private StationInfoTask stationInfoTask;
+    private StationInfoTask stationInfoTask;
     private FirebaseStorage storage;
     private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
@@ -148,41 +151,18 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         });
 
-        // Read comments on gas stations
-        firestore.collection("gas_eval")
-                .document(stnId)
-                .collection("comments")
-                .orderBy("timestamp", Query.Direction.DESCENDING) //descending ordered query based on timestamp.
-                .get().addOnCompleteListener(task -> {
+        firestore.collection("gas_eval").document(stnId).collection("comments")
+                .orderBy("timestamp", Query.Direction.DESCENDING).get()
+                .addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         List<DocumentSnapshot> snapshotList = new ArrayList<>();
                         for(DocumentSnapshot document : task.getResult()) {
-                            log.i("Comments: %s, %s", document.get("comments"), document.get("name"));
                             snapshotList.add(document);
-
-                            /*
-                            final String userid = document.getId();
-                            storage.getReference().child("images/" + userid + "/profile.jpg").getDownloadUrl()
-                                    .addOnSuccessListener(uri -> {
-                                        log.i("Image Uri: %s", uri);
-                                        ThreadManager.downloadImageTask(this, imgPos, uri.toString(), imageModel);
-
-
-                                    }).addOnFailureListener(e -> log.e("Download failed"));
-
-                            imgPos++;
-                            */
                         }
-
-                        commentAdapter = new CommentRecyclerAdapter(this, snapshotList);
+                        commentAdapter = new CommentRecyclerAdapter(snapshotList);
                         recyclerComments.setAdapter(commentAdapter);
-
-                    } else {
-                        log.e("task failed: %s", task.getException());
                     }
-
-
-        });
+                }).addOnFailureListener(e -> {});
 
         /*
         imageModel.getDownloadImage().observe(this, sparseArray -> {
@@ -230,7 +210,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         fabNavi.setOnClickListener(view ->
                 naviHelper = new ConnectNaviHelper(StationMapActivity.this, stnName, longitude, latitude)
         );
-        */
+         */
+
 
 
     }

@@ -15,8 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.silverback.carman2.R;
@@ -33,37 +36,22 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
     // Objects
     private Context context;
     private FirebaseFirestore firestore;
-    private FirebaseStorage storage;
-    //private LoadImageViewModel viewModel;
-    private StorageReference storageRef;
     private List<DocumentSnapshot> snapshotList;
-    //private RoundedBitmapDrawable drawable;
-
-    // UIs
-    //private TextView tvComment;
-    //private ImageView imgProfile;
 
     // Constructor
-    public CommentRecyclerAdapter(Context context, List<DocumentSnapshot> snapshotList) {
-            //Context context, List<DocumentSnapshot> snapshotList, LoadImageViewModel viewModel){
-
-        this.context = context;
+    public CommentRecyclerAdapter(List<DocumentSnapshot> snapshotList) {
         this.snapshotList = snapshotList;
-        //this.viewModel = viewModel;
-        //firestore = FirebaseFirestore.getInstance();
-        //storage = FirebaseStorage.getInstance();
-        //storageRef = storage.getReference();
-
+        firestore = FirebaseFirestore.getInstance();
     }
 
 
     @NonNull
     @Override
     public CommentListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        this.context = parent.getContext();
+
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_comments, parent, false);
-
-        //imgProfile = cardView.findViewById(R.id.img_profile);
 
         return new CommentListHolder(cardView);
     }
@@ -71,26 +59,13 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
     @Override
     public void onBindViewHolder(@NonNull CommentListHolder holder, int position) {
 
-        final String userid = snapshotList.get(position).getId();
-        final String imagePath = "images/" + userid + "/profile.jpg";
-
-        //storage.getReference().child("images/" + userid + "/profile.jpg").getDownloadUrl()
-        FirebaseStorage.getInstance().getReference().child(imagePath).getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    log.i("Image Uri: %s", uri);
-                    //ThreadManager.downloadImageTask(context, position, uri.toString(), viewModel);
-                    /*
-                    RequestOptions myOptions = new RequestOptions().fitCenter().override(50, 50).circleCrop();
-                    Glide.with(context)
-                            .asBitmap()
-                            .load(uri)
-                            .apply(myOptions)
-                            .into(imgProfile);
-                    */
-                    holder.bindImage(uri);
-
-
-                }).addOnFailureListener(e -> log.e("Download failed"));
+        final String userId = snapshotList.get(position).getId();
+        firestore.collection("users").document(userId).get().addOnSuccessListener(snapshot -> {
+            if(snapshot != null && snapshot.exists()) {
+                String strUserPic = snapshot.getString("user_pic");
+                if (!strUserPic.isEmpty()) holder.bindImage(Uri.parse(strUserPic));
+            }
+        }).addOnFailureListener(e -> {});
 
         holder.bindToComments(snapshotList.get(position));
     }
@@ -116,7 +91,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
 
     @Override
     public int getItemCount() {
-        //log.i("snapshotlist: %s", snapshotList.size());
+        log.i("snapshotlist: %s", snapshotList.size());
         return snapshotList.size();
     }
 
