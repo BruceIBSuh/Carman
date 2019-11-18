@@ -6,7 +6,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,19 +21,12 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FirebaseStorage;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.CommentRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.LoadImageViewModel;
-import com.silverback.carman2.threads.StationInfoTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ConnectNaviHelper;
-import com.silverback.carman2.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +37,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
-    private StationInfoTask stationInfoTask;
-    private FirebaseStorage storage;
     private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
     private double longitude, latitude;
@@ -56,9 +46,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     // UIs
     private TextView tvName, tvAddrs, tvCarwash, tvService,tvCVS;
 
-    // Fields
     private String stnName;
-    private int imgPos;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -71,8 +59,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         log.i("Station ID: %s", stnId);
 
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
-        //LoadImageViewModel imageModel = ViewModelProviders.of(this).get(LoadImageViewModel.class);
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         Toolbar mapToolbar = findViewById(R.id.tb_map);
@@ -109,6 +95,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
          * To be notified when the task fails, attach on an OnFailureListener
          * To handle success and failure in the same listener, attach an OnCompleteListener.
          */
+        // Retrive the gas station data from Firestore with the station id.
         firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
@@ -122,6 +109,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                             getString(R.string.map_value_yes):getString(R.string.map_value_no);
 
                     // Set the String values to TextViews
+                    stnName = snapshot.getString("stn_name");
                     tvName.setText(snapshot.getString("stn_name"));
                     tvAddrs.setText(String.format("%s%15s", snapshot.getString("new_addrs"), snapshot.getString("phone")));
                     tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), carwash));
@@ -131,7 +119,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                     xCoord = snapshot.getDouble("katec_x");
                     yCoord = snapshot.getDouble("katec_y");
 
-                    // Convert KATEC to longitude and latitude
+                    // Convert KATEC to longitude and latitude to locate the station in the Google map.
                     GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
                     GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
                     longitude = in_pt.getX();
@@ -151,6 +139,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         });
 
+        // Retrive comments on the gas station from "comments" collection which is contained in
+        // a station document.
         firestore.collection("gas_eval").document(stnId).collection("comments")
                 .orderBy("timestamp", Query.Direction.DESCENDING).get()
                 .addOnCompleteListener(task -> {
@@ -159,52 +149,12 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                         for(DocumentSnapshot document : task.getResult()) {
                             snapshotList.add(document);
                         }
+
                         commentAdapter = new CommentRecyclerAdapter(snapshotList);
                         recyclerComments.setAdapter(commentAdapter);
                     }
                 }).addOnFailureListener(e -> {});
-
         /*
-        imageModel.getDownloadImage().observe(this, sparseArray -> {
-            commentAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray.valueAt(0));
-        });
-        */
-
-        /*
-         * RETRIEVE THE DETAILED STATION INFO DIRECTLY FROM OPINET, WHICH HAS BEEN ALREADY PERFORMED
-         * WHEN THE NEAR STATIONS WERE FETCHED, SETTING NEW STATION INFO TO FIRESTORE.
-         * REQUIRED TO REMOVE STATIONINFOTASK, STATIONINFORUNNABLE, FIRESTOREUPDATERUNNABLE.
-         */
-
-        /*
-        // Initiate the worker thread to retrieve station info.
-        stationInfoTask = ThreadManager.startStationInfoTask(stnListModel, stnName, stnId);
-        // Retrieve extra station info from the result of StationIntoTask via ViewModel.
-        stnListModel.getStationInfoLiveData().observe(this, stnInfo -> {
-            tvName.setText(stnName);
-            tvAddrs.setText(String.format("%s, %15s", stnInfo.getNewAddrs(), stnInfo.getTelNo()));
-            tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), stnInfo.getIsCarWash()));
-            tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), stnInfo.getIsService()));
-            tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), stnInfo.getIsCVS()));
-            log.i("Station Info: %s %s %s %s", stnInfo.getNewAddrs(), stnInfo.getIsCarWash(), stnInfo.getIsService(), stnInfo.getIsCVS());
-
-            xCoord = Double.valueOf(stnInfo.getXcoord()); //KATEC
-            yCoord = Double.valueOf(stnInfo.getYcoord());
-
-            // Convert KATEC to longitude and latitude
-            GeoPoint katec_pt = new GeoPoint(xCoord, yCoord);
-            GeoPoint in_pt = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katec_pt);
-            longitude = in_pt.getX();
-            latitude = in_pt.getY();
-
-            // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                    .findFragmentById(R.id.google_map);
-
-            if(mapFragment != null) mapFragment.getMapAsync(this);
-
-        });
-
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
         // KakaoNavi as an installed app is first applied.
         fabNavi.setOnClickListener(view ->
@@ -216,17 +166,16 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onResume() {
         super.onResume();
 
-        String title = mSettings.getString(Constants.USER_NAME, null);
+        //String title = mSettings.getString(Constants.USER_NAME, null);
         //if(title != null) getSupportActionBar().setTitle(title);
 
         // When returning from the navigation, the navigation instance should be killed and garbage
         // collected.
-        if(naviHelper != null) naviHelper = null;
+        //if(naviHelper != null) naviHelper = null;
     }
 
     @Override

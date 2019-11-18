@@ -26,8 +26,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.adapters.AttachImageAdapter;
@@ -78,7 +76,7 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
 
         root = findViewById(R.id.coordinatorLayout);
         Toolbar toolbar = findViewById(R.id.toolbar_board_write);
-        statusLayout = findViewById(R.id.vg_status);
+        statusLayout = findViewById(R.id.vg_constraint_status);
         TextView tvAutoMaker = findViewById(R.id.tv_status_automaker);
         TextView tvAutoModel = findViewById(R.id.tv_status_model);
         TextView tvAutoYear = findViewById(R.id.tv_status_year);

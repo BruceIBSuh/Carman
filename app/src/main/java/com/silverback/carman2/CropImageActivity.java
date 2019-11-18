@@ -54,7 +54,7 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
-        mImageView = findViewById(R.id.img_profile);
+        mImageView = findViewById(R.id.img_userpic);
         drawView = findViewById(R.id.view_custom_drawEditorView);
         Button btnConfirm = findViewById(R.id.btn_editor_confirm);
         Button btnCancel = findViewById(R.id.btn_editor_cancel);

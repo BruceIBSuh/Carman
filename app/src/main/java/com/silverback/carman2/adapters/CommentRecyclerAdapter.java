@@ -15,13 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -104,7 +99,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
 
         CommentListHolder(CardView cardView) {
             super(cardView);
-            imgProfile = cardView.findViewById(R.id.img_profile);
+            imgProfile = cardView.findViewById(R.id.img_userpic);
             tvNickname = cardView.findViewById(R.id.tv_nickname);
             tvComments = cardView.findViewById(R.id.tv_comments);
             tvTimestamp = cardView.findViewById(R.id.tv_timestamp);

@@ -6,60 +6,109 @@
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
     tools:context="com.silverback.carman2.BoardWritingActivity">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar_board_write"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/vg_constraint_top"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/bgToolbar"
-        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        android:elevation="2dp"
-        app:layout_insetEdge="top"
-        app:titleTextColor="#FFFFFF" />
+        android:background="@color/colorPrimary"
+        android:elevation="2dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/vg_constraint_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:background="@drawable/bg_service_subtitle"
-        android:elevation="1dp"
-        app:layout_insetEdge="top" >
-
-        <TextView
-            android:id="@+id/tv_status_automaker"
+        <ImageButton
+            android:id="@+id/btn_dismiss"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:textSize="@dimen/smallText"
+            android:layout_marginStart="8dp"
+            android:background="@android:drawable/btn_dialog"
+            android:contentDescription="@null"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/tv_status_model"
+        <ImageButton
+            android:id="@+id/btn_upload"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_toEndOf="@id/tv_status_automaker"
-            android:textSize="@dimen/smallText"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_status_automaker"
-            app:layout_constraintStart_toEndOf="@+id/tv_status_automaker"
-            app:layout_constraintTop_toTopOf="@+id/tv_status_automaker" />
+            android:layout_marginEnd="8dp"
+            android:background="@android:drawable/ic_menu_save"
+            android:contentDescription="@null"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/tv_status_year"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_toEndOf="@id/tv_status_model"
-            android:textSize="@dimen/smallText"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_status_model"
-            app:layout_constraintStart_toEndOf="@+id/tv_status_model"
-            app:layout_constraintTop_toTopOf="@+id/tv_status_model" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <HorizontalScrollView
+        android:id="@+id/scrollview_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="37dp"
+        app:layout_insetEdge="top">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/vg_constraint_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:elevation="1dp"
+            android:padding="8dp">
+
+            <CheckBox
+                android:id="@+id/chkbox_general"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="General"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <CheckBox
+                android:id="@+id/chkbox_maker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Automaker"
+                app:layout_constraintBottom_toBottomOf="@+id/chkbox_general"
+                app:layout_constraintStart_toEndOf="@+id/chkbox_general"
+                app:layout_constraintTop_toTopOf="@+id/chkbox_general"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <CheckBox
+                android:id="@+id/chkbox_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="AutoType"
+                app:layout_constraintBottom_toBottomOf="@+id/chkbox_maker"
+                app:layout_constraintStart_toEndOf="@+id/chkbox_maker"
+                app:layout_constraintTop_toTopOf="@+id/chkbox_maker" />
+
+            <CheckBox
+                android:id="@+id/chkbox_model"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="AutoModel"
+                app:layout_constraintBottom_toBottomOf="@+id/chkbox_type"
+                app:layout_constraintStart_toEndOf="@+id/chkbox_type"
+                app:layout_constraintTop_toTopOf="@+id/chkbox_type" />
+
+            <CheckBox
+                android:id="@+id/chkbox_year"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="AutoYear"
+                app:layout_constraintBottom_toBottomOf="@+id/chkbox_model"
+                app:layout_constraintStart_toEndOf="@+id/chkbox_model"
+                app:layout_constraintTop_toTopOf="@+id/chkbox_model" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </HorizontalScrollView>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
@@ -67,6 +116,7 @@
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:scrollbars="vertical"
+        android:elevation="1dp"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
         app:layout_dodgeInsetEdges="top" >
 
@@ -156,4 +206,3 @@
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

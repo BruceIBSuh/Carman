@@ -2,7 +2,6 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="2dp"
@@ -14,7 +13,7 @@
         android:padding="10dp">
 
         <ImageView
-            android:id="@+id/img_profile"
+            android:id="@+id/img_userpic"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:layout_marginTop="3dp"
@@ -28,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:textSize="@dimen/mediumText"
-            cardview:layout_constraintStart_toEndOf="@+id/img_profile"
+            cardview:layout_constraintStart_toEndOf="@+id/img_userpic"
             cardview:layout_constraintTop_toTopOf="parent" />
 
         <TextView
@@ -46,7 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             cardview:layout_constraintEnd_toEndOf="parent"
-            cardview:layout_constraintStart_toStartOf="@+id/img_profile"
+            cardview:layout_constraintStart_toStartOf="@+id/img_userpic"
             cardview:layout_constraintTop_toBottomOf="@+id/tv_timestamp" />
 
         <RatingBar style="?android:attr/ratingBarStyleSmall"
