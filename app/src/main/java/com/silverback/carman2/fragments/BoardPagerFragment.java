@@ -20,6 +20,7 @@ import com.silverback.carman2.adapters.BoardRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.text.SimpleDateFormat;
@@ -36,6 +37,7 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private FirestoreViewModel fireModel;
+    private FragmentSharedModel fragmentModel;
     private BoardRecyclerAdapter recyclerAdapter;
     private SimpleDateFormat sdf;
     private int page;
@@ -59,7 +61,8 @@ public class BoardPagerFragment extends Fragment implements
         if(getActivity() == null) return;
 
         firestore = FirebaseFirestore.getInstance();
-        fireModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
+        //fireModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -103,6 +106,17 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         return localView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle bundle) {
+        super.onActivityCreated(bundle);
+
+        if(getActivity() == null) return;
+        fragmentModel.getNewPosting().observe(getActivity(), isPosting -> {
+            log.i("new positing: %s", isPosting);
+            //recyclerAdapter.notifyItemChanged(0);
+        });
     }
 
 

@@ -26,6 +26,9 @@ public class Constants {
     // ExpensePagerFragment max pages of ExpRecentPagerAdapter
     public static final int NUM_RECENT_PAGES = 5;
 
+    // Limit of the images attached with the post.
+    public static final int MAX_ATTACHED_IMAGE = 6;
+
     // File names
     public static final String FILE_CACHED_AVG_PRICE = "AvgPrice";
     public static final String FILE_CACHED_SIDO_PRICE = "SidoPrice";

@@ -51,9 +51,16 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
     }
 
     @Override
+    public void onBindViewHolder(@NonNull ImageViewHolder holder, int position, @NonNull List<Object> payloads) {
+        log.i("Partial Binding");
+        holder.bindImageToHolder(uriImageList.get(position));
+    }
+
+    @Override
     public int getItemCount() {
         return uriImageList.size();
     }
+
 
     class ImageViewHolder extends RecyclerView.ViewHolder {
 

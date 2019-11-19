@@ -28,8 +28,12 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> favoriteStnId;
     private MutableLiveData<Integer> imageItemSelected;
 
+    private MutableLiveData<Integer> imageChooser;
+
 
     private MutableLiveData<String> strData;
+
+    private MutableLiveData<Boolean> newPosting;
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -123,6 +127,21 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<String> getFragmentStringData() {
         if(strData == null) strData = new MutableLiveData<>();
         return strData;
+    }
+
+
+    // Communicate b/w BoardWriteFragment and BoardChooserDlgFragme to notify which image chooser
+    // out of camera or gallery is selected.
+    public MutableLiveData<Integer> getImageChooser() {
+        if(imageChooser == null) imageChooser = new MutableLiveData<>();
+        return imageChooser;
+    }
+
+    // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardPostingActivity
+    // cocntains.
+    public MutableLiveData<Boolean> getNewPosting() {
+        if(newPosting == null) newPosting = new MutableLiveData<>();
+        return newPosting;
     }
 
 

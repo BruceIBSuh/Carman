@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BoardWritingActivity extends BaseActivity implements BoardChooserDlgFragment.OnMediaSelectListener {
+public class BoardWritingActivity extends BaseActivity {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWritingActivity.class);
 
@@ -157,8 +157,9 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
         animStatusView.start();
     }
 
-    // Implements BoardChooserDlgFragment.OnMediaSelectListener that notifies which media
+    // Implements BoardChooserDlgFragment.OnImageChooserListener that notifies which media
     // to use for picking images b/w camera and gallery.
+    /*
     @Override
     public void selectMedia(int which) {
         switch(which) {
@@ -197,6 +198,8 @@ public class BoardWritingActivity extends BaseActivity implements BoardChooserDl
                 break;
         }
     }
+
+     */
 
     /**
      * Required to make the multi-selection restricted for preventing the DB from overflowing.

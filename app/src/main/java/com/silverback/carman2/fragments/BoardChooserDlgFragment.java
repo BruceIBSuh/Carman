@@ -9,12 +9,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.BoardWritingActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-
+import com.silverback.carman2.models.FragmentSharedModel;
 
 
 /**
@@ -26,16 +27,25 @@ public class BoardChooserDlgFragment extends DialogFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardChooserDlgFragment.class);
 
 
-    private OnMediaSelectListener mListener;
+    //private OnImageChooserListener mListener;
+    private FragmentSharedModel fragmentModel;
 
-    public interface OnMediaSelectListener {
+    /*
+    public interface OnImageChooserListener {
         void selectMedia(int which);
     }
+    */
 
     public BoardChooserDlgFragment() {
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+    }
 
     @SuppressWarnings("ConstantConditions")
     @NonNull
@@ -48,13 +58,15 @@ public class BoardChooserDlgFragment extends DialogFragment {
 
         tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
-            mListener.selectMedia(BoardWritingActivity.GALLERY);
+            //mListener.selectMedia(BoardWritingActivity.GALLERY);
+            fragmentModel.getImageChooser().setValue(BoardWritingActivity.GALLERY);
             dismiss();
         });
 
         tvCamera.setOnClickListener(view -> {
             log.i("Camera selected");
-            mListener.selectMedia(BoardWritingActivity.CAMERA);
+            //mListener.selectMedia(BoardWritingActivity.CAMERA);
+            fragmentModel.getImageChooser().setValue(BoardWritingActivity.CAMERA);
             dismiss();
         });
 
@@ -65,16 +77,19 @@ public class BoardChooserDlgFragment extends DialogFragment {
         return builder.create();
     }
 
-    // Override the Fragment.onAttach() method to instantiate the OnMediaSelectListener
+    // Override the Fragment.onAttach() method to instantiate the OnImageChooserListener
+    /*
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
 
         try {
-            mListener = (OnMediaSelectListener) context;
+            mListener = (OnImageChooserListener) context;
         } catch(ClassCastException e) {
-            throw new ClassCastException(getActivity().toString() + "must implement OnMediaSelectListener");
+            throw new ClassCastException(getActivity().toString() + "must implement OnImageChooserListener");
         }
     }
+
+     */
 
 }

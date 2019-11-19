@@ -138,8 +138,9 @@
 
     <!--BoardPostingActivity-->
     <string name="billboard_title">카르맨 광장</string>
-    <!--BoardWritingActivity -->
+    <!--BoardPsotingActivity$BoardWriteFragment -->
     <string name="boardwrite_label_title">제 목:</string>
+    <string name="board_msg_image">이미지 첨부는 6개까지 가능합니다</string>
 
     <!--SettingPreferenceActivity-->
     <string name="setting_toolbar_title">차량정보/앱 설정</string>

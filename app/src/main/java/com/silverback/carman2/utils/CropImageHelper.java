@@ -194,4 +194,7 @@ public class CropImageHelper {
         byte[] decodeBytes = android.util.Base64.decode(input, android.util.Base64.DEFAULT);
         return BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.length);
     }
+
+
+
 }

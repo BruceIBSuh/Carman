@@ -25,6 +25,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 
 public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BoardItemHolder> {
@@ -57,8 +58,8 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         this.querySnapshot = querySnapshot;
         mListener = listener;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        firestore = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
+        //firestore = FirebaseFirestore.getInstance();
+        //storage = FirebaseStorage.getInstance();
     }
 
 
@@ -108,8 +109,21 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     }
 
+
+    @Override
+    public void onBindViewHolder(@NonNull BoardItemHolder holder, int position, @NonNull List<Object> payloads) {
+        log.i("Partial Binding of BoardPosting");
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+        } else {
+
+        }
+    }
+
+
     @Override
     public int getItemCount() {
+        log.i("Item Count: %s", querySnapshot.size());
         return querySnapshot.size();
     }
 

@@ -146,5 +146,4 @@ public class BoardPostingActivity extends BaseActivity implements
         return mSettings;
     }
 
-
 }
