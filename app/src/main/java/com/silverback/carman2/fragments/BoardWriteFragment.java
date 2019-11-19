@@ -52,6 +52,8 @@ import com.silverback.carman2.adapters.AttachImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.threads.BitmapResizeTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.BufferedReader;
@@ -90,6 +92,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     private FragmentSharedModel fragmentModel;
     private AttachImageAdapter imageAdapter;
     private List<Uri> uriImageList;
+    private BitmapResizeTask bitmapTask;
 
 
     // UIs
@@ -172,7 +175,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         // Create RecyclerView with attched pictures which are handled in onActivityResult()
         recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
-        //recyclerImageView.setHasFixedSize(true);
+        //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
         imageAdapter = new AttachImageAdapter(uriImageList);
         recyclerImageView.setAdapter(imageAdapter);
 
@@ -216,6 +219,8 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
+
+        // Notified of which chooser to select in BoardChooserDlgFragment
         fragmentModel.getImageChooser().observe(getActivity(), chooser -> {
             log.i("FragmentSharedModel chooser: %s", chooser);
 
@@ -266,19 +271,13 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode != RESULT_OK || data == null) return;
 
+        if(resultCode != RESULT_OK || data == null) return;
         switch(requestCode) {
-            case REQUEST_CODE_SAMSUNG:
-                if(data.getData() != null) {
-                    log.i("Uri from Samsung: %s", data.getData());
-                }
-                break;
 
             case REQUEST_CODE_GALLERY:
                 if(data.getData() != null) {
                     Uri uri = data.getData();
-                    log.i("Uri of other phones: %s", uri);
                     uriImageList.add(uri);
                 }
                 break;
@@ -287,13 +286,14 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
                 break;
         }
 
-        // Partial binding to show the image.
-        log.i("uriImageList size: %s", uriImageList.size());
-        int position = uriImageList.size() - 1;
-        imageAdapter.notifyItemInserted(position);
+        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
+        // additional pics.
+        final int position = uriImageList.size() - 1;
+        imageAdapter.notifyItemInserted(position);//
 
         // Resize the image
-        handleAttachedBitmap(uriImageList.get(position));
+        //handleAttachedBitmap(uriImageList.get(position));
+        bitmapTask = ThreadManager.startBitmapResizeTask(getContext(), uriImageList.get(position));
 
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -378,17 +378,13 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
 
-        try (InputStream is = getActivity().getContentResolver().openInputStream(uri)) {
+        try (InputStream is = getContext().getApplicationContext().getContentResolver().openInputStream(uri)) {
 
-            BitmapFactory.decodeStream(is, new Rect(20, 20, 20, 20), options);
+            BitmapFactory.decodeStream(is, new Rect(10, 10, 10, 10), options);
             int imgWidth = options.outWidth;
             int imgHeight = options.outHeight;
             log.i("Dimension: %s, %s", imgWidth, imgHeight);
-            int inSampleSize = calculateInSampleSize(options, 100, 100);
-            log.i("inSampleSize: %s", inSampleSize);
-
-            options.inJustDecodeBounds = false;
-
+            options.inSampleSize = calculateInSampleSize(options, 100, 100);
 
         } catch(IOException e) {
             log.e("IOException: %s",e.getMessage());

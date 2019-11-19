@@ -10,11 +10,10 @@ import androidx.lifecycle.ViewModel;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class LoadImageViewModel extends ViewModel {
-
-    private static final LoggingHelper log = LoggingHelperFactory.create(LoadImageViewModel.class);
+public class ImageViewModel extends ViewModel {
 
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
+    private MutableLiveData<Boolean> resizeBitmap;
 
     public MutableLiveData<SparseArray> getDownloadImage() {
         return downloadImage;
@@ -25,5 +24,10 @@ public class LoadImageViewModel extends ViewModel {
         sparseArray.put(key, drawable);
         downloadImage.postValue(sparseArray); // Background Thread!!
 
+    }
+
+    public MutableLiveData<Boolean> getResizeBitmap() {
+        if(resizeBitmap == null) resizeBitmap = new MutableLiveData<>();
+        return resizeBitmap;
     }
 }

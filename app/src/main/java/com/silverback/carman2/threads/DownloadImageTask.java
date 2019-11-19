@@ -8,7 +8,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.LoadImageViewModel;
+import com.silverback.carman2.models.ImageViewModel;
 
 public class DownloadImageTask extends ThreadTask implements
         DownloadImageRunnable.DownloadImageMethods{
@@ -23,14 +23,14 @@ public class DownloadImageTask extends ThreadTask implements
     // Objects
     private Context context;
     private String imgUrl;
-    private LoadImageViewModel viewModel;
+    private ImageViewModel viewModel;
     private Runnable downloadImageRunnable;
     private SparseArray<Bitmap> sparseArray;
 
     private int position;
 
     // Constructor
-    DownloadImageTask(Context context, LoadImageViewModel model) {
+    DownloadImageTask(Context context, ImageViewModel model) {
         this.context = context;
         this.viewModel = model;
         downloadImageRunnable = new DownloadImageRunnable(context, this);

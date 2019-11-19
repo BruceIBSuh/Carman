@@ -2,6 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -11,8 +12,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
-import com.silverback.carman2.models.LoadImageViewModel;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
@@ -106,6 +106,8 @@ public class ThreadManager {
     private final Queue<PriceDistrictTask> mPriceDistrictTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
 
+    private final Queue<ThreadTask> mBitmapResizeTask;
+
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -142,6 +144,8 @@ public class ThreadManager {
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
+
+        mBitmapResizeTask = new LinkedBlockingQueue<>();
 
         // Instantiates ThreadPoolExecutor
         //Log.i(LOG_TAG, "NUMBER_OF_CORES: " + NUMBER_OF_CORES);
@@ -469,8 +473,9 @@ public class ThreadManager {
 
     }
 
-    public static GeocoderReverseTask startReverseGeocoderTask(Context context, LocationViewModel model, Location location) {
-        log.i("ReverseGeocoderTask initiated");
+    public static GeocoderReverseTask startReverseGeocoderTask(
+            Context context, LocationViewModel model, Location location) {
+
         GeocoderReverseTask geocoderReverseTask = (GeocoderReverseTask)sInstance.mTaskWorkQueue.poll();
         if(geocoderReverseTask == null) geocoderReverseTask = new GeocoderReverseTask(context);
 
@@ -479,7 +484,9 @@ public class ThreadManager {
         return geocoderReverseTask;
     }
 
-    public static GeocoderTask startGeocoderTask(Context context, LocationViewModel model, String addrs) {
+    public static GeocoderTask startGeocoderTask(
+            Context context, LocationViewModel model, String addrs) {
+
         GeocoderTask geocoderTask = (GeocoderTask)sInstance.mTaskWorkQueue.poll();
         if(geocoderTask == null) geocoderTask = new GeocoderTask(context);
 
@@ -491,7 +498,7 @@ public class ThreadManager {
     }
 
     public static DownloadImageTask downloadImageTask(
-            Context context, int position, String url, LoadImageViewModel model) {
+            Context context, int position, String url, ImageViewModel model) {
 
         DownloadImageTask imageTask = sInstance.mDownloadImageTaskQueue.poll();
         if(imageTask == null) imageTask = new DownloadImageTask(context, model);
@@ -499,6 +506,16 @@ public class ThreadManager {
         sInstance.mDownloadThreadPool.execute(imageTask.getDownloadImageRunnable());
 
         return imageTask;
+    }
+
+    public static BitmapResizeTask startBitmapResizeTask(Context context, Uri uri) {
+
+        ThreadTask bitmapTask = sInstance.mTaskWorkQueue.poll();
+        if(bitmapTask == null) bitmapTask = new BitmapResizeTask(context);
+        ((BitmapResizeTask)bitmapTask).initBitmapTask(uri);
+        sInstance.mDownloadThreadPool.execute(((BitmapResizeTask)bitmapTask).getmBitmapResizeRunnable());
+
+        return (BitmapResizeTask)bitmapTask;
     }
 
 
