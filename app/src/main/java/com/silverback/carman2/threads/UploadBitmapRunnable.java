@@ -3,10 +3,12 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Process;
 
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -14,47 +16,51 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class BitmapResizeRunnable implements Runnable {
+public class UploadBitmapRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BitmapResizeRunnable.class);
-
-    // Constants
-    private final int MAX_IMAGE_SIZE = 1024 * 1024;
+    private static final LoggingHelper log = LoggingHelperFactory.create(UploadBitmapRunnable.class);
 
     // Objects
     private Context context;
-    private BitmapResizeMethods task;
-
+    private BitmapResizeMethods callback;
+    private FirebaseStorage firestorage;
 
     // Interface
     public interface BitmapResizeMethods {
         Uri getImageUri();
         void setBitmapTaskThread(Thread thread);
+        void setBitmapUri(Uri uri);
     }
 
     // Constructor
-    public BitmapResizeRunnable(Context context,BitmapResizeMethods task) {
+    UploadBitmapRunnable(Context context, BitmapResizeMethods task) {
         this.context = context;
-        this.task = task;
+        this.callback = task;
+        firestorage = FirebaseStorage.getInstance();
     }
 
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
-        task.setBitmapTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        callback.setBitmapTaskThread(Thread.currentThread());
 
-        final Uri uri = task.getImageUri();
+        final Uri uri = callback.getImageUri();
+        final int MAX_IMAGE_SIZE = 1024 * 1024;
         log.i("uri: %s", uri);
+
+        // Create the storage reference of an image uploading to Firebase Storage
+        final StorageReference imgReference = firestorage.getReference().child("images");
+        final String filename = System.currentTimeMillis() + ".jpg";
+        final StorageReference uploadReference = imgReference.child(filename);
+
+        // Set BitmapFactory.Options
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
 
         try(InputStream is = context.getApplicationContext().getContentResolver().openInputStream(uri)){
             BitmapFactory.decodeStream(is, null, options);
-            int imgWidth = options.outWidth;
-            int imgHeight = options.outHeight;
-            log.i("Dimension: %s, %s", imgWidth, imgHeight);
 
             options.inSampleSize = calculateInSampleSize(options, 800, 800);
             options.inJustDecodeBounds = false;
@@ -67,15 +73,40 @@ public class BitmapResizeRunnable implements Runnable {
 
                 int compressDensity = 100;
                 int streamLength;
-
+                ByteArrayOutputStream baos;
+                byte[] bmpByteArray;
+                // Compress the raw image down to the MAX_IMAGE_SIZE
                 do{
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    resizedBitmap.compress(Bitmap.CompressFormat.JPEG, compressDensity, byteArrayOutputStream);
-                    byte[] bmpByteArray = byteArrayOutputStream.toByteArray();
+                    baos = new ByteArrayOutputStream();
+                    resizedBitmap.compress(Bitmap.CompressFormat.JPEG, compressDensity, baos);
+                    bmpByteArray = baos.toByteArray();
                     streamLength = bmpByteArray.length;
                     compressDensity -= 5;
                     log.i("compress density: %s", streamLength / 1024 + " kb");
+
                 } while(streamLength >= MAX_IMAGE_SIZE);
+
+
+                UploadTask uploadTask = uploadReference.putBytes(bmpByteArray);
+                uploadTask.addOnProgressListener(listener -> log.i("upload progressing"))
+                        .addOnSuccessListener(snapshot -> log.i("File metadata: %s", snapshot.getMetadata()))
+                        .addOnFailureListener(e -> log.e("UploadFailed: %s", e.getMessage()));
+
+                uploadTask.continueWithTask(task -> {
+                    if(!task.isSuccessful()) {
+                        task.getException();
+                    }
+
+                    return uploadReference.getDownloadUrl();
+
+                }).addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        Uri uriUploaded = task.getResult();
+                        callback.setBitmapUri(uriUploaded);
+
+                    } else log.w("No uri fetched");
+                });
+
             }
 
         } catch(IOException e) {
@@ -99,8 +130,6 @@ public class BitmapResizeRunnable implements Runnable {
                 inSampleSize *= 2;
             }
         }
-
         return inSampleSize;
-
     }
 }

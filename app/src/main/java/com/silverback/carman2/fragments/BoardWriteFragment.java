@@ -3,13 +3,8 @@ package com.silverback.carman2.fragments;
 
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -18,7 +13,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -35,13 +29,10 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CheckedTextView;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
-import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
@@ -52,24 +43,25 @@ import com.silverback.carman2.adapters.AttachImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.threads.BitmapResizeTask;
+import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.UploadPostTask;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static android.app.Activity.RESULT_OK;
 import static android.content.Context.INPUT_METHOD_SERVICE;
-import static androidx.core.content.ContextCompat.getSystemService;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -92,7 +84,10 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     private FragmentSharedModel fragmentModel;
     private AttachImageAdapter imageAdapter;
     private List<Uri> uriImageList;
-    private BitmapResizeTask bitmapTask;
+    private List<Uri> uriUploadList;
+    private UploadBitmapTask bitmapTask;
+    private UploadPostTask postTask;
+    private ImageViewModel bitmapModel;
 
 
     // UIs
@@ -114,6 +109,8 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         mSettings = ((BoardPostingActivity)getActivity()).getSettings();
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         uriImageList = new ArrayList<>();
+        uriUploadList = new ArrayList<>();
+        bitmapModel = ViewModelProviders.of(this).get(ImageViewModel.class);
 
     }
 
@@ -165,12 +162,15 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         });
         */
 
+        // Animate the status bar
         TypedValue typedValue = new TypedValue();
         if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
             float actionBarHeight = TypedValue.complexToDimensionPixelSize(
                     typedValue.data, getResources().getDisplayMetrics());
 
-            animateStatusTitleViews(actionBarHeight);
+            ObjectAnimator animStatusView = ObjectAnimator.ofFloat(hScrollView, "Y", actionBarHeight);
+            animStatusView.setDuration(1000);
+            animStatusView.start();
         }
 
         // Create RecyclerView with attched pictures which are handled in onActivityResult()
@@ -183,7 +183,14 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         // Set the event listeners to the buttons.
         btnDismiss.setOnClickListener(btn -> dismiss());
-        btnUpload.setOnClickListener(btn -> uploadPostToFirestore());
+        btnUpload.setOnClickListener(btn -> {
+            if(!doEmptyCheck()) return;
+
+            for(Uri uri : uriImageList) {
+                bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, bitmapModel);
+            }
+
+        });
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
@@ -267,6 +274,17 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
             }
         });
 
+        // Notified of having attached images uploaded to Firebase Storage and retreive each uri
+        // of uploaded images by ImageViewModel
+        bitmapModel.getUploadBitmap().observe(this, uri -> {
+            log.i("UploadedImageUri: %s", uri);
+            uriUploadList.add(uri);
+
+            // Upload the post with attached images.
+            uploadPostToFirestore();
+
+        });
+
     }
 
     @Override
@@ -293,7 +311,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         // Resize the image
         //handleAttachedBitmap(uriImageList.get(position));
-        bitmapTask = ThreadManager.startBitmapResizeTask(getContext(), uriImageList.get(position));
+        //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), bitmapModel);
 
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -305,19 +323,12 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
     }
 
-    private void animateStatusTitleViews(float height) {
-        ObjectAnimator animStatusView = ObjectAnimator.ofFloat(hScrollView, "Y", height);
-        animStatusView.setDuration(1000);
-        animStatusView.start();
-    }
-
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
-        if(!doEmptyCheck()) return;
+        //if(!doEmptyCheck()) return;
 
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        //FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         String userId = null;
-
         try (FileInputStream fis = getActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             userId = br.readLine();
@@ -331,11 +342,27 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         Map<String, Object> post = new HashMap<>();
         post.put("title", etPostTitle.getText().toString());
-        post.put("body", etPostBody.getText().toString());
+        //post.put("body", etPostBody.getText().toString());
         post.put("timestamp", FieldValue.serverTimestamp());
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
         post.put("user_id", userId);
+
+        String content = etPostBody.getText().toString();
+
+
+        postTask = ThreadManager.startUploadPostTask(getContext(), post, content, uriUploadList);
+        dismiss();
+
+        /*
+        // In case attached images exist, upload the images as Array.
+        if(uriUploadList.size() > 0) {
+            String[] arrImageUri = new String[uriUploadList.size()];
+            for(int i = 0; i < uriUploadList.size(); i++) {
+                arrImageUri[i] = uriUploadList.get(i).toString();
+            }
+            post.put("images", Arrays.asList(arrImageUri));
+        }
 
         // Query the user data with the retrieved user id.
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
@@ -348,6 +375,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
             // the user data if the post retrieves the user data from different collection.
             firestore.collection("board_general").add(post)
                     .addOnSuccessListener(docref -> {
+                        // Notify BoardPagerFragment of completing upload to upadte the fragment.
                         fragmentModel.getNewPosting().setValue(true);
                         dismiss();
 
@@ -355,7 +383,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
                     .addOnFailureListener(e -> log.e("upload failed: %s", e.getMessage()));
         });
 
-
+        */
 
     }
 
@@ -372,6 +400,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     }
 
 
+    /*
     @SuppressWarnings("ConstantConditions")
     private void handleAttachedBitmap(Uri uri)  {
 
@@ -412,6 +441,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
     }
 
-
+    */
 
 }

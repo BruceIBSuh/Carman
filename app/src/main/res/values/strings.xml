@@ -240,6 +240,7 @@
     <string name="date_format_7">yy/MM/dd(E)HH:mm</string>
     <string name="date_format_8">yy.MM.dd</string>
     <string name="time_format_1">%d시%d분</string>
+    <string name="filename_attached_image">yyMMddHHmmss</string>
 
     <!--Miscellany-->
     <string name="textview">TextView</string>

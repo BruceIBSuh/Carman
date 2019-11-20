@@ -1,19 +1,16 @@
 package com.silverback.carman2.models;
 
-import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.SparseArray;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
-
 public class ImageViewModel extends ViewModel {
 
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
-    private MutableLiveData<Boolean> resizeBitmap;
+    private MutableLiveData<Uri> uploadBitmap;
 
     public MutableLiveData<SparseArray> getDownloadImage() {
         return downloadImage;
@@ -26,8 +23,8 @@ public class ImageViewModel extends ViewModel {
 
     }
 
-    public MutableLiveData<Boolean> getResizeBitmap() {
-        if(resizeBitmap == null) resizeBitmap = new MutableLiveData<>();
-        return resizeBitmap;
+    public MutableLiveData<Uri> getUploadBitmap() {
+        if(uploadBitmap == null) uploadBitmap = new MutableLiveData<>();
+        return uploadBitmap;
     }
 }

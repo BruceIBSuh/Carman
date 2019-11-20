@@ -20,6 +20,8 @@ import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -508,14 +510,26 @@ public class ThreadManager {
         return imageTask;
     }
 
-    public static BitmapResizeTask startBitmapResizeTask(Context context, Uri uri) {
+    public static UploadBitmapTask startBitmapUploadTask(Context context, Uri uri, ImageViewModel model) {
 
         ThreadTask bitmapTask = sInstance.mTaskWorkQueue.poll();
-        if(bitmapTask == null) bitmapTask = new BitmapResizeTask(context);
-        ((BitmapResizeTask)bitmapTask).initBitmapTask(uri);
-        sInstance.mDownloadThreadPool.execute(((BitmapResizeTask)bitmapTask).getmBitmapResizeRunnable());
+        if(bitmapTask == null) bitmapTask = new UploadBitmapTask(context);
+        ((UploadBitmapTask)bitmapTask).initBitmapTask(uri, model);
+        sInstance.mDownloadThreadPool.execute(((UploadBitmapTask)bitmapTask).getmBitmapResizeRunnable());
 
-        return (BitmapResizeTask)bitmapTask;
+        return (UploadBitmapTask)bitmapTask;
+    }
+
+    public static UploadPostTask startUploadPostTask(
+            Context context, Map<String, Object> post, String content, List<Uri> uriImageList) {
+
+        ThreadTask postTask = sInstance.mTaskWorkQueue.poll();
+        if(postTask == null) postTask = new UploadPostTask(context);
+        ((UploadPostTask)postTask).initPostTask(post, content, uriImageList);
+
+        sInstance.mDownloadThreadPool.execute(((UploadPostTask)postTask).getUploadPostRunnable());
+
+        return (UploadPostTask)postTask;
     }
 
 
