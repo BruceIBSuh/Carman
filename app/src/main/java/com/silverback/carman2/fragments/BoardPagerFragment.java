@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman2.R;
@@ -70,6 +71,7 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -79,6 +81,7 @@ public class BoardPagerFragment extends Fragment implements
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         switch(page) {
+
             case 0:
                 Query firstQuery = firestore.collection("board_general")
                         .orderBy("timestamp", Query.Direction.DESCENDING)
@@ -86,8 +89,23 @@ public class BoardPagerFragment extends Fragment implements
 
                 firstQuery.get().addOnSuccessListener(querySnapshot -> {
                     recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
+                    log.i("querysnapshot: %s", querySnapshot);
                     recyclerView.setAdapter(recyclerAdapter);
                     //DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+
+                    fragmentModel.getNewPosting().observe(getActivity(), postId -> {
+                        log.i("new positing: %s", postId);
+                        firestore.collection("board_general").document(postId).get()
+                                .addOnSuccessListener(snapshot -> {
+                                    log.i("Update");
+                                    querySnapshot.getDocuments().add(0, snapshot);
+                                    for(DocumentSnapshot doc : querySnapshot) {
+                                        log.i("document: %s", doc.getString("post_title"));
+                                    }
+                                    recyclerAdapter.notifyItemInserted(0);
+                                });
+
+                    });
                 });
 
                 break;
@@ -112,14 +130,8 @@ public class BoardPagerFragment extends Fragment implements
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
-        if(getActivity() == null) return;
-        fragmentModel.getNewPosting().observe(getActivity(), isPosting -> {
-            log.i("new positing: %s", isPosting);
-            //recyclerAdapter.notifyItemChanged(0);
-        });
+
     }
-
-
 
     @SuppressWarnings("ConstantConditions")
     @Override

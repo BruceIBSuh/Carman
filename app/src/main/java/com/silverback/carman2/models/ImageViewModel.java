@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModel;
 public class ImageViewModel extends ViewModel {
 
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
-    private MutableLiveData<Uri> uploadBitmap;
+    private MutableLiveData<String> uploadBitmap;
 
     public MutableLiveData<SparseArray> getDownloadImage() {
         return downloadImage;
@@ -23,7 +23,7 @@ public class ImageViewModel extends ViewModel {
 
     }
 
-    public MutableLiveData<Uri> getUploadBitmap() {
+    public MutableLiveData<String> getUploadBitmap() {
         if(uploadBitmap == null) uploadBitmap = new MutableLiveData<>();
         return uploadBitmap;
     }

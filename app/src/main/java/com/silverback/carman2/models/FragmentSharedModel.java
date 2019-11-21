@@ -33,7 +33,8 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<String> strData;
 
-    private MutableLiveData<Boolean> newPosting;
+    private MutableLiveData<String> newPosting;
+
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -139,7 +140,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardPostingActivity
     // cocntains.
-    public MutableLiveData<Boolean> getNewPosting() {
+    public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
     }

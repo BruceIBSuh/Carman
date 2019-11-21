@@ -25,8 +25,11 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BoardItemHolder> {
 //public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BaseViewHolder> {
@@ -80,28 +83,18 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         // Retreive an board item queried in and passed from BoardPagerFragment
         DocumentSnapshot document = querySnapshot.getDocuments().get(position);
 
-        holder.tvPostTitle.setText(document.getString("title"));
+        holder.tvPostTitle.setText(document.getString("post_title"));
         holder.tvNumber.setText(String.valueOf(position + 1));
         holder.tvPostingDate.setText(sdf.format(document.getDate("timestamp")));
         holder.tvUserName.setText(document.getString("user_name"));
         holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
 
-        // Query
-        /*
-        String userid = document.getString("userid");
+        List<String> imgList = (List<String>)document.get("post_images");
+        if(imgList != null && imgList.size() > 0) {
+            log.i("imagList: %s", imgList.get(0));
+            holder.bindAttachedImage(Uri.parse(imgList.get(0)));
+        }
 
-        firestore.collection("users").document(userid).get()
-                .addOnSuccessListener(snapshot -> {
-                    String username = snapshot.getString("user_name");
-                    String userImage = snapshot.getString("user_pic");
-                    log.i("userImage: %s", userImage);
-                    holder.tvUserName.setText(username);
-                    if(!userImage.isEmpty()) {
-                        Uri uriImage = Uri.parse(snapshot.getString("user_pic"));
-                        holder.bindProfileImage(uriImage);
-                    }
-                }).addOnFailureListener(e -> log.e("query user collection failed"));
-        */
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {
             if(mListener != null) mListener.onItemClicked(document.getId());
@@ -112,11 +105,11 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position, @NonNull List<Object> payloads) {
-        log.i("Partial Binding of BoardPosting");
+
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-
+            log.i("Partial Binding of BoardPosting");
         }
     }
 
@@ -137,7 +130,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
         private int currentPos;
 
-        public BaseViewHolder(View view) {
+        BaseViewHolder(View view) {
             super(view);
         }
 
@@ -179,6 +172,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         TextView tvNumber;
         TextView tvPostingDate;
         ImageView imgProfile;
+        ImageView imgAttached;
 
         BoardItemHolder(CardView cardview){
             super(cardview);
@@ -187,6 +181,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
             tvPostingDate = cardview.findViewById(R.id.tv_posting_date);
             tvUserName = cardview.findViewById(R.id.tv_post_owner);
             imgProfile = cardview.findViewById(R.id.img_user);
+            imgAttached = cardview.findViewById(R.id.img_attached);
 
         }
 
@@ -198,6 +193,15 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .apply(myOptions)
                     .into(imgProfile);
+        }
+
+        void bindAttachedImage(Uri uri) {
+            Glide.with(context)
+                    .asBitmap()
+                    .load(uri)
+                    .centerCrop()
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .into(imgAttached);
         }
 
 

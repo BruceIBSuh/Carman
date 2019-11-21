@@ -12,6 +12,7 @@ public class FirestoreViewModel extends ViewModel {
     private MutableLiveData<SparseArray> favoriteSnapshot;
     private MutableLiveData<DocumentSnapshot> postSnapshot;
     private MutableLiveData<DocumentSnapshot> userSnapshot;
+    private MutableLiveData<Boolean> hasUploadPosted;
 
     public MutableLiveData<SparseArray> getFavoriteSnapshot() {
         if(favoriteSnapshot == null) favoriteSnapshot = new MutableLiveData<>();
@@ -28,4 +29,9 @@ public class FirestoreViewModel extends ViewModel {
         return userSnapshot;
     }
 
+
+    public MutableLiveData<Boolean> getUploadPOst() {
+        if(hasUploadPosted == null) hasUploadPosted = new MutableLiveData<>();
+        return hasUploadPosted;
+    }
 }

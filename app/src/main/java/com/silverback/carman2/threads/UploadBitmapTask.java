@@ -43,8 +43,8 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     }
 
     @Override
-    public void setBitmapUri(Uri uri) {
-        log.i("uploadUri: %s", uri);
-        bitmapModel.getUploadBitmap().postValue(uri);
+    public void setBitmapUri(String strImageUri) {
+        log.i("uploadUri: %s", strImageUri);
+        bitmapModel.getUploadBitmap().postValue(strImageUri);
     }
 }

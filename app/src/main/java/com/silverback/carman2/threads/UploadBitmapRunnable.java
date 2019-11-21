@@ -20,6 +20,7 @@ public class UploadBitmapRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadBitmapRunnable.class);
 
+
     // Objects
     private Context context;
     private BitmapResizeMethods callback;
@@ -29,7 +30,7 @@ public class UploadBitmapRunnable implements Runnable {
     public interface BitmapResizeMethods {
         Uri getImageUri();
         void setBitmapTaskThread(Thread thread);
-        void setBitmapUri(Uri uri);
+        void setBitmapUri(String uriString);
     }
 
     // Constructor
@@ -51,15 +52,17 @@ public class UploadBitmapRunnable implements Runnable {
         log.i("uri: %s", uri);
 
         // Create the storage reference of an image uploading to Firebase Storage
+        /*
         final StorageReference imgReference = firestorage.getReference().child("images");
         final String filename = System.currentTimeMillis() + ".jpg";
         final StorageReference uploadReference = imgReference.child(filename);
+        */
 
         // Set BitmapFactory.Options
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
 
         try(InputStream is = context.getApplicationContext().getContentResolver().openInputStream(uri)){
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
             BitmapFactory.decodeStream(is, null, options);
 
             options.inSampleSize = calculateInSampleSize(options, 800, 800);
@@ -68,6 +71,13 @@ public class UploadBitmapRunnable implements Runnable {
 
             // Recall InputStream once again b/c it is auto closeable. Otherwise, it returns null.
             try(InputStream in = context.getApplicationContext().getContentResolver().openInputStream(uri)) {
+                // Compress the Bitmap which already resized down by calculating the inSampleSize.
+                byte[] bmpByteArray = compressBitmap(in, options);
+
+                // Upload the compressed image(less than 1 MB) to Firebase Storage
+                uploadBitmapToStorage(bmpByteArray);
+
+                /*
                 Bitmap resizedBitmap = BitmapFactory.decodeStream(in, null, options);
                 log.i("Resized Bitmap: %s", resizedBitmap);
 
@@ -86,7 +96,9 @@ public class UploadBitmapRunnable implements Runnable {
 
                 } while(streamLength >= MAX_IMAGE_SIZE);
 
+                */
 
+                /*
                 UploadTask uploadTask = uploadReference.putBytes(bmpByteArray);
                 uploadTask.addOnProgressListener(listener -> log.i("upload progressing"))
                         .addOnSuccessListener(snapshot -> log.i("File metadata: %s", snapshot.getMetadata()))
@@ -106,12 +118,39 @@ public class UploadBitmapRunnable implements Runnable {
 
                     } else log.w("No uri fetched");
                 });
+                */
 
             }
 
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
+
+    }
+
+
+    @SuppressWarnings("ConstantConditions")
+    private byte[] compressBitmap(InputStream in, BitmapFactory.Options options)  {
+        final int MAX_IMAGE_SIZE = 1024 * 1024;
+        Bitmap resizedBitmap = BitmapFactory.decodeStream(in, null, options);
+        log.i("Resized Bitmap: %s", resizedBitmap);
+
+        int compressDensity = 100;
+        int streamLength;
+        ByteArrayOutputStream baos;
+        byte[] bmpByteArray;
+        // Compress the raw image down to the MAX_IMAGE_SIZE
+        do{
+            baos = new ByteArrayOutputStream();
+            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, compressDensity, baos);
+            bmpByteArray = baos.toByteArray();
+            streamLength = bmpByteArray.length;
+            compressDensity -= 5;
+            log.i("compress density: %s", streamLength / 1024 + " kb");
+
+        } while(streamLength >= MAX_IMAGE_SIZE);
+
+        return bmpByteArray;
 
     }
 
@@ -131,5 +170,34 @@ public class UploadBitmapRunnable implements Runnable {
             }
         }
         return inSampleSize;
+    }
+
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    private void uploadBitmapToStorage(byte[] bitmapByteArray) {
+
+        // Create the storage reference of an image uploading to Firebase Storage
+        final StorageReference imgReference = firestorage.getReference().child("images");
+        final String filename = System.currentTimeMillis() + ".jpg";
+        final StorageReference uploadReference = imgReference.child(filename);
+
+        UploadTask uploadTask = uploadReference.putBytes(bitmapByteArray);
+        uploadTask.addOnProgressListener(listener -> log.i("upload progressing"))
+                .addOnSuccessListener(snapshot -> log.i("File metadata: %s", snapshot.getMetadata()))
+                .addOnFailureListener(e -> log.e("UploadFailed: %s", e.getMessage()));
+
+        uploadTask.continueWithTask(task -> {
+            if(!task.isSuccessful()) {
+                task.getException();
+            }
+
+            return uploadReference.getDownloadUrl();
+
+        }).addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                Uri uriUploaded = task.getResult();
+                callback.setBitmapUri(uriUploaded.toString());
+
+            } else log.w("No uri fetched");
+        });
     }
 }

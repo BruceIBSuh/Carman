@@ -12,6 +12,8 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
@@ -521,11 +523,11 @@ public class ThreadManager {
     }
 
     public static UploadPostTask startUploadPostTask(
-            Context context, Map<String, Object> post, String content, List<Uri> uriImageList) {
+            Context context, Map<String, Object> post, FragmentSharedModel viewModel) {
 
         ThreadTask postTask = sInstance.mTaskWorkQueue.poll();
         if(postTask == null) postTask = new UploadPostTask(context);
-        ((UploadPostTask)postTask).initPostTask(post, content, uriImageList);
+        ((UploadPostTask)postTask).initPostTask(post, viewModel);
 
         sInstance.mDownloadThreadPool.execute(((UploadPostTask)postTask).getUploadPostRunnable());
 

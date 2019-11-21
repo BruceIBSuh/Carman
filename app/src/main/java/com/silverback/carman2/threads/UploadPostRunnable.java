@@ -1,10 +1,17 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Process;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -19,13 +26,13 @@ public class UploadPostRunnable implements Runnable {
     private Context mContext;
     private UploadPostMethods mTask;
     private FirebaseFirestore firestore;
+    private String postId;
 
 
     public interface UploadPostMethods {
-        List<Uri> getImageUriList();
         Map<String, Object> getFirestorePost();
-        String getPostContent();
         void setUploadPostThread(Thread thread);
+        void notifyUploadDone(String docId);
     }
 
 
@@ -41,17 +48,10 @@ public class UploadPostRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mTask.setUploadPostThread(Thread.currentThread());
 
-        String contentBody = mTask.getPostContent();
-
-        // Convert the image uri list to String array for Arrays.asList()
-        List<Uri> uriList = mTask.getImageUriList();
-        String[] arrImageUri = new String[uriList.size()];
-        for (int i = 0; i < uriList.size(); i++) arrImageUri[i] = uriList.get(i).toString();
-
-
         // Query the user data with the retrieved user id.
-        Map<String, Object> firePost = mTask.getFirestorePost();
-        final String userId = (String) firePost.get("user_id");
+        Map<String, Object> post = mTask.getFirestorePost();
+        final String userId = (String) post.get("user_id");
+        log.i("User ID: %s", userId);
 
 
         // Retrieve the user name and user pic with the user Id and contain them in the Map, then
@@ -59,20 +59,37 @@ public class UploadPostRunnable implements Runnable {
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
             String userName = document.getString("user_name");
             String userPic = document.getString("user_pic");
-            if (!userName.isEmpty()) firePost.put("user_name", userName);
-            if (!userPic.isEmpty()) firePost.put("user_pic", userPic);
+            if (!userName.isEmpty()) post.put("user_name", userName);
+            if (!userPic.isEmpty()) post.put("user_pic", userPic);
 
             // Upload the post along with the queried user data, which may prevent latency to load
             // the user data if the post retrieves the user data from different collection.
-            firestore.collection("board_general").add(firePost)
-                    .addOnSuccessListener(docref -> {
-                        // Notify BoardPagerFragment of completing upload to upadte the fragment.
 
+            firestore.collection("board_general").add(post)
+                    .addOnSuccessListener(docref -> {
+                        log.i("Uploade completed");
+                        mTask.notifyUploadDone(docref.getId());
                     })
-                    .addOnFailureListener(e -> log.e("upload failed: %s", e.getMessage()));
+                    .addOnFailureListener(e -> log.e("Upload failed: %s"));
+
+                    /*
+                    .continueWith(task -> {
+                        if(!task.isSuccessful()) task.getException();
+                        return postId;
+                    })
+                    .addOnCompleteListener(task -> {
+                        log.i("Post Id: %s", postId);
+                        firestore.collection("board_general").document(postId).collection("post_content").add(postContent)
+                                .addOnSuccessListener(content -> {
+                                    log.i("Post content successfully uploaded to post_content collection");
+                                })
+                                .addOnFailureListener(e -> log.e("Post content failed to upload"));
+                    })
+                    .addOnFailureListener(e -> log.e("Uploading post failed: %s", e.getMessage()));
+                    */
+
         });
 
-
-
     }
+
 }

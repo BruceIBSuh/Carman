@@ -5,8 +5,6 @@ import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.BitmapFactory;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,12 +34,12 @@ import android.widget.ImageButton;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.BoardPostingActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.AttachImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.UploadBitmapTask;
@@ -52,7 +50,6 @@ import com.silverback.carman2.utils.Constants;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,10 +81,11 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     private FragmentSharedModel fragmentModel;
     private AttachImageAdapter imageAdapter;
     private List<Uri> uriImageList;
-    private List<Uri> uriUploadList;
+    private List<String> strImgUriList;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
     private ImageViewModel bitmapModel;
+    //private FirestoreViewModel uploadPostModel;
 
 
     // UIs
@@ -107,10 +105,11 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         super.onCreate(savedInstanceState);
 
         mSettings = ((BoardPostingActivity)getActivity()).getSettings();
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         uriImageList = new ArrayList<>();
-        uriUploadList = new ArrayList<>();
+        strImgUriList = new ArrayList<>();
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         bitmapModel = ViewModelProviders.of(this).get(ImageViewModel.class);
+        //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
 
     }
 
@@ -124,8 +123,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         hScrollView = localView.findViewById(R.id.scrollview_horizontal);
         //statusLayout = localView.findViewById(R.id.vg_constraint_status);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
-
-
 
         CheckBox chkboxGeneral = localView.findViewById(R.id.chkbox_general);
         CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_maker);
@@ -186,8 +183,16 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         btnUpload.setOnClickListener(btn -> {
             if(!doEmptyCheck()) return;
 
-            for(Uri uri : uriImageList) {
-                bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, bitmapModel);
+            // No attached image immediately makes uploading started.
+            if(uriImageList.size() == 0) uploadPostToFirestore();
+            else {
+
+                // Downsize and compress attached images and upload them to Storage running in
+                // the background, the result of which is notified to getUploadBitmap() of ImageViewModel
+                // one by one and all of images has processed, start to upload the post to Firestore.
+                for (Uri uri : uriImageList) {
+                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, bitmapModel);
+                }
             }
 
         });
@@ -276,12 +281,16 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         // Notified of having attached images uploaded to Firebase Storage and retreive each uri
         // of uploaded images by ImageViewModel
-        bitmapModel.getUploadBitmap().observe(this, uri -> {
-            log.i("UploadedImageUri: %s", uri);
-            uriUploadList.add(uri);
+        bitmapModel.getUploadBitmap().observe(getViewLifecycleOwner(), uriString -> {
+            log.i("UploadedImageUri: %s", uriString);
+            strImgUriList.add(uriString);
 
-            // Upload the post with attached images.
-            uploadPostToFirestore();
+            // Start uploading only when attached images finised downsizing and uploading to Storage.
+            // Otherwise, the image uris fail to upload to Firestore.
+            if(strImgUriList.size() == uriImageList.size()) {
+                uploadPostToFirestore();
+                dismiss();
+            }
 
         });
 
@@ -337,22 +346,26 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
             log.e("IOException: %s", e.getMessage());
         }
 
+        String[] arrUriString = new String[strImgUriList.size()];
+        for (int i = 0; i < strImgUriList.size(); i++) arrUriString[i] = strImgUriList.get(i);
+
         //if(TextUtils.isEmpty(userId)) return;
         if(userId == null || userId.isEmpty()) return;
 
         Map<String, Object> post = new HashMap<>();
-        post.put("title", etPostTitle.getText().toString());
-        //post.put("body", etPostBody.getText().toString());
+        post.put("user_id", userId);
+        post.put("post_title", etPostTitle.getText().toString());
         post.put("timestamp", FieldValue.serverTimestamp());
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
-        post.put("user_id", userId);
+        post.put("post_content", etPostBody.getText().toString());
+        post.put("post_images",  Arrays.asList(arrUriString));
 
-        String content = etPostBody.getText().toString();
 
+        //postTask = ThreadManager.startUploadPostTask(getContext(), postTitle, content, strImgUriList);
 
-        postTask = ThreadManager.startUploadPostTask(getContext(), post, content, uriUploadList);
-        dismiss();
+        postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
+
 
         /*
         // In case attached images exist, upload the images as Array.
