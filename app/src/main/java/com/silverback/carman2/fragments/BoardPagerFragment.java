@@ -25,6 +25,9 @@ import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -135,10 +138,30 @@ public class BoardPagerFragment extends Fragment implements
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onItemClicked(String postId) {
+    public void onItemClicked(DocumentSnapshot snapshot) {
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardPostDialogFragment postDialogFragment = new BoardPostDialogFragment();
+
+        Bundle bundle = new Bundle();
+        String title = snapshot.getString("post_title");
+        String userName = snapshot.getString("user_name");
+        String userPic = snapshot.getString("user_pic");
+        String content = snapshot.getString("post_content");
+        List<String> imgList = (List<String>)snapshot.get("post_images");
+        Date timestamp = snapshot.getDate("timestamp");
+
+        log.i("Bunde: %s, %s, %s, %s, %s, %s", title, userName, userPic, content, imgList, timestamp);
+        bundle.putString("postTitle", snapshot.getString("post_title"));
+        bundle.putString("userName", snapshot.getString("user_name"));
+        bundle.putString("userPic", snapshot.getString("user_pic"));
+        bundle.putString("postContent", snapshot.getString("post_content"));
+        bundle.putStringArrayList("imageUriList", (ArrayList<String>)snapshot.get("post_images"));
+        bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
+
+        postDialogFragment.setArguments(bundle);
+
+
         getFragmentManager().beginTransaction()
                 .add(android.R.id.content, postDialogFragment)
                 .addToBackStack(null)

@@ -50,7 +50,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     // Interface for RecyclerView item click event
     public interface OnRecyclerItemClickListener {
-        void onItemClicked(String postId);
+        void onItemClicked(DocumentSnapshot snapshot);
     }
 
     // Constructor
@@ -97,7 +97,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {
-            if(mListener != null) mListener.onItemClicked(document.getId());
+            if(mListener != null) mListener.onItemClicked(document);
         });
 
     }
