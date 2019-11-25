@@ -3,6 +3,7 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -131,61 +132,36 @@ public class BoardPostDialogFragment extends DialogFragment {
                 .into(imgUserPic);
 
         // If no images are transferred, just return localview not displaying any images.
-        log.i("imagUriList: %s, %s", imgUriList, imgUriList.size());
         if(imgUriList == null || imgUriList.size() == 0) return localView;
 
-        for(String uri : imgUriList) {
-
-            Glide.with(getContext())
-                    .asBitmap()
-                    .load(Uri.parse(uri))
-                    //.diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .fitCenter()
-                    .into(new CustomTarget<Bitmap>() {
-                        @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            memCache.put(uri, resource);
-                            log.i("Image Uri: %s", memCache.get(uri));
-
-                        }
-
-                        @Override
-                        public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                        }
-                    });
-        }
-
-
-            // Attached Image(s) dynamically using LayoutParams for layout_width and height and
+        // Create ImageView dynamically
+        // Attached Image(s) dynamically using LayoutParams for layout_width and height and
         // ConstraintSet to set the layout positioned in ConstraintLayout
-        ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.MATCH_CONSTRAINT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT);
-
-        ConstraintSet set = new ConstraintSet();
-        imgIdList = new ArrayList<>();
-        prevImageViewId = -1;
-
+        List<Integer> idList = new ArrayList<>();
         for(int i = 0; i < imgUriList.size(); i++) {
+            ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.MATCH_CONSTRAINT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT);
+            ConstraintSet set = new ConstraintSet();
 
-            ImageView imgView = new ImageView(getContext());
-            imgView.setId(View.generateViewId());
-            imgView.setLayoutParams(layoutParams);
-            log.i("image view id: %s", imgView.getId());
-            constraintLayout.addView(imgView);
+            ImageView imageView = new ImageView(getContext());
+            imageView.setLayoutParams(layoutParams);
+            imageView.setId(View.generateViewId());
+            idList.add(imageView.getId());
+            imageView.setBackgroundColor(Color.BLUE);
+            constraintLayout.addView(imageView, i);
             set.clone(constraintLayout);
 
-            set.connect(imgView.getId(), ConstraintSet.START, R.id.root_constraint, ConstraintSet.START, 50);
-            set.connect(imgView.getId(), ConstraintSet.END, R.id.root_constraint, ConstraintSet.END, 50);
-            //set.connect(imgView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM, 50);
-            /*
-            int constrained = (i == 0)? R.id.tv_posting_body : prevImageViewId;
-            set.connect(imgView.getId(), ConstraintSet.TOP, constrained, ConstraintSet.BOTTOM, 50);
-            set.applyTo(constraintLayout);
-            */
+            set.connect(imageView.getId(), ConstraintSet.START, R.id.root_constraint, ConstraintSet.START);
+            set.connect(imageView.getId(), ConstraintSet.END, R.id.root_constraint, ConstraintSet.END);
 
-            String uri = imgUriList.get(i);
+            if(i == 0) {
+                set.connect(imageView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM);
+            } else {
+                set.connect(imageView.getId(), ConstraintSet.TOP, idList.get(i -1), ConstraintSet.BOTTOM, 30);
+            }
+
+            set.applyTo(constraintLayout);
 
             Glide.with(getContext())
                     .asBitmap()
@@ -195,44 +171,15 @@ public class BoardPostDialogFragment extends DialogFragment {
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-
-                            Bitmap image = memCache.get(uri);
-                            log.i("Image in cache: %s", image);
-
-                            if(uri.equals(imgUriList.get(0))) {
-                                set.connect(imgView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM, 50);
-                                set.applyTo(constraintLayout);
-
-
-                            } else {
-                                log.i("additional images");
-                                set.connect(imgView.getId(), ConstraintSet.TOP, prevImageViewId, ConstraintSet.BOTTOM, 50);
-                                set.applyTo(constraintLayout);
-                            }
-
-                            if(image != null) {
-                                imgView.setImageBitmap(image);
-                                prevImageViewId = imgView.getId();
-                                log.i("prev id: %s", prevImageViewId);
-                            } else {
-                                Glide.with(getContext())
-                                        .load(uri)
-                                        .into(imgView);
-
-                            }
-
-
-
+                            imageView.setImageBitmap(resource);
                         }
 
                         @Override
                         public void onLoadCleared(@Nullable Drawable placeholder) {
-                            log.i("onLoadCleared");
-                        }
 
+                        }
                     });
 
-            log.i("prevImageViewId: %s", prevImageViewId);
         }
 
         return localView;
