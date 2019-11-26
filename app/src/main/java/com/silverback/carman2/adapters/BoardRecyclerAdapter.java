@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -19,17 +18,16 @@ import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BoardItemHolder> {
 //public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BaseViewHolder> {
@@ -50,7 +48,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     // Interface for RecyclerView item click event
     public interface OnRecyclerItemClickListener {
-        void onItemClicked(DocumentSnapshot snapshot);
+        void onPostItemClicked(DocumentSnapshot snapshot);
     }
 
     // Constructor
@@ -80,6 +78,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position) {
+
         // Retreive an board item queried in and passed from BoardPagerFragment
         DocumentSnapshot document = querySnapshot.getDocuments().get(position);
 
@@ -97,7 +96,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {
-            if(mListener != null) mListener.onItemClicked(document);
+            if(mListener != null) mListener.onPostItemClicked(document);
         });
 
     }
@@ -126,6 +125,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     }
 
 
+    // ViewHolder class
     abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 
         private int currentPos;

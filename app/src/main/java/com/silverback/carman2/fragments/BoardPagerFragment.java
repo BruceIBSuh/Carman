@@ -24,6 +24,9 @@ import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.threads.ThreadManager;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -85,7 +88,7 @@ public class BoardPagerFragment extends Fragment implements
 
         switch(page) {
 
-            case 0:
+            case 0: // Recent post
                 Query firstQuery = firestore.collection("board_general")
                         .orderBy("timestamp", Query.Direction.DESCENDING)
                         .limit(25);
@@ -96,6 +99,7 @@ public class BoardPagerFragment extends Fragment implements
                     recyclerView.setAdapter(recyclerAdapter);
                     //DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
 
+                    // Seems not working to update a new posting in the list.
                     fragmentModel.getNewPosting().observe(getActivity(), postId -> {
                         log.i("new positing: %s", postId);
                         firestore.collection("board_general").document(postId).get()
@@ -113,7 +117,7 @@ public class BoardPagerFragment extends Fragment implements
 
                 break;
 
-            case 1:
+            case 1: // Popular post
                 break;
 
             case 2:
@@ -138,68 +142,45 @@ public class BoardPagerFragment extends Fragment implements
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onItemClicked(DocumentSnapshot snapshot) {
+    public void onPostItemClicked(DocumentSnapshot snapshot) {
+
+
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardPostDialogFragment postDialogFragment = new BoardPostDialogFragment();
 
         Bundle bundle = new Bundle();
-        String title = snapshot.getString("post_title");
-        String userName = snapshot.getString("user_name");
-        String userPic = snapshot.getString("user_pic");
-        String content = snapshot.getString("post_content");
-        List<String> imgList = (List<String>)snapshot.get("post_images");
-        Date timestamp = snapshot.getDate("timestamp");
 
-        log.i("Bunde: %s, %s, %s, %s, %s, %s", title, userName, userPic, content, imgList, timestamp);
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userName", snapshot.getString("user_name"));
         bundle.putString("userPic", snapshot.getString("user_pic"));
         bundle.putString("postContent", snapshot.getString("post_content"));
         bundle.putStringArrayList("imageUriList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
+        bundle.putString("userId", snapshot.getString("user_id"));
 
         postDialogFragment.setArguments(bundle);
-
 
         getFragmentManager().beginTransaction()
                 .add(android.R.id.content, postDialogFragment)
                 .addToBackStack(null)
                 .commit();
 
-
+        // Auto information is retrived from Firestore based upon the user id and put it to Bundle,
+        // then call the dialog.
         /*
-        log.i("post id: %s", postId);
-        BoardPostDialogFragment postDialogFragment = new BoardPostDialogFragment();
-        FragmentManager fragmentManager = getFragmentManager();
-        Bundle args = new Bundle();
+        firestore.collection("users").document(snapshot.getString("user_id")).get()
+                .addOnSuccessListener(document -> {
+                    bundle.putString("autoData", document.getString("auto_data"));
+                    postDialogFragment.setArguments(bundle);
 
-        firestore.collection("board_general").document(postId).get().addOnSuccessListener(snapshot -> {
-            args.putString("title", snapshot.getString("title"));
-            args.putString("body", snapshot.getString("body"));
-            args.putString("postDate", sdf.format(snapshot.getDate("timestamp")));
-            args.putString("userId", snapshot.getString("userid"));
-            postDialogFragment.setArguments(args);
+                    getFragmentManager().beginTransaction()
+                            .add(android.R.id.content, postDialogFragment)
+                            .addToBackStack(null)
+                            .commit();
 
-            firestore.collection("users").document(snapshot.getString("userid")).get().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    log.i("user name: %s", document.getString("user_name"));
+                });
 
-                }
-            });
-
-
-            // The device is smaller, so show the fragment fullscreen
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            // For a little polish, specify a transition animation
-            //transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
-            // To make it fullscreen, use the 'content' root view as the container
-            // for the fragment, which is always the root view for the activity
-            transaction.add(android.R.id.content, postDialogFragment)
-                            .addToBackStack(null).commit();
-
-        }).addOnFailureListener(e -> {});
          */
     }
 }

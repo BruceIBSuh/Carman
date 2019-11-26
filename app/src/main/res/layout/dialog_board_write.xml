@@ -14,7 +14,8 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/colorPrimary"
-        android:elevation="2dp">
+        android:elevation="2dp"
+        app:layout_insetEdge="top">
 
         <ImageButton
             android:id="@+id/btn_dismiss"
@@ -46,6 +47,8 @@
         android:id="@+id/scrollview_horizontal"
         android:layout_width="match_parent"
         android:layout_height="37dp"
+        android:scrollbarSize="1dp"
+        android:background="#F5F5F5"
         app:layout_insetEdge="top">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -123,7 +126,8 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/vg_constraint_body"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="120dp"
             android:padding="8dp">
 
             <TextView
@@ -131,6 +135,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
+                android:layout_marginTop="16dp"
                 android:labelFor="@id/et_board_title"
                 android:text="@string/boardwrite_label_title"
                 android:textSize="@dimen/mediumText"
@@ -142,7 +147,7 @@
                 android:id="@+id/et_board_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="24dp"
+                android:layout_marginStart="16dp"
                 android:background="@null"
                 android:ems="10"
                 android:inputType="textMultiLine"
@@ -152,6 +157,16 @@
                 app:layout_constraintStart_toEndOf="@+id/tv_label_title"
                 app:layout_constraintTop_toTopOf="@+id/tv_label_title"
                 tools:ignore="autofill" />
+
+            <View
+                android:id="@+id/view_underline"
+                android:layout_width="0dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="8dp"
+                android:background="#F5F5F5"
+                app:layout_constraintTop_toBottomOf="@+id/tv_label_title"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
             <EditText
                 android:id="@+id/et_board_body"
@@ -167,7 +182,7 @@
                 android:textSize="@dimen/mediumText"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_board_title"
+                app:layout_constraintTop_toBottomOf="@+id/view_underline"
                 tools:ignore="autofill" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -175,9 +190,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_board_body" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

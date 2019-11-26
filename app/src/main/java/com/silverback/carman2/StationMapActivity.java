@@ -45,8 +45,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // UIs
     private TextView tvName, tvAddrs, tvCarwash, tvService,tvCVS;
-
     private String stnName;
+
 
 
     @SuppressWarnings("ConstantConditions")

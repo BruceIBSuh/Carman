@@ -97,33 +97,16 @@ public class BoardPostingActivity extends BaseActivity implements
 
     // AppBarLayout.OnOffsetChangedListener invokes this.
     @Override
-    public void onOffsetChanged(AppBarLayout appBarLayout, int i) {
-
-    }
+    public void onOffsetChanged(AppBarLayout appBarLayout, int i) {}
 
     // ViewPager.OnPageChangeListener invokes the following 3 overriding methods.
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
 
-    }
     @Override
-    public void onPageSelected(int position) {
-        log.i("onPageSelected position: %s", position);
-        switch(position) {
-            case 0:
-                break;
-
-            case 1:
-                break;
-
-            case 2:
-                break;
-        }
-    }
+    public void onPageSelected(int position) {}
     @Override
-    public void onPageScrollStateChanged(int state) {
-
-    }
+    public void onPageScrollStateChanged(int state) {}
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {

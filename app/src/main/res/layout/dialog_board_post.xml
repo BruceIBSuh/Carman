@@ -1,110 +1,186 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".fragments.BoardPostDialogFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/root_constraint"
+        android:id="@+id/vg_constraint_top"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/background_light"
-        tools:context=".fragments.BoardPostDialogFragment">
-
-        <View
-            android:id="@+id/view_header"
-            android:layout_width="0dp"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            android:minHeight="?attr/actionBarSize"
-            android:theme="?attr/actionBarTheme"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="?attr/actionBarSize"
+        android:background="#F5F5F5"
+        android:padding="5dp"
+        app:layout_anchor="@+id/vg_constraint_top"
+        app:layout_anchorGravity="center"
+        app:layout_insetEdge="top">
 
         <ImageButton
             android:id="@+id/imgbtn_dismiss"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:background="@null"
-            android:src="@android:drawable/btn_dialog"
             android:contentDescription="@null"
-            app:layout_constraintBottom_toBottomOf="@+id/view_header"
-            app:layout_constraintStart_toStartOf="@+id/view_header"
+            android:src="@android:drawable/btn_dialog"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/tv_post_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:padding="5dp"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="vertical"
+        app:layout_dodgeInsetEdges="top|bottom">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraint_posting"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="50dp"
+            android:background="@android:color/background_light"
+            android:padding="8dp"
+            tools:context=".fragments.BoardPostDialogFragment">
+
+            <TextView
+                android:id="@+id/tv_post_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:padding="5dp"
+                android:textSize="@dimen/extraLargeText"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/img_userpic"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@null"
+                app:layout_constraintStart_toStartOf="@+id/tv_post_title"
+                app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
+                tools:src="@tools:sample/avatars[0]" />
+
+            <TextView
+                android:id="@+id/tv_username"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:textSize="@dimen/smallText"
+                app:layout_constraintStart_toEndOf="@+id/img_userpic"
+                app:layout_constraintTop_toTopOf="@+id/img_userpic" />
+
+            <TextView
+                android:id="@+id/tv_autoinfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:textSize="@dimen/extraSmallText"
+                app:layout_constraintBottom_toBottomOf="@+id/img_userpic"
+                app:layout_constraintStart_toStartOf="@+id/tv_username" />
+
+            <TextView
+                android:id="@+id/tv_posting_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:textSize="@dimen/extraSmallText"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_autoinfo"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tv_autoinfo" />
+
+            <View
+                android:id="@+id/view_uniderline"
+                android:layout_width="0dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="8dp"
+                android:background="#F5F5F5"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/img_userpic"
+                app:layout_constraintTop_toBottomOf="@+id/img_userpic" />
+
+            <TextView
+                android:id="@+id/tv_posting_body"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/view_uniderline" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/vg_recycler_comments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                app:layout_constraintBottom_toTopOf="@+id/view_add_comment"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_posting_body" />
+
+            <View
+                android:id="@+id/view_add_comment"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/vg_recycler_comments" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraint_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_gravity="bottom"
+        android:background="#F5F5F5"
+        android:padding="5dp" >
+
+        <Button
+            android:id="@+id/btn_compathy"
+            android:layout_width="90dp"
+            android:layout_height="30dp"
+            android:padding="0dp"
+            android:text="compathy"
+            android:textSize="@dimen/extraSmallText"
+            app:layout_constraintEnd_toStartOf="@+id/btn_comment"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view_header" />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <View
-            android:id="@+id/view"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:padding="5dp"
+        <Button
+            android:id="@+id/btn_comment"
+            android:layout_width="90dp"
+            android:layout_height="30dp"
+            android:padding="0dp"
+            android:text="comment"
+            android:textSize="@dimen/extraSmallText"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_post_title" />
-
-        <ImageView
-            android:id="@+id/img_userpic"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="8dp"
-            android:contentDescription="@null"
-            app:layout_constraintBottom_toBottomOf="@+id/view"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/view"
-            tools:src="@tools:sample/avatars[0]" />
-
-        <TextView
-            android:id="@+id/tv_username"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            app:layout_constraintStart_toEndOf="@+id/img_userpic"
-            app:layout_constraintTop_toTopOf="@+id/img_userpic" />
-
-        <TextView
-            android:id="@+id/tv_autoinfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            app:layout_constraintStart_toStartOf="@+id/tv_username"
-            app:layout_constraintTop_toBottomOf="@+id/tv_username" />
-
-        <TextView
-            android:id="@+id/tv_posting_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_autoinfo"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_autoinfo" />
-
-        <TextView
-            android:id="@+id/tv_posting_body"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view" />
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/btn_compathy"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-</ScrollView>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
 
