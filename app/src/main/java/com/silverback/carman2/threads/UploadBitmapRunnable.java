@@ -59,7 +59,6 @@ public class UploadBitmapRunnable implements Runnable {
         */
 
         // Set BitmapFactory.Options
-
         try(InputStream is = context.getApplicationContext().getContentResolver().openInputStream(uri)){
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;

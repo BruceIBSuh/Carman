@@ -33,7 +33,7 @@ import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.PriceDistrictTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.CropImageHelper;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -286,7 +286,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode != RESULT_OK) return;
 
-        CropImageHelper cropHelper = new CropImageHelper(this);
+        EditImageHelper cropHelper = new EditImageHelper(this);
         int orientation;
 
         switch(requestCode) {

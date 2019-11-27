@@ -9,7 +9,6 @@ import android.text.TextUtils;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -26,7 +25,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.CropImageHelper;
+import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
@@ -35,9 +34,6 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
 
@@ -177,7 +173,7 @@ public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
         String imageUri = mSettings.getString("croppedImageUri", null);
         if(!TextUtils.isEmpty(imageUri)) {
             try {
-                CropImageHelper cropHelper = new CropImageHelper(getContext());
+                EditImageHelper cropHelper = new EditImageHelper(getContext());
                 RoundedBitmapDrawable drawable = cropHelper.drawRoundedBitmap(Uri.parse(imageUri));
                 cropImagePreference.setIcon(drawable);
             } catch (IOException e) {

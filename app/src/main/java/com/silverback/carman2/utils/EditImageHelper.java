@@ -22,17 +22,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
-public class CropImageHelper {
+public class EditImageHelper {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(CropImageHelper.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(EditImageHelper.class);
 
     // Objects
     private Context mContext;
     //private BitmapTypeRequest<?> bitmapTypeReq;
 
-    public CropImageHelper(Context context) {
+    public EditImageHelper(Context context) {
         mContext = context;
     }
 
@@ -196,5 +197,45 @@ public class CropImageHelper {
     }
 
 
+    // Resize the image by calculating BitmapFactory.Options.inSampleSize.
+    public static Bitmap resizeBitmap(Context context, Uri uri, int reqWidth, int reqHeight) {
+
+        try (InputStream is = context.getApplicationContext().getContentResolver().openInputStream(uri)){
+            log.i("InputStream: %s", is);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(is, null, options);
+
+            final int rawHeight = options.outHeight;
+            final int rawWidth = options.outWidth;
+            int inSampleSize = 1;
+
+            if(rawHeight > reqHeight || rawWidth > reqWidth) {
+                final int halfHeight = rawHeight / 2;
+                final int halfWidth = rawWidth / 2;
+
+                while((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+
+            options.inSampleSize = inSampleSize;
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+            // Must create a new InputStream for the actual sampling bitmap
+            try(InputStream in = context.getApplicationContext().getContentResolver().openInputStream(uri)){
+                options.inJustDecodeBounds = false;
+                log.i("Bitmap: %s, %s", inSampleSize, BitmapFactory.decodeStream(is, null, options));
+
+                return BitmapFactory.decodeStream(in, null, options);
+
+            }
+
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
+
+        return null;
+    }
 
 }

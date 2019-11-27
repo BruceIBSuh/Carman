@@ -3,6 +3,7 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -162,6 +163,7 @@ public class BoardPostDialogFragment extends DialogFragment {
             ImageView imageView = new ImageView(getContext());
             imageView.setLayoutParams(layoutParams);
             imageView.setId(View.generateViewId());
+            imageView.setBackgroundColor(Color.parseColor("#E0E0E0"));
             idList.add(imageView.getId());
             constraintLayout.addView(imageView, i);
             set.clone(constraintLayout);

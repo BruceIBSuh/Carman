@@ -5,8 +5,10 @@ import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,7 +20,10 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.provider.MediaStore;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.text.style.ImageSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,13 +44,13 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.AttachImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.UploadPostTask;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -86,6 +91,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     private UploadPostTask postTask;
     private ImageViewModel bitmapModel;
     //private FirestoreViewModel uploadPostModel;
+    private SpannableStringBuilder ssb;
 
 
     // UIs
@@ -110,6 +116,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         bitmapModel = ViewModelProviders.of(this).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
+        ssb = new SpannableStringBuilder();
 
     }
 
@@ -200,7 +207,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
         btnAttach.setOnClickListener(btn -> {
-            log.i("Phone maker: %s, %s", Build.MANUFACTURER, Build.MODEL);
             ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                     .hideSoftInputFromWindow(etPostTitle.getWindowToken(), 0);
 
@@ -306,6 +312,28 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
                 if(data.getData() != null) {
                     Uri uri = data.getData();
                     uriImageList.add(uri);
+
+                    // Get the resized image using the Helper class fitting to the request sizes.
+                    Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), uri, 100, 100);
+                    log.i("Bitmap: %s", bitmap);
+
+                    Drawable drawable = new BitmapDrawable(getContext().getResources(), bitmap);
+                    drawable.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
+                    ImageSpan imageSpan = new ImageSpan(drawable);
+
+                    ssb.append(etPostBody.getText());
+                    String imgId = "\nimg\n";
+
+                    int selStart = etPostBody.getSelectionStart();
+                    ssb.replace(etPostBody.getSelectionStart(), etPostBody.getSelectionEnd(), imgId);
+
+                    ssb.setSpan(imageSpan, selStart, selStart + imgId.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    etPostBody.setText(ssb);
+
+
+
+
+
                 }
                 break;
 
@@ -316,7 +344,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
         final int position = uriImageList.size() - 1;
-        imageAdapter.notifyItemInserted(position);//
+        imageAdapter.notifyItemInserted(position);
 
         // Resize the image
         //handleAttachedBitmap(uriImageList.get(position));
@@ -327,6 +355,8 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
     }
 
+
+    // Callback by Checkboxes
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
