@@ -29,6 +29,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -117,6 +118,9 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         bitmapModel = ViewModelProviders.of(this).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         ssb = new SpannableStringBuilder();
+
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
     }
 
@@ -306,40 +310,37 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if(resultCode != RESULT_OK || data == null) return;
+        Uri imgUri = null;
+
         switch(requestCode) {
 
             case REQUEST_CODE_GALLERY:
                 if(data.getData() != null) {
-                    Uri uri = data.getData();
-                    uriImageList.add(uri);
-
-                    // Get the resized image using the Helper class fitting to the request sizes.
-                    Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), uri, 100, 100);
-                    log.i("Bitmap: %s", bitmap);
-
-                    Drawable drawable = new BitmapDrawable(getContext().getResources(), bitmap);
-                    drawable.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
-                    ImageSpan imageSpan = new ImageSpan(drawable);
-
-                    ssb.append(etPostBody.getText());
-                    String imgId = "\nimg\n";
-
-                    int selStart = etPostBody.getSelectionStart();
-                    ssb.replace(etPostBody.getSelectionStart(), etPostBody.getSelectionEnd(), imgId);
-
-                    ssb.setSpan(imageSpan, selStart, selStart + imgId.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-                    etPostBody.setText(ssb);
-
-
-
-
-
+                    imgUri = data.getData();
+                    uriImageList.add(imgUri);
                 }
+
                 break;
 
             case REQUEST_CODE_CAMERA:
                 break;
+
+
         }
+
+        // Insert ImageSpan into SpannalbeStringBuilder
+        Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
+        ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+
+        ssb.append(etPostBody.getText());
+        String imgId = "\nimg\n";
+
+        int selStart = etPostBody.getSelectionStart();
+        log.i("getSelection: %s, %s", etPostBody.getSelectionStart(), etPostBody.getSelectionEnd());
+        ssb.replace(selStart, etPostBody.getSelectionEnd(), imgId);
+        ssb.setSpan(imgSpan, selStart, selStart + imgId.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        etPostBody.setText(ssb);
+        etPostBody.setSelection(ssb.length());
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.

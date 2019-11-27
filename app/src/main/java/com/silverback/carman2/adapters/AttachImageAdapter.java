@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -36,7 +37,7 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
     @Override
     public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        RelativeLayout layout = (RelativeLayout)LayoutInflater.from(context)
+        ConstraintLayout layout = (ConstraintLayout)LayoutInflater.from(context)
                 .inflate(R.layout.gridview_board_images, parent, false);
 
         return new ImageViewHolder(layout);
