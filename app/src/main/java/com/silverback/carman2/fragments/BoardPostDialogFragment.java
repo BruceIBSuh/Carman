@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -150,7 +151,12 @@ public class BoardPostDialogFragment extends DialogFragment {
         // If no images are transferred, just return localview not displaying any images.
         if(imgUriList == null || imgUriList.size() == 0) return localView;
 
-        // Create ImageView dynamically
+        StringBuilder sb = new StringBuilder(postContent);
+        int pos = sb.lastIndexOf("image_3");
+        log.i("span position: %s", pos);
+
+
+                // Create ImageView dynamically
         // Attached Image(s) dynamically using LayoutParams for layout_width and height and
         // ConstraintSet to set the layout positioned in ConstraintLayout
         List<Integer> idList = new ArrayList<>();

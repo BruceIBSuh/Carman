@@ -37,6 +37,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
@@ -101,6 +102,9 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     private RecyclerView recyclerImageView;
     private EditText etPostTitle, etPostBody;
 
+    // Fields
+    private int imageTag = 0;
+
     // Constructor
     public BoardWriteFragment() {
         // Required empty public constructor
@@ -119,7 +123,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         ssb = new SpannableStringBuilder();
 
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+
         //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
     }
@@ -149,6 +153,8 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         ImageButton btnDismiss = localView.findViewById(R.id.btn_dismiss);
         ImageButton btnUpload = localView.findViewById(R.id.btn_upload);
 
+        RelativeLayout relativeLayout = localView.findViewById(R.id.vg_relative_attach);
+
 
         chkboxGeneral.setText("일반");
         chkboxMaker.setText(mSettings.getString("pref_auto_maker", null));
@@ -163,12 +169,17 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         chkboxModel.setOnCheckedChangeListener(this);
         chkboxYear.setOnCheckedChangeListener(this);
 
+        log.i("Bottom height: %s", relativeLayout.getHeight());
+
         /*
         statusLayout.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             float statusHeight = statusLayout.getHeight();
             log.i("statuslayout height: %s", statusHeight);
         });
         */
+
+        // Handle the soft input mode
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         // Animate the status bar
         TypedValue typedValue = new TypedValue();
@@ -222,6 +233,9 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
                 // create an intent by the selection.
                 DialogFragment dialog = new BoardChooserDlgFragment();
                 dialog.show(getChildFragmentManager(), "@null");
+
+                // Put a line feed into the EditText
+                etPostBody.append("\n");
             }
         });
 
@@ -306,6 +320,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -328,19 +343,22 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         }
 
+        imageTag+= 1;
+
         // Insert ImageSpan into SpannalbeStringBuilder
         Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
         ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
-
-        ssb.append(etPostBody.getText());
-        String imgId = "\nimg\n";
+        SpannableStringBuilder ssb = new SpannableStringBuilder(etPostBody.getText());
+        String imgId = "image_" + imageTag + "\n";
 
         int selStart = etPostBody.getSelectionStart();
         log.i("getSelection: %s, %s", etPostBody.getSelectionStart(), etPostBody.getSelectionEnd());
         ssb.replace(selStart, etPostBody.getSelectionEnd(), imgId);
         ssb.setSpan(imgSpan, selStart, selStart + imgId.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         etPostBody.setText(ssb);
-        etPostBody.setSelection(ssb.length());
+        etPostBody.setSelection(ssb.length()); //set the cursor positioned to a new line.
+
+        log.i("etPostBody text: %s", etPostBody.getText());
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
