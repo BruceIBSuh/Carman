@@ -124,7 +124,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         ssb = new SpannableStringBuilder();
 
 
-        //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
     }
 
@@ -178,9 +177,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         });
         */
 
-        // Handle the soft input mode
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-
         // Animate the status bar
         TypedValue typedValue = new TypedValue();
         if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
@@ -192,8 +188,11 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
             animStatusView.start();
         }
 
+        // Set the soft input mode, which seems not working.
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+
         // Create RecyclerView with attched pictures which are handled in onActivityResult()
-        recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 1));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
         imageAdapter = new AttachImageAdapter(uriImageList);
         recyclerImageView.setAdapter(imageAdapter);
@@ -344,6 +343,8 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         }
 
         imageTag+= 1;
+
+        recyclerImageView.setVisibility(View.VISIBLE);
 
         // Insert ImageSpan into SpannalbeStringBuilder
         Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);

@@ -126,6 +126,7 @@
             android:id="@+id/vg_constraint_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="50dp"
             android:padding="8dp" >
 
             <TextView
@@ -169,29 +170,41 @@
             <EditText
                 android:id="@+id/et_board_body"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="100dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="150dp"
+                android:layout_marginTop="16dp"
+                android:background="@null"
                 android:gravity="start|top"
                 android:hint="Write Here!"
-                android:background="@null"
+                android:inputType="textMultiLine"
+                android:minHeight="100dp"
                 android:textSize="@dimen/smallText"
+                app:layout_constraintEnd_toStartOf="@+id/vg_recycler_images"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/view_underline"
+                tools:ignore="autofill" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/vg_recycler_images"
+                android:layout_width="80dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="@+id/et_board_body"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/view_underline" />
+                app:layout_constraintTop_toTopOf="@+id/et_board_body" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
 
+    <!--
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/vg_recycler_images"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         app:layout_dodgeInsetEdges="bottom" />
-
+    -->
     <RelativeLayout
+        android:visibility="gone"
         android:id="@+id/vg_relative_attach"
         android:layout_width="match_parent"
         android:layout_height="35dp"
