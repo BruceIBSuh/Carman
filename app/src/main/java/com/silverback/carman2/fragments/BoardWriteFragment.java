@@ -372,7 +372,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         super.onActivityResult(requestCode, resultCode, data);
 
-
     }
 
 

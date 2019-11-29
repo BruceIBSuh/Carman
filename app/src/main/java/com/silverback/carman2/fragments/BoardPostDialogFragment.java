@@ -7,7 +7,11 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.style.DynamicDrawableSpan;
+import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,18 +29,25 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -55,13 +66,15 @@ public class BoardPostDialogFragment extends DialogFragment {
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     //private LruCache<String, Bitmap> memCache;
+    private List<Integer> viewIdList;
 
     // UIs
-    //private ConstraintLayout constraintLayout;
+    private ConstraintLayout constraintLayout;
     //private ConstraintSet set;
     //private ImageView imgView;
     //private ConstraintLayout.LayoutParams layoutParams;
     private TextView tvAutoInfo;
+    private TextView tvContent;
 
     // Fields
     private String userId;
@@ -124,19 +137,19 @@ public class BoardPostDialogFragment extends DialogFragment {
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.dialog_board_post, container, false);
-        ConstraintLayout constraintLayout = localView.findViewById(R.id.constraint_posting);
+        constraintLayout = localView.findViewById(R.id.constraint_posting);
         ImageButton btn = localView.findViewById(R.id.imgbtn_dismiss);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
         TextView tvUserName = localView.findViewById(R.id.tv_username);
         tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
-        TextView tvContent = localView.findViewById(R.id.tv_posting_body);
+        tvContent = localView.findViewById(R.id.tv_posting_body);
         ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
         btn.setOnClickListener(view -> dismiss());
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
-        tvContent.setText(postContent);
+        //tvContent.setText(postContent);
         tvDate.setText(getArguments().getString("timestamp"));
 
         Uri uriUserPic = Uri.parse(userPic);
@@ -148,17 +161,100 @@ public class BoardPostDialogFragment extends DialogFragment {
                 .circleCrop()
                 .into(imgUserPic);
 
+
+        final String REGEX = "image_\\d";
+        Pattern p = Pattern.compile(REGEX);
+        Matcher m = p.matcher(postContent.trim());
+
+        /*
+        SpannableString ssb = new SpannableString(postContent.trim());
+        int count = 0;
+        while(m.find()) {
+            log.i("matched: %s, %s", m.start(), m.end());
+            Uri imgUri = Uri.parse(imgUriList.get(count));
+            //Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 100, 100);
+
+
+            FutureTarget<Drawable> futureImage = Glide.with(getContext()).asDrawable().load(imgUri).submit();
+            new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    try {
+                        log.i("futureImage: %s", futureImage.get());
+
+
+                    } catch(ExecutionException e) {
+
+                    } catch(InterruptedException e) {
+
+                    }
+                }
+            }).start();
+
+
+
+
+
+            Glide.with(getContext()).load(imgUri).into(new CustomTarget<Drawable>(){
+                @Override
+                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                    ImageSpan imgSpan = new ImageSpan(resource, DynamicDrawableSpan.ALIGN_BASELINE);
+                    ssb.setSpan(imgSpan, m.start(), m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+
+                @Override
+                public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                }
+            });
+
+
+
+            count++;
+        }
+
+
+        log.i("SSB:%s", ssb);
+        tvContent.setText(ssb);
+        */
+
+
         // If no images are transferred, just return localview not displaying any images.
-        if(imgUriList == null || imgUriList.size() == 0) return localView;
+        if(imgUriList == null || imgUriList.size() == 0) {
+            tvContent.setText(postContent);
+            return localView;
 
-        StringBuilder sb = new StringBuilder(postContent);
-        int pos = sb.lastIndexOf("image_3");
-        log.i("span position: %s", pos);
+        // In case a single image is attached, the image is displayed at the end of the content.
+        } else if(imgUriList.size() == 1) {
+            tvContent.setText(postContent);
+
+            ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.MATCH_CONSTRAINT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT);
+            ConstraintSet set = new ConstraintSet();
+
+            ImageView imageView = new ImageView(getContext());
+            imageView.setLayoutParams(params);
+            imageView.setId(View.generateViewId());
+            imageView.setBackgroundColor(Color.parseColor("#E0E0E0"));
+            constraintLayout.addView(imageView);
+            set.clone(constraintLayout);
+
+            set.connect(imageView.getId(), ConstraintSet.START, R.id.constraint_posting, ConstraintSet.START);
+            set.connect(imageView.getId(), ConstraintSet.END, R.id.constraint_posting, ConstraintSet.END);
+            set.connect(imageView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM, 50);
+
+        // Multiple images should be interleaved b/w split strings according to the markups.
+        } else if(imgUriList.size() > 1) {
+            log.i("imgUriList: %s, %s", imgUriList.get(0), Uri.parse(imgUriList.get(0)));
+            addTextImageView(postContent);
+
+        }
 
 
-                // Create ImageView dynamically
         // Attached Image(s) dynamically using LayoutParams for layout_width and height and
         // ConstraintSet to set the layout positioned in ConstraintLayout
+        /*
         List<Integer> idList = new ArrayList<>();
         for(int i = 0; i < imgUriList.size(); i++) {
             ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
@@ -209,6 +305,7 @@ public class BoardPostDialogFragment extends DialogFragment {
                     });
 
         }
+        */
 
         return localView;
     }
@@ -220,6 +317,119 @@ public class BoardPostDialogFragment extends DialogFragment {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
+    }
+
+
+    @SuppressWarnings("ConstantConditions")
+    private void addTextImageView(String content) {
+
+        List<Integer> viewIdList = new ArrayList<>();
+
+        final String REGEX = "image_\\d";
+        Pattern p = Pattern.compile(REGEX);
+        String trimContent = content.trim();
+        List<String> splitContent =  Arrays.asList(p.split((trimContent)));
+
+
+        /*
+        SpannableStringBuilder ssb = new SpannableStringBuilder(content);
+        Matcher m = p.matcher(ssb);
+
+
+        int count = 0;
+        while(m.find()) {
+            log.i("matched: %s, %s", m.start(), m.end());
+            Uri imgUri = Uri.parse(imgUriList.get(count));
+            log.i("Image Uri: %s", imgUri);
+            Bitmap bitmap = EditImageHelper.resizeBitmap(getActivity().getApplicationContext(), imgUri, 50, 50);
+            log.i("Bitmap: %s", bitmap);
+            ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+            ssb.setSpan(imgSpan, m.start(), m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            count++;
+        }
+
+        tvContent.setText(ssb);
+        */
+
+
+        log.i("Size: %s, %s", splitContent.size(), imgUriList.size());
+        for(int i = 0; i < splitContent.size(); i++) {
+
+            ConstraintLayout.LayoutParams tvParams = new ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.MATCH_CONSTRAINT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT);
+
+            ConstraintLayout.LayoutParams imgParams = new ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.MATCH_CONSTRAINT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT);
+
+
+            ConstraintSet set = new ConstraintSet();
+
+            TextView textView = new TextView(getContext());
+            textView.setLayoutParams(tvParams);
+            textView.setId(View.generateViewId());
+            viewIdList.add(textView.getId());
+            log.i("TextView ID: %s", textView.getId());
+
+            ImageView imageView = new ImageView(getContext());
+            imageView.setLayoutParams(imgParams);
+            imageView.setId(View.generateViewId());
+            log.i("ImageView Id: %s", imageView.getId());
+            viewIdList.add(imageView.getId());
+
+            constraintLayout.addView(textView);
+            constraintLayout.addView(imageView);
+            set.clone(constraintLayout);
+
+            set.connect(textView.getId(), ConstraintSet.START, R.id.constraint_posting, ConstraintSet.START);
+            set.connect(textView.getId(), ConstraintSet.END, R.id.constraint_posting, ConstraintSet.END);
+
+            set.connect(imageView.getId(), ConstraintSet.START, R.id.constraint_posting, ConstraintSet.START);
+            set.connect(imageView.getId(), ConstraintSet.END, R.id.constraint_posting, ConstraintSet.END);
+
+
+
+            //if(imgUriList.get(i) == null) return;
+            final int pos = i;
+            Glide.with(getContext()).asBitmap().load(Uri.parse(imgUriList.get(i)))
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .fitCenter()
+                    .into(new CustomTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            if(pos == 0) {
+                                set.connect(textView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM);
+                                set.connect(imageView.getId(), ConstraintSet.TOP, textView.getId(), ConstraintSet.BOTTOM);
+                                textView.setText(splitContent.get(pos));
+                                imageView.setImageBitmap(resource);
+
+                            } else {
+                                // The second text view is placed below the first image
+                                log.i("View id: %s, %s", textView.getId(), imageView.getId());
+                                set.connect(textView.getId(), ConstraintSet.TOP, viewIdList.get(pos), ConstraintSet.BOTTOM);
+                                set.connect(imageView.getId(), ConstraintSet.TOP, viewIdList.get(pos -1), ConstraintSet.BOTTOM);
+                                textView.setText(splitContent.get(pos));
+                                imageView.setImageBitmap(resource);
+                            }
+
+                            log.i("split string: %s", splitContent.get(pos));
+
+
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                        }
+                    });
+
+            set.applyTo(constraintLayout);
+
+
+
+
+        }
     }
 
 }
