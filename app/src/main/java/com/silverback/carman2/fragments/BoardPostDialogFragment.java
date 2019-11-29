@@ -166,6 +166,7 @@ public class BoardPostDialogFragment extends DialogFragment {
         Pattern p = Pattern.compile(REGEX);
         Matcher m = p.matcher(postContent.trim());
 
+        /*
         SpannableString ssb = new SpannableString(postContent.trim());
         int count = 0;
         while(m.find()) {
@@ -193,7 +194,7 @@ public class BoardPostDialogFragment extends DialogFragment {
 
 
 
-            /*
+
             Glide.with(getContext()).load(imgUri).into(new CustomTarget<Drawable>(){
                 @Override
                 public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
@@ -207,7 +208,7 @@ public class BoardPostDialogFragment extends DialogFragment {
                 }
             });
 
-             */
+
 
             count++;
         }
@@ -215,8 +216,9 @@ public class BoardPostDialogFragment extends DialogFragment {
 
         log.i("SSB:%s", ssb);
         tvContent.setText(ssb);
+        */
 
-        /*
+
         // If no images are transferred, just return localview not displaying any images.
         if(imgUriList == null || imgUriList.size() == 0) {
             tvContent.setText(postContent);
@@ -248,7 +250,7 @@ public class BoardPostDialogFragment extends DialogFragment {
             addTextImageView(postContent);
 
         }
-        */
+
 
         // Attached Image(s) dynamically using LayoutParams for layout_width and height and
         // ConstraintSet to set the layout positioned in ConstraintLayout
@@ -325,10 +327,11 @@ public class BoardPostDialogFragment extends DialogFragment {
 
         final String REGEX = "image_\\d";
         Pattern p = Pattern.compile(REGEX);
-        //String trimContent = content.trim();
-        //List<String> splitContent =  Arrays.asList(p.split((trimContent)));
+        String trimContent = content.trim();
+        List<String> splitContent =  Arrays.asList(p.split((trimContent)));
 
 
+        /*
         SpannableStringBuilder ssb = new SpannableStringBuilder(content);
         Matcher m = p.matcher(ssb);
 
@@ -346,8 +349,9 @@ public class BoardPostDialogFragment extends DialogFragment {
         }
 
         tvContent.setText(ssb);
+        */
 
-        /*
+
         log.i("Size: %s, %s", splitContent.size(), imgUriList.size());
         for(int i = 0; i < splitContent.size(); i++) {
 
@@ -384,28 +388,34 @@ public class BoardPostDialogFragment extends DialogFragment {
             set.connect(imageView.getId(), ConstraintSet.START, R.id.constraint_posting, ConstraintSet.START);
             set.connect(imageView.getId(), ConstraintSet.END, R.id.constraint_posting, ConstraintSet.END);
 
-            if(i == 0) {
-                set.connect(textView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM);
-                set.connect(imageView.getId(), ConstraintSet.TOP, textView.getId(), ConstraintSet.BOTTOM);
-            } else {
-                // The second text view is placed below the first image
-                log.i("View id: %s, %s", textView.getId(), imageView.getId());
-                set.connect(textView.getId(), ConstraintSet.TOP, viewIdList.get(i), ConstraintSet.BOTTOM);
-                set.connect(imageView.getId(), ConstraintSet.TOP, viewIdList.get(i -1), ConstraintSet.BOTTOM);
-            }
 
-            log.i("split string: %s", splitContent.get(i));
-            textView.setText(splitContent.get(i));
 
             //if(imgUriList.get(i) == null) return;
-
+            final int pos = i;
             Glide.with(getContext()).asBitmap().load(Uri.parse(imgUriList.get(i)))
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .fitCenter()
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            imageView.setImageBitmap(resource);
+                            if(pos == 0) {
+                                set.connect(textView.getId(), ConstraintSet.TOP, R.id.tv_posting_body, ConstraintSet.BOTTOM);
+                                set.connect(imageView.getId(), ConstraintSet.TOP, textView.getId(), ConstraintSet.BOTTOM);
+                                textView.setText(splitContent.get(pos));
+                                imageView.setImageBitmap(resource);
+
+                            } else {
+                                // The second text view is placed below the first image
+                                log.i("View id: %s, %s", textView.getId(), imageView.getId());
+                                set.connect(textView.getId(), ConstraintSet.TOP, viewIdList.get(pos), ConstraintSet.BOTTOM);
+                                set.connect(imageView.getId(), ConstraintSet.TOP, viewIdList.get(pos -1), ConstraintSet.BOTTOM);
+                                textView.setText(splitContent.get(pos));
+                                imageView.setImageBitmap(resource);
+                            }
+
+                            log.i("split string: %s", splitContent.get(pos));
+
+
                         }
 
                         @Override
@@ -420,12 +430,6 @@ public class BoardPostDialogFragment extends DialogFragment {
 
 
         }
-
-         */
-
-
-
-
     }
 
 }
