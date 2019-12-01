@@ -115,7 +115,6 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     @Override
     public int getItemCount() {
-        log.i("Item Count: %s", querySnapshot.size());
         return querySnapshot.size();
     }
 

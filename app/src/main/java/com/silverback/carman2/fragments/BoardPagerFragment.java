@@ -89,13 +89,13 @@ public class BoardPagerFragment extends Fragment implements
         switch(page) {
 
             case 0: // Recent post
+                // Pagination should be programmed.
                 Query firstQuery = firestore.collection("board_general")
                         .orderBy("timestamp", Query.Direction.DESCENDING)
                         .limit(25);
 
                 firstQuery.get().addOnSuccessListener(querySnapshot -> {
                     recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
-                    log.i("querysnapshot: %s", querySnapshot);
                     recyclerView.setAdapter(recyclerAdapter);
                     //DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
 
@@ -140,6 +140,7 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    // Callback invoked by BoardRecyclerAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot) {

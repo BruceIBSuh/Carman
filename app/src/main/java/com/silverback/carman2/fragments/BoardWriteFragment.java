@@ -20,9 +20,13 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.SpanWatcher;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -70,7 +74,8 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BoardWriteFragment extends DialogFragment implements CheckBox.OnCheckedChangeListener {
+public class BoardWriteFragment extends DialogFragment implements
+        CheckBox.OnCheckedChangeListener, SpanWatcher {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
@@ -114,6 +119,9 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set the soft input mode, which seems not working.
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED);
 
         mSettings = ((BoardPostingActivity)getActivity()).getSettings();
         uriImageList = new ArrayList<>();
@@ -188,11 +196,10 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
             animStatusView.start();
         }
 
-        // Set the soft input mode, which seems not working.
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+
 
         // Create RecyclerView with attched pictures which are handled in onActivityResult()
-        recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 1));
+        recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
         imageAdapter = new AttachImageAdapter(uriImageList);
         recyclerImageView.setAdapter(imageAdapter);
@@ -201,6 +208,8 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         // Set the event listeners to the buttons.
         btnDismiss.setOnClickListener(btn -> dismiss());
+
+        // Upload button
         btnUpload.setOnClickListener(btn -> {
             if(!doEmptyCheck()) return;
 
@@ -260,7 +269,7 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
             log.i("FragmentSharedModel chooser: %s", chooser);
 
             switch(chooser) {
-                case GALLERY: // Gallery
+                case GALLERY:
                     // Handle SAMSUNG for multi-selection
                     /*
                     if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
@@ -342,24 +351,56 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
 
         }
 
-        imageTag+= 1;
-
+        imageTag += 1;
         recyclerImageView.setVisibility(View.VISIBLE);
+
+        // Create SpanWatcher
+        SpanWatcher spanWatcher = new SpanWatcher() {
+            @Override
+            public void onSpanAdded(Spannable text, Object what, int start, int end) {
+                log.i("onSpanAdded: %s, %s, %s, %s", text, what, start, end);
+            }
+            @Override
+            public void onSpanRemoved(Spannable text, Object what, int start, int end) {
+                log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
+            }
+            @Override
+            public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
+                log.i("OnSpanChanged: %s, %s, %s, %s, %s, %s", text, what, ostart, oend, nstart, nend);
+            }
+        };
+
+        etPostBody.getText().setSpan(spanWatcher, 0, 0, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
 
         // Insert ImageSpan into SpannalbeStringBuilder
         Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
         ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
-        SpannableStringBuilder ssb = new SpannableStringBuilder(etPostBody.getText());
-        String imgId = "image_" + imageTag + "\n";
+        //SpannableStringBuilder ssb = new SpannableStringBuilder(etPostBody.getText());
+        final String markup = "[image_" + imageTag + "]\n";
 
-        int selStart = etPostBody.getSelectionStart();
-        log.i("getSelection: %s, %s", etPostBody.getSelectionStart(), etPostBody.getSelectionEnd());
-        ssb.replace(selStart, etPostBody.getSelectionEnd(), imgId);
-        ssb.setSpan(imgSpan, selStart, selStart + imgId.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        etPostBody.setText(ssb);
+        int selectionStart = etPostBody.getSelectionStart();
+        int selectionEnd = etPostBody.getSelectionEnd();
+        etPostBody.getText().replace(selectionStart, selectionEnd, markup);
+        etPostBody.getText().setSpan(imgSpan, selectionStart, selectionStart + markup.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //etPostBody.setText(ssb);
         etPostBody.setSelection(ssb.length()); //set the cursor positioned to a new line.
+        ImageSpan[] arrSpan = ssb.getSpans(0, ssb.length(), ImageSpan.class);
 
-        log.i("etPostBody text: %s", etPostBody.getText());
+
+        /*
+        etPostBody.addTextChangedListener(new TextWatcher(){
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                ImageSpan[] afterSpan = ssb.getSpans(0, ssb.length(), ImageSpan.class);
+                log.i("onTextChanged: %s, %s, %s", start, before, count);
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+         */
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
@@ -369,7 +410,6 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         // Resize the image
         //handleAttachedBitmap(uriImageList.get(position));
         //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), bitmapModel);
-
         super.onActivityResult(requestCode, resultCode, data);
 
     }
@@ -459,6 +499,21 @@ public class BoardWriteFragment extends DialogFragment implements CheckBox.OnChe
         }
 
         return true;
+    }
+
+    @Override
+    public void onSpanAdded(Spannable text, Object what, int start, int end) {
+
+    }
+
+    @Override
+    public void onSpanRemoved(Spannable text, Object what, int start, int end) {
+
+    }
+
+    @Override
+    public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
+
     }
 
 

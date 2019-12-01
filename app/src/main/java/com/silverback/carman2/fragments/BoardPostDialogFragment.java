@@ -3,14 +3,11 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.style.DynamicDrawableSpan;
+import android.text.Spanned;
 import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,23 +26,19 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,6 +105,9 @@ public class BoardPostDialogFragment extends DialogFragment {
         // to the view.
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
             log.i("auto data: %s", document.getString("auto_data"));
+            if(document.getString("auto_data") == null || document.getString("auto_data").isEmpty())
+                return;
+
             try {
                 JSONArray jsonArray = new JSONArray(document.getString("auto_data"));
                 StringBuilder sb = new StringBuilder();
@@ -162,12 +158,7 @@ public class BoardPostDialogFragment extends DialogFragment {
                 .into(imgUserPic);
 
 
-        final String REGEX = "image_\\d";
-        Pattern p = Pattern.compile(REGEX);
-        Matcher m = p.matcher(postContent.trim());
-
         /*
-        SpannableString ssb = new SpannableString(postContent.trim());
         int count = 0;
         while(m.find()) {
             log.i("matched: %s, %s", m.start(), m.end());
@@ -192,12 +183,10 @@ public class BoardPostDialogFragment extends DialogFragment {
             }).start();
 
 
-
-
-
             Glide.with(getContext()).load(imgUri).into(new CustomTarget<Drawable>(){
                 @Override
                 public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                    resource.setBounds(0, 0, resource.getIntrinsicWidth(), resource.getIntrinsicHeight());
                     ImageSpan imgSpan = new ImageSpan(resource, DynamicDrawableSpan.ALIGN_BASELINE);
                     ssb.setSpan(imgSpan, m.start(), m.end(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
@@ -209,16 +198,16 @@ public class BoardPostDialogFragment extends DialogFragment {
             });
 
 
-
             count++;
         }
 
+         */
 
-        log.i("SSB:%s", ssb);
+        SpannableStringBuilder ssb = doImageSpanString(imgUriList);
         tvContent.setText(ssb);
-        */
 
 
+        /*
         // If no images are transferred, just return localview not displaying any images.
         if(imgUriList == null || imgUriList.size() == 0) {
             tvContent.setText(postContent);
@@ -250,8 +239,7 @@ public class BoardPostDialogFragment extends DialogFragment {
             addTextImageView(postContent);
 
         }
-
-
+        */
         // Attached Image(s) dynamically using LayoutParams for layout_width and height and
         // ConstraintSet to set the layout positioned in ConstraintLayout
         /*
@@ -426,10 +414,55 @@ public class BoardPostDialogFragment extends DialogFragment {
 
             set.applyTo(constraintLayout);
 
+        }
+    }
 
 
+    private SpannableStringBuilder doImageSpanString(List<String> imgUriList) {
+
+        int markupCount = 0;
+        int imgCount = imgUriList.size();
+
+        SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
+
+
+        // Find the tag from the posting String.
+        final String REGEX = "\\[image_\\d\\]";
+        Pattern p = Pattern.compile(REGEX);
+        Matcher m = p.matcher(ssb);
+
+        while(m.find(0)) {
+            markupCount++;
+            log.i("matched: %s", ssb.subSequence(m.start(), m.end()));
+            CharSequence num = ssb.subSequence(m.start() + 7, m.end() - 1);
+
+            log.i("Image Number: %s", num);
 
         }
+
+        /*
+        // No tags exist and insert markup.
+        if(!m.lookingAt()) {
+            log.i("no markup exists");
+            for(int i = 0; i < imgCount; i++) {
+                ssb.append("\n").append("image_").append(String.valueOf(i + 1));
+                //ssb.append(System.getProperty("line.separator")); // Line Separator using System
+            }
+
+            m = p.matcher(ssb);
+        }
+
+        Drawable drawable = getResources().getDrawable(R.drawable.logo_gs);
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+        while(m.find(0)) {
+            ImageSpan imgSpan = new ImageSpan(drawable);
+            ssb.setSpan(imgSpan, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+         */
+
+        return ssb;
+
     }
 
 }
