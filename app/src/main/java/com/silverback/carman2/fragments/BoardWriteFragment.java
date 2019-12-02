@@ -53,6 +53,7 @@ import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.UploadPostTask;
+import com.silverback.carman2.utils.BoardImageSpanHandler;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.EditImageHelper;
 
@@ -73,7 +74,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * A simple {@link Fragment} subclass.
  */
 public class BoardWriteFragment extends DialogFragment implements
-        CheckBox.OnCheckedChangeListener, SpanWatcher,
+        CheckBox.OnCheckedChangeListener,
         AttachImageAdapter.OnBoardWriteListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
@@ -104,6 +105,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private ImageViewModel bitmapModel;
     //private FirestoreViewModel uploadPostModel;
     private SpannableStringBuilder ssb;
+    private BoardImageSpanHandler spanHandler;
 
 
     // UIs
@@ -112,11 +114,13 @@ public class BoardWriteFragment extends DialogFragment implements
     private RecyclerView recyclerImageView;
     private EditText etPostTitle, etPostBody;
 
-
+    /*
     static {
         imageTag = 1;
         markup = "[image_" + imageTag + "]\n";
     }
+
+     */
 
     // Constructor
     public BoardWriteFragment() {
@@ -255,10 +259,9 @@ public class BoardWriteFragment extends DialogFragment implements
             }
         });
 
-
-
-
-
+        // Create BoardImageSpanHandler, a helper class to handle the image span and the spanwatcher
+        // to prevent the image span from deletion while editing.
+        spanHandler = new BoardImageSpanHandler(etPostBody.getText());
 
         return localView;
     }
@@ -348,89 +351,24 @@ public class BoardWriteFragment extends DialogFragment implements
         Uri imgUri = null;
 
         switch(requestCode) {
-
             case REQUEST_CODE_GALLERY:
                 if(data.getData() != null) {
                     imgUri = data.getData();
                     uriImageList.add(imgUri);
                 }
-
                 break;
 
             case REQUEST_CODE_CAMERA:
                 break;
-
-
         }
-
-
-
 
         // Insert ImageSpan into SpannalbeStringBuilder
         Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
         ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
-        ssb = new SpannableStringBuilder(etPostBody.getText());
-        markup = "[image_" + imageTag + "]\n";
-        int selectionStart = etPostBody.getSelectionStart();
-        int selectionEnd = etPostBody.getSelectionEnd();
-        etPostBody.getText().replace(selectionStart, selectionEnd, markup);
-        etPostBody.getText().setSpan(imgSpan, selectionStart, selectionStart + markup.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-        arrImageSpan = ssb.getSpans(0, ssb.length(), ImageSpan.class);
-        //etPostBody.setText(ssb);
-        etPostBody.setSelection(etPostBody.getText().length()); //set the cursor positioned to a new line.
-        imageTag += 1;
 
-        // Set the InputFilter to EditText, which prevents the image span from deleting except for
-        // removing the image out of ImageAdapter.
-        etPostBody.getText().setFilters(new InputFilter[]{
-                (source, start, end, dest, dstart, dend) -> {
-                    log.i("Filters: %s ,%s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-                    final int newStart = Math.max(markup.length(), dstart);
-                    final int newEnd = Math.max(markup.length(), dend);
-                    log.i("new position: %s, %s", newStart, newEnd);
-                    if(end == 0) {
-                        etPostBody.setSelection(etPostBody.getText().length() - 9);
-                    }
-
-                    return null;
-                }
-        });
-
-        final SpanWatcher watcher = new SpanWatcher() {
-            @Override
-            public void onSpanAdded(final Spannable text, final Object what, final int start, final int end) {}
-            @Override
-            public void onSpanRemoved(final Spannable text, final Object what, final int start, final int end) {}
-            @Override
-            public void onSpanChanged(final Spannable text, final Object what,
-                                      final int ostart, final int oend, final int nstart, final int nend) {
-
-                log.i("what: %s", what);
-                if (what == Selection.SELECTION_START) {
-                    log.i("SpanWatcher_start: %s, %s", nstart, markup.length());
-                    if (nstart < markup.length()) {
-                        final int end = Math.max(markup.length(), Selection.getSelectionEnd(text));
-                        Selection.setSelection(text, markup.length(), end);
-                        log.i("SpanWatcher_start: %s, %s, %s", text, markup.length(), end);
-                    }
-
-                } else if (what == Selection.SELECTION_END) {
-                    log.i("SpanWatcher_start: %s, %s", nstart, markup.length());
-                    final int start = Math.max(markup.length(), Selection.getSelectionEnd(text));
-                    final int end = Math.max(start, nstart);
-                    if (end != nstart) {
-                        Selection.setSelection(text, start, end);
-                        log.i("SpanWatcher_end: %s, %s, %s", text, markup.length(), end);
-                    }
-                }
-            }
-        };
-        etPostBody.getText().setSpan(watcher, 0, 0, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-
-
-
-
-
+        // Manager the image spans using BoardImageSpanHandler helper class.
+        spanHandler.setImageSpanToPosting(imgSpan);
+        spanHandler.setImageSpanInputFilter();
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
@@ -484,7 +422,6 @@ public class BoardWriteFragment extends DialogFragment implements
 
 
         //postTask = ThreadManager.startUploadPostTask(getContext(), postTitle, content, strImgUriList);
-
         postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
 
 
@@ -533,24 +470,10 @@ public class BoardWriteFragment extends DialogFragment implements
         return true;
     }
 
-    @Override
-    public void onSpanAdded(Spannable text, Object what, int start, int end) {
-
-    }
-
-    @Override
-    public void onSpanRemoved(Spannable text, Object what, int start, int end) {
-
-    }
-
-    @Override
-    public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
-
-    }
-
     // Callback invoked by AttachImageAdapter.OnBoardWriteListener when an image is removed from the list
     @Override
     public void removeGridImage(int position) {
+        ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
         log.i("position: %s, %s, %s", position, uriImageList.size(), arrImageSpan.length);
         imageAdapter.notifyItemRemoved(position);
         uriImageList.remove(position);
