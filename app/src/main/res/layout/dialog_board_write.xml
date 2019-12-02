@@ -120,7 +120,9 @@
         android:fillViewport="true"
         android:scrollbars="vertical"
         android:elevation="1dp"
-        app:layout_dodgeInsetEdges="top" >
+        app:layout_dodgeInsetEdges="top"
+        app:layout_anchor="@+id/vg_relative_attach"
+        app:layout_anchorGravity="top">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/vg_constraint_body"

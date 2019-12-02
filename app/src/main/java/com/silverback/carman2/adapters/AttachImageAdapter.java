@@ -5,8 +5,9 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -18,6 +19,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
+import java.util.Map;
 
 public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.ImageViewHolder> {
 
@@ -26,10 +28,17 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
     // Objects
     private Context context;
     private List<Uri> uriImageList;
+    private OnBoardWriteListener mListener;
+
+    // Interface to communicate w/ BoardWriteFragment
+    public interface OnBoardWriteListener {
+        void removeGridImage(int position);
+    }
 
     // Constructor
-    public AttachImageAdapter(List<Uri> uriList) {
+    public AttachImageAdapter(List<Uri> uriList, OnBoardWriteListener listener) {
         uriImageList = uriList;
+        mListener = listener;
     }
 
 
@@ -49,12 +58,24 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
         log.i("Image Uri in Adapter: %s", uriImageList.get(position));
         Uri uri = uriImageList.get(position);
         holder.bindImageToHolder(uri);
+
+        // Invoke the callback method when clicking the image button in order to remove the clicked
+        // image out of the list and notify the adapter of the position for invalidating.
+        holder.btnRemoveImage.setOnClickListener(view -> mListener.removeGridImage(position));
     }
 
+    // Adapter should not assume that the payload will always be passed to onBindViewHolder(),
+    // e.g. when the view is not attached, the payload will be simply dropped,as is the case here.
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position, @NonNull List<Object> payloads) {
-        log.i("Partial Binding");
-        holder.bindImageToHolder(uriImageList.get(position));
+
+        if(payloads.isEmpty()) {
+            log.i("zero payload: %s", payloads);
+            super.onBindViewHolder(holder,position, payloads);
+        }
+
+        String caption = "image_" + (position + 1);
+        holder.tvCaption.setText(caption);
     }
 
     @Override
@@ -63,20 +84,23 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
     }
 
 
+
     class ImageViewHolder extends RecyclerView.ViewHolder {
 
-        ImageView imgView;
+        TextView tvCaption;
+        ImageView thumbnail;
+        ImageButton btnRemoveImage;
 
         ImageViewHolder(View view) {
             super(view);
-            imgView = view.findViewById(R.id.img_board_grid);
+            thumbnail = view.findViewById(R.id.img_thumbnail);
+            tvCaption = view.findViewById(R.id.tv_image_caption);
+            btnRemoveImage = view.findViewById(R.id.imgbtn_remove_image);
         }
 
         void bindImageToHolder(Uri uri) {
-            Glide.with(context).load(uri).into(imgView);
-
+            Glide.with(context).load(uri).into(thumbnail);
         }
-
 
     }
 }

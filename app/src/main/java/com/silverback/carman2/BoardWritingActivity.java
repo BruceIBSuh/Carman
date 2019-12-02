@@ -314,7 +314,7 @@ public class BoardWritingActivity extends BaseActivity {
             }
 
 
-            imageAdapter = new AttachImageAdapter(uriImageList);
+            //imageAdapter = new AttachImageAdapter(uriImageList, this);
             recyclerImageView.setAdapter(imageAdapter);
 
         } catch(Exception e) {

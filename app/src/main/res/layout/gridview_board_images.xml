@@ -7,37 +7,36 @@
     android:layout_height="wrap_content" >
 
     <ImageView
-        android:id="@+id/img_board_grid"
+        android:id="@+id/img_thumbnail"
         android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_height="80dp"
         android:layout_margin="5dp"
         android:layout_marginStart="4dp"
         android:adjustViewBounds="true"
         android:contentDescription="@null"
         android:scaleType="centerCrop"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/tv_image_caption"
         android:layout_width="0dp"
-        android:layout_height="20dp"
+        android:layout_height="18dp"
         android:background="#F5F5F5"
-        android:text="caption"
         android:textSize="@dimen/extraSmallText"
-        app:layout_constraintBottom_toBottomOf="@+id/img_board_grid"
-        app:layout_constraintEnd_toEndOf="@+id/img_board_grid"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/img_board_grid" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imgbtn_remove_image"
+        app:layout_constraintStart_toStartOf="@+id/img_thumbnail"
+        app:layout_constraintTop_toBottomOf="@+id/img_thumbnail" />
 
     <ImageButton
-        android:id="@+id/imageButton2"
-        android:layout_width="18dp"
-        android:layout_height="18dp"
-        app:layout_constraintBottom_toBottomOf="@+id/img_board_grid"
-        app:layout_constraintEnd_toEndOf="@+id/textView2"
-        app:layout_constraintTop_toTopOf="@+id/textView2"
+        android:id="@+id/imgbtn_remove_image"
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_image_caption"
+        app:layout_constraintEnd_toEndOf="@+id/img_thumbnail"
+        app:layout_constraintTop_toTopOf="@+id/tv_image_caption"
         app:srcCompat="@android:drawable/ic_delete" />
 
 
