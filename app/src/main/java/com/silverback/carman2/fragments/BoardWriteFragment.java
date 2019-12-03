@@ -254,8 +254,8 @@ public class BoardWriteFragment extends DialogFragment implements
                 DialogFragment dialog = new BoardChooserDlgFragment();
                 dialog.show(getChildFragmentManager(), "@null");
 
-                // Put a line feed into the EditText
-                etPostBody.getText().append("\n");
+                // Put a line feed into the EditTex when the image interleaves b/w the lines
+                if(etPostBody.getText().length() > 0) etPostBody.getText().append("\n");
             }
         });
 
