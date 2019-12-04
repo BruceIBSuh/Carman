@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -75,7 +76,6 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
         }
 
         String caption = "image_" + (position + 1);
-        holder.tvCaption.setText(caption);
     }
 
     @Override
@@ -87,15 +87,13 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
 
     class ImageViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvCaption;
         ImageView thumbnail;
-        ImageButton btnRemoveImage;
+        Button btnRemoveImage;
 
         ImageViewHolder(View view) {
             super(view);
             thumbnail = view.findViewById(R.id.img_thumbnail);
-            tvCaption = view.findViewById(R.id.tv_image_caption);
-            btnRemoveImage = view.findViewById(R.id.imgbtn_remove_image);
+            btnRemoveImage = view.findViewById(R.id.btn_del_image);
         }
 
         void bindImageToHolder(Uri uri) {

@@ -24,6 +24,8 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // Objects
     private Editable editable;
+    private ImageSpan[] arrImgSpan;
+    private int cursor;
 
     // Initialize the static members
     static {
@@ -48,24 +50,26 @@ public class BoardImageSpanHandler implements SpanWatcher {
         //log.i("what: %s", what);
         // Set the selection anchor to Spannable.
         if (what == Selection.SELECTION_START) {
-            //log.i("SELECTION_START: %s, %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend, markup.length());
+            log.i("SELECTION_START: %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
+            cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
 
         // Cursor moves at the counter-direction
         } else if (what == Selection.SELECTION_END) {
-            //log.i("SELECTION_END %s, %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend, markup.length());
-
-
+            log.i("SELECTION_END %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
+            cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
         }
     }
 
     public void setImageSpanToPosting(ImageSpan span) {
-        int selectionStart = Selection.getSelectionStart(editable);
-        int selectionEnd = Selection.getSelectionEnd(editable);
+        int start = Selection.getSelectionStart(editable);
+        int end = Selection.getSelectionEnd(editable);
         markup = "[image_" + imageTag + "]\n";
-        log.i("Selection: %s, %s", selectionStart, selectionEnd);
+        log.i("Selection: %s, %s", start, end);
 
-        editable.replace(selectionStart, selectionEnd, markup);
-        editable.setSpan(span, selectionStart, selectionStart + markup.length(), SPAN_FLAG);
+        editable.replace(Math.min(start, end), Math.max(start, end), markup);
+        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(), SPAN_FLAG);
+        arrImgSpan = editable.getSpans(0, editable.length(), ImageSpan.class);
+        log.i("arrImageSpan: %s", arrImgSpan.length);
 
         Selection.setSelection(editable, editable.length());
         imageTag += 1;
@@ -75,23 +79,31 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // InputFilter
     public void setImageSpanInputFilter(){
-
-        editable.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
+        editable.setFilters(new InputFilter[]{ (source, start, end, dest, dstart, dend) -> {
             log.i("Filters: %s ,%s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-            //SpannableStringBuilder ssb = new SpannableStringBuilder(dest);
-            //ssb.replace(newStart, newEnd, source);
-
+            // Disable ImageSpan to be deleted by skipping it range.
             if(source instanceof Spanned) {
-               log.i("Spanned");
-               if(Math.abs(start - end) == 0) Selection.setSelection(editable, dstart - markup.length() - 1);
+                for(int i = 0; i < arrImgSpan.length; i++) {
+                    log.i("Spanned: %s, %s", dest.getSpanStart(arrImgSpan[i]), dest.getSpanEnd(arrImgSpan[i]));
+                }
+
+
+               if(Math.abs(start - end) == 0 && cursor > 1)
+                   Selection.setSelection(editable, dstart - markup.length() - 1);
             }
-
-
-
             //Selection.setSelection(ssb, newStart + source.length());
-            //return ssb;
             return null;
         }});
+    }
+
+    // When an image is removed from the grid, the span containing the image and the markup string
+    // should be removed at the same time.
+    public void removeImageSpan(int position) {
+        if(arrImgSpan[position] == null) return;
+
+        int start = editable.getSpanStart(arrImgSpan[position]);
+        editable.removeSpan(arrImgSpan[position]);
+        editable.replace(start, start + markup.length(), "");
     }
 
     public ImageSpan[] getImageSpan() {

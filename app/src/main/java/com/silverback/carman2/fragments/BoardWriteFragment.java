@@ -114,14 +114,6 @@ public class BoardWriteFragment extends DialogFragment implements
     private RecyclerView recyclerImageView;
     private EditText etPostTitle, etPostBody;
 
-    /*
-    static {
-        imageTag = 1;
-        markup = "[image_" + imageTag + "]\n";
-    }
-
-     */
-
     // Constructor
     public BoardWriteFragment() {
         // Required empty public constructor
@@ -133,7 +125,7 @@ public class BoardWriteFragment extends DialogFragment implements
         super.onCreate(savedInstanceState);
 
         // Set the soft input mode, which seems not working.
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED);
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED);
 
         mSettings = ((BoardPostingActivity)getActivity()).getSettings();
         uriImageList = new ArrayList<>();
@@ -247,6 +239,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
             if(uriImageList.size() > Constants.MAX_ATTACHED_IMAGE) {
+                log.i("Image count: %s", uriImageList.size());
                 Snackbar.make(nestedLayout, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
             } else {
                 // Pop up the dialog to select which media to use bewteen the camera and gallery, then
@@ -255,7 +248,19 @@ public class BoardWriteFragment extends DialogFragment implements
                 dialog.show(getChildFragmentManager(), "@null");
 
                 // Put a line feed into the EditTex when the image interleaves b/w the lines
-                if(etPostBody.getText().length() > 0) etPostBody.getText().append("\n");
+                /*
+                 * This works for both, inserting a text at the current position and replacing
+                 * whatever text is selected by the user. The Math.max() is necessary in the first
+                 * and second line because, if there is no selection or cursor in the EditText,
+                 * getSelectionStart() and getSelectionEnd() will both return -1. The Math.min()
+                 * and Math.max() in the third line is necessary because the user could have selected
+                 * the text backwards and thus start would have a higher value than end which is not
+                 * allowed for Editable.replace().
+                 */
+                int start = Math.max(etPostBody.getSelectionStart(), 0);
+                int end = Math.max(etPostBody.getSelectionStart(), 0);
+                log.i("Cursor: %s", Math.min(start, end));
+                etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
             }
         });
 
@@ -477,6 +482,8 @@ public class BoardWriteFragment extends DialogFragment implements
         log.i("position: %s, %s, %s", position, uriImageList.size(), arrImageSpan.length);
         imageAdapter.notifyItemRemoved(position);
         uriImageList.remove(position);
+        spanHandler.removeImageSpan(position);
+
 
         imageTag -= 1;
 
