@@ -48,15 +48,15 @@ public class BoardImageSpanHandler implements SpanWatcher {
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
         //log.i("what: %s", what);
-        // Set the selection anchor to Spannable.
         if (what == Selection.SELECTION_START) {
             log.i("SELECTION_START: %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
             cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
 
+
         // Cursor moves at the counter-direction
-        } else if (what == Selection.SELECTION_END) {
+        } else if(what == Selection.SELECTION_END) {
             log.i("SELECTION_END %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
-            cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
+            cursor = (ostart == nstart) ? ostart : Math.max(ostart, nstart);
         }
     }
 
@@ -71,22 +71,23 @@ public class BoardImageSpanHandler implements SpanWatcher {
         arrImgSpan = editable.getSpans(0, editable.length(), ImageSpan.class);
         log.i("arrImageSpan: %s", arrImgSpan.length);
 
-        Selection.setSelection(editable, editable.length());
+        Selection.setSelection(editable, Math.min(start, end) + markup.length());
         imageTag += 1;
-
-        log.i("span markup: %s", markup);
     }
 
     // InputFilter
     public void setImageSpanInputFilter(){
         editable.setFilters(new InputFilter[]{ (source, start, end, dest, dstart, dend) -> {
-            log.i("Filters: %s ,%s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
+            log.i("Filters: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
             // Disable ImageSpan to be deleted by skipping it range.
             if(source instanceof Spanned) {
+                log.i("source: %s", source);
+                /*
                 for(int i = 0; i < arrImgSpan.length; i++) {
-                    log.i("Spanned: %s, %s", dest.getSpanStart(arrImgSpan[i]), dest.getSpanEnd(arrImgSpan[i]));
+                    //log.i("Spanned: %s, %s, %s", source, dest.getSpanStart(arrImgSpan[i]), dest.getSpanEnd(arrImgSpan[i]));
                 }
 
+                 */
 
                if(Math.abs(start - end) == 0 && cursor > 1)
                    Selection.setSelection(editable, dstart - markup.length() - 1);
