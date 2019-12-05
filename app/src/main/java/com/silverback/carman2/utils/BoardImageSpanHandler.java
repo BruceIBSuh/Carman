@@ -29,7 +29,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // Initialize the static members
     static {
-        SPAN_FLAG = Spanned.SPAN_INCLUSIVE_EXCLUSIVE;
+        SPAN_FLAG = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
         imageTag = 1;
         markup = "";
     }
@@ -47,64 +47,70 @@ public class BoardImageSpanHandler implements SpanWatcher {
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {}
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
-        //log.i("what: %s", what);
+
+        log.i("what: %s", what);
+        // Set the selection anchor to Spannable.
         if (what == Selection.SELECTION_START) {
             log.i("SELECTION_START: %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
             cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
 
-
         // Cursor moves at the counter-direction
-        } else if(what == Selection.SELECTION_END) {
+        } else if (what == Selection.SELECTION_END) {
             log.i("SELECTION_END %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
-            cursor = (ostart == nstart) ? ostart : Math.max(ostart, nstart);
+            cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
         }
     }
+
+    // InputFilter
+    public void setImageSpanInputFilter(){
+        editable.setFilters(new InputFilter[]{ (source, start, end, dest, dstart, dend) -> {
+            log.i("Filters: %s ,%s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
+
+            // Disable ImageSpan to be deleted by soft input
+            for(ImageSpan span : arrImgSpan) {
+                log.i("span position: %s, %s", dest.getSpanStart(span), dest.getSpanEnd(span));
+                if(cursor == dest.getSpanEnd(span))
+                    Selection.setSelection((Spannable)dest, dest.getSpanStart(span) - 1);
+                else if(cursor == dest.getSpanStart(span))
+                    Selection.setSelection((Spannable)dest, dest.getSpanEnd(span) + 1);
+            }
+
+            /*
+            if(source instanceof Spanned) {
+                if(Math.abs(start - end) == 0 && cursor > 1)
+                    Selection.setSelection(editable, dstart - markup.length() - 1);
+            }
+            */
+            //Selection.setSelection(ssb, newStart + source.length());
+            return null;
+        }});
+    }
+
 
     public void setImageSpanToPosting(ImageSpan span) {
         int start = Selection.getSelectionStart(editable);
         int end = Selection.getSelectionEnd(editable);
         markup = "[image_" + imageTag + "]\n";
         log.i("Selection: %s, %s", start, end);
-
         editable.replace(Math.min(start, end), Math.max(start, end), markup);
-        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(), SPAN_FLAG);
+        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         arrImgSpan = editable.getSpans(0, editable.length(), ImageSpan.class);
-        log.i("arrImageSpan: %s", arrImgSpan.length);
+        //log.i("arrImageSpan: %s", arrImgSpan.length);
 
-        Selection.setSelection(editable, Math.min(start, end) + markup.length());
+        Selection.setSelection(editable, editable.length());
         imageTag += 1;
+
+        log.i("span markup: %s", markup);
     }
 
-    // InputFilter
-    public void setImageSpanInputFilter(){
-        editable.setFilters(new InputFilter[]{ (source, start, end, dest, dstart, dend) -> {
-            log.i("Filters: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-            // Disable ImageSpan to be deleted by skipping it range.
-            if(source instanceof Spanned) {
-                log.i("source: %s", source);
-                /*
-                for(int i = 0; i < arrImgSpan.length; i++) {
-                    //log.i("Spanned: %s, %s, %s", source, dest.getSpanStart(arrImgSpan[i]), dest.getSpanEnd(arrImgSpan[i]));
-                }
-
-                 */
-
-               if(Math.abs(start - end) == 0 && cursor > 1)
-                   Selection.setSelection(editable, dstart - markup.length() - 1);
-            }
-            //Selection.setSelection(ssb, newStart + source.length());
-            return null;
-        }});
-    }
 
     // When an image is removed from the grid, the span containing the image and the markup string
     // should be removed at the same time.
     public void removeImageSpan(int position) {
-        if(arrImgSpan[position] == null) return;
-
         int start = editable.getSpanStart(arrImgSpan[position]);
-        editable.removeSpan(arrImgSpan[position]);
-        editable.replace(start, start + markup.length(), "");
+        editable.removeSpan(arrImgSpan[position]);//remove the image span
+        editable.replace(start, start + markup.length(), "");//delete the markkup
+        imageTag -= 1;
     }
 
     public ImageSpan[] getImageSpan() {

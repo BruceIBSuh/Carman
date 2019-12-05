@@ -6,10 +6,12 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
@@ -41,6 +43,9 @@ import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.silverback.carman2.BoardPostingActivity;
@@ -259,7 +264,6 @@ public class BoardWriteFragment extends DialogFragment implements
                  */
                 int start = Math.max(etPostBody.getSelectionStart(), 0);
                 int end = Math.max(etPostBody.getSelectionStart(), 0);
-                log.i("Cursor: %s", Math.min(start, end));
                 etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
             }
         });
@@ -368,12 +372,33 @@ public class BoardWriteFragment extends DialogFragment implements
         }
 
         // Insert ImageSpan into SpannalbeStringBuilder
-        Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
-        ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+        //Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
+        //ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+        // EditImageHelper is repalced w/ Glide.
+        Glide.with(getContext().getApplicationContext()).asBitmap().override(50, 50).centerCrop()
+                .load(imgUri)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        ImageSpan imgSpan = new ImageSpan(getContext(), resource);
+                        // Manager the image spans using BoardImageSpanHandler helper class.
+                        spanHandler.setImageSpanToPosting(imgSpan);
+                        spanHandler.setImageSpanInputFilter();
 
-        // Manager the image spans using BoardImageSpanHandler helper class.
-        spanHandler.setImageSpanToPosting(imgSpan);
-        spanHandler.setImageSpanInputFilter();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        // this is called when imageView is cleared on lifecycle call or for
+                        // some other reason.
+                        // if you are referencing the bitmap somewhere else too other than this imageView
+                        // clear it here as you can no longer have the bitmap
+
+                    }
+                });
+
+
+
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
