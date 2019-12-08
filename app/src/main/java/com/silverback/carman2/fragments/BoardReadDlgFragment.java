@@ -460,7 +460,7 @@ public class BoardReadDlgFragment extends DialogFragment {
 
         Drawable drawable = getResources().getDrawable(R.drawable.logo_gs);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-        while(m.find(0)) {
+        while(m.find()) {
             log.i("matching process: %s", m.start());
             ImageSpan imgSpan = new ImageSpan(drawable);
             ssb.setSpan(imgSpan, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
