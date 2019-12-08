@@ -1,7 +1,6 @@
 package com.silverback.carman2;
 
 import android.animation.ObjectAnimator;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
@@ -13,10 +12,8 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
-import com.google.firebase.firestore.Query;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
-import com.silverback.carman2.fragments.BoardPostDialogFragment;
-import com.silverback.carman2.fragments.BoardWriteFragment;
+import com.silverback.carman2.fragments.BoardWriteDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -55,7 +52,7 @@ public class BoardPostingActivity extends BaseActivity implements
         fabWrite.setOnClickListener(view -> {
             log.i("Writing activity");
             //startActivityForResult(new Intent(this, BoardWritingActivity.class), 1000);
-            BoardWriteFragment writePostFragment = new BoardWriteFragment();
+            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, writePostFragment)
                     .addToBackStack(null)

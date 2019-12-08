@@ -42,7 +42,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
     <HorizontalScrollView
         android:id="@+id/scrollview_horizontal"
         android:layout_width="match_parent"
@@ -62,6 +61,7 @@
                 android:id="@+id/chkbox_general"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:checked="true"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />

@@ -131,14 +131,14 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    // Communicate b/w BoardWriteFragment and BoardChooserDlgFragme to notify which image chooser
+    // Communicate b/w BoardWriteDlgFragment and BoardChooserDlgFragme to notify which image chooser
     // out of camera or gallery is selected.
     public MutableLiveData<Integer> getImageChooser() {
         if(imageChooser == null) imageChooser = new MutableLiveData<>();
         return imageChooser;
     }
 
-    // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardPostingActivity
+    // Communicate b/w BoardWriteDlgFragment and BoardPagerFragment both of which BoardPostingActivity
     // cocntains.
     public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();

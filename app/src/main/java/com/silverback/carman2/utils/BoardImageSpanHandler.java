@@ -1,5 +1,6 @@
 package com.silverback.carman2.utils;
 
+import android.app.Notification;
 import android.content.IntentFilter;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -23,13 +24,15 @@ public class BoardImageSpanHandler implements SpanWatcher {
     private static String markup;
 
     // Objects
+    private SpannableStringBuilder ssb;
     private Editable editable;
     private ImageSpan[] arrImgSpan;
-    private int cursor;
+    private int cursorPos;
+    private boolean cursorDir;
 
     // Initialize the static members
     static {
-        SPAN_FLAG = Spanned.SPAN_INCLUSIVE_EXCLUSIVE;
+        SPAN_FLAG = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
         imageTag = 1;
         markup = "";
     }
@@ -37,76 +40,97 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // Constructor
     public BoardImageSpanHandler(Editable editable) {
         this.editable = editable;
+        ssb = new SpannableStringBuilder(editable);
         editable.setSpan(this, 0, editable.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
     }
 
     // Callbacks invoked by SpanWatcher
     @Override
-    public void onSpanAdded(Spannable text, Object what, int start, int end) {}
+    public void onSpanAdded(Spannable text, Object what, int start, int end) {
+        //log.i("onSpanAdded");
+    }
     @Override
-    public void onSpanRemoved(Spannable text, Object what, int start, int end) {}
+    public void onSpanRemoved(Spannable text, Object what, int start, int end) {
+        //log.i("onSpanRemoved");
+    }
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
-        //log.i("what: %s", what);
+
+        if(arrImgSpan == null || arrImgSpan.length == 0) return;
+        // Indicate the key down(touch down). As long as the touch down and touch up at the same
+        // position, all position values are the same no matter what value is SELECTION_START OR
+        // SELECTION_END, but when it makes a range, the SELECTION_START and the SELECTION_END values
+        // become different.
         if (what == Selection.SELECTION_START) {
-            //log.i("SELECTION_START: %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
-            cursor = (ostart == nstart)?ostart : Math.max(ostart, nstart);
+            log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
+            //if(arrImgSpan != null && arrImgSpan.length > 0 && (ostart == nstart) && ) {
+            if((ostart == nstart) && (oend == nend)) {  // Pick 'del' key in the soft input.
+                for(ImageSpan span : arrImgSpan) {
+                    if(nstart == text.getSpanEnd(span)) {
+                        log.i("Spanned at the end!!!!");
+                        Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
+                    }
+                }
+            }
+        // Indicate the key up(touch up)
+        } else if (what == Selection.SELECTION_END) {
+            log.i("SELECTION_END %s, %s, %s, %s", ostart, oend, nstart, nend);
 
-
-        // Cursor moves at the counter-direction
-        } else if(what == Selection.SELECTION_END) {
-            //log.i("SELECTION_END %s, %s, %s, %s, %s", text, ostart, oend, nstart, nend);
-            cursor = (ostart == nstart) ? ostart : Math.max(ostart, nstart);
         }
+
     }
 
     // InputFilter
+    /*
     public void setImageSpanInputFilter(){
-        editable.setFilters(new InputFilter[]{ (source, start, end, dest, dstart, dend) -> {
-            log.i("Filters: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-            // Disable ImageSpan to be deleted by skipping it range.
-            if(source instanceof Spanned) {
-                log.i("source: %s", source);
-                /*
-                for(int i = 0; i < arrImgSpan.length; i++) {
-                    //log.i("Spanned: %s, %s, %s", source, dest.getSpanStart(arrImgSpan[i]), dest.getSpanEnd(arrImgSpan[i]));
-                }
-                 */
 
-                if(Math.abs(start - end) == 0 && cursor > 1) Selection.setSelection(editable, dstart - markup.length() - 1);
+        editable.setFilters(new InputFilter[]{ (source, start, end, dest, dstart, dend) -> {
+            log.i("Filters: %s ,%s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
+            for(ImageSpan span : arrImgSpan){
+                log.i("Within ImageSpan: %s, %s", dest.getSpanStart(span), dest.getSpanEnd(span));
+                if(dend == dest.getSpanStart(span)) {
+                    log.i("ImageSpan skipping");
+                    Selection.setSelection((Spannable)dest, 1);
+                }
             }
-            //Selection.setSelection(ssb, newStart + source.length());
+
+            if(source instanceof Spanned) {
+            }
+
+            if(source instanceof ImageSpan) {
+                log.i("ImageSpan");
+            }
+
             return null;
         }});
     }
 
+     */
 
 
     public void setImageSpanToPosting(ImageSpan span) {
         int start = Selection.getSelectionStart(editable);
         int end = Selection.getSelectionEnd(editable);
         markup = "[image_" + imageTag + "]\n";
-        log.i("Selection: %s, %s", start, end);
 
         editable.replace(Math.min(start, end), Math.max(start, end), markup);
-        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(), SPAN_FLAG);
+        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         arrImgSpan = editable.getSpans(0, editable.length(), ImageSpan.class);
-        log.i("arrImageSpan: %s", arrImgSpan.length);
 
-        Selection.setSelection(editable, Math.min(start, end) + markup.length());
+        Selection.setSelection(editable, editable.length());
         imageTag += 1;
-    }
 
+        //log.i("span markup: %s", markup);
+    }
 
 
     // When an image is removed from the grid, the span containing the image and the markup string
     // should be removed at the same time.
     public void removeImageSpan(int position) {
-        if(arrImgSpan[position] == null) return;
-
         int start = editable.getSpanStart(arrImgSpan[position]);
-        editable.removeSpan(arrImgSpan[position]);
-        editable.replace(start, start + markup.length(), "");
+        editable.removeSpan(arrImgSpan[position]);//remove the image span
+        editable.replace(start, start + markup.length(), "");//delete the markkup
+        imageTag -= 1;
     }
 
     public ImageSpan[] getImageSpan() {

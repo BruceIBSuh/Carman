@@ -22,15 +22,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.threads.ThreadManager;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -92,7 +86,7 @@ public class BoardPagerFragment extends Fragment implements
                 // Pagination should be programmed.
                 Query firstQuery = firestore.collection("board_general")
                         .orderBy("timestamp", Query.Direction.DESCENDING)
-                        .limit(25);
+                        .limit(10);
 
                 firstQuery.get().addOnSuccessListener(querySnapshot -> {
                     recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
@@ -136,22 +130,18 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
-
-
     }
 
     // Callback invoked by BoardRecyclerAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot) {
-
-
+        log.i("Post item clicked");
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
-        BoardPostDialogFragment postDialogFragment = new BoardPostDialogFragment();
+        BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
 
         Bundle bundle = new Bundle();
-
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userName", snapshot.getString("user_name"));
         bundle.putString("userPic", snapshot.getString("user_pic"));

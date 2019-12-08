@@ -6,8 +6,10 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.style.DynamicDrawableSpan;
 import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,12 +28,14 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,15 +43,16 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BoardPostDialogFragment extends DialogFragment {
+public class BoardReadDlgFragment extends DialogFragment {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostDialogFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
     // Constants
     //private static final int IMAGE_CACHE_SIZE = 1024 * 1024 * 4;
@@ -72,7 +77,7 @@ public class BoardPostDialogFragment extends DialogFragment {
     // Fields
     private String userId;
 
-    public BoardPostDialogFragment() {
+    public BoardReadDlgFragment() {
         // Required empty public constructor
     }
 
@@ -103,6 +108,7 @@ public class BoardPostDialogFragment extends DialogFragment {
 
         // Auto information is retrived from Firestore based upon transferred user id and set it
         // to the view.
+        /*
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
             log.i("auto data: %s", document.getString("auto_data"));
             if(document.getString("auto_data") == null || document.getString("auto_data").isEmpty())
@@ -121,6 +127,7 @@ public class BoardPostDialogFragment extends DialogFragment {
                 log.e("JSONException: %s", e.getMessage());
             }
         });
+         */
 
 
 
@@ -156,7 +163,6 @@ public class BoardPostDialogFragment extends DialogFragment {
                 .fitCenter()
                 .circleCrop()
                 .into(imgUserPic);
-
 
         /*
         int count = 0;
@@ -200,8 +206,7 @@ public class BoardPostDialogFragment extends DialogFragment {
 
             count++;
         }
-
-         */
+        */
 
         SpannableStringBuilder ssb = doImageSpanString(imgUriList);
         tvContent.setText(ssb);
@@ -307,7 +312,7 @@ public class BoardPostDialogFragment extends DialogFragment {
         return dialog;
     }
 
-
+    /*
     @SuppressWarnings("ConstantConditions")
     private void addTextImageView(String content) {
 
@@ -319,7 +324,7 @@ public class BoardPostDialogFragment extends DialogFragment {
         List<String> splitContent =  Arrays.asList(p.split((trimContent)));
 
 
-        /*
+
         SpannableStringBuilder ssb = new SpannableStringBuilder(content);
         Matcher m = p.matcher(ssb);
 
@@ -337,7 +342,6 @@ public class BoardPostDialogFragment extends DialogFragment {
         }
 
         tvContent.setText(ssb);
-        */
 
 
         log.i("Size: %s, %s", splitContent.size(), imgUriList.size());
@@ -416,6 +420,7 @@ public class BoardPostDialogFragment extends DialogFragment {
 
         }
     }
+    */
 
 
     private SpannableStringBuilder doImageSpanString(List<String> imgUriList) {
@@ -431,6 +436,7 @@ public class BoardPostDialogFragment extends DialogFragment {
         Pattern p = Pattern.compile(REGEX);
         Matcher m = p.matcher(ssb);
 
+        /*
         while(m.find(0)) {
             markupCount++;
             log.i("matched: %s", ssb.subSequence(m.start(), m.end()));
@@ -440,7 +446,6 @@ public class BoardPostDialogFragment extends DialogFragment {
 
         }
 
-        /*
         // No tags exist and insert markup.
         if(!m.lookingAt()) {
             log.i("no markup exists");
@@ -451,18 +456,17 @@ public class BoardPostDialogFragment extends DialogFragment {
 
             m = p.matcher(ssb);
         }
+        */
 
         Drawable drawable = getResources().getDrawable(R.drawable.logo_gs);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         while(m.find(0)) {
+            log.i("matching process: %s", m.start());
             ImageSpan imgSpan = new ImageSpan(drawable);
             ssb.setSpan(imgSpan, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-         */
-
         return ssb;
-
     }
 
 }

@@ -7,7 +7,7 @@
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.BoardPostDialogFragment">
+    tools:context=".fragments.BoardReadDlgFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/vg_constraint_top"
@@ -56,7 +56,7 @@
             android:layout_height="match_parent"
             android:background="@android:color/background_light"
             android:padding="8dp"
-            tools:context=".fragments.BoardPostDialogFragment">
+            tools:context=".fragments.BoardReadDlgFragment">
 
             <TextView
                 android:id="@+id/tv_post_title"

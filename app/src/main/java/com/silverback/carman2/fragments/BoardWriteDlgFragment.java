@@ -6,11 +6,14 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -18,12 +21,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.provider.MediaStore;
-import android.text.InputFilter;
-import android.text.Selection;
-import android.text.SpanWatcher;
-import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.TypedValue;
@@ -39,8 +37,12 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.silverback.carman2.BoardPostingActivity;
@@ -55,7 +57,6 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.UploadPostTask;
 import com.silverback.carman2.utils.BoardImageSpanHandler;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -73,11 +74,11 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BoardWriteFragment extends DialogFragment implements
+public class BoardWriteDlgFragment extends DialogFragment implements
         CheckBox.OnCheckedChangeListener,
         AttachImageAdapter.OnBoardWriteListener {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteDlgFragment.class);
 
     // Constants
     private static final int MENU_ITEM_ID = 1001;
@@ -106,16 +107,21 @@ public class BoardWriteFragment extends DialogFragment implements
     //private FirestoreViewModel uploadPostModel;
     private SpannableStringBuilder ssb;
     private BoardImageSpanHandler spanHandler;
+    private ProgressBar progressBar;
 
 
     // UIs
+    private NestedScrollView nestedScrollView;
     private HorizontalScrollView hScrollView;
     private ConstraintLayout statusLayout, nestedLayout;
     private RecyclerView recyclerImageView;
     private EditText etPostTitle, etPostBody;
 
+    // Fields
+    private boolean isGeneral, isAutoMaker, isAutoType, isAutoModel, isAutoYear;
+
     // Constructor
-    public BoardWriteFragment() {
+    public BoardWriteDlgFragment() {
         // Required empty public constructor
     }
 
@@ -146,6 +152,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         View localView = inflater.inflate(R.layout.dialog_board_write, container, false);
 
+        nestedScrollView = localView.findViewById(R.id.nestedScrollView);
         hScrollView = localView.findViewById(R.id.scrollview_horizontal);
         //statusLayout = localView.findViewById(R.id.vg_constraint_status);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
@@ -217,6 +224,18 @@ public class BoardWriteFragment extends DialogFragment implements
         btnUpload.setOnClickListener(btn -> {
             if(!doEmptyCheck()) return;
 
+            // Create ProbressBar
+            /*
+            RelativeLayout layout = new RelativeLayout(getContext());
+            ProgressBar progressBar = new ProgressBar(getActivity(), null,android.R.attr.progressBarStyleLarge);
+            progressBar.setIndeterminate(true);
+            progressBar.setVisibility(View.VISIBLE);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100);
+            params.addRule(RelativeLayout.CENTER_IN_PARENT);
+            layout.addView(progressBar,params);
+            */
+
+
             // No attached image immediately makes uploading started.
             if(uriImageList.size() == 0) uploadPostToFirestore();
             else {
@@ -259,7 +278,6 @@ public class BoardWriteFragment extends DialogFragment implements
                  */
                 int start = Math.max(etPostBody.getSelectionStart(), 0);
                 int end = Math.max(etPostBody.getSelectionStart(), 0);
-                log.i("Cursor: %s", Math.min(start, end));
                 etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
             }
         });
@@ -368,12 +386,34 @@ public class BoardWriteFragment extends DialogFragment implements
         }
 
         // Insert ImageSpan into SpannalbeStringBuilder
-        Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
-        ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+        //Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
+        //ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+        // EditImageHelper is repalced w/ Glide.
+        Glide.with(getContext().getApplicationContext()).asBitmap().override(80, 80).centerCrop()
+                .load(imgUri)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        ImageSpan imgSpan = new ImageSpan(getContext(), resource);
+                        // Manager the image spans using BoardImageSpanHandler helper class.
+                        spanHandler.setImageSpanToPosting(imgSpan);
+                        //spanHandler.setImageSpanInputFilter();
 
-        // Manager the image spans using BoardImageSpanHandler helper class.
-        spanHandler.setImageSpanToPosting(imgSpan);
-        spanHandler.setImageSpanInputFilter();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        log.i("onLoadCleard");
+                        // this is called when imageView is cleared on lifecycle call or for
+                        // some other reason.
+                        // if you are referencing the bitmap somewhere else too other than this imageView
+                        // clear it here as you can no longer have the bitmap
+
+                    }
+                });
+
+
+
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
@@ -393,7 +433,27 @@ public class BoardWriteFragment extends DialogFragment implements
     // Callback by Checkboxes
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        switch(buttonView.getId()) {
+            case R.id.chkbox_general:
+                isGeneral = isChecked;
+                break;
 
+            case R.id.chkbox_maker:
+                isAutoMaker = isChecked;
+                break;
+
+            case R.id.chkbox_model:
+                isAutoModel = isChecked;
+                break;
+
+            case R.id.chkbox_type:
+                isAutoType = isChecked;
+                break;
+
+            case R.id.chkbox_year:
+                isAutoYear = isChecked;
+                break;
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -424,6 +484,18 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("cnt_compathy", 0);
         post.put("post_content", etPostBody.getText().toString());
         post.put("post_images",  Arrays.asList(arrUriString));
+
+        Map<String, Object> filter = new HashMap<>();
+        filter.put("general", isGeneral);
+        filter.put("auto_maker", isAutoMaker);
+        filter.put("auto_type", isAutoType);
+        filter.put("auto_model", isAutoModel);
+        filter.put("auto_year", isAutoYear);
+
+        post.put("post_filter", filter);
+
+        // Alternative
+        //post.put("post_filter", Arrays.asList(isGeneral, isAutoMaker, isAutoType, isAutoModel, isAutoYear));
 
 
         //postTask = ThreadManager.startUploadPostTask(getContext(), postTitle, content, strImgUriList);
