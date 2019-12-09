@@ -21,7 +21,6 @@ public class DownloadImageTask extends ThreadTask implements
     static final int DOWNLOAD_FAIL = -1;
 
     // Objects
-    private Context context;
     private String imgUrl;
     private ImageViewModel viewModel;
     private Runnable downloadImageRunnable;
@@ -31,7 +30,6 @@ public class DownloadImageTask extends ThreadTask implements
 
     // Constructor
     DownloadImageTask(Context context, ImageViewModel model) {
-        this.context = context;
         this.viewModel = model;
         downloadImageRunnable = new DownloadImageRunnable(context, this);
         sparseArray = new SparseArray<>();

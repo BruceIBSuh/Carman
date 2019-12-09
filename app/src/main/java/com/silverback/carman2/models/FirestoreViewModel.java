@@ -1,5 +1,7 @@
 package com.silverback.carman2.models;
 
+import android.graphics.Bitmap;
+import android.text.style.ImageSpan;
 import android.util.SparseArray;
 
 import androidx.lifecycle.MutableLiveData;
@@ -7,12 +9,16 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 
+import java.util.List;
+
 public class FirestoreViewModel extends ViewModel {
 
     private MutableLiveData<SparseArray> favoriteSnapshot;
     private MutableLiveData<DocumentSnapshot> postSnapshot;
     private MutableLiveData<DocumentSnapshot> userSnapshot;
     private MutableLiveData<Boolean> hasUploadPosted;
+
+    private MutableLiveData<List<ImageSpan>> attachedImageSpan;
 
     public MutableLiveData<SparseArray> getFavoriteSnapshot() {
         if(favoriteSnapshot == null) favoriteSnapshot = new MutableLiveData<>();
@@ -33,5 +39,10 @@ public class FirestoreViewModel extends ViewModel {
     public MutableLiveData<Boolean> getUploadPOst() {
         if(hasUploadPosted == null) hasUploadPosted = new MutableLiveData<>();
         return hasUploadPosted;
+    }
+
+    public MutableLiveData<List<ImageSpan>> getAttachedImageSpanList() {
+        if(attachedImageSpan == null) attachedImageSpan = new MutableLiveData<>();
+        return attachedImageSpan;
     }
 }

@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 
@@ -28,8 +27,8 @@ public class DownloadBitmapRunnable implements Runnable {
     // Interface
     public interface DownloadBitmapMethods {
         void setDownloadBitmapThread(Thread thread);
-        void setBitmapTask(Bitmap bitmap);
-        String getBitmapUri();
+        void fetchImageSpan(ImageSpan imgspan);
+        List<String> getImageUriList();
     }
 
     public DownloadBitmapRunnable(Context context, DownloadBitmapMethods task) {
@@ -40,33 +39,28 @@ public class DownloadBitmapRunnable implements Runnable {
 
     @Override
     public void run() {
-
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mTask.setDownloadBitmapThread(Thread.currentThread());
+        final List<String> uriStringList = mTask.getImageUriList();
 
-        final String uriString = mTask.getBitmapUri();
-        List<FutureTarget<Bitmap>> futureBitmapList = new ArrayList<>();
-        /*
-        FutureTarget<Bitmap> futureBitmap = Glide.with(context.getApplicationContext())
-                .asBitmap()
-                .load(Uri.parse(uriString))
-                .submit();
-        */
+        for(String uriString : uriStringList) {
+            Glide.with(context.getApplicationContext()).asBitmap()
+                    .load(Uri.parse(uriString))
+                    .into(new CustomTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(
+                                @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                            ImageSpan imgSpan = new ImageSpan(context, resource);
+                            mTask.fetchImageSpan(imgSpan);
 
-        Glide.with(context.getApplicationContext()).asBitmap()
-                .load(Uri.parse(uriString))
-                .into(new CustomTarget<Bitmap>() {
+                        }
 
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {
 
-                    }
+                        }
+                    });
 
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                    }
-                });
-
+        }
     }
 }

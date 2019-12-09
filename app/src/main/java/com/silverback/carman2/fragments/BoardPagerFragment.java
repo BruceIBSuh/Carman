@@ -25,6 +25,7 @@ import com.silverback.carman2.models.FragmentSharedModel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -156,6 +157,7 @@ public class BoardPagerFragment extends Fragment implements
                 .add(android.R.id.content, postDialogFragment)
                 .addToBackStack(null)
                 .commit();
+
 
         // Auto information is retrived from Firestore based upon the user id and put it to Bundle,
         // then call the dialog.

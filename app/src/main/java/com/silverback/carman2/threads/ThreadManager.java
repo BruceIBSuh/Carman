@@ -524,11 +524,11 @@ public class ThreadManager {
     }
 
     public static DownloadBitmapTask startDownloadBitmapTask(
-            Context context, String uriString, FirestoreViewModel firestoreModel) {
+            Context context, List<String> imgUriList, FirestoreViewModel firestoreModel) {
 
         ThreadTask downBitmapTask = sInstance.mTaskWorkQueue.poll();
         if(downBitmapTask ==null) downBitmapTask = new DownloadBitmapTask(context);
-        ((DownloadBitmapTask)downBitmapTask).initTask(uriString, firestoreModel);
+        ((DownloadBitmapTask)downBitmapTask).initTask(imgUriList, firestoreModel);
         sInstance.mDownloadThreadPool.execute(((DownloadBitmapTask)downBitmapTask).getDownloadBitmapRunnable());
 
         return (DownloadBitmapTask)downBitmapTask;
