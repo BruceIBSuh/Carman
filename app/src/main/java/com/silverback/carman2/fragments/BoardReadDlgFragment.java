@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -25,6 +26,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -35,6 +37,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
+import com.silverback.carman2.threads.DownloadBitmapTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
@@ -59,12 +64,14 @@ public class BoardReadDlgFragment extends DialogFragment {
 
 
     // Objects
-    //private FirestoreViewModel firestoreModel;
+    private Context context;
+    private FirestoreViewModel firestoreModel;
     //private SimpleDateFormat sdf;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     //private LruCache<String, Bitmap> memCache;
     private List<Integer> viewIdList;
+    private DownloadBitmapTask bitmapTask;
 
     // UIs
     private ConstraintLayout constraintLayout;
@@ -74,8 +81,11 @@ public class BoardReadDlgFragment extends DialogFragment {
     private TextView tvAutoInfo;
     private TextView tvContent;
 
+    private ImageView attachedImage;
+
     // Fields
     private String userId;
+    private int cntImages;
 
     public BoardReadDlgFragment() {
         // Required empty public constructor
@@ -84,8 +94,9 @@ public class BoardReadDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-        //firestoreModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
+        this.context = getContext();
+        //FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestoreModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         if(getArguments() != null) {
@@ -96,6 +107,13 @@ public class BoardReadDlgFragment extends DialogFragment {
             imgUriList = getArguments().getStringArrayList("imageUriList");
             userId = getArguments().getString("userId");
             //autoData = getArguments().getString("autoData");
+        }
+
+        // If no images are transferred, just return localview not displaying any images.
+        if(imgUriList != null && imgUriList.size() > 0) {
+            for(String uriString : imgUriList) {
+                bitmapTask = ThreadManager.startDownloadBitmapTask(context, uriString, firestoreModel);
+            }
         }
 
         /*
@@ -155,6 +173,8 @@ public class BoardReadDlgFragment extends DialogFragment {
         //tvContent.setText(postContent);
         tvDate.setText(getArguments().getString("timestamp"));
 
+        attachedImage = localView.findViewById(R.id.img_attached);
+
         Uri uriUserPic = Uri.parse(userPic);
         Glide.with(getContext())
                 .asBitmap()
@@ -208,16 +228,16 @@ public class BoardReadDlgFragment extends DialogFragment {
         }
         */
 
+
+
+
         SpannableStringBuilder ssb = doImageSpanString(imgUriList);
         tvContent.setText(ssb);
 
 
-        /*
-        // If no images are transferred, just return localview not displaying any images.
-        if(imgUriList == null || imgUriList.size() == 0) {
-            tvContent.setText(postContent);
-            return localView;
 
+
+        /*
         // In case a single image is attached, the image is displayed at the end of the content.
         } else if(imgUriList.size() == 1) {
             tvContent.setText(postContent);
@@ -422,31 +442,21 @@ public class BoardReadDlgFragment extends DialogFragment {
     }
     */
 
-
+    @SuppressWarnings("ConstantConditiosn")
     private SpannableStringBuilder doImageSpanString(List<String> imgUriList) {
 
-        int markupCount = 0;
-        int imgCount = imgUriList.size();
 
+
+        cntImages = 0;
         SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
-
 
         // Find the tag from the posting String.
         final String REGEX = "\\[image_\\d\\]";
-        Pattern p = Pattern.compile(REGEX);
-        Matcher m = p.matcher(ssb);
+        final Pattern p = Pattern.compile(REGEX);
+        final Matcher m = p.matcher(ssb);
 
+        // No tags exist and insert markup
         /*
-        while(m.find(0)) {
-            markupCount++;
-            log.i("matched: %s", ssb.subSequence(m.start(), m.end()));
-            CharSequence num = ssb.subSequence(m.start() + 7, m.end() - 1);
-
-            log.i("Image Number: %s", num);
-
-        }
-
-        // No tags exist and insert markup.
         if(!m.lookingAt()) {
             log.i("no markup exists");
             for(int i = 0; i < imgCount; i++) {
@@ -454,19 +464,58 @@ public class BoardReadDlgFragment extends DialogFragment {
                 //ssb.append(System.getProperty("line.separator")); // Line Separator using System
             }
 
-            m = p.matcher(ssb);
+            //m = p.matcher(ssb);
         }
         */
+        List<FutureTarget<Bitmap>> futureBitmapList = new ArrayList<>();
+        for(String uriString : imgUriList) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    FutureTarget<Bitmap> futureBitmap = Glide.with(context.getApplicationContext())
+                            .asBitmap()
+                            .load(Uri.parse(uriString))
+                            .submit();
 
-        Drawable drawable = getResources().getDrawable(R.drawable.logo_gs);
-        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+                    futureBitmapList.add(futureBitmap);
+                    log.i("futureBitmapList: %s", futureBitmapList.size());
+
+                }
+            }).start();
+
+        }
+
+
         while(m.find()) {
-            log.i("matching process: %s", m.start());
-            ImageSpan imgSpan = new ImageSpan(drawable);
-            ssb.setSpan(imgSpan, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            /*
+            Glide.with(context.getApplicationContext()).asBitmap()
+                    .load(Uri.parse(imgUriList.get(cntImages)))
+                    .into(new CustomTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+
+                            ImageSpan imageSpan = new ImageSpan(context, resource);
+                            log.i("image span: %s", imageSpan);
+
+                            ssb.setSpan(imageSpan, m.start(), m.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                            //log.i("image span: %s, %s, %s", imageSpan, m.start(), m.end());
+                            cntImages++;
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                        }
+                    });
+
+             */
+
+
         }
 
         return ssb;
     }
+
 
 }

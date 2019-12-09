@@ -512,6 +512,7 @@ public class ThreadManager {
         return imageTask;
     }
 
+    // Upload the downsized user image to Firebase Storage
     public static UploadBitmapTask startBitmapUploadTask(Context context, Uri uri, ImageViewModel model) {
 
         ThreadTask bitmapTask = sInstance.mTaskWorkQueue.poll();
@@ -520,6 +521,17 @@ public class ThreadManager {
         sInstance.mDownloadThreadPool.execute(((UploadBitmapTask)bitmapTask).getmBitmapResizeRunnable());
 
         return (UploadBitmapTask)bitmapTask;
+    }
+
+    public static DownloadBitmapTask startDownloadBitmapTask(
+            Context context, String uriString, FirestoreViewModel firestoreModel) {
+
+        ThreadTask downBitmapTask = sInstance.mTaskWorkQueue.poll();
+        if(downBitmapTask ==null) downBitmapTask = new DownloadBitmapTask(context);
+        ((DownloadBitmapTask)downBitmapTask).initTask(uriString, firestoreModel);
+        sInstance.mDownloadThreadPool.execute(((DownloadBitmapTask)downBitmapTask).getDownloadBitmapRunnable());
+
+        return (DownloadBitmapTask)downBitmapTask;
     }
 
     public static UploadPostTask startUploadPostTask(
@@ -533,6 +545,7 @@ public class ThreadManager {
 
         return (UploadPostTask)postTask;
     }
+
 
 
         /*

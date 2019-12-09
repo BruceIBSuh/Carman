@@ -395,7 +395,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         ImageSpan imgSpan = new ImageSpan(getContext(), resource);
-                        // Manager the image spans using BoardImageSpanHandler helper class.
+                        // Manage the image spans using BoardImageSpanHandler helper class.
                         spanHandler.setImageSpanToPosting(imgSpan);
                         //spanHandler.setImageSpanInputFilter();
 
