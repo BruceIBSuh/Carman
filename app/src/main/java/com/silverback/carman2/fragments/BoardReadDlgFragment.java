@@ -99,40 +99,6 @@ public class BoardReadDlgFragment extends DialogFragment {
         if(imgUriList != null && imgUriList.size() > 0) {
             bitmapTask = ThreadManager.startDownloadBitmapTask(context, imgUriList, firestoreModel);
         }
-
-        /*
-        memCache = new LruCache<String, Bitmap>(IMAGE_CACHE_SIZE) {
-            protected int sizeOf(String key, Bitmap value) {
-                return value.getByteCount();
-            }
-        };
-         */
-
-        // Auto information is retrived from Firestore based upon transferred user id and set it
-        // to the view.
-        /*
-        firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
-            log.i("auto data: %s", document.getString("auto_data"));
-            if(document.getString("auto_data") == null || document.getString("auto_data").isEmpty())
-                return;
-
-            try {
-                JSONArray jsonArray = new JSONArray(document.getString("auto_data"));
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < jsonArray.length(); i++) {
-                    if(!jsonArray.getString(i).isEmpty()) sb.append(jsonArray.getString(i));
-                    sb.append(" ");
-                }
-                tvAutoInfo.setText(sb.toString());
-
-            } catch(JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
-            }
-        });
-         */
-
-
-
     }
 
 
@@ -159,6 +125,7 @@ public class BoardReadDlgFragment extends DialogFragment {
 
         attachedImage = localView.findViewById(R.id.img_attached);
 
+        // Set the user image
         Uri uriUserPic = Uri.parse(userPic);
         Glide.with(getContext())
                 .asBitmap()
@@ -185,6 +152,8 @@ public class BoardReadDlgFragment extends DialogFragment {
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
+        // Set the image span to the post content as the image span instances are retrieved from
+        // DownloadBitmapTask.
         firestoreModel.getAttachedImageSpanList().observe(getViewLifecycleOwner(), spanArray -> {
             SpannableStringBuilder ssb = doImageSpanString(spanArray);
             tvContent.setText(ssb);
@@ -192,11 +161,11 @@ public class BoardReadDlgFragment extends DialogFragment {
         });
     }
 
-
     @SuppressWarnings("ConstantConditiosn")
     private SpannableStringBuilder doImageSpanString(SparseArray<ImageSpan> spanArray) {
 
         SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
+
         // Find the tag from the posting String.
         final String REGEX = "\\[image_\\d\\]";
         final Pattern p = Pattern.compile(REGEX);

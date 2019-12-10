@@ -57,11 +57,12 @@
             android:elevation="1dp"
             android:padding="8dp">
 
-            <CheckBox
-                android:id="@+id/chkbox_general"
+            <TextView
+                android:id="@+id/tv_label_category"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="true"
+                android:text="@string/board_write_category"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -71,9 +72,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                app:layout_constraintBottom_toBottomOf="@+id/chkbox_general"
-                app:layout_constraintStart_toEndOf="@+id/chkbox_general"
-                app:layout_constraintTop_toTopOf="@+id/chkbox_general"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_label_category"
+                app:layout_constraintStart_toEndOf="@+id/tv_label_category"
+                app:layout_constraintTop_toTopOf="@+id/tv_label_category"
                 app:layout_constraintVertical_bias="0.0" />
 
             <CheckBox

@@ -88,15 +88,18 @@ public class BoardPagerFragment extends Fragment implements
         switch(page) {
             case 0: // Recent post
                 // Pagination should be programmed.
+                Query firstQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(5);
+                firstQuery.get().addOnSuccessListener(querySnapshot -> {
+                    // Get the last visible document in the first query.
+                    DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+                    Query nextQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING)
+                            .startAfter(lastDoc).limit(5);
 
-                colRef.whereEqualTo("post_filter.general", true)
-                        .orderBy("timestamp", Query.Direction.DESCENDING)
-                        .limit(25)
-                        .get().addOnSuccessListener(querySnapshot -> {
-                            recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
-                            recyclerView.setAdapter(recyclerAdapter);
+                    recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
+                    recyclerView.setAdapter(recyclerAdapter);
 
                 });
+
 
                 break;
 

@@ -60,22 +60,20 @@ public class DownloadBitmapRunnable implements Runnable {
         // should be divided by 2 for fitting.
         Point size = calculateDeviceSize();
 
-
         // What if the Glide fails to fetch an image?
         for(int i = 0; i < uriStringList.size(); i++) {
-
-            final int count = i;
+            final int key = i;
             Glide.with(context.getApplicationContext())
                     .asBitmap()
                     .load(Uri.parse(uriStringList.get(i)))
-                    .apply(new RequestOptions().override(size.x / 2, size.y / 2))
+                    .apply(new RequestOptions().override(size.x / 4, size.y / 4))
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(
                                 @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
 
                             ImageSpan imgSpan = new ImageSpan(context, resource);
-                            sparseSpanArray.put(count, imgSpan);
+                            sparseSpanArray.put(key, imgSpan);
 
                             if(sparseSpanArray.size() == uriStringList.size()) {
                                 mTask.setImageSpanArray(sparseSpanArray);
@@ -97,6 +95,8 @@ public class DownloadBitmapRunnable implements Runnable {
 
         Point size = new Point();
         display.getSize(size);
+        int orientation = display.getRotation();
+        log.i("orientation: %s", orientation);
 
         return size;
     }

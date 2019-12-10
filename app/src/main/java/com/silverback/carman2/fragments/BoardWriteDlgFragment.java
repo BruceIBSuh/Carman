@@ -157,7 +157,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         //statusLayout = localView.findViewById(R.id.vg_constraint_status);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
 
-        CheckBox chkboxGeneral = localView.findViewById(R.id.chkbox_general);
         CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_maker);
         CheckBox chkboxType = localView.findViewById(R.id.chkbox_type);
         CheckBox chkboxModel = localView.findViewById(R.id.chkbox_model);
@@ -173,17 +172,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         RelativeLayout relativeLayout = localView.findViewById(R.id.vg_relative_attach);
 
-
-        chkboxGeneral.setText("일반");
         chkboxMaker.setText(mSettings.getString("pref_auto_maker", null));
         chkboxType.setText(mSettings.getString("pref_auto_type", null));
         chkboxModel.setText(mSettings.getString("pref_auto_model", null));
         chkboxYear.setText(mSettings.getString("pref_auto_year", null));
 
-        chkboxGeneral.setChecked(true);
 
         // Set the event listener to the checkboxes
-        chkboxGeneral.setOnCheckedChangeListener(this);
         chkboxMaker.setOnCheckedChangeListener(this);
         chkboxType.setOnCheckedChangeListener(this);
         chkboxModel.setOnCheckedChangeListener(this);
@@ -438,10 +433,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         switch(buttonView.getId()) {
-            case R.id.chkbox_general:
-                isGeneral = isChecked;
-                break;
-
             case R.id.chkbox_maker:
                 isAutoMaker = isChecked;
                 break;
