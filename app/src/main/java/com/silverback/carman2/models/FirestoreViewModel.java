@@ -18,7 +18,7 @@ public class FirestoreViewModel extends ViewModel {
     private MutableLiveData<DocumentSnapshot> userSnapshot;
     private MutableLiveData<Boolean> hasUploadPosted;
 
-    private MutableLiveData<List<ImageSpan>> attachedImageSpan;
+    private MutableLiveData<SparseArray<ImageSpan>> attachedImageSpan;
 
     public MutableLiveData<SparseArray> getFavoriteSnapshot() {
         if(favoriteSnapshot == null) favoriteSnapshot = new MutableLiveData<>();
@@ -41,7 +41,7 @@ public class FirestoreViewModel extends ViewModel {
         return hasUploadPosted;
     }
 
-    public MutableLiveData<List<ImageSpan>> getAttachedImageSpanList() {
+    public MutableLiveData<SparseArray<ImageSpan>> getAttachedImageSpanList() {
         if(attachedImageSpan == null) attachedImageSpan = new MutableLiveData<>();
         return attachedImageSpan;
     }

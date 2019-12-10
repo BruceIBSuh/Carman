@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.text.style.ImageSpan;
+import android.util.SparseArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -23,7 +24,6 @@ public class DownloadBitmapTask extends ThreadTask implements DownloadBitmapRunn
     private FirestoreViewModel viewModel;
     private List<ImageSpan> imgSpanList;
 
-    // Constructor
     DownloadBitmapTask(Context context) {
         downloadBitmapRunnable = new DownloadBitmapRunnable(context, this);
         imgSpanList = new ArrayList<>();
@@ -38,18 +38,19 @@ public class DownloadBitmapTask extends ThreadTask implements DownloadBitmapRunn
         return downloadBitmapRunnable;
     }
 
+    void recycle() {
+        if(imgSpanList != null) imgSpanList = null;
+    }
+
     @Override
     public void setDownloadBitmapThread(Thread thread) {
         setCurrentThread(thread);
     }
 
+
     @Override
-    public void fetchImageSpan(ImageSpan span) {
-        imgSpanList.add(span);
-        if(imgSpanList.size() == uriStringList.size()) {
-            log.i("span: %s", imgSpanList.size());
-            viewModel.getAttachedImageSpanList().postValue(imgSpanList);
-        }
+    public void setImageSpanArray(SparseArray<ImageSpan> spanArray) {
+        viewModel.getAttachedImageSpanList().postValue(spanArray);
     }
 
     @Override

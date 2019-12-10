@@ -297,7 +297,7 @@ public class BaseActivity extends AppCompatActivity {
 
             tabIconList = Arrays.asList(icons);
 
-        } else if(context instanceof BoardPostingActivity) {
+        } else if(context instanceof BoardActivity) {
 
             log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_billboard_title));

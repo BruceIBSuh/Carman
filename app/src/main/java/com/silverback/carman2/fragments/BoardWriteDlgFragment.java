@@ -45,7 +45,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
-import com.silverback.carman2.BoardPostingActivity;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.AttachImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -133,7 +133,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // Set the soft input mode, which seems not working.
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED);
 
-        mSettings = ((BoardPostingActivity)getActivity()).getSettings();
+        mSettings = ((BoardActivity)getActivity()).getSettings();
         uriImageList = new ArrayList<>();
         strImgUriList = new ArrayList<>();
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
@@ -180,12 +180,16 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         chkboxModel.setText(mSettings.getString("pref_auto_model", null));
         chkboxYear.setText(mSettings.getString("pref_auto_year", null));
 
+        chkboxGeneral.setChecked(true);
+
         // Set the event listener to the checkboxes
         chkboxGeneral.setOnCheckedChangeListener(this);
         chkboxMaker.setOnCheckedChangeListener(this);
         chkboxType.setOnCheckedChangeListener(this);
         chkboxModel.setOnCheckedChangeListener(this);
         chkboxYear.setOnCheckedChangeListener(this);
+
+
 
         log.i("Bottom height: %s", relativeLayout.getHeight());
 

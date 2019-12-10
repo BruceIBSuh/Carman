@@ -17,17 +17,16 @@ import com.silverback.carman2.fragments.BoardWriteDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class BoardPostingActivity extends BaseActivity implements
+public class BoardActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
     private AppBarLayout appBar;
     private TabLayout boardTabLayout;
-    private ViewPager boardPager;
     private FloatingActionButton fabWrite;
     private BoardPagerAdapter pagerAdapter;
 
@@ -52,6 +51,7 @@ public class BoardPostingActivity extends BaseActivity implements
         fabWrite.setOnClickListener(view -> {
             log.i("Writing activity");
             //startActivityForResult(new Intent(this, BoardWritingActivity.class), 1000);
+            // Pop up the dialog to write the post.
             BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, writePostFragment)
@@ -77,7 +77,7 @@ public class BoardPostingActivity extends BaseActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_options_board, menu);
+        //getMenuInflater().inflate(R.menu.menu_options_board, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -107,7 +107,6 @@ public class BoardPostingActivity extends BaseActivity implements
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
-
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
@@ -122,6 +121,7 @@ public class BoardPostingActivity extends BaseActivity implements
 
     }
 
+    // Referenced by the child fragments
     public SharedPreferences getSettings() {
         return mSettings;
     }

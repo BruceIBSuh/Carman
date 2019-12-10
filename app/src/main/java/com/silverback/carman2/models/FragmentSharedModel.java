@@ -138,7 +138,7 @@ public class FragmentSharedModel extends ViewModel {
         return imageChooser;
     }
 
-    // Communicate b/w BoardWriteDlgFragment and BoardPagerFragment both of which BoardPostingActivity
+    // Communicate b/w BoardWriteDlgFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
     public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();

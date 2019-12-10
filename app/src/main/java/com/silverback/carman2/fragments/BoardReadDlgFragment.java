@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ImageSpan;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -184,8 +185,8 @@ public class BoardReadDlgFragment extends DialogFragment {
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
-        firestoreModel.getAttachedImageSpanList().observe(getViewLifecycleOwner(), imgspanList -> {
-            SpannableStringBuilder ssb = doImageSpanString(imgspanList);
+        firestoreModel.getAttachedImageSpanList().observe(getViewLifecycleOwner(), spanArray -> {
+            SpannableStringBuilder ssb = doImageSpanString(spanArray);
             tvContent.setText(ssb);
 
         });
@@ -193,7 +194,7 @@ public class BoardReadDlgFragment extends DialogFragment {
 
 
     @SuppressWarnings("ConstantConditiosn")
-    private SpannableStringBuilder doImageSpanString(List<ImageSpan> spanList) {
+    private SpannableStringBuilder doImageSpanString(SparseArray<ImageSpan> spanArray) {
 
         SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
         // Find the tag from the posting String.
@@ -201,10 +202,16 @@ public class BoardReadDlgFragment extends DialogFragment {
         final Pattern p = Pattern.compile(REGEX);
         final Matcher m = p.matcher(ssb);
 
-        int count = 0;
+
+        int key = 0;
         while(m.find()) {
-            ssb.setSpan(spanList.get(count), m.start(), m.end(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-            count++;
+            if(spanArray.get(key) != null) {
+                ssb.setSpan(spanArray.get(key), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                log.i("Failed to sete Span");
+            }
+
+            key++;
         }
 
         return ssb;

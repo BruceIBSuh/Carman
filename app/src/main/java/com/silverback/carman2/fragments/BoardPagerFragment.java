@@ -13,8 +13,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardRecyclerAdapter;
@@ -22,6 +26,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
+
+import org.w3c.dom.Document;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,7 +44,6 @@ public class BoardPagerFragment extends Fragment implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private FirestoreViewModel fireModel;
     private FragmentSharedModel fragmentModel;
     private BoardRecyclerAdapter recyclerAdapter;
     private SimpleDateFormat sdf;
@@ -60,16 +65,13 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() == null) return;
 
-        firestore = FirebaseFirestore.getInstance();
-        //fireModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        if(getActivity() == null) return;
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
+        firestore = FirebaseFirestore.getInstance();
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -81,38 +83,30 @@ public class BoardPagerFragment extends Fragment implements
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_billboard);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        switch(page) {
+        CollectionReference colRef = firestore.collection("board_general");
 
+        switch(page) {
             case 0: // Recent post
                 // Pagination should be programmed.
-                Query firstQuery = firestore.collection("board_general")
+
+                colRef.whereEqualTo("post_filter.general", true)
                         .orderBy("timestamp", Query.Direction.DESCENDING)
-                        .limit(10);
+                        .limit(25)
+                        .get().addOnSuccessListener(querySnapshot -> {
+                            recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
+                            recyclerView.setAdapter(recyclerAdapter);
 
-                firstQuery.get().addOnSuccessListener(querySnapshot -> {
-                    recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
-                    recyclerView.setAdapter(recyclerAdapter);
-                    //DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-
-                    // Seems not working to update a new posting in the list.
-                    fragmentModel.getNewPosting().observe(getActivity(), postId -> {
-                        log.i("new positing: %s", postId);
-                        firestore.collection("board_general").document(postId).get()
-                                .addOnSuccessListener(snapshot -> {
-                                    log.i("Update");
-                                    querySnapshot.getDocuments().add(0, snapshot);
-                                    for(DocumentSnapshot doc : querySnapshot) {
-                                        log.i("document: %s", doc.getString("post_title"));
-                                    }
-                                    recyclerAdapter.notifyItemInserted(0);
-                                });
-
-                    });
                 });
 
                 break;
 
             case 1: // Popular post
+                colRef.orderBy("cnt_view", Query.Direction.DESCENDING)
+                        .limit(25)
+                        .get().addOnSuccessListener(querySnapshot -> {
+                            recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
+                            recyclerView.setAdapter(recyclerAdapter);
+                });
                 break;
 
             case 2:
@@ -136,7 +130,7 @@ public class BoardPagerFragment extends Fragment implements
     // Callback invoked by BoardRecyclerAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onPostItemClicked(DocumentSnapshot snapshot) {
+    public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
         log.i("Post item clicked");
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
@@ -159,21 +153,24 @@ public class BoardPagerFragment extends Fragment implements
                 .commit();
 
 
-        // Auto information is retrived from Firestore based upon the user id and put it to Bundle,
-        // then call the dialog.
-        /*
-        firestore.collection("users").document(snapshot.getString("user_id")).get()
-                .addOnSuccessListener(document -> {
-                    bundle.putString("autoData", document.getString("auto_data"));
-                    postDialogFragment.setArguments(bundle);
+        // Update the field of "cnt_view" increasing the number.
+        DocumentReference docref = snapshot.getReference();
+        docref.update("cnt_view", FieldValue.increment(1));
 
-                    getFragmentManager().beginTransaction()
-                            .add(android.R.id.content, postDialogFragment)
-                            .addToBackStack(null)
-                            .commit();
+        // Listener to events for local changes, which will be notified with the new data before
+        // the data is sent to the backend.
+        docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
+            if(e != null) {
+                log.e("SnapshotListener erred: %s", e.getMessage());
+                return;
+            }
 
-                });
+            String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
+            if(data != null && data.exists()) {
+                log.i("source: %s", source + "data: %s" + data.getData());
+                recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+            }
+        });
 
-         */
     }
 }

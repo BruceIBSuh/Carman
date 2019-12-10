@@ -18,14 +18,13 @@ import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Source;
 import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,7 +47,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     // Interface for RecyclerView item click event
     public interface OnRecyclerItemClickListener {
-        void onPostItemClicked(DocumentSnapshot snapshot);
+        void onPostItemClicked(DocumentSnapshot snapshot, int position);
     }
 
     // Constructor
@@ -69,7 +68,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     public BoardItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_board_title, parent, false);
+                .inflate(R.layout.cardview_board_list, parent, false);
 
 
         return new BoardItemHolder(cardView);
@@ -86,9 +85,10 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         holder.tvNumber.setText(String.valueOf(position + 1));
         holder.tvPostingDate.setText(sdf.format(document.getDate("timestamp")));
         holder.tvUserName.setText(document.getString("user_name"));
+        holder.tvViewCount.setText(String.valueOf(document.getLong("cnt_view")));
         holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
 
-        List<String> imgList = (List<String>)document.get("post_images");
+        List<String> imgList = (ArrayList<String>)document.get("post_images");
         if(imgList != null && imgList.size() > 0) {
             log.i("imagList: %s", imgList.get(0));
             holder.bindAttachedImage(Uri.parse(imgList.get(0)));
@@ -96,7 +96,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {
-            if(mListener != null) mListener.onPostItemClicked(document);
+            if(mListener != null) mListener.onPostItemClicked(document, position);
         });
 
     }
@@ -108,7 +108,13 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            log.i("Partial Binding of BoardPosting");
+            log.i("Partial Binding of BoardPosting: %s", payloads);
+            for(Object obj : payloads) {
+                if(obj instanceof Long) {
+                    log.i("document snapshot: %s", obj);
+                    holder.tvViewCount.setText(String.valueOf(obj));
+                }
+            }
         }
     }
 
@@ -166,10 +172,8 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     class BoardItemHolder extends RecyclerView.ViewHolder {
 
-        TextView tvPostTitle;
-        TextView tvUserName;
-        TextView tvNumber;
-        TextView tvPostingDate;
+        TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvPostingDate;
+
         ImageView imgProfile;
         ImageView imgAttached;
 
@@ -179,6 +183,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
             tvPostTitle = cardview.findViewById(R.id.tv_post_title);
             tvPostingDate = cardview.findViewById(R.id.tv_posting_date);
             tvUserName = cardview.findViewById(R.id.tv_post_owner);
+            tvViewCount = cardview.findViewById(R.id.tv_count_views);
             imgProfile = cardview.findViewById(R.id.img_user);
             imgAttached = cardview.findViewById(R.id.img_attached);
 

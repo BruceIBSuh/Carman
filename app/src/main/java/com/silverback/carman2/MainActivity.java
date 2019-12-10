@@ -108,7 +108,7 @@ public class MainActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_board:
-                startActivity(new Intent(this, BoardPostingActivity.class));
+                startActivity(new Intent(this, BoardActivity.class));
                 return true;
 
             case R.id.action_login:
