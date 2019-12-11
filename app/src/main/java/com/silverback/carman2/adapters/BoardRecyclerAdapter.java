@@ -38,8 +38,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     // Objects
     private Context context;
-    private FirebaseFirestore firestore;
-    private FirebaseStorage storage;
+    private List<DocumentSnapshot> snapshotList;
     private QuerySnapshot querySnapshot;
     private CardView cardView;
     private OnRecyclerItemClickListener mListener;
@@ -51,11 +50,12 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     }
 
     // Constructor
-    public BoardRecyclerAdapter(QuerySnapshot querySnapshot, OnRecyclerItemClickListener listener) {
+    public BoardRecyclerAdapter(List<DocumentSnapshot> snapshotList, OnRecyclerItemClickListener listener) {
 
         super();
         //this.context = context;
-        this.querySnapshot = querySnapshot;
+        //this.querySnapshot = querySnapshot;
+        this.snapshotList = snapshotList;
         mListener = listener;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         //firestore = FirebaseFirestore.getInstance();
@@ -79,7 +79,8 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position) {
 
         // Retreive an board item queried in and passed from BoardPagerFragment
-        DocumentSnapshot document = querySnapshot.getDocuments().get(position);
+        //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
+        DocumentSnapshot document = snapshotList.get(position);
 
         holder.tvPostTitle.setText(document.getString("post_title"));
         holder.tvNumber.setText(String.valueOf(position + 1));
@@ -121,7 +122,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     @Override
     public int getItemCount() {
-        return querySnapshot.size();
+        return snapshotList.size();
     }
 
     @Override

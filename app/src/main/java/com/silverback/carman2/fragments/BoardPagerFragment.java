@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -26,6 +27,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.PaginateRecyclerView;
 
 import org.w3c.dom.Document;
 
@@ -46,8 +48,13 @@ public class BoardPagerFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentModel;
     private BoardRecyclerAdapter recyclerAdapter;
+    private PaginateRecyclerView paginateRecyclerView;
+    private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
+
+    // Fields
     private int page;
+    private boolean isScrolling;
 
     public BoardPagerFragment() {
         // Required empty public constructor
@@ -71,6 +78,8 @@ public class BoardPagerFragment extends Fragment implements
 
         firestore = FirebaseFirestore.getInstance();
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        snapshotList = new ArrayList<>();
+
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
@@ -79,24 +88,34 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        final int limit = 7;
+
         View localView = inflater.inflate(R.layout.fragment_billboard, container, false);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_billboard);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         CollectionReference colRef = firestore.collection("board_general");
+        // Paginate the recyclerview with the preset limit.
+        paginateRecyclerView = new PaginateRecyclerView(colRef, snapshotList, limit);
 
         switch(page) {
             case 0: // Recent post
                 // Pagination should be programmed.
-                Query firstQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(5);
+                Query firstQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(limit);
                 firstQuery.get().addOnSuccessListener(querySnapshot -> {
+                    for(DocumentSnapshot snapshot : querySnapshot) snapshotList.add(snapshot);
+                    paginateRecyclerView.setQuerySnapshot(querySnapshot);
+
                     // Get the last visible document in the first query.
+                    /*
                     DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
                     Query nextQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING)
                             .startAfter(lastDoc).limit(5);
+                    */
 
-                    recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
+                    recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
                     recyclerView.setAdapter(recyclerAdapter);
+                    recyclerView.addOnScrollListener(paginateRecyclerView);
 
                 });
 
@@ -104,10 +123,10 @@ public class BoardPagerFragment extends Fragment implements
                 break;
 
             case 1: // Popular post
-                colRef.orderBy("cnt_view", Query.Direction.DESCENDING)
-                        .limit(25)
+                snapshotList.clear();
+                colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(25)
                         .get().addOnSuccessListener(querySnapshot -> {
-                            recyclerAdapter = new BoardRecyclerAdapter(querySnapshot, this);
+                            recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
                             recyclerView.setAdapter(recyclerAdapter);
                 });
                 break;
@@ -176,4 +195,7 @@ public class BoardPagerFragment extends Fragment implements
         });
 
     }
+
+
+
 }
