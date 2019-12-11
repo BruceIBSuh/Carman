@@ -83,7 +83,6 @@ public class BoardPagerFragment extends Fragment implements
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -94,31 +93,34 @@ public class BoardPagerFragment extends Fragment implements
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_billboard);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        CollectionReference colRef = firestore.collection("board_general");
+        recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
+        recyclerView.setAdapter(recyclerAdapter);
+
         // Paginate the recyclerview with the preset limit.
-        paginateRecyclerView = new PaginateRecyclerView(colRef, snapshotList, limit);
+        CollectionReference colRef = firestore.collection("board_general");
+        paginateRecyclerView = new PaginateRecyclerView(colRef, limit);
+        recyclerView.addOnScrollListener(paginateRecyclerView);
 
         switch(page) {
+
             case 0: // Recent post
                 // Pagination should be programmed.
                 Query firstQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(limit);
-                firstQuery.get().addOnSuccessListener(querySnapshot -> {
-                    for(DocumentSnapshot snapshot : querySnapshot) snapshotList.add(snapshot);
-                    paginateRecyclerView.setQuerySnapshot(querySnapshot);
+                firstQuery.get().addOnSuccessListener(firstQuerySnapshot -> {
+                    paginateRecyclerView.setQuerySnapshot(firstQuerySnapshot);
+                    for(DocumentSnapshot document : firstQuerySnapshot) snapshotList.add(document);
+                    recyclerAdapter.notifyDataSetChanged();
 
-                    // Get the last visible document in the first query.
-                    /*
-                    DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-                    Query nextQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING)
-                            .startAfter(lastDoc).limit(5);
-                    */
-
-                    recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
-                    recyclerView.setAdapter(recyclerAdapter);
-                    recyclerView.addOnScrollListener(paginateRecyclerView);
+                    // Implement OnFirestoreQueryListener of PaginateRecyclerView to initiate the
+                    // next query following the last document fetched by the firstQuery using
+                    // startafter()
+                    paginateRecyclerView.setOnFirestoreQueryListener(nextQuerySnapshot -> {
+                        log.i("Listener: %s", snapshotList.size());
+                        for(DocumentSnapshot document : nextQuerySnapshot) snapshotList.add(document);
+                        recyclerAdapter.notifyDataSetChanged();
+                    });
 
                 });
-
 
                 break;
 
@@ -126,8 +128,10 @@ public class BoardPagerFragment extends Fragment implements
                 snapshotList.clear();
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(25)
                         .get().addOnSuccessListener(querySnapshot -> {
-                            recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
-                            recyclerView.setAdapter(recyclerAdapter);
+                            for(DocumentSnapshot document : querySnapshot) {
+                                snapshotList.add(document);
+                            }
+                            recyclerAdapter.notifyDataSetChanged();
                 });
                 break;
 

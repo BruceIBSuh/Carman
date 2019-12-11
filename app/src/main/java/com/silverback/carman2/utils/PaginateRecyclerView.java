@@ -8,34 +8,40 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.silverback.carman2.adapters.BoardRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-
-import java.util.List;
 
 public class PaginateRecyclerView extends RecyclerView.OnScrollListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PaginateRecyclerView.class);
 
     // Objects
-    private BoardRecyclerAdapter recyclerAdapter;
+    private FirebaseFirestore firestore;
     private CollectionReference colRef;
     private QuerySnapshot querySnapshot;
-    private List<DocumentSnapshot> snapshotList;
+    private OnFirestoreQueryListener mListener;
 
     // Fields
-    private boolean isScrolling = false;
-    private boolean isLastItem = false;
+    private boolean isScrolling;
+    private boolean isLastItem;
     private int limit;
 
+    public interface OnFirestoreQueryListener {
+        void setNextQuerySnapshot(QuerySnapshot querySnapshot);
+    }
+
     // Constructor
-    public PaginateRecyclerView(CollectionReference colref, List<DocumentSnapshot> list, int limit) {
+    public PaginateRecyclerView(CollectionReference colref, final int limit) {
         this.colRef = colref;
         this.limit = limit;
-        this.snapshotList = list;
+    }
+
+    // Method for implementing the inteface in BoardPagerFragment.
+    public void setOnFirestoreQueryListener(OnFirestoreQueryListener listener) {
+        mListener = listener;
     }
 
     public void setQuerySnapshot(QuerySnapshot querySnapshot) {
@@ -73,13 +79,12 @@ public class PaginateRecyclerView extends RecyclerView.OnScrollListener {
             // startAfter().
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
             Query nextQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING)
-                    .startAfter(lastDoc).limit(5);
+                    .startAfter(lastDoc).limit(limit);
+
             nextQuery.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() < limit) isLastItem = true;
-                for(DocumentSnapshot snapshot : querySnapshot) {
-                    log.i("document: %s", snapshot);
-                    snapshotList.add(snapshot);
-                }
+
+                mListener.setNextQuerySnapshot(querySnapshot);
             });
 
         }

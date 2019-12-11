@@ -51,15 +51,10 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     // Constructor
     public BoardRecyclerAdapter(List<DocumentSnapshot> snapshotList, OnRecyclerItemClickListener listener) {
-
         super();
-        //this.context = context;
-        //this.querySnapshot = querySnapshot;
         this.snapshotList = snapshotList;
         mListener = listener;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        //firestore = FirebaseFirestore.getInstance();
-        //storage = FirebaseStorage.getInstance();
     }
 
 
