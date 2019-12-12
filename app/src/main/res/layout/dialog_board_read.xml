@@ -176,7 +176,7 @@
                 android:layout_width="0dp"
                 android:layout_height="2dp"
                 android:layout_marginTop="8dp"
-                android:background="#F5F5F5"
+                android:background="#C8C8C8"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="@+id/img_userpic"
                 app:layout_constraintTop_toBottomOf="@+id/img_userpic" />

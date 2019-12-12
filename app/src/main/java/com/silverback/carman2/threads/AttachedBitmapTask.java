@@ -1,31 +1,28 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.net.Uri;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
-import com.silverback.carman2.models.ImageViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DownloadBitmapTask extends ThreadTask implements DownloadBitmapRunnable.DownloadBitmapMethods{
+public class AttachedBitmapTask extends ThreadTask implements AttachedBitmapRunnable.DownloadBitmapMethods{
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(DownloadBitmapTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(AttachedBitmapTask.class);
 
     // Objects
-    private Runnable downloadBitmapRunnable;
+    private Runnable mAttachedBitmapRunnable;
     private List<String> uriStringList;
     private FirestoreViewModel viewModel;
     private List<ImageSpan> imgSpanList;
 
-    DownloadBitmapTask(Context context) {
-        downloadBitmapRunnable = new DownloadBitmapRunnable(context, this);
+    AttachedBitmapTask(Context context) {
+        mAttachedBitmapRunnable = new AttachedBitmapRunnable(context, this);
         imgSpanList = new ArrayList<>();
     }
 
@@ -34,8 +31,8 @@ public class DownloadBitmapTask extends ThreadTask implements DownloadBitmapRunn
         this.viewModel = viewModel;
     }
 
-    Runnable getDownloadBitmapRunnable() {
-        return downloadBitmapRunnable;
+    Runnable getAttachedBitmapRunnable() {
+        return mAttachedBitmapRunnable;
     }
 
     void recycle() {

@@ -30,7 +30,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
-import com.silverback.carman2.threads.DownloadBitmapTask;
+import com.silverback.carman2.threads.AttachedBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.util.List;
@@ -56,7 +56,7 @@ public class BoardReadDlgFragment extends DialogFragment {
     private List<String> imgUriList;
     //private LruCache<String, Bitmap> memCache;
     private List<Integer> viewIdList;
-    private DownloadBitmapTask bitmapTask;
+    private AttachedBitmapTask bitmapTask;
     private List<Bitmap> bmpList;
 
     // UIs
@@ -97,7 +97,7 @@ public class BoardReadDlgFragment extends DialogFragment {
 
         // If no images are transferred, just return localview not displaying any images.
         if(imgUriList != null && imgUriList.size() > 0) {
-            bitmapTask = ThreadManager.startDownloadBitmapTask(context, imgUriList, firestoreModel);
+            bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, firestoreModel);
         }
     }
 
@@ -107,7 +107,7 @@ public class BoardReadDlgFragment extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View localView = inflater.inflate(R.layout.dialog_board_post, container, false);
+        View localView = inflater.inflate(R.layout.dialog_board_read, container, false);
         constraintLayout = localView.findViewById(R.id.constraint_posting);
         ImageButton btn = localView.findViewById(R.id.imgbtn_dismiss);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
@@ -153,16 +153,16 @@ public class BoardReadDlgFragment extends DialogFragment {
         super.onActivityCreated(bundle);
 
         // Set the image span to the post content as the image span instances are retrieved from
-        // DownloadBitmapTask.
+        // AttachedBitmapTask.
         firestoreModel.getAttachedImageSpanList().observe(getViewLifecycleOwner(), spanArray -> {
-            SpannableStringBuilder ssb = doImageSpanString(spanArray);
+            SpannableStringBuilder ssb = createImageSpanString(spanArray);
             tvContent.setText(ssb);
 
         });
     }
 
     @SuppressWarnings("ConstantConditiosn")
-    private SpannableStringBuilder doImageSpanString(SparseArray<ImageSpan> spanArray) {
+    private SpannableStringBuilder createImageSpanString(SparseArray<ImageSpan> spanArray) {
 
         SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
 

@@ -2,6 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -13,26 +14,32 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.exifinterface.media.ExifInterface;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.util.List;
 
-public class DownloadBitmapRunnable implements Runnable {
+public class AttachedBitmapRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(DownloadBitmapRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(AttachedBitmapRunnable.class);
 
     // Objects
     private Context context;
     private DownloadBitmapMethods mTask;
+    private ExifInterface exifInterface;
+
+    // Fields
+    private Point screenSize;
 
     // Interface
     public interface DownloadBitmapMethods {
@@ -42,9 +49,10 @@ public class DownloadBitmapRunnable implements Runnable {
     }
 
     // Constructor
-    DownloadBitmapRunnable(Context context, DownloadBitmapMethods task) {
+    AttachedBitmapRunnable(Context context, DownloadBitmapMethods task) {
         this.context = context;
         mTask = task;
+        screenSize = calculateDeviceSize();
     }
 
 
@@ -56,21 +64,22 @@ public class DownloadBitmapRunnable implements Runnable {
         List<String> uriStringList = mTask.getImageUriList();
         SparseArray<ImageSpan> sparseSpanArray = new SparseArray<>();
 
-        // Calculate the screen size to fit the image to the size by Glide. Not sure why the size
-        // should be divided by 2 for fitting.
-        Point size = calculateDeviceSize();
 
         // What if the Glide fails to fetch an image?
         for(int i = 0; i < uriStringList.size(); i++) {
             final int key = i;
+            Point scaledSize = getImageScaleToScreen(uriStringList.get(i));
             Glide.with(context.getApplicationContext())
                     .asBitmap()
                     .load(Uri.parse(uriStringList.get(i)))
-                    .apply(new RequestOptions().override(size.x / 4, size.y / 4))
+                    .apply(new RequestOptions().override(screenSize.x, scaledSize.y))
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(
                                 @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+
+
 
                             ImageSpan imgSpan = new ImageSpan(context, resource);
                             sparseSpanArray.put(key, imgSpan);
@@ -89,7 +98,10 @@ public class DownloadBitmapRunnable implements Runnable {
 
     }
 
+    // Calculate the screen size to fit the image to the size by Glide. Not sure why the size
+    // should be divided by 2 for fitting.
     private Point calculateDeviceSize() {
+
         WindowManager windowManager = (WindowManager)(context.getSystemService(Context.WINDOW_SERVICE));
         Display display = windowManager.getDefaultDisplay();
 
@@ -100,4 +112,31 @@ public class DownloadBitmapRunnable implements Runnable {
 
         return size;
     }
+
+    private Point getImageScaleToScreen(String url) {
+
+        try (InputStream in = new java.net.URL(url).openStream()) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(in, null, options);
+
+            float scale = (float)screenSize.x / (float)options.outWidth;
+
+            int scaledWidth = screenSize.x;
+            int scaledHeight = (int)(options.outHeight * scale);
+
+
+            return new Point(scaledWidth, scaledHeight);
+
+
+        } catch(MalformedURLException e) {
+            log.e("MalFormedURLException: %s", e.getMessage());
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
+
+        return null;
+    }
+
+
 }

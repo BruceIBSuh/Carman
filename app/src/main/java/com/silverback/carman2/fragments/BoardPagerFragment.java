@@ -5,14 +5,13 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
+import android.widget.ProgressBar;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -21,15 +20,12 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
-import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.utils.PaginateRecyclerView;
-
-import org.w3c.dom.Document;
+import com.silverback.carman2.utils.PaginationUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,15 +42,17 @@ public class BoardPagerFragment extends Fragment implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private FragmentSharedModel fragmentModel;
     private BoardRecyclerAdapter recyclerAdapter;
-    private PaginateRecyclerView paginateRecyclerView;
+    private PaginationUtil paginationUtil;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
 
+    // UIs
+    private ProgressBar pagingProgressBar;
+
     // Fields
     private int page;
-    private boolean isScrolling;
+    private String fieldName;
 
     public BoardPagerFragment() {
         // Required empty public constructor
@@ -77,9 +75,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
         firestore = FirebaseFirestore.getInstance();
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         snapshotList = new ArrayList<>();
-
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
@@ -89,7 +85,8 @@ public class BoardPagerFragment extends Fragment implements
 
         final int limit = 7;
 
-        View localView = inflater.inflate(R.layout.fragment_billboard, container, false);
+        View localView = inflater.inflate(R.layout.fragment_board_list, container, false);
+        pagingProgressBar = localView.findViewById(R.id.progressBar);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_billboard);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -98,41 +95,40 @@ public class BoardPagerFragment extends Fragment implements
 
         // Paginate the recyclerview with the preset limit.
         CollectionReference colRef = firestore.collection("board_general");
-        paginateRecyclerView = new PaginateRecyclerView(colRef, limit);
-        recyclerView.addOnScrollListener(paginateRecyclerView);
+        paginationUtil = new PaginationUtil(colRef, limit);
+        recyclerView.addOnScrollListener(paginationUtil);
 
         switch(page) {
-
             case 0: // Recent post
-                // Pagination should be programmed.
-                Query firstQuery = colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(limit);
-                firstQuery.get().addOnSuccessListener(firstQuerySnapshot -> {
-                    paginateRecyclerView.setQuerySnapshot(firstQuerySnapshot);
-                    for(DocumentSnapshot document : firstQuerySnapshot) snapshotList.add(document);
-                    recyclerAdapter.notifyDataSetChanged();
+                fieldName = "timestamp";
+                colRef.orderBy(fieldName, Query.Direction.DESCENDING)
+                        .limit(limit)
+                        .get()
+                        .addOnSuccessListener(recentQuerySnapshot -> {
+                            for(DocumentSnapshot document : recentQuerySnapshot)
+                                snapshotList.add(document);
+                            recyclerAdapter.notifyDataSetChanged();
+                            paginationUtil.setQuerySnapshot(recentQuerySnapshot, fieldName);
+                        });
 
-                    // Implement OnFirestoreQueryListener of PaginateRecyclerView to initiate the
-                    // next query following the last document fetched by the firstQuery using
-                    // startafter()
-                    paginateRecyclerView.setOnFirestoreQueryListener(nextQuerySnapshot -> {
-                        log.i("Listener: %s", snapshotList.size());
-                        for(DocumentSnapshot document : nextQuerySnapshot) snapshotList.add(document);
-                        recyclerAdapter.notifyDataSetChanged();
-                    });
-
-                });
+                doPagingNextQuery();
 
                 break;
 
             case 1: // Popular post
                 snapshotList.clear();
-                colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(25)
-                        .get().addOnSuccessListener(querySnapshot -> {
-                            for(DocumentSnapshot document : querySnapshot) {
+                fieldName = "cnt_view";
+                colRef.orderBy(fieldName, Query.Direction.DESCENDING)
+                        .limit(limit)
+                        .get()
+                        .addOnSuccessListener(popularQuerySnapshot -> {
+                            paginationUtil.setQuerySnapshot(popularQuerySnapshot, fieldName);
+                            for(DocumentSnapshot document : popularQuerySnapshot)
                                 snapshotList.add(document);
-                            }
                             recyclerAdapter.notifyDataSetChanged();
-                });
+
+
+                        });
                 break;
 
             case 2:
@@ -198,6 +194,28 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
 
+    }
+
+    // Implement OnPaginationListener of PaginationUtil to initiate
+    // the next query following the last document fetched by the firstQuery
+    // using startafter()
+    private void doPagingNextQuery() {
+
+        paginationUtil.setOnPaginationListener(new PaginationUtil.OnPaginationListener() {
+            @Override
+            public void setQueryStart(boolean b) {
+                pagingProgressBar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void setNextQueryComplete(QuerySnapshot querySnapshot) {
+                for(DocumentSnapshot document : querySnapshot) {
+                    snapshotList.add(document);
+                }
+                pagingProgressBar.setVisibility(View.INVISIBLE);
+                recyclerAdapter.notifyDataSetChanged();
+            }
+        });
     }
 
 
