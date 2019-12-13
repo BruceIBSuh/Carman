@@ -10,11 +10,14 @@ import android.hardware.camera2.CameraAccessException;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.widget.ImageView;
 
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -31,7 +34,7 @@ public class EditImageHelper {
 
     // Objects
     private Context mContext;
-    //private BitmapTypeRequest<?> bitmapTypeReq;
+    //private BitmapTypeRequest<ModelType> bitmapTypeReq;
 
     public EditImageHelper(Context context) {
         mContext = context;
@@ -57,7 +60,8 @@ public class EditImageHelper {
             }
         });
     }
-    */
+     */
+
 
     // Make the cropped image be circular.
     public RoundedBitmapDrawable drawRoundedBitmap(Uri uri) throws IOException {

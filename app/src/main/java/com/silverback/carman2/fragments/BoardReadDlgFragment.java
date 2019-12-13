@@ -51,7 +51,6 @@ public class BoardReadDlgFragment extends DialogFragment {
     // Objects
     private Context context;
     private FirestoreViewModel firestoreModel;
-    //private SimpleDateFormat sdf;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     //private LruCache<String, Bitmap> memCache;
@@ -123,7 +122,7 @@ public class BoardReadDlgFragment extends DialogFragment {
         tvContent.setText(postContent);
         tvDate.setText(getArguments().getString("timestamp"));
 
-        attachedImage = localView.findViewById(R.id.img_attached);
+        //attachedImage = localView.findViewById(R.id.img_attached);
 
         // Set the user image
         Uri uriUserPic = Uri.parse(userPic);
@@ -167,7 +166,7 @@ public class BoardReadDlgFragment extends DialogFragment {
         SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
 
         // Find the tag from the posting String.
-        final String REGEX = "\\[image_\\d\\]";
+        final String REGEX = "\\[image_\\d]";
         final Pattern p = Pattern.compile(REGEX);
         final Matcher m = p.matcher(ssb);
 

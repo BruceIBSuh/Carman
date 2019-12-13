@@ -105,13 +105,14 @@ public class BoardPagerFragment extends Fragment implements
                         .limit(limit)
                         .get()
                         .addOnSuccessListener(recentQuerySnapshot -> {
-                            for(DocumentSnapshot document : recentQuerySnapshot)
-                                snapshotList.add(document);
+                            for(DocumentSnapshot document : recentQuerySnapshot) snapshotList.add(document);
                             recyclerAdapter.notifyDataSetChanged();
                             paginationUtil.setQuerySnapshot(recentQuerySnapshot, fieldName);
+
+                            doPagingNextQuery();
                         });
 
-                doPagingNextQuery();
+
 
                 break;
 
@@ -122,13 +123,14 @@ public class BoardPagerFragment extends Fragment implements
                         .limit(limit)
                         .get()
                         .addOnSuccessListener(popularQuerySnapshot -> {
-                            paginationUtil.setQuerySnapshot(popularQuerySnapshot, fieldName);
-                            for(DocumentSnapshot document : popularQuerySnapshot)
-                                snapshotList.add(document);
+                            for(DocumentSnapshot document : popularQuerySnapshot) snapshotList.add(document);
                             recyclerAdapter.notifyDataSetChanged();
+                            paginationUtil.setQuerySnapshot(popularQuerySnapshot, fieldName);
 
-
+                            doPagingNextQuery();
                         });
+
+
                 break;
 
             case 2:

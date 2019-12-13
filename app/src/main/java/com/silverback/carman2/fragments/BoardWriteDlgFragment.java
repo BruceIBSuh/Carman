@@ -47,7 +47,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.AttachImageAdapter;
+import com.silverback.carman2.adapters.BoardAttachImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
@@ -76,7 +76,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  */
 public class BoardWriteDlgFragment extends DialogFragment implements
         CheckBox.OnCheckedChangeListener,
-        AttachImageAdapter.OnBoardWriteListener {
+        BoardAttachImageAdapter.OnBoardWriteListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteDlgFragment.class);
 
@@ -86,8 +86,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private static final int REQUEST_CODE_GALLERY = 1003;
     private static final int REQUEST_CODE_SAMSUNG = 1004;
 
-    private static int imageTag;
-    private static String markup;
+    //private static int imageTag;
+    //private static String markup;
 
     static final int GALLERY = 1;
     static final int CAMERA = 2;
@@ -97,7 +97,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     // Objects
     private SharedPreferences mSettings;
     private FragmentSharedModel fragmentModel;
-    private AttachImageAdapter imageAdapter;
+    private BoardAttachImageAdapter imageAdapter;
     private List<Uri> uriImageList;
     private List<String> strImgUriList;
     private ImageSpan[] arrImageSpan;
@@ -140,9 +140,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         bitmapModel = ViewModelProviders.of(this).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         ssb = new SpannableStringBuilder();
-
-
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -154,7 +151,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         nestedScrollView = localView.findViewById(R.id.nestedScrollView);
         hScrollView = localView.findViewById(R.id.scrollview_horizontal);
-        //statusLayout = localView.findViewById(R.id.vg_constraint_status);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
 
         CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_maker);
@@ -184,10 +180,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         chkboxModel.setOnCheckedChangeListener(this);
         chkboxYear.setOnCheckedChangeListener(this);
 
-
-
-        log.i("Bottom height: %s", relativeLayout.getHeight());
-
         /*
         statusLayout.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             float statusHeight = statusLayout.getHeight();
@@ -195,7 +187,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         });
         */
 
-        // Animate the status bar
+        // Animate the status bar up to the actionbar height.
         TypedValue typedValue = new TypedValue();
         if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
             float actionBarHeight = TypedValue.complexToDimensionPixelSize(
@@ -211,29 +203,32 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // Create RecyclerView with attched pictures which are handled in onActivityResult()
         recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
-        imageAdapter = new AttachImageAdapter(uriImageList, this);
+        imageAdapter = new BoardAttachImageAdapter(uriImageList, this);
         recyclerImageView.setAdapter(imageAdapter);
 
 
 
         // Set the event listeners to the buttons.
-        btnDismiss.setOnClickListener(btn -> dismiss());
+        btnDismiss.setOnClickListener(btn -> {
+            // Close the soft input.
+            ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                    .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+            dismiss();
+        });
 
         // Upload button
         btnUpload.setOnClickListener(btn -> {
             if(!doEmptyCheck()) return;
 
             // Create ProbressBar
-            /*
             RelativeLayout layout = new RelativeLayout(getContext());
             ProgressBar progressBar = new ProgressBar(getActivity(), null,android.R.attr.progressBarStyleLarge);
             progressBar.setIndeterminate(true);
             progressBar.setVisibility(View.VISIBLE);
             RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100);
             params.addRule(RelativeLayout.CENTER_IN_PARENT);
-            layout.addView(progressBar,params);
-            */
-
+            layout.addView(progressBar, params);
 
             // No attached image immediately makes uploading started.
             if(uriImageList.size() == 0) uploadPostToFirestore();
@@ -252,8 +247,9 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
         btnAttach.setOnClickListener(btn -> {
+
             ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                    .hideSoftInputFromWindow(etPostTitle.getWindowToken(), 0);
+                    .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
             if(uriImageList.size() > Constants.MAX_ATTACHED_IMAGE) {
@@ -281,8 +277,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             }
         });
 
-        // Create BoardImageSpanHandler, a helper class to handle the image span and the spanwatcher
-        // to prevent the image span from deletion while editing.
+        // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to handle
+        // SpannableStringBuilder in order to protect image spans from while editing.
         spanHandler = new BoardImageSpanHandler(etPostBody.getText());
 
         return localView;
@@ -299,14 +295,14 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
+
         super.onActivityCreated(bundle);
 
-        // Notified of which chooser to select in BoardChooserDlgFragment
+        // ViewModel to be Notified of which media(camera or gallery) to select in BoardChooserDlgFragment
         fragmentModel.getImageChooser().observe(getActivity(), chooser -> {
-            log.i("FragmentSharedModel chooser: %s", chooser);
-
             switch(chooser) {
                 case GALLERY:
+                    log.i("FragmentModel: Gallery");
                     // Handle SAMSUNG for multi-selection
                     /*
                     if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
@@ -346,6 +342,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     }
                     break;
             }
+
+
         });
 
         // Notified of having attached images uploaded to Firebase Storage and retreive each uri
@@ -365,6 +363,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     }
 
+    @Override
+    public void onDestroyView() {
+        log.i("onDestroyView()");
+        if(this.getArguments() != null) this.getArguments().clear();
+        super.onDestroyView();
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -374,10 +379,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         switch(requestCode) {
             case REQUEST_CODE_GALLERY:
-                if(data.getData() != null) {
-                    imgUri = data.getData();
-                    uriImageList.add(imgUri);
-                }
+                imgUri = data.getData();
+                uriImageList.add(imgUri);
                 break;
 
             case REQUEST_CODE_CAMERA:
@@ -388,11 +391,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         //Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
         //ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
         // EditImageHelper is repalced w/ Glide.
-        Glide.with(getContext().getApplicationContext()).asBitmap().override(80, 80).centerCrop()
+        Glide.with(getContext().getApplicationContext()).asBitmap().override(80).centerCrop()
                 .load(imgUri)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                    public void onResourceReady(
+                            @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+
                         ImageSpan imgSpan = new ImageSpan(getContext(), resource);
                         // Manage the image spans using BoardImageSpanHandler helper class.
                         spanHandler.setImageSpanToPosting(imgSpan);
@@ -542,20 +547,16 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         return true;
     }
 
-    // Callback invoked by AttachImageAdapter.OnBoardWriteListener when an image is removed from the list
+    // Callback invoked by BoardAttachImageAdapter.OnBoardWriteListener when an image is removed from the list
     @Override
     public void removeGridImage(int position) {
-        ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
-        log.i("position: %s, %s, %s", position, uriImageList.size(), arrImageSpan.length);
+
+        spanHandler.removeImageSpan(position);
+        //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
         imageAdapter.notifyItemRemoved(position);
         uriImageList.remove(position);
-        spanHandler.removeImageSpan(position);
 
-
-        imageTag -= 1;
-
-        //ssb.removeSpan(arrImageSpan[position]);
-        //log.i("ssb remove span: %s", ssb);
+        //imageTag -= 1;
 
     }
 

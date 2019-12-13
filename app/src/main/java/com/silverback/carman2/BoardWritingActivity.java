@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.animation.ObjectAnimator;
 import android.content.ClipData;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,7 +26,7 @@ import android.widget.TextView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman2.adapters.AttachImageAdapter;
+import com.silverback.carman2.adapters.BoardAttachImageAdapter;
 import com.silverback.carman2.fragments.BoardChooserDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -57,7 +55,7 @@ public class BoardWritingActivity extends BaseActivity {
 
     // Objects
     private List<Uri> uriImageList;
-    private AttachImageAdapter imageAdapter;
+    private BoardAttachImageAdapter imageAdapter;
 
     // UIs
     private CoordinatorLayout root;
@@ -243,7 +241,7 @@ public class BoardWritingActivity extends BaseActivity {
             }
         }
 
-        imageAdapter = new AttachImageAdapter(uriImageList);
+        imageAdapter = new BoardAttachImageAdapter(uriImageList);
         recyclerImageView.setAdapter(imageAdapter);
         */
 
@@ -314,7 +312,7 @@ public class BoardWritingActivity extends BaseActivity {
             }
 
 
-            //imageAdapter = new AttachImageAdapter(uriImageList, this);
+            //imageAdapter = new BoardAttachImageAdapter(uriImageList, this);
             recyclerImageView.setAdapter(imageAdapter);
 
         } catch(Exception e) {

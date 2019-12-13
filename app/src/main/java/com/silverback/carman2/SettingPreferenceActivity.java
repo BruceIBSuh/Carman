@@ -362,7 +362,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     // Upload the data to Firestore.
     private void uploadUserDataToFirestore(Map<String, Object> data) {
-
+        // Read the user id containing file which is saved in the internal storage.
         try (FileInputStream fis = openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 

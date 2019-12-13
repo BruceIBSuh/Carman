@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -16,6 +17,7 @@ import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardWriteDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 
 public class BoardActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
@@ -49,13 +51,14 @@ public class BoardActivity extends BaseActivity implements
         // Add an listener to AppBarLayout
         appBar.addOnOffsetChangedListener(this);
         fabWrite.setOnClickListener(view -> {
-            log.i("Writing activity");
-            //startActivityForResult(new Intent(this, BoardWritingActivity.class), 1000);
+            // Initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
+            // automatically invoking startActivityForResult() when the fragment pops up.
+            FragmentSharedModel model = ViewModelProviders.of(this).get(FragmentSharedModel.class);
+            model.getImageChooser().setValue(-1);
             // Pop up the dialog to write the post.
             BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, writePostFragment)
-                    .addToBackStack(null)
                     .commit();
 
         });

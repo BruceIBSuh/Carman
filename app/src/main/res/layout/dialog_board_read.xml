@@ -42,10 +42,11 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/vg_nestedscrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="80dp"
         android:fillViewport="true"
         android:scrollbars="vertical"
         app:layout_dodgeInsetEdges="top">
@@ -75,12 +76,10 @@
                 android:id="@+id/img_compathy"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_marginStart="8dp"
                 android:contentDescription="@null"
                 android:src="@android:drawable/btn_star_big_on"
                 app:layout_constraintBottom_toBottomOf="@+id/tv_username"
                 app:layout_constraintEnd_toStartOf="@+id/tv_count_compathy"
-                app:layout_constraintStart_toStartOf="@+id/guideline2"
                 app:layout_constraintTop_toTopOf="@+id/tv_username" />
 
             <TextView
@@ -98,8 +97,8 @@
                 android:id="@+id/img_comment"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:src="@android:drawable/ic_btn_speak_now"
                 android:contentDescription="@null"
+                android:src="@android:drawable/ic_btn_speak_now"
                 app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
                 app:layout_constraintEnd_toStartOf="@+id/tv_count_comment"
                 app:layout_constraintTop_toTopOf="@+id/img_compathy"
@@ -132,10 +131,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="3dp"
-                android:layout_marginEnd="8dp"
                 android:text="TEST"
                 android:textSize="@dimen/smallText"
-                app:layout_constraintEnd_toStartOf="@+id/guideline2"
                 app:layout_constraintStart_toEndOf="@+id/img_userpic"
                 app:layout_constraintTop_toTopOf="@+id/img_userpic" />
 
@@ -143,12 +140,10 @@
                 android:id="@+id/tv_autoinfo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
                 android:layout_marginBottom="3dp"
                 android:text="TEST"
                 android:textSize="@dimen/extraSmallText"
                 app:layout_constraintBottom_toBottomOf="@+id/img_userpic"
-                app:layout_constraintEnd_toStartOf="@+id/guideline2"
                 app:layout_constraintStart_toStartOf="@+id/tv_username" />
 
             <TextView
@@ -161,15 +156,7 @@
                 android:textSize="@dimen/extraSmallText"
                 app:layout_constraintBottom_toBottomOf="@+id/tv_autoinfo"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/guideline2"
                 app:layout_constraintTop_toTopOf="@+id/tv_autoinfo" />
-
-            <androidx.constraintlayout.widget.Guideline
-                android:id="@+id/guideline2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintGuide_begin="285dp" />
 
             <View
                 android:id="@+id/view_underline_header"
@@ -196,8 +183,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@null"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tv_posting_body" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -205,9 +192,6 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:minHeight="16dp"
-                app:layout_constraintBottom_toTopOf="@+id/view_add_comment"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tv_posting_body" />
@@ -219,7 +203,7 @@
                 android:background="#E0E0E0"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/vg_recycler_comments" />
 
             <TextView
                 android:id="@+id/tv_label_comment"
@@ -232,7 +216,6 @@
                 android:textSize="@dimen/smallText"
                 app:layout_constraintStart_toStartOf="@+id/view_add_comment"
                 app:layout_constraintTop_toTopOf="@+id/view_add_comment" />
-
 
             <EditText
                 android:id="@+id/et_comment"
@@ -266,13 +249,15 @@
 
     </androidx.core.widget.NestedScrollView>
 
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraint_bottom"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_gravity="bottom"
         android:background="#F5F5F5"
-        android:padding="5dp" >
+        android:padding="5dp"
+        app:layout_insetEdge="bottom" >
 
         <Button
             android:id="@+id/btn_compathy"

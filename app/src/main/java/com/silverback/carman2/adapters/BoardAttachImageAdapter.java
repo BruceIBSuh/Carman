@@ -6,9 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -20,11 +18,10 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
-import java.util.Map;
 
-public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.ImageViewHolder> {
+public class BoardAttachImageAdapter extends RecyclerView.Adapter<BoardAttachImageAdapter.ImageViewHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(AttachImageAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardAttachImageAdapter.class);
 
     // Objects
     private Context context;
@@ -37,7 +34,7 @@ public class AttachImageAdapter extends RecyclerView.Adapter<AttachImageAdapter.
     }
 
     // Constructor
-    public AttachImageAdapter(List<Uri> uriList, OnBoardWriteListener listener) {
+    public BoardAttachImageAdapter(List<Uri> uriList, OnBoardWriteListener listener) {
         uriImageList = uriList;
         mListener = listener;
     }

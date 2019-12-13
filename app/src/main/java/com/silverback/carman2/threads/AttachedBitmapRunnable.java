@@ -23,6 +23,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +37,7 @@ public class AttachedBitmapRunnable implements Runnable {
     // Objects
     private Context context;
     private DownloadBitmapMethods mTask;
+    private EditImageHelper imageHelper;
     private ExifInterface exifInterface;
 
     // Fields
@@ -53,6 +55,7 @@ public class AttachedBitmapRunnable implements Runnable {
         this.context = context;
         mTask = task;
         screenSize = calculateDeviceSize();
+        imageHelper = new EditImageHelper(context);
     }
 
 
@@ -67,19 +70,21 @@ public class AttachedBitmapRunnable implements Runnable {
 
         // What if the Glide fails to fetch an image?
         for(int i = 0; i < uriStringList.size(); i++) {
+            int orientation = getAttachedImageOrientation(uriStringList.get(i));
+            log.i("Orientation: %s", orientation);
+
             final int key = i;
-            Point scaledSize = getImageScaleToScreen(uriStringList.get(i));
             Glide.with(context.getApplicationContext())
                     .asBitmap()
                     .load(Uri.parse(uriStringList.get(i)))
-                    .apply(new RequestOptions().override(screenSize.x, scaledSize.y))
+                    //.centerCrop()
+                    //.fitCenter()
+                    .apply(new RequestOptions().override(screenSize.x))
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(new CustomTarget<Bitmap>() {
                         @Override
                         public void onResourceReady(
                                 @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-
-
 
                             ImageSpan imgSpan = new ImageSpan(context, resource);
                             sparseSpanArray.put(key, imgSpan);
@@ -107,15 +112,18 @@ public class AttachedBitmapRunnable implements Runnable {
 
         Point size = new Point();
         display.getSize(size);
-        int orientation = display.getRotation();
-        log.i("orientation: %s", orientation);
-
         return size;
     }
 
-    private Point getImageScaleToScreen(String url) {
-
+    private int getAttachedImageOrientation(String url) {
+        // Download images from Firebase Storage with URL provided by FireStore.
+        int orientation = -1;
         try (InputStream in = new java.net.URL(url).openStream()) {
+            exifInterface = new ExifInterface(in);
+            orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
+            log.i("Image Orientation: %s", orientation);
+
+            /*
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeStream(in, null, options);
@@ -127,7 +135,8 @@ public class AttachedBitmapRunnable implements Runnable {
 
 
             return new Point(scaledWidth, scaledHeight);
-
+            */
+            return orientation;
 
         } catch(MalformedURLException e) {
             log.e("MalFormedURLException: %s", e.getMessage());
@@ -135,7 +144,7 @@ public class AttachedBitmapRunnable implements Runnable {
             log.e("IOException: %s", e.getMessage());
         }
 
-        return null;
+        return orientation;
     }
 
 

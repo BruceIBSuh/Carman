@@ -41,7 +41,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     public BoardImageSpanHandler(Editable editable) {
         this.editable = editable;
         ssb = new SpannableStringBuilder(editable);
-        editable.setSpan(this, 0, editable.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
     }
 
     // Callbacks invoked by SpanWatcher
@@ -57,13 +57,13 @@ public class BoardImageSpanHandler implements SpanWatcher {
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
 
         if(arrImgSpan == null || arrImgSpan.length == 0) return;
-        // Indicate the key down(touch down). As long as the touch down and touch up at the same
-        // position, all position values are the same no matter what value is SELECTION_START OR
-        // SELECTION_END, but when it makes a range, the SELECTION_START and the SELECTION_END values
-        // become different.
+
+        // As long as the touch down and touch up at the same position, all position values are
+        // the same no matter what value is SELECTION_START OR SELECTION_END.
+        // When it makes a range, however, the SELECTION_START and the SELECTION_END values become different.
         if (what == Selection.SELECTION_START) {
+            // Indicate that the cursor is moving, not making a range.
             log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
-            //if(arrImgSpan != null && arrImgSpan.length > 0 && (ostart == nstart) && ) {
             if((ostart == nstart) && (oend == nend)) {  // Pick 'del' key in the soft input.
                 for(ImageSpan span : arrImgSpan) {
                     if(nstart == text.getSpanEnd(span)) {
@@ -75,7 +75,12 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // Indicate the key up(touch up)
         } else if (what == Selection.SELECTION_END) {
             log.i("SELECTION_END %s, %s, %s, %s", ostart, oend, nstart, nend);
-
+            for(ImageSpan span : arrImgSpan) {
+                if(nstart == text.getSpanEnd(span)) {
+                    log.i("Spanned at the end!!!!");
+                    Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
+                }
+            }
         }
 
     }
@@ -109,6 +114,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
 
     public void setImageSpanToPosting(ImageSpan span) {
+
         int start = Selection.getSelectionStart(editable);
         int end = Selection.getSelectionEnd(editable);
         markup = "[image_" + imageTag + "]\n";
@@ -120,11 +126,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
         Selection.setSelection(editable, editable.length());
         imageTag += 1;
 
-        //log.i("span markup: %s", markup);
     }
 
 
-    // When an image is removed from the grid, the span containing the image and the markup string
+    // When an image is removed from the GridView, the span containing the image and the markup string
     // should be removed at the same time.
     public void removeImageSpan(int position) {
         int start = editable.getSpanStart(arrImgSpan[position]);
@@ -133,6 +138,8 @@ public class BoardImageSpanHandler implements SpanWatcher {
         imageTag -= 1;
     }
 
+    // Referenced by removeGridImage() defined in BoardWriteDlgFragmen, which is invoked when an
+    // image in the GridView is selected to remove out of the list.
     public ImageSpan[] getImageSpan() {
         return editable.getSpans(0, editable.length(), ImageSpan.class);
     }

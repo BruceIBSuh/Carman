@@ -3,7 +3,6 @@ package com.silverback.carman2.adapters;
 import android.content.Context;
 import android.net.Uri;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -16,10 +15,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -27,18 +26,14 @@ import java.util.List;
 import java.util.Locale;
 
 public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BoardItemHolder> {
-//public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BaseViewHolder> {
-    // Logging
+
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardRecyclerAdapter.class);
 
     // Constants
 
-
     // Objects
     private Context context;
     private List<DocumentSnapshot> snapshotList;
-    private QuerySnapshot querySnapshot;
-    private CardView cardView;
     private OnRecyclerItemClickListener mListener;
     private SimpleDateFormat sdf;
 
@@ -60,14 +55,13 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     @Override
     public BoardItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        cardView = (CardView)LayoutInflater.from(parent.getContext())
+        CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_board_post, parent, false);
 
 
         return new BoardItemHolder(cardView);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position) {
 
@@ -124,50 +118,11 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     }
 
 
-    // ViewHolder class
-    abstract class BaseViewHolder extends RecyclerView.ViewHolder {
-
-        private int currentPos;
-
-        BaseViewHolder(View view) {
-            super(view);
-        }
-
-        abstract void clear();
-        void onBind(int position) {
-            currentPos = position;
-            clear();
-        }
-
-        int getCurrentPos() {
-            return currentPos;
-        }
-    }
-
-    class ItemViewHolder extends BaseViewHolder {
-        TextView tvPostTitle;
-        ItemViewHolder(CardView view) {
-            super(view);
-            tvPostTitle = view.findViewById(R.id.tv_post_title);
-        }
-
-        @Override
-        void clear() {}
-    }
-
-    class ProgressHolder extends BaseViewHolder {
-        ProgressHolder(View view) {
-            super(view);
-        }
-
-        @Override
-        void clear(){}
-    }
-
     class BoardItemHolder extends RecyclerView.ViewHolder {
 
-        TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvPostingDate;
+        EditImageHelper imageHelper;
 
+        TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvPostingDate;
         ImageView imgProfile;
         ImageView imgAttached;
 
@@ -180,6 +135,8 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
             tvViewCount = cardview.findViewById(R.id.tv_count_views);
             imgProfile = cardview.findViewById(R.id.img_user);
             imgAttached = cardview.findViewById(R.id.img_attached);
+
+            imageHelper = new EditImageHelper(cardview.getContext());
 
         }
 

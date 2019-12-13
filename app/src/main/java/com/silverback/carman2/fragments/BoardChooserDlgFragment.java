@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
