@@ -27,6 +27,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     private SpannableStringBuilder ssb;
     private Editable editable;
     private ImageSpan[] arrImgSpan;
+    private SpanWatcher[] arrSpanWatcher;
     private int cursorPos;
     private boolean cursorDir;
 
@@ -64,23 +65,25 @@ public class BoardImageSpanHandler implements SpanWatcher {
         if (what == Selection.SELECTION_START) {
             // Indicate that the cursor is moving, not making a range.
             log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
-            if((ostart == nstart) && (oend == nend)) {  // Pick 'del' key in the soft input.
+            // Prevent ImageSpan from deleting by picking del key.
+            if((ostart == nstart) && (oend == nend)) {
                 for(ImageSpan span : arrImgSpan) {
                     if(nstart == text.getSpanEnd(span)) {
                         log.i("Spanned at the end!!!!");
                         Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
                     }
                 }
-            }
-        // Indicate the key up(touch up)
-        } else if (what == Selection.SELECTION_END) {
-            log.i("SELECTION_END %s, %s, %s, %s", ostart, oend, nstart, nend);
-            for(ImageSpan span : arrImgSpan) {
-                if(nstart == text.getSpanEnd(span)) {
-                    log.i("Spanned at the end!!!!");
-                    Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
+            // Preven ImageSpan from deleting when it sets range and cut or del the range by blocking
+            // the cursor from moving left.
+            } else if((ostart > nstart) && (oend > nend)) {
+                for(ImageSpan span : arrImgSpan) {
+                    if(nstart == text.getSpanEnd(span)) {
+                        Selection.setSelection(text, Math.max(0, text.getSpanEnd(span) + 1));
+                    }
                 }
             }
+        } else if (what == Selection.SELECTION_END) {
+            log.i("SELECTION_END %s, %s, %s, %s", ostart, oend, nstart, nend);
         }
 
     }

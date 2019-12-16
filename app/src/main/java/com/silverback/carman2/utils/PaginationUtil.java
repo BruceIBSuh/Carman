@@ -35,7 +35,6 @@ public class PaginationUtil extends RecyclerView.OnScrollListener {
     }
 
     // Constructor
-
     public PaginationUtil(CollectionReference colref, int limit) {
         this.colRef = colref;
         pagingLimit = limit;
@@ -71,8 +70,10 @@ public class PaginationUtil extends RecyclerView.OnScrollListener {
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
         log.i("Item Status by LayoutManager: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
+        log.i("flag: %s, %s", isScrolling, isLastItem);
 
         if(isScrolling && (firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
+            log.i("Query next items");
             mListener.setQueryStart(true);
             isScrolling = false;
 
@@ -83,7 +84,8 @@ public class PaginationUtil extends RecyclerView.OnScrollListener {
                     .startAfter(lastDoc).limit(pagingLimit);
 
             nextQuery.get().addOnSuccessListener(nextQuerySnapshot -> {
-                if(nextQuerySnapshot.size() <= pagingLimit) isLastItem = true;
+                // Bug here. No more pagination due to the wrong condition.
+                if((nextQuerySnapshot.size() - 1) <= pagingLimit) isLastItem = true;
                 log.i("isLastItem: %s, %s, %s", nextQuerySnapshot.size(), pagingLimit, isLastItem);
                 mListener.setNextQueryComplete(nextQuerySnapshot);
             });

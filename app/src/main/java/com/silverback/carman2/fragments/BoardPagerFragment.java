@@ -94,7 +94,7 @@ public class BoardPagerFragment extends Fragment implements
         recyclerView.setAdapter(recyclerAdapter);
 
         // Paginate the recyclerview with the preset limit.
-        CollectionReference colRef = firestore.collection("board_general");
+        final CollectionReference colRef = firestore.collection("board_general");
         paginationUtil = new PaginationUtil(colRef, limit);
         recyclerView.addOnScrollListener(paginationUtil);
 
@@ -111,8 +111,6 @@ public class BoardPagerFragment extends Fragment implements
 
                             doPagingNextQuery();
                         });
-
-
 
                 break;
 
