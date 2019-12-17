@@ -10,7 +10,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.silverback.carman2.BoardWritingActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -58,14 +57,14 @@ public class BoardChooserDlgFragment extends DialogFragment {
         tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
             //mListener.selectMedia(BoardWritingActivity.GALLERY);
-            fragmentModel.getImageChooser().setValue(BoardWritingActivity.GALLERY);
+            fragmentModel.getImageChooser().setValue(BoardWriteDlgFragment.GALLERY);
             dismiss();
         });
 
         tvCamera.setOnClickListener(view -> {
             log.i("Camera selected");
             //mListener.selectMedia(BoardWritingActivity.CAMERA);
-            fragmentModel.getImageChooser().setValue(BoardWritingActivity.CAMERA);
+            fragmentModel.getImageChooser().setValue(BoardWriteDlgFragment.CAMERA);
             dismiss();
         });
 

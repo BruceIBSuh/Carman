@@ -74,15 +74,6 @@
         </activity>
 
         <activity
-            android:name=".BoardWritingActivity"
-            android:parentActivityName=".BoardActivity"
-            android:windowSoftInputMode="adjustPan|adjustResize">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.silverback.carman2.BoardActivity" />
-        </activity>
-
-        <activity
             android:name=".SettingPreferenceActivity"
             android:label="@string/setting_toolbar_title"
             android:parentActivityName=".MainActivity">

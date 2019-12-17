@@ -329,7 +329,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     galleryIntent.setType("image/*");
                     //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
-                    startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                     startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
                     break;
 
                 case CAMERA: // Camera
@@ -361,13 +361,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         });
 
-    }
-
-    @Override
-    public void onDestroyView() {
-        log.i("onDestroyView()");
-        if(this.getArguments() != null) this.getArguments().clear();
-        super.onDestroyView();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -550,12 +543,14 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     // Callback invoked by BoardAttachImageAdapter.OnBoardWriteListener when an image is removed from the list
     @Override
     public void removeGridImage(int position) {
-
-        spanHandler.removeImageSpan(position);
-        //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
-        imageAdapter.notifyItemRemoved(position);
-        uriImageList.remove(position);
-
+        try {
+            spanHandler.removeImageSpan(position);
+            //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
+            imageAdapter.notifyItemRemoved(position);
+            uriImageList.remove(position);
+        } catch(IndexOutOfBoundsException e) {
+            log.e("IndexOutOfBoundsException: %s", e.getMessage());
+        }
         //imageTag -= 1;
 
     }

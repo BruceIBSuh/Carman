@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
-    tools:context="com.silverback.carman2.BoardWritingActivity">
+    tools:context="com.silverback.carman2.fragments.BoardWriteDlgFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/vg_constraint_top"
