@@ -2,7 +2,6 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -28,7 +27,6 @@ import com.silverback.carman2.utils.EditImageHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.List;
 
 public class AttachedBitmapRunnable implements Runnable {
 
@@ -37,25 +35,29 @@ public class AttachedBitmapRunnable implements Runnable {
     // Objects
     private Context context;
     private DownloadBitmapMethods mTask;
-    private EditImageHelper imageHelper;
     private ExifInterface exifInterface;
+    private SparseArray<ImageSpan> sparseImageArray;
 
     // Fields
+    private String imgUri;
+    private int key;
     private Point screenSize;
 
     // Interface
     public interface DownloadBitmapMethods {
         void setDownloadBitmapThread(Thread thread);
-        void setImageSpanArray(SparseArray<ImageSpan> spanArray);
-        List<String> getImageUriList();
+        void setImageSpan(SparseArray<ImageSpan> spanArray);
+        void handleTaskState(int state);
     }
 
     // Constructor
-    AttachedBitmapRunnable(Context context, DownloadBitmapMethods task) {
+    AttachedBitmapRunnable(Context context, String uri, int position, DownloadBitmapMethods task) {
         this.context = context;
         mTask = task;
+        sparseImageArray = new SparseArray<>();
+        imgUri = uri;
+        key = position;
         screenSize = calculateDeviceSize();
-        imageHelper = new EditImageHelper(context);
     }
 
 
@@ -64,44 +66,26 @@ public class AttachedBitmapRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mTask.setDownloadBitmapThread(Thread.currentThread());
 
-        List<String> uriStringList = mTask.getImageUriList();
-        SparseArray<ImageSpan> sparseSpanArray = new SparseArray<>();
+        Glide.with(context.getApplicationContext()).asBitmap().load(Uri.parse(imgUri)).fitCenter()
+                .apply(new RequestOptions().override(screenSize.x))
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
 
+                        ImageSpan imgSpan = new ImageSpan(context, resource);
+                        sparseImageArray.put(key, imgSpan);
+                        mTask.setImageSpan(sparseImageArray);
+                    }
 
-        // What if the Glide fails to fetch an image?
-        for(int i = 0; i < uriStringList.size(); i++) {
-            int orientation = getAttachedImageOrientation(uriStringList.get(i));
-            log.i("Orientation: %s", orientation);
-
-            final int key = i;
-            Glide.with(context.getApplicationContext())
-                    .asBitmap()
-                    .load(Uri.parse(uriStringList.get(i)))
-                    //.centerCrop()
-                    //.fitCenter()
-                    .apply(new RequestOptions().override(screenSize.x))
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .into(new CustomTarget<Bitmap>() {
-                        @Override
-                        public void onResourceReady(
-                                @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-
-                            ImageSpan imgSpan = new ImageSpan(context, resource);
-                            sparseSpanArray.put(key, imgSpan);
-
-                            if(sparseSpanArray.size() == uriStringList.size()) {
-                                mTask.setImageSpanArray(sparseSpanArray);
-                            }
-                        }
-
-                        @Override
-                        public void onLoadCleared(@Nullable Drawable placeholder) {
-                            log.i("onLoadCleared");
-                        }
-                    });
-        }
-
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        log.i("onLoadCleared");
+                    }
+                });
     }
+
 
     // Calculate the screen size to fit the image to the size by Glide. Not sure why the size
     // should be divided by 2 for fitting.

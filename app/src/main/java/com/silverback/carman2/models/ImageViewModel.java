@@ -1,6 +1,7 @@
 package com.silverback.carman2.models;
 
 import android.net.Uri;
+import android.text.style.ImageSpan;
 import android.util.SparseArray;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
@@ -11,6 +12,7 @@ public class ImageViewModel extends ViewModel {
 
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
     private MutableLiveData<String> uploadBitmap;
+    private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
 
     public MutableLiveData<SparseArray> getDownloadImage() {
         return downloadImage;
@@ -26,5 +28,10 @@ public class ImageViewModel extends ViewModel {
     public MutableLiveData<String> getUploadBitmap() {
         if(uploadBitmap == null) uploadBitmap = new MutableLiveData<>();
         return uploadBitmap;
+    }
+
+    public MutableLiveData<SparseArray<ImageSpan>> getImageSpanArray() {
+        if(sparseImageSpanArray == null) sparseImageSpanArray = new MutableLiveData<>();
+        return sparseImageSpanArray;
     }
 }

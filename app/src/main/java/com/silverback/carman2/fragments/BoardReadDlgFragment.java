@@ -29,7 +29,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.AttachedBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
 
@@ -50,7 +50,8 @@ public class BoardReadDlgFragment extends DialogFragment {
 
     // Objects
     private Context context;
-    private FirestoreViewModel firestoreModel;
+    private SpannableStringBuilder ssb;
+    private ImageViewModel imageModel;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     //private LruCache<String, Bitmap> memCache;
@@ -81,7 +82,7 @@ public class BoardReadDlgFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
         this.context = getContext();
         //FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-        firestoreModel = ViewModelProviders.of(this).get(FirestoreViewModel.class);
+        imageModel = ViewModelProviders.of(this).get(ImageViewModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         if(getArguments() != null) {
@@ -94,10 +95,21 @@ public class BoardReadDlgFragment extends DialogFragment {
             //autoData = getArguments().getString("autoData");
         }
 
-        // If no images are transferred, just return localview not displaying any images.
         if(imgUriList != null && imgUriList.size() > 0) {
-            bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, firestoreModel);
+            bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, imageModel);
         }
+
+        // If no images are transferred, just return localview not displaying any images.
+        /*
+        if(imgUriList != null && imgUriList.size() > 0) {
+            for(int i = 0 ; i < imgUriList.size(); i++) {
+                final String imgUri = imgUriList.get(i);
+                bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUri, i, imageModel);
+            }
+
+        }
+
+         */
     }
 
 
@@ -130,7 +142,6 @@ public class BoardReadDlgFragment extends DialogFragment {
                 .asBitmap()
                 .load(uriUserPic)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .fitCenter()
                 .circleCrop()
                 .into(imgUserPic);
 
@@ -153,10 +164,10 @@ public class BoardReadDlgFragment extends DialogFragment {
 
         // Set the image span to the post content as the image span instances are retrieved from
         // AttachedBitmapTask.
-        firestoreModel.getAttachedImageSpanList().observe(getViewLifecycleOwner(), spanArray -> {
+        imageModel.getImageSpanArray().observe(getViewLifecycleOwner(), spanArray -> {
+            log.i("ImageSpan: %s", spanArray.keyAt(0));
             SpannableStringBuilder ssb = createImageSpanString(spanArray);
             tvContent.setText(ssb);
-
         });
     }
 
@@ -164,19 +175,17 @@ public class BoardReadDlgFragment extends DialogFragment {
     private SpannableStringBuilder createImageSpanString(SparseArray<ImageSpan> spanArray) {
 
         SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
-
         // Find the tag from the posting String.
         final String REGEX = "\\[image_\\d]";
         final Pattern p = Pattern.compile(REGEX);
         final Matcher m = p.matcher(ssb);
-
 
         int key = 0;
         while(m.find()) {
             if(spanArray.get(key) != null) {
                 ssb.setSpan(spanArray.get(key), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else {
-                log.i("Failed to sete Span");
+                log.i("Failed to set Span");
             }
 
             key++;

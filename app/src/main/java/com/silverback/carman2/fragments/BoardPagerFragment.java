@@ -25,7 +25,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.PaginationUtil;
+import com.silverback.carman2.utils.PagingRecyclerViewUtil;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,6 +36,7 @@ import java.util.Locale;
  * A simple {@link Fragment} subclass.
  */
 public class BoardPagerFragment extends Fragment implements
+        PagingRecyclerViewUtil.OnPaginationListener,
         BoardRecyclerAdapter.OnRecyclerItemClickListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
@@ -43,7 +44,7 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private BoardRecyclerAdapter recyclerAdapter;
-    private PaginationUtil paginationUtil;
+    private PagingRecyclerViewUtil pagingRecyclerViewUtil;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
 
@@ -52,7 +53,6 @@ public class BoardPagerFragment extends Fragment implements
 
     // Fields
     private int page;
-    private String fieldName;
 
     public BoardPagerFragment() {
         // Required empty public constructor
@@ -83,7 +83,7 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        final int limit = 7;
+        final int limit = 10;
 
         View localView = inflater.inflate(R.layout.fragment_board_list, container, false);
         pagingProgressBar = localView.findViewById(R.id.progressBar);
@@ -94,43 +94,19 @@ public class BoardPagerFragment extends Fragment implements
         recyclerView.setAdapter(recyclerAdapter);
 
         // Paginate the recyclerview with the preset limit.
-        CollectionReference colRef = firestore.collection("board_general");
-        paginationUtil = new PaginationUtil(colRef, limit);
-        recyclerView.addOnScrollListener(paginationUtil);
+        //final CollectionReference colRef = firestore.collection("board_general");
+        pagingRecyclerViewUtil = new PagingRecyclerViewUtil();
+        pagingRecyclerViewUtil.setOnPaginationListener(this);
+        recyclerView.addOnScrollListener(pagingRecyclerViewUtil);
 
         switch(page) {
             case 0: // Recent post
-                fieldName = "timestamp";
-                colRef.orderBy(fieldName, Query.Direction.DESCENDING)
-                        .limit(limit)
-                        .get()
-                        .addOnSuccessListener(recentQuerySnapshot -> {
-                            for(DocumentSnapshot document : recentQuerySnapshot) snapshotList.add(document);
-                            recyclerAdapter.notifyDataSetChanged();
-                            paginationUtil.setQuerySnapshot(recentQuerySnapshot, fieldName);
-
-                            doPagingNextQuery();
-                        });
-
-
-
+                pagingRecyclerViewUtil.setQuery("timestamp", limit);
                 break;
 
             case 1: // Popular post
                 snapshotList.clear();
-                fieldName = "cnt_view";
-                colRef.orderBy(fieldName, Query.Direction.DESCENDING)
-                        .limit(limit)
-                        .get()
-                        .addOnSuccessListener(popularQuerySnapshot -> {
-                            for(DocumentSnapshot document : popularQuerySnapshot) snapshotList.add(document);
-                            recyclerAdapter.notifyDataSetChanged();
-                            paginationUtil.setQuerySnapshot(popularQuerySnapshot, fieldName);
-
-                            doPagingNextQuery();
-                        });
-
-
+                pagingRecyclerViewUtil.setQuery("cnt_view", limit);
                 break;
 
             case 2:
@@ -146,10 +122,27 @@ public class BoardPagerFragment extends Fragment implements
         return localView;
     }
 
+
+    // The following 3 callbacks are invoked by PagingRecyclerViewUtil.OnPaginationListener which
+    // notifies the adapter of the first and the next query result.
     @Override
-    public void onActivityCreated(Bundle bundle) {
-        super.onActivityCreated(bundle);
+    public void setFirstQuery(QuerySnapshot snapshot) {
+        for(DocumentSnapshot document : snapshot) snapshotList.add(document);
+        recyclerAdapter.notifyDataSetChanged();
     }
+
+    @Override
+    public void setNextQueryStart(boolean b) {
+        pagingProgressBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void setNextQueryComplete(QuerySnapshot querySnapshot) {
+        for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
+        pagingProgressBar.setVisibility(View.INVISIBLE);
+        recyclerAdapter.notifyDataSetChanged();
+    }
+
 
     // Callback invoked by BoardRecyclerAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings("ConstantConditions")
@@ -197,29 +190,4 @@ public class BoardPagerFragment extends Fragment implements
         });
 
     }
-
-    // Implement OnPaginationListener of PaginationUtil to initiate
-    // the next query following the last document fetched by the firstQuery
-    // using startafter()
-    private void doPagingNextQuery() {
-
-        paginationUtil.setOnPaginationListener(new PaginationUtil.OnPaginationListener() {
-            @Override
-            public void setQueryStart(boolean b) {
-                pagingProgressBar.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void setNextQueryComplete(QuerySnapshot querySnapshot) {
-                for(DocumentSnapshot document : querySnapshot) {
-                    snapshotList.add(document);
-                }
-                pagingProgressBar.setVisibility(View.INVISIBLE);
-                recyclerAdapter.notifyDataSetChanged();
-            }
-        });
-    }
-
-
-
 }

@@ -217,32 +217,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             dismiss();
         });
 
-        // Upload button
-        btnUpload.setOnClickListener(btn -> {
-            if(!doEmptyCheck()) return;
-
-            // Create ProbressBar
-            RelativeLayout layout = new RelativeLayout(getContext());
-            ProgressBar progressBar = new ProgressBar(getActivity(), null,android.R.attr.progressBarStyleLarge);
-            progressBar.setIndeterminate(true);
-            progressBar.setVisibility(View.VISIBLE);
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(100,100);
-            params.addRule(RelativeLayout.CENTER_IN_PARENT);
-            layout.addView(progressBar, params);
-
-            // No attached image immediately makes uploading started.
-            if(uriImageList.size() == 0) uploadPostToFirestore();
-            else {
-
-                // Downsize and compress attached images and upload them to Storage running in
-                // the background, the result of which is notified to getUploadBitmap() of ImageViewModel
-                // one by one and all of images has processed, start to upload the post to Firestore.
-                for (Uri uri : uriImageList) {
-                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, bitmapModel);
-                }
-            }
-
-        });
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
@@ -276,6 +250,30 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
             }
         });
+
+        // Upload the post whic
+        btnUpload.setOnClickListener(btn -> {
+            if(!doEmptyCheck()) return;
+
+            ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                    .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+            // No attached image immediately makes uploading started.
+            if(uriImageList.size() == 0) uploadPostToFirestore();
+            else {
+
+                // Downsize and compress attached images and upload them to Storage running in
+                // the background, the result of which is notified to getUploadBitmap() of ImageViewModel
+                // one by one and all of images has processed, start to upload the post to Firestore.
+                for (Uri uri : uriImageList) {
+                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, bitmapModel);
+                }
+            }
+
+            //dismiss();
+
+        });
+
 
         // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to handle
         // SpannableStringBuilder in order to protect image spans from while editing.
@@ -329,7 +327,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     galleryIntent.setType("image/*");
                     //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
-                     startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                    startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
                     break;
 
                 case CAMERA: // Camera
@@ -356,12 +354,20 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             // Otherwise, the image uris fail to upload to Firestore.
             if(strImgUriList.size() == uriImageList.size()) {
                 uploadPostToFirestore();
-                dismiss();
+                //dismiss();
             }
 
         });
 
+        // Notified that uploading the post has completed by UploadPostTask.
+        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), id -> {
+            log.i("upload done");
+            dismiss();
+        });
+
+
     }
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -381,10 +387,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         }
 
         // Insert ImageSpan into SpannalbeStringBuilder
-        //Bitmap bitmap = EditImageHelper.resizeBitmap(getContext(), imgUri, 50, 50);
-        //ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
-        // EditImageHelper is repalced w/ Glide.
-        Glide.with(getContext().getApplicationContext()).asBitmap().override(80).centerCrop()
+        Glide.with(getContext().getApplicationContext()).asBitmap().override(80).fitCenter()
                 .load(imgUri)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
@@ -449,16 +452,27 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         }
     }
 
+    // Callback invoked by BoardAttachImageAdapter.OnBoardWriteListener when an image is removed from the list
+    @Override
+    public void removeGridImage(int position) {
+
+        spanHandler.removeImageSpan(position);
+        //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
+        imageAdapter.notifyItemRemoved(position);
+        uriImageList.remove(position);
+
+        //imageTag -= 1;
+
+    }
+
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
-        //if(!doEmptyCheck()) return;
 
-        //FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         String userId = null;
         try (FileInputStream fis = getActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             userId = br.readLine();
-            log.i("userID: %s", userId);
+
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
@@ -475,9 +489,11 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         post.put("timestamp", FieldValue.serverTimestamp());
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
+        post.put("cnt_view", 0);
         post.put("post_content", etPostBody.getText().toString());
         post.put("post_images",  Arrays.asList(arrUriString));
 
+        // Nested fields to filter the post by category
         Map<String, Object> filter = new HashMap<>();
         filter.put("general", isGeneral);
         filter.put("auto_maker", isAutoMaker);
@@ -487,44 +503,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         post.put("post_filter", filter);
 
-        // Alternative
-        //post.put("post_filter", Arrays.asList(isGeneral, isAutoMaker, isAutoType, isAutoModel, isAutoYear));
-
-
         //postTask = ThreadManager.startUploadPostTask(getContext(), postTitle, content, strImgUriList);
         postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
-
-
-        /*
-        // In case attached images exist, upload the images as Array.
-        if(uriUploadList.size() > 0) {
-            String[] arrImageUri = new String[uriUploadList.size()];
-            for(int i = 0; i < uriUploadList.size(); i++) {
-                arrImageUri[i] = uriUploadList.get(i).toString();
-            }
-            post.put("images", Arrays.asList(arrImageUri));
-        }
-
-        // Query the user data with the retrieved user id.
-        firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
-            String userName = document.getString("user_name");
-            String userPic = document.getString("user_pic");
-            if(!userName.isEmpty()) post.put("user_name", userName);
-            if(!userPic.isEmpty()) post.put("user_pic", userPic);
-
-            // Upload the post along with the queried user data, which may prevent latency to load
-            // the user data if the post retrieves the user data from different collection.
-            firestore.collection("board_general").add(post)
-                    .addOnSuccessListener(docref -> {
-                        // Notify BoardPagerFragment of completing upload to upadte the fragment.
-                        fragmentModel.getNewPosting().setValue(true);
-                        dismiss();
-
-                    })
-                    .addOnFailureListener(e -> log.e("upload failed: %s", e.getMessage()));
-        });
-
-        */
 
     }
 
@@ -539,64 +519,4 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         return true;
     }
-
-    // Callback invoked by BoardAttachImageAdapter.OnBoardWriteListener when an image is removed from the list
-    @Override
-    public void removeGridImage(int position) {
-        try {
-            spanHandler.removeImageSpan(position);
-            //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
-            imageAdapter.notifyItemRemoved(position);
-            uriImageList.remove(position);
-        } catch(IndexOutOfBoundsException e) {
-            log.e("IndexOutOfBoundsException: %s", e.getMessage());
-        }
-        //imageTag -= 1;
-
-    }
-
-
-    /*
-    @SuppressWarnings("ConstantConditions")
-    private void handleAttachedBitmap(Uri uri)  {
-
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-
-        try (InputStream is = getContext().getApplicationContext().getContentResolver().openInputStream(uri)) {
-
-            BitmapFactory.decodeStream(is, new Rect(10, 10, 10, 10), options);
-            int imgWidth = options.outWidth;
-            int imgHeight = options.outHeight;
-            log.i("Dimension: %s, %s", imgWidth, imgHeight);
-            options.inSampleSize = calculateInSampleSize(options, 100, 100);
-
-        } catch(IOException e) {
-            log.e("IOException: %s",e.getMessage());
-        }
-    }
-
-
-    public int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-
-        // Raw dimension of the image
-        final int rawHeight = options.outHeight;
-        final int rawWidth = options.outWidth;
-        int inSampleSize = 1;
-
-        if(rawHeight > reqHeight || rawWidth > reqWidth) {
-            final int halfHeight = rawHeight / 2;
-            final int halfWidth = rawWidth / 2;
-
-            while((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-
-    }
-
-    */
-
 }

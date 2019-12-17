@@ -524,13 +524,15 @@ public class ThreadManager {
     }
 
     public static AttachedBitmapTask startAttachedBitmapTask(
-            Context context, List<String> imgUriList, FirestoreViewModel firestoreModel) {
+            Context context, List<String> imgList, ImageViewModel viewModel) {
 
         ThreadTask downBitmapTask = sInstance.mTaskWorkQueue.poll();
-        if(downBitmapTask ==null) downBitmapTask = new AttachedBitmapTask(context);
+        if(downBitmapTask == null) downBitmapTask = new AttachedBitmapTask(context, viewModel);
 
-        ((AttachedBitmapTask)downBitmapTask).initTask(imgUriList, firestoreModel);
-        sInstance.mDownloadThreadPool.execute(((AttachedBitmapTask)downBitmapTask).getAttachedBitmapRunnable());
+        for(int i = 0; i < imgList.size(); i++) {
+            ((AttachedBitmapTask) downBitmapTask).initTask(imgList.get(i), i);
+            sInstance.mDownloadThreadPool.execute(((AttachedBitmapTask) downBitmapTask).getAttachedBitmapRunnable());
+        }
 
         return (AttachedBitmapTask)downBitmapTask;
     }
@@ -582,6 +584,8 @@ public class ThreadManager {
             mTaskWorkQueue.offer(task);
 
         } else if(task instanceof DownloadImageTask) {
+            mTaskWorkQueue.offer(task);
+        } else {
             mTaskWorkQueue.offer(task);
         }
 

@@ -62,12 +62,14 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         return new BoardItemHolder(cardView);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position) {
 
         // Retreive an board item queried in and passed from BoardPagerFragment
         //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
         DocumentSnapshot document = snapshotList.get(position);
+        log.i("viewcount: %s", document.getLong("cnt_view"));
 
         holder.tvPostTitle.setText(document.getString("post_title"));
         holder.tvNumber.setText(String.valueOf(position + 1));
