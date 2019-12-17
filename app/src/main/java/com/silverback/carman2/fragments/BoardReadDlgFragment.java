@@ -25,6 +25,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.MultiTransformation;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -50,6 +51,7 @@ public class BoardReadDlgFragment extends DialogFragment {
 
     // Objects
     private Context context;
+    private SpannableStringBuilder ssb;
     private FirestoreViewModel firestoreModel;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
@@ -96,7 +98,9 @@ public class BoardReadDlgFragment extends DialogFragment {
 
         // If no images are transferred, just return localview not displaying any images.
         if(imgUriList != null && imgUriList.size() > 0) {
-            bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, firestoreModel);
+            for(int i = 0; i < imgUriList.size(); i++) {
+                bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList.get(i), i, firestoreModel);
+            }
         }
     }
 
@@ -130,7 +134,6 @@ public class BoardReadDlgFragment extends DialogFragment {
                 .asBitmap()
                 .load(uriUserPic)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .fitCenter()
                 .circleCrop()
                 .into(imgUserPic);
 
@@ -170,13 +173,12 @@ public class BoardReadDlgFragment extends DialogFragment {
         final Pattern p = Pattern.compile(REGEX);
         final Matcher m = p.matcher(ssb);
 
-
         int key = 0;
         while(m.find()) {
             if(spanArray.get(key) != null) {
                 ssb.setSpan(spanArray.get(key), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else {
-                log.i("Failed to sete Span");
+                log.i("Failed to set Span");
             }
 
             key++;

@@ -17,17 +17,23 @@ public class AttachedBitmapTask extends ThreadTask implements AttachedBitmapRunn
 
     // Objects
     private Runnable mAttachedBitmapRunnable;
-    private List<String> uriStringList;
+    private String uriString;
+    //private List<String> uriStringList;
     private FirestoreViewModel viewModel;
     private List<ImageSpan> imgSpanList;
+    private int position;
 
     AttachedBitmapTask(Context context) {
+        log.i("AttachedBitmapTask");
         mAttachedBitmapRunnable = new AttachedBitmapRunnable(context, this);
         imgSpanList = new ArrayList<>();
     }
 
-    void initTask(List<String> imgUriList, FirestoreViewModel viewModel) {
-        uriStringList = imgUriList;
+    //void initTask(List<String> imgUriList, FirestoreViewModel viewModel) {
+    void initTask(String uriString, int position, FirestoreViewModel viewModel) {
+        //uriStringList = imgUriList;
+        this.uriString = uriString;
+        this.position = position;
         this.viewModel = viewModel;
     }
 
@@ -51,7 +57,21 @@ public class AttachedBitmapTask extends ThreadTask implements AttachedBitmapRunn
     }
 
     @Override
+    public String getImageUriString() {
+        return uriString;
+    }
+
+    @Override
+    public int getImagePosition() {
+        return position;
+    }
+
+    /*
+    @Override
     public List<String> getImageUriList() {
         return uriStringList;
     }
+
+     */
+
 }

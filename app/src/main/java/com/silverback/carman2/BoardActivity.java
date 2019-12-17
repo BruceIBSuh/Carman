@@ -104,7 +104,9 @@ public class BoardActivity extends BaseActivity implements
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
 
     @Override
-    public void onPageSelected(int position) {}
+    public void onPageSelected(int position) {
+        log.i("ViewPager onPageSelected: %s", position);
+    }
     @Override
     public void onPageScrollStateChanged(int state) {}
 

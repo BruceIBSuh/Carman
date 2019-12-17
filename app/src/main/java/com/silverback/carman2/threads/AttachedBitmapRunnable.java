@@ -47,7 +47,9 @@ public class AttachedBitmapRunnable implements Runnable {
     public interface DownloadBitmapMethods {
         void setDownloadBitmapThread(Thread thread);
         void setImageSpanArray(SparseArray<ImageSpan> spanArray);
-        List<String> getImageUriList();
+        String getImageUriString();
+        int getImagePosition();
+        //List<String> getImageUriList();
     }
 
     // Constructor
@@ -64,6 +66,11 @@ public class AttachedBitmapRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mTask.setDownloadBitmapThread(Thread.currentThread());
 
+        log.i("Image uri: %s, %s", Thread.currentThread(), mTask.getImageUriString());
+        final String uri = mTask.getImageUriString();
+        final int position = mTask.getImagePosition();
+        log.i("Image: %s, %s", uri, position);
+        /*
         List<String> uriStringList = mTask.getImageUriList();
         SparseArray<ImageSpan> sparseSpanArray = new SparseArray<>();
 
@@ -77,8 +84,7 @@ public class AttachedBitmapRunnable implements Runnable {
             Glide.with(context.getApplicationContext())
                     .asBitmap()
                     .load(Uri.parse(uriStringList.get(i)))
-                    //.centerCrop()
-                    //.fitCenter()
+                    .fitCenter()
                     .apply(new RequestOptions().override(screenSize.x))
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(new CustomTarget<Bitmap>() {
@@ -100,6 +106,7 @@ public class AttachedBitmapRunnable implements Runnable {
                         }
                     });
         }
+        */
 
     }
 
