@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -13,7 +14,10 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
+import android.text.style.LeadingMarginSpan;
+import android.text.style.ParagraphStyle;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -182,8 +186,8 @@ public class BoardReadDlgFragment extends DialogFragment {
                 .into(imgUserPic);
 
         // TEST CODING
-        createImageSpanStringBuilder();
-
+        //createImageSpanStringBuilder();
+        setParagraphSpanString(postContent);
 
         return localView;
     }
@@ -205,18 +209,43 @@ public class BoardReadDlgFragment extends DialogFragment {
         // AttachedBitmapTask.
         imageModel.getImageSpanArray().observe(getViewLifecycleOwner(), spanArray -> {
             log.i("ImageSpan: %s", spanArray.keyAt(0));
-            SpannableString spannable = createImageSpanString(spanArray);
-            //tvContent.setText(spannable);
-
-
+            SpannableString spannable = setParagraphSpanString(postContent);
+            SpannableString imgSpannable = createImageSpanString(spannable, spanArray);
+            tvContent.setText(imgSpannable);
 
         });
     }
 
-    @SuppressWarnings("ConstantConditiosn")
-    private SpannableString createImageSpanString(SparseArray<ImageSpan> spanArray) {
+    private SpannableString setParagraphSpanString(String text) {
+        SpannableString spannable = new SpannableString(text);
+        final String REGEX = "\n";
+        final Matcher m = Pattern.compile(REGEX).matcher(spannable);
 
-        SpannableString spannable = new SpannableString(postContent);
+        int start = 0;
+        while(m.find()) {
+            CharSequence paragraph = spannable.subSequence(start, m.start());
+            if(!paragraph.toString().contains("[image_")) {
+                log.i("Paragraph: %s", paragraph);
+                spannable.setSpan(new LeadingMarginSpan.Standard(25), start, m.start(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+
+            start = m.end();
+        }
+
+        if(start < spannable.length()) {
+            spannable.setSpan(new LeadingMarginSpan.Standard(50), start, spannable.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        tvContent.setText(spannable);
+        return spannable;
+    }
+
+    @SuppressWarnings("ConstantConditiosn")
+    private SpannableString createImageSpanString(SpannableString spannable, SparseArray<ImageSpan> spanArray) {
+
+        //SpannableString spannable = new SpannableString(postContent);
         // Find the tag from the posting String.
         final String REGEX = "\\[image_\\d]";
         final Pattern p = Pattern.compile(REGEX);
@@ -236,34 +265,7 @@ public class BoardReadDlgFragment extends DialogFragment {
         return spannable;
     }
 
-    private SpannableStringBuilder createImageSpanStringBuilder() {
-        Spannable text = new SpannableString(postContent);
-        SpannableStringBuilder ssb = new SpannableStringBuilder();
-        final String REGEX = "\\[image_\\d]";
-        final Pattern p = Pattern.compile(REGEX);
-        final Matcher m = p.matcher(text);
-        int start = 0;
+    class ParagraphMarginSpan implements ParagraphStyle {
 
-        while(m.find()) {
-            CharSequence s = text.subSequence(start, m.start());
-            TextView tv = new TextView(context);
-            tv.setId(View.generateViewId());
-            ConstraintSet set = new ConstraintSet();
-            set.constrainWidth(tv.getId(), ConstraintSet.MATCH_CONSTRAINT);
-            set.constrainHeight(tv.getId(), ConstraintSet.WRAP_CONTENT);
-            //if(start == 0) set.connect(R.id.view_underline_header, ConstraintSet.TOP, null, null);
-
-
-            //ssb.setSpan(new ImageSpan(context, R.drawable.arrow_left), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            start = m.end();
-        }
-
-        log.i("ssb: %s", ssb.length());
-
-        tvContent.setText(ssb);
-
-        return ssb;
     }
-
-
 }
