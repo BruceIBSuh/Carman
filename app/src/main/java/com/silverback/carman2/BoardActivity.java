@@ -5,8 +5,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
@@ -129,6 +131,16 @@ public class BoardActivity extends BaseActivity implements
     // Referenced by the child fragments
     public SharedPreferences getSettings() {
         return mSettings;
+    }
+
+    // Turn the floating action button on and off. doubtful if the usage is right!!!!!
+    public void handleFabVisibility() {
+        //CoordinatorLayout.LayoutParams p = (CoordinatorLayout.LayoutParams)fabWrite.getLayoutParams();
+        //p.setAnchorId(View.NO_ID);
+        //fabWrite.setLayoutParams(p);
+        if(fabWrite.isOrWillBeShown()) fabWrite.hide();
+        else if(fabWrite.isOrWillBeHidden()) fabWrite.show();
+
     }
 
 }

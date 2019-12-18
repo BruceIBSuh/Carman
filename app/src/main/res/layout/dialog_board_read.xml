@@ -13,7 +13,7 @@
         android:id="@+id/vg_constraint_top"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#F5F5F5"
+        android:background="@color/bgToolbar"
         android:padding="5dp"
         app:layout_insetEdge="top">
 
@@ -56,20 +56,41 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/background_light"
-            android:padding="8dp"
+
             tools:context=".fragments.BoardReadDlgFragment">
 
             <TextView
                 android:id="@+id/tv_post_title"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_margin="8dp"
                 android:padding="5dp"
                 android:textSize="@dimen/extraLargeText"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/img_userpic"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:scaleType="fitCenter"
+                android:contentDescription="@null"
+                app:layout_constraintStart_toStartOf="@+id/tv_post_title"
+                app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
+                tools:src="@tools:sample/avatars[0]" />
+
+            <TextView
+                android:id="@+id/tv_username"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="3dp"
+                android:text="TEST"
+                android:textSize="@dimen/smallText"
+                app:layout_constraintStart_toEndOf="@+id/img_userpic"
+                app:layout_constraintTop_toTopOf="@+id/img_userpic" />
 
             <ImageView
                 android:id="@+id/img_compathy"
@@ -114,27 +135,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/img_compathy" />
 
-            <ImageView
-                android:id="@+id/img_userpic"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginTop="8dp"
-                android:scaleType="fitCenter"
-                android:contentDescription="@null"
-                app:layout_constraintStart_toStartOf="@+id/tv_post_title"
-                app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
-                tools:src="@tools:sample/avatars[0]" />
-
-            <TextView
-                android:id="@+id/tv_username"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="3dp"
-                android:text="TEST"
-                android:textSize="@dimen/smallText"
-                app:layout_constraintStart_toEndOf="@+id/img_userpic"
-                app:layout_constraintTop_toTopOf="@+id/img_userpic" />
 
             <TextView
                 android:id="@+id/tv_autoinfo"
@@ -165,7 +165,7 @@
                 android:layout_marginTop="8dp"
                 android:background="#C8C8C8"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/img_userpic"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/img_userpic" />
 
             <TextView
@@ -177,7 +177,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/view_underline_header" />
-
+            <!--
             <ImageView
                 android:id="@+id/img_attached"
                 android:layout_width="wrap_content"
@@ -186,7 +186,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tv_posting_body" />
-
+            -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/vg_recycler_comments"
                 android:layout_width="0dp"

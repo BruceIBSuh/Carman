@@ -3,11 +3,16 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -20,20 +25,31 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.AttachedBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,6 +74,7 @@ public class BoardReadDlgFragment extends DialogFragment {
     private List<Integer> viewIdList;
     private AttachedBitmapTask bitmapTask;
     private List<Bitmap> bmpList;
+    private SharedPreferences mSettings;
 
     // UIs
     private ConstraintLayout constraintLayout;
@@ -70,6 +87,7 @@ public class BoardReadDlgFragment extends DialogFragment {
     private ImageView attachedImage;
 
     // Fields
+    private StringBuilder autoData;
     private String userId;
     private int cntImages;
 
@@ -81,7 +99,7 @@ public class BoardReadDlgFragment extends DialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.context = getContext();
-        //FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         imageModel = ViewModelProviders.of(this).get(ImageViewModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
@@ -92,11 +110,27 @@ public class BoardReadDlgFragment extends DialogFragment {
             userPic = getArguments().getString("userPic");
             imgUriList = getArguments().getStringArrayList("imageUriList");
             userId = getArguments().getString("userId");
-            //autoData = getArguments().getString("autoData");
         }
 
         if(imgUriList != null && imgUriList.size() > 0) {
             bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, imageModel);
+        }
+
+        // Get the auto data from SharedPreferences to display the post header.
+        if(getActivity() != null) mSettings = ((BoardActivity)getActivity()).getSettings();
+        String json = mSettings.getString(Constants.VEHICLE, null);
+
+        try {
+            JSONArray jsonArray = new JSONArray(json);
+            autoData = new StringBuilder();
+
+            // Refactor required
+            autoData.append(jsonArray.get(0)).append(" ")
+                    .append(jsonArray.get(2)).append(" ")
+                    .append(jsonArray.get(3));
+
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
         }
 
         // If no images are transferred, just return localview not displaying any images.
@@ -131,6 +165,8 @@ public class BoardReadDlgFragment extends DialogFragment {
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
+        tvAutoInfo.setText(autoData.toString());
+        //tvContent.setText(postContent);
         tvContent.setText(postContent);
         tvDate.setText(getArguments().getString("timestamp"));
 
@@ -144,6 +180,9 @@ public class BoardReadDlgFragment extends DialogFragment {
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .circleCrop()
                 .into(imgUserPic);
+
+        // TEST CODING
+        createImageSpanStringBuilder();
 
 
         return localView;
@@ -166,30 +205,62 @@ public class BoardReadDlgFragment extends DialogFragment {
         // AttachedBitmapTask.
         imageModel.getImageSpanArray().observe(getViewLifecycleOwner(), spanArray -> {
             log.i("ImageSpan: %s", spanArray.keyAt(0));
-            SpannableStringBuilder ssb = createImageSpanString(spanArray);
-            tvContent.setText(ssb);
+            SpannableString spannable = createImageSpanString(spanArray);
+            //tvContent.setText(spannable);
+
+
+
         });
     }
 
     @SuppressWarnings("ConstantConditiosn")
-    private SpannableStringBuilder createImageSpanString(SparseArray<ImageSpan> spanArray) {
+    private SpannableString createImageSpanString(SparseArray<ImageSpan> spanArray) {
 
-        SpannableStringBuilder ssb = new SpannableStringBuilder(postContent);
+        SpannableString spannable = new SpannableString(postContent);
         // Find the tag from the posting String.
         final String REGEX = "\\[image_\\d]";
         final Pattern p = Pattern.compile(REGEX);
-        final Matcher m = p.matcher(ssb);
+        final Matcher m = p.matcher(spannable);
 
         int key = 0;
         while(m.find()) {
             if(spanArray.get(key) != null) {
-                ssb.setSpan(spanArray.get(key), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                spannable.setSpan(spanArray.get(key), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else {
                 log.i("Failed to set Span");
             }
 
             key++;
         }
+
+        return spannable;
+    }
+
+    private SpannableStringBuilder createImageSpanStringBuilder() {
+        Spannable text = new SpannableString(postContent);
+        SpannableStringBuilder ssb = new SpannableStringBuilder();
+        final String REGEX = "\\[image_\\d]";
+        final Pattern p = Pattern.compile(REGEX);
+        final Matcher m = p.matcher(text);
+        int start = 0;
+
+        while(m.find()) {
+            CharSequence s = text.subSequence(start, m.start());
+            TextView tv = new TextView(context);
+            tv.setId(View.generateViewId());
+            ConstraintSet set = new ConstraintSet();
+            set.constrainWidth(tv.getId(), ConstraintSet.MATCH_CONSTRAINT);
+            set.constrainHeight(tv.getId(), ConstraintSet.WRAP_CONTENT);
+            //if(start == 0) set.connect(R.id.view_underline_header, ConstraintSet.TOP, null, null);
+
+
+            //ssb.setSpan(new ImageSpan(context, R.drawable.arrow_left), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            start = m.end();
+        }
+
+        log.i("ssb: %s", ssb.length());
+
+        tvContent.setText(ssb);
 
         return ssb;
     }

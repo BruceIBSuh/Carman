@@ -21,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -31,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -98,21 +100,23 @@ public class BoardPagerFragment extends Fragment implements
         pagingRecyclerViewUtil = new PagingRecyclerViewUtil();
         pagingRecyclerViewUtil.setOnPaginationListener(this);
         recyclerView.addOnScrollListener(pagingRecyclerViewUtil);
-
+        if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
+        if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
         switch(page) {
             case 0: // Recent post
                 pagingRecyclerViewUtil.setQuery("timestamp", limit);
                 break;
 
             case 1: // Popular post
-                snapshotList.clear();
                 pagingRecyclerViewUtil.setQuery("cnt_view", limit);
                 break;
 
-            case 2:
+            case 2: // Info n Tips
+                if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
                 break;
 
-            case 3:
+            case 3: // Auto Club
+
                 break;
 
             default:
@@ -130,7 +134,6 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);
         recyclerAdapter.notifyDataSetChanged();
     }
-
     @Override
     public void setNextQueryStart(boolean b) {
         pagingProgressBar.setVisibility(View.VISIBLE);
@@ -148,11 +151,9 @@ public class BoardPagerFragment extends Fragment implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
-        log.i("Post item clicked");
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
-
         Bundle bundle = new Bundle();
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userName", snapshot.getString("user_name"));
@@ -164,7 +165,8 @@ public class BoardPagerFragment extends Fragment implements
 
         postDialogFragment.setArguments(bundle);
 
-        getFragmentManager().beginTransaction()
+        // What if Fragment calls another fragment? What is getChildFragmentManager() for?
+        getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, postDialogFragment)
                 .addToBackStack(null)
                 .commit();
@@ -178,13 +180,13 @@ public class BoardPagerFragment extends Fragment implements
         // the data is sent to the backend.
         docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
             if(e != null) {
-                log.e("SnapshotListener erred: %s", e.getMessage());
+                //log.e("SnapshotListener erred: %s", e.getMessage());
                 return;
             }
 
             String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
             if(data != null && data.exists()) {
-                log.i("source: %s", source + "data: %s" + data.getData());
+                //log.i("source: %s", source + "data: %s" + data.getData());
                 recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
             }
         });

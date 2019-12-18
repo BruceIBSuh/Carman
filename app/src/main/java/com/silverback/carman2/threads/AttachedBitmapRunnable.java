@@ -131,5 +131,4 @@ public class AttachedBitmapRunnable implements Runnable {
         return orientation;
     }
 
-
 }

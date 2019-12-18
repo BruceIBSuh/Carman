@@ -202,6 +202,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 log.i("Auto data changed:");
                 String jsonAutoData = mSettings.getString(Constants.VEHICLE, null);
 
+                // Auto data should be saved both in SharedPreferences and Firestore for the stat's
+                // sake.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
                     Map<String, Object> autoData = new HashMap<>();
                     autoData.put("auto_data", jsonAutoData);

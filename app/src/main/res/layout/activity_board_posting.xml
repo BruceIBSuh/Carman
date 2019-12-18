@@ -30,10 +30,10 @@
                 android:id="@+id/toolbar_main"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="@android:color/holo_blue_dark"
+                android:background="@color/bgToolbar"
                 android:elevation="3dp"
                 app:layout_collapseMode="pin"
-                app:titleTextColor="#fb9000" />
+                app:titleTextColor="#FFFFFF" />
 
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/tab_board"
@@ -43,12 +43,12 @@
                 android:elevation="2dp"
                 android:padding="0dp"
                 app:layout_collapseMode="pin"
-                app:tabBackground="@color/boardTabColor"
+                app:tabBackground="@android:color/darker_gray"
                 app:tabIndicatorColor="@android:color/holo_orange_dark"
                 app:tabIndicatorHeight="5dp"
                 app:tabSelectedTextColor="@android:color/holo_orange_dark"
                 app:tabTextAppearance="@style/CustomTabText"
-                app:tabTextColor="@android:color/background_light" />
+                app:tabTextColor="@android:color/white" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
