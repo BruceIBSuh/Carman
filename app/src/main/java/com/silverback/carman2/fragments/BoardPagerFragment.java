@@ -85,7 +85,7 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        final int limit = 10;
+        final int limit = 20;
 
         View localView = inflater.inflate(R.layout.fragment_board_list, container, false);
         pagingProgressBar = localView.findViewById(R.id.progressBar);

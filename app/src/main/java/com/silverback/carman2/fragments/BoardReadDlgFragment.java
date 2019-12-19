@@ -5,12 +5,14 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Layout;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
 import android.util.SparseArray;
@@ -24,6 +26,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -56,6 +59,7 @@ public class BoardReadDlgFragment extends DialogFragment {
 
     // Constants
     private final int SPANNED_FLAG = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
+    private final int LEADING = 20;
 
     // Objects
     private Context context;
@@ -63,7 +67,6 @@ public class BoardReadDlgFragment extends DialogFragment {
     private ImageViewModel imageModel;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
-    //private LruCache<String, Bitmap> memCache;
     private List<Integer> viewIdList;
     private AttachedBitmapTask bitmapTask;
     private List<Bitmap> bmpList;
@@ -71,10 +74,10 @@ public class BoardReadDlgFragment extends DialogFragment {
 
     // UIs
     private ConstraintLayout constraintLayout;
+    private View underline;
     //private ConstraintSet set;
     //private ImageView imgView;
     //private ConstraintLayout.LayoutParams layoutParams;
-    private TextView tvAutoInfo;
     private TextView tvContent;
 
     private ImageView attachedImage;
@@ -147,22 +150,25 @@ public class BoardReadDlgFragment extends DialogFragment {
         ImageButton btn = localView.findViewById(R.id.imgbtn_dismiss);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
         TextView tvUserName = localView.findViewById(R.id.tv_username);
-        tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
+        TextView tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
         tvContent = localView.findViewById(R.id.tv_posting_body);
         ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
+
+        underline = localView.findViewById(R.id.view_underline_header);
+
         btn.setOnClickListener(view -> dismiss());
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
         tvAutoInfo.setText(autoData.toString());
-        tvContent.setText(postContent);
+        tvContent.setText(spannable);
         tvDate.setText(getArguments().getString("timestamp"));
 
 
         // Set the user image
         Uri uriUserPic = Uri.parse(userPic);
-        Glide.with(getContext())
+        Glide.with(context)
                 .asBitmap()
                 .load(uriUserPic)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
@@ -195,6 +201,41 @@ public class BoardReadDlgFragment extends DialogFragment {
         });
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(bitmapTask != null) bitmapTask = null;
+    }
+
+    /*
+    private void createParagraphView(String text) {
+
+        ConstraintSet set = new ConstraintSet();
+        final String REGEX_MARKUP = "\\[image_\\d]";
+        final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(spannable);
+        int start = 0;
+        int constraintId = constraintLayout.getId();
+        while(m.find()) {
+            String paragraph = text.substring(start, m.start());
+            TextView tv = new TextView(context);
+            ImageView img  = new ImageView(context):
+            tv.setId(View.generateViewId());
+            img.setId(View.generateViewId());
+            set.connect(tv.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 50);
+            set.connect(tv.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 50):
+            if(start == 0) {
+                set.connect(tv.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 50);
+            } else {
+                set.connect()
+            }
+
+
+
+        }
+
+    }
+     */
+
     // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span
     // for making the leading margin to every single line.
     private SpannableStringBuilder translateParagraphSpan(String text) {
@@ -210,24 +251,23 @@ public class BoardReadDlgFragment extends DialogFragment {
             // Include the lines that does not contains the image markup for displaying attached images.
             if(!Pattern.compile(REGEX_MARKUP).matcher(paragraph).matches()) {
                 log.i("Paragraph: %s, %s, %s", paragraph, start, m.start());
-                spannable.setSpan(new LeadingMarginSpan.Standard(25), start, m.start(), SPANNED_FLAG);
+                spannable.setSpan(new LeadingMarginSpan.Standard(LEADING), start, m.start(), SPANNED_FLAG);
             }
 
             start = m.end();
         }
 
-        // Handle the last charSequence after the last line separator in the text because the while
-        // looping makes paragraph the second last charSequence which ends at the last line separator.
-        if(start < spannable.length()) {
-            spannable.setSpan(new LeadingMarginSpan.Standard(25), start, spannable.length(), SPANNED_FLAG);
-        }
-
         log.i("start: %s, %s", start, spannable.length());
         if(start == 0) {
-            spannable.insert(start, "  ");
-            spannable.setSpan(new ForegroundColorSpan(Color.RED), start, spannable.length(), SPANNED_FLAG);
+            spannable.setSpan(new LeadingMarginSpan.Standard(LEADING), start, spannable.length(),
+                    Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
-        log.i("Spannable: %s", spannable);
+        // Handle the last charSequence after the last line separator in the text because the while
+        // looping makes paragraph the second last charSequence which ends at the last line separator.
+        else if(start < spannable.length()) {
+            spannable.setSpan(new LeadingMarginSpan.Standard(LEADING), start, spannable.length(), SPANNED_FLAG);
+        }
+
         return spannable;
     }
 
@@ -260,6 +300,22 @@ public class BoardReadDlgFragment extends DialogFragment {
         }
 
         return spannable;
+    }
+
+    class CustomLeadingMarginSpan extends LeadingMarginSpan.Standard {
+
+        public CustomLeadingMarginSpan(int every) {
+            super(every);
+        }
+
+        @Override
+        public void drawLeadingMargin (Canvas c, Paint p,
+                                       int x, int dir, int top, int baseline, int bottom,
+                                       CharSequence text, int start, int end,
+                                       boolean first,
+                                       Layout layout) {
+            log.i("Layout: %s", layout);
+        }
     }
 
 }
