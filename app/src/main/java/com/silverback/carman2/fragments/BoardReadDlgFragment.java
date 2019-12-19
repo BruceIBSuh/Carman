@@ -8,16 +8,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.Spannable;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.LeadingMarginSpan;
-import android.text.style.ParagraphStyle;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,16 +24,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -51,9 +43,7 @@ import com.silverback.carman2.utils.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,12 +55,11 @@ public class BoardReadDlgFragment extends DialogFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
     // Constants
-    //private static final int IMAGE_CACHE_SIZE = 1024 * 1024 * 4;
-
+    private final int SPANNED_FLAG = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 
     // Objects
     private Context context;
-    private SpannableStringBuilder ssb;
+    private SpannableStringBuilder spannable;
     private ImageViewModel imageModel;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
@@ -116,11 +105,19 @@ public class BoardReadDlgFragment extends DialogFragment {
             userId = getArguments().getString("userId");
         }
 
+        // Separate the text by line feeder("\n") to set the leading margin span to it, then return
+        // a margin-formatted spannable string, which, in turn, set the image spans to display
+        // attached images as images are notified to retrieve by the task.
+        spannable = translateParagraphSpan(postContent);
+
+        // Initiate the task to fetch images attached to the post
         if(imgUriList != null && imgUriList.size() > 0) {
             bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, imageModel);
         }
 
-        // Get the auto data from SharedPreferences to display the post header.
+
+        // Get the auto data, which is saved as the type of json string in SharedPreferences, for
+        // displaying it in the post header.
         if(getActivity() != null) mSettings = ((BoardActivity)getActivity()).getSettings();
         String json = mSettings.getString(Constants.VEHICLE, null);
 
@@ -137,17 +134,6 @@ public class BoardReadDlgFragment extends DialogFragment {
             log.e("JSONException: %s", e.getMessage());
         }
 
-        // If no images are transferred, just return localview not displaying any images.
-        /*
-        if(imgUriList != null && imgUriList.size() > 0) {
-            for(int i = 0 ; i < imgUriList.size(); i++) {
-                final String imgUri = imgUriList.get(i);
-                bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUri, i, imageModel);
-            }
-
-        }
-
-         */
     }
 
 
@@ -170,11 +156,9 @@ public class BoardReadDlgFragment extends DialogFragment {
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
         tvAutoInfo.setText(autoData.toString());
-        //tvContent.setText(postContent);
         tvContent.setText(postContent);
         tvDate.setText(getArguments().getString("timestamp"));
 
-        //attachedImage = localView.findViewById(R.id.img_attached);
 
         // Set the user image
         Uri uriUserPic = Uri.parse(userPic);
@@ -184,10 +168,6 @@ public class BoardReadDlgFragment extends DialogFragment {
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .circleCrop()
                 .into(imgUserPic);
-
-        // TEST CODING
-        //createImageSpanStringBuilder();
-        setParagraphSpanString(postContent);
 
         return localView;
     }
@@ -208,53 +188,63 @@ public class BoardReadDlgFragment extends DialogFragment {
         // Set the image span to the post content as the image span instances are retrieved from
         // AttachedBitmapTask.
         imageModel.getImageSpanArray().observe(getViewLifecycleOwner(), spanArray -> {
-            log.i("ImageSpan: %s", spanArray.keyAt(0));
-            SpannableString spannable = setParagraphSpanString(postContent);
-            SpannableString imgSpannable = createImageSpanString(spannable, spanArray);
+            //log.i("ImageSpan: %s", spanArray.keyAt(0));
+            SpannableStringBuilder imgSpannable = createImageSpanString(spanArray);
             tvContent.setText(imgSpannable);
 
         });
     }
 
-    private SpannableString setParagraphSpanString(String text) {
-        SpannableString spannable = new SpannableString(text);
-        final String REGEX = "\n";
-        final Matcher m = Pattern.compile(REGEX).matcher(spannable);
+    // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span
+    // for making the leading margin to every single line.
+    private SpannableStringBuilder translateParagraphSpan(String text) {
+
+        SpannableStringBuilder spannable = new SpannableStringBuilder(text);
+        final String REGEX_SEPARATOR = "\n";
+        final String REGEX_MARKUP = "\\[image_\\d]";
+        final Matcher m = Pattern.compile(REGEX_SEPARATOR).matcher(spannable);
 
         int start = 0;
         while(m.find()) {
             CharSequence paragraph = spannable.subSequence(start, m.start());
-            if(!paragraph.toString().contains("[image_")) {
-                log.i("Paragraph: %s", paragraph);
-                spannable.setSpan(new LeadingMarginSpan.Standard(25), start, m.start(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            // Include the lines that does not contains the image markup for displaying attached images.
+            if(!Pattern.compile(REGEX_MARKUP).matcher(paragraph).matches()) {
+                log.i("Paragraph: %s, %s, %s", paragraph, start, m.start());
+                spannable.setSpan(new LeadingMarginSpan.Standard(25), start, m.start(), SPANNED_FLAG);
             }
 
             start = m.end();
         }
 
+        // Handle the last charSequence after the last line separator in the text because the while
+        // looping makes paragraph the second last charSequence which ends at the last line separator.
         if(start < spannable.length()) {
-            spannable.setSpan(new LeadingMarginSpan.Standard(50), start, spannable.length(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannable.setSpan(new LeadingMarginSpan.Standard(25), start, spannable.length(), SPANNED_FLAG);
         }
 
-        tvContent.setText(spannable);
+        log.i("start: %s, %s", start, spannable.length());
+        if(start == 0) {
+            spannable.insert(start, "  ");
+            spannable.setSpan(new ForegroundColorSpan(Color.RED), start, spannable.length(), SPANNED_FLAG);
+        }
+        log.i("Spannable: %s", spannable);
         return spannable;
     }
 
+    // On fetching images by AttachedBitmapTask and being notified by ImageViewModel, set ImageSpans
+    // to the margin-formatted text.
     @SuppressWarnings("ConstantConditiosn")
-    private SpannableString createImageSpanString(SpannableString spannable, SparseArray<ImageSpan> spanArray) {
+    private SpannableStringBuilder createImageSpanString(SparseArray<ImageSpan> spanArray) {
 
-        //SpannableString spannable = new SpannableString(postContent);
-        // Find the tag from the posting String.
-        final String REGEX = "\\[image_\\d]";
-        final Pattern p = Pattern.compile(REGEX);
-        final Matcher m = p.matcher(spannable);
+        //SpannableStringBuilder ssb = new SpannableStringBuilder(spannable);
+        String regexMarkup = "\\[image_\\d]";
+        final Matcher markup = Pattern.compile(regexMarkup).matcher(spannable);
 
         int key = 0;
-        while(m.find()) {
+        while(markup.find()) {
             if(spanArray.get(key) != null) {
-                spannable.setSpan(spanArray.get(key), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                spannable.setSpan(spanArray.get(key), markup.start(), markup.end(), SPANNED_FLAG);
+
             } else {
                 log.i("Failed to set Span");
             }
@@ -262,10 +252,14 @@ public class BoardReadDlgFragment extends DialogFragment {
             key++;
         }
 
+        // Feed the line separator rigth before and after the image span
+        ImageSpan[] arrSpans = spannable.getSpans(0, spannable.length(), ImageSpan.class);
+        for(ImageSpan span : arrSpans) {
+            spannable.insert(spannable.getSpanStart(span) - 1, "\n");
+            spannable.insert(spannable.getSpanEnd(span) + 1, "\n");
+        }
+
         return spannable;
     }
 
-    class ParagraphMarginSpan implements ParagraphStyle {
-
-    }
 }
