@@ -162,13 +162,14 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putStringArrayList("imageUriList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
         bundle.putString("userId", snapshot.getString("user_id"));
+        bundle.putString("documentId", snapshot.getId());
 
         postDialogFragment.setArguments(bundle);
 
         // What if Fragment calls another fragment? What is getChildFragmentManager() for?
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, postDialogFragment)
-                .addToBackStack(null)
+                //.addToBackStack(null)
                 .commit();
 
 

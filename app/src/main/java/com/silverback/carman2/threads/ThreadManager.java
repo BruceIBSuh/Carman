@@ -523,6 +523,7 @@ public class ThreadManager {
         return (UploadBitmapTask)bitmapTask;
     }
 
+    /*
     public static AttachedBitmapTask startAttachedBitmapTask(
             Context context, List<String> imgList, ImageViewModel viewModel) {
 
@@ -536,6 +537,7 @@ public class ThreadManager {
 
         return (AttachedBitmapTask)downBitmapTask;
     }
+    */
 
     public static UploadPostTask startUploadPostTask(
             Context context, Map<String, Object> post, FragmentSharedModel viewModel) {
