@@ -14,9 +14,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
+public class PaginationHelper extends RecyclerView.OnScrollListener {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(PagingRecyclerViewUtil.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PaginationHelper.class);
 
     // Objects
     private CollectionReference colRef;
@@ -37,7 +37,7 @@ public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
     }
 
     // Constructor
-    public PagingRecyclerViewUtil() {
+    public PaginationHelper() {
         // default constructor left empty.
     }
 
@@ -47,8 +47,7 @@ public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-
-    public void setQuery(final String field, final int limit) {
+    public void setPostingQuery(final String field, final int limit) {
         this.field = field;
         pagingLimit = limit;
 
@@ -59,6 +58,22 @@ public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
                 });
+    }
+
+
+    public void setCommentQuery(final String field, final String docId, final int limit) {
+        this.field = field;
+        pagingLimit = limit;
+
+        colRef = FirebaseFirestore.getInstance()
+                .collection("board_general").document(docId).collection("comments");
+
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
+                .addOnSuccessListener(querySnapshot -> {
+                    this.querySnapshot = querySnapshot;
+                    mListener.setFirstQuery(querySnapshot);
+                });
+
     }
 
     @Override

@@ -13,40 +13,38 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.BoardRecyclerAdapter;
+import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.PagingRecyclerViewUtil;
+import com.silverback.carman2.utils.PaginationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class BoardPagerFragment extends Fragment implements
-        PagingRecyclerViewUtil.OnPaginationListener,
-        BoardRecyclerAdapter.OnRecyclerItemClickListener {
+        PaginationHelper.OnPaginationListener,
+        BoardPostingAdapter.OnRecyclerItemClickListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
     private FirebaseFirestore firestore;
-    private BoardRecyclerAdapter recyclerAdapter;
-    private PagingRecyclerViewUtil pagingRecyclerViewUtil;
+    private BoardPostingAdapter recyclerAdapter;
+    private PaginationHelper paginationHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
 
@@ -85,30 +83,31 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        final int limit = 20;
+        final int limit = 25;
 
         View localView = inflater.inflate(R.layout.fragment_board_list, container, false);
         pagingProgressBar = localView.findViewById(R.id.progressBar);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_billboard);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
+        recyclerAdapter = new BoardPostingAdapter(snapshotList, this);
         recyclerView.setAdapter(recyclerAdapter);
 
         // Paginate the recyclerview with the preset limit.
         //final CollectionReference colRef = firestore.collection("board_general");
-        pagingRecyclerViewUtil = new PagingRecyclerViewUtil();
-        pagingRecyclerViewUtil.setOnPaginationListener(this);
-        recyclerView.addOnScrollListener(pagingRecyclerViewUtil);
+        paginationHelper = new PaginationHelper();
+        paginationHelper.setOnPaginationListener(this);
+        recyclerView.addOnScrollListener(paginationHelper);
         if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
         if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
+
         switch(page) {
             case 0: // Recent post
-                pagingRecyclerViewUtil.setQuery("timestamp", limit);
+                paginationHelper.setPostingQuery("timestamp", limit);
                 break;
 
             case 1: // Popular post
-                pagingRecyclerViewUtil.setQuery("cnt_view", limit);
+                paginationHelper.setPostingQuery("cnt_view", limit);
                 break;
 
             case 2: // Info n Tips
@@ -127,7 +126,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // The following 3 callbacks are invoked by PagingRecyclerViewUtil.OnPaginationListener which
+    // The following 3 callbacks are invoked by PaginationHelper.OnPaginationListener which
     // notifies the adapter of the first and the next query result.
     @Override
     public void setFirstQuery(QuerySnapshot snapshot) {
@@ -147,7 +146,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // Callback invoked by BoardRecyclerAdapter.OnRecyclerItemClickListener when an item is clicked.
+    // Callback invoked by BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
@@ -155,14 +154,16 @@ public class BoardPagerFragment extends Fragment implements
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
+        bundle.putString("documentId", snapshot.getId());
+        bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userName", snapshot.getString("user_name"));
         bundle.putString("userPic", snapshot.getString("user_pic"));
+        bundle.putInt("cntComment", snapshot.getLong("cnt_comment").intValue());
+        bundle.putInt("cntCompathy", snapshot.getLong("cnt_compathy").intValue());
         bundle.putString("postContent", snapshot.getString("post_content"));
         bundle.putStringArrayList("imageUriList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
-        bundle.putString("userId", snapshot.getString("user_id"));
-        bundle.putString("documentId", snapshot.getId());
 
         postDialogFragment.setArguments(bundle);
 
@@ -180,17 +181,13 @@ public class BoardPagerFragment extends Fragment implements
         // Listener to events for local changes, which will be notified with the new data before
         // the data is sent to the backend.
         docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
-            if(e != null) {
-                //log.e("SnapshotListener erred: %s", e.getMessage());
-                return;
-            }
-
-            String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
+            if(e != null) return;
+            //String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
             if(data != null && data.exists()) {
                 //log.i("source: %s", source + "data: %s" + data.getData());
                 recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
             }
         });
-
     }
 }

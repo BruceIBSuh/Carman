@@ -25,9 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdapter.BoardItemHolder> {
+public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapter.BoardItemHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardRecyclerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
 
     // Constants
 
@@ -43,7 +43,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
     }
 
     // Constructor
-    public BoardRecyclerAdapter(List<DocumentSnapshot> snapshotList, OnRecyclerItemClickListener listener) {
+    public BoardPostingAdapter(List<DocumentSnapshot> snapshotList, OnRecyclerItemClickListener listener) {
         super();
         this.snapshotList = snapshotList;
         mListener = listener;
@@ -76,6 +76,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
         holder.tvPostingDate.setText(sdf.format(document.getDate("timestamp")));
         holder.tvUserName.setText(document.getString("user_name"));
         holder.tvViewCount.setText(String.valueOf(document.getLong("cnt_view")));
+        holder.tvCommentCount.setText(String.valueOf(document.getLong("cnt_comment")));
         holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
 
 
@@ -96,17 +97,14 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position, @NonNull List<Object> payloads) {
-
+        log.i("payloads: %s", payloads.size());
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            log.i("Partial Binding of BoardPosting: %s", payloads);
-            for(Object obj : payloads) {
-                if(obj instanceof Long) {
-                    log.i("document snapshot: %s", obj);
-                    holder.tvViewCount.setText(String.valueOf(obj));
-                }
-            }
+            log.i("Partial Binding of BoardPosting: %s, %s, %s", payloads.size(), payloads.get(0), payloads.get(1));
+            holder.tvViewCount.setText(String.valueOf(payloads.get(0)));
+            holder.tvCommentCount.setText(String.valueOf(payloads.get(1)));
+
         }
     }
 
@@ -126,7 +124,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
 
         EditImageHelper imageHelper;
 
-        TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvPostingDate;
+        TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
         ImageView imgProfile;
         ImageView imgAttached;
 
@@ -137,6 +135,7 @@ public class BoardRecyclerAdapter extends RecyclerView.Adapter<BoardRecyclerAdap
             tvPostingDate = cardview.findViewById(R.id.tv_posting_date);
             tvUserName = cardview.findViewById(R.id.tv_post_owner);
             tvViewCount = cardview.findViewById(R.id.tv_count_views);
+            tvCommentCount = cardview.findViewById(R.id.tv_count_comment);
             imgProfile = cardview.findViewById(R.id.img_user);
             imgAttached = cardview.findViewById(R.id.img_attached);
 
