@@ -70,11 +70,10 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         this.field = field;
         pagingLimit = limit;
 
-        Source source = Source.CACHE;
         colRef = FirebaseFirestore.getInstance()
                 .collection("board_general").document(docId).collection("comments");
 
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get(source)
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
                 .addOnSuccessListener(querySnapshot -> {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
