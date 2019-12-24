@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardElevation="2dp"
-    app:cardCornerRadius="2dp">
+    app:cardCornerRadius="2dp" >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -104,11 +104,11 @@
             android:contentDescription="@null"
             android:padding="3dp"
             app:layout_constraintBottom_toBottomOf="@+id/img_icon_viewcount"
-            app:layout_constraintEnd_toStartOf="@+id/tv_count_comments"
+            app:layout_constraintEnd_toStartOf="@+id/tv_count_comment"
             app:layout_constraintTop_toTopOf="@+id/img_icon_viewcount" />
 
         <TextView
-            android:id="@+id/tv_count_comments"
+            android:id="@+id/tv_count_comment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"

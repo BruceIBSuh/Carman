@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,11 +20,13 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.BoardRecyclerAdapter;
+import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
 
 import java.text.SimpleDateFormat;
@@ -36,13 +39,13 @@ import java.util.Locale;
  */
 public class BoardPagerFragment extends Fragment implements
         PaginationHelper.OnPaginationListener,
-        BoardRecyclerAdapter.OnRecyclerItemClickListener {
+        BoardPostingAdapter.OnRecyclerItemClickListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
     private FirebaseFirestore firestore;
-    private BoardRecyclerAdapter recyclerAdapter;
+    private BoardPostingAdapter recyclerAdapter;
     private PaginationHelper paginationHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
@@ -53,6 +56,7 @@ public class BoardPagerFragment extends Fragment implements
     // Fields
     private int page;
 
+    // Constructor
     public BoardPagerFragment() {
         // Required empty public constructor
     }
@@ -73,6 +77,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getActivity() == null) return;
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
+
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -82,14 +87,14 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        final int limit = 20;
+        final int limit = Constants.PAGINATION;
 
         View localView = inflater.inflate(R.layout.fragment_board_list, container, false);
         pagingProgressBar = localView.findViewById(R.id.progressBar);
         RecyclerView recyclerView = localView.findViewById(R.id.recycler_billboard);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        recyclerAdapter = new BoardRecyclerAdapter(snapshotList, this);
+        recyclerAdapter = new BoardPostingAdapter(snapshotList, this);
         recyclerView.setAdapter(recyclerAdapter);
 
         // Paginate the recyclerview with the preset limit.
@@ -111,7 +116,7 @@ public class BoardPagerFragment extends Fragment implements
                 break;
 
             case 2: // Info n Tips
-                if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
+                //if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
                 break;
 
             case 3: // Auto Club
@@ -132,6 +137,7 @@ public class BoardPagerFragment extends Fragment implements
     public void setFirstQuery(QuerySnapshot snapshot) {
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);
         recyclerAdapter.notifyDataSetChanged();
+
     }
     @Override
     public void setNextQueryStart(boolean b) {
@@ -146,7 +152,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // Callback invoked by BoardRecyclerAdapter.OnRecyclerItemClickListener when an item is clicked.
+    // Callback invoked by BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
@@ -154,14 +160,16 @@ public class BoardPagerFragment extends Fragment implements
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
+        bundle.putString("documentId", snapshot.getId());
+        bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userName", snapshot.getString("user_name"));
         bundle.putString("userPic", snapshot.getString("user_pic"));
+        bundle.putInt("cntComment", snapshot.getLong("cnt_comment").intValue());
+        bundle.putInt("cntCompathy", snapshot.getLong("cnt_compathy").intValue());
         bundle.putString("postContent", snapshot.getString("post_content"));
         bundle.putStringArrayList("imageUriList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
-        bundle.putString("userId", snapshot.getString("user_id"));
-        bundle.putString("documentId", snapshot.getId());
 
         postDialogFragment.setArguments(bundle);
 
@@ -179,17 +187,14 @@ public class BoardPagerFragment extends Fragment implements
         // Listener to events for local changes, which will be notified with the new data before
         // the data is sent to the backend.
         docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
-            if(e != null) {
-                //log.e("SnapshotListener erred: %s", e.getMessage());
-                return;
-            }
-
-            String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
+            if(e != null) return;
+            //String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
             if(data != null && data.exists()) {
                 //log.i("source: %s", source + "data: %s" + data.getData());
                 recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
             }
         });
-
     }
+
 }

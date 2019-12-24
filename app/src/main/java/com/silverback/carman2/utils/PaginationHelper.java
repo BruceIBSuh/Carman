@@ -7,11 +7,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -48,34 +48,37 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-
     public void setPostingQuery(final String field, final int limit) {
+
         this.field = field;
         pagingLimit = limit;
 
         // Initate the first query
+        Source source = Source.CACHE;
         colRef = FirebaseFirestore.getInstance().collection("board_general");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get(source)
                 .addOnSuccessListener(querySnapshot -> {
+                    log.i("First query");
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
                 });
     }
 
-    public void setCommentQuery(String id, final String field, final int limit) {
+
+    public void setCommentQuery(final String field, final String docId, final int limit) {
+
         this.field = field;
         pagingLimit = limit;
 
-        FirebaseFirestore.getInstance().collection("board_general").document(id).get()
-                .addOnSuccessListener(document -> {
-                    colRef = document.getReference().collection("comments");
-                    colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
-                            .addOnSuccessListener(querySnapshot -> {
-                                this.querySnapshot = querySnapshot;
-                                mListener.setFirstQuery(querySnapshot);
-                            });
-                });
+        Source source = Source.CACHE;
+        colRef = FirebaseFirestore.getInstance()
+                .collection("board_general").document(docId).collection("comments");
 
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get(source)
+                .addOnSuccessListener(querySnapshot -> {
+                    this.querySnapshot = querySnapshot;
+                    mListener.setFirstQuery(querySnapshot);
+                });
 
     }
 

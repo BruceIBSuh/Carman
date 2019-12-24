@@ -44,7 +44,7 @@
                 app:tabBackground="@android:color/darker_gray"
                 app:tabIndicatorColor="@android:color/holo_orange_dark"
                 app:tabIndicatorHeight="5dp"
-                app:tabSelectedTextColor="@android:color/holo_orange_dark"
+                app:tabSelectedTextColor="@android:color/tab_indicator_text"
                 app:tabTextAppearance="@style/CustomTabText"
                 app:tabTextColor="@android:color/white" />
 

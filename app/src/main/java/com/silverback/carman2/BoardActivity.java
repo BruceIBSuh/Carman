@@ -16,6 +16,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
+import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.fragments.BoardWriteDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -35,7 +36,7 @@ public class BoardActivity extends BaseActivity implements
     private BoardPagerAdapter pagerAdapter;
 
     // Fields
-    private boolean isTabVisible = false;
+    private boolean isTabVisible;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -70,6 +71,8 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+
+
         BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);
         boardPager.addOnPageChangeListener(this);
@@ -77,8 +80,8 @@ public class BoardActivity extends BaseActivity implements
 
         addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
-    }
 
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -89,7 +92,6 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingPreferenceActivity");
             finish();
             return true;
         }
@@ -116,7 +118,7 @@ public class BoardActivity extends BaseActivity implements
     private void animSlideTabLayout() {
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
-
+        log.i("tabEndValue: %s", tabEndValue);
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "Y", tabEndValue);
         //ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
         slideTab.setDuration(1000);
@@ -142,5 +144,6 @@ public class BoardActivity extends BaseActivity implements
         else if(fabWrite.isOrWillBeHidden()) fabWrite.show();
 
     }
+
 
 }

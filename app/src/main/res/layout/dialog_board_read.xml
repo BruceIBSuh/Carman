@@ -81,7 +81,7 @@
                 tools:src="@tools:sample/avatars[0]" />
 
             <TextView
-                android:id="@+id/tv_comment_username"
+                android:id="@+id/tv_username"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -97,16 +97,15 @@
                 android:layout_height="20dp"
                 android:contentDescription="@null"
                 android:src="@android:drawable/btn_star_big_on"
-                app:layout_constraintBottom_toBottomOf="@+id/tv_comment_username"
-                app:layout_constraintEnd_toStartOf="@+id/tv_count_compathy"
-                app:layout_constraintTop_toTopOf="@+id/tv_comment_username" />
+                app:layout_constraintBottom_toBottomOf="@+id/tv_username"
+                app:layout_constraintEnd_toStartOf="@+id/tv_cnt_compathy"
+                app:layout_constraintTop_toTopOf="@+id/tv_username" />
 
             <TextView
-                android:id="@+id/tv_count_compathy"
+                android:id="@+id/tv_cnt_compathy"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:text="100"
                 android:textSize="@dimen/extraSmallText"
                 app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
                 app:layout_constraintEnd_toStartOf="@+id/img_comment"
@@ -119,16 +118,15 @@
                 android:contentDescription="@null"
                 android:src="@android:drawable/ic_btn_speak_now"
                 app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
-                app:layout_constraintEnd_toStartOf="@+id/tv_count_comment"
+                app:layout_constraintEnd_toStartOf="@+id/tv_cnt_comment"
                 app:layout_constraintTop_toTopOf="@+id/img_compathy"
                 app:layout_constraintVertical_bias="0.100000024" />
 
             <TextView
-                android:id="@+id/tv_count_comment"
+                android:id="@+id/tv_cnt_comment"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:text="100"
                 android:textSize="@dimen/extraSmallText"
                 app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -143,7 +141,7 @@
                 android:text="TEST"
                 android:textSize="@dimen/extraSmallText"
                 app:layout_constraintBottom_toBottomOf="@+id/img_userpic"
-                app:layout_constraintStart_toStartOf="@+id/tv_comment_username" />
+                app:layout_constraintStart_toStartOf="@+id/tv_username" />
 
             <TextView
                 android:id="@+id/tv_posting_date"
@@ -178,11 +176,9 @@
                 app:layout_constraintTop_toBottomOf="@+id/view_underline_header" />
             -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_board_comments"
+                android:id="@+id/recycler_comments"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:minHeight="150dp"
-                android:background="#FF9900"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -298,8 +294,8 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_gravity="bottom"
-        android:background="#F5F5F5"
         android:padding="5dp"
+        android:background="#FFFFFF"
         app:layout_insetEdge="bottom" >
 
         <Button

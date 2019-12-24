@@ -204,20 +204,25 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        // Retrieve the last gas data set in tvRecentExp.
+        // Retrieve the last gas data and set it in tvRecentExp.
         mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
+            if(data == null) return;
+
             //log.i("Last gas data: %s, %s", data.stnName, data.dateTime);
             String format = getContext().getResources().getString(R.string.date_format_1);
             String won = getString(R.string.unit_won);
             String liter = getString(R.string.unit_liter);
+
             if(data != null) {
+                StringBuilder stringBuilder = new StringBuilder();
                 String strDate = BaseActivity.formatMilliseconds(format, data.dateTime);
-                String name = data.stnName;
-                int mileage = data.mileage;
-                int amount = data.gasAmount;
-                int payment = data.gasPayment;
-                String lastData = strDate + "\n" + name + "\n" + mileage + "\n" + amount + liter + "\n" + payment + won;
-                tvRecentExp.setText(lastData);
+                stringBuilder.append(getString(R.string.gas_label_date)).append(strDate).append("\n")
+                        .append(getString(R.string.gas_label_station)).append(data.stnName).append("\n")
+                        .append(getString(R.string.exp_label_odometer)).append(data.mileage).append("\n")
+                        .append(getString(R.string.gas_label_amount)).append(data.gasAmount).append("\n")
+                        .append(getString(R.string.gas_label_expense)).append(data.gasPayment);
+
+                tvRecentExp.setText(stringBuilder.toString());
             }
         });
 
@@ -307,9 +312,12 @@ public class GeneralFragment extends Fragment implements
                     });
                 } else {
                     mDB.serviceManagerModel().loadLastSvcData().observe(getViewLifecycleOwner(), data -> {
-                        log.i("Last Service Data: %s, %s, %s, %s, %s",
-                                data.dateTime, data.mileage, data.svcName, data.totalExpense, data.svcAddrs);
-                        tvRecentExp.setText(data.svcName);
+                        if(data != null) {
+                            log.i("service data: %s", data);
+                            tvRecentExp.setText(data.svcName);
+                        } else {
+                            tvRecentExp.setText("no info");
+                        }
                     });
                 }
                 break;

@@ -29,6 +29,9 @@ public class Constants {
     // Limit of the images attached with the post.
     public static final int MAX_ATTACHED_IMAGE = 6;
 
+    // Board Pagination
+    public static final int PAGINATION = 25;
+
     // File names
     public static final String FILE_CACHED_AVG_PRICE = "AvgPrice";
     public static final String FILE_CACHED_SIDO_PRICE = "SidoPrice";
