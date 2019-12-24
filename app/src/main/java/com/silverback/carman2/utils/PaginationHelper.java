@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -14,9 +15,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
+public class PaginationHelper extends RecyclerView.OnScrollListener {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(PagingRecyclerViewUtil.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PaginationHelper.class);
 
     // Objects
     private CollectionReference colRef;
@@ -37,7 +38,7 @@ public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
     }
 
     // Constructor
-    public PagingRecyclerViewUtil() {
+    public PaginationHelper() {
         // default constructor left empty.
     }
 
@@ -48,7 +49,7 @@ public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
     }
 
 
-    public void setQuery(final String field, final int limit) {
+    public void setPostingQuery(final String field, final int limit) {
         this.field = field;
         pagingLimit = limit;
 
@@ -59,6 +60,23 @@ public class PagingRecyclerViewUtil extends RecyclerView.OnScrollListener {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
                 });
+    }
+
+    public void setCommentQuery(String id, final String field, final int limit) {
+        this.field = field;
+        pagingLimit = limit;
+
+        FirebaseFirestore.getInstance().collection("board_general").document(id).get()
+                .addOnSuccessListener(document -> {
+                    colRef = document.getReference().collection("comments");
+                    colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
+                            .addOnSuccessListener(querySnapshot -> {
+                                this.querySnapshot = querySnapshot;
+                                mListener.setFirstQuery(querySnapshot);
+                            });
+                });
+
+
     }
 
     @Override

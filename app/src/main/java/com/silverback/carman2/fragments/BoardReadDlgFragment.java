@@ -28,6 +28,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -38,18 +39,21 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.AttachedBitmapTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.PaginationHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,24 +63,29 @@ import java.util.regex.Pattern;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BoardReadDlgFragment extends DialogFragment {
+public class BoardReadDlgFragment extends DialogFragment implements PaginationHelper.OnPaginationListener{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
     // Constants
     private final int SPANNED_FLAG = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
     private final int LEADING = 20;
+    private final int QUERY_LIMIT = 25;
+
 
     // Objects
     private FirebaseFirestore firestore;
     private Context context;
-    private SpannableStringBuilder spannable;
-    private ImageViewModel imageModel;
+    private BoardCommentAdapter commentAdapter;
+    private List<DocumentSnapshot> snapshotList;
+    private PaginationHelper paginationHelper;
+    //private SpannableStringBuilder spannable;
+    //private ImageViewModel imageModel;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
-    private List<Integer> viewIdList;
-    private AttachedBitmapTask bitmapTask;
-    private List<Bitmap> bmpList;
+    //private List<Integer> viewIdList;
+    //private AttachedBitmapTask bitmapTask;
+    //private List<Bitmap> bmpList;
     private SharedPreferences mSettings;
 
     // UIs
@@ -84,12 +93,12 @@ public class BoardReadDlgFragment extends DialogFragment {
     private View underline;
     private RecyclerView recyclerComment;
 
-    private ImageView attachedImage;
+    //private ImageView attachedImage;
 
     // Fields
     private StringBuilder autoData;
     private String userId, documentId;
-    private int cntImages;
+    //private int cntImages;
     private boolean isCommentVisible;
 
     public BoardReadDlgFragment() {
@@ -102,8 +111,9 @@ public class BoardReadDlgFragment extends DialogFragment {
         this.context = getContext();
 
         firestore = FirebaseFirestore.getInstance();
-        imageModel = ViewModelProviders.of(this).get(ImageViewModel.class);
+        //imageModel = ViewModelProviders.of(this).get(ImageViewModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        snapshotList = new ArrayList<>();
 
         if(getArguments() != null) {
             postTitle = getArguments().getString("postTitle");
@@ -113,10 +123,12 @@ public class BoardReadDlgFragment extends DialogFragment {
             imgUriList = getArguments().getStringArrayList("imageUriList");
             userId = getArguments().getString("userId");
             documentId = getArguments().getString("documentId");
-
-            log.i("DocumentID: %s", documentId);
-
         }
+
+        // Instantiate PaginationHelper and attach the listener for paing comments.
+        paginationHelper = new PaginationHelper();
+        paginationHelper.setOnPaginationListener(this);
+        paginationHelper.setCommentQuery(documentId, "timestamp", QUERY_LIMIT);
 
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
         // a margin-formatted spannable string, which, in turn, set the image spans to display
@@ -161,7 +173,7 @@ public class BoardReadDlgFragment extends DialogFragment {
         constraintLayout = localView.findViewById(R.id.constraint_posting);
         ConstraintLayout commentLayout = localView.findViewById(R.id.constraint_comment);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
-        TextView tvUserName = localView.findViewById(R.id.tv_username);
+        TextView tvUserName = localView.findViewById(R.id.tv_comment_username);
         TextView tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
         ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
@@ -169,17 +181,23 @@ public class BoardReadDlgFragment extends DialogFragment {
         ImageButton btnDismiss = localView.findViewById(R.id.imgbtn_dismiss);
         ImageButton btnSendComment = localView.findViewById(R.id.imgbtn_comment);
         Button btnComment = localView.findViewById(R.id.btn_comment);
-
-
         underline = localView.findViewById(R.id.view_underline_header);
-        recyclerComment = localView.findViewById(R.id.vg_recycler_comments);
+        recyclerComment = localView.findViewById(R.id.recycler_board_comments);
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
         tvAutoInfo.setText(autoData.toString());
         tvDate.setText(getArguments().getString("timestamp"));
 
+        recyclerComment.setLayoutManager(new LinearLayoutManager(context));
+        recyclerComment.addOnScrollListener(paginationHelper);
+        commentAdapter = new BoardCommentAdapter(snapshotList);
+        recyclerComment.setAdapter(commentAdapter);
+
+
         btnDismiss.setOnClickListener(view -> dismiss());
+
+        //
         btnComment.setOnClickListener(view -> {
             if(isCommentVisible) commentLayout.setVisibility(View.INVISIBLE);
             else commentLayout.setVisibility(View.VISIBLE);
@@ -209,8 +227,6 @@ public class BoardReadDlgFragment extends DialogFragment {
         });
 
 
-
-
         createParagraphView(postContent);
 
 
@@ -233,6 +249,24 @@ public class BoardReadDlgFragment extends DialogFragment {
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
+    }
+
+    // The following 3 callbacks are invoked by PaginationHelper.OnPaginationListener which
+    // notifies the adapter of the first and the next query result.
+    @Override
+    public void setFirstQuery(QuerySnapshot snapshot) {
+        for(DocumentSnapshot document : snapshot) snapshotList.add(document);
+        commentAdapter.notifyDataSetChanged();
+    }
+    @Override
+    public void setNextQueryStart(boolean b) {
+        //pagingProgressBar.setVisibility(View.VISIBLE);
+    }
+    @Override
+    public void setNextQueryComplete(QuerySnapshot querySnapshot) {
+        for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
+        //pagingProgressBar.setVisibility(View.INVISIBLE);
+        commentAdapter.notifyDataSetChanged();
     }
 
     /*
@@ -259,12 +293,14 @@ public class BoardReadDlgFragment extends DialogFragment {
 
 
     private void createParagraphView(String text) {
+
         // When an image is attached as the post writes, the line separator is supposed to put in at
         // before and after the image. That's why the regex contains the line separator in order to
         // get the right end position.
         final String REGEX_MARKUP = "\\[image_\\d]\\n";
         final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(text);
 
+        final int MARGIN_TOP = 64;
         int index = 0;
         int start = 0;
         int constraintId = constraintLayout.getId();
@@ -315,9 +351,7 @@ public class BoardReadDlgFragment extends DialogFragment {
         }
 
 
-        log.i("position: %s, %s", start, text.length());
-
-        // No imaage attached.
+        // No image attached.
         if(start == 0) {
             TextView noImageText = new TextView(context);
             noImageText.setId(View.generateViewId());
@@ -329,7 +363,7 @@ public class BoardReadDlgFragment extends DialogFragment {
             tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 0);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, MARGIN_TOP);
 
             tvSet.applyTo(constraintLayout);
 
@@ -348,7 +382,7 @@ public class BoardReadDlgFragment extends DialogFragment {
             tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 0);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, MARGIN_TOP);
             tvSet.applyTo(constraintLayout);
 
         // In case no text exists after the last image, the RecyclerView is constrained to the last
@@ -356,11 +390,13 @@ public class BoardReadDlgFragment extends DialogFragment {
         } else if(start == text.length()) {
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(constraintLayout);
-            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
+            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, MARGIN_TOP);
             recyclerSet.applyTo(constraintLayout);
         }
 
     }
+
+
 
 
     // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span

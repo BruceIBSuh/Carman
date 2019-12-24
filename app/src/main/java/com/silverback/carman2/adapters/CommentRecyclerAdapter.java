@@ -102,7 +102,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
             imgProfile = cardView.findViewById(R.id.img_userpic);
             tvNickname = cardView.findViewById(R.id.tv_nickname);
             tvComments = cardView.findViewById(R.id.tv_comments);
-            tvTimestamp = cardView.findViewById(R.id.tv_timestamp);
+            tvTimestamp = cardView.findViewById(R.id.tv_comment_timestamp);
             ratingBar = cardView.findViewById(R.id.rb_comments_rating);
         }
 

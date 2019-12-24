@@ -13,32 +13,29 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardRecyclerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.PagingRecyclerViewUtil;
+import com.silverback.carman2.utils.PaginationHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class BoardPagerFragment extends Fragment implements
-        PagingRecyclerViewUtil.OnPaginationListener,
+        PaginationHelper.OnPaginationListener,
         BoardRecyclerAdapter.OnRecyclerItemClickListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
@@ -46,7 +43,7 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private BoardRecyclerAdapter recyclerAdapter;
-    private PagingRecyclerViewUtil pagingRecyclerViewUtil;
+    private PaginationHelper paginationHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
 
@@ -97,18 +94,20 @@ public class BoardPagerFragment extends Fragment implements
 
         // Paginate the recyclerview with the preset limit.
         //final CollectionReference colRef = firestore.collection("board_general");
-        pagingRecyclerViewUtil = new PagingRecyclerViewUtil();
-        pagingRecyclerViewUtil.setOnPaginationListener(this);
-        recyclerView.addOnScrollListener(pagingRecyclerViewUtil);
+        paginationHelper = new PaginationHelper();
+        paginationHelper.setOnPaginationListener(this);
+        recyclerView.addOnScrollListener(paginationHelper);
+
         if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
         if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
+
         switch(page) {
             case 0: // Recent post
-                pagingRecyclerViewUtil.setQuery("timestamp", limit);
+                paginationHelper.setPostingQuery("timestamp", limit);
                 break;
 
             case 1: // Popular post
-                pagingRecyclerViewUtil.setQuery("cnt_view", limit);
+                paginationHelper.setPostingQuery("cnt_view", limit);
                 break;
 
             case 2: // Info n Tips
@@ -127,7 +126,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // The following 3 callbacks are invoked by PagingRecyclerViewUtil.OnPaginationListener which
+    // The following 3 callbacks are invoked by PaginationHelper.OnPaginationListener which
     // notifies the adapter of the first and the next query result.
     @Override
     public void setFirstQuery(QuerySnapshot snapshot) {

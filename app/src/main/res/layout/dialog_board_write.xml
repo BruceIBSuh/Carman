@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
+    android:fitsSystemWindows="false"
     tools:context="com.silverback.carman2.fragments.BoardWriteDlgFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -39,7 +40,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <HorizontalScrollView
@@ -54,8 +54,8 @@
             android:id="@+id/vg_constraint_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:elevation="1dp"
-            android:padding="8dp">
+            android:padding="8dp"
+            app:elevation="1dp" >
 
             <TextView
                 android:id="@+id/tv_label_category"
@@ -116,9 +116,7 @@
         android:fillViewport="true"
         android:scrollbars="vertical"
         android:elevation="1dp"
-        app:layout_dodgeInsetEdges="top"
-        app:layout_anchor="@+id/vg_relative_attach"
-        app:layout_anchorGravity="top">
+        app:layout_dodgeInsetEdges="top" >
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/vg_constraint_body"
@@ -170,23 +168,23 @@
             <EditText
                 android:id="@+id/et_board_body"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
+                android:layout_height="wrap_content"
+                android:minHeight="200dp"
                 android:minEms="50"
+                android:padding="0dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="16dp"
                 android:background="@null"
                 android:gravity="start|top"
                 android:hint="@null"
                 android:inputType="textMultiLine"
-                android:minHeight="200dp"
-                android:padding="0dp"
                 android:textSize="@dimen/smallText"
-                app:layout_constraintBottom_toTopOf="@+id/vg_recycler_images"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/view_underline"
                 tools:ignore="autofill" />
 
+            <!--
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/vg_recycler_images"
                 android:layout_width="0dp"
@@ -196,19 +194,20 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
-
+            -->
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
 
-    <!--
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/vg_recycler_images"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:elevation="1dp"
         app:layout_dodgeInsetEdges="bottom" />
-    -->
+
     <RelativeLayout
         android:id="@+id/vg_relative_attach"
         android:layout_width="match_parent"
@@ -216,7 +215,7 @@
         android:layout_gravity="bottom"
         android:gravity="center_vertical"
         android:background="#F5F5F5"
-        android:elevation="2dp"
+        android:elevation="1dp"
         app:layout_insetEdge="bottom">
 
         <Button

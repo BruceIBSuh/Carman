@@ -131,7 +131,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         super.onCreate(savedInstanceState);
 
         // Set the soft input mode, which seems not working.
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_UNSPECIFIED);
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         mSettings = ((BoardActivity)getActivity()).getSettings();
         uriImageList = new ArrayList<>();
