@@ -36,6 +36,17 @@
     <string name="general_def_sido">서울</string>
     <string name="general_def_sigun">종로구</string>
     <string name="general_def_code">0101</string>
+    <!--GeneralFragment$LatestExpense-->
+    <string name="general_label_gas_date">주유일자;</string>
+    <string name="general_label_svc_date">서비스일자:</string>
+    <string name="general_label_station">주유소:</string>
+    <string name="general_label_svc_provider">서비스센터:</string>
+    <string name="general_label_mileage">운행거리:</string>
+    <string name="general_label_gas_amount">주유량:</string>
+    <string name="general_label_gas_payment">주유금액:</string>
+    <string name="general_label_svc_payment">서비스비용:</string>
+    <string name="general_no_gas_history">최근 주유 이력이 없습니다</string>
+    <string name="general_no_svc_history">최근 정비 이력이 없습니다</string>
     <!--GeneralFragment$StatonRecyclerView-->
     <string name="general_no_station">주유소 없습니다</string>
     <string name="general_station_price">가격</string>

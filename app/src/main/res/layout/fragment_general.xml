@@ -127,13 +127,23 @@
         app:layout_constraintEnd_toEndOf="@+id/view_subtitle_expense" />
 
     <TextView
-        android:id="@+id/tv_recent_exp"
-        android:layout_width="0dp"
-        android:layout_height="100dp"
+        android:id="@+id/tv_label_exp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="110dp"
         android:padding="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_subtitle_expense" />
+
+    <TextView
+        android:id="@+id/tv_exp_stmts"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_exp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_exp"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_exp" />
 
     <View
         android:id="@+id/view_subtitle_stations"
@@ -144,7 +154,7 @@
         android:background="@drawable/bg_colored_border"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_recent_exp" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_exp" />
 
     <TextView
         android:id="@+id/tv_subtitle_stations"

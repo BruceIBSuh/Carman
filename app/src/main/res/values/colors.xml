@@ -7,6 +7,7 @@
     <color name="colorAccent">#D81B60</color>
     <color name="white">#F3F3F3</color>
     <color name="subBorder">#FFCE00</color> <!-- National Geographic color -->
+    <!--<color name="subBorder">#DCDCDC</color>-->
     <color name="priceUp">#FF0000</color>
     <color name="priceDown">#0080FF</color>
 

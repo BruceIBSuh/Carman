@@ -2,9 +2,13 @@ package com.silverback.carman2.fragments;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BulletSpan;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,6 +34,8 @@ import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
+import com.silverback.carman2.database.GasManagerDao;
+import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.LocationViewModel;
@@ -50,6 +56,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.silverback.carman2.BaseActivity.formatMilliseconds;
 
@@ -89,7 +97,7 @@ public class GeneralFragment extends Fragment implements
     // UI's
     private View childView;
     private ViewPager priceViewPager;
-    private TextView tvRecentExp;
+    private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
 
@@ -133,7 +141,8 @@ public class GeneralFragment extends Fragment implements
 
         TextView tvDate = childView.findViewById(R.id.tv_today);
         Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
-        tvRecentExp = childView.findViewById(R.id.tv_recent_exp);
+        tvExpLabel = childView.findViewById(R.id.tv_label_exp);
+        tvLatestExp = childView.findViewById(R.id.tv_exp_stmts);
         tvExpenseSort = childView.findViewById(R.id.tv_expenses_sort);
         tvStationsOrder = childView.findViewById(R.id.tv_stations_order);
         priceViewPager = childView.findViewById(R.id.pager_price);
@@ -197,6 +206,7 @@ public class GeneralFragment extends Fragment implements
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
 
+        // Query the favorite provider set in the first place in SettingPreferenceActivity
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) stnId = provider.providerId;
@@ -206,23 +216,8 @@ public class GeneralFragment extends Fragment implements
 
         // Retrieve the last gas data and set it in tvRecentExp.
         mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
-            if(data == null) return;
-
-            //log.i("Last gas data: %s, %s", data.stnName, data.dateTime);
-            String format = getContext().getResources().getString(R.string.date_format_1);
-            String won = getString(R.string.unit_won);
-            String liter = getString(R.string.unit_liter);
-
             if(data != null) {
-                StringBuilder stringBuilder = new StringBuilder();
-                String strDate = BaseActivity.formatMilliseconds(format, data.dateTime);
-                stringBuilder.append(getString(R.string.gas_label_date)).append(strDate).append("\n")
-                        .append(getString(R.string.gas_label_station)).append(data.stnName).append("\n")
-                        .append(getString(R.string.exp_label_odometer)).append(data.mileage).append("\n")
-                        .append(getString(R.string.gas_label_amount)).append(data.gasAmount).append("\n")
-                        .append(getString(R.string.gas_label_expense)).append(data.gasPayment);
-
-                tvRecentExp.setText(stringBuilder.toString());
+                setLatestExpense(0, data);
             }
         });
 
@@ -302,24 +297,28 @@ public class GeneralFragment extends Fragment implements
 
             case R.id.imgbtn_expense:
                 bExpenseSort = !bExpenseSort;
-                String sort = (bExpenseSort)? getString(R.string.general_expense_service) :
-                        getString(R.string.general_expense_gas);
+                String sort = (bExpenseSort)?getString(R.string.general_expense_service):getString(R.string.general_expense_gas);
                 tvExpenseSort.setText(sort);
 
                 if(!bExpenseSort) {
                     mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
-                        tvRecentExp.setText(data.stnName);
+                        if(data != null) {
+                            setLatestExpense(0, data);
+                        } else {
+                            tvLatestExp.setText(getString(R.string.general_no_gas_history));
+                        }
+
                     });
                 } else {
                     mDB.serviceManagerModel().loadLastSvcData().observe(getViewLifecycleOwner(), data -> {
                         if(data != null) {
-                            log.i("service data: %s", data);
-                            tvRecentExp.setText(data.svcName);
+                            setLatestExpense(1, data);
                         } else {
-                            tvRecentExp.setText("no info");
+                            tvLatestExp.setText(getString(R.string.general_no_svc_history));
                         }
                     });
                 }
+
                 break;
 
             case R.id.imgbtn_stations:
@@ -427,5 +426,65 @@ public class GeneralFragment extends Fragment implements
         }
 
         return null;
+    }
+
+    // Make String to display the latest expense information of gas and service as well
+    private void setLatestExpense(int mode, Object obj) {
+        SpannableStringBuilder sbLabel = new SpannableStringBuilder();
+        StringBuilder sbStmts = new StringBuilder();
+
+        switch(mode) {
+            case 0: // Gas
+                GasManagerDao.RecentGasData gasData = (GasManagerDao.RecentGasData)obj;
+                String gasDate = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), gasData.dateTime);
+
+                sbLabel.append(getString(R.string.general_label_gas_date)).append("\n")
+                        .append(getString(R.string.general_label_station)).append("\n")
+                        .append(getString(R.string.general_label_mileage)).append("\n")
+                        .append(getString(R.string.general_label_gas_amount)).append("\n")
+                        .append(getString(R.string.general_label_gas_payment));
+
+                sbStmts.append(gasDate).append("\n")
+                        .append(gasData.stnName).append("\n")
+                        .append(gasData.mileage).append(getString(R.string.unit_km)).append("\n")
+                        .append(gasData.gasAmount).append(getString(R.string.unit_liter)).append("\n")
+                        .append(gasData.gasPayment).append(getString(R.string.unit_won));
+
+                break;
+
+            case 1: // Service
+                ServiceManagerDao.RecentServiceData svcData = (ServiceManagerDao.RecentServiceData)obj;
+                String svcDate = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), svcData.dateTime);
+
+                sbLabel.append(getString(R.string.general_label_svc_date)).append("\n")
+                        .append(getString(R.string.general_label_svc_provider)).append("\n")
+                        .append(getString(R.string.general_label_mileage)).append("\n")
+                        .append(getString(R.string.general_label_svc_payment));
+
+                sbStmts.append(svcDate).append("\n")
+                        .append(svcData.svcName).append("\n")
+                        .append(svcData.mileage).append(getString(R.string.unit_km)).append("\n")
+                        .append(svcData.totalExpense).append(getString(R.string.unit_won))
+                        .append("\n");
+
+                break;
+
+        }
+
+        final String REGEX_SEPARATOR = "\n";
+        final Matcher m = Pattern.compile(REGEX_SEPARATOR).matcher(sbLabel);
+        // Set the span for the first bullet
+        int start = 0;
+        while(m.find()) {
+            log.i("set span:%s, %s", m.start(), sbLabel.length());
+            sbLabel.setSpan(new BulletSpan(20, Color.RED), start, m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            start = m.end();
+        }
+
+        // Set the span for the last bullet
+        sbLabel.setSpan(new BulletSpan(20, Color.RED), start, sbLabel.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        tvExpLabel.setText(sbLabel);
+        tvLatestExp.setText(sbStmts.toString());
     }
 }

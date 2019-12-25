@@ -6,8 +6,7 @@
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
-    cardview:cardCornerRadius="2dp" >
+    android:layout_marginBottom="8dp" >
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -19,12 +18,10 @@
             android:id="@+id/img_logo"
             android:layout_width="35dp"
             android:layout_height="35dp"
-            android:layout_alignParentStart="true"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
             android:contentDescription="@null"
-            android:src="@drawable/logo_gs"
             cardview:layout_constraintBottom_toBottomOf="parent"
             cardview:layout_constraintStart_toStartOf="parent"
             cardview:layout_constraintTop_toTopOf="parent" />
