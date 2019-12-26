@@ -34,6 +34,9 @@ public interface FavoriteProviderDao {
     @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
 
+    @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity")
+    LiveData<ResetFavoriteProviders> resetFavoriteProviders();
+
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
@@ -77,5 +80,13 @@ public interface FavoriteProviderDao {
 
         @ColumnInfo(name = "favorite_id")
         public String providerId;
+    }
+
+    class ResetFavoriteProviders {
+        @ColumnInfo(name = "favrotie _name")
+        public String favoriteName;
+
+        @ColumnInfo(name = "category")
+        public int category;
     }
 }

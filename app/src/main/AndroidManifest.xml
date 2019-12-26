@@ -28,6 +28,7 @@
             android:name=".backgrounds.SnoozeBroadcastReceiver"
             android:enabled="true"
             android:exported="false" />
+
         <receiver
             android:name=".backgrounds.GeofenceRebootReceiver"
             android:enabled="true"

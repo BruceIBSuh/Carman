@@ -11,12 +11,15 @@ import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.ThreadManager;
@@ -25,6 +28,8 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GeofenceResetService extends IntentService {
 
@@ -34,6 +39,7 @@ public class GeofenceResetService extends IntentService {
     // Objects
     private FirebaseFirestore firestore;
     private PendingIntent geofencePendingIntent;
+
     // Constructor
     public GeofenceResetService() {
         super("GeofenceResetService");
@@ -51,6 +57,10 @@ public class GeofenceResetService extends IntentService {
     protected void onHandleIntent(@Nullable Intent intent) {
 
         GeofencingClient geofencingClient = LocationServices.getGeofencingClient(this);
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
+        List<Geofence> gefenceList = new ArrayList<>();
+
+
 
         /*
         try (FileInputStream fis = openFileInput("user_id");

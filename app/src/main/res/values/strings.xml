@@ -37,7 +37,7 @@
     <string name="general_def_sigun">종로구</string>
     <string name="general_def_code">0101</string>
     <!--GeneralFragment$LatestExpense-->
-    <string name="general_label_gas_date">주유일자;</string>
+    <string name="general_label_gas_date">주유일자:</string>
     <string name="general_label_svc_date">서비스일자:</string>
     <string name="general_label_station">주유소:</string>
     <string name="general_label_svc_provider">서비스센터:</string>
