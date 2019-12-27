@@ -31,13 +31,14 @@ public class CarmanLocationHelper implements
     private Location mLocation;
 
 
-    // Constructor
+    // private Constructor
     private CarmanLocationHelper() {
         // Leave this empty for creating a singleton pattern
         mLocationRequest = LocationRequest.create();
         setLocationRequest();
     }
 
+    // Singleton for instantiating this.
     public static CarmanLocationHelper getLocationInstance() {
         if(sLocationHelper == null) {
             sLocationHelper = new CarmanLocationHelper();

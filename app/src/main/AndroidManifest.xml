@@ -43,7 +43,7 @@
 
         <service
             android:name=".backgrounds.GeofenceResetService"
-            android:enabled="true" />
+            android:exported="false" />
         <service
             android:name=".backgrounds.GeofenceTransitionService"
             android:exported="false" />
