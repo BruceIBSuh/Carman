@@ -21,15 +21,19 @@ public abstract class ServiceManagerDao {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerDao.class);
 
-    @Query("SELECT date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity " +
+
+    @Query("SELECT service_id, date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity " +
             "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "ORDER BY service_id DESC LIMIT " + Constants.NUM_RECENT_PAGES)
+    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
 
-    @Query("SELECT date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity  " +
+    // Query the latest service to display in GeneralFragment with LIMIT condition as 1.
+    @Query("SELECT service_id, date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity  " +
             "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "ORDER BY service_id DESC LIMIT 1")
-    public abstract LiveData<RecentServiceData> loadLastSvcData();
+    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+    public abstract LiveData<RecentServiceData> loadLatestSvcData();
 
 
     // Query the last service history for each item with item name as keyword in ServicedItemEntity
@@ -77,6 +81,8 @@ public abstract class ServiceManagerDao {
 
     // Static nested class for returning subsets of columns with the joined tables.
     public static class RecentServiceData {
+        @ColumnInfo(name = "service_id")
+        public int svcId;
         @ColumnInfo(name = "date_time")
         public long dateTime;
         @ColumnInfo(name = "mileage")
@@ -85,8 +91,8 @@ public abstract class ServiceManagerDao {
         public int totalExpense;
         @ColumnInfo(name = "service_center")
         public String svcName;
-        @ColumnInfo(name="service_addrs")
-        public String svcAddrs;
+        //@ColumnInfo(name="service_addrs")
+        //public String svcAddrs;
     }
 
     public static class LatestServiceData {
@@ -100,7 +106,7 @@ public abstract class ServiceManagerDao {
         public String serviceCenter;
 
         @ColumnInfo(name = "item_name")
-        public String itemName;
+        public String jsonItemName;
 
         /*
         @ColumnInfo(name = "item_price")

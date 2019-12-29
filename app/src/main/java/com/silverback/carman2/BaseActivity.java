@@ -8,6 +8,8 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -408,6 +410,17 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         return null;
+    }
+
+    // Check a state of the network
+    public static boolean isNetworkConnected(Context context) {
+        ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
+        if(networkInfo != null) {
+            int type = networkInfo.getSubtype();
+        }
+
+        return false;
     }
 
 

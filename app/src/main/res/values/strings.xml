@@ -16,16 +16,15 @@
     <string name="tab_board_popular">인기글</string>
     <string name="tab_board_community">우리차고</string>
 
-
     <!--GeneralFragment-->
     <string name="general_label_today">TODAY: </string>
     <string name="general_subtitle_stations">주변 주유소</string>
     <string name="general_subtitle_region">[관심 지역 / 주유소]</string>
     <string name="general_subtitle_expense">최근 지출 내역</string>
-    <string name="general_spinner_gasoline">Gasoline</string>
-    <string name="general_spinner_diesel">Diesel</string>
+    <string name="general_spinner_gasoline">휘발유</string>
+    <string name="general_spinner_diesel">경유</string>
     <string name="general_spinner_lpg">LPG</string>
-    <string name="general_spinner_premium">Premium</string>
+    <string name="general_spinner_premium">고급휘발유</string>
     <string name="general_expense_gas">[ 주유지출 ]</string>
     <string name="general_expense_service">[ 서비스지출 ]</string>
     <string name="general_stations_distance">[ 거리순 ]</string>
@@ -44,6 +43,7 @@
     <string name="general_label_mileage">운행거리:</string>
     <string name="general_label_gas_amount">주유량:</string>
     <string name="general_label_gas_payment">주유금액:</string>
+    <string name="general_label_svc_items">서비스내역:</string>
     <string name="general_label_svc_payment">서비스비용:</string>
     <string name="general_no_gas_history">최근 주유 이력이 없습니다</string>
     <string name="general_no_svc_history">최근 정비 이력이 없습니다</string>

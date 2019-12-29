@@ -7,6 +7,8 @@ import androidx.room.Query;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import java.util.List;
+
 @Dao
 public abstract class ServicedItemDao {
 
@@ -14,5 +16,8 @@ public abstract class ServicedItemDao {
 
     @Query("SELECT item_id FROM ServicedItemEntity WHERE item_name = :name")
     public abstract int queryServicedItemByName(String name);
+
+    @Query("SELECT item_name FROM ServicedItemEntity WHERE svc_id = :id")
+    public abstract LiveData<List<String>> queryLatestItems(int id);
 
 }

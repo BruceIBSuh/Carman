@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".fragments.GeneralFragment">
 
+    <!--
     <TextView
         android:id="@+id/tv_today"
         android:layout_width="wrap_content"
@@ -16,32 +17,32 @@
         android:textSize="@dimen/extraLargeText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
+    -->
     <Spinner
         android:id="@+id/spinner_fuel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="70dp"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
-        android:gravity="center_vertical"
+        android:layout_marginBottom="2dp"
         android:background="@drawable/spinner_main"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:gravity="center_vertical"
+        android:minWidth="70dp"
+        app:layout_constraintBottom_toTopOf="@+id/view_boxing"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.silverback.carman2.views.OpinetAvgPriceView
         android:id="@+id/avgPriceView"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="2dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/bg_colored_border"
         android:gravity="center"
         android:padding="5dp"
         app:avgPriceDown="@color/priceDown"
         app:avgPriceUp="@color/priceUp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_today" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tv_subtitle_region"
@@ -61,6 +62,7 @@
         android:layout_height="1dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="3dp"
+        android:layout_marginTop="3dp"
         android:background="@color/subBorder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/avgPriceView"
@@ -70,7 +72,7 @@
         android:id="@+id/pager_price"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="3dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="3dp"
         android:padding="2dp"
         app:layout_constraintBottom_toBottomOf="@+id/avgPriceView"
@@ -130,8 +132,8 @@
         android:id="@+id/tv_label_exp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minHeight="110dp"
-        android:padding="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_subtitle_expense" />
 
@@ -139,7 +141,7 @@
         android:id="@+id/tv_exp_stmts"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="8dp"
+        android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_exp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tv_label_exp"
@@ -151,6 +153,7 @@
         android:layout_height="35dp"
         android:layout_marginStart="2dp"
         android:layout_marginEnd="2dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/bg_colored_border"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

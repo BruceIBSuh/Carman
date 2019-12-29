@@ -90,6 +90,8 @@ public class IntroActivity extends BaseActivity implements View.OnClickListener 
             finish();
         });
 
+        // Retrieve the providers set at the first in the favorite list in order to get the price
+        // of the gas station and display the favorite price view.
         CarmanDatabase.getDatabaseInstance(this).favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) stnId = provider.providerId;

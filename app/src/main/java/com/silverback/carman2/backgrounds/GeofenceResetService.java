@@ -35,7 +35,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/*
 public class GeofenceResetService extends Service {
 
     public static final LoggingHelper log = LoggingHelperFactory.create(GeofenceResetService.class);
@@ -54,6 +54,8 @@ public class GeofenceResetService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
+
+            log.i("GeofenceResetService by handleMessage");
 
             List<FavoriteProviderEntity> favoriteList = mDB.favoriteModel().loadAllFavoriteProvider();
             for(FavoriteProviderEntity entity : favoriteList) {
@@ -122,16 +124,14 @@ public class GeofenceResetService extends Service {
     }
 
 }
+*/
 
-/*
 public class GeofenceResetService extends IntentService {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceResetService.class);
 
 
     // Objects
-    private GeofencingClient geofencingClient;
-    private CarmanDatabase mDB;
     private List<Geofence> geofenceList;
     private PendingIntent mGeofencePendingIntent;
 
@@ -157,8 +157,8 @@ public class GeofenceResetService extends IntentService {
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
 
-        geofencingClient = LocationServices.getGeofencingClient(this);
-        mDB = CarmanDatabase.getDatabaseInstance(this);
+        GeofencingClient geofencingClient = LocationServices.getGeofencingClient(this);
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this);
         geofenceList = new ArrayList<>();
 
         List<FavoriteProviderEntity> favoriteList = mDB.favoriteModel().loadAllFavoriteProvider();
@@ -199,5 +199,5 @@ public class GeofenceResetService extends IntentService {
 
     }
 }
-*/
+
 

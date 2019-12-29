@@ -171,7 +171,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         // The service item data is saved in SharedPreferences as String type, which should be
         // converted to JSONArray.
-
         try {
             String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
             jsonServiceArray = new JSONArray(json);
@@ -186,7 +185,6 @@ public class ServiceManagerFragment extends Fragment implements
                 final String name = jsonServiceArray.optJSONObject(pos).getString("name");
                 mDB.serviceManagerModel().loadServiceData(name).observe(this, data -> {
                     if(data != null) {
-                        log.i("Service Data: %s, %s", pos, data.itemName);
                         mAdapter.setServiceData(pos, data);
                         mAdapter.notifyItemChanged(pos, data);
                     } else {

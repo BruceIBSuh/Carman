@@ -72,8 +72,7 @@ public class GeneralFragment extends Fragment implements
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
-    //private static final int NUM_PAGES = 2;
-    //private static String GAS_CODE;
+
 
     // Objects
     private CarmanDatabase mDB;
@@ -82,6 +81,9 @@ public class GeneralFragment extends Fragment implements
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
     private OpinetViewModel priceViewModel;
+
+    private GasManagerDao.RecentGasData queryGasResult;
+    private ServiceManagerDao.RecentServiceData querySvcResult;
 
     private LocationTask locationTask;
     private PriceDistrictTask priceDistrictTask;
@@ -106,6 +108,7 @@ public class GeneralFragment extends Fragment implements
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
     private boolean bExpenseSort;
+    private String latestItems;
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -139,7 +142,7 @@ public class GeneralFragment extends Fragment implements
 
         childView = inflater.inflate(R.layout.fragment_general, container, false);
 
-        TextView tvDate = childView.findViewById(R.id.tv_today);
+        //TextView tvDate = childView.findViewById(R.id.tv_today);
         Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvExpLabel = childView.findViewById(R.id.tv_label_exp);
         tvLatestExp = childView.findViewById(R.id.tv_exp_stmts);
@@ -156,8 +159,8 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView.addOnItemTouchListener(this);
 
         // Display the current time. Refactor required to show the real time using a worker thread.
-        String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
-        tvDate.setText(date);
+        //String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
+        //tvDate.setText(date);
 
         // Sets the spinner_stat default value if it is saved in SharedPreference.Otherwise, sets it to 0.
         fuelSpinner.setOnItemSelectedListener(this);
@@ -169,7 +172,6 @@ public class GeneralFragment extends Fragment implements
         // Set the spinner to the default value that's fetched from SharedPreferences
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
         defaults = getArguments().getStringArray("defaults");
-        log.i("Default fuel: %s, %s, %s", defaults[0], defaults[1], defaults[2]);
 
         // Set the initial spinner value with the default from SharedPreferences
         for(int i = 0; i < code.length; i++) {
@@ -201,7 +203,6 @@ public class GeneralFragment extends Fragment implements
         return childView;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
@@ -210,14 +211,31 @@ public class GeneralFragment extends Fragment implements
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) stnId = provider.providerId;
-                log.i("Station ID: %s", stnId);
             }
         });
 
         // Retrieve the last gas data and set it in tvRecentExp.
-        mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
+        mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), data -> {
             if(data != null) {
                 setLatestExpense(0, data);
+                queryGasResult = data;
+            } else {
+                tvLatestExp.setText(getString(R.string.general_no_gas_history));
+            }
+        });
+
+        mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), data -> {
+            if(data != null) {
+                querySvcResult = data;
+                // Retrieve the latest serviced items from ServicedItemEntitiy with the service_id
+                // fetched from ServiceManagerEntitiy.
+                StringBuilder sb = new StringBuilder();
+                mDB.servicedItemModel().queryLatestItems(data.svcId).observe(getViewLifecycleOwner(), items -> {
+                    for(String name : items) sb.append(name).append("  ");
+                    latestItems = sb.toString();
+                });
+            } else {
+                tvLatestExp.setText(getString(R.string.general_no_svc_history));
             }
         });
 
@@ -275,7 +293,6 @@ public class GeneralFragment extends Fragment implements
         // ********** Refactor Required ************
         int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
         if(numFavorite == 0 || numFavorite == 1) {
-            log.i("Special case");
             pricePagerAdapter.notifyDataSetChanged();
         }
     }
@@ -301,7 +318,9 @@ public class GeneralFragment extends Fragment implements
                 tvExpenseSort.setText(sort);
 
                 if(!bExpenseSort) {
-                    mDB.gasManagerModel().loadLastGasData().observe(getViewLifecycleOwner(), data -> {
+                    setLatestExpense(0, queryGasResult);
+                    /*
+                    mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), data -> {
                         if(data != null) {
                             setLatestExpense(0, data);
                         } else {
@@ -309,14 +328,19 @@ public class GeneralFragment extends Fragment implements
                         }
 
                     });
+
+                     */
                 } else {
-                    mDB.serviceManagerModel().loadLastSvcData().observe(getViewLifecycleOwner(), data -> {
+                    setLatestExpense(1, querySvcResult);
+
+                    mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), data -> {
                         if(data != null) {
                             setLatestExpense(1, data);
                         } else {
                             tvLatestExp.setText(getString(R.string.general_no_svc_history));
                         }
                     });
+
                 }
 
                 break;
@@ -368,26 +392,19 @@ public class GeneralFragment extends Fragment implements
         priceViewPager.setAdapter(pricePagerAdapter);
 
     }
-
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-    /**
-     * The following 3 methods are invoked by RecyclerView.OnItemTouchListener
-     */
+
+    //The following 3 methods are invoked by RecyclerView.OnItemTouchListener.
     @Override
     public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-        log.i("onInterceptTouchEvent");
         return false;
     }
     @Override
-    public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-        log.i("onTouchEvent: %s", rv);
-    }
+    public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
     @Override
-    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {
-        log.i("onRequestDisallowInterceptTouchEvent");
-    }
+    public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
 
 
     // Callback invoked by StationListAdapter.OnRecyclerItemClickListener
@@ -430,6 +447,7 @@ public class GeneralFragment extends Fragment implements
 
     // Make String to display the latest expense information of gas and service as well
     private void setLatestExpense(int mode, Object obj) {
+
         SpannableStringBuilder sbLabel = new SpannableStringBuilder();
         StringBuilder sbStmts = new StringBuilder();
 
@@ -459,11 +477,13 @@ public class GeneralFragment extends Fragment implements
                 sbLabel.append(getString(R.string.general_label_svc_date)).append("\n")
                         .append(getString(R.string.general_label_svc_provider)).append("\n")
                         .append(getString(R.string.general_label_mileage)).append("\n")
+                        .append(getString(R.string.general_label_svc_items)).append("\n")
                         .append(getString(R.string.general_label_svc_payment));
 
                 sbStmts.append(svcDate).append("\n")
                         .append(svcData.svcName).append("\n")
                         .append(svcData.mileage).append(getString(R.string.unit_km)).append("\n")
+                        .append(latestItems).append("\n")
                         .append(svcData.totalExpense).append(getString(R.string.unit_won))
                         .append("\n");
 
@@ -476,13 +496,14 @@ public class GeneralFragment extends Fragment implements
         // Set the span for the first bullet
         int start = 0;
         while(m.find()) {
-            log.i("set span:%s, %s", m.start(), sbLabel.length());
-            sbLabel.setSpan(new BulletSpan(20, Color.RED), start, m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sbLabel.setSpan(new BulletSpan(20, Color.parseColor("#FFCE00")),
+                    start, m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             start = m.end();
         }
 
         // Set the span for the last bullet
-        sbLabel.setSpan(new BulletSpan(20, Color.RED), start, sbLabel.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sbLabel.setSpan(new BulletSpan(20, Color.parseColor("#FFCE00")),
+                start, sbLabel.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         tvExpLabel.setText(sbLabel);
         tvLatestExp.setText(sbStmts.toString());

@@ -29,7 +29,7 @@ public abstract class GasManagerDao {
     @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
             "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "ORDER BY gas_id DESC LIMIT 1")
-    public abstract LiveData<RecentGasData> loadLastGasData();
+    public abstract LiveData<RecentGasData> loadLatestGasData();
 
 
 
