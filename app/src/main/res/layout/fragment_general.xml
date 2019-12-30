@@ -6,27 +6,14 @@
     android:layout_height="match_parent"
     tools:context=".fragments.GeneralFragment">
 
-    <!--
-    <TextView
-        android:id="@+id/tv_today"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="3dp"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical"
-        android:textSize="@dimen/extraLargeText"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    -->
     <Spinner
         android:id="@+id/spinner_fuel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="3dp"
         android:layout_marginBottom="2dp"
-        android:background="@drawable/spinner_main"
+        android:background="@drawable/spinner_main_2"
         android:gravity="center_vertical"
-        android:minWidth="70dp"
         app:layout_constraintBottom_toTopOf="@+id/view_boxing"
         app:layout_constraintEnd_toEndOf="parent" />
 

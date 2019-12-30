@@ -183,7 +183,7 @@ public class GeneralFragment extends Fragment implements
 
         // Set Floating Action Button
         // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
-        // button when scolling/idling
+        // button according to scolling or idling
         fabLocation.setOnClickListener(this);
         fabLocation.setSize(FloatingActionButton.SIZE_AUTO);
         // Change the size of the Floating Action Button on scolling
@@ -203,6 +203,8 @@ public class GeneralFragment extends Fragment implements
         return childView;
     }
 
+    // Receive values of the ViewModels or queried results of Room which are synced with observe()
+    // defined in LiveData.
     @Override
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
@@ -214,31 +216,29 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
+        /*
+         * Retrieve the queried results of the latest gas and service statements as LiveData from
+         * Room database,  both of which are stored in GasManagerEntity and ServiceManagerEntity.
+         */
         // Retrieve the last gas data and set it in tvRecentExp.
         mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), data -> {
-            if(data != null) {
-                setLatestExpense(0, data);
-                queryGasResult = data;
-            } else {
-                tvLatestExp.setText(getString(R.string.general_no_gas_history));
-            }
-        });
+            queryGasResult = data;
+            setLatestExpense(0, data);
 
+        });
+        // Retrieve queried result of the latest service.
         mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), data -> {
+            querySvcResult = data;
+            // Retrieve the latest serviced items from ServicedItemEntitiy with the service_id
+            // fetched from ServiceManagerEntitiy.
             if(data != null) {
-                querySvcResult = data;
-                // Retrieve the latest serviced items from ServicedItemEntitiy with the service_id
-                // fetched from ServiceManagerEntitiy.
                 StringBuilder sb = new StringBuilder();
                 mDB.servicedItemModel().queryLatestItems(data.svcId).observe(getViewLifecycleOwner(), items -> {
-                    for(String name : items) sb.append(name).append("  ");
+                    for (String name : items) sb.append(name).append("  ");
                     latestItems = sb.toString();
                 });
-            } else {
-                tvLatestExp.setText(getString(R.string.general_no_svc_history));
             }
         });
-
 
         // On fetching the current location, attempt to get the near stations based on the value.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
@@ -249,6 +249,7 @@ public class GeneralFragment extends Fragment implements
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
                 mPrevLocation = location;
                 stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
+
             } else {
                 Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
@@ -317,31 +318,8 @@ public class GeneralFragment extends Fragment implements
                 String sort = (bExpenseSort)?getString(R.string.general_expense_service):getString(R.string.general_expense_gas);
                 tvExpenseSort.setText(sort);
 
-                if(!bExpenseSort) {
-                    setLatestExpense(0, queryGasResult);
-                    /*
-                    mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), data -> {
-                        if(data != null) {
-                            setLatestExpense(0, data);
-                        } else {
-                            tvLatestExp.setText(getString(R.string.general_no_gas_history));
-                        }
-
-                    });
-
-                     */
-                } else {
-                    setLatestExpense(1, querySvcResult);
-
-                    mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), data -> {
-                        if(data != null) {
-                            setLatestExpense(1, data);
-                        } else {
-                            tvLatestExp.setText(getString(R.string.general_no_svc_history));
-                        }
-                    });
-
-                }
+                if(!bExpenseSort) setLatestExpense(0, queryGasResult);
+                else setLatestExpense(1, querySvcResult);
 
                 break;
 
@@ -445,7 +423,8 @@ public class GeneralFragment extends Fragment implements
         return null;
     }
 
-    // Make String to display the latest expense information of gas and service as well
+    // Build Strings for the item labels and their statements by category of Gas and Service,
+    // which are queried from Room database.
     private void setLatestExpense(int mode, Object obj) {
 
         SpannableStringBuilder sbLabel = new SpannableStringBuilder();
@@ -453,44 +432,51 @@ public class GeneralFragment extends Fragment implements
 
         switch(mode) {
             case 0: // Gas
-                GasManagerDao.RecentGasData gasData = (GasManagerDao.RecentGasData)obj;
-                String gasDate = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), gasData.dateTime);
-
                 sbLabel.append(getString(R.string.general_label_gas_date)).append("\n")
                         .append(getString(R.string.general_label_station)).append("\n")
                         .append(getString(R.string.general_label_mileage)).append("\n")
                         .append(getString(R.string.general_label_gas_amount)).append("\n")
                         .append(getString(R.string.general_label_gas_payment));
 
-                sbStmts.append(gasDate).append("\n")
-                        .append(gasData.stnName).append("\n")
-                        .append(gasData.mileage).append(getString(R.string.unit_km)).append("\n")
-                        .append(gasData.gasAmount).append(getString(R.string.unit_liter)).append("\n")
-                        .append(gasData.gasPayment).append(getString(R.string.unit_won));
+                if(obj != null) {
+                    GasManagerDao.RecentGasData gasData = (GasManagerDao.RecentGasData) obj;
+                    String gasDate = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), gasData.dateTime);
+                    sbStmts.append(gasDate).append("\n")
+                            .append(gasData.stnName).append("\n")
+                            .append(gasData.mileage).append(getString(R.string.unit_km)).append("\n")
+                            .append(gasData.gasAmount).append(getString(R.string.unit_liter)).append("\n")
+                            .append(gasData.gasPayment).append(getString(R.string.unit_won));
+
+                } else sbStmts.append(getString(R.string.general_no_gas_history));
 
                 break;
 
             case 1: // Service
-                ServiceManagerDao.RecentServiceData svcData = (ServiceManagerDao.RecentServiceData)obj;
-                String svcDate = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), svcData.dateTime);
-
                 sbLabel.append(getString(R.string.general_label_svc_date)).append("\n")
                         .append(getString(R.string.general_label_svc_provider)).append("\n")
                         .append(getString(R.string.general_label_mileage)).append("\n")
                         .append(getString(R.string.general_label_svc_items)).append("\n")
                         .append(getString(R.string.general_label_svc_payment));
 
-                sbStmts.append(svcDate).append("\n")
-                        .append(svcData.svcName).append("\n")
-                        .append(svcData.mileage).append(getString(R.string.unit_km)).append("\n")
-                        .append(latestItems).append("\n")
-                        .append(svcData.totalExpense).append(getString(R.string.unit_won))
-                        .append("\n");
+
+                if(obj != null) {
+                    ServiceManagerDao.RecentServiceData svcData = (ServiceManagerDao.RecentServiceData) obj;
+                    String svcDate = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), svcData.dateTime);
+
+                    sbStmts.append(svcDate).append("\n")
+                            .append(svcData.svcName).append("\n")
+                            .append(svcData.mileage).append(getString(R.string.unit_km)).append("\n")
+                            .append(latestItems).append("\n")
+                            .append(svcData.totalExpense).append(getString(R.string.unit_won))
+                            .append("\n");
+
+                } else sbStmts.append(getString(R.string.general_no_svc_history));
 
                 break;
 
         }
 
+        // Put the BulletSpan at the first of each item.
         final String REGEX_SEPARATOR = "\n";
         final Matcher m = Pattern.compile(REGEX_SEPARATOR).matcher(sbLabel);
         // Set the span for the first bullet
@@ -501,7 +487,7 @@ public class GeneralFragment extends Fragment implements
             start = m.end();
         }
 
-        // Set the span for the last bullet
+        // Set the span for the last item
         sbLabel.setSpan(new BulletSpan(20, Color.parseColor("#FFCE00")),
                 start, sbLabel.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 

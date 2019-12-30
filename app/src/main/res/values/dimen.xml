@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="borderWidth">2dp</dimen>
+    <dimen name="borderWidth">1dp</dimen>
     <dimen name="title">18sp</dimen>
     <dimen name="subtitle">16sp</dimen>
 

@@ -13,7 +13,6 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.exifinterface.media.ExifInterface;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -22,11 +21,6 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.EditImageHelper;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
 
 public class AttachedBitmapRunnable implements Runnable {
 
@@ -35,7 +29,7 @@ public class AttachedBitmapRunnable implements Runnable {
     // Objects
     private Context context;
     private DownloadBitmapMethods mTask;
-    private ExifInterface exifInterface;
+    //private ExifInterface exifInterface;
     private SparseArray<ImageSpan> sparseImageArray;
 
     // Fields
@@ -99,6 +93,7 @@ public class AttachedBitmapRunnable implements Runnable {
         return size;
     }
 
+    /*
     private int getAttachedImageOrientation(String url) {
         // Download images from Firebase Storage with URL provided by FireStore.
         int orientation = -1;
@@ -107,7 +102,7 @@ public class AttachedBitmapRunnable implements Runnable {
             orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
             log.i("Image Orientation: %s", orientation);
 
-            /*
+
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeStream(in, null, options);
@@ -119,7 +114,7 @@ public class AttachedBitmapRunnable implements Runnable {
 
 
             return new Point(scaledWidth, scaledHeight);
-            */
+
             return orientation;
 
         } catch(MalformedURLException e) {
@@ -130,5 +125,6 @@ public class AttachedBitmapRunnable implements Runnable {
 
         return orientation;
     }
+    */
 
 }

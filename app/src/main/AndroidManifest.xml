@@ -45,10 +45,10 @@
 
         <service
             android:name=".backgrounds.GeofenceResetService"
-            android:exported="false" />
+            android:exported="true" />
         <service
             android:name=".backgrounds.GeofenceTransitionService"
-            android:exported="false" />
+            android:exported="true" />
 
         <activity android:name=".BaseActivity" />
         <activity android:name=".IntroActivity">

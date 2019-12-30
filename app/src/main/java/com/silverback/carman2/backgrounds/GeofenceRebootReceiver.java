@@ -20,7 +20,6 @@ public class GeofenceRebootReceiver extends BroadcastReceiver {
                 intent.getAction().equalsIgnoreCase(Intent.ACTION_LOCKED_BOOT_COMPLETED)) {
 
             Intent geoIntent = new Intent(context, GeofenceResetService.class);
-            log.i("Geo Intent: %s", geoIntent);
 
             // startService in the background is not allowed in API 26+ unless the application is
             // in the foreground except for some specific cases. JobScheduler or startForeground has
