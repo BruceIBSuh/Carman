@@ -59,11 +59,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.silverback.carman2.BaseActivity.formatMilliseconds;
-
 /**
  * A simple {@link Fragment} subclass.
  */
+
 public class GeneralFragment extends Fragment implements
         View.OnClickListener,
         RecyclerView.OnItemTouchListener,
@@ -94,7 +93,6 @@ public class GeneralFragment extends Fragment implements
     private PricePagerAdapter pricePagerAdapter;
     private List<Opinet.GasStnParcelable> mStationList;
     private Location mPrevLocation;
-    //private Uri uriStnList;
 
     // UI's
     private View childView;

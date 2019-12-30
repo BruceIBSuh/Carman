@@ -19,8 +19,7 @@ import com.silverback.carman2.utils.Constants;
 
 import java.io.File;
 
-public class MainActivity extends BaseActivity implements
-        FinishAppDialogFragment.NoticeDialogListener {
+public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -50,24 +49,18 @@ public class MainActivity extends BaseActivity implements
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
         Fragment generalFragment = new GeneralFragment();
-
+        generalFragment.setArguments(bundle);
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
-        generalFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_main, generalFragment, "general").addToBackStack(null).commit();
+                .replace(R.id.frame_main, generalFragment, "general")
+                .addToBackStack(null)
+                .commit();
 
         // Permission Check
         checkPermissions();
     }
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onResume(){
-        super.onResume();
-        //String title = mSettings.getString(Constants.USER_NAME, null);
-        //if(title != null) getSupportActionBar().setTitle(title);
-    }
 
     @Override
     public void onPause() {

@@ -416,11 +416,8 @@ public class BaseActivity extends AppCompatActivity {
     public static boolean isNetworkConnected(Context context) {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
-        if(networkInfo != null) {
-            int type = networkInfo.getSubtype();
-        }
-
-        return false;
+        if(networkInfo != null && networkInfo.isConnected()) return true;
+        else return false;
     }
 
 

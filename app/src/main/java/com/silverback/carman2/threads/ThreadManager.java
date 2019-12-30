@@ -106,7 +106,7 @@ public class ThreadManager {
     private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
-    private final Queue<LocationTask> mLocationTaskQueue;
+    //private final Queue<LocationTask> mLocationTaskQueue;
     private final Queue<PriceDistrictTask> mPriceDistrictTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
 
@@ -145,7 +145,7 @@ public class ThreadManager {
         mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
 
-        mLocationTaskQueue = new LinkedBlockingQueue<>();
+        //mLocationTaskQueue = new LinkedBlockingQueue<>();
         //mClockTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
 
@@ -185,12 +185,7 @@ public class ThreadManager {
                 LoadDistCodeTask loadDistCodeTask;
 
                 switch(msg.what) {
-                    case UPDATE_CLOCK:
-                        clockTask = (ClockTask)msg.obj;
-                        TextView tvDate = (TextView)clockTask.getClockView();
-                        tvDate.setText(clockTask.getCurrentTime());
-                        //clockTask.recycle();
-                        break;
+
                     case DOWNLOAD_DISTCODE_COMPLTETED:
                         //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
                         districtCodeTask = (DistrictCodeTask)msg.obj;
@@ -429,16 +424,18 @@ public class ThreadManager {
         return tabPagerTask;
     }
 
+
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
-        LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
+        //LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
+        LocationTask locationTask = (LocationTask)sInstance.mTaskWorkQueue.poll();
 
         if(locationTask == null) {
             locationTask = new LocationTask(context);
         }
 
         locationTask.initLocationTask(model);
-        sInstance.mDownloadThreadPool.execute(locationTask.getLocationRunnable());
+        sInstance.mDecodeThreadPool.execute(locationTask.getLocationRunnable());
 
         return locationTask;
 
@@ -567,7 +564,7 @@ public class ThreadManager {
         } else if(task instanceof LocationTask) {
             ((LocationTask) task).recycle();
             //if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
-            mLocationTaskQueue.offer((LocationTask) task);
+            //mLocationTaskQueue.offer((LocationTask) task);
 
         } else if(task instanceof StationListTask) {
             ((StationListTask) task).recycle();
