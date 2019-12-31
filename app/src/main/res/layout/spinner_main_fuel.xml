@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:minWidth="60dp"
     android:padding='3dp'
-    android:background="@color/bgToolbar"
     android:gravity="center"
     android:textSize="@dimen/smallText"
-    android:textColor="@android:color/white" />
+    android:textStyle="bold"
+    android:textColor="@color/bgToolbar" />
