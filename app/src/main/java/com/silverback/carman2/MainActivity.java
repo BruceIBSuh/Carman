@@ -15,6 +15,7 @@ import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.StationInfoTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
-    private StationInfoTask mapInfoTask;
+    //private StationInfoTask mapInfoTask;
     //private ActionBarDrawerToggle drawerToggle;
 
     @SuppressWarnings("ConstantConditions")
@@ -65,7 +66,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public void onPause() {
         super.onPause();
-        if(mapInfoTask != null) mapInfoTask = null;
+        //if(mapInfoTask != null) mapInfoTask = null;
     }
 
     /*
@@ -139,6 +140,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
             for (File file : cacheDir.listFiles()) file.delete();
         }
 
+        // Kill all the threads.
+        ThreadManager.cancelAllThreads();
         finishAffinity();
     }
 

@@ -11,11 +11,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="3dp"
-        android:layout_marginBottom="3dp"
-        android:background="@android:color/darker_gray"
+        android:background="@drawable/spinner_main_fuel"
         android:gravity="center"
-        app:layout_constraintBottom_toTopOf="@+id/view_boxing"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_subtitle_region"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tv_subtitle_region" />
 
     <com.silverback.carman2.views.OpinetAvgPriceView
         android:id="@+id/avgPriceView"
@@ -201,7 +201,7 @@
             android:layout_gravity="center" />
 
         <ProgressBar
-            android:id="@+id/listProgress"
+            android:id="@+id/progbar_stn_list"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
@@ -224,7 +224,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:fab="@id/fab_relocation"
-            app:progressbar="@id/listProgress"
+            app:progressbar="@id/progbar_stn_list"
             app:textview="@id/tv_no_stations" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

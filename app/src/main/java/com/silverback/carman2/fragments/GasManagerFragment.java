@@ -39,6 +39,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceFavoriteTask;
+import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
@@ -284,8 +285,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             this.location = location;
             if(!isGeofenceIntent) {
-                stationListTask = ThreadManager.startStationListTask(
-                        getContext(), stnListModel, location, defaultParams);
+                stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaultParams);
             }
         });
 

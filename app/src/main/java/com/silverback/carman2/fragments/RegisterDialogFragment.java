@@ -37,6 +37,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
@@ -76,7 +77,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     private LoadDistCodeTask spinnerTask;
     private GeocoderReverseTask geocoderReverseTask;
     private GeocoderTask geocoderTask;
-    private LocationTask locationTask;
+    private ThreadTask locationTask;
     private SpinnerDistrictModel distModel;
     private LocationViewModel locationModel;
     private DistrictSpinnerAdapter sigunAdapter;

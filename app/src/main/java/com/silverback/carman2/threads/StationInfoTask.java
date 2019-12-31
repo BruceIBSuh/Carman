@@ -8,7 +8,7 @@ import com.silverback.carman2.models.StationListViewModel;
 public class StationInfoTask extends ThreadTask implements
         //LifecycleObserver,
         StationInfoRunnable.StationInfoMethods,
-        FireStoreUpdateRunnable.FireStoreUpdateMethods {
+        FireStoreupdateRunnable.FireStoreUpdateMethods {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationInfoTask.class);
@@ -22,7 +22,7 @@ public class StationInfoTask extends ThreadTask implements
     // Constructor
     StationInfoTask() {
         mStationInfoRunnable = new StationInfoRunnable(this);
-        mFireStoreUpdateRunnable = new FireStoreUpdateRunnable(this);
+        mFireStoreUpdateRunnable = new FireStoreupdateRunnable(this);
     }
 
     void initStationTask(StationListViewModel model, String stationName, String stationId) {
@@ -55,7 +55,7 @@ public class StationInfoTask extends ThreadTask implements
         //stnViewModel.getStationInfoLiveData().postValue(info);
     }
 
-    // Referenced by FireStoreUpdateRunnable
+    // Referenced by FireStoreupdateRunnable
     @Override
     public Opinet.GasStationInfo getStationInfo() {
         return stationInfo;

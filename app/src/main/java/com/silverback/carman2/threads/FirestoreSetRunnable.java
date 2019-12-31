@@ -6,6 +6,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -20,10 +21,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FireStoreSetRunnable implements Runnable {
+public class FirestoreSetRunnable implements Runnable {
 
     // Constants
-    private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreSetRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FirestoreSetRunnable.class);
     private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
 
     // Objects
@@ -39,7 +40,7 @@ public class FireStoreSetRunnable implements Runnable {
     }
 
     // Constructor
-    FireStoreSetRunnable(FireStoreSetMethods task) {
+    FirestoreSetRunnable(FireStoreSetMethods task) {
         this.mCallback = task;
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         xmlHandler = new XmlPullParserHandler();
@@ -56,8 +57,16 @@ public class FireStoreSetRunnable implements Runnable {
         InputStream is = null;
 
         try {
+
+            if(Thread.interrupted()) throw new InterruptedException();
+
             URL url = new URL(OPINET_DETAIL);
             conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Connection", "close");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            //conn.connect();
+
             is = new BufferedInputStream(conn.getInputStream());
             Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
 
@@ -81,6 +90,7 @@ public class FireStoreSetRunnable implements Runnable {
                 DocumentSnapshot snapshot = transaction.get(docRef);
                 if(snapshot.exists()) {
                     transaction.set(docRef, data, SetOptions.merge());
+                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                 }
 
                 return null;
@@ -93,6 +103,10 @@ public class FireStoreSetRunnable implements Runnable {
 
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            log.e("InterruptedException: %s", e.getMessage());
 
         } finally {
             if (is != null) {

@@ -3,16 +3,9 @@ package com.silverback.carman2.threads;
 import android.os.Process;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.Opinet;
@@ -20,10 +13,10 @@ import com.silverback.carman2.models.Opinet;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FireStoreUpdateRunnable implements Runnable {
+public class FireStoreupdateRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreUpdateRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FireStoreupdateRunnable.class);
 
     // Objects
     private FirebaseFirestore fireStore;
@@ -37,7 +30,7 @@ public class FireStoreUpdateRunnable implements Runnable {
     }
 
     // Constructor
-    FireStoreUpdateRunnable(FireStoreUpdateMethods callback) {
+    FireStoreupdateRunnable(FireStoreUpdateMethods callback) {
         mCallback = callback;
         fireStore = FirebaseFirestore.getInstance();
     }

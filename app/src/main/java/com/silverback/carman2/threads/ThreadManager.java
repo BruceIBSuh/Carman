@@ -39,7 +39,7 @@ public class ThreadManager {
     static final int DOWNLOAD_PRICE_COMPLETED = 100;
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
-    static final int DOWNLOAD_STATION_INFO_COMPLETED = 200;
+    static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
 
     static final int DOWNLOAD_IMAGE_FINISH = 201;
 
@@ -106,7 +106,7 @@ public class ThreadManager {
     private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
-    //private final Queue<LocationTask> mLocationTaskQueue;
+    private final Queue<LocationTask> mLocationTaskQueue;
     private final Queue<PriceDistrictTask> mPriceDistrictTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
 
@@ -144,9 +144,8 @@ public class ThreadManager {
         mTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
+        mLocationTaskQueue = new LinkedBlockingQueue<>();
 
-        //mLocationTaskQueue = new LinkedBlockingQueue<>();
-        //mClockTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
 
         mBitmapResizeTask = new LinkedBlockingQueue<>();
@@ -174,11 +173,15 @@ public class ThreadManager {
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
-                //Log.d(LOG_TAG, "mMainHandler Message: " + msg.what + "," + msg.obj);
-                ClockTask clockTask;
+
+                ThreadTask task = (ThreadTask)msg.obj;
+                recycleTask(task);
+                // Otherwise, calls the super method
+                super.handleMessage(msg);
+
+                /*
+                ThreadTask threadTask;
                 PriceDistrictTask priceDistrictTask;
-                LocationTask locationTask;
-                //LoadPriceListTask loadPriceTask;
                 StationListTask stationListTask;
                 StationInfoTask stationInfoTask;
                 DistrictCodeTask districtCodeTask;
@@ -192,22 +195,9 @@ public class ThreadManager {
                         districtCodeTask.recycle();
                         break;
 
-
                     case DOWNLOAD_PRICE_COMPLETED:
                         priceDistrictTask = (PriceDistrictTask)msg.obj;
-                        recycleTask(priceDistrictTask);
-
-                        break;
-
-                    case FETCH_LOCATION_COMPLETED:
-                        locationTask = (LocationTask)msg.obj;
-                        //recycleTask(locationTask);
-
-                        break;
-
-                    case FETCH_LOCATION_FAILED:
-                        locationTask = (LocationTask)msg.obj;
-                        //locationTask.recycle();
+                        //recycleTask(priceDistrictTask);
 
                         break;
 
@@ -220,25 +210,26 @@ public class ThreadManager {
                         //recycleTask((StationListTask)msg.obj);
                         break;
 
+
                     case DOWNLOAD_CURRENT_STATION_FAILED:
                         break;
 
                     case FIRESTORE_STATION_SET_COMPLETED:
-                        recycleTask((StationListTask)msg.obj);
+                        //recycleTask((StationListTask)msg.obj);
                         break;
 
                     case DOWNLOAD_CURRENT_STATION_COMPLETED:
                         stationListTask = (StationListTask)msg.obj;
-                        recycleTask(stationListTask);
+                        //recycleTask(stationListTask);
                         break;
 
                     case DOWNLOAD_STATION_INFO_COMPLETED:
                         stationInfoTask = (StationInfoTask)msg.obj;
-                        recycleTask(stationInfoTask);
+                        //recycleTask(stationInfoTask);
                         break;
 
                     case DOWNLOAD_STATION_INFO_FAILED:
-                        recycleTask((StationInfoTask)msg.obj);
+                        //recycleTask((StationInfoTask)msg.obj);
                         break;
 
                     case DOWNLOAD_IMAGE_FINISH:
@@ -247,19 +238,23 @@ public class ThreadManager {
 
                     case GEOCODER_REVERSE_TASK_COMPLETED:
                         log.i("GeocoderReverseTask completed");
-                        recycleTask((GeocoderReverseTask)msg.obj);
+                        //recycleTask((GeocoderReverseTask)msg.obj);
                         break;
 
                     case GEOCODER_REVERSE_TASK_FAILED:
                         log.i("GeocoderReverseTask Failed");
-                        recycleTask((GeocoderReverseTask)msg.obj);
+                        //recycleTask((GeocoderReverseTask)msg.obj);
                         break;
 
                     default:
+                        ThreadTask task = (ThreadTask)msg.obj;
+                        recycleTask(task);
                         // Otherwise, calls the super method
                         super.handleMessage(msg);
 
                 }
+
+                 */
 
             }
 
@@ -281,7 +276,7 @@ public class ThreadManager {
             case DOWNLOAD_NEAR_STATIONS_COMPLETED:
                 //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
                 mDownloadThreadPool.execute(((StationListTask)task).getFireStoreRunnable());
-                //msg.sendToTarget();
+                msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
@@ -289,21 +284,8 @@ public class ThreadManager {
                 // Save basic information of stations in FireStore
                 mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
                 //mDecodeThreadPool.execute(((StationListTask) task).getStationInfoRunnable());
-                //msg.sendToTarget();
-                break;
-
-            case DOWNLOAD_STATION_INFO_COMPLETED:
-                // Save additional information of a selected station in FireStore
-                //mDecodeThreadPool.execute(((StationInfoTask)task).updateFireStoreRunnable());
                 msg.sendToTarget();
                 break;
-
-
-            case RECYCLER_ADAPTER_SERVICE_COMPLETED:
-
-                msg.sendToTarget();
-                break;
-
 
             default:
                 msg.sendToTarget();
@@ -314,27 +296,36 @@ public class ThreadManager {
     @SuppressWarnings("all")
     public static synchronized void cancelAllThreads() {
 
-        ThreadTask[] taskArray = new ThreadTask[sInstance.mDownloadWorkQueue.size()];
+        ThreadTask[] taskDownloadArray = new ThreadTask[sInstance.mDownloadWorkQueue.size()];
+        ThreadTask[] taskDecodeArray = new ThreadTask[sInstance.mDecodeWorkQueue.size()];
 
         // Populates the array with the task objects in the queue
-
-        sInstance.mDownloadWorkQueue.toArray(taskArray);
+        sInstance.mDownloadWorkQueue.toArray(taskDownloadArray);
+        sInstance.mDecodeWorkQueue.toArray(taskDecodeArray);
 
         // Stores the array length in order to iterate over the array
-        int taskArraylen = taskArray.length;
+        int taskDownloadArrayLen = taskDownloadArray.length;
+        int taskDecodeArrayLen = taskDecodeArray.length;
 
         //synchronized (sInstance) {
         // Iterates over the array of tasks
-        for (int taskArrayIndex = 0; taskArrayIndex < taskArraylen; taskArrayIndex++) {
+        for (int taskArrayIndex = 0; taskArrayIndex < taskDownloadArrayLen; taskArrayIndex++) {
             // Gets the task's current thread
-            Thread thread = taskArray[taskArrayIndex].mThreadThis;
-
+            Thread thread = taskDownloadArray[taskArrayIndex].mThreadThis;
             // if the Thread exists, post an interrupt to it
             if (null != thread) {
                 thread.interrupt();
             }
         }
-        //}
+
+        for (int taskArrayIndex = 0; taskArrayIndex < taskDecodeArrayLen; taskArrayIndex++) {
+            // Gets the task's current thread
+            Thread thread = taskDecodeArray[taskArrayIndex].mThreadThis;
+            // if the Thread exists, post an interrupt to it
+            if (null != thread) {
+                thread.interrupt();
+            }
+        }
     }
 
 
@@ -410,7 +401,7 @@ public class ThreadManager {
             PagerAdapterViewModel model,
             String[] defaults, String jsonDistrict, String jsonSvcItem){
 
-        TabPagerTask tabPagerTask = (TabPagerTask)sInstance.mTaskWorkQueue.poll();
+        TabPagerTask tabPagerTask = sInstance.mTabPagerTaskQueue.poll();
 
         if(tabPagerTask == null) {
             tabPagerTask = new TabPagerTask(context);
@@ -427,8 +418,7 @@ public class ThreadManager {
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
-        //LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
-        LocationTask locationTask = (LocationTask)sInstance.mTaskWorkQueue.poll();
+        LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
 
         if(locationTask == null) {
             locationTask = new LocationTask(context);
@@ -441,11 +431,10 @@ public class ThreadManager {
 
     }
 
-
-    // Download stations around the current location from Opinet
-    // given Location and defaut params transferred from OpinetStationListFragment
+    // Download stations around the current location from Opinet given the current location fetched
+    // by LocationTask and defaut params transferred from OpinetStationListFragment
     public static StationListTask startStationListTask(
-            Context context, StationListViewModel model, Location location, String[] params) {
+            StationListViewModel model, Location location, String[] params) {
 
         StationListTask stationListTask = sInstance.mStationListTaskQueue.poll();
 
@@ -513,6 +502,7 @@ public class ThreadManager {
     public static UploadBitmapTask startBitmapUploadTask(Context context, Uri uri, ImageViewModel model) {
 
         ThreadTask bitmapTask = sInstance.mTaskWorkQueue.poll();
+
         if(bitmapTask == null) bitmapTask = new UploadBitmapTask(context);
         ((UploadBitmapTask)bitmapTask).initBitmapTask(uri, model);
         sInstance.mDownloadThreadPool.execute(((UploadBitmapTask)bitmapTask).getmBitmapResizeRunnable());
@@ -549,35 +539,11 @@ public class ThreadManager {
     }
 
 
-
-        /*
-     * Recycles tasks by calling their internal recycle() method and then putting them back into
-     * the task queue.
-     */
     private void recycleTask(ThreadTask task) {
 
         if(task instanceof PriceDistrictTask) {
-            log.i("PriceDistrictTask thread: %s", task.getCurrentThread());
-            if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
             mPriceDistrictTaskQueue.offer((PriceDistrictTask)task);
 
-        } else if(task instanceof LocationTask) {
-            ((LocationTask) task).recycle();
-            //if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
-            //mLocationTaskQueue.offer((LocationTask) task);
-
-        } else if(task instanceof StationListTask) {
-            ((StationListTask) task).recycle();
-            if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
-            mStationListTaskQueue.offer((StationListTask)task);
-
-            //mStationTaskListener = null;
-            //if(mCurrentStationListener != null) mCurrentStationListener = null;
-
-        } else if(task instanceof StationInfoTask) {
-            ((StationInfoTask)task).recycle();
-            //mStationInfoTaskQueue.offer((StationInfoTask)task);
-            //mStationInfoListener = null;
         } else if(task instanceof GeocoderReverseTask) {
             ((GeocoderReverseTask)task).recycle();
             mTaskWorkQueue.offer(task);
@@ -585,9 +551,12 @@ public class ThreadManager {
         } else if(task instanceof DownloadImageTask) {
             mTaskWorkQueue.offer(task);
         } else {
-            mTaskWorkQueue.offer(task);
+            //mTaskWorkQueue.offer(task);
         }
 
+        if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
+
     }
+
 
 }

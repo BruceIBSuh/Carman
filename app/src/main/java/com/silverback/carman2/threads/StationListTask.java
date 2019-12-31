@@ -1,7 +1,6 @@
 package com.silverback.carman2.threads;
 
 
-import android.content.Context;
 import android.location.Location;
 import android.util.SparseBooleanArray;
 
@@ -14,8 +13,8 @@ import java.util.List;
 
 public class StationListTask extends ThreadTask implements
         StationListRunnable.StationListMethod,
-        FireStoreGetRunnable.FireStoreGetMethods,
-        FireStoreSetRunnable.FireStoreSetMethods {
+        FirestoreGetRunnable.FireStoreGetMethods,
+        FirestoreSetRunnable.FireStoreSetMethods {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
@@ -24,7 +23,7 @@ public class StationListTask extends ThreadTask implements
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETE = 2;
     static final int FIRESTORE_GET_COMPLETE = 3;
-    //static final int FIRESTORE_SET_COMPLETE = 4;
+    static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
     static final int DOWNLOAD_CURRENT_STATION_FAIL = -2;
 
@@ -48,8 +47,8 @@ public class StationListTask extends ThreadTask implements
     StationListTask() {
         super();
         mStationListRunnable = new StationListRunnable(this);
-        mFireStoreGetRunnable = new FireStoreGetRunnable(this);
-        mFireStoreSetRunnable = new FireStoreSetRunnable(this);
+        mFireStoreGetRunnable = new FirestoreGetRunnable(this);
+        mFireStoreSetRunnable = new FirestoreSetRunnable(this);
 
         sparseBooleanArray = new SparseBooleanArray();
 
@@ -125,7 +124,7 @@ public class StationListTask extends ThreadTask implements
         log.i("Station Id: %s", stnId);
         return stnId;
     }
-    // FireStoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
+    // FirestoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {
@@ -151,13 +150,13 @@ public class StationListTask extends ThreadTask implements
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
             // Update extra inforamtion on queried station.
-            /*
             case FIRESTORE_SET_COMPLETE:
                 log.i("FireStore Set Complete");
                 outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
                 break;
-            */
+
             case DOWNLOAD_NEAR_STATIONS_FAIL:
+                viewModel.getStationListLiveData().postValue(mStationList);
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;
 

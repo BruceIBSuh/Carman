@@ -31,6 +31,7 @@ import com.silverback.carman2.models.PagerAdapterViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.TabPagerTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.ExpenseViewPager;
 
@@ -55,8 +56,8 @@ public class ExpenseActivity extends BaseActivity implements
     private ExpTabPagerAdapter tabPagerAdapter;
     private ExpRecentPagerAdapter recentPagerAdapter;
 
-    private TabPagerTask tabPagerTask;
-    private LocationTask locationTask;
+    private ThreadTask tabPagerTask;
+    private ThreadTask locationTask;
 
     // UIs
     private AppBarLayout appBar;
@@ -115,8 +116,6 @@ public class ExpenseActivity extends BaseActivity implements
         // to JSONArray in advance for the recyclerview in ServiceManager
         tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
-
-
 
         // Create ViewPager for the last 5 recent expense statements in the top frame.
         // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,

@@ -12,6 +12,7 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.XmlPullParserHandler;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -28,7 +29,6 @@ public class StationListRunnable implements Runnable{
     private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
     // Objects
-    //private Context context;
     private FirebaseFirestore fireStore;
     private List<Opinet.GasStnParcelable> mStationList;
     private StationListMethod mTask;
@@ -47,7 +47,6 @@ public class StationListRunnable implements Runnable{
     StationListRunnable(StationListMethod task) {
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         mStationList = null;
-        //this.context = context;
         mTask = task;
     }
 
@@ -64,8 +63,6 @@ public class StationListRunnable implements Runnable{
         String fuelCode = defaultParams[0];
         String radius = defaultParams[1];
         String sort = defaultParams[2];
-
-        log.i("Default Params: %s, %s, %s", fuelCode, radius, sort);
 
         // Convert longitute and latitude-based location to TM(Transverse Mercator), then again to
         // Katec location using convertgeocoords which is distributed over internet^^ tnx.
@@ -91,7 +88,6 @@ public class StationListRunnable implements Runnable{
         try {
 
             if(Thread.interrupted()) throw new InterruptedException();
-
             // Option: url.openStream()
             /*
             final URL url = new URL(OPINET_AROUND);
@@ -105,10 +101,9 @@ public class StationListRunnable implements Runnable{
             conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
-            conn.connect();
+            //conn.connect();
 
-            //bis = new BufferedInputStream(conn.getInputStream());
-            is = conn.getInputStream();
+            is = new BufferedInputStream(conn.getInputStream());
             mStationList = xmlHandler.parseStationListParcelable(is);
 
             // Fetch the current station which is located within MIN_RADIUS. This is invoked from
@@ -152,36 +147,5 @@ public class StationListRunnable implements Runnable{
             if(conn != null) conn.disconnect();
         }
     }
-
-
-    // Save the downloaded near station list in the designated file location.
-    /*
-    private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
-
-        File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
-
-        // Delete the file before saving a new list.
-        if(file.exists()) {
-            boolean delete = file.delete();
-            if(delete) log.i("cache cleared");
-        }
-
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(list);
-
-            return Uri.fromFile(file);
-
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-
-        }
-
-        return null;
-    }
-    */
 
 }

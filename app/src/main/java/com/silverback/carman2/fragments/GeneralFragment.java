@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -46,6 +47,7 @@ import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceDistrictTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetAvgPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
@@ -85,8 +87,8 @@ public class GeneralFragment extends Fragment implements
     private ServiceManagerDao.RecentServiceData querySvcResult;
 
     private LocationTask locationTask;
-    private PriceDistrictTask priceDistrictTask;
     private StationListTask stationListTask;
+    private PriceDistrictTask priceDistrictTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
@@ -100,12 +102,14 @@ public class GeneralFragment extends Fragment implements
     private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
+    private ProgressBar progbarStnList;
 
     // Fields
     private String stnId;
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
     private boolean bExpenseSort;
+    private boolean hasNearStations;
     private String latestItems;
 
     public GeneralFragment() {
@@ -149,6 +153,7 @@ public class GeneralFragment extends Fragment implements
         priceViewPager = childView.findViewById(R.id.pager_price);
         opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
+        progbarStnList = childView.findViewById(R.id.progbar_stn_list);
         fabLocation = childView.findViewById(R.id.fab_relocation);
 
         // Attach event listeners
@@ -238,20 +243,7 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        // On fetching the current location, attempt to get the near stations based on the value.
-        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
-            // attempt to retreive a new station list based on the location.
-            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
-            // the station recyclerView should not be refreshed, showing the snackbar message.
-            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
-                mPrevLocation = location;
-                stationListTask = ThreadManager.startStationListTask(getContext(), stnListModel, location, defaults);
 
-            } else {
-                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
-            }
-        });
 
         //priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
         // Invoked from SettingPreferenceActivity as a new region has set.
@@ -264,12 +256,29 @@ public class GeneralFragment extends Fragment implements
             priceViewPager.setAdapter(pricePagerAdapter);
         });
 
+
+        // On fetching the current location, start to get the near stations based on the value.
+        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
+            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
+            // attempt to retreive a new station list based on the location.
+            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
+            // the station recyclerView should not be refreshed, showing the snackbar message.
+            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
+                mPrevLocation = location;
+                stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaults);
+
+            } else {
+                Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
+            }
+        });
+
         // Receive the LiveData of station list within a given radius based on
         stnListModel.getStationListLiveData().observe(getViewLifecycleOwner(), stnList -> {
             mStationList = stnList;
             mAdapter = new StationListAdapter(mStationList, this);
             stationRecyclerView.showStationListRecyclerView();
             stationRecyclerView.setAdapter(mAdapter);
+            hasNearStations = true;
         });
 
         stnListModel.getStationCarWashInfo().observe(getViewLifecycleOwner(), sparseArray -> {
@@ -322,6 +331,9 @@ public class GeneralFragment extends Fragment implements
                 break;
 
             case R.id.imgbtn_stations:
+                // The button does work only if the task has finished fetching near stations.
+                if(!hasNearStations) return;
+
                 // Save the station list to prevent reordering from retasking the station list.
                 Uri uri = saveNearStationList(mStationList);
                 if(uri == null) return;
