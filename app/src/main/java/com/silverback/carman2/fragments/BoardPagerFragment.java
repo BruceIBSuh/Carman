@@ -77,7 +77,6 @@ public class BoardPagerFragment extends Fragment implements
         if(getActivity() == null) return;
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
-
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -104,7 +103,7 @@ public class BoardPagerFragment extends Fragment implements
         recyclerView.addOnScrollListener(paginationHelper);
 
         if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
-        if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
+        //if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
 
         switch(page) {
             case 0: // Recent post

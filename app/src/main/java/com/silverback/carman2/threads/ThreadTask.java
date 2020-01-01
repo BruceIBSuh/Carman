@@ -24,10 +24,8 @@ public class ThreadTask {
      * changed by processes outside of this app.
      */
     public Thread getCurrentThread() {
-        //synchronized(sThreadManager) {
-            log.d("ThreadTask current Thread: %s", mCurrentThread);
-            return mCurrentThread;
-        //}
+        log.d("ThreadTask current Thread: %s", mCurrentThread);
+        return mCurrentThread;
     }
     /*
      * Sets the identifier for the current Thread. This must be a synchronized operation; see the

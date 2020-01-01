@@ -71,8 +71,6 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-
-
         BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);
         boardPager.addOnPageChangeListener(this);

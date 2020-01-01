@@ -49,14 +49,13 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
     public void setPostingQuery(final String field, final int limit) {
-
         this.field = field;
         pagingLimit = limit;
 
         // Initate the first query
-        Source source = Source.CACHE;
+        //Source source = Source.CACHE;
         colRef = FirebaseFirestore.getInstance().collection("board_general");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get(source)
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
                 .addOnSuccessListener(querySnapshot -> {
                     log.i("First query");
                     this.querySnapshot = querySnapshot;

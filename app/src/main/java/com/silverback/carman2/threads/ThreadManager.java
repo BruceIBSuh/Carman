@@ -99,7 +99,6 @@ public class ThreadManager {
 
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
-
     private Queue<ThreadTask> mTaskWorkQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
@@ -109,9 +108,6 @@ public class ThreadManager {
     private final Queue<LocationTask> mLocationTaskQueue;
     private final Queue<PriceDistrictTask> mPriceDistrictTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
-
-    private final Queue<ThreadTask> mBitmapResizeTask;
-
 
     // A managed pool of background download threads
     private final ThreadPoolExecutor mDownloadThreadPool;
@@ -135,9 +131,8 @@ public class ThreadManager {
         mDownloadWorkQueue = new LinkedBlockingQueue<>();
         mDecodeWorkQueue = new LinkedBlockingQueue<>();
 
-        // Queues of tasks, which is handed to ThreadPool.
+        // Queues of tasks, which extends ThreadPool.
         mTaskWorkQueue = new LinkedBlockingQueue<>();
-
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
         mPriceDistrictTaskQueue = new LinkedBlockingQueue<>();
@@ -148,7 +143,6 @@ public class ThreadManager {
 
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
 
-        mBitmapResizeTask = new LinkedBlockingQueue<>();
 
         // Instantiates ThreadPoolExecutor
         //Log.i(LOG_TAG, "NUMBER_OF_CORES: " + NUMBER_OF_CORES);
@@ -169,93 +163,11 @@ public class ThreadManager {
          * happens when the View invokes startDownload. Since the View runs on the UI Thread, so
          * does the constructor and the Handler.
          */
-
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
-
                 ThreadTask task = (ThreadTask)msg.obj;
                 recycleTask(task);
-                // Otherwise, calls the super method
-                super.handleMessage(msg);
-
-                /*
-                ThreadTask threadTask;
-                PriceDistrictTask priceDistrictTask;
-                StationListTask stationListTask;
-                StationInfoTask stationInfoTask;
-                DistrictCodeTask districtCodeTask;
-                LoadDistCodeTask loadDistCodeTask;
-
-                switch(msg.what) {
-
-                    case DOWNLOAD_DISTCODE_COMPLTETED:
-                        //Log.i(LOG_TAG, "DOWNLOAD_DISTCODE_COMPLETED");
-                        districtCodeTask = (DistrictCodeTask)msg.obj;
-                        districtCodeTask.recycle();
-                        break;
-
-                    case DOWNLOAD_PRICE_COMPLETED:
-                        priceDistrictTask = (PriceDistrictTask)msg.obj;
-                        //recycleTask(priceDistrictTask);
-
-                        break;
-
-                    case DOWNLOAD_NEAR_STATIONS_COMPLETED:
-                        log.i("DOWNLOAD_NEAR_STATIONS_COMPLETED");
-                        break;
-
-                    case DOWNLOAD_NEAR_STATIONS_FAILED:
-                        //mStationTaskListener.onTaskFailure();
-                        //recycleTask((StationListTask)msg.obj);
-                        break;
-
-
-                    case DOWNLOAD_CURRENT_STATION_FAILED:
-                        break;
-
-                    case FIRESTORE_STATION_SET_COMPLETED:
-                        //recycleTask((StationListTask)msg.obj);
-                        break;
-
-                    case DOWNLOAD_CURRENT_STATION_COMPLETED:
-                        stationListTask = (StationListTask)msg.obj;
-                        //recycleTask(stationListTask);
-                        break;
-
-                    case DOWNLOAD_STATION_INFO_COMPLETED:
-                        stationInfoTask = (StationInfoTask)msg.obj;
-                        //recycleTask(stationInfoTask);
-                        break;
-
-                    case DOWNLOAD_STATION_INFO_FAILED:
-                        //recycleTask((StationInfoTask)msg.obj);
-                        break;
-
-                    case DOWNLOAD_IMAGE_FINISH:
-                        //recycleTask((DownloadImageTask)msg.obj);
-                        break;
-
-                    case GEOCODER_REVERSE_TASK_COMPLETED:
-                        log.i("GeocoderReverseTask completed");
-                        //recycleTask((GeocoderReverseTask)msg.obj);
-                        break;
-
-                    case GEOCODER_REVERSE_TASK_FAILED:
-                        log.i("GeocoderReverseTask Failed");
-                        //recycleTask((GeocoderReverseTask)msg.obj);
-                        break;
-
-                    default:
-                        ThreadTask task = (ThreadTask)msg.obj;
-                        recycleTask(task);
-                        // Otherwise, calls the super method
-                        super.handleMessage(msg);
-
-                }
-
-                 */
-
             }
 
         };
@@ -274,7 +186,6 @@ public class ThreadManager {
 
         switch(state) {
             case DOWNLOAD_NEAR_STATIONS_COMPLETED:
-                //List<Opinet.GasStnParcelable> stnList = ((StationListTask)task).getStationList();
                 mDownloadThreadPool.execute(((StationListTask)task).getFireStoreRunnable());
                 msg.sendToTarget();
                 break;
@@ -283,12 +194,12 @@ public class ThreadManager {
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
-                //mDecodeThreadPool.execute(((StationListTask) task).getStationInfoRunnable());
                 msg.sendToTarget();
                 break;
 
             default:
                 msg.sendToTarget();
+                break;
         }
     }
 
@@ -540,8 +451,11 @@ public class ThreadManager {
 
 
     private void recycleTask(ThreadTask task) {
+        log.i("RecycleTask: %s", task);
+        if(task instanceof LocationTask) mLocationTaskQueue.offer((LocationTask)task);
+        else if(task instanceof StationListTask) mStationListTaskQueue.offer((StationListTask)task);
 
-        if(task instanceof PriceDistrictTask) {
+        else if(task instanceof PriceDistrictTask) {
             mPriceDistrictTaskQueue.offer((PriceDistrictTask)task);
 
         } else if(task instanceof GeocoderReverseTask) {
@@ -550,8 +464,6 @@ public class ThreadManager {
 
         } else if(task instanceof DownloadImageTask) {
             mTaskWorkQueue.offer(task);
-        } else {
-            //mTaskWorkQueue.offer(task);
         }
 
         if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
