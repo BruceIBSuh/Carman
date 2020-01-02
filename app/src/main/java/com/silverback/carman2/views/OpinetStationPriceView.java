@@ -36,16 +36,13 @@ public class OpinetStationPriceView extends LinearLayout {
     private TextView tvStnName, tvStnPrice;
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
-
     public OpinetStationPriceView(Context context) {
         super(context);
     }
-
     public OpinetStationPriceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
-
     public OpinetStationPriceView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
         getAttributes(context, attrs);
@@ -83,7 +80,6 @@ public class OpinetStationPriceView extends LinearLayout {
 
             String stnName = stnPrice.getStnName();
             Map<String, Float> price = stnPrice.getStnPrice();
-            log.i("Station: %s %s", stnName, price.get("B027"));
             tvStnName.setText(stnName);
             tvStnPrice.setText(String.valueOf(price.get(fuelCode)));
 

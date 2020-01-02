@@ -62,7 +62,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A simple {@link Fragment} subclass.
+ * This class is a fragment of MainActivity, which contains the price information and the recent
+ * expenditure of gas and service, and enlist stations in the neighborhood. MainActivity may extend
+ * to multi fragments at a time when an additional fragment such as general information ahead of the
+ * current fragment is introduced.
  */
 
 public class GeneralFragment extends Fragment implements
@@ -110,6 +113,7 @@ public class GeneralFragment extends Fragment implements
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
     private boolean bExpenseSort;
     private boolean hasNearStations;
+    private boolean isNetworkConnected;
     private String latestItems;
 
     public GeneralFragment() {
@@ -124,7 +128,7 @@ public class GeneralFragment extends Fragment implements
         mSettings = ((MainActivity)getActivity()).getSettings();
         // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+        isNetworkConnected = getArguments().getBoolean("isNetworkConnected");
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
@@ -161,10 +165,6 @@ public class GeneralFragment extends Fragment implements
         childView.findViewById(R.id.imgbtn_stations).setOnClickListener(this);
         stationRecyclerView.addOnItemTouchListener(this);
 
-        // Display the current time. Refactor required to show the real time using a worker thread.
-        //String date = formatMilliseconds(getString(R.string.date_format_1), System.currentTimeMillis());
-        //tvDate.setText(date);
-
         // Sets the spinner_stat default value if it is saved in SharedPreference.Otherwise, sets it to 0.
         fuelSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
@@ -172,11 +172,10 @@ public class GeneralFragment extends Fragment implements
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
         fuelSpinner.setAdapter(spinnerAdapter);
 
-        // Set the spinner to the default value that's fetched from SharedPreferences
+        // Get the spinner String values and set the inital value with the default one saved in
+        // SharedPreferences.
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
         defaults = getArguments().getStringArray("defaults");
-
-        // Set the initial spinner value with the default from SharedPreferences
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])){
                 fuelSpinner.setSelection(i);
@@ -243,10 +242,7 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-
-
-        //priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId);
-        // Invoked from SettingPreferenceActivity as a new region has set.
+        // Invoked from SettingPreferenceActivity as a first-set favroite station has newly set.
         priceViewModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isComplete -> {
             // Save the saving time to prevent the regional price data from frequently updating.
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
@@ -274,11 +270,17 @@ public class GeneralFragment extends Fragment implements
 
         // Receive the LiveData of station list within a given radius based on
         stnListModel.getStationListLiveData().observe(getViewLifecycleOwner(), stnList -> {
-            mStationList = stnList;
-            mAdapter = new StationListAdapter(mStationList, this);
-            stationRecyclerView.showStationListRecyclerView();
-            stationRecyclerView.setAdapter(mAdapter);
-            hasNearStations = true;
+            if(stnList != null && stnList.size() > 0) {
+                log.i("near stations fetched");
+                mStationList = stnList;
+                mAdapter = new StationListAdapter(mStationList, this);
+                stationRecyclerView.showStationListRecyclerView();
+                stationRecyclerView.setAdapter(mAdapter);
+                hasNearStations = true;
+            } else {
+                String msg = (isNetworkConnected)?"No neighboring stations" : "Network is unstable or failed to established";
+                stationRecyclerView.showTextView(msg);
+            }
         });
 
         stnListModel.getStationCarWashInfo().observe(getViewLifecycleOwner(), sparseArray -> {
@@ -355,8 +357,9 @@ public class GeneralFragment extends Fragment implements
         }
     }
 
-    // The following 2 abstract methods are invoked by AdapterView.OnItemSelectedListener for Spinner,
-    // which intially invokes at
+    // The following 2 callbacks are initially invoked by AdapterView.OnItemSelectedListener
+    // defined in the spinner, thus the viewpager adapter should be created here in order to
+    // pass arguments.
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 

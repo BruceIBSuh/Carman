@@ -127,7 +127,7 @@ public class ThreadManager {
 
     // Private constructor for Singleton instance of ThreadManager
     private ThreadManager() {
-        // Runnable work queues
+        // Runnable work queues which are used as param in ThreadPoolExecutor.execute()
         mDownloadWorkQueue = new LinkedBlockingQueue<>();
         mDecodeWorkQueue = new LinkedBlockingQueue<>();
 
@@ -140,12 +140,9 @@ public class ThreadManager {
         mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
-
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
 
-
         // Instantiates ThreadPoolExecutor
-        //Log.i(LOG_TAG, "NUMBER_OF_CORES: " + NUMBER_OF_CORES);
         mDownloadThreadPool = new ThreadPoolExecutor(CORE_POOL_SIZE, MAXIMUM_POOL_SIZE,
                 KEEP_ALIVE_TIME, KEEP_ALIVE_TIME_UNIT, mDownloadWorkQueue);
 
@@ -162,6 +159,9 @@ public class ThreadManager {
          * constructor. The constructor is invoked when the class is first referenced, and that
          * happens when the View invokes startDownload. Since the View runs on the UI Thread, so
          * does the constructor and the Handler.
+         *
+         * ViewModel may replace this with LiveData which send values from worker threads directly to
+         * the main thread.
          */
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @Override

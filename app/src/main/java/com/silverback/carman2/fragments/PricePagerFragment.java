@@ -26,7 +26,7 @@ public class PricePagerFragment extends Fragment {
 
     // Objects
     private CarmanDatabase mDB;
-    private OpinetViewModel opinetModel;
+    //private OpinetViewModel opinetModel;
     private int page;
     private String fuelCode;
 
@@ -50,7 +50,7 @@ public class PricePagerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        opinetModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        //opinetModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
     }
 
     @Override
@@ -81,8 +81,8 @@ public class PricePagerFragment extends Fragment {
                 View secondPage = inflater.inflate(R.layout.pager_station_price, container, false);
                 OpinetStationPriceView stnPriceView = secondPage.findViewById(R.id.stationPriceView);
 
-                // Handle the station price view when the favorite is registered first time or
-                // becomes void.
+                // Check if any favorite gas station has registered. The first registered station,
+                // if any, stores its name and price in the internal cache directory.
                 mDB.favoriteModel().firstFavRegLiveData(Constants.GAS)
                         .observe(getViewLifecycleOwner(), count -> {
                             if( count == 0) {

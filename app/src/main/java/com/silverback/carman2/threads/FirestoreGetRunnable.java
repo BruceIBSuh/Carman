@@ -44,7 +44,6 @@ public class FirestoreGetRunnable implements Runnable {
         mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         stnList = mCallback.getStationList();
-        log.i("Station List: %s", stnList.size());
 
         try {
             if(Thread.interrupted()) throw new InterruptedException();

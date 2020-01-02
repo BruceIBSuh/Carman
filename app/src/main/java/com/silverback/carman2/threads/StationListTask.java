@@ -33,7 +33,6 @@ public class StationListTask extends ThreadTask implements
     private Runnable mFireStoreSetRunnable;
     private Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
-    private Opinet.GasStnParcelable gasStation;
 
     private SparseBooleanArray sparseBooleanArray;
 
@@ -164,8 +163,6 @@ public class StationListTask extends ThreadTask implements
                 viewModel.getCurrentStationLiveData().postValue(null);
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
-
-
 
             default:
                 break;

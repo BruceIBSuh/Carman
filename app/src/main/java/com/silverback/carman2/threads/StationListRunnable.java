@@ -76,7 +76,7 @@ public class StationListRunnable implements Runnable{
         final String OPINET_AROUND = OPINET
                 + "&x=" + x
                 + "&y=" + y
-                + "&radius=" + radius
+                + "&radius=" + "10"
                 + "&sort=" + sort // 1: price 2: distance
                 + "&prodcd=" + fuelCode;
 
@@ -123,6 +123,7 @@ public class StationListRunnable implements Runnable{
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
                 } else mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
             }
+
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());

@@ -13,6 +13,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -52,6 +53,7 @@ public class BaseActivity extends AppCompatActivity {
     protected static DecimalFormat df;
 
     // Fields
+    protected boolean isNetworkConnected;
     protected boolean hasLocationPermission;
 
     @Override
@@ -67,6 +69,16 @@ public class BaseActivity extends AppCompatActivity {
         if(mSettings == null) {
             mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         }
+
+        // Checkk if the network connectivitis ok.
+        if(isNetworkConnected(this)) {
+            log.i("network connection is ok");
+            isNetworkConnected = true;
+        } else {
+            log.i("please check the network condition");
+            isNetworkConnected = false;
+        }
+
 
     }
 
@@ -413,11 +425,10 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // Check a state of the network
-    public static boolean isNetworkConnected(Context context) {
+    public boolean isNetworkConnected(Context context) {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
-        if(networkInfo != null && networkInfo.isConnected()) return true;
-        else return false;
+        return networkInfo != null && networkInfo.isConnected();
     }
 
 
