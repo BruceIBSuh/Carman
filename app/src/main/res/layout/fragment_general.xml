@@ -194,17 +194,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_subtitle_stations">
 
+        <ProgressBar
+            android:id="@+id/progbar_stn_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_insetEdge="top"/>
+
         <TextView
             android:id="@+id/tv_no_stations"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center" />
-
-
-        <ProgressBar
-            android:id="@+id/progbar_stn_list"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_relocation"

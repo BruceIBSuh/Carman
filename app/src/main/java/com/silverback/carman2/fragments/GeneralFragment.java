@@ -6,9 +6,11 @@ import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.BulletSpan;
+import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,6 +32,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -47,7 +50,6 @@ import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.PriceDistrictTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetAvgPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
@@ -77,6 +79,9 @@ public class GeneralFragment extends Fragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
+    // Constants
+    private final int NOSTATION = 0;
+    private final int NETWORK = 1;
 
     // Objects
     private CarmanDatabase mDB;
@@ -104,6 +109,7 @@ public class GeneralFragment extends Fragment implements
     private ViewPager priceViewPager;
     private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
+    private TextView tvNoStations;
     private FloatingActionButton fabLocation;
     private ProgressBar progbarStnList;
 
@@ -128,7 +134,7 @@ public class GeneralFragment extends Fragment implements
         mSettings = ((MainActivity)getActivity()).getSettings();
         // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        isNetworkConnected = getArguments().getBoolean("isNetworkConnected");
+        isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
@@ -159,6 +165,7 @@ public class GeneralFragment extends Fragment implements
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
         progbarStnList = childView.findViewById(R.id.progbar_stn_list);
         fabLocation = childView.findViewById(R.id.fab_relocation);
+        tvNoStations = childView.findViewById(R.id.tv_no_stations);
 
         // Attach event listeners
         childView.findViewById(R.id.imgbtn_expense).setOnClickListener(this);
@@ -268,18 +275,19 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        // Receive the LiveData of station list within a given radius based on
+        // Receive station(s) within the radius. If no stations exist, post the message that
+        // indicate why it failed to fetch stations. It would be caused by any network problem or
+        // no stations actually exist within the radius.
         stnListModel.getStationListLiveData().observe(getViewLifecycleOwner(), stnList -> {
-            if(stnList != null && stnList.size() > 0) {
-                log.i("near stations fetched");
+            if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
                 mAdapter = new StationListAdapter(mStationList, this);
                 stationRecyclerView.showStationListRecyclerView();
                 stationRecyclerView.setAdapter(mAdapter);
                 hasNearStations = true;
             } else {
-                String msg = (isNetworkConnected)?"No neighboring stations" : "Network is unstable or failed to established";
-                stationRecyclerView.showTextView(msg);
+                SpannableString spannableString = handleStnListException();
+                stationRecyclerView.showTextView(spannableString);
             }
         });
 
@@ -294,6 +302,8 @@ public class GeneralFragment extends Fragment implements
 
         });
     }
+
+
 
     @Override
     public void onResume() {
@@ -507,4 +517,64 @@ public class GeneralFragment extends Fragment implements
         tvExpLabel.setText(sbLabel);
         tvLatestExp.setText(sbStmts.toString());
     }
+
+
+    // Method for handling the exceptions which would be caused by the network status or there isn't
+    // any station within the radius.
+    // In both cases, post the message as to its exception and convert it to SpannableString having
+    // ClickableSpan which has the specific keyword be spanned, then enable to retry network connection
+    // or start SettingPreferenceActivity.
+    @SuppressWarnings("ConstantConditions")
+    private SpannableString handleStnListException(){
+
+        SpannableString spannableString;
+
+        if(isNetworkConnected) {
+            fabLocation.setVisibility(View.VISIBLE);
+            String radius = mSettings.getString(Constants.RADIUS, null);
+            String msg = getString(R.string.general_no_station_fetched);
+
+            // In case the radius is already set to the max(5000m), no need to change the value.
+            if(radius != null && radius.matches("5000")) {
+                msg = msg.substring(0, msg.indexOf("\n"));
+                return new SpannableString(radius + msg);
+            }
+
+            String format = String.format("%s%s", radius, msg);
+            spannableString = new SpannableString(format);
+
+            // Set the ClickableSpan range
+            int start = format.indexOf(getString(R.string.general_index_reset));
+            int end = start + 2;
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    Snackbar.make(childView, "No stations within the radius", Snackbar.LENGTH_SHORT).show();
+                    getActivity().startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+                }
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        } else {
+            String message = getString(R.string.errror_no_network);
+            spannableString = new SpannableString(message);
+
+            // Set the ClickableSpan range.
+            int start = message.indexOf(getString(R.string.error_index_retry));
+            int end = start + 5;
+
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    if(BaseActivity.notifyNetworkConnected(getContext()))
+                        stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
+                    else
+                        Snackbar.make(childView, "Network connection not established", Snackbar.LENGTH_SHORT).show();
+                }
+
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return spannableString;
+    }
+
 }

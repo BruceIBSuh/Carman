@@ -13,7 +13,6 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
-import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -71,7 +70,7 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         // Checkk if the network connectivitis ok.
-        if(isNetworkConnected(this)) {
+        if(notifyNetworkConnected(this)) {
             log.i("network connection is ok");
             isNetworkConnected = true;
         } else {
@@ -425,7 +424,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // Check a state of the network
-    public boolean isNetworkConnected(Context context) {
+    public static boolean notifyNetworkConnected(Context context) {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();

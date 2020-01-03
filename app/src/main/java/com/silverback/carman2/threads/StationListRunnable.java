@@ -40,6 +40,7 @@ public class StationListRunnable implements Runnable{
         void setStationTaskThread(Thread thread);
         void setStationList(List<Opinet.GasStnParcelable> list);
         void setCurrentStation(Opinet.GasStnParcelable station);
+        void notifyException(String msg);
         void handleStationTaskState(int state);
     }
 
@@ -76,7 +77,7 @@ public class StationListRunnable implements Runnable{
         final String OPINET_AROUND = OPINET
                 + "&x=" + x
                 + "&y=" + y
-                + "&radius=" + "10"
+                + "&radius=" + radius
                 + "&sort=" + sort // 1: price 2: distance
                 + "&prodcd=" + fuelCode;
 
@@ -86,16 +87,8 @@ public class StationListRunnable implements Runnable{
         InputStream is = null;
 
         try {
-
             if(Thread.interrupted()) throw new InterruptedException();
-            // Option: url.openStream()
-            /*
-            final URL url = new URL(OPINET_AROUND);
-            url.openConnection().setConnectTimeout(5000);
-            url.openConnection().setReadTimeout(5000);
-            is = url.openStream();
-            */
-            // Option: HttpURLConnection.getInputStream()
+
             final URL url = new URL(OPINET_AROUND);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Connection", "close");
@@ -127,18 +120,20 @@ public class StationListRunnable implements Runnable{
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
+            mTask.notifyException(e.getMessage());
             mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
+            mTask.notifyException(e.getMessage());
             mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } catch (InterruptedException e) {
             log.e("InterruptedException: %s", e.getMessage());
+            mTask.notifyException(e.getMessage());
             mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } finally {
-
             try {
                 if(is != null) is.close();
             } catch (IOException e) {

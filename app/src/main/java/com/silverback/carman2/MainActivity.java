@@ -49,7 +49,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // and set it to be bundled to pass it to GeneralFragment
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
-        bundle.putBoolean("isNetworkConnected", isNetworkConnected);
+        bundle.putBoolean("notifyNetworkConnected", isNetworkConnected);
         Fragment generalFragment = new GeneralFragment();
         generalFragment.setArguments(bundle);
         // Attaches GeneralFragment as a default display at first or returning from the fragments

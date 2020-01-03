@@ -55,6 +55,9 @@
     <string name="general_snackkbar_inbounds">같은 구역입니다. 잠시 후 다시 확인하여 주세요</string>
     <string name="general_carwash_yes">가능</string>
     <string name="general_carwash_no">불가</string>
+    <string name="general_no_station_fetched">미터 반경에서 주유소를 찾을 수 없습니다\n 탐색 반경을 변경해 주세요</string>
+    <string name="general_index_reset">변경</string>
+
 
     <!--StationMapActivity-->
     <string name="map_toolbar_title">주유소 위치 및 정보</string>
@@ -285,4 +288,8 @@
     <string name="service_item_progressbar_header">교체 시기</string>
     <string name="service_item_price_header">소요 비용</string>
     <string name="service_item_memo">추가정보</string>
+
+    <!-- Error Messages -->
+    <string name="errror_no_network">네트워크 연결에 실패하였습니다\n확인 후 다시 연결해 주세요</string>
+    <string name="error_index_retry">다시 연결</string>
 </resources>

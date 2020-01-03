@@ -106,6 +106,11 @@ public class StationListTask extends ThreadTask implements
         viewModel.getCurrentStationLiveData().postValue(station);
     }
 
+    @Override
+    public void notifyException(String msg) {
+        log.i("Exception occurred: %s", msg);
+    }
+
     // The following  callbacks are invoked by StationListRunnable to retrieve stations within
     // a radius and location, then give them back by setStationList().
     @Override
@@ -135,20 +140,18 @@ public class StationListTask extends ThreadTask implements
     public void handleStationTaskState(int state) {
         int outState = -1;
         switch (state) {
-            // Retrieve Stations located within the radius set in SharedPreferences
             case DOWNLOAD_NEAR_STATIONS_COMPLETE:
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
                 break;
-            // Retrieve a station, if any, within the radius set in Constants.MIN_RADIUS
+
             case DOWNLOAD_CURRENT_STATION_COMPLETE:
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_COMPLETED;
                 break;
-            // Query stations with station ids and add info as to car wash and hasVisited to it
-            // when any station is queried.
+
             case FIRESTORE_GET_COMPLETE:
                 outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
-            // Update extra inforamtion on queried station.
+
             case FIRESTORE_SET_COMPLETE:
                 log.i("FireStore Set Complete");
                 outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;

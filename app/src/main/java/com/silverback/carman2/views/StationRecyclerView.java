@@ -3,13 +3,21 @@ package com.silverback.carman2.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.location.Location;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,12 +37,12 @@ public class StationRecyclerView extends RecyclerView {
     private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerView.class);
 
     // Objects
-    //private Context context;
     private WeakReference<View> mThisView;
     private StationListTask stationListTask;
     private int mPBResId;
     private int mTextViewResId;
     private int mFabResId;
+    private int state;
 
     // Default constructors
     public StationRecyclerView(Context context) {
@@ -51,6 +59,7 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     protected void getAttributes(Context context, AttributeSet attrs) {
+
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setHasFixedSize(true);
         setLayoutManager(layoutManager);
@@ -60,6 +69,7 @@ public class StationRecyclerView extends RecyclerView {
             mPBResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
             mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
             mFabResId = typedArray.getResourceId(R.styleable.StationRecyclerView_fab, -3);
+
         } finally {
             typedArray.recycle();
         }
@@ -121,17 +131,24 @@ public class StationRecyclerView extends RecyclerView {
 
     // Invoked from the parent GeneralFragment when StationListTask failed to fetch any station
     // within a givene radius or the network connection failed to make.
-    public void showTextView(String message){
+    public void showTextView(SpannableString message){
 
         if((mTextViewResId != -2) && getParent() instanceof View) {
 
-            View localView = ((View)getParent()).findViewById(mTextViewResId);
+            TextView localView = ((View)getParent()).findViewById(mTextViewResId);
+
             // If the sibling View contains something, make it the weak reference for this View
             if (localView != null) {
+
                 ((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
-                ((View)getParent()).findViewById(mFabResId).setVisibility(View.VISIBLE);
+                // Hide RecyclerView if no stations failed to fetch in order for ClickableSpan to work.
+                // Otherwise, RecyclerView covers the TextView which causes ClickSpannable to be untouchable.
+                this.setVisibility(View.GONE);
                 mThisView = new WeakReference<>(localView);
-                ((TextView)mThisView.get()).setText(message);
+
+                ((TextView)mThisView.get()).setText(message, TextView.BufferType.SPANNABLE);
+                ((TextView)mThisView.get()).setMovementMethod(LinkMovementMethod.getInstance());
+
             }
         }
     }
