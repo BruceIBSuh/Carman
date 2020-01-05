@@ -93,10 +93,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private ConstraintLayout constraintLayout;
     private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
     private EditText etUnitPrice, etExtraExpense, etGasComment;
-    private ImageButton btnFavorite;
     private RatingBar ratingBar;
     private ProgressBar pbStation;
     private ImageButton imgRefresh;
+    private ImageButton btnFavorite;
 
     // Fields
     private String[] defaultParams;
@@ -124,8 +124,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // In case the activity is initiated by tabbing the notification, which sent the intent w/
-        // action and extras for the geofance data.
+        // In case the activity is initiated by tabbing the notification, which contains the intent
+        // with action and extras for the geofance data.
         if(getActivity().getIntent() != null && getActivity().getIntent().getAction() != null) {
             String action = getActivity().getIntent().getAction();
             if(action.equals(Constants.NOTI_GEOFENCE)) {
@@ -144,13 +144,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         }
 
         firestore = FirebaseFirestore.getInstance();
-        // Instantiate the ViewModels
-        // Refactor required using getViewLifecyclerOwnerLiveData()
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         stnListModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
         opinetViewModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
-
 
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.

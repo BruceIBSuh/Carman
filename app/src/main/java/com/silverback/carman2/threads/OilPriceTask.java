@@ -1,34 +1,41 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
+import android.util.SparseArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.OpinetViewModel;
 
-public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnable.OpinetPriceListMethods {
+import java.util.List;
+
+public class OilPriceTask extends ThreadTask implements OilPriceRunnable.OpinetPriceListMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceDistrictTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(OilPriceTask.class);
 
     // Objects and Fields
     private OpinetViewModel viewModel;
+    private SparseArray<Object> sparseArray;
     private Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable, mStationPriceRunnable;
     private String distCode;
     private String stnId;
     private int index = 0;
 
-    // Constructor: creates an PriceDistrictTask object containing PriceDistrictRunnable object.
-    PriceDistrictTask(Context context) {
+    // Constructor: creates an OilPriceTask object containing OilPriceRunnable object.
+    OilPriceTask(Context context) {
         super();
-        mAvgPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.AVG);
-        mSidoPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.SIDO);
-        mSigunPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.SIGUN);
-        mStationPriceRunnable = new PriceDistrictRunnable(context, this, PriceDistrictRunnable.STATION);
+
+        sparseArray = new SparseArray<>();
+        mAvgPriceRunnable = new OilPriceRunnable(context, this, OilPriceRunnable.AVG);
+        mSidoPriceRunnable = new OilPriceRunnable(context, this, OilPriceRunnable.SIDO);
+        mSigunPriceRunnable = new OilPriceRunnable(context, this, OilPriceRunnable.SIGUN);
+        mStationPriceRunnable = new OilPriceRunnable(context, this, OilPriceRunnable.STATION);
 
     }
 
-    // Initialize args for PriceDistrictRunnable
+    // Initialize args for OilPriceRunnable
     void initPriceTask(OpinetViewModel viewModel, String distCode, String stnId) {
     //void initPriceTask(OpinetViewModel viewModel, String distCode) {
         this.viewModel = viewModel;
@@ -36,7 +43,7 @@ public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnab
         this.stnId = stnId;
     }
 
-    // Getter for the Runnable invoked by startPriceDistrictTask() in ThreadManager
+    // Getter for the Runnable invoked by startOilPriceTask() in ThreadManager
     Runnable getAvgPriceRunnable() {
         return mAvgPriceRunnable;
     }
@@ -49,7 +56,7 @@ public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnab
     Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
 
 
-    // Callback methods defined in PriceDistrictRunnable.OpinentPriceListMethods
+    // Callback methods defined in OilPriceRunnable.OpinentPriceListMethods
     @Override
     public void setPriceDownloadThread(Thread currentThread) {
         setCurrentThread(currentThread);
@@ -72,12 +79,15 @@ public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnab
     }
 
     @Override
-    public synchronized void setTaskCount() {
+    public synchronized void setOilPrice(int mode, Object obj) {
         index++;
+
+        sparseArray.put(mode, obj);
         // When initiating the app first time, the station id doesn't exist. Thus, no price info
         // of the favorite station shouldn't be provided. Other than this case, the price info should
         // be provided 4 times(avg, sido, sigun, station).
-        if(index >= ((stnId == null)? 3 : 4)) viewModel.districtPriceComplete().postValue(true);
+        //if(index >= ((stnId == null)? 3 : 4)) viewModel.distOilPriceComplete().postValue(true);
+        if(index == 4) viewModel.getOilPriceData().postValue(sparseArray);
     }
 
     @Override
@@ -85,11 +95,11 @@ public class PriceDistrictTask extends ThreadTask implements PriceDistrictRunnab
         int outstate = -1;
 
         switch(state) {
-            case PriceDistrictRunnable.DOWNLOAD_PRICE_COMPLETE:
+            case OilPriceRunnable.DOWNLOAD_PRICE_COMPLETE:
                 outstate = ThreadManager.DOWNLOAD_PRICE_COMPLETED;
                 break;
 
-            case PriceDistrictRunnable.DOWNLOAD_PRICE_FAILED:
+            case OilPriceRunnable.DOWNLOAD_PRICE_FAILED:
                 outstate = ThreadManager.DOWNLOAD_PRICE_FAILED;
                 break;
         }

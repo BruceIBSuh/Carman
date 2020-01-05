@@ -193,7 +193,6 @@ public class Opinet  {
         public String getStnId() {
             return stnId;
         }
-
         public void setStnId(String stnId) {
             this.stnId = stnId;
         }
@@ -201,7 +200,6 @@ public class Opinet  {
         public String getStnCompany() {
             return stnCompany;
         }
-
         public void setStnCompany(String stnCompany) {
             this.stnCompany = stnCompany;
         }
@@ -209,7 +207,6 @@ public class Opinet  {
         public String getStnName() {
             return stnName;
         }
-
         public void setStnName(String stnName) {
             this.stnName = stnName;
         }
@@ -217,7 +214,6 @@ public class Opinet  {
         public String getProductCd() {
             return productCd;
         }
-
         public void setProductCd(String productCd) {
             this.productCd = productCd;
         }
@@ -225,12 +221,9 @@ public class Opinet  {
         public Map<String, Float> getStnPrice() {
             return mapPrice;
         }
-
         public void setStnPrice(String prodCd, float price) {
             mapPrice.put(prodCd, price);
         }
-
-
 
         @NonNull
         @Override
@@ -241,8 +234,6 @@ public class Opinet  {
                     + "\nproductCd: " + getProductCd()
                     + "\nprice: " + getStnPrice();
         }
-
-
     }
 
 

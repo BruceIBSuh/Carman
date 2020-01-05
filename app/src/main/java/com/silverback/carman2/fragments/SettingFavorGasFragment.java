@@ -78,7 +78,7 @@ public class SettingFavorGasFragment extends Fragment implements
         recyclerView.setLayoutManager(layoutManager);
 
         // Query the favorite gas stations from FavoriteProviderEntity
-        mDB.favoriteModel().queryFavoriteProvider(Constants.GAS).observe(this, favoriteList -> {
+        mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(this, favoriteList -> {
 
             mAdapter = new SettingFavoriteAdapter(favoriteList, snapshotList, this);
 

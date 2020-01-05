@@ -14,6 +14,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 /**
  * Abstract class subclassed by Avg, Sido, Sigun, Station PriceView
+ *
  */
 public abstract class OpinetPriceView extends LinearLayout {
 
@@ -44,6 +45,7 @@ public abstract class OpinetPriceView extends LinearLayout {
 
     // Methods to switch the text color according to whether the price gets higher or lower.
     protected void setColoredTextView(TextView textView, float price, float diff) {
+
         int colorDiff = (diff > 0)? priceUpColor : priceDownColor;
         log.i("colorDiff: %s", colorDiff);
 

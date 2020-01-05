@@ -9,10 +9,10 @@ import com.silverback.carman2.fragments.PricePagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-/**
- * This class shows the gas price of the region(Sido and Sigun) and the favorite station in each
- * page of ViewPager in GeneralFragment of MainActivity, using the single type of fragment
- * (PricePagerFragment) with different values.
+/*
+ * This class is a viewpager adapter that displays the gas price of a region and a station set as
+ * the place of interest in each page, the fragment of which is defined in PricePagerFragment as
+ * a single fragment with different values.
  *
  * FragmentStatePagerAdapter destroy the entire fragment when it is not visible, keeping the saved
  * state of the fragment, thus use much less memory compared with FragmentPagerAdapter.
@@ -23,9 +23,10 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
  */
 public class PricePagerAdapter extends FragmentStatePagerAdapter {
 
+    private static final int NUM_PAGES = 2;
+
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(PricePagerAdapter.class);
-    private static final int NUM_PAGES = 2;
 
     // Objects
     private String fuelCode;

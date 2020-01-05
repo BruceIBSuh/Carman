@@ -20,10 +20,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-public class PriceDistrictRunnable implements Runnable {
+public class OilPriceRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceDistrictRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(OilPriceRunnable.class);
 
     // constants
     private static final String API_KEY = "F186170711";
@@ -53,22 +53,23 @@ public class PriceDistrictRunnable implements Runnable {
 
     /*
      * An interface that defines methods that ThreadTask implements. An instance of
-     * ThreadTask passes itself to an PriceDistrictRunnable instance through the
-     * PriceDistrictRunnable constructor, after which the two instances can access each other's
+     * ThreadTask passes itself to an OilPriceRunnable instance through the
+     * OilPriceRunnable constructor, after which the two instances can access each other's
      * variables.
      */
     public interface OpinetPriceListMethods {
         void setPriceDownloadThread(Thread currentThread);
         void handlePriceTaskState(int state);
-        void setTaskCount();
+        void setOilPrice(int sort, Object obj);
+
         int getTaskCount();
         String getDistrictCode();
         String getStationId();
     }
 
     // Constructor
-    PriceDistrictRunnable(Context context, OpinetPriceListMethods task, int category) {
-        this.context = context;
+    OilPriceRunnable(Context context, OpinetPriceListMethods task, int category) {
+        this.context = context.getApplicationContext();
         this.category = category;
         this.task = task;
         xmlHandler = new XmlPullParserHandler();
@@ -102,10 +103,11 @@ public class PriceDistrictRunnable implements Runnable {
                     if(!avgList.isEmpty()) {
                         avgList.remove(avgList.get(3)); // Exclude Kerotene
                         //task.handlePriceTaskState(DOWNLOAD_AVG_PRICE_COMPLETE);
-                        task.setTaskCount();
+                        //task.setAvgPrice(avgList);
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
                     }
 
+                    task.setOilPrice(0, avgList);
                     break;
 
                 case SIDO: // Sido price
@@ -120,10 +122,11 @@ public class PriceDistrictRunnable implements Runnable {
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
                         //task.handlePriceTaskState(DOWNLOAD_SIDO_PRICE_COMPLETE);
-                        task.setTaskCount();
+                        //task.setSidoPrice(sidoList);
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                     }
 
+                    task.setOilPrice(1, sidoList);
                     break;
 
                 case SIGUN: // Sigun price
@@ -138,10 +141,11 @@ public class PriceDistrictRunnable implements Runnable {
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
                         //task.handlePriceTaskState(DOWNLOAD_SIGUN_PRICE_COMPLETE);
-                        task.setTaskCount();
+                        //task.setSigunPrice(sigunList);
                         savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
                     }
 
+                    task.setOilPrice(2, sigunList);
                     break;
 
                 case STATION:
@@ -155,11 +159,11 @@ public class PriceDistrictRunnable implements Runnable {
 
                     Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(in);
                     if(stnPrice != null) {
-                        log.i("Station Price: %s", stnPrice.getStnName());
-                        task.setTaskCount();
+                        log.i("Station Price: %s, %s", stnPrice.getStnName(), stnPrice.getStnPrice());
                         savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
                     }
 
+                    task.setOilPrice(3, stnPrice);
                     break;
             }
 
@@ -197,17 +201,11 @@ public class PriceDistrictRunnable implements Runnable {
 
     private synchronized void savePriceInfo(Object obj, String fName) {
 
-        File file = new File(context.getApplicationContext().getCacheDir(), fName);
-        FileOutputStream fos;
-        ObjectOutputStream oos;
+        File file = new File(context.getCacheDir(), fName);
 
-        try {
-            fos = new FileOutputStream(file);
-            oos = new ObjectOutputStream(fos);
+        try (FileOutputStream fos = new FileOutputStream(file);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)){
             oos.writeObject(obj);
-            fos.close();
-            oos.close();
-
         } catch (FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e.getMessage());
         } catch (IOException e) {

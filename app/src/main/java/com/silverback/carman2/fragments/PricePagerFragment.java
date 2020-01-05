@@ -21,8 +21,11 @@ import com.silverback.carman2.views.OpinetStationPriceView;
 
 public class PricePagerFragment extends Fragment {
 
-    // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(PricePagerFragment.class);
+
+    // Constants
+    private static final int DISTRICT_PRICE = 0;
+    private static final int STATION_PRICE = 1;
 
     // Objects
     private CarmanDatabase mDB;
@@ -62,11 +65,7 @@ public class PricePagerFragment extends Fragment {
             fuelCode = getArguments().getString("fuelCode");
         }
 
-        final int DISTRICT_PRICE = 0;
-        final int STATION_PRICE = 1;
-
         switch(page) {
-
             case DISTRICT_PRICE:
                 View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
                 OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);
@@ -83,6 +82,11 @@ public class PricePagerFragment extends Fragment {
 
                 // Check if any favorite gas station has registered. The first registered station,
                 // if any, stores its name and price in the internal cache directory.
+
+                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                if(numFavorite == 0) stnPriceView.removePriceView();
+                else stnPriceView.addPriceView(fuelCode);
+                /*
                 mDB.favoriteModel().firstFavRegLiveData(Constants.GAS)
                         .observe(getViewLifecycleOwner(), count -> {
                             if( count == 0) {
@@ -93,7 +97,7 @@ public class PricePagerFragment extends Fragment {
                             }
 
                         });
-
+                */
                 return secondPage;
         }
 

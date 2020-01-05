@@ -78,6 +78,7 @@ public class BaseActivity extends AppCompatActivity {
             isNetworkConnected = false;
         }
 
+        checkPermissions();
 
     }
 

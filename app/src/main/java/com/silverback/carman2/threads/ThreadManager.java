@@ -6,13 +6,11 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.widget.TextView;
 
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.LocationViewModel;
@@ -22,7 +20,6 @@ import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -101,12 +98,12 @@ public class ThreadManager {
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
+    private final Queue<OilPriceTask> mOilPriceTaskQueue;
     private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
     private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
-    private final Queue<PriceDistrictTask> mPriceDistrictTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
 
     // A managed pool of background download threads
@@ -135,7 +132,7 @@ public class ThreadManager {
         mTaskWorkQueue = new LinkedBlockingQueue<>();
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
-        mPriceDistrictTaskQueue = new LinkedBlockingQueue<>();
+        mOilPriceTaskQueue = new LinkedBlockingQueue<>();
         mTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
@@ -270,23 +267,23 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static PriceDistrictTask startPriceDistrictTask(
+    public static OilPriceTask startOilPriceTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
 
-        PriceDistrictTask priceDistrictTask = sInstance.mPriceDistrictTaskQueue.poll();
+        OilPriceTask oilPriceTask = sInstance.mOilPriceTaskQueue.poll();
 
-        if(priceDistrictTask == null) {
-            priceDistrictTask = new PriceDistrictTask(context);
+        if(oilPriceTask == null) {
+            oilPriceTask = new OilPriceTask(context);
         }
 
-        priceDistrictTask.initPriceTask(model, distCode, stnId);
+        oilPriceTask.initPriceTask(model, distCode, stnId);
 
-        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getAvgPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getSidoPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getSigunPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(priceDistrictTask.getStationPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(oilPriceTask.getAvgPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(oilPriceTask.getSidoPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(oilPriceTask.getSigunPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(oilPriceTask.getStationPriceRunnable());
 
-        return priceDistrictTask;
+        return oilPriceTask;
     }
 
     // Retrieve the price of a favorite station or service.
@@ -455,8 +452,8 @@ public class ThreadManager {
         if(task instanceof LocationTask) mLocationTaskQueue.offer((LocationTask)task);
         else if(task instanceof StationListTask) mStationListTaskQueue.offer((StationListTask)task);
 
-        else if(task instanceof PriceDistrictTask) {
-            mPriceDistrictTaskQueue.offer((PriceDistrictTask)task);
+        else if(task instanceof OilPriceTask) {
+            mOilPriceTaskQueue.offer((OilPriceTask)task);
 
         } else if(task instanceof GeocoderReverseTask) {
             ((GeocoderReverseTask)task).recycle();

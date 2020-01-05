@@ -9,7 +9,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
@@ -77,7 +76,7 @@ public class FavoriteListFragment extends DialogFragment {
 
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
 
-        mDB.favoriteModel().queryFavoriteProvider(category).observe(this, data -> {
+        mDB.favoriteModel().queryFavoriteProviders(category).observe(this, data -> {
             favoriteList = data;
             mAdapter = new FavoriteListAdapter(favoriteList);
             listView.setAdapter(mAdapter);

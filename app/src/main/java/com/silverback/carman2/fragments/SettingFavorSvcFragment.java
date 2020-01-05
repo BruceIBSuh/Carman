@@ -68,7 +68,7 @@ public class SettingFavorSvcFragment extends Fragment implements
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        mDB.favoriteModel().queryFavoriteProvider(Constants.SVC).observe(this, favoriteList -> {
+        mDB.favoriteModel().queryFavoriteProviders(Constants.SVC).observe(this, favoriteList -> {
             for(int i = 0; i < favoriteList.size(); i++) {
                 log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }

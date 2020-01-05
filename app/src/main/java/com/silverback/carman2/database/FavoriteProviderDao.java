@@ -27,10 +27,10 @@ public interface FavoriteProviderDao {
 
     // Query ther favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
-    LiveData<List<FavoriteProviderEntity>> queryFavoriteProvider(int category);
+    LiveData<List<FavoriteProviderEntity>> queryFavoriteProviders(int category);
 
-    // Retrieve the favorite station with the placeholder set first in SettingFavorGasFragment and
-    // SettingFavorSvcFragment.
+    // Retrieve the favorite station with the first-set placeholder in SettingFavorGasFragment and
+    // SettingFavorSvcFragment respectively.
     @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
 

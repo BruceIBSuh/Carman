@@ -33,8 +33,6 @@ public class PriceFavoriteRunnable implements Runnable {
     private StationPriceMethods mCallback;
     private XmlPullParserHandler xmlHandler;
 
-    private boolean isFirst;
-
 
     // Interface
     interface StationPriceMethods {
@@ -74,7 +72,7 @@ public class PriceFavoriteRunnable implements Runnable {
 
             Opinet.StationPrice stnPriceData = xmlHandler.parseStationPrice(in);
             if(stnPriceData != null) {
-                // favorite placeholder becomes first, the provider of which saves its price in the cache.
+                // if the favorite placeholder becomes first, the provider saves its price in the cache.
                 if(mCallback.getIsFirst()) {
                     log.i("First registered favorite");
                     savePriceInfo(stnPriceData);

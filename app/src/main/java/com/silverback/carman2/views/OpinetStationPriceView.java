@@ -70,7 +70,7 @@ public class OpinetStationPriceView extends LinearLayout {
     }
 
     public void addPriceView(String fuelCode) {
-
+        log.i("addPriceView");
         File stnFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
 
