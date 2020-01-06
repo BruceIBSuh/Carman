@@ -30,7 +30,7 @@ import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.threads.OilPriceTask;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.EditImageHelper;
@@ -63,7 +63,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private FirebaseStorage storage;
     private OpinetViewModel priceModel;
     private SettingPreferenceFragment settingFragment;
-    private OilPriceTask oilPriceTask;
+    private GasPriceTask gasPriceTask;
     private String distCode;
 
     // UIs
@@ -128,7 +128,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onPause() {
         super.onPause();
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
-        if(oilPriceTask != null) oilPriceTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
 
@@ -219,7 +219,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
-                oilPriceTask = ThreadManager.startOilPriceTask(this, priceModel, distCode, null);
+                gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
         }

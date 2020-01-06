@@ -25,7 +25,7 @@ public class DistrictCodeTask extends ThreadTask
         opinetDistCodeRunnable = new DistrictCodeRunnable(context, this);
     }
 
-    // Getter for the Runnable invoked by startOilPriceTask() in ThreadManager
+    // Getter for the Runnable invoked by startGasPriceTask() in ThreadManager
     Runnable getOpinetDistCodeRunnable() {
         return opinetDistCodeRunnable;
     }

@@ -98,7 +98,7 @@ public class ThreadManager {
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
-    private final Queue<OilPriceTask> mOilPriceTaskQueue;
+    private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
     private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
@@ -132,7 +132,7 @@ public class ThreadManager {
         mTaskWorkQueue = new LinkedBlockingQueue<>();
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
-        mOilPriceTaskQueue = new LinkedBlockingQueue<>();
+        mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
@@ -267,23 +267,23 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static OilPriceTask startOilPriceTask(
+    public static GasPriceTask startGasPriceTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
 
-        OilPriceTask oilPriceTask = sInstance.mOilPriceTaskQueue.poll();
+        GasPriceTask gasPriceTask = sInstance.mGasPriceTaskQueue.poll();
 
-        if(oilPriceTask == null) {
-            oilPriceTask = new OilPriceTask(context);
+        if(gasPriceTask == null) {
+            gasPriceTask = new GasPriceTask(context);
         }
 
-        oilPriceTask.initPriceTask(model, distCode, stnId);
+        gasPriceTask.initPriceTask(model, distCode, stnId);
 
-        sInstance.mDownloadThreadPool.execute(oilPriceTask.getAvgPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(oilPriceTask.getSidoPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(oilPriceTask.getSigunPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(oilPriceTask.getStationPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(gasPriceTask.getAvgPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(gasPriceTask.getSidoPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(gasPriceTask.getSigunPriceRunnable());
+        sInstance.mDownloadThreadPool.execute(gasPriceTask.getStationPriceRunnable());
 
-        return oilPriceTask;
+        return gasPriceTask;
     }
 
     // Retrieve the price of a favorite station or service.
@@ -452,8 +452,9 @@ public class ThreadManager {
         if(task instanceof LocationTask) mLocationTaskQueue.offer((LocationTask)task);
         else if(task instanceof StationListTask) mStationListTaskQueue.offer((StationListTask)task);
 
-        else if(task instanceof OilPriceTask) {
-            mOilPriceTaskQueue.offer((OilPriceTask)task);
+        else if(task instanceof GasPriceTask) {
+            ((GasPriceTask)task).recycle();
+            mGasPriceTaskQueue.offer((GasPriceTask)task);
 
         } else if(task instanceof GeocoderReverseTask) {
             ((GeocoderReverseTask)task).recycle();

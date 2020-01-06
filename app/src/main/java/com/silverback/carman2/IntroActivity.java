@@ -14,9 +14,8 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.threads.OilPriceTask;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.DistrictCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
@@ -39,7 +38,8 @@ public class IntroActivity extends BaseActivity  {
     // Objects
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
-    private OilPriceTask oilPriceTask;
+    private CarmanDatabase mDB;
+    private GasPriceTask gasPriceTask;
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
 
@@ -52,11 +52,12 @@ public class IntroActivity extends BaseActivity  {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Hide the action bar
         setContentView(R.layout.activity_intro);
 
+        // Instantiate the objects
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
+        mDB = CarmanDatabase.getDatabaseInstance(this);
         opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
         mProgBar = findViewById(R.id.progbar);
@@ -68,21 +69,20 @@ public class IntroActivity extends BaseActivity  {
         });
 
 
-        // On finishing saving the district code which was downloaded and saved,
+        // Notified of the dist
         opinetViewModel.districtCodeComplete().observe(this, isCompete -> {
-            log.i("District code task finished");
             mProgBar.setVisibility(View.INVISIBLE);
             regularInitProcess();
         });
 
-        // Being notified of the opinet price data on the worker thread of OilPriceTask,
+        // Being notified of the opinet price data on the worker thread of GasPriceTask,
         // start MainActivity and finish the progressbar
-
-        //opinetViewModel.distOilPriceComplete().observe(this, isComplete -> {
-        opinetViewModel.getOilPriceData().observe(this, sparseArray -> {
-            log.i("OilPriceTask complete: %s", ((List<Opinet.OilPrice>)sparseArray.get(0)).size());
+        opinetViewModel.getDistrictPriceComplete().observe(this, isDone -> {
+            log.i("district price complete");
+            // Save the last update time in SharedPreferences
+            mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             mProgBar.setVisibility(View.GONE);
-            startActivity(new Intent(IntroActivity.this, MainActivity.class));
+            startActivity(new Intent(this, MainActivity.class));
             finish();
         });
     }
@@ -92,7 +92,7 @@ public class IntroActivity extends BaseActivity  {
     public void onPause() {
         super.onPause();
         if(distCodeTask != null) distCodeTask = null;
-        if(oilPriceTask != null) oilPriceTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
     // The single-time process at the first-time launching
@@ -158,9 +158,9 @@ public class IntroActivity extends BaseActivity  {
             if(district == null) distCode = "0101";
             else distCode = district.get(2);
 
-            // Retrieve the providers set at the first in the favorite list in order to get the price
-            // of the gas station and display the favorite price view.
-            CarmanDatabase.getDatabaseInstance(this).favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+            // Retrieve the first-set gas station and service center in each placeholders from DB
+            // to fetch the id which is used as param to get the price, then pass it to MainActivity.
+            mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
                 for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                     if(provider.category == Constants.GAS) {
                         stnId = provider.providerId;
@@ -168,10 +168,9 @@ public class IntroActivity extends BaseActivity  {
                         break;
                     }
                 }
-                // Starts OilPriceTask, the results of which is notified OpinetViewModel.
-                oilPriceTask = ThreadManager.startOilPriceTask(this, opinetViewModel, distCode, stnId);
-                // Save the last update time in SharedPreferences
-                mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+                // Starts GasPriceTask, the results of which is notified OpinetViewModel.
+                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+
             });
 
         } else {

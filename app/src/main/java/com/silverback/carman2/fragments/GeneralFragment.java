@@ -46,8 +46,8 @@ import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.OilPriceTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -79,10 +79,6 @@ public class GeneralFragment extends Fragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
-    // Constants
-    private final int NOSTATION = 0;
-    private final int NETWORK = 1;
-
     // Objects
     private CarmanDatabase mDB;
     private SharedPreferences mSettings;
@@ -96,7 +92,7 @@ public class GeneralFragment extends Fragment implements
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
-    private OilPriceTask oilPriceTask;
+    private GasPriceTask gasPriceTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
@@ -133,7 +129,9 @@ public class GeneralFragment extends Fragment implements
         mSettings = ((MainActivity)getActivity()).getSettings();
         // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
         isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
+
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
@@ -144,7 +142,6 @@ public class GeneralFragment extends Fragment implements
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
         locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -220,8 +217,11 @@ public class GeneralFragment extends Fragment implements
         // Query the favorite provider set in the first place in SettingPreferenceActivity
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                if(provider.category == Constants.GAS) stnId = provider.providerId;
-                log.i("Favorite Station ID: %s", stnId);
+                if(provider.category == Constants.GAS) {
+                    stnId = provider.providerId;
+                    log.i("Favorite Station ID: %s", stnId);
+                    break;
+                }
             }
         });
 
@@ -309,9 +309,8 @@ public class GeneralFragment extends Fragment implements
 
         int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
         log.i("num of favorite: %s", numFavorite);
-
+        // In case there is no favorite provider or set a new favorite one first time
         if(numFavorite == 0 || numFavorite == 1) {
-            pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
             pricePagerAdapter.notifyDataSetChanged();
         }
     }
@@ -324,7 +323,7 @@ public class GeneralFragment extends Fragment implements
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
-        if(oilPriceTask != null) oilPriceTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
     // The following 2 callbacks are initially invoked by AdapterView.OnItemSelectedListener

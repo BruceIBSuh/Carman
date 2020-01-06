@@ -1,7 +1,9 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Process;
+import android.util.SparseArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -14,16 +16,18 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
-public class OilPriceRunnable implements Runnable {
+public class GasPriceRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(OilPriceRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(GasPriceRunnable.class);
 
     // constants
     private static final String API_KEY = "F186170711";
@@ -53,14 +57,14 @@ public class OilPriceRunnable implements Runnable {
 
     /*
      * An interface that defines methods that ThreadTask implements. An instance of
-     * ThreadTask passes itself to an OilPriceRunnable instance through the
-     * OilPriceRunnable constructor, after which the two instances can access each other's
+     * ThreadTask passes itself to an GasPriceRunnable instance through the
+     * GasPriceRunnable constructor, after which the two instances can access each other's
      * variables.
      */
     public interface OpinetPriceListMethods {
         void setPriceDownloadThread(Thread currentThread);
         void handlePriceTaskState(int state);
-        void setOilPrice(int sort, Object obj);
+        void addPriceCount();
 
         int getTaskCount();
         String getDistrictCode();
@@ -68,7 +72,7 @@ public class OilPriceRunnable implements Runnable {
     }
 
     // Constructor
-    OilPriceRunnable(Context context, OpinetPriceListMethods task, int category) {
+    GasPriceRunnable(Context context, OpinetPriceListMethods task, int category) {
         this.context = context.getApplicationContext();
         this.category = category;
         this.task = task;
@@ -107,7 +111,7 @@ public class OilPriceRunnable implements Runnable {
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
                     }
 
-                    task.setOilPrice(0, avgList);
+                    task.addPriceCount();
                     break;
 
                 case SIDO: // Sido price
@@ -126,7 +130,7 @@ public class OilPriceRunnable implements Runnable {
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                     }
 
-                    task.setOilPrice(1, sidoList);
+                    task.addPriceCount();
                     break;
 
                 case SIGUN: // Sigun price
@@ -145,8 +149,10 @@ public class OilPriceRunnable implements Runnable {
                         savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
                     }
 
-                    task.setOilPrice(2, sigunList);
+                    task.addPriceCount();
+                    //task.setOilPrice(2, sigunList);
                     break;
+
 
                 case STATION:
                     log.i("Station price thread:%s", Thread.currentThread());
@@ -159,12 +165,15 @@ public class OilPriceRunnable implements Runnable {
 
                     Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(in);
                     if(stnPrice != null) {
+                        calcStationPriceDiff(stnPrice);
                         log.i("Station Price: %s, %s", stnPrice.getStnName(), stnPrice.getStnPrice());
                         savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
                     }
 
-                    task.setOilPrice(3, stnPrice);
+                    task.addPriceCount();
                     break;
+
+
             }
 
 
@@ -182,7 +191,7 @@ public class OilPriceRunnable implements Runnable {
 
         } finally {
 
-            if(task.getTaskCount() == 3) {
+            if(task.getTaskCount() == 4) {
                 log.i("Runnable count: %s", task.getTaskCount());
                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
             }
@@ -211,6 +220,30 @@ public class OilPriceRunnable implements Runnable {
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
+    }
+
+    private Map<String, Float> calcStationPriceDiff(Opinet.StationPrice currentPrice) {
+
+        File sidoFile = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        Uri uriSido = Uri.fromFile(sidoFile);
+
+        try(InputStream is = context.getContentResolver().openInputStream(uriSido);
+            ObjectInputStream ois = new ObjectInputStream(is)){
+            Opinet.StationPrice prevPrice = (Opinet.StationPrice)ois.readObject();
+
+            Map<String, Float> current = currentPrice.getStnPrice();
+            Map<String, Float> prev = prevPrice.getStnPrice();
+
+        } catch(FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e);
+        } catch(IOException e) {
+            log.e("IOException: %s", e);
+        } catch(ClassNotFoundException e) {
+            log.e("ClassNotFoundException: %s", e);
+        }
+
+        return null;
+
     }
 
 }

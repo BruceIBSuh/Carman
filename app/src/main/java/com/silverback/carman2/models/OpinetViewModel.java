@@ -27,7 +27,7 @@ public class OpinetViewModel extends ViewModel {
         return distCode;
     }
 
-    public MutableLiveData<Boolean> distOilPriceComplete() {
+    public MutableLiveData<Boolean> getDistrictPriceComplete() {
         if(districtPrice == null) districtPrice = new MutableLiveData<>();
         return districtPrice;
     }

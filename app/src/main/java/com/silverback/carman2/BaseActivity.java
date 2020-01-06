@@ -79,7 +79,6 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         checkPermissions();
-
     }
 
     /*

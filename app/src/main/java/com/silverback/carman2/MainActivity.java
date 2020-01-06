@@ -9,11 +9,15 @@ import android.view.MenuItem;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
+import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -26,8 +30,13 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
+    private CarmanDatabase mDB;
+    private OpinetViewModel opinetViewModel;
     //private StationInfoTask mapInfoTask;
     //private ActionBarDrawerToggle drawerToggle;
+
+    // Fields
+    private String stnId;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -39,7 +48,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
         String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
-
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);
@@ -60,7 +68,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 .commit();
 
         // Permission Check
-        checkPermissions();
+        //checkPermissions();
     }
 
 
