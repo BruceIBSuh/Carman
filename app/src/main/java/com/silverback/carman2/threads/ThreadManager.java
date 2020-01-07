@@ -100,7 +100,7 @@ public class ThreadManager {
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
-    private final Queue<PriceFavoriteTask> mPriceFavoriteTaskQueue;
+    private final Queue<FavoritePriceTask> mFavoritePriceTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
@@ -134,7 +134,7 @@ public class ThreadManager {
         mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mTabPagerTaskQueue = new LinkedBlockingQueue<>();
-        mPriceFavoriteTaskQueue = new LinkedBlockingQueue<>();
+        mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
@@ -290,11 +290,11 @@ public class ThreadManager {
     // boolean isFirst indicates that when it is set to true, it is the first favorite which shows
     // the price info in the main activity as the data is saved in the cache directory.
     // Otherwise, it just fetches the price of a favorite when selected out the list.
-    public static PriceFavoriteTask startFavoritePriceTask(
+    public static FavoritePriceTask startFavoritePriceTask(
             Context context, OpinetViewModel model, String stnId, boolean isFirst) {
 
-        PriceFavoriteTask stnPriceTask = (PriceFavoriteTask)sInstance.mTaskWorkQueue.poll();
-        if(stnPriceTask == null) stnPriceTask = new PriceFavoriteTask(context);
+        FavoritePriceTask stnPriceTask = sInstance.mFavoritePriceTaskQueue.poll();
+        if(stnPriceTask == null) stnPriceTask = new FavoritePriceTask(context);
 
         stnPriceTask.initTask(model, stnId, isFirst);
         sInstance.mDownloadThreadPool.execute(stnPriceTask.getPriceRunnableStation());
@@ -456,8 +456,12 @@ public class ThreadManager {
             mStationListTaskQueue.offer((StationListTask)task);
 
         } else if(task instanceof GasPriceTask) {
-            ((GasPriceTask)task).recycle();
-            mGasPriceTaskQueue.offer((GasPriceTask)task);
+            ((GasPriceTask) task).recycle();
+            mGasPriceTaskQueue.offer((GasPriceTask) task);
+
+        } else if(task instanceof FavoritePriceTask) {
+            ((FavoritePriceTask)task).recycle();
+            mFavoritePriceTaskQueue.offer((FavoritePriceTask)task);
 
         } else if(task instanceof GeocoderReverseTask) {
             ((GeocoderReverseTask)task).recycle();

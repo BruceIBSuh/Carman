@@ -20,9 +20,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
-public class PriceFavoriteRunnable implements Runnable {
+public class FavoritePriceRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(PriceFavoriteRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavoritePriceRunnable.class);
 
     private static final String API_KEY = "F186170711";
     private static final String OPINET = "http://www.opinet.co.kr/api/";
@@ -44,7 +44,7 @@ public class PriceFavoriteRunnable implements Runnable {
     }
 
     // Constructor
-    PriceFavoriteRunnable(Context context, StationPriceMethods callback) {
+    FavoritePriceRunnable(Context context, StationPriceMethods callback) {
         mContext = context;
         mCallback = callback;
         xmlHandler = new XmlPullParserHandler();
@@ -76,7 +76,7 @@ public class PriceFavoriteRunnable implements Runnable {
                 if(mCallback.getIsFirst()) {
                     log.i("First registered favorite");
                     savePriceInfo(stnPriceData);
-                    mCallback.saveStationPriceData();
+
                 // a provider selected in FavoriteListFragment, the price of which isn't saved.
                 } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());
 
@@ -104,16 +104,17 @@ public class PriceFavoriteRunnable implements Runnable {
     private void savePriceInfo(Object obj) {
         final String fName = Constants.FILE_CACHED_STATION_PRICE;
         File file = new File(mContext.getApplicationContext().getCacheDir(), fName);
-        FileOutputStream fos;
-        ObjectOutputStream oos;
+        //FileOutputStream fos;
+        //ObjectOutputStream oos;
 
-        try {
-            fos = new FileOutputStream(file);
-            oos = new ObjectOutputStream(fos);
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            //fos = new FileOutputStream(file);
+            //oos = new ObjectOutputStream(fos);
             oos.writeObject(obj);
-            fos.close();
-            oos.close();
-
+            //fos.close();
+            //oos.close();
+            mCallback.saveStationPriceData();
         } catch (FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e.getMessage());
         } catch (IOException e) {

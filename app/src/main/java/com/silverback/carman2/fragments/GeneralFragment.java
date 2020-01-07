@@ -214,7 +214,13 @@ public class GeneralFragment extends Fragment implements
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
 
+        mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
+            log.i("Favorite Number: %s", num);
+            if(num <= 1) pricePagerAdapter.notifyDataSetChanged();
+        });
+
         // Query the favorite provider set in the first place in SettingPreferenceActivity
+        /*
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) {
@@ -224,6 +230,7 @@ public class GeneralFragment extends Fragment implements
                 }
             }
         });
+         */
 
         /*
          * Retrieve the queried results of the latest gas and service statements as LiveData from
@@ -307,12 +314,18 @@ public class GeneralFragment extends Fragment implements
     public void onResume() {
         super.onResume();
 
-        int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+        //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+
+
+        /*
         log.i("num of favorite: %s", numFavorite);
         // In case there is no favorite provider or set a new favorite one first time
-        if(numFavorite == 0 || numFavorite == 1) {
+        if(numFavorite <= 1) {
             pricePagerAdapter.notifyDataSetChanged();
         }
+
+         */
+
     }
 
     @Override

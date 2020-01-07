@@ -27,7 +27,7 @@ import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.threads.PriceFavoriteTask;
+import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
@@ -48,7 +48,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
     private SparseArray<DocumentSnapshot> snapshotList;
-    private PriceFavoriteTask priceFavoriteTask;
+    private FavoritePriceTask favoritePriceTask;
     private OpinetViewModel priceViewModel;
 
     // Constructor
@@ -113,7 +113,7 @@ public class SettingFavorGasFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
-        if(priceFavoriteTask != null) priceFavoriteTask = null;
+        if(favoritePriceTask != null) favoritePriceTask = null;
     }
 
     @Override
@@ -146,7 +146,7 @@ public class SettingFavorGasFragment extends Fragment implements
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
-            priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId, true);
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId, true);
         }
     }
 

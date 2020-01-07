@@ -15,6 +15,8 @@ import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.threads.FavoritePriceTask;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetSidoPriceView;
@@ -31,7 +33,8 @@ public class PricePagerFragment extends Fragment {
 
     // Objects
     private CarmanDatabase mDB;
-    //private OpinetViewModel opinetModel;
+    private FavoritePriceTask favoritePriceTask;
+    private OpinetViewModel opinetModel;
     private int page;
     private String fuelCode;
 
@@ -55,7 +58,7 @@ public class PricePagerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        //opinetModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        opinetModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
     }
 
     @Override
@@ -84,22 +87,20 @@ public class PricePagerFragment extends Fragment {
 
                 // Check if any favorite gas station has registered. The first registered station,
                 // if any, stores its name and price in the internal cache directory.
-
-                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                if(numFavorite == 0) stnPriceView.removePriceView();
-                else stnPriceView.addPriceView(fuelCode);
-
-                mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
-                    for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                        if(provider.category == Constants.GAS) {
-                            String stnId = provider.providerId;
-                            log.i("First-set favorite station: %s", stnId);
-                            break;
-                        }
+                mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
+                    log.i("Favorite Number: %s", num);
+                    if(num == 0) stnPriceView.removePriceView();
+                    else {
+                        String stnId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
+                        log.i("Station ID: %s", stnId);
+                        favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
                     }
-                    // Starts GasPriceTask, the results of which is notified OpinetViewModel.
-                    //gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+                });
 
+                // Add the favorite station view in PricePagerFragment only when the task has fetched
+                // the price which is cached in the internal storage.
+                opinetModel.favoritePriceComplete().observe(this, isDone -> {
+                    if(isDone) stnPriceView.addPriceView(fuelCode);
                 });
 
                 return secondPage;

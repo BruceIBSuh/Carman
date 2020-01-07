@@ -92,7 +92,6 @@ public class GasPriceRunnable implements Runnable {
 
         try {
             switch(category) {
-
                 case AVG: // Average oil price
                     log.i("AvgPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());

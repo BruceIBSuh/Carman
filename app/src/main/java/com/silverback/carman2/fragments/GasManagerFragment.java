@@ -38,8 +38,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.PriceFavoriteTask;
-import com.silverback.carman2.threads.ThreadTask;
+import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
@@ -79,7 +78,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FavoriteGeofenceHelper geofenceHelper;
     private StationListTask stationListTask;
     private StationInfoTask stationInfoTask;
-    private PriceFavoriteTask priceFavoriteTask;
+    private FavoritePriceTask favoritePriceTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
 
@@ -271,7 +270,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             btnChangeDate.setVisibility(View.GONE);
 
             // Task to fetch the gas price of a station with the station ID.
-            priceFavoriteTask = ThreadManager.startFavoritePriceTask(
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(
                     getContext(), opinetViewModel, geoStnId, false);
         }
 
@@ -321,7 +320,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             stnId = entity.providerId;
             isFavoriteGas = true;
 
-            priceFavoriteTask = ThreadManager.startFavoritePriceTask(
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(
                     getContext(), opinetViewModel, entity.providerId, false);
         });
 
@@ -361,7 +360,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onDestroy() {
-        if(priceFavoriteTask != null) priceFavoriteTask = null;
+        if(favoritePriceTask != null) favoritePriceTask = null;
         if(stationListTask != null) stationListTask = null;
         if(stationInfoTask != null) stationInfoTask = null;
 
@@ -478,7 +477,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                     final String fName = Constants.FILE_CACHED_STATION_PRICE;
                     File file = new File(getContext().getApplicationContext().getCacheDir(), fName);
                     if(!file.exists()) {
-                        priceFavoriteTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
+                        favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
                     }
                 }
 

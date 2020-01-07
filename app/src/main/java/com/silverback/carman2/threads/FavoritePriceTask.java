@@ -6,7 +6,7 @@ import com.silverback.carman2.models.OpinetViewModel;
 
 import java.util.Map;
 
-public class PriceFavoriteTask extends ThreadTask implements PriceFavoriteRunnable.StationPriceMethods {
+public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnable.StationPriceMethods {
 
     // Objects
     private OpinetViewModel viewModel;
@@ -14,9 +14,9 @@ public class PriceFavoriteTask extends ThreadTask implements PriceFavoriteRunnab
     private String stnId;
     private boolean isFirst;
 
-    PriceFavoriteTask(Context context) {
+    FavoritePriceTask(Context context) {
         super();
-        mPriceRunnableStation = new PriceFavoriteRunnable(context, this);
+        mPriceRunnableStation = new FavoritePriceRunnable(context, this);
     }
 
     void initTask(OpinetViewModel model, String stnId, boolean isFirst) {
@@ -52,5 +52,9 @@ public class PriceFavoriteTask extends ThreadTask implements PriceFavoriteRunnab
     @Override
     public void saveStationPriceData() {
         viewModel.favoritePriceComplete().postValue(true);
+    }
+
+    public void recycle() {
+        isFirst = false;
     }
 }
