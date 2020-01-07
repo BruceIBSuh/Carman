@@ -11,9 +11,11 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
+import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetSidoPriceView;
 import com.silverback.carman2.views.OpinetSigunPriceView;
@@ -86,18 +88,20 @@ public class PricePagerFragment extends Fragment {
                 int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
                 if(numFavorite == 0) stnPriceView.removePriceView();
                 else stnPriceView.addPriceView(fuelCode);
-                /*
-                mDB.favoriteModel().firstFavRegLiveData(Constants.GAS)
-                        .observe(getViewLifecycleOwner(), count -> {
-                            if( count == 0) {
-                                log.i("First set favorite void");
-                                stnPriceView.removePriceView();
-                            } else {
-                                stnPriceView.addPriceView(fuelCode);
-                            }
 
-                        });
-                */
+                mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+                    for(FavoriteProviderDao.FirstSetFavorite provider : data) {
+                        if(provider.category == Constants.GAS) {
+                            String stnId = provider.providerId;
+                            log.i("First-set favorite station: %s", stnId);
+                            break;
+                        }
+                    }
+                    // Starts GasPriceTask, the results of which is notified OpinetViewModel.
+                    //gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+
+                });
+
                 return secondPage;
         }
 

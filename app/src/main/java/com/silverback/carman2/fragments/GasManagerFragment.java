@@ -171,15 +171,21 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // FavoriteGeofenceHelper class notifies whether a specific station is successfully added to
         // or removed out of the favorite list.
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
+            // Count the number of the favorite provider to handle the number becomes one or zero.
+
             @Override
             public void notifyAddGeofenceCompleted() {
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
+                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                log.i("num favorite: %s", numFavorite);
             }
             @Override
             public void notifyRemoveGeofenceCompleted() {
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
+                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                log.i("num favorite: %s", numFavorite);
             }
             @Override
             public void notifyAddGeofenceFailed() {
@@ -438,11 +444,14 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Remove the station both from the local db and Firestore, the result of which is notified
         // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
         } else if(isFavoriteGas) {
-            //Snackbar.make(constraintLayout, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_LONG).show();
-            geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId, Constants.GAS);
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            Snackbar snackbar = Snackbar.make(
+                    getView(), getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
+            snackbar.setAction(R.string.popup_msg_confirm, view -> {
+                geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId, Constants.GAS);
+                btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            });
 
-            //firestore.collection("gas_eval").document(stnId).update("favorite_num", FieldValue.increment(-1));
+            snackbar.show();
 
         } else {
             // First, check if the favorite is up to the limit.
@@ -614,6 +623,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             } catch(ParseException e) {
                 log.e("ParseException: %s", e.getMessage());
             }
+        }
+    }
+
+    // Handle the favorite provider is registered first time or becomes empty, which should be
+    // notified to PricePagerAdapter
+    private void handleSingleFavoriteProvider(){
+        int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+        if(numFavorite == 1) {
+
+        } else if(numFavorite == 0) {
+
         }
     }
 

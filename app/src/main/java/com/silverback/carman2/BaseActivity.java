@@ -168,7 +168,7 @@ public class BaseActivity extends AppCompatActivity {
     // value passed from SettingsActivity that is true when the DistCode has changed,
     // then decide whether to newly update for the opinet price list or not
     // Big Bug here
-    protected boolean checkUpdateOilPrice() {
+    protected boolean checkPriceUpdate() {
         long currentTime = System.currentTimeMillis();
         long lastUpdate = mSettings.getLong(Constants.OPINET_LAST_UPDATE, 0L);
         return (currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;

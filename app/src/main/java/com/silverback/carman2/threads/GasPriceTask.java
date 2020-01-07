@@ -73,25 +73,11 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         return index;
     }
 
-    /*
-    @Override
-    public synchronized void setOilPrice(int mode, Object obj) {
-        index++;
-        sparseArray.put(mode, obj);
-        // When initiating the app first time, the station id doesn't exist. Thus, no price info
-        // of the favorite station shouldn't be provided. Other than this case, the price info should
-        // be provided 4 times(avg, sido, sigun, station).
-        //if(index >= ((stnId == null)? 3 : 4)) viewModel.getDistrictPriceComplete().postValue(true);
-        if(index == 4) viewModel.getOilPriceData().postValue(sparseArray);
-    }
-
-     */
-
     @Override
     public void addPriceCount() {
         index++;
         log.i("Index: %s", index);
-        if(index >= 3) viewModel.getDistrictPriceComplete().postValue(true);
+        if(index == 4) viewModel.getDistrictPriceComplete().postValue(true);
     }
 
     @Override

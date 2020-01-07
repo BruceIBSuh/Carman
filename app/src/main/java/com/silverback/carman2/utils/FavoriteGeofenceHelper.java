@@ -3,8 +3,8 @@ package com.silverback.carman2.utils;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.text.TextUtils;
+
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
@@ -39,7 +39,7 @@ public class FavoriteGeofenceHelper {
     private CarmanDatabase mDB;
     private FavoriteProviderEntity favoriteModel;
 
-    private DocumentReference evalDocument;//Set or update the "favorite_num" by category.
+    private DocumentReference evalReference;//Set or update the "favorite_num" by category.
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
     private PendingIntent mGeofencePendingIntent;
@@ -68,34 +68,6 @@ public class FavoriteGeofenceHelper {
     public void setGeofenceListener(OnGeofenceListener listener) {
         mListener = listener;
     }
-
-    // Set params required to create geofence objects
-    /*
-    public void setGeofenceParam(int category, String id, Location location) {
-        this.category = category;
-        geofenceId = id;
-        geofenceLocation = location;
-    }
-    */
-
-
-    // Create a geofence, setting the desired location, radius, duration and transition type.
-    // Set the stationId or the serviceId(registered time) respectively as the key of Geofence.
-    /*
-    private void createGeofence(String geofenceId, GeoPoint geoPoint){
-
-        if(mGeofenceList == null) mGeofenceList = new ArrayList<>();
-        mGeofenceList.add(new Geofence.Builder()
-                .setRequestId(geofenceId)
-                .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)//bitwise OR only
-                //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
-                //.setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
-                .build()
-        );
-    }
-    */
 
     // Specify the geofences to monitor and to set how related geofence events are triggered.
     private GeofencingRequest getGeofencingRequest() {
@@ -136,7 +108,6 @@ public class FavoriteGeofenceHelper {
         String address;
 
         switch(category) {
-
             case Constants.GAS:
                 // Get the location data saved as KATEC and convert the data into GEO
                 GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
@@ -147,7 +118,7 @@ public class FavoriteGeofenceHelper {
                 address = TextUtils.isEmpty(snapshot.getString("new_addrs"))?
                         snapshot.getString("old_addrs"):snapshot.getString("new_addrs");
 
-                evalDocument = firestore.collection("gas_eval").document(providerId);
+                evalReference = firestore.collection("gas_eval").document(providerId);
                 break;
 
             case Constants.SVC:
@@ -162,7 +133,7 @@ public class FavoriteGeofenceHelper {
                 providerCode = snapshot.getString("svc_code");
                 address = snapshot.getString("address");
 
-                evalDocument = firestore.collection("svc_eval").document(providerId);
+                evalReference = firestore.collection("svc_eval").document(providerId);
                 break;
 
             default:
@@ -197,8 +168,7 @@ public class FavoriteGeofenceHelper {
         // Then, geofences should be saved in the Favorite table as far as they successfully added to
         // geofences. Otherwise, show the error messages using GeofenceStatusCodes
         try {
-            mGeofencingClient
-                    .addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
                         // Insert the provider into the local db(FavoriteProviderEntity)
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
@@ -218,15 +188,15 @@ public class FavoriteGeofenceHelper {
                                 });
 
                         // Update the favorite_num field of the evaluation collection
-                        evalDocument.get().addOnCompleteListener(task -> {
+                        evalReference.get().addOnCompleteListener(task -> {
                             if(task.isSuccessful()) {
                                 DocumentSnapshot doc = task.getResult();
                                 if(doc != null && doc.exists()) {
-                                    evalDocument.update("favorite_num", FieldValue.increment(1));
+                                    evalReference.update("favorite_num", FieldValue.increment(1));
                                 } else {
                                     Map<String, Integer> favorite = new HashMap<>();
                                     favorite.put("favorite_num", 1);
-                                    evalDocument.set(favorite);
+                                    evalReference.set(favorite);
                                 }
                             }
                         });
@@ -259,10 +229,10 @@ public class FavoriteGeofenceHelper {
 
         switch(category) {
             case Constants.GAS:
-                evalDocument = firestore.collection("gas_eval").document(id);
+                evalReference = firestore.collection("gas_eval").document(id);
                 break;
             case Constants.SVC:
-                evalDocument = firestore.collection("svc_eval").document(id);
+                evalReference = firestore.collection("svc_eval").document(id);
                 break;
         }
 
@@ -275,11 +245,11 @@ public class FavoriteGeofenceHelper {
                 firestore.collection("users").document(userId)
                         .collection("geofence").document(id).delete()
                         .addOnSuccessListener(bVoid -> log.i("Successfully deleted the geofence"));
-                evalDocument.get().addOnCompleteListener(task -> {
+                evalReference.get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot doc = task.getResult();
                         if(doc.getDouble("favorite_num") > 0)
-                            evalDocument.update("favorite_num", FieldValue.increment(-1));
+                            evalReference.update("favorite_num", FieldValue.increment(-1));
                     }
                 });
 

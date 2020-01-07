@@ -185,6 +185,7 @@ public class Opinet  {
         private String stnName;
         private String productCd;
         private Map<String, Float> mapPrice;
+        private Map<String, Float> priceDiff;
 
         public StationPrice() {
             mapPrice = new HashMap<>();
@@ -225,6 +226,13 @@ public class Opinet  {
             mapPrice.put(prodCd, price);
         }
 
+        public Map<String, Float> getDiff() {
+            return priceDiff;
+        }
+        public void setPriceDiff(Map<String, Float> diff) {
+            priceDiff = diff;
+        }
+
         @NonNull
         @Override
         public String toString(){
@@ -232,7 +240,8 @@ public class Opinet  {
                     + "\nstnCompany: " + getStnCompany()
                     + "\nstnName: " + getStnName()
                     + "\nproductCd: " + getProductCd()
-                    + "\nprice: " + getStnPrice();
+                    + "\nprice: " + getStnPrice()
+                    + "\ndiff: " + getDiff();
         }
     }
 

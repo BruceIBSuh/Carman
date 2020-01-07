@@ -9,16 +9,13 @@ import android.view.MenuItem;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 
@@ -140,13 +137,18 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     // App closing process, in which cache-clearing code be required.
     // FinishAppDialogFragment.NoticeDialogListener invokes
     // to handle how the dialog buttons act according to positive and negative.
+    // The station price file named FILE_CACHED_STATION_PRICE is excluded to delete because
+    // it should retain the price to calculate the difference in the current and previous price.
+
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
-        //boolean isDeleted = false;
         File cacheDir = getCacheDir();
-        if(cacheDir != null && checkUpdateOilPrice()) {
-            for (File file : cacheDir.listFiles()) file.delete();
+        if(cacheDir != null && checkPriceUpdate()) {
+            for (File file : cacheDir.listFiles()) {
+                if(!file.getName().equals(Constants.FILE_CACHED_STATION_PRICE))
+                    file.delete();
+            }
         }
 
         // Kill all the threads.

@@ -41,7 +41,6 @@ public abstract class OpinetPriceView extends LinearLayout {
     // Abstract Methods
     protected abstract void getAttributes(Context context, AttributeSet attrs);
     public abstract void addPriceView(String fuelCode);
-    //public abstract void showView();
 
     // Methods to switch the text color according to whether the price gets higher or lower.
     protected void setColoredTextView(TextView textView, float price, float diff) {
@@ -57,9 +56,7 @@ public abstract class OpinetPriceView extends LinearLayout {
         ssb.setSpan(new ForegroundColorSpan(colorDiff), start, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.append(")");
 
-        // To set font size, use the px value in dimen.xml, then covert it to sp using TypedValue.
-        // COMPLEX_UNIT_SP
-        //tvAvgPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        log.i("Diff: %s, %s", price, diff);
         textView.setText(ssb);
 
     }

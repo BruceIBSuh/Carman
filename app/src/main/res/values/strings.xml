@@ -289,6 +289,9 @@
     <string name="service_item_price_header">소요 비용</string>
     <string name="service_item_memo">추가정보</string>
 
+    <!-- Pop-up messages in General-->
+    <string name="popup_msg_confirm">확인</string>
+
     <!-- Error Messages -->
     <string name="errror_no_network">네트워크 연결에 실패하였습니다\n확인 후 다시 연결해 주세요</string>
     <string name="error_index_retry">다시 연결</string>

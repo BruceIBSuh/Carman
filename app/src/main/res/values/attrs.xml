@@ -17,8 +17,8 @@
     </declare-styleable>
 
     <declare-styleable name="OpinetStationPriceView">
-        <attr name="stationPriceUp" format="color|reference" />
-        <attr name="stationPriceDown" format="color|reference" />
+        <attr name="stnPriceUp" format="color|reference" />
+        <attr name="stnPriceDown" format="color|reference" />
     </declare-styleable>
 
     <declare-styleable name="StationRecyclerView">

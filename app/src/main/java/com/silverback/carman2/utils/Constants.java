@@ -12,7 +12,7 @@ public class Constants {
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
     //public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
 
-    public static final long OPINET_UPDATE_INTERVAL = 1000;//* 60 * 60 * 6;//Interval for downloading gas prices from Opinet (6 hrs)
+    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60 * 6;//Interval for downloading gas prices from Opinet (6 hrs)
     public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
     static final int INTERVAL = 1000 * 10; //Location update interval set by the app
     static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.
@@ -32,12 +32,12 @@ public class Constants {
     // Board Pagination
     public static final int PAGINATION = 25;
 
-    // File names
-    public static final String FILE_CACHED_AVG_PRICE = "AvgPrice";
-    public static final String FILE_CACHED_SIDO_PRICE = "SidoPrice";
-    public static final String FILE_CACHED_SIGUN_PRICE = "SigunPrice";
-    public static final String FILE_CACHED_STATION_PRICE = "StationPrice";
-    public static final String FILE_DISTRICT_CODE = "DistrictCode";
+    // File names for FileProvider
+    public static final String FILE_CACHED_AVG_PRICE = "avgPrice";
+    public static final String FILE_CACHED_SIDO_PRICE = "sidoPrice";
+    public static final String FILE_CACHED_SIGUN_PRICE = "sigunPrice";
+    public static final String FILE_CACHED_STATION_PRICE = "stationPrice";
+    public static final String FILE_DISTRICT_CODE = "districtCode";
     public static final String FILE_CACHED_NEAR_STATIONS = "tmpStnList";
     public static final String OPINET_LAST_UPDATE = "com.ibnco.carman.UPDATE";
 

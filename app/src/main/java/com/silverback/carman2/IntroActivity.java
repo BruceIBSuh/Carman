@@ -152,7 +152,7 @@ public class IntroActivity extends BaseActivity  {
 
         // The price check time set in Constants.OPINET_UPDATE_INTERVAL has lapsed
         // or no file as to the average oil price exists b/c it is the first-time launching.
-        if(checkUpdateOilPrice() || !file.exists()) {
+        if(checkPriceUpdate() || !file.exists()) {
             log.i("Receiving the oil price");
             List<String> district = convJSONArrayToList();
             if(district == null) distCode = "0101";

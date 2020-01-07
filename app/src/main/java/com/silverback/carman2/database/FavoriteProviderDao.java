@@ -6,7 +6,9 @@ import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
+import androidx.room.PrimaryKey;
 import androidx.room.Query;
+import androidx.room.RoomWarnings;
 import androidx.room.Update;
 
 import java.util.List;
@@ -21,9 +23,6 @@ public interface FavoriteProviderDao {
     // The total number of the favorite stations and service centers
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
     int countFavoriteNumber(int category);
-
-    @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
-    LiveData<Integer> firstFavRegLiveData(int category);
 
     // Query ther favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
@@ -77,6 +76,7 @@ public interface FavoriteProviderDao {
         @ColumnInfo(name = "favorite_id")
         public String providerId;
     }
+
 
     class ResetFavoriteProviders {
         @ColumnInfo(name = "favrotie _name")

@@ -449,10 +449,13 @@ public class ThreadManager {
 
     private void recycleTask(ThreadTask task) {
         log.i("RecycleTask: %s", task);
-        if(task instanceof LocationTask) mLocationTaskQueue.offer((LocationTask)task);
-        else if(task instanceof StationListTask) mStationListTaskQueue.offer((StationListTask)task);
+        if(task instanceof LocationTask) {
+            mLocationTaskQueue.offer((LocationTask)task);
 
-        else if(task instanceof GasPriceTask) {
+        } else if(task instanceof StationListTask) {
+            mStationListTaskQueue.offer((StationListTask)task);
+
+        } else if(task instanceof GasPriceTask) {
             ((GasPriceTask)task).recycle();
             mGasPriceTaskQueue.offer((GasPriceTask)task);
 

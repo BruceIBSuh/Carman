@@ -3,7 +3,6 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Process;
-import android.util.SparseArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -21,6 +20,7 @@ import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -65,7 +65,6 @@ public class GasPriceRunnable implements Runnable {
         void setPriceDownloadThread(Thread currentThread);
         void handlePriceTaskState(int state);
         void addPriceCount();
-
         int getTaskCount();
         String getDistrictCode();
         String getStationId();
@@ -106,8 +105,6 @@ public class GasPriceRunnable implements Runnable {
                     List<Opinet.OilPrice> avgList = xmlHandler.parseOilPrice(in);
                     if(!avgList.isEmpty()) {
                         avgList.remove(avgList.get(3)); // Exclude Kerotene
-                        //task.handlePriceTaskState(DOWNLOAD_AVG_PRICE_COMPLETE);
-                        //task.setAvgPrice(avgList);
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
                     }
 
@@ -125,8 +122,6 @@ public class GasPriceRunnable implements Runnable {
 
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
-                        //task.handlePriceTaskState(DOWNLOAD_SIDO_PRICE_COMPLETE);
-                        //task.setSidoPrice(sidoList);
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                     }
 
@@ -144,15 +139,11 @@ public class GasPriceRunnable implements Runnable {
 
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
-                        //task.handlePriceTaskState(DOWNLOAD_SIGUN_PRICE_COMPLETE);
-                        //task.setSigunPrice(sigunList);
                         savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
                     }
 
                     task.addPriceCount();
-                    //task.setOilPrice(2, sigunList);
                     break;
-
 
                 case STATION:
                     log.i("Station price thread:%s", Thread.currentThread());
@@ -163,19 +154,15 @@ public class GasPriceRunnable implements Runnable {
 
                     if(Thread.interrupted()) throw new InterruptedException();
 
-                    Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(in);
-                    if(stnPrice != null) {
-                        calcStationPriceDiff(stnPrice);
-                        log.i("Station Price: %s, %s", stnPrice.getStnName(), stnPrice.getStnPrice());
-                        savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
+                    Opinet.StationPrice stationPrice = xmlHandler.parseStationPrice(in);
+                    if(stationPrice != null) {
+                        saveStationPriceWithDiff(stationPrice);
+                        //savePriceInfo(stationPrice, Constants.FILE_CACHED_STATION_PRICE);
                     }
 
                     task.addPriceCount();
                     break;
-
-
             }
-
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
@@ -222,17 +209,48 @@ public class GasPriceRunnable implements Runnable {
         }
     }
 
-    private Map<String, Float> calcStationPriceDiff(Opinet.StationPrice currentPrice) {
 
-        File sidoFile = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
-        Uri uriSido = Uri.fromFile(sidoFile);
+    // Retrieve the station price previously saved in the internal storage, then compare it
+    // with the current price to calculate the price difference, which is passed to Opinet.StationPrice
+    // and save the object in the internal storage
+    private synchronized void saveStationPriceWithDiff(Opinet.StationPrice stationPrice) {
 
-        try(InputStream is = context.getContentResolver().openInputStream(uriSido);
-            ObjectInputStream ois = new ObjectInputStream(is)){
+        File stnFile = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        Uri stnUri = Uri.fromFile(stnFile);
+
+        if(!stnFile.exists()) {
+            savePriceInfo(stationPrice, Constants.FILE_CACHED_STATION_PRICE);
+            return;
+        }
+
+        try(InputStream is = context.getContentResolver().openInputStream(stnUri);
+            ObjectInputStream ois = new ObjectInputStream(is)) {
+
             Opinet.StationPrice prevPrice = (Opinet.StationPrice)ois.readObject();
+            log.i("prevPrice: %s", prevPrice);
 
-            Map<String, Float> current = currentPrice.getStnPrice();
+            Map<String, Float> current = stationPrice.getStnPrice();
             Map<String, Float> prev = prevPrice.getStnPrice();
+            Map<String, Float> diffPrice = new HashMap<>();
+
+            for (String key : current.keySet()) {
+
+                Float currentValue = current.get(key);
+                Float prevValue = prev.get(key);
+
+                // Handle the null condition of both prices.
+                if(currentValue == null) throw new NullPointerException("current price failed to fetch");
+                if(prevValue == null) throw new NullPointerException("prev price failed to fetch");
+
+                // Get the price difference of both prices.
+                diffPrice.put(key, currentValue - prevValue);
+            }
+
+            // Set the price differrence as params to Opinet.StationPrice setPriceDiff() and save
+            // in the cached directory.
+            stationPrice.setPriceDiff(diffPrice);
+            savePriceInfo(stationPrice, Constants.FILE_CACHED_STATION_PRICE);
+
 
         } catch(FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e);
@@ -240,9 +258,9 @@ public class GasPriceRunnable implements Runnable {
             log.e("IOException: %s", e);
         } catch(ClassNotFoundException e) {
             log.e("ClassNotFoundException: %s", e);
+        } catch(NullPointerException e) {
+            log.e("NullPointerException: %s", e);
         }
-
-        return null;
 
     }
 

@@ -24,10 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * [IntentService and Service]
  * Service is the base class for all services using the main thread as default. Creating worker
  * threads, it handls multi requests simultaneously, calling onStartCommand() respectively.
- * IntentService is a subclass of Service using a worker thread to handle requests one at a time.
+ *
+ * Whereas, IntentService is a subclass of Service using a worker thread to handle requests one at a time.
  * Here, the class uses Service to handle multi requests.
  */
 
@@ -36,7 +36,6 @@ public class GeofenceResetService extends Service {
     public static final LoggingHelper log = LoggingHelperFactory.create(GeofenceResetService.class);
 
     private ServiceHandler serviceHandler;
-    private Looper serviceLooper;
     private GeofencingClient geofencingClient;
     private CarmanDatabase mDB;
     private List<Geofence> geofenceList;
@@ -77,7 +76,7 @@ public class GeofenceResetService extends Service {
         // Also, create the thread looper and Handler to do the operation in the worker thread.
         HandlerThread handlerThread = new HandlerThread("GeofenceReset", Process.THREAD_PRIORITY_BACKGROUND);
         handlerThread.start();
-        serviceLooper = handlerThread.getLooper();
+        Looper serviceLooper = handlerThread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
         // Create GeofencingClient and the geofence list for containing the queried result.

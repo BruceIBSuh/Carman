@@ -51,7 +51,6 @@ public class OpinetSigunPriceView extends OpinetPriceView {
         tvSigunPrice = findViewById(R.id.tv_sigun_price);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetSigunPriceView);
-
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetSigunPriceView_sigunPriceUp, 0);
             priceDownColor = typedArray.getColor(R.styleable.OpinetSigunPriceView_sigunPriceDown, 0);
@@ -78,7 +77,6 @@ public class OpinetSigunPriceView extends OpinetPriceView {
                     String sigunName = opinet.getSigunName();
                     float price = opinet.getPrice();
                     float diff = opinet.getDiff();
-                    log.i("SidoPriceView: %s, %s, %s", sigunName, price, diff);
                     tvSigunName.setText(sigunName);
                     setColoredTextView(tvSigunPrice, price, diff);
                     break;
