@@ -21,8 +21,6 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     // Constructor: creates an GasPriceTask object containing GasPriceRunnable object.
     GasPriceTask(Context context) {
         super();
-
-        //sparseArray = new SparseArray<>();
         mAvgPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.AVG);
         mSidoPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIDO);
         mSigunPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIGUN);
@@ -60,7 +58,6 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     public String getDistrictCode() {
         return distCode;
     }
-
 
     @Override
     public String getStationId() {

@@ -32,6 +32,7 @@ public class OpinetViewModel extends ViewModel {
         return districtPrice;
     }
 
+    //
     public MutableLiveData<Boolean> favoritePriceComplete() {
         if(favoritePrice == null) favoritePrice = new MutableLiveData<>();
         return favoritePrice;
