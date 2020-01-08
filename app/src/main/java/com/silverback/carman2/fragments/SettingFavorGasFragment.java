@@ -35,7 +35,11 @@ import com.silverback.carman2.utils.ItemTouchHelperCallback;
 import java.util.List;
 
 /**
- * A simple {@link Fragment} subclass.
+ * This fragment is to show favorite gas statoins which are retrieved from CarmanDatabase and passed
+ * to SettingFavoriteAdapter extending RecyclerView.Adapter.
+ *
+ * Drag and drop is set to the RecyclerView using ItemTouchHelperCallback, the util class extending
+ * ItemTouchHelper.Callback and attached to the adapter.
  */
 public class SettingFavorGasFragment extends Fragment implements
         SettingFavoriteAdapter.OnFavoriteAdapterListener{
@@ -47,9 +51,9 @@ public class SettingFavorGasFragment extends Fragment implements
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
-    private SparseArray<DocumentSnapshot> snapshotList;
+    private SparseArray<DocumentSnapshot> sparseSnapshotArray;
     private FavoritePriceTask favoritePriceTask;
-    private OpinetViewModel priceViewModel;
+    private OpinetViewModel opinetViewModel;
 
     // Constructor
     public SettingFavorGasFragment() {
@@ -63,9 +67,8 @@ public class SettingFavorGasFragment extends Fragment implements
 
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
-        //firestoreViewModel = ViewModelProviders.of(this).get(FirestoreViewModel.class);
-        snapshotList = new SparseArray<>();
+        opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        sparseSnapshotArray = new SparseArray<>();
     }
 
     @Override
@@ -80,7 +83,7 @@ public class SettingFavorGasFragment extends Fragment implements
         // Query the favorite gas stations from FavoriteProviderEntity
         mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(this, favoriteList -> {
 
-            mAdapter = new SettingFavoriteAdapter(favoriteList, snapshotList, this);
+            mAdapter = new SettingFavoriteAdapter(favoriteList, sparseSnapshotArray, this);
 
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
@@ -92,14 +95,15 @@ public class SettingFavorGasFragment extends Fragment implements
                 final int pos = i;
                 final String stnId = favoriteList.get(pos).providerId;
 
+                // Retrieve the data of evaluation as to favroite stations from Firestore, add it
+                // to the SparseArray, then make the partial binding of recyclerview items.
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
                         if(snapshot != null && snapshot.exists()) {
-                            mAdapter.addSnapshotList(pos, snapshot);
+                            mAdapter.addSparseSnapshotArray(pos, snapshot);
                             mAdapter.notifyItemChanged(pos, snapshot);
                         }
-
                     }
                 });
             }
@@ -111,6 +115,17 @@ public class SettingFavorGasFragment extends Fragment implements
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        opinetViewModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
+            log.i("SettingFavorGasFragment newly sets the top-priority station");
+        });
+    }
+
+
+
+    @Override
     public void onPause() {
         super.onPause();
         if(favoritePriceTask != null) favoritePriceTask = null;
@@ -120,7 +135,6 @@ public class SettingFavorGasFragment extends Fragment implements
     public boolean onOptionsItemSelected(MenuItem menuItem) {
 
         if(menuItem.getItemId() == android.R.id.home) {
-
             List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
             int position = 0;
 
@@ -141,12 +155,13 @@ public class SettingFavorGasFragment extends Fragment implements
     }
 
 
-    // Callback invoked bwhen the first-set favorite station has changed in
+    // Callback defined in  SettingFavoriteAdapter.OnFavoriteAdapterListener and it is invoked
+    // when and only when the first-set favorite station has changed by drag and drop action.
     @Override
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), priceViewModel, stnId, true);
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
         }
     }
 

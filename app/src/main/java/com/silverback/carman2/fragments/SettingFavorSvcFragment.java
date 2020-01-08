@@ -90,7 +90,7 @@ public class SettingFavorSvcFragment extends Fragment implements
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
                         if(snapshot != null && snapshot.exists()) {
-                            mAdapter.addSnapshotList(pos, snapshot);
+                            mAdapter.addSparseSnapshotArray(pos, snapshot);
                             mAdapter.notifyItemChanged(pos, snapshot);
                         }
 

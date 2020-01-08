@@ -154,10 +154,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     /*
-     * Invoked when a Preference with an associated Fragment is tabbed.
-     * If you do not implement on PreferenceStartFragment(), a fallback implementation is used instead.
-     * While this works i most cases, we strongly recommend implementing this method so you can fully
-     * configure transitions b/w Fragment objects and update the title in the toolbar, if applicable.
+     * Invoked when a Preference with an associated Fragment is tabbed. If you do not implement
+     * onPreferenceStartFragment(), a fallback implementation is used instead.
+     *
+     * While this works in most cases, it is strongly recommend to implement this method, thereby
+     * you can fully configure transitions b/w Fragment objects and update the title in the toolbar,
+     * if applicable.
      */
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -182,11 +184,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
         return true;
     }
 
+    // Invoked when a value of any preference changes.
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-
         switch(key) {
-
             case Constants.USER_NAME:
                 // Change the nickname after verifying it, then upload it to the Firestore.
                 String username = mSettings.getString(key, null);

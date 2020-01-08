@@ -55,7 +55,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_station_map);
 
-        final String stnId = getIntent().getStringExtra("stnId");
+        final String stnId = getIntent().getStringExtra("gasStationId");
         log.i("Station ID: %s", stnId);
 
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();

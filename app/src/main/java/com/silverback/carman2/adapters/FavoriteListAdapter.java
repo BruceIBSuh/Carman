@@ -28,7 +28,6 @@ public class FavoriteListAdapter extends BaseAdapter {
         favoriteList = list;
     }
 
-
     @Override
     public int getCount() {
         return favoriteList.size();

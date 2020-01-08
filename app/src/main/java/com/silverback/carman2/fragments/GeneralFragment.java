@@ -85,14 +85,14 @@ public class GeneralFragment extends Fragment implements
 
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
-    private OpinetViewModel priceViewModel;
+    //private OpinetViewModel opinetViewModel;
 
     private GasManagerDao.RecentGasData queryGasResult;
     private ServiceManagerDao.RecentServiceData querySvcResult;
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
-    private GasPriceTask gasPriceTask;
+    //private GasPriceTask gasPriceTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
@@ -136,7 +136,7 @@ public class GeneralFragment extends Fragment implements
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        priceViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        //opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
 
         // Fetch the current location using the worker thread and return the value via ViewModel
@@ -214,23 +214,26 @@ public class GeneralFragment extends Fragment implements
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
 
-        mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
-            log.i("Favorite Number: %s", num);
-            if(num <= 1) pricePagerAdapter.notifyDataSetChanged();
-        });
-
         // Query the favorite provider set in the first place in SettingPreferenceActivity
         /*
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
+            log.i("First Station in GeneralFragent");
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
                 if(provider.category == Constants.GAS) {
-                    stnId = provider.providerId;
-                    log.i("Favorite Station ID: %s", stnId);
+                    log.i("Favorite Station ID: %s, %s", stnId, provider.providerId);
+                    pricePagerAdapter.notifyDataSetChanged();
                     break;
                 }
             }
         });
-         */
+        */
+
+        // Invalidate StationPriceView in PricePagerFragment when The number of favorite providers
+        // becomes empty or set first time.
+        mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
+            log.i("Favorite Number: %s", num);
+            pricePagerAdapter.notifyDataSetChanged();
+        });
 
         /*
          * Retrieve the queried results of the latest gas and service statements as LiveData from
@@ -256,16 +259,7 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-        // Invoked from SettingPreferenceActivity as a first-set favroite station has newly set.
-        priceViewModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isComplete -> {
-            // Save the saving time to prevent the regional price data from frequently updating.
-            mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
 
-            // Attach the pager adatepr with a fuel code set.
-            pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
-            pricePagerAdapter.setFuelCode(defaults[0]);
-            priceViewPager.setAdapter(pricePagerAdapter);
-        });
 
         // On fetching the current location, start to get the near stations based on the value.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
@@ -313,20 +307,13 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-
-        //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-
-
         /*
-        log.i("num of favorite: %s", numFavorite);
-        // In case there is no favorite provider or set a new favorite one first time
-        if(numFavorite <= 1) {
-            pricePagerAdapter.notifyDataSetChanged();
-        }
+        int num = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+        if(num <= 1) pricePagerAdapter.notifyDataSetChanged();
 
          */
-
     }
+
 
     @Override
     public void onPause() {
@@ -336,7 +323,7 @@ public class GeneralFragment extends Fragment implements
         //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
-        if(gasPriceTask != null) gasPriceTask = null;
+        //if(gasPriceTask != null) gasPriceTask = null;
     }
 
     // The following 2 callbacks are initially invoked by AdapterView.OnItemSelectedListener
@@ -358,11 +345,10 @@ public class GeneralFragment extends Fragment implements
         opinetAvgPriceView.addPriceView(defaults[0]);
 
         // Attach the pager adatepr with a fuel code set.
-        //pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
         pricePagerAdapter.setFuelCode(defaults[0]);
         priceViewPager.setAdapter(pricePagerAdapter);
-
     }
+
     @Override
     public void onNothingSelected(AdapterView<?> parent){
         log.i("onNothingSelected by Spinner");
@@ -426,7 +412,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onItemClicked(final int position) {
         Intent intent = new Intent(getActivity(), StationMapActivity.class);
-        intent.putExtra("stnId", mStationList.get(position).getStnId());
+        intent.putExtra("gasStationId", mStationList.get(position).getStnId());
         startActivity(intent);
     }
 

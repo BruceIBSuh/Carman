@@ -176,15 +176,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             public void notifyAddGeofenceCompleted() {
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
-                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                log.i("num favorite: %s", numFavorite);
+                //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                //log.i("num favorite: %s", numFavorite);
             }
             @Override
             public void notifyRemoveGeofenceCompleted() {
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
-                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                log.i("num favorite: %s", numFavorite);
+                //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                //log.i("num favorite: %s", numFavorite);
             }
             @Override
             public void notifyAddGeofenceFailed() {

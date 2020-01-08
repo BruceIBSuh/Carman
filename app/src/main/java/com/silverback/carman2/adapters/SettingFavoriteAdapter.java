@@ -33,7 +33,6 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     // Objects
     private List<FavoriteProviderEntity> favoriteList;
     private SparseArray<DocumentSnapshot> snapshotArray;
-    //private DocumentSnapshot fromSnapshot, toSnapshot;
     private OnFavoriteAdapterListener mListener;
     private ViewGroup parent;
 
@@ -182,7 +181,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
     // any evaluation data from Firestore.
-    public void addSnapshotList(int position, DocumentSnapshot snapshot) {
+    public void addSparseSnapshotArray(int position, DocumentSnapshot snapshot) {
         snapshotArray.put(position, snapshot);
     }
 }

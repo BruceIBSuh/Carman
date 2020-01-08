@@ -170,22 +170,27 @@ public class FavoriteGeofenceHelper {
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
-                        // Insert the provider into the local db(FavoriteProviderEntity)
+
+                        // Insert the provider into FavoriteProviderEntity, which is notified to
+                        // GeneralFragment by increasing the favorite provider number.
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
 
                         // Upload the geofence to Firestore for purpose of reloading on rebooting.
                         // Seems not working, then refactor requried.
+                        /*
                         Map<String, Object> geofence = new HashMap<>();
                         geofence.put("providerName", providerName);
                         geofence.put("category", category);
                         geofence.put("geopoint", geoPoint);
 
-                        // Upload the Geofence data to "users" for downloading the data when rebooting.
+                        // Upload the Geofence data to "users" for downloading the data when rebooting
+                        // Prefer to save in the local db. Refactor required.
                         firestore.collection("users").document(userId).collection("geofence").document(providerId)
                                 .set(geofence, SetOptions.merge())
                                 .addOnCompleteListener(task -> {
                                    if(task.isSuccessful()) log.i("Geofence added to Firestore");
                                 });
+                        */
 
                         // Update the favorite_num field of the evaluation collection
                         evalReference.get().addOnCompleteListener(task -> {
@@ -239,12 +244,16 @@ public class FavoriteGeofenceHelper {
         mGeofencingClient.removeGeofences(geofenceId).addOnSuccessListener(aVoid -> {
             FavoriteProviderEntity provider = mDB.favoriteModel().findFavoriteProvider(name, id);
             if(provider != null) {
-                // Delete the favorite provider out of the local db.
+                // Delete the provider from FavoriteProviderEntity, which is notified to
+                // GeneralFragment by decreasing the favorite provider number.
                 mDB.favoriteModel().deleteProvider(provider);
+
+                /*
                 // Remove the geofence out of Firestore with the providerId;
                 firestore.collection("users").document(userId)
                         .collection("geofence").document(id).delete()
                         .addOnSuccessListener(bVoid -> log.i("Successfully deleted the geofence"));
+                */
                 evalReference.get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot doc = task.getResult();

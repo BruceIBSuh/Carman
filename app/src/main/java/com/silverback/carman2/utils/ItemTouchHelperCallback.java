@@ -29,7 +29,6 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
 
     // Objects
-    private Context mContext;
     private RecyclerItemMoveListener mListener;
     private Drawable iconTrash;
     private ColorDrawable background;
@@ -41,10 +40,9 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
     // Constructor
     public ItemTouchHelperCallback(Context context, RecyclerView.Adapter listener) {
-        mContext = context;
         // Set the Background color and the icon in the item background.
         background = new ColorDrawable(Color.parseColor("#606060"));
-        iconTrash = ContextCompat.getDrawable(mContext, R.drawable.ic_trash);
+        iconTrash = ContextCompat.getDrawable(context, R.drawable.ic_trash);
 
        if(listener instanceof SettingServiceItemAdapter) mListener = (SettingServiceItemAdapter)listener;
        else if(listener instanceof SettingFavoriteAdapter) mListener = (SettingFavoriteAdapter)listener;
