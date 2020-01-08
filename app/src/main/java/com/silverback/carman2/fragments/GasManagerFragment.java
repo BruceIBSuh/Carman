@@ -625,17 +625,4 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         }
     }
-
-    // Handle the favorite provider is registered first time or becomes empty, which should be
-    // notified to PricePagerAdapter
-    private void handleSingleFavoriteProvider(){
-        int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-        if(numFavorite == 1) {
-
-        } else if(numFavorite == 0) {
-
-        }
-    }
-
-
 }
