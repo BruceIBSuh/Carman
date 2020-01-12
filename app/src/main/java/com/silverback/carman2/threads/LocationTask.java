@@ -34,7 +34,9 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         return mLocationRunnable;
     }
 
-    void recycle() {}
+    void recycle() {
+
+    }
 
     @Override
     public void setDownloadThread(Thread thread) {

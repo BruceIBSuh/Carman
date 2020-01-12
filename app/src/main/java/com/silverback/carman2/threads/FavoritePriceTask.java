@@ -44,6 +44,7 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
         setCurrentThread(thread);
     }
 
+
     @Override
     public void setFavoritePrice(Map<String, Float> data) {
         viewModel.getFavoritePriceData().postValue(data);
@@ -53,6 +54,7 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     public void saveStationPriceDone() {
         viewModel.favoritePriceComplete().postValue(true);
     }
+
 
     public void recycle() {
         isFirst = false;

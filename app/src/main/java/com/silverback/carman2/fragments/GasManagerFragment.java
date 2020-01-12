@@ -59,7 +59,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * A simple {@link Fragment} subclass.
+ * This fragment manages the gas expenses to
  */
 public class GasManagerFragment extends Fragment implements View.OnClickListener {
 
@@ -142,12 +142,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             userId = getArguments().getString("userId");
         }
 
+        // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         stnListModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
         opinetViewModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
-
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
@@ -173,18 +173,30 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // Count the number of the favorite provider to handle the number becomes one or zero.
 
             @Override
-            public void notifyAddGeofenceCompleted() {
+            public void notifyAddGeofenceCompleted(String stnId) {
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
-                //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                //log.i("num favorite: %s", numFavorite);
+                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                // In case a gas station is registered with the favorite for the first time, retrieve
+                // the price data from the Opinet server, then save it in the internal storage.
+                if(numFavorite == 1) {
+                    favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, true);
+                }
+
             }
             @Override
             public void notifyRemoveGeofenceCompleted() {
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
-                //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                //log.i("num favorite: %s", numFavorite);
+                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+                if(numFavorite == 1) {
+                    String stnId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
+                    log.i("Last station id: %s", stnId);
+                    if(!stnId.isEmpty()) {
+                        favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, true);
+                    }
+
+                }
             }
             @Override
             public void notifyAddGeofenceFailed() {
@@ -254,9 +266,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         });
 
-
-
-
         // In case the activity and this fragment get started by tabbing the geofence notification,
         // the pendingintent of which passes the name, id, time.
         if(isGeofenceIntent) {
@@ -270,8 +279,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             btnChangeDate.setVisibility(View.GONE);
 
             // Task to fetch the gas price of a station with the station ID.
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(
-                    getContext(), opinetViewModel, geoStnId, false);
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, geoStnId, false);
         }
 
         return localView;
@@ -321,7 +329,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             isFavoriteGas = true;
 
             favoritePriceTask = ThreadManager.startFavoritePriceTask(
-                    getContext(), opinetViewModel, entity.providerId, false);
+                    getActivity(), opinetViewModel, entity.providerId, false);
         });
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.

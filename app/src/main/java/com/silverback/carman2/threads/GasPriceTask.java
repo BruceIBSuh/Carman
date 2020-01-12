@@ -74,7 +74,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     public void addPriceCount() {
         index++;
         log.i("Index: %s", index);
-        if(index == 4) viewModel.getDistrictPriceComplete().postValue(true);
+        if(index == 4) viewModel.getDistPriceComplete().postValue(true);
     }
 
     @Override

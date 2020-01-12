@@ -72,7 +72,7 @@ public class GasPriceRunnable implements Runnable {
 
     // Constructor
     GasPriceRunnable(Context context, OpinetPriceListMethods task, int category) {
-        this.context = context.getApplicationContext();
+        this.context = context;
         this.category = category;
         this.task = task;
         xmlHandler = new XmlPullParserHandler();
@@ -155,8 +155,9 @@ public class GasPriceRunnable implements Runnable {
 
                     Opinet.StationPrice stationPrice = xmlHandler.parseStationPrice(in);
                     if(stationPrice != null) {
-                        saveStationPriceWithDiff(stationPrice);
-                        //savePriceInfo(stationPrice, Constants.FILE_CACHED_STATION_PRICE);
+                        // Save the object in the cache with the price difference if the favorite
+                        // gas stqation is left unchanged.
+                        saveStationPriceDiff(stationPrice);
                     }
 
                     task.addPriceCount();
@@ -194,10 +195,10 @@ public class GasPriceRunnable implements Runnable {
         }
     }
 
+    // Save price data
     private synchronized void savePriceInfo(Object obj, String fName) {
 
         File file = new File(context.getCacheDir(), fName);
-
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)){
             oos.writeObject(obj);
@@ -209,47 +210,46 @@ public class GasPriceRunnable implements Runnable {
     }
 
 
-    // Retrieve the station price previously saved in the internal storage, then compare it
-    // with the current price to calculate the price difference, which is passed to Opinet.StationPrice
-    // and save the object in the internal storage
-    private synchronized void saveStationPriceWithDiff(Opinet.StationPrice stationPrice) {
+    // As with the first-set favorite station, compare the current station id with the id previous
+    // id from saved in the internal cache storage to check whether it has unchanged.
+    // If it is unchanged, calculate the price difference b/w the current and the previously saved
+    // station and pass it to setPriceDiff() in Opinet.StationPrice, then save the object.
+    // Otherwise, just save the object the same as the other prices.
+    private void saveStationPriceDiff(Opinet.StationPrice stnPrice) {
 
         File stnFile = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
 
-        if(!stnFile.exists()) {
-            savePriceInfo(stationPrice, Constants.FILE_CACHED_STATION_PRICE);
-            return;
-        }
-
         try(InputStream is = context.getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
-            Opinet.StationPrice prevPrice = (Opinet.StationPrice)ois.readObject();
-            log.i("prevPrice: %s", prevPrice);
+            Opinet.StationPrice savedPrice = (Opinet.StationPrice)ois.readObject();
+            log.i("prevPrice: %s", savedPrice);
+            // Check if the station is unchanged.
+            if(stnPrice.getStnId().matches(savedPrice.getStnId())) {
+                log.i("Same favorite station");
+                Map<String, Float> current = stnPrice.getStnPrice();
+                Map<String, Float> prev = savedPrice.getStnPrice();
+                Map<String, Float> diffPrice = new HashMap<>();
+                // Calculate the price differences based on the fuel codes.
+                for (String key : current.keySet()) {
+                    Float currentValue = current.get(key);
+                    Float prevValue = prev.get(key);
 
-            Map<String, Float> current = stationPrice.getStnPrice();
-            Map<String, Float> prev = prevPrice.getStnPrice();
-            Map<String, Float> diffPrice = new HashMap<>();
+                    // Throw the exception if the price is null.
+                    if(currentValue == null) throw new NullPointerException();
+                    if(prevValue == null) throw new NullPointerException();
 
-            for (String key : current.keySet()) {
+                    // Get the price difference of both prices.
+                    diffPrice.put(key, currentValue - prevValue);
+                    stnPrice.setPriceDiff(diffPrice);
+                }
 
-                Float currentValue = current.get(key);
-                Float prevValue = prev.get(key);
-
-                // Handle the null condition of both prices.
-                if(currentValue == null) throw new NullPointerException("current price failed to fetch");
-                if(prevValue == null) throw new NullPointerException("prev price failed to fetch");
-
-                // Get the price difference of both prices.
-                diffPrice.put(key, currentValue - prevValue);
+            } else {
+                log.i("Favorite station changes");
             }
 
-            // Set the price differrence as params to Opinet.StationPrice setPriceDiff() and save
-            // in the cached directory.
-            stationPrice.setPriceDiff(diffPrice);
-            savePriceInfo(stationPrice, Constants.FILE_CACHED_STATION_PRICE);
-
+            savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
 
         } catch(FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e);
@@ -262,5 +262,6 @@ public class GasPriceRunnable implements Runnable {
         }
 
     }
+
 
 }

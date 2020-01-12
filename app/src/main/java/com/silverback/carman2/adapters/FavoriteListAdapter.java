@@ -69,9 +69,4 @@ public class FavoriteListAdapter extends BaseAdapter {
         CheckedTextView tvFavoriteName;
         TextView tvFavoriteAddrs;
     }
-
-
-
-
-
 }

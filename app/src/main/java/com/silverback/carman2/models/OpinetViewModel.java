@@ -17,17 +17,12 @@ public class OpinetViewModel extends ViewModel {
     private MutableLiveData<Map<String, Float>> favoritePriceData;
 
 
-    public MutableLiveData<SparseArray<Object>> getOilPriceData() {
-        if(oilPriceData == null) oilPriceData = new MutableLiveData<>();
-        return oilPriceData;
-    }
-
-    public MutableLiveData<Boolean> districtCodeComplete() {
+    public MutableLiveData<Boolean> distCodeComplete() {
         if(distCode == null) distCode = new MutableLiveData<>();
         return distCode;
     }
 
-    public MutableLiveData<Boolean> getDistrictPriceComplete() {
+    public MutableLiveData<Boolean> getDistPriceComplete() {
         if(districtPrice == null) districtPrice = new MutableLiveData<>();
         return districtPrice;
     }

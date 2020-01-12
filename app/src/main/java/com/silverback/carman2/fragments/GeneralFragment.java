@@ -64,10 +64,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * This class is a fragment of MainActivity, which contains the price information and the recent
- * expenditure of gas and service, and enlist stations in the neighborhood. MainActivity may extend
+ * This fragment belongs to MainActivity and it  contains the price information and the latest
+ * expenditure of gas and service, and stations in the neighborhood. MainActivity may extend
  * to multi fragments at a time when an additional fragment such as general information ahead of the
  * current fragment is introduced.
+ *
+ *
  */
 
 public class GeneralFragment extends Fragment implements
@@ -215,7 +217,6 @@ public class GeneralFragment extends Fragment implements
         super.onActivityCreated(savedStateInstance);
 
         // Query the favorite provider set in the first place in SettingPreferenceActivity
-        /*
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
             log.i("First Station in GeneralFragent");
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
@@ -226,13 +227,16 @@ public class GeneralFragment extends Fragment implements
                 }
             }
         });
-        */
 
-        // Invalidate StationPriceView in PricePagerFragment when The number of favorite providers
-        // becomes empty or set first time.
+        // Handle the special condition that has a favorite station first time or has no favorite
+        // station by adding or removing the favorite station in GasManagerFragment. Under this
+        // condition, the favorite price data should be updated because a station it will be a
+        // favorite one or no favorite station exists.
         mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
-            log.i("Favorite Number: %s", num);
-            pricePagerAdapter.notifyDataSetChanged();
+            if(num == 0 || num == 1) {
+                log.i("Favorite Number: %s", num);
+                pricePagerAdapter.notifyDataSetChanged();
+            }
         });
 
         /*
@@ -258,7 +262,6 @@ public class GeneralFragment extends Fragment implements
                 });
             }
         });
-
 
 
         // On fetching the current location, start to get the near stations based on the value.
@@ -307,11 +310,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        /*
-        int num = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-        if(num <= 1) pricePagerAdapter.notifyDataSetChanged();
-
-         */
     }
 
 
@@ -392,9 +390,6 @@ public class GeneralFragment extends Fragment implements
 
         }
     }
-
-
-
 
     //The following 3 methods are invoked by RecyclerView.OnItemTouchListener.
     @Override

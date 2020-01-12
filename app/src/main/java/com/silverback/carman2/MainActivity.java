@@ -21,6 +21,11 @@ import com.silverback.carman2.utils.Constants;
 
 import java.io.File;
 
+/**
+ * This activity is a container holding GeneralFragment which displays the gas prices and the recent
+ * expenditure of gas and service, and stations in the default radius based on the current location.
+ * It should be replaced with alternative fragment that shows a content instead of the near stations.
+ */
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
 
     // Logging
@@ -29,7 +34,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     // Objects
     private CarmanDatabase mDB;
     private OpinetViewModel opinetViewModel;
-    //private StationInfoTask mapInfoTask;
     //private ActionBarDrawerToggle drawerToggle;
 
     // Fields
@@ -64,15 +68,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 .addToBackStack(null)
                 .commit();
 
-        // Permission Check
+        // Permission Check which is initiated by the parent activty(BaseActivity), so it is of no
+        // use to initiate the permission check again here.
         //checkPermissions();
-    }
-
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        //if(mapInfoTask != null) mapInfoTask = null;
     }
 
     /*
@@ -153,6 +151,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
         // Kill all the threads.
         ThreadManager.cancelAllThreads();
+        if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
     }
 
@@ -162,8 +161,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     public SharedPreferences getSettings() {
         return mSettings;
     }
-    public boolean getNetworkStatus() {
-        return isNetworkConnected;
-    }
+
 
 }

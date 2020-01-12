@@ -49,7 +49,7 @@ public class DistrictCodeRunnable implements Runnable {
     // Constructor
     DistrictCodeRunnable(Context context, OpinetDistCodeMethods task) {
         mTask = task;
-        this.context = context;
+        this.context = context.getApplicationContext();
         sido = context.getResources().getStringArray(R.array.sido_code);
     }
 
@@ -114,14 +114,8 @@ public class DistrictCodeRunnable implements Runnable {
 
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+
             oos.writeObject(list);
-
-            /*
-            for(Opinet.DistrictCode code : list) {
-                log.i("Save District Code: %s, %s", code.getDistrictCode(), code.getDistrictName());
-            }
-             */
-
             return true;
 
         } catch (FileNotFoundException e) {

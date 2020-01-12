@@ -57,7 +57,6 @@ public class FirestoreSetRunnable implements Runnable {
         InputStream is = null;
 
         try {
-
             if(Thread.interrupted()) throw new InterruptedException();
 
             URL url = new URL(OPINET_DETAIL);

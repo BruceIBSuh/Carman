@@ -48,8 +48,8 @@ public class DistrictCodeTask extends ThreadTask
 
     @Override
     public void notifySaved(boolean b) {
-        if(b) model.districtCodeComplete().postValue(true);
-        else log.e("Saving the DistrictCode failed");
+        if(b) model.distCodeComplete().postValue(true);
+        else model.distCodeComplete().postValue(false);
     }
 
     @Override

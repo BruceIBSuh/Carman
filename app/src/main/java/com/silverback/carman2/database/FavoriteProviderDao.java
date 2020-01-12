@@ -16,7 +16,6 @@ import java.util.List;
 @Dao
 public interface FavoriteProviderDao {
 
-
     @Query("SELECT * FROM FavoriteProviderEntity")
     List<FavoriteProviderEntity> loadAllFavoriteProvider();
 

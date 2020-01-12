@@ -36,6 +36,8 @@ public class FavoritePriceRunnable implements Runnable {
     private StationPriceMethods mCallback;
     private XmlPullParserHandler xmlHandler;
 
+    // Fields
+    private String stationId;
 
     // Interface
     interface StationPriceMethods {
@@ -48,7 +50,7 @@ public class FavoritePriceRunnable implements Runnable {
 
     // Constructor
     FavoritePriceRunnable(Context context, StationPriceMethods callback) {
-        mContext = context.getApplicationContext();
+        mContext = context;
         mCallback = callback;
         xmlHandler = new XmlPullParserHandler();
     }
@@ -59,13 +61,13 @@ public class FavoritePriceRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mCallback.setStnPriceThread(Thread.currentThread());
 
-        final String stnId = mCallback.getStationId();
+        stationId = mCallback.getStationId();
         URL url;
         InputStream in = null;
         HttpURLConnection conn = null;
 
         try {
-            url = new URL(URLStn + stnId);
+            url = new URL(URLStn + stationId);
             conn = (HttpURLConnection) url.openConnection();
             in = conn.getInputStream();
 
@@ -79,7 +81,7 @@ public class FavoritePriceRunnable implements Runnable {
                 if(mCallback.getIsFirst()) {
                     log.i("First registered favorite");
                     //savePriceInfo(stnPriceData);
-                    saveStationPriceWithDiff(stnPriceData);
+                    saveDifferedPrice(stnPriceData);
 
                 // a provider selected in FavoriteListFragment, the price of which isn't saved.
                 } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());
@@ -107,7 +109,7 @@ public class FavoritePriceRunnable implements Runnable {
 
     private void savePriceInfo(Object obj) {
         final String fName = Constants.FILE_CACHED_STATION_PRICE;
-        File file = new File(mContext.getApplicationContext().getCacheDir(), fName);
+        File file = new File(mContext.getCacheDir(), fName);
 
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
@@ -123,24 +125,23 @@ public class FavoritePriceRunnable implements Runnable {
     // Retrieve the station price previously saved in the internal storage, then compare it
     // with the current price to calculate the price difference, which is passed to Opinet.StationPrice
     // and save the object in the internal storage
-    private synchronized void saveStationPriceWithDiff(Opinet.StationPrice stationPrice) {
+    private synchronized void saveDifferedPrice(Opinet.StationPrice stationPrice) {
 
         File stnFile = new File(mContext.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
 
-        if(!stnFile.exists()) {
-            savePriceInfo(stationPrice);
-            return;
-        }
-
         try(InputStream is = mContext.getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
-            Opinet.StationPrice prevPrice = (Opinet.StationPrice)ois.readObject();
-            log.i("prevPrice: %s", prevPrice);
+            Opinet.StationPrice savedStationPrice = (Opinet.StationPrice)ois.readObject();
+            if(!savedStationPrice.getStnId().matches(stationId)) {
+                log.i("Same favorite station: %s, %s", savedStationPrice.getStnId(), stationId);
+                savePriceInfo(stationPrice);
+                return;
+            }
 
             Map<String, Float> current = stationPrice.getStnPrice();
-            Map<String, Float> prev = prevPrice.getStnPrice();
+            Map<String, Float> prev = savedStationPrice.getStnPrice();
             Map<String, Float> diffPrice = new HashMap<>();
 
             for (String key : current.keySet()) {
@@ -160,7 +161,6 @@ public class FavoritePriceRunnable implements Runnable {
             // in the cached directory.
             stationPrice.setPriceDiff(diffPrice);
             savePriceInfo(stationPrice);
-
 
         } catch(FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e);
