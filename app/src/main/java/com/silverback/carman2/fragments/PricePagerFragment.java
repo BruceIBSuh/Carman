@@ -92,8 +92,8 @@ public class PricePagerFragment extends Fragment {
                     if(num == 0) stnPriceView.removePriceView();
                     else {
                         stnPriceView.addPriceView(fuelCode);
-                        String stnId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
-                        log.i("Station ID: %s", stnId);
+                        //String stnId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
+                        //log.i("Station ID: %s", stnId);
                         //favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
                     }
                 });

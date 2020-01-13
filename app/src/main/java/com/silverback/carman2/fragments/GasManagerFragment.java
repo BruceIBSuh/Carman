@@ -166,37 +166,40 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         date = BaseActivity.formatMilliseconds(dateFormat, visitTime);
 
-        // FavoriteGeofenceHelper.OnGeofenceListener().
-        // FavoriteGeofenceHelper class notifies whether a specific station is successfully added to
-        // or removed out of the favorite list.
+
+        /*
+         * Implements the interface of FavoriteGeofenceHelper.SetGefenceListener to notify the UI
+         * controller of having the favroite station added or removed, re-setting the flag and
+         * pop up the snackbar.
+         *
+         * At the same time, handle exceptional conditions under which the current station becomes
+         * the first-set favorite when it is added first time, or the removed station is the first
+         * set station.
+         */
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             // Count the number of the favorite provider to handle the number becomes one or zero.
-
             @Override
             public void notifyAddGeofenceCompleted(String stnId) {
+                //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
+
+                mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
+                    log.i("numFavorite: %s", num);
+                    if(num == 1) favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, stnId, true);
+                });
+
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
-                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                // In case a gas station is registered with the favorite for the first time, retrieve
-                // the price data from the Opinet server, then save it in the internal storage.
-                if(numFavorite == 1) {
-                    favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, true);
-                }
-
             }
+
             @Override
             public void notifyRemoveGeofenceCompleted() {
+                mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id ->{
+                    log.i("Remaining station becomes firstFavorite: %s, %s", id);
+                    favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, id, true);
+                });
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
-                int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                if(numFavorite == 1) {
-                    String stnId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
-                    log.i("Last station id: %s", stnId);
-                    if(!stnId.isEmpty()) {
-                        favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, true);
-                    }
 
-                }
             }
             @Override
             public void notifyAddGeofenceFailed() {
@@ -304,7 +307,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // its address, completion of which is notified by the same ViewModel.
         stnListModel.getCurrentStationLiveData().observe(getViewLifecycleOwner(), curStn -> {
             if(curStn != null) {
-                log.i("Current Station");
                 stnName = curStn.getStnName();
                 stnId = curStn.getStnId();
                 tvStnName.setText(stnName);

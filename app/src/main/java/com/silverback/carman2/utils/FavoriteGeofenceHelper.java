@@ -100,8 +100,6 @@ public class FavoriteGeofenceHelper {
     public void addFavoriteGeofence(
             final String userId, final DocumentSnapshot snapshot, final int placeHolder, final int category) {
 
-        log.i("category: %s", category);
-
         final String providerId = snapshot.getId();
         String providerName;
         String providerCode;
@@ -227,7 +225,6 @@ public class FavoriteGeofenceHelper {
     // provided when adding it to Favorite.
     @SuppressWarnings("ConstantConditions")
     public void removeFavoriteGeofence(String userId, String name, String id, int category) {
-
         // Create the list which contains requestId's to remove.
         List<String> geofenceId = new ArrayList<>();
         geofenceId.add(id);
@@ -244,6 +241,9 @@ public class FavoriteGeofenceHelper {
         mGeofencingClient.removeGeofences(geofenceId).addOnSuccessListener(aVoid -> {
             FavoriteProviderEntity provider = mDB.favoriteModel().findFavoriteProvider(name, id);
             if(provider != null) {
+                log.i("placeholder: %s", provider.placeHolder);
+                if(provider.placeHolder == 0) mListener.notifyRemoveGeofenceCompleted();
+
                 // Delete the provider from FavoriteProviderEntity, which is notified to
                 // GeneralFragment by decreasing the favorite provider number.
                 mDB.favoriteModel().deleteProvider(provider);
@@ -254,6 +254,7 @@ public class FavoriteGeofenceHelper {
                         .collection("geofence").document(id).delete()
                         .addOnSuccessListener(bVoid -> log.i("Successfully deleted the geofence"));
                 */
+
                 evalReference.get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot doc = task.getResult();
@@ -261,8 +262,6 @@ public class FavoriteGeofenceHelper {
                             evalReference.update("favorite_num", FieldValue.increment(-1));
                     }
                 });
-
-                mListener.notifyRemoveGeofenceCompleted();
             }
         }).addOnFailureListener(e -> {
             log.i("failed to remove");

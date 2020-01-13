@@ -41,6 +41,7 @@ public class SettingFavorSvcFragment extends Fragment implements
     // Objects
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
+    private List<FavoriteProviderEntity> favoriteEntityList;
     private SparseArray<DocumentSnapshot> snapshotArray;
     private SettingFavoriteAdapter mAdapter;
 
@@ -72,6 +73,8 @@ public class SettingFavorSvcFragment extends Fragment implements
             for(int i = 0; i < favoriteList.size(); i++) {
                 log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }
+
+            favoriteEntityList = favoriteList;
             // Make the item drag by invoking ItemTouchHelperCallback
             mAdapter = new SettingFavoriteAdapter(favoriteList, snapshotArray, this);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
@@ -105,6 +108,7 @@ public class SettingFavorSvcFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if(menuItem.getItemId() == android.R.id.home) {
+            /*
             List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
             int position = 0;
 
@@ -116,6 +120,8 @@ public class SettingFavorSvcFragment extends Fragment implements
             }
 
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
+
+             */
             //getActivity().onBackPressed();
             startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
             return true;
@@ -138,8 +144,8 @@ public class SettingFavorSvcFragment extends Fragment implements
     }
 
     @Override
-    public void deleteFavorite(FavoriteProviderEntity entity) {
-        log.i("Listener: delete Favorite - %s", entity.providerName);
-        mDB.favoriteModel().deleteProvider(entity);
+    public void deleteFavorite(int category, int position) {
+        log.i("Listener: delete Favorite - %s", favoriteEntityList.get(position).providerName);
+        mDB.favoriteModel().deleteProvider(favoriteEntityList.get(position));
     }
 }

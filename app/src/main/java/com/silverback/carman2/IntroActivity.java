@@ -186,9 +186,11 @@ public class IntroActivity extends BaseActivity  {
 
             // Retrieve the first-set gas station and service center in each placeholders from DB
             // to fetch the id which is used as param to get the price, then pass it to MainActivity.
-            String stnId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
-            log.i("Intro StationID: %s", stnId);
-            gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, id -> {
+                log.i("Intro StationID: %s", stnId);
+                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+            });
+
 
             /*
             mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {

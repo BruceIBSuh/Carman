@@ -38,8 +38,13 @@ import java.util.List;
  * This fragment is to show favorite gas statoins which are retrieved from CarmanDatabase and passed
  * to SettingFavoriteAdapter extending RecyclerView.Adapter.
  *
- * Drag and drop is set to the RecyclerView using ItemTouchHelperCallback, the util class extending
- * ItemTouchHelper.Callback and attached to the adapter.
+ * Drag and drop action is set to the RecyclerView using ItemTouchHelperCallback, the util class
+ * extending ItemTouchHelper.Callback, which defines the interface of RecyclerItemMoveListener when
+ * an item is moving up and down or deleted by dragging and drop.
+ *
+ * The callbacks of the interface are overrided in SettingFavoriteAdapter, invoking onDragItem() and
+ * onDeleteItem(), notify the adapter of which item moves up and down or is deleted. The adapter, in
+ * turn, notifies this fragment of initiating FavoritePriceTask to get the price data or
  */
 public class SettingFavorGasFragment extends Fragment implements
         SettingFavoriteAdapter.OnFavoriteAdapterListener{
@@ -54,6 +59,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private SparseArray<DocumentSnapshot> sparseSnapshotArray;
     private FavoritePriceTask favoritePriceTask;
     private OpinetViewModel opinetViewModel;
+    private List<FavoriteProviderEntity> favoriteList;
 
     // Constructor
     public SettingFavorGasFragment() {
@@ -67,7 +73,7 @@ public class SettingFavorGasFragment extends Fragment implements
 
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        //opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
         sparseSnapshotArray = new SparseArray<>();
     }
 
@@ -83,6 +89,7 @@ public class SettingFavorGasFragment extends Fragment implements
         // Query the favorite gas stations from FavoriteProviderEntity
         mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(this, favoriteList -> {
 
+            this.favoriteList = favoriteList;
             mAdapter = new SettingFavoriteAdapter(favoriteList, sparseSnapshotArray, this);
 
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
@@ -95,8 +102,8 @@ public class SettingFavorGasFragment extends Fragment implements
                 final int pos = i;
                 final String stnId = favoriteList.get(pos).providerId;
 
-                // Retrieve the data of evaluation as to favroite stations from Firestore, add it
-                // to the SparseArray, then make the partial binding of recyclerview items.
+                // Retrieve the evaluation of favroite stations from Firestore, add it to the
+                // SparseArray, then make the partial binding of recyclerview items.
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
@@ -118,9 +125,12 @@ public class SettingFavorGasFragment extends Fragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        /*
         opinetViewModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
             log.i("SettingFavorGasFragment newly sets the top-priority station");
         });
+
+         */
     }
 
 
@@ -131,23 +141,24 @@ public class SettingFavorGasFragment extends Fragment implements
         if(favoritePriceTask != null) favoritePriceTask = null;
     }
 
+    // When clicking the back button in the toolbar, fetch the placeholder value of each items and
+    // update the local db, then back to the parent activity.
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
 
         if(menuItem.getItemId() == android.R.id.home) {
-            List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
-            int position = 0;
 
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
             // the edited fasvorte list.
+            int position = 0;
             for(FavoriteProviderEntity entity : favoriteList) {
                 entity.placeHolder = position;
                 position++;
             }
 
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
-            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
 
+            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
             return true;
         }
 
@@ -155,19 +166,31 @@ public class SettingFavorGasFragment extends Fragment implements
     }
 
 
-    // Callback defined in  SettingFavoriteAdapter.OnFavoriteAdapterListener and it is invoked
-    // when and only when the first-set favorite station has changed by drag and drop action.
     @Override
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
         }
+
+
     }
 
     @Override
-    public void deleteFavorite(FavoriteProviderEntity entity) {
-        log.i("Listener: delete Favorite - %s", entity.providerName);
-        mDB.favoriteModel().deleteProvider(entity);
+    public void deleteFavorite(int category, int position) {
+
+        log.i("FavoriteProviderEntity number: %s", favoriteList.size());
+        if(position == 0 && favoriteList.size() > 1) {
+            favoritePriceTask = ThreadManager.startFavoritePriceTask(
+                    getContext(), null, favoriteList.get(position + 1).providerId, true);
+        }
+
+        //String firstFavoriteId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
+        //log.i("Station Id compared: %s, %s", entity.providerId, firstFavoriteId);
+        mDB.favoriteModel().deleteProvider(favoriteList.get(position));
+        favoriteList.remove(position);
+        mAdapter.notifyItemRemoved(position);
+
+
     }
 }

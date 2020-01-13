@@ -81,7 +81,7 @@ public class FavoritePriceRunnable implements Runnable {
                 if(mCallback.getIsFirst()) {
                     log.i("First registered favorite");
                     //savePriceInfo(stnPriceData);
-                    saveDifferedPrice(stnPriceData);
+                    //saveDifferedPrice(stnPriceData);
 
                 // a provider selected in FavoriteListFragment, the price of which isn't saved.
                 } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());

@@ -24,6 +24,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ *
+ */
+
 public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHolder> implements
         ItemTouchHelperCallback.RecyclerItemMoveListener {
 
@@ -39,7 +43,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     public interface OnFavoriteAdapterListener {
         void changeFavorite(int category, String stnId);
-        void deleteFavorite(FavoriteProviderEntity entity);
+        void deleteFavorite(int cqtegory, int position);
     }
 
     // Constructor
@@ -109,7 +113,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         DocumentSnapshot fromSnapshot;
         DocumentSnapshot toSnapshot;
 
-        // Swap the list elements of FavoriteProviderEntity
+        // Drag an item down, swapping the positions.
         if (from < to) {
             fromSnapshot = snapshotArray.get(from);
             toSnapshot = snapshotArray.get(to);
@@ -144,22 +148,24 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         notifyItemChanged(from, toSnapshot);
         notifyItemChanged(to, fromSnapshot);
 
-        // Notify that the favorite positioned at the first, the price of which is to display
-        // in the MainActivity, has changed.
-        if(to == 0) mListener.changeFavorite(Constants.GAS, favoriteList.get(to).providerId);
+        // If an item is dragged up to the first place, the callback is invoked to fetch the
+        // price data, initiating FavoritePriceTask in SettingFavorGasFragment.
+        if(to == 0) {
+            log.i("First set favorite: %s", favoriteList.get(to).providerId);
+            mListener.changeFavorite(Constants.GAS, favoriteList.get(to).providerId);
+        }
     }
 
     @Override
     public void onDeleteItem(final int pos) {
-
-        final FavoriteProviderEntity deletedItem = favoriteList.get(pos);
-
         Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_SHORT);
         snackbar.setAction("REMOVE", v -> {
-            favoriteList.remove(pos);
-            notifyItemRemoved(pos);
-            mListener.deleteFavorite(deletedItem);
+            mListener.deleteFavorite(Constants.GAS, pos);
+
+            //favoriteList.remove(pos);
+            //notifyItemRemoved(pos);
             snackbar.dismiss();
+
 
         }).addCallback(new Snackbar.Callback() {
             @Override
@@ -175,9 +181,11 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPreferenceFragment
     // and its price information is to display in the main page,
+    /*
     public List<FavoriteProviderEntity> getFavoriteList() {
         return favoriteList;
     }
+    */
 
     // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
     // any evaluation data from Firestore.

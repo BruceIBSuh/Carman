@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
@@ -291,7 +292,7 @@ public class ThreadManager {
     // the price info in the main activity as the data is saved in the cache directory.
     // Otherwise, it just fetches the price of a favorite when selected out the list.
     public static FavoritePriceTask startFavoritePriceTask(
-            Context context, OpinetViewModel model, String stnId, boolean isFirst) {
+            Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
 
         FavoritePriceTask stnPriceTask = sInstance.mFavoritePriceTaskQueue.poll();
         if(stnPriceTask == null) stnPriceTask = new FavoritePriceTask(context);

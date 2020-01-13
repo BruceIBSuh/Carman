@@ -188,6 +188,10 @@ public class GeneralFragment extends Fragment implements
             }
         }
 
+        // Attach the pager adatepr with a fuel code set.
+        pricePagerAdapter.setFuelCode(defaults[0]);
+        priceViewPager.setAdapter(pricePagerAdapter);
+
         // Set Floating Action Button
         // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
         // button according to scolling or idling
@@ -217,6 +221,7 @@ public class GeneralFragment extends Fragment implements
         super.onActivityCreated(savedStateInstance);
 
         // Query the favorite provider set in the first place in SettingPreferenceActivity
+        /*
         mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
             log.i("First Station in GeneralFragent");
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
@@ -226,6 +231,13 @@ public class GeneralFragment extends Fragment implements
                     break;
                 }
             }
+        });
+
+         */
+
+        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
+            log.i("Favorite changed: %s", id);
+            pricePagerAdapter.notifyDataSetChanged();
         });
 
         // Handle the special condition that has a favorite station first time or has no favorite
@@ -318,10 +330,9 @@ public class GeneralFragment extends Fragment implements
         super.onPause();
 
         // Refactor required as to how to finish worker threads.
-        //if(clockTask != null) clockTask = null;
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
-        //if(gasPriceTask != null) gasPriceTask = null;
+
     }
 
     // The following 2 callbacks are initially invoked by AdapterView.OnItemSelectedListener
@@ -344,7 +355,8 @@ public class GeneralFragment extends Fragment implements
 
         // Attach the pager adatepr with a fuel code set.
         pricePagerAdapter.setFuelCode(defaults[0]);
-        priceViewPager.setAdapter(pricePagerAdapter);
+        //priceViewPager.setAdapter(pricePagerAdapter);
+        pricePagerAdapter.notifyDataSetChanged();
     }
 
     @Override
