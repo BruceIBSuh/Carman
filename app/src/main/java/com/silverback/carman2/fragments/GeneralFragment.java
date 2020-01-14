@@ -111,11 +111,11 @@ public class GeneralFragment extends Fragment implements
     private ProgressBar progbarStnList;
 
     // Fields
-    private String stnId;
+    private String prevStnId;
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
     private boolean bExpenseSort;
-    private boolean hasNearStations;
+    private boolean hasNearStations; //flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
     private String latestItems;
 
@@ -129,11 +129,11 @@ public class GeneralFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         mSettings = ((MainActivity)getActivity()).getSettings();
+        isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
         // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        // ViewPager adapter to display the price of district and first-set favorite station.
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
-        isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
-
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
@@ -188,10 +188,6 @@ public class GeneralFragment extends Fragment implements
             }
         }
 
-        // Attach the pager adatepr with a fuel code set.
-        pricePagerAdapter.setFuelCode(defaults[0]);
-        priceViewPager.setAdapter(pricePagerAdapter);
-
         // Set Floating Action Button
         // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
         // button according to scolling or idling
@@ -232,14 +228,15 @@ public class GeneralFragment extends Fragment implements
                 }
             }
         });
+        */
 
-         */
-
-        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
-            log.i("Favorite changed: %s", id);
-            pricePagerAdapter.notifyDataSetChanged();
+        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
+            log.i("Firstset favroite changed: %s, %s", prevStnId, stnId);
+            if(stnId != null && !stnId.equalsIgnoreCase(prevStnId)) {
+                log.i("new firstset favorite");
+                pricePagerAdapter.notifyDataSetChanged();
+            }
         });
-
         // Handle the special condition that has a favorite station first time or has no favorite
         // station by adding or removing the favorite station in GasManagerFragment. Under this
         // condition, the favorite price data should be updated because a station it will be a
@@ -355,8 +352,7 @@ public class GeneralFragment extends Fragment implements
 
         // Attach the pager adatepr with a fuel code set.
         pricePagerAdapter.setFuelCode(defaults[0]);
-        //priceViewPager.setAdapter(pricePagerAdapter);
-        pricePagerAdapter.notifyDataSetChanged();
+        priceViewPager.setAdapter(pricePagerAdapter);
     }
 
     @Override

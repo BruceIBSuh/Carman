@@ -45,7 +45,7 @@ public class FavoritePriceRunnable implements Runnable {
         boolean getIsFirst();
         void setStnPriceThread(Thread thread);
         void setFavoritePrice(Map<String, Float> data);
-        void saveStationPriceDone();
+        void saveDifferedPrice();
     }
 
     // Constructor
@@ -65,6 +65,7 @@ public class FavoritePriceRunnable implements Runnable {
         URL url;
         InputStream in = null;
         HttpURLConnection conn = null;
+        final File file = new File(mContext.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
 
         try {
             url = new URL(URLStn + stationId);
@@ -77,11 +78,12 @@ public class FavoritePriceRunnable implements Runnable {
 
             Opinet.StationPrice stnPriceData = xmlHandler.parseStationPrice(in);
             if(stnPriceData != null) {
+                log.i("new favorite: %s, %s", stnPriceData.getStnName(), stnPriceData.getDiff());
                 // if the favorite placeholder becomes first, the provider saves its price in the cache.
                 if(mCallback.getIsFirst()) {
-                    log.i("First registered favorite");
-                    //savePriceInfo(stnPriceData);
-                    //saveDifferedPrice(stnPriceData);
+                    savePriceInfo(file, stnPriceData);
+                    //if(!file.exists()) savePriceInfo(stnPriceData);
+                    //else saveDifferedPrice(file, stnPriceData);
 
                 // a provider selected in FavoriteListFragment, the price of which isn't saved.
                 } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());
@@ -107,60 +109,44 @@ public class FavoritePriceRunnable implements Runnable {
         }
     }
 
-    private void savePriceInfo(Object obj) {
-        final String fName = Constants.FILE_CACHED_STATION_PRICE;
-        File file = new File(mContext.getCacheDir(), fName);
-
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(obj);
-            mCallback.saveStationPriceDone();
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-        }
-    }
 
     // Retrieve the station price previously saved in the internal storage, then compare it
     // with the current price to calculate the price difference, which is passed to Opinet.StationPrice
     // and save the object in the internal storage
-    private synchronized void saveDifferedPrice(Opinet.StationPrice stationPrice) {
-
-        File stnFile = new File(mContext.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+    private synchronized void saveDifferedPrice(final File stnFile, Opinet.StationPrice stationPrice) {
         Uri stnUri = Uri.fromFile(stnFile);
-
         try(InputStream is = mContext.getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
-            Opinet.StationPrice savedStationPrice = (Opinet.StationPrice)ois.readObject();
-            if(!savedStationPrice.getStnId().matches(stationId)) {
-                log.i("Same favorite station: %s, %s", savedStationPrice.getStnId(), stationId);
-                savePriceInfo(stationPrice);
-                return;
+            Opinet.StationPrice savedPrice = (Opinet.StationPrice)ois.readObject();
+            log.i("Compare Station ids: %s, %s", savedPrice.getStnId(), stationId);
+
+            if(savedPrice.getStnId().matches(stationId)) {
+                Map<String, Float> current = stationPrice.getStnPrice();
+                Map<String, Float> prev = savedPrice.getStnPrice();
+                Map<String, Float> differedPrice = new HashMap<>();
+
+                for (String key : current.keySet()) {
+                    Float currentValue = current.get(key);
+                    Float prevValue = prev.get(key);
+
+                    log.i("price compared: %s, %s", currentValue, prevValue);
+
+                    // Handle the null condition of both prices.
+                    if(currentValue == null) throw new NullPointerException();
+                    if(prevValue == null) throw new NullPointerException();
+
+                    // Get the price difference of both prices.
+                    differedPrice.put(key, currentValue - prevValue);
+                }
+
+                // Set the price differrence as params to Opinet.StationPrice setPriceDiff() and save
+                // in the cached directory.
+                stationPrice.setPriceDiff(differedPrice);
             }
 
-            Map<String, Float> current = stationPrice.getStnPrice();
-            Map<String, Float> prev = savedStationPrice.getStnPrice();
-            Map<String, Float> diffPrice = new HashMap<>();
+            savePriceInfo(stnFile, stationPrice);
 
-            for (String key : current.keySet()) {
-
-                Float currentValue = current.get(key);
-                Float prevValue = prev.get(key);
-
-                // Handle the null condition of both prices.
-                if(currentValue == null) throw new NullPointerException("current price failed to fetch");
-                if(prevValue == null) throw new NullPointerException("prev price failed to fetch");
-
-                // Get the price difference of both prices.
-                diffPrice.put(key, currentValue - prevValue);
-            }
-
-            // Set the price differrence as params to Opinet.StationPrice setPriceDiff() and save
-            // in the cached directory.
-            stationPrice.setPriceDiff(diffPrice);
-            savePriceInfo(stationPrice);
 
         } catch(FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e);
@@ -172,6 +158,19 @@ public class FavoritePriceRunnable implements Runnable {
             log.e("NullPointerException: %s", e);
         }
 
+    }
+
+    private void savePriceInfo(final File file, Object obj) {
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(obj);
+            mCallback.saveDifferedPrice();
+
+        } catch (FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e.getMessage());
+        } catch (IOException e) {
+            log.e("SavePriceInfo IOException: %s", e.getMessage());
+        }
     }
 
 }

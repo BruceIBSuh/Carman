@@ -36,7 +36,7 @@ public class GasPriceRunnable implements Runnable {
     private static final String URLsido = OPINET + "avgSidoPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String URLsigun = OPINET + "avgSigunPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String SigunCode = "&sigun=";
-    private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
+    //private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
 
 
     static final int AVG = 0;
@@ -67,7 +67,7 @@ public class GasPriceRunnable implements Runnable {
         void addPriceCount();
         int getTaskCount();
         String getDistrictCode();
-        String getStationId();
+        //String getStationId();
     }
 
     // Constructor
@@ -84,7 +84,7 @@ public class GasPriceRunnable implements Runnable {
 
         String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
-        String stnId = task.getStationId();
+        //String stnId = task.getStationId();
 
         URL url;
         InputStream in = null;
@@ -143,18 +143,18 @@ public class GasPriceRunnable implements Runnable {
 
                     task.addPriceCount();
                     break;
-
+                /*
                 case STATION:
                     log.i("Station price thread:%s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
                     url = new URL(URLStn + stnId);
-                    conn = (HttpURLConnection)url.openConnection();
+                    conn = (HttpURLConnection) url.openConnection();
                     in = conn.getInputStream();
 
-                    if(Thread.interrupted()) throw new InterruptedException();
+                    if (Thread.interrupted()) throw new InterruptedException();
 
                     Opinet.StationPrice stationPrice = xmlHandler.parseStationPrice(in);
-                    if(stationPrice != null) {
+                    if (stationPrice != null) {
                         // Save the object in the cache with the price difference if the favorite
                         // gas stqation is left unchanged.
                         saveStationPriceDiff(stationPrice);
@@ -162,6 +162,8 @@ public class GasPriceRunnable implements Runnable {
 
                     task.addPriceCount();
                     break;
+
+                 */
             }
 
         } catch (MalformedURLException e) {

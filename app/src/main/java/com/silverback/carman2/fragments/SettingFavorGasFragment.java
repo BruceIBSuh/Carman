@@ -166,6 +166,8 @@ public class SettingFavorGasFragment extends Fragment implements
     }
 
 
+    // If an item moves up to the first placeholder, initiate the task to fetch the price data from
+    // the Opinet server and save it in the cache storage.
     @Override
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
@@ -178,19 +180,8 @@ public class SettingFavorGasFragment extends Fragment implements
 
     @Override
     public void deleteFavorite(int category, int position) {
-
-        log.i("FavoriteProviderEntity number: %s", favoriteList.size());
-        if(position == 0 && favoriteList.size() > 1) {
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(
-                    getContext(), null, favoriteList.get(position + 1).providerId, true);
-        }
-
-        //String firstFavoriteId = mDB.favoriteModel().getFirstFavorite(Constants.GAS);
-        //log.i("Station Id compared: %s, %s", entity.providerId, firstFavoriteId);
         mDB.favoriteModel().deleteProvider(favoriteList.get(position));
         favoriteList.remove(position);
         mAdapter.notifyItemRemoved(position);
-
-
     }
 }

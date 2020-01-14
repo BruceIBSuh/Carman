@@ -51,12 +51,13 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     }
 
     @Override
-    public void saveStationPriceDone() {
-        viewModel.favoritePriceComplete().postValue(true);
+    public void saveDifferedPrice() {
+        if(viewModel != null) viewModel.favoritePriceComplete().postValue(true);
     }
 
 
     public void recycle() {
         isFirst = false;
+        stnId = null;
     }
 }

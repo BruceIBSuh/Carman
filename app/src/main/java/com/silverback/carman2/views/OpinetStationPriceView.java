@@ -59,7 +59,6 @@ public class OpinetStationPriceView extends OpinetPriceView {
     }
 
     public void addPriceView(String fuelCode) {
-        log.i("addPriceView");
         File stnFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
 
@@ -68,6 +67,8 @@ public class OpinetStationPriceView extends OpinetPriceView {
         try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)){
             Opinet.StationPrice stnPrice = (Opinet.StationPrice)ois.readObject();
+
+            log.i("First Favorite Station: %s, %s", stnPrice.getStnName(), stnPrice.getDiff());
 
             String stnName = stnPrice.getStnName();
             tvStnName.setText(stnName);

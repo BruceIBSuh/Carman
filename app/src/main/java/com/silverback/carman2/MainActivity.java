@@ -49,6 +49,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
         String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) getSupportActionBar().setTitle(title);
+
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);

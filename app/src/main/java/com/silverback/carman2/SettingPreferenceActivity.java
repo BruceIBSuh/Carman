@@ -134,15 +134,17 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     @Override
     public void onBackPressed() {
-        NavUtils.navigateUpFromSameTask(this);
+        Intent intent = new Intent();
+        intent.putExtra("setting", true);
+        NavUtils.navigateUpTo(this, intent);
         //finish();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         if(getSupportFragmentManager().findFragmentById(R.id.frame_setting) instanceof SettingAutoFragment) {
             log.i("SettingAutoFragment");
-            //getSupportFragmentManager().popBackStack();
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.frame_setting, new SettingPreferenceFragment())
                     .addToBackStack(null)
@@ -220,7 +222,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
-                gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
+                gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
         }

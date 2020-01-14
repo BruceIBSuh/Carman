@@ -268,8 +268,7 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static GasPriceTask startGasPriceTask(
-            Context context, OpinetViewModel model, String distCode, String stnId) {
+    public static GasPriceTask startGasPriceTask(Context context, OpinetViewModel model, String distCode) {
 
         GasPriceTask gasPriceTask = sInstance.mGasPriceTaskQueue.poll();
 
@@ -277,12 +276,12 @@ public class ThreadManager {
             gasPriceTask = new GasPriceTask(context);
         }
 
-        gasPriceTask.initPriceTask(model, distCode, stnId);
+        gasPriceTask.initPriceTask(model, distCode);
 
         sInstance.mDownloadThreadPool.execute(gasPriceTask.getAvgPriceRunnable());
         sInstance.mDownloadThreadPool.execute(gasPriceTask.getSidoPriceRunnable());
         sInstance.mDownloadThreadPool.execute(gasPriceTask.getSigunPriceRunnable());
-        sInstance.mDownloadThreadPool.execute(gasPriceTask.getStationPriceRunnable());
+        //sInstance.mDownloadThreadPool.execute(gasPriceTask.getStationPriceRunnable());
 
         return gasPriceTask;
     }

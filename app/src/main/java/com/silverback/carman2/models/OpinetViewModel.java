@@ -5,12 +5,11 @@ import android.util.SparseArray;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import java.util.List;
 import java.util.Map;
 
 public class OpinetViewModel extends ViewModel {
 
-    private MutableLiveData<SparseArray<Object>> oilPriceData;
+    //private MutableLiveData<SparseArray<Object>> oilPriceData;
     private MutableLiveData<Boolean> districtPrice;
     private MutableLiveData<Boolean> distCode;
     private MutableLiveData<Boolean> favoritePrice;
@@ -22,7 +21,7 @@ public class OpinetViewModel extends ViewModel {
         return distCode;
     }
 
-    public MutableLiveData<Boolean> getDistPriceComplete() {
+    public MutableLiveData<Boolean> distPriceComplete() {
         if(districtPrice == null) districtPrice = new MutableLiveData<>();
         return districtPrice;
     }

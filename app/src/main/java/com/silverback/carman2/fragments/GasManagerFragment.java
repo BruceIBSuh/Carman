@@ -76,9 +76,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private OpinetViewModel opinetViewModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
-    private StationListTask stationListTask;
-    private StationInfoTask stationInfoTask;
-    private FavoritePriceTask favoritePriceTask;
+    private StationListTask stnListTask;
+    private StationInfoTask stnInfoTask;
+    private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
 
@@ -180,11 +180,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
             public void notifyAddGeofenceCompleted(String stnId) {
-                //int numFavorite = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-
                 mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
                     log.i("numFavorite: %s", num);
-                    if(num == 1) favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, stnId, true);
+                    if(num == 1) favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, stnId, true);
                 });
 
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
@@ -193,14 +191,21 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
             @Override
             public void notifyRemoveGeofenceCompleted() {
-                mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id ->{
-                    log.i("Remaining station becomes firstFavorite: %s, %s", id);
-                    favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, id, true);
+                mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
+                    log.i("numFavorite: %s", num);
+                    if(num >= 1) {
+                        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId ->{
+                            log.i("automatically designated fav: %s", stnId);
+                            favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, stnId, true);
+                        });
+                    }
                 });
+
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
 
             }
+
             @Override
             public void notifyAddGeofenceFailed() {
                 log.i("Failed to add the gas station to Geofence");
@@ -282,7 +287,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             btnChangeDate.setVisibility(View.GONE);
 
             // Task to fetch the gas price of a station with the station ID.
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, geoStnId, false);
+            favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, geoStnId, false);
         }
 
         return localView;
@@ -298,7 +303,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             this.location = location;
             if(!isGeofenceIntent) {
-                stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaultParams);
+                stnListTask = ThreadManager.startStationListTask(stnListModel, location, defaultParams);
             }
         });
 
@@ -330,7 +335,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             stnId = entity.providerId;
             isFavoriteGas = true;
 
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(
+            favPriceTask = ThreadManager.startFavoritePriceTask(
                     getActivity(), opinetViewModel, entity.providerId, false);
         });
 
@@ -370,9 +375,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onDestroy() {
-        if(favoritePriceTask != null) favoritePriceTask = null;
-        if(stationListTask != null) stationListTask = null;
-        if(stationInfoTask != null) stationInfoTask = null;
+        if(favPriceTask != null) favPriceTask = null;
+        if(stnListTask != null) stnListTask = null;
+        if(stnInfoTask != null) stnInfoTask = null;
 
         super.onDestroy();
     }
@@ -487,7 +492,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                     final String fName = Constants.FILE_CACHED_STATION_PRICE;
                     File file = new File(getContext().getApplicationContext().getCacheDir(), fName);
                     if(!file.exists()) {
-                        favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
+                        favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
                     }
                 }
 

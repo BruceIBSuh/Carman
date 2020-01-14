@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 
+import androidx.annotation.Nullable;
+
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
@@ -224,7 +226,7 @@ public class FavoriteGeofenceHelper {
     // removeGeofences() with its requestId which has been already set by setGeofenceParam() and
     // provided when adding it to Favorite.
     @SuppressWarnings("ConstantConditions")
-    public void removeFavoriteGeofence(String userId, String name, String id, int category) {
+    public void removeFavoriteGeofence(String userId, @Nullable String name, @Nullable String id, int category) {
         // Create the list which contains requestId's to remove.
         List<String> geofenceId = new ArrayList<>();
         geofenceId.add(id);
@@ -242,8 +244,6 @@ public class FavoriteGeofenceHelper {
             FavoriteProviderEntity provider = mDB.favoriteModel().findFavoriteProvider(name, id);
             if(provider != null) {
                 log.i("placeholder: %s", provider.placeHolder);
-                if(provider.placeHolder == 0) mListener.notifyRemoveGeofenceCompleted();
-
                 // Delete the provider from FavoriteProviderEntity, which is notified to
                 // GeneralFragment by decreasing the favorite provider number.
                 mDB.favoriteModel().deleteProvider(provider);
@@ -262,6 +262,8 @@ public class FavoriteGeofenceHelper {
                             evalReference.update("favorite_num", FieldValue.increment(-1));
                     }
                 });
+
+                mListener.notifyRemoveGeofenceCompleted();
             }
         }).addOnFailureListener(e -> {
             log.i("failed to remove");

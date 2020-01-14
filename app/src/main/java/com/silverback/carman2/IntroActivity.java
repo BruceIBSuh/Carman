@@ -12,7 +12,6 @@ import androidx.lifecycle.ViewModelProviders;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
@@ -103,7 +102,7 @@ public class IntroActivity extends BaseActivity  {
 
         // Being notified of the opinet price data on the worker thread of GasPriceTask,
         // start MainActivity and finish the progressbar
-        opinetViewModel.getDistPriceComplete().observe(this, isDone -> {
+        opinetViewModel.distPriceComplete().observe(this, isDone -> {
             log.i("district price complete");
             // Save the last update time in SharedPreferences
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
@@ -178,12 +177,18 @@ public class IntroActivity extends BaseActivity  {
         // The price check time set in Constants.OPINET_UPDATE_INTERVAL has lapsed
         // or no file as to the average oil price exists b/c it is the first-time launching.
         //if(checkPriceUpdate() || !file.exists()) {
-        if(checkPriceUpdate()) {
+        if(checkPriceUpdate() || !file.exists()) {
             log.i("Receiving the oil price");
             List<String> district = convJSONArrayToList();
             if(district == null) distCode = "0101";
             else distCode = district.get(2);
 
+            // Initiate the task to retrieve the prices of average, sido, sigun district from
+            // the Opinet server, then notify this activity of having the data done by OpinetViewModel.
+            // distPriceComplete() defined in onCreate() to move to MainActivity.
+            gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode);
+
+            /*
             // Retrieve the first-set gas station and service center in each placeholders from DB
             // to fetch the id which is used as param to get the price, then pass it to MainActivity.
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, id -> {
@@ -191,21 +196,7 @@ public class IntroActivity extends BaseActivity  {
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
             });
 
-
-            /*
-            mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
-                for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                    if(provider.category == Constants.GAS) {
-                        stnId = provider.providerId;
-                        log.i("First-set favorite station: %s", stnId);
-                        break;
-                    }
-                }
-                // Starts GasPriceTask, the results of which is notified OpinetViewModel.
-                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
-
-            });
-            */
+             */
 
         } else {
             startActivity(new Intent(this, MainActivity.class));
