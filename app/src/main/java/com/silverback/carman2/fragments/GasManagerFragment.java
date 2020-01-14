@@ -180,27 +180,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
             public void notifyAddGeofenceCompleted(String stnId) {
-                mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
-                    log.i("numFavorite: %s", num);
-                    if(num == 1) favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, stnId, true);
-                });
-
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
 
             @Override
             public void notifyRemoveGeofenceCompleted() {
-                mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
-                    log.i("numFavorite: %s", num);
-                    if(num >= 1) {
-                        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId ->{
-                            log.i("automatically designated fav: %s", stnId);
-                            favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), null, stnId, true);
-                        });
-                    }
-                });
-
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
 
@@ -455,9 +440,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             FavoriteListFragment favoriteFragment = FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS);
             favoriteFragment.show(getFragmentManager(), null);
 
-        // Remove the station both from the local db and Firestore, the result of which is notified
-        // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
+
         } else if(isFavoriteGas) {
+            // Remove the station both from the local db and Firestore, the result of which is notified
+            // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
+            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
+                log.i("First placeholedr: %s", id);
+            });
             Snackbar snackbar = Snackbar.make(
                     getView(), getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
@@ -468,9 +457,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             snackbar.show();
 
         } else {
-            // First, check if the favorite is up to the limit.
+            log.i("Add Geofence");
+            // Add a station both to the local db and Firestore as far as the number of favorite stations
+            // is less than
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-
             if(placeholder == Constants.MAX_FAVORITE) {
                 Snackbar.make(constraintLayout, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
 
@@ -488,6 +478,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 });
 
                 // Registered first time and no data is saved in the cache.
+                /*
                 if(placeholder == 1) {
                     final String fName = Constants.FILE_CACHED_STATION_PRICE;
                     File file = new File(getContext().getApplicationContext().getCacheDir(), fName);
@@ -495,6 +486,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                         favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
                     }
                 }
+                 */
 
             }
         }

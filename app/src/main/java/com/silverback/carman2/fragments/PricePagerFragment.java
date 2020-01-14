@@ -69,6 +69,7 @@ public class PricePagerFragment extends Fragment {
         }
 
         switch(page) {
+
             case DISTRICT_PRICE:
                 View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
                 OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);
@@ -80,6 +81,7 @@ public class PricePagerFragment extends Fragment {
                 return firstPage;
 
             case STATION_PRICE:
+                log.i("pricepagerfragment update");
                 View secondPage = inflater.inflate(R.layout.pager_station_price, container, false);
                 OpinetStationPriceView stnPriceView = secondPage.findViewById(R.id.stationPriceView);
 
@@ -90,16 +92,15 @@ public class PricePagerFragment extends Fragment {
                     else {
                         mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
                             log.i("Retrieve the first-set favorite: %s", stnId);
-                            if(stnId != null)
-                                favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
+                            favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
+
                         });
                     }
                 });
 
 
-
                 // Add the favorite station view in PricePagerFragment only when the task has fetched
-                // the price which is cached in the internal storage.
+                // the price which is cached in the internal storage
                 opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
                     log.i("new firstset favorite");
                     if(isDone) stnPriceView.addPriceView(fuelCode);

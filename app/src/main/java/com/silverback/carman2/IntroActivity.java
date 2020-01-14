@@ -170,33 +170,21 @@ public class IntroActivity extends BaseActivity  {
 
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
-
         File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
         String distCode;
 
-        // The price check time set in Constants.OPINET_UPDATE_INTERVAL has lapsed
+        // The price updating interval set in Constants.OPINET_UPDATE_INTERVAL has lapsed
         // or no file as to the average oil price exists b/c it is the first-time launching.
-        //if(checkPriceUpdate() || !file.exists()) {
         if(checkPriceUpdate() || !file.exists()) {
             log.i("Receiving the oil price");
             List<String> district = convJSONArrayToList();
             if(district == null) distCode = "0101";
             else distCode = district.get(2);
 
-            // Initiate the task to retrieve the prices of average, sido, sigun district from
-            // the Opinet server, then notify this activity of having the data done by OpinetViewModel.
-            // distPriceComplete() defined in onCreate() to move to MainActivity.
+            // Initiate the task to retrieve each price of average, sido, sigun district from
+            // the Opinet server, then notify this of having the data done by OpinetViewModel.
+            // distPriceComplete() defined in onCreate() to move on to MainActivity.
             gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode);
-
-            /*
-            // Retrieve the first-set gas station and service center in each placeholders from DB
-            // to fetch the id which is used as param to get the price, then pass it to MainActivity.
-            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, id -> {
-                log.i("Intro StationID: %s", stnId);
-                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
-            });
-
-             */
 
         } else {
             startActivity(new Intent(this, MainActivity.class));

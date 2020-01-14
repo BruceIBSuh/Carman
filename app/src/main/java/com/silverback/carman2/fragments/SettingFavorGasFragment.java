@@ -147,7 +147,6 @@ public class SettingFavorGasFragment extends Fragment implements
     public boolean onOptionsItemSelected(MenuItem menuItem) {
 
         if(menuItem.getItemId() == android.R.id.home) {
-
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
             // the edited fasvorte list.
             int position = 0;
@@ -157,8 +156,8 @@ public class SettingFavorGasFragment extends Fragment implements
             }
 
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
-
             startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+
             return true;
         }
 
@@ -172,7 +171,7 @@ public class SettingFavorGasFragment extends Fragment implements
     public void changeFavorite(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
-            favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
+            //favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
         }
 
 

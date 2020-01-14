@@ -13,7 +13,10 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 /**
- * Abstract class subclassed by Avg, Sido, Sigun, Station PriceView
+ * The abstract class is subclassed by OpinetAvgPriceView, OpinetSidoPriceView, OpinetSigunPriceView
+ * and OpinetStationPriceView, inheriting setColoredTextView() which makes the color of price
+ * difference colored according to whether the price is up or down.
+ *
  *
  */
 public abstract class OpinetPriceView extends LinearLayout {
@@ -58,8 +61,5 @@ public abstract class OpinetPriceView extends LinearLayout {
 
         log.i("Diff: %s, %s", price, diff);
         textView.setText(ssb);
-
     }
-
-
 }

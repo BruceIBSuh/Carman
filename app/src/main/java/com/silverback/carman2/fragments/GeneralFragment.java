@@ -46,6 +46,7 @@ import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
+import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationListTask;
@@ -94,6 +95,7 @@ public class GeneralFragment extends Fragment implements
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
+    private FavoritePriceTask favPriceTask;
     //private GasPriceTask gasPriceTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
@@ -113,6 +115,7 @@ public class GeneralFragment extends Fragment implements
     // Fields
     private String prevStnId;
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
+    private String defaultFuel;
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
     private boolean bExpenseSort;
     private boolean hasNearStations; //flag to check whether near stations exist within the radius.
@@ -184,9 +187,16 @@ public class GeneralFragment extends Fragment implements
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])){
                 fuelSpinner.setSelection(i);
+                defaultFuel = defaults[0];
                 break;
             }
         }
+
+        // Add the custom view for the average price and the viewpager in which to show the sido,
+        // sigun price and the first-place
+        opinetAvgPriceView.addPriceView(defaultFuel);
+        pricePagerAdapter.setFuelCode(defaultFuel);
+        priceViewPager.setAdapter(pricePagerAdapter);
 
         // Set Floating Action Button
         // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
@@ -216,37 +226,16 @@ public class GeneralFragment extends Fragment implements
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
 
-        // Query the favorite provider set in the first place in SettingPreferenceActivity
-        /*
-        mDB.favoriteModel().queryFirstSetFavorite().observe(getViewLifecycleOwner(), data -> {
-            log.i("First Station in GeneralFragent");
-            for(FavoriteProviderDao.FirstSetFavorite provider : data) {
-                if(provider.category == Constants.GAS) {
-                    log.i("Favorite Station ID: %s, %s", stnId, provider.providerId);
-                    pricePagerAdapter.notifyDataSetChanged();
-                    break;
-                }
-            }
-        });
-        */
-
-        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
-            log.i("Firstset favroite changed: %s, %s", prevStnId, stnId);
-            if(stnId != null && !stnId.equalsIgnoreCase(prevStnId)) {
-                log.i("new firstset favorite");
-                pricePagerAdapter.notifyDataSetChanged();
-            }
-        });
-        // Handle the special condition that has a favorite station first time or has no favorite
-        // station by adding or removing the favorite station in GasManagerFragment. Under this
-        // condition, the favorite price data should be updated because a station it will be a
-        // favorite one or no favorite station exists.
+        // Handle the special conditions that a favorite station is added first time or no favorite
+        // station is left by removing the last one or the removed station is the first place one
+        // displaying the price in the viewpager.
         mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
             if(num == 0 || num == 1) {
                 log.i("Favorite Number: %s", num);
                 pricePagerAdapter.notifyDataSetChanged();
             }
         });
+
 
         /*
          * Retrieve the queried results of the latest gas and service statements as LiveData from
@@ -337,7 +326,7 @@ public class GeneralFragment extends Fragment implements
     // pass arguments.
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        log.i("onItemSelected");
+
         switch(position){
             case 0: defaults[0] = "B027"; break; // gasoline
             case 1: defaults[0] = "D047"; break; // diesel
@@ -346,13 +335,17 @@ public class GeneralFragment extends Fragment implements
             default: break;
         }
 
-        // Retrives the data respectively saved in the cache directory with a fuel selected by the
-        // spinner.
-        opinetAvgPriceView.addPriceView(defaults[0]);
-
-        // Attach the pager adatepr with a fuel code set.
-        pricePagerAdapter.setFuelCode(defaults[0]);
-        priceViewPager.setAdapter(pricePagerAdapter);
+        if(!defaultFuel.matches(defaults[0])) {
+            log.i("onItemSelected");
+            defaultFuel = defaults[0];
+            // Retrives the price data respectively saved in the cache directory with a fuel selected
+            // by the spinner.
+            opinetAvgPriceView.addPriceView(defaults[0]);
+            // Attach the viewpager adatepr with a fuel code selected by the spinner.
+            pricePagerAdapter.setFuelCode(defaults[0]);
+            //priceViewPager.setAdapter(pricePagerAdapter);
+            pricePagerAdapter.notifyDataSetChanged();
+        }
     }
 
     @Override
