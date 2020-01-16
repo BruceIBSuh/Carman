@@ -109,6 +109,19 @@ public class FavoritePriceRunnable implements Runnable {
         }
     }
 
+    private void savePriceInfo(final File file, Object obj) {
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(obj);
+            mCallback.saveDifferedPrice();
+
+        } catch (FileNotFoundException e) {
+            log.e("FileNotFoundException: %s", e.getMessage());
+        } catch (IOException e) {
+            log.e("SavePriceInfo IOException: %s", e.getMessage());
+        }
+    }
+
 
     // Retrieve the station price previously saved in the internal storage, then compare it
     // with the current price to calculate the price difference, which is passed to Opinet.StationPrice
@@ -160,17 +173,6 @@ public class FavoritePriceRunnable implements Runnable {
 
     }
 
-    private void savePriceInfo(final File file, Object obj) {
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(obj);
-            mCallback.saveDifferedPrice();
 
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-        } catch (IOException e) {
-            log.e("SavePriceInfo IOException: %s", e.getMessage());
-        }
-    }
 
 }

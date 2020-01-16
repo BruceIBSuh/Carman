@@ -27,7 +27,7 @@ public class DistrictCodeRunnable implements Runnable {
 
     // Constants
     private static final String API_KEY = "F186170711";
-    private static final String OPINET = "http://www.opinet.co.kr/api/areaCode.do?out=xml&code=" + API_KEY;
+    private static final String OPINET = "http://www.opinet.co.kr/api/areaCode.do?out=xml&code=F186170711" + API_KEY;
     private static final String OPINET_AREA = OPINET + "&area=";
 
     static final int DOWNLOAD_DISTCODE_SUCCEED = 1;
@@ -37,27 +37,27 @@ public class DistrictCodeRunnable implements Runnable {
     private Context context;
     private OpinetDistCodeMethods mTask;
     private List<Opinet.DistrictCode> distCodeList;
-    private final String[] sido;
 
     // Interface
     public interface OpinetDistCodeMethods {
         void setDistCodeDownloadThread(Thread currentThread);
-        void notifySaved(boolean b);
+        void hasDistCodeSaved(boolean b);
         void handleDistCodeTask(int state);
     }
 
     // Constructor
     DistrictCodeRunnable(Context context, OpinetDistCodeMethods task) {
+        this.context = context;
         mTask = task;
-        this.context = context.getApplicationContext();
-        sido = context.getResources().getStringArray(R.array.sido_code);
+
     }
 
     @Override
     public void run() {
         mTask.setDistCodeDownloadThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        log.i("Thread: " + Thread.currentThread());
+        // Get the District Sido codes from the resource.
+        final String[] sido = context.getResources().getStringArray(R.array.sido_code);
 
         HttpURLConnection conn = null;
         BufferedInputStream bis = null;
@@ -87,10 +87,10 @@ public class DistrictCodeRunnable implements Runnable {
 
             if(saveDistCode(distCodeList)){
                 log.d("Sigun Numbers: %d", distCodeList.size());
-                mTask.notifySaved(true);
-                mTask.handleDistCodeTask(DOWNLOAD_DISTCODE_SUCCEED);
+                mTask.hasDistCodeSaved(true);
+                //mTask.handleDistCodeTask(DOWNLOAD_DISTCODE_SUCCEED);
 
-            } else mTask.notifySaved(false);
+            } else mTask.hasDistCodeSaved(false);
 
         } catch (IOException e) {
             log.e("InputStream failed: " + e);
@@ -109,15 +109,11 @@ public class DistrictCodeRunnable implements Runnable {
     }
 
     private boolean saveDistCode(List<Opinet.DistrictCode> list) {
-
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
-
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-
             oos.writeObject(list);
             return true;
-
         } catch (FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e.getMessage());
         } catch (IOException e) {

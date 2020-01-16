@@ -35,6 +35,8 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<String> newPosting;
 
+    private MutableLiveData<String> firstPlaceholderId;
+
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -143,6 +145,13 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
+    }
+
+    // Commnumcate b/w GeneralFragment and PricePagerFragment in MainActivity to pass the station id
+    // of the first placeholder.
+    public MutableLiveData<String> getFirstPlaceholderId() {
+        if(firstPlaceholderId == null) firstPlaceholderId = new MutableLiveData<>();
+        return firstPlaceholderId;
     }
 
 

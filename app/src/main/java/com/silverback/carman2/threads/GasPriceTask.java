@@ -24,15 +24,15 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         mAvgPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.AVG);
         mSidoPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIDO);
         mSigunPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIGUN);
-        //mStationPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.STATION);
+        mStationPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.STATION);
 
     }
 
     // Initialize args for GasPriceRunnable
-    void initPriceTask(OpinetViewModel viewModel, String distCode) {
+    void initPriceTask(OpinetViewModel viewModel, String distCode, String stnId) {
         this.viewModel = viewModel;
         this.distCode = distCode;
-        //this.stnId = stnId;
+        this.stnId = stnId;
     }
 
     // Getter for the Runnable invoked by startGasPriceTask() in ThreadManager
@@ -45,7 +45,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     Runnable getSigunPriceRunnable(){
         return mSigunPriceRunnable;
     }
-    //Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
+    Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
 
 
     // Callback methods defined in GasPriceRunnable.OpinentPriceListMethods
@@ -58,13 +58,11 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     public String getDistrictCode() {
         return distCode;
     }
-    /*
+
     @Override
     public String getStationId() {
         return stnId;
     }
-
-     */
 
     // Check if the 3 Runnables successfully complte.
     @Override
@@ -75,7 +73,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     @Override
     public void addPriceCount() {
         index++;
-        if(index == 3) viewModel.distPriceComplete().postValue(true);
+        if(index == 4) viewModel.distPriceComplete().postValue(true);
     }
 
     @Override

@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
+/*
  * This class downloads necessary resources not only from the server but also from the local db and
  * starts the app. The process is forked as the first time initiation and the regular initiation,
  * according to whether the user is anonymously registered with Firebase anonymous authentication.
@@ -170,21 +170,22 @@ public class IntroActivity extends BaseActivity  {
 
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
-        File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
+        //File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
         String distCode;
-
         // The price updating interval set in Constants.OPINET_UPDATE_INTERVAL has lapsed
         // or no file as to the average oil price exists b/c it is the first-time launching.
-        if(checkPriceUpdate() || !file.exists()) {
+        if(checkPriceUpdate()) {
             log.i("Receiving the oil price");
             List<String> district = convJSONArrayToList();
             if(district == null) distCode = "0101";
             else distCode = district.get(2);
 
-            // Initiate the task to retrieve each price of average, sido, sigun district from
-            // the Opinet server, then notify this of having the data done by OpinetViewModel.
-            // distPriceComplete() defined in onCreate() to move on to MainActivity.
-            gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode);
+            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId ->{
+                // Initiate the task to retrieve each price of average, sido, sigun district from
+                // the Opinet server, then notify this of having the data done by OpinetViewModel.
+                // distPriceComplete() defined in onCreate() to move on to MainActivity.
+                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+            });
 
         } else {
             startActivity(new Intent(this, MainActivity.class));

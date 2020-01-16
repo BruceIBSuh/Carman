@@ -33,6 +33,7 @@ import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ExpenseBaseEntity;
+import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -55,6 +56,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -179,7 +181,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
-            public void notifyAddGeofenceCompleted(String stnId) {
+            public void notifyAddGeofenceCompleted(int placeholder, String stnId) {
+                if(placeholder == 0)
+                    favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
+
+                // The station is added to the favorite list in the first placeholder.
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
@@ -272,7 +278,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             btnChangeDate.setVisibility(View.GONE);
 
             // Task to fetch the gas price of a station with the station ID.
-            favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, geoStnId, false);
+            //favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, geoStnId, false);
         }
 
         return localView;
@@ -326,7 +332,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
         opinetViewModel.getFavoritePriceData().observe(getViewLifecycleOwner(), data -> {
-            log.i("Map data: %s", data.get(defaultParams[0]));
+            log.i("Favorite price data: %s", data.get(defaultParams[0]));
             etUnitPrice.setText(String.valueOf(data.get(defaultParams[0])));
             etUnitPrice.setCursorVisible(false);
         });
@@ -445,8 +451,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // Remove the station both from the local db and Firestore, the result of which is notified
             // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
-                log.i("First placeholedr: %s", id);
+                // if the station is the firstholder in the list, the second placeholder will be the
+                // first when the firstholder is removed and the favorite list should be updated with
+                // the placeholder field.
             });
+
+
             Snackbar snackbar = Snackbar.make(
                     getView(), getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
@@ -476,17 +486,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                         }
                     }
                 });
-
-                // Registered first time and no data is saved in the cache.
-                /*
-                if(placeholder == 1) {
-                    final String fName = Constants.FILE_CACHED_STATION_PRICE;
-                    File file = new File(getContext().getApplicationContext().getCacheDir(), fName);
-                    if(!file.exists()) {
-                        favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetViewModel, stnId, true);
-                    }
-                }
-                 */
 
             }
         }

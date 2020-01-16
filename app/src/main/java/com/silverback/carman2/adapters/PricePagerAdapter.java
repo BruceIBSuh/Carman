@@ -30,6 +30,7 @@ public class PricePagerAdapter extends FragmentStatePagerAdapter {
 
     // Objects
     private String fuelCode;
+    private String stnId;
 
     // Constructor
     public PricePagerAdapter(FragmentManager fm) {
@@ -52,4 +53,6 @@ public class PricePagerAdapter extends FragmentStatePagerAdapter {
         this.fuelCode = fuelCode;
         log.i("Fuel Code: %s", fuelCode);
     }
+
+
 }

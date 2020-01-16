@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -20,7 +19,6 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 import com.silverback.carman2.viewholders.FavoriteItemHolder;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,13 +34,13 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     // Objects
     private List<FavoriteProviderEntity> favoriteList;
-    private SparseArray<DocumentSnapshot> snapshotArray;
+    private SparseArray<DocumentSnapshot> sparseSnapshotArray;
     private OnFavoriteAdapterListener mListener;
     private ViewGroup parent;
 
 
     public interface OnFavoriteAdapterListener {
-        void changeFavorite(int category, String stnId);
+        void setFirstPlaceholder(int category, String stnId);
         void deleteFavorite(int cqtegory, int position);
     }
 
@@ -54,7 +52,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
         mListener = listener;
         this.favoriteList = favoriteList;
-        this.snapshotArray = snapshotArray;
+        this.sparseSnapshotArray = snapshotArray;
     }
 
 
@@ -76,8 +74,8 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         holder.bindToFavorite(provider);
 
         // Bind the favorite registration number and the rating if any.
-        if(snapshotArray.size() > 0 && snapshotArray.get(position) != null)
-            holder.bindToEval(snapshotArray.get(position));
+        if(sparseSnapshotArray.size() > 0 && sparseSnapshotArray.get(position) != null)
+            holder.bindToEval(sparseSnapshotArray.get(position));
     }
 
     @Override
@@ -94,7 +92,7 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
         for(Object obj : payloads) {
             DocumentSnapshot snapshot = (DocumentSnapshot) obj;
-            if(snapshotArray.size() > 0 && snapshotArray.get(position) != null) {
+            if(sparseSnapshotArray.size() > 0 && sparseSnapshotArray.get(position) != null) {
                 holder.bindToEval(snapshot);
             }
         }
@@ -115,30 +113,30 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
         // Drag an item down, swapping the positions.
         if (from < to) {
-            fromSnapshot = snapshotArray.get(from);
-            toSnapshot = snapshotArray.get(to);
-            snapshotArray.remove(from);
-            snapshotArray.remove(to);
+            fromSnapshot = sparseSnapshotArray.get(from);
+            toSnapshot = sparseSnapshotArray.get(to);
+            sparseSnapshotArray.remove(from);
+            sparseSnapshotArray.remove(to);
 
             for (int i = from; i < to; i++) {
                 // Swap the FavorteProviderEntity positioned at from with that positioned at to.
                 Collections.swap(favoriteList, i, i + 1);
                 // Swap the DocumentSnapshot positioned at the key of from and the key of to.
-                if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
-                if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
+                if(fromSnapshot != null) sparseSnapshotArray.put(to, fromSnapshot);
+                if(toSnapshot != null) sparseSnapshotArray.put(from, toSnapshot);
             }
 
         } else {
-            fromSnapshot = snapshotArray.get(from);
-            toSnapshot = snapshotArray.get(to);
-            snapshotArray.remove(from);
-            snapshotArray.remove(to);
+            fromSnapshot = sparseSnapshotArray.get(from);
+            toSnapshot = sparseSnapshotArray.get(to);
+            sparseSnapshotArray.remove(from);
+            sparseSnapshotArray.remove(to);
 
             for (int i = from; i > to; i--) {
                 Collections.swap(favoriteList, i, i - 1);
                 // Change a new key if the snapshot is not null.
-                if(fromSnapshot != null) snapshotArray.put(to, fromSnapshot);
-                if(toSnapshot != null) snapshotArray.put(from, toSnapshot);
+                if(fromSnapshot != null) sparseSnapshotArray.put(to, fromSnapshot);
+                if(toSnapshot != null) sparseSnapshotArray.put(from, toSnapshot);
             }
         }
 
@@ -148,11 +146,11 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         notifyItemChanged(from, toSnapshot);
         notifyItemChanged(to, fromSnapshot);
 
-        // If an item is dragged up to the first place, the callback is invoked to fetch the
-        // price data, initiating FavoritePriceTask in SettingFavorGasFragment.
+        // If an item is dragged up to the first place in the list, it is notified that a new favorite
+        // is set up to the first placeholder, ready to display the price in MainActivity.
         if(to == 0) {
             log.i("First set favorite: %s", favoriteList.get(to).providerId);
-            mListener.changeFavorite(Constants.GAS, favoriteList.get(to).providerId);
+            mListener.setFirstPlaceholder(Constants.GAS, favoriteList.get(to).providerId);
         }
     }
 
@@ -190,6 +188,6 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
     // any evaluation data from Firestore.
     public void addSparseSnapshotArray(int position, DocumentSnapshot snapshot) {
-        snapshotArray.put(position, snapshot);
+        sparseSnapshotArray.put(position, snapshot);
     }
 }

@@ -6,7 +6,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -59,7 +58,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private SparseArray<DocumentSnapshot> sparseSnapshotArray;
     private FavoritePriceTask favoritePriceTask;
     private OpinetViewModel opinetViewModel;
-    private List<FavoriteProviderEntity> favoriteList;
+    private List<FavoriteProviderEntity> favList;
 
     // Constructor
     public SettingFavorGasFragment() {
@@ -89,7 +88,7 @@ public class SettingFavorGasFragment extends Fragment implements
         // Query the favorite gas stations from FavoriteProviderEntity
         mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(this, favoriteList -> {
 
-            this.favoriteList = favoriteList;
+            this.favList = favoriteList;
             mAdapter = new SettingFavoriteAdapter(favoriteList, sparseSnapshotArray, this);
 
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
@@ -150,14 +149,20 @@ public class SettingFavorGasFragment extends Fragment implements
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
             // the edited fasvorte list.
             int position = 0;
-            for(FavoriteProviderEntity entity : favoriteList) {
+            for(FavoriteProviderEntity entity : favList) {
+                log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
                 entity.placeHolder = position;
                 position++;
             }
 
-            mDB.favoriteModel().updatePlaceHolder(favoriteList);
-            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+            mDB.favoriteModel().updatePlaceHolder(favList);
 
+            // Have the favorite list updated.
+            for(FavoriteProviderEntity entity : favList) {
+                log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
+            }
+
+            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
             return true;
         }
 
@@ -168,7 +173,7 @@ public class SettingFavorGasFragment extends Fragment implements
     // If an item moves up to the first placeholder, initiate the task to fetch the price data from
     // the Opinet server and save it in the cache storage.
     @Override
-    public void changeFavorite(int category, String stnId) {
+    public void setFirstPlaceholder(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
             //favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
@@ -179,8 +184,8 @@ public class SettingFavorGasFragment extends Fragment implements
 
     @Override
     public void deleteFavorite(int category, int position) {
-        mDB.favoriteModel().deleteProvider(favoriteList.get(position));
-        favoriteList.remove(position);
+        mDB.favoriteModel().deleteProvider(favList.get(position));
+        favList.remove(position);
         mAdapter.notifyItemRemoved(position);
     }
 }

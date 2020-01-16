@@ -36,7 +36,7 @@ public class GasPriceRunnable implements Runnable {
     private static final String URLsido = OPINET + "avgSidoPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String URLsigun = OPINET + "avgSigunPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String SigunCode = "&sigun=";
-    //private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
+    private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
 
 
     static final int AVG = 0;
@@ -67,7 +67,7 @@ public class GasPriceRunnable implements Runnable {
         void addPriceCount();
         int getTaskCount();
         String getDistrictCode();
-        //String getStationId();
+        String getStationId();
     }
 
     // Constructor
@@ -84,7 +84,7 @@ public class GasPriceRunnable implements Runnable {
 
         String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
-        //String stnId = task.getStationId();
+        String stnId = task.getStationId();
 
         URL url;
         InputStream in = null;
@@ -103,8 +103,11 @@ public class GasPriceRunnable implements Runnable {
 
                     List<Opinet.OilPrice> avgList = xmlHandler.parseOilPrice(in);
                     if(!avgList.isEmpty()) {
+                        log.i("average price fetched");
                         avgList.remove(avgList.get(3)); // Exclude Kerotene
                         savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
+                    } else {
+                        log.i("failed to fetch the average price");
                     }
 
                     task.addPriceCount();
@@ -121,6 +124,7 @@ public class GasPriceRunnable implements Runnable {
 
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
+                        log.i("Sido price fetched");
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                     }
 
@@ -138,32 +142,33 @@ public class GasPriceRunnable implements Runnable {
 
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
+                        log.i("sigun price list fetched");
                         savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
                     }
 
                     task.addPriceCount();
                     break;
-                /*
+
                 case STATION:
-                    log.i("Station price thread:%s", Thread.currentThread());
-                    task.setPriceDownloadThread(Thread.currentThread());
-                    url = new URL(URLStn + stnId);
-                    conn = (HttpURLConnection) url.openConnection();
-                    in = conn.getInputStream();
+                    if(stnId != null) {
+                        log.i("Station price thread:%s", Thread.currentThread());
+                        task.setPriceDownloadThread(Thread.currentThread());
+                        url = new URL(URLStn + stnId);
+                        conn = (HttpURLConnection) url.openConnection();
+                        in = conn.getInputStream();
 
-                    if (Thread.interrupted()) throw new InterruptedException();
+                        if (Thread.interrupted()) throw new InterruptedException();
 
-                    Opinet.StationPrice stationPrice = xmlHandler.parseStationPrice(in);
-                    if (stationPrice != null) {
-                        // Save the object in the cache with the price difference if the favorite
-                        // gas stqation is left unchanged.
-                        saveStationPriceDiff(stationPrice);
+                        Opinet.StationPrice stationPrice = xmlHandler.parseStationPrice(in);
+                        if (stationPrice != null) {
+                            // Save the object in the cache with the price difference if the favorite
+                            // gas stqation is left unchanged.
+                            saveStationPriceDiff(stationPrice);
+                        }
                     }
 
                     task.addPriceCount();
                     break;
-
-                 */
             }
 
         } catch (MalformedURLException e) {

@@ -50,7 +50,7 @@ public class FavoriteGeofenceHelper {
 
     // Interface for parent activities
     public interface OnGeofenceListener {
-        void notifyAddGeofenceCompleted(String stnId);
+        void notifyAddGeofenceCompleted(int placeholder, String stnId);
         void notifyRemoveGeofenceCompleted();
         void notifyAddGeofenceFailed();
     }
@@ -191,7 +191,7 @@ public class FavoriteGeofenceHelper {
 
                         // Notify GasManagerFragment ro ServiceManagerFragment of the completion of
                         // geofencing.
-                        mListener.notifyAddGeofenceCompleted(providerId);
+                        mListener.notifyAddGeofenceCompleted(placeHolder, providerId);
 
                     }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());

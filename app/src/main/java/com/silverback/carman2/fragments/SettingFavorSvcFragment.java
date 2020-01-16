@@ -132,14 +132,14 @@ public class SettingFavorSvcFragment extends Fragment implements
 
     /*
     @Override
-    public void changeFavorite(FavoriteProviderEntity entity) {
+    public void setFirstPlaceholder(FavoriteProviderEntity entity) {
         log.i("Listener: Add Favorite - %s", entity.providerName);
         mDB.favoriteModel().insertFavoriteProvider(entity);
     }
     */
 
     @Override
-    public void changeFavorite(int category, String svcId) {
+    public void setFirstPlaceholder(int category, String svcId) {
 
     }
 

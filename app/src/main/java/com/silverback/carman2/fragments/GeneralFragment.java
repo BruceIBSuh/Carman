@@ -1,5 +1,6 @@
 package com.silverback.carman2.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -37,17 +38,15 @@ import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.adapters.StationListAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
-import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.database.GasManagerDao;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.FavoritePriceTask;
-import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
@@ -59,6 +58,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -88,6 +89,7 @@ public class GeneralFragment extends Fragment implements
 
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
+    private FragmentSharedModel fragmentModel;
     //private OpinetViewModel opinetViewModel;
 
     private GasManagerDao.RecentGasData queryGasResult;
@@ -113,7 +115,7 @@ public class GeneralFragment extends Fragment implements
     private ProgressBar progbarStnList;
 
     // Fields
-    private String prevStnId;
+    private String savedId;
     private String[] defaults; //defaults[0]:fuel defaults[1]:radius default[2]:sorting
     private String defaultFuel;
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
@@ -141,6 +143,7 @@ public class GeneralFragment extends Fragment implements
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
         //opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
 
@@ -193,7 +196,7 @@ public class GeneralFragment extends Fragment implements
         }
 
         // Add the custom view for the average price and the viewpager in which to show the sido,
-        // sigun price and the first-place
+        // sigun price and the first placeholder station
         opinetAvgPriceView.addPriceView(defaultFuel);
         pricePagerAdapter.setFuelCode(defaultFuel);
         priceViewPager.setAdapter(pricePagerAdapter);
@@ -222,16 +225,29 @@ public class GeneralFragment extends Fragment implements
 
     // Receive values of the ViewModels or queried results of Room which are synced with observe()
     // defined in LiveData.
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
+        // Handle the various conditions to display the price of the first placeholder station in
+        // the viewpager.
 
-        // Handle the special conditions that a favorite station is added first time or no favorite
-        // station is left by removing the last one or the removed station is the first place one
-        // displaying the price in the viewpager.
-        mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
-            if(num == 0 || num == 1) {
-                log.i("Favorite Number: %s", num);
+        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
+            // Get the station id of the first placeholder in the favorite list, which is saved in the
+            // cache.
+            savedId = getSavedFirstFavorite(getContext());
+            log.i("Compare ids: %s, %s", stnId, savedId);
+
+            // A station is added to the favroite list.
+            if(stnId != null) {
+                // A station is added to the favorite list for the first time.
+                if(!stnId.matches(savedId)) {
+                    pricePagerAdapter.notifyDataSetChanged();
+                    fragmentModel.getFirstPlaceholderId().setValue(stnId);
+                    pricePagerAdapter.notifyDataSetChanged();
+                }
+            } else {
+                fragmentModel.getFirstPlaceholderId().setValue(null);
                 pricePagerAdapter.notifyDataSetChanged();
             }
         });
@@ -326,7 +342,6 @@ public class GeneralFragment extends Fragment implements
     // pass arguments.
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
         switch(position){
             case 0: defaults[0] = "B027"; break; // gasoline
             case 1: defaults[0] = "D047"; break; // diesel
@@ -341,10 +356,10 @@ public class GeneralFragment extends Fragment implements
             // Retrives the price data respectively saved in the cache directory with a fuel selected
             // by the spinner.
             opinetAvgPriceView.addPriceView(defaults[0]);
+
             // Attach the viewpager adatepr with a fuel code selected by the spinner.
             pricePagerAdapter.setFuelCode(defaults[0]);
-            //priceViewPager.setAdapter(pricePagerAdapter);
-            pricePagerAdapter.notifyDataSetChanged();
+            priceViewPager.setAdapter(pricePagerAdapter);
         }
     }
 
@@ -570,6 +585,26 @@ public class GeneralFragment extends Fragment implements
         }
 
         return spannableString;
+    }
+
+    // To get the id of the first placeholder in the favorite station list, check the file, if any,
+    // which saves the first placeholder.
+    private String getSavedFirstFavorite(Context context) {
+        final File file = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        Uri uri = Uri.fromFile(file);
+        try(InputStream is = context.getContentResolver().openInputStream(uri);
+            ObjectInputStream ois = new ObjectInputStream(is)) {
+
+            Opinet.StationPrice savedFavorite = (Opinet.StationPrice) ois.readObject();
+            if(savedFavorite != null) return savedFavorite.getStnId();
+
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        } catch(ClassNotFoundException e) {
+            log.e("ClassNotFoundException: %s", e.getMessage());
+        }
+
+        return null;
     }
 
 }

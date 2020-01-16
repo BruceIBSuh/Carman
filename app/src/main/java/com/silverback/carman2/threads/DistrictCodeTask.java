@@ -47,7 +47,7 @@ public class DistrictCodeTask extends ThreadTask
     }
 
     @Override
-    public void notifySaved(boolean b) {
+    public void hasDistCodeSaved(boolean b) {
         if(b) model.distCodeComplete().postValue(true);
         else model.distCodeComplete().postValue(false);
     }

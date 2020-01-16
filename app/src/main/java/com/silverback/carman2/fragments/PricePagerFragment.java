@@ -13,6 +13,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.threads.ThreadManager;
@@ -33,6 +34,7 @@ public class PricePagerFragment extends Fragment {
     private CarmanDatabase mDB;
     private FavoritePriceTask favPriceTask;
     private OpinetViewModel opinetModel;
+    private FragmentSharedModel fragmentModel;
     private int page;
     private String fuelCode;
 
@@ -52,11 +54,14 @@ public class PricePagerFragment extends Fragment {
         return pagerFragment;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        opinetModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        opinetModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
+
     }
 
     @Override
@@ -81,29 +86,22 @@ public class PricePagerFragment extends Fragment {
                 return firstPage;
 
             case STATION_PRICE:
-                log.i("pricepagerfragment update");
                 View secondPage = inflater.inflate(R.layout.pager_station_price, container, false);
                 OpinetStationPriceView stnPriceView = secondPage.findViewById(R.id.stationPriceView);
+                stnPriceView.addPriceView(fuelCode);
 
-                //int num = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
-                //log.i("Favorite Number: %s", num);
-                mDB.favoriteModel().getFavoriteNum(Constants.GAS).observe(getViewLifecycleOwner(), num -> {
-                    if(num == 0) stnPriceView.removePriceView();
-                    else {
-                        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
-                            log.i("Retrieve the first-set favorite: %s", stnId);
-                            favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
-
-                        });
+                fragmentModel.getFirstPlaceholderId().observe(getViewLifecycleOwner(), stnId -> {
+                    log.i("First placeholder: %s", stnId);
+                    if(stnId != null) {
+                        favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
+                    } else {
+                        stnPriceView.removePriceView();
                     }
+
                 });
 
-
-                // Add the favorite station view in PricePagerFragment only when the task has fetched
-                // the price which is cached in the internal storage
                 opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
-                    log.i("new firstset favorite");
-                    if(isDone) stnPriceView.addPriceView(fuelCode);
+                    stnPriceView.addPriceView(fuelCode);
                 });
 
                 return secondPage;
