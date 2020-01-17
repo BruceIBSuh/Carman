@@ -17,7 +17,6 @@
     <string name="tab_board_community">우리차고</string>
 
     <!--GeneralFragment-->
-    <string name="general_label_today">TODAY: </string>
     <string name="general_subtitle_stations">주변 주유소</string>
     <string name="general_subtitle_region">[관심 지역 / 주유소]</string>
     <string name="general_subtitle_expense">최근 지출 내역</string>
@@ -29,12 +28,13 @@
     <string name="general_expense_service">[ 서비스지출 ]</string>
     <string name="general_stations_distance">[ 거리순 ]</string>
     <string name="general_stations_price">[ 가격순 ]</string>
-    <!--GneralFragment$Opinet Custom Views-->
+    <!--GneralFragment$OpinetPriceView-->
     <string name="general_opinet_subtitle_avgPrice">전국평균유가</string>
     <string name="general_opinet_avgPrice">Gasoline 1400</string>
     <string name="general_def_sido">서울</string>
     <string name="general_def_sigun">종로구</string>
     <string name="general_def_code">0101</string>
+    <string name="general_opinet_stn_reset">다시 설정</string>
     <!--GeneralFragment$LatestExpense-->
     <string name="general_label_gas_date">주유일자:</string>
     <string name="general_label_svc_date">서비스일자:</string>

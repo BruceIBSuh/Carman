@@ -96,8 +96,8 @@ public class OpinetStationPriceView extends OpinetPriceView {
     }
 
     // Set the station price views to be void when the favorite is left empty.
-    public void removePriceView() {
-        tvStnName.setText("");
+    public void removePriceView(String msg) {
+        tvStnName.setText(msg);
         tvStnPrice.setText("");
     }
 

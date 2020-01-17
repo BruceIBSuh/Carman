@@ -181,17 +181,30 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
-            public void notifyAddGeofenceCompleted(int placeholder, String stnId) {
-                if(placeholder == 0)
-                    favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
-
+            public void notifyAddGeofenceCompleted(int placeholder) {
                 // The station is added to the favorite list in the first placeholder.
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
 
             @Override
-            public void notifyRemoveGeofenceCompleted() {
+            public void notifyRemoveGeofenceCompleted(int placeholder) {
+                /*
+                if(placeholder == 0) {
+                    log.i("First placeholder is removed");
+                    mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(getViewLifecycleOwner(), favList -> {
+                        int position = 0;
+                        for(FavoriteProviderEntity entity : favList) {
+                            log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
+                            entity.placeHolder = position;
+                            position++;
+                        }
+                    });
+
+                    //mDB.favoriteModel().updatePlaceHolder(favList);
+                }
+                */
+
                 Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
 
@@ -361,7 +374,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onPause() {
         super.onPause();
-
     }
 
     @Override
@@ -446,17 +458,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             FavoriteListFragment favoriteFragment = FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS);
             favoriteFragment.show(getFragmentManager(), null);
 
-
+        // Remove the station both from the local db and Firestore, the result of which is notified
+        // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
         } else if(isFavoriteGas) {
-            // Remove the station both from the local db and Firestore, the result of which is notified
-            // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
-            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
-                // if the station is the firstholder in the list, the second placeholder will be the
-                // first when the firstholder is removed and the favorite list should be updated with
-                // the placeholder field.
-            });
-
-
             Snackbar snackbar = Snackbar.make(
                     getView(), getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {

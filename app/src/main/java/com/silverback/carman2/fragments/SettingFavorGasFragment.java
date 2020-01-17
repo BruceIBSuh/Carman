@@ -149,6 +149,7 @@ public class SettingFavorGasFragment extends Fragment implements
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
             // the edited fasvorte list.
             int position = 0;
+
             for(FavoriteProviderEntity entity : favList) {
                 log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
                 entity.placeHolder = position;

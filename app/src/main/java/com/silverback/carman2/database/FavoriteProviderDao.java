@@ -29,7 +29,7 @@ public interface FavoriteProviderDao {
     @Query("SELECT favorite_id FROM FavoriteProviderEntity WHERE category = :category AND placeholder = 0")
     LiveData<String> getFirstFavorite(int category);
 
-    // Query ther favorite list with GAS or SERVICE being sorted.
+    // Query the favorite list with GAS or SERVICE being sorted.
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
     LiveData<List<FavoriteProviderEntity>> queryFavoriteProviders(int category);
 

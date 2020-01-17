@@ -91,16 +91,25 @@ public class PricePagerFragment extends Fragment {
                 stnPriceView.addPriceView(fuelCode);
 
                 fragmentModel.getFirstPlaceholderId().observe(getViewLifecycleOwner(), stnId -> {
-                    log.i("First placeholder: %s", stnId);
                     if(stnId != null) {
-                        favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
+                        favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
                     } else {
-                        stnPriceView.removePriceView();
+                        stnPriceView.removePriceView(getString(R.string.general_opinet_stn_reset));
+                        /*
+                        mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
+                            if(id == null) stnPriceView.removePriceView();
+                            else {
+                                log.i("The second placeholder should be the first one: %s", id);
+                                favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, id, true);
+                            }
+                        });
+                        */
                     }
 
                 });
 
                 opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
+                    log.i("favoritePriceComplete() done");
                     stnPriceView.addPriceView(fuelCode);
                 });
 

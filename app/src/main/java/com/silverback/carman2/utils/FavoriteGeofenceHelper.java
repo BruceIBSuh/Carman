@@ -50,8 +50,8 @@ public class FavoriteGeofenceHelper {
 
     // Interface for parent activities
     public interface OnGeofenceListener {
-        void notifyAddGeofenceCompleted(int placeholder, String stnId);
-        void notifyRemoveGeofenceCompleted();
+        void notifyAddGeofenceCompleted(int placeholder);
+        void notifyRemoveGeofenceCompleted(int placeholder);
         void notifyAddGeofenceFailed();
     }
 
@@ -191,7 +191,7 @@ public class FavoriteGeofenceHelper {
 
                         // Notify GasManagerFragment ro ServiceManagerFragment of the completion of
                         // geofencing.
-                        mListener.notifyAddGeofenceCompleted(placeHolder, providerId);
+                        mListener.notifyAddGeofenceCompleted(placeHolder);
 
                     }).addOnFailureListener(e -> {
                         log.e("Fail to add favorite: %s", e.getMessage());
@@ -228,6 +228,8 @@ public class FavoriteGeofenceHelper {
             if(provider != null) {
                 // Delete the provider from FavoriteProviderEntity, which is notified to
                 // GeneralFragment by decreasing the favorite provider number.
+                int placeholder = provider.placeHolder;
+                log.i("placeholder to be deleted: %s", placeholder);
                 mDB.favoriteModel().deleteProvider(provider);
                 evalReference.get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
@@ -237,7 +239,7 @@ public class FavoriteGeofenceHelper {
                     }
                 });
 
-                mListener.notifyRemoveGeofenceCompleted();
+                mListener.notifyRemoveGeofenceCompleted(placeholder);
             }
         }).addOnFailureListener(e -> {
             log.i("failed to remove");

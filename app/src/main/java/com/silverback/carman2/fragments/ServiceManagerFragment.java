@@ -200,7 +200,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Attach the listener for callback methods invoked by addGeofence or removeGeofence
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             @Override
-            public void notifyAddGeofenceCompleted(int placeholder, String providerId) {
+            public void notifyAddGeofenceCompleted(int placeholder) {
                 isSvcFavorite = true;
                 Snackbar.make(relativeLayout, R.string.svc_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
 
@@ -208,7 +208,7 @@ public class ServiceManagerFragment extends Fragment implements
                 // as type of JSONString in order to reload in GeofenceResetService when rebooting.
             }
             @Override
-            public void notifyRemoveGeofenceCompleted() {
+            public void notifyRemoveGeofenceCompleted(int placeholder) {
                 isSvcFavorite = false;
                 Snackbar.make(relativeLayout, "Successfully removed", Snackbar.LENGTH_SHORT).show();
             }

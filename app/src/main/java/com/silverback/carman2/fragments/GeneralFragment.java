@@ -83,8 +83,11 @@ public class GeneralFragment extends Fragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
+
+
     // Objects
     private CarmanDatabase mDB;
+    private File favFile;
     private SharedPreferences mSettings;
 
     private LocationViewModel locationModel;
@@ -133,6 +136,7 @@ public class GeneralFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         mSettings = ((MainActivity)getActivity()).getSettings();
         isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
         // Retrieve the Station ID of the favroite station to show the price.
@@ -225,7 +229,6 @@ public class GeneralFragment extends Fragment implements
 
     // Receive values of the ViewModels or queried results of Room which are synced with observe()
     // defined in LiveData.
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
@@ -241,7 +244,7 @@ public class GeneralFragment extends Fragment implements
             // A station is added to the favroite list.
             if(stnId != null) {
                 // A station is added to the favorite list for the first time.
-                if(!stnId.matches(savedId)) {
+                if(savedId == null || !stnId.matches(savedId)) {
                     pricePagerAdapter.notifyDataSetChanged();
                     fragmentModel.getFirstPlaceholderId().setValue(stnId);
                     pricePagerAdapter.notifyDataSetChanged();
@@ -249,6 +252,7 @@ public class GeneralFragment extends Fragment implements
             } else {
                 fragmentModel.getFirstPlaceholderId().setValue(null);
                 pricePagerAdapter.notifyDataSetChanged();
+                //if(favFile.exists()) favFile.delete();
             }
         });
 
@@ -590,8 +594,7 @@ public class GeneralFragment extends Fragment implements
     // To get the id of the first placeholder in the favorite station list, check the file, if any,
     // which saves the first placeholder.
     private String getSavedFirstFavorite(Context context) {
-        final File file = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
-        Uri uri = Uri.fromFile(file);
+        Uri uri = Uri.fromFile(favFile);
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
