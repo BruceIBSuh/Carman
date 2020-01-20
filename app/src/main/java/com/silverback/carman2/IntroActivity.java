@@ -180,7 +180,7 @@ public class IntroActivity extends BaseActivity  {
             if(district == null) distCode = "0101";
             else distCode = district.get(2);
 
-            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId ->{
+            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 // Initiate the task to retrieve each price of average, sido, sigun district from
                 // the Opinet server, then notify this of having the data done by OpinetViewModel.
                 // distPriceComplete() defined in onCreate() to move on to MainActivity.
