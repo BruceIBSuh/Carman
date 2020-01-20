@@ -46,7 +46,6 @@ import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.StationListViewModel;
-import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
@@ -70,8 +69,6 @@ import java.util.regex.Pattern;
  * expenditure of gas and service, and stations in the neighborhood. MainActivity may extend
  * to multi fragments at a time when an additional fragment such as general information ahead of the
  * current fragment is introduced.
- *
- *
  */
 
 public class GeneralFragment extends Fragment implements
@@ -82,8 +79,6 @@ public class GeneralFragment extends Fragment implements
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
-
-
 
     // Objects
     private CarmanDatabase mDB;
@@ -100,8 +95,6 @@ public class GeneralFragment extends Fragment implements
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
-    private FavoritePriceTask favPriceTask;
-    //private GasPriceTask gasPriceTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
@@ -123,7 +116,7 @@ public class GeneralFragment extends Fragment implements
     private String defaultFuel;
     private boolean bStationsOrder;//true: distance order(value = 2) false: price order(value =1);
     private boolean bExpenseSort;
-    private boolean hasNearStations; //flag to check whether near stations exist within the radius.
+    private boolean hasNearStations;//flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
     private String latestItems;
 
@@ -139,16 +132,13 @@ public class GeneralFragment extends Fragment implements
         favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         mSettings = ((MainActivity)getActivity()).getSettings();
         isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
-        // Retrieve the Station ID of the favroite station to show the price.
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        // ViewPager adapter to display the price of district and first-set favorite station.
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
         // Create ViewModels
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        //opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
 
         // Fetch the current location using the worker thread and return the value via ViewModel
@@ -232,23 +222,21 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
-        // Handle the various conditions to display the price of the first placeholder station in
-        // the viewpager.
 
+        // Get the first placeholder id from the local db and if it is different from the id previously
+        // saved as the first placeholder in the file, which means the first favorite has changed,
+        // pass the id to PricePagerFragment by FramentSharedModel and update the adapter.
         mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
-            // Get the station id of the first placeholder in the favorite list, which is saved in the
-            // cache.
             savedId = getSavedFirstFavorite(getContext());
             log.i("Compare ids: %s, %s", stnId, savedId);
-
             // A station is added to the favroite list.
             if(stnId != null) {
-                // A station is added to the favorite list for the first time.
                 if(savedId == null || !stnId.matches(savedId)) {
                     pricePagerAdapter.notifyDataSetChanged();
                     fragmentModel.getFirstPlaceholderId().setValue(stnId);
                     pricePagerAdapter.notifyDataSetChanged();
                 }
+            // An already registered favorite station is removed.
             } else {
                 fragmentModel.getFirstPlaceholderId().setValue(null);
                 pricePagerAdapter.notifyDataSetChanged();
@@ -256,17 +244,14 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
-
-        /*
-         * Retrieve the queried results of the latest gas and service statements as LiveData from
-         * Room database,  both of which are stored in GasManagerEntity and ServiceManagerEntity.
-         */
-        // Retrieve the last gas data and set it in tvRecentExp.
+        // Retrieve the queried results of the latest gas and service statements as LiveData from
+        // Room database,  both of which are stored in GasManagerEntity and ServiceManagerEntity
         mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), data -> {
             queryGasResult = data;
             setLatestExpense(0, data);
 
         });
+
         // Retrieve queried result of the latest service.
         mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), data -> {
             querySvcResult = data;
@@ -282,16 +267,16 @@ public class GeneralFragment extends Fragment implements
         });
 
 
-        // On fetching the current location, start to get the near stations based on the value.
+        // On fetching the current location, start to get the near stations based on the location.
+        // As far as the fragment is first created or the current location outbounds UPDATE_DISTANCE,
+        // attempt to retreive a new station list based on the location. On the other hand,
+        // if a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
+        // do not initiate the task to get new near stations to prevent frequent connection to
+        // the server.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            // If the fragment is first created or the current location outbounds UPDATE_DISTANCE,
-            // attempt to retreive a new station list based on the location.
-            // If a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
-            // the station recyclerView should not be refreshed, showing the snackbar message.
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
                 mPrevLocation = location;
                 stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaults);
-
             } else {
                 Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
@@ -308,15 +293,17 @@ public class GeneralFragment extends Fragment implements
                 stationRecyclerView.setAdapter(mAdapter);
                 hasNearStations = true;
             } else {
-                SpannableString spannableString = handleStnListException();
+                // No near stations post an message that contains the clickable span to link to the
+                // SettingPreferenceActivity for resetting the searching radius.
+                SpannableString spannableString = handleStationListException();
                 stationRecyclerView.showTextView(spannableString);
             }
         });
 
+        // Update the carwash info to StationList and notify the data change to Adapter.
+        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+        // e.g. when the view is not attached.
         stnListModel.getStationCarWashInfo().observe(getViewLifecycleOwner(), sparseArray -> {
-            // Update the carwash info to StationList and notify the data change to Adapter.
-            // Adapter should not assume that the payload will always be passed to onBindViewHolder()
-            // e.g. when the view is not attached.
             for(int i = 0; i < sparseArray.size(); i++) {
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
@@ -334,8 +321,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
-
-        // Refactor required as to how to finish worker threads.
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
 
@@ -366,7 +351,6 @@ public class GeneralFragment extends Fragment implements
             priceViewPager.setAdapter(pricePagerAdapter);
         }
     }
-
     @Override
     public void onNothingSelected(AdapterView<?> parent){
         log.i("onNothingSelected by Spinner");
@@ -375,7 +359,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onClick(View view) {
         switch(view.getId()) {
-
             case R.id.imgbtn_expense:
                 bExpenseSort = !bExpenseSort;
                 String sort = (bExpenseSort)?getString(R.string.general_expense_service):getString(R.string.general_expense_gas);
@@ -539,7 +522,7 @@ public class GeneralFragment extends Fragment implements
     // ClickableSpan which has the specific keyword be spanned, then enable to retry network connection
     // or start SettingPreferenceActivity.
     @SuppressWarnings("ConstantConditions")
-    private SpannableString handleStnListException(){
+    private SpannableString handleStationListException(){
 
         SpannableString spannableString;
 

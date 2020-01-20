@@ -48,7 +48,7 @@ public class BaseActivity extends AppCompatActivity {
     protected static final int REQUEST_PERMISSION_ACCESS_FINE_LOCATION = 1000;
 
     // Objects
-    public static SharedPreferences mSettings;
+    protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
 
     // Fields
@@ -65,9 +65,7 @@ public class BaseActivity extends AppCompatActivity {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         // SharedPreferences
-        if(mSettings == null) {
-            mSettings = PreferenceManager.getDefaultSharedPreferences(this);
-        }
+        if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
 
         // Checkk if the network connectivitis ok.
         if(notifyNetworkConnected(this)) {
@@ -80,19 +78,6 @@ public class BaseActivity extends AppCompatActivity {
 
         checkPermissions();
     }
-
-    /*
-    public static SharedPreferences getSharedPreferenceInstance(Context context) {
-        // SharedPreferences
-        if(mSettings == null) {
-            mSettings = PreferenceManager.getDefaultSharedPreferences(context);
-        }
-
-        return mSettings;
-    }
-
-    */
-
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
     protected final String[] getDefaultParams() {
