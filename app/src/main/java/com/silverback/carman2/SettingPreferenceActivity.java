@@ -134,10 +134,13 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     @Override
     public void onBackPressed() {
+        log.i("NavUtils");
+        /*
         Intent intent = new Intent();
         intent.putExtra("setting", true);
         NavUtils.navigateUpTo(this, intent);
-        //finish();
+         */
+        finish();
     }
 
     @Override

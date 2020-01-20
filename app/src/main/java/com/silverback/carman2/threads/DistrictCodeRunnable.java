@@ -17,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class DistrictCodeRunnable implements Runnable {
 
     // Constants
     private static final String API_KEY = "F186170711";
-    private static final String OPINET = "http://www.opinet.co.kr/api/areaCode.do?out=xml&code=F186170711" + API_KEY;
+    private static final String OPINET = "http://www.opinet.co.kr/api/areaCode.do?out=xml&code=" + API_KEY;
     private static final String OPINET_AREA = OPINET + "&area=";
 
     static final int DOWNLOAD_DISTCODE_SUCCEED = 1;
@@ -72,10 +73,10 @@ public class DistrictCodeRunnable implements Runnable {
 
                 final URL url = new URL(OPINET_AREA.concat(code));
                 conn = (HttpURLConnection)url.openConnection();
-                //conn.setRequestMethod("GET");
-                //conn.setRequestProperty("Content-type", "text/xml");
-                //conn.setDoOutput(true);
-                //conn.setDoInput(true);
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Content-type", "text/xml");
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
                 conn.setRequestProperty("Connection", "close");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
@@ -109,6 +110,7 @@ public class DistrictCodeRunnable implements Runnable {
     }
 
     private boolean saveDistCode(List<Opinet.DistrictCode> list) {
+        log.i("saveDistCode: %s", list.size());
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {

@@ -5,10 +5,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
@@ -16,7 +14,6 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
-import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.fragments.BoardWriteDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -30,7 +27,6 @@ public class BoardActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
-    private AppBarLayout appBar;
     private TabLayout boardTabLayout;
     private FloatingActionButton fabWrite;
     private BoardPagerAdapter pagerAdapter;
@@ -47,7 +43,7 @@ public class BoardActivity extends BaseActivity implements
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);
         ViewPager boardPager = findViewById(R.id.viewpager_board);
-        appBar = findViewById(R.id.appBar);
+        AppBarLayout appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
         fabWrite = findViewById(R.id.fab_write);
 

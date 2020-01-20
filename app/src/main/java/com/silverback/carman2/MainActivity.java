@@ -21,7 +21,7 @@ import com.silverback.carman2.utils.Constants;
 
 import java.io.File;
 
-/**
+/*
  * This activity is a container holding GeneralFragment which displays the gas prices and the recent
  * expenditure of gas and service, and stations in the default radius based on the current location.
  * It should be replaced with alternative fragment that shows a content instead of the near stations.
@@ -30,14 +30,12 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
+    private final int REQ_SETTING = 1;
 
     // Objects
     private CarmanDatabase mDB;
     private OpinetViewModel opinetViewModel;
     //private ActionBarDrawerToggle drawerToggle;
-
-    // Fields
-    private String stnId;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -138,7 +136,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     // to handle how the dialog buttons act according to positive and negative.
     // The station price file named FILE_CACHED_STATION_PRICE is excluded to delete because
     // it should retain the price to calculate the difference in the current and previous price.
-
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
@@ -150,12 +147,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
             }
         }
 
-        // Kill all the threads.
         ThreadManager.cancelAllThreads();
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
     }
-
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 

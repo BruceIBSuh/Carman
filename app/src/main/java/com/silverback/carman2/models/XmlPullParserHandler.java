@@ -70,9 +70,7 @@ public class XmlPullParserHandler {
                 switch(eventType) {
 
                     case XmlPullParser.START_TAG:
-                        if (tagName.equalsIgnoreCase("OIL")) {
-                            districtCode = new Opinet.DistrictCode();
-                        }
+                        if (tagName.equalsIgnoreCase("OIL")) districtCode = new Opinet.DistrictCode();
                         break;
 
                     case XmlPullParser.TEXT:
@@ -80,13 +78,9 @@ public class XmlPullParserHandler {
                         break;
 
                     case XmlPullParser.END_TAG:
-                        if (tagName.equalsIgnoreCase("OIL")) {
-                            distCodeList.add(districtCode);
-                        } else if (tagName.equalsIgnoreCase("AREA_CD")) {
-                            districtCode.setDistrictCode(text);
-                        } else if (tagName.equalsIgnoreCase("AREA_NM")) {
-                            districtCode.setDistrictName(text);
-                        }
+                        if (tagName.equalsIgnoreCase("OIL")) distCodeList.add(districtCode);
+                        else if (tagName.equalsIgnoreCase("AREA_CD")) districtCode.setDistrictCode(text);
+                        else if (tagName.equalsIgnoreCase("AREA_NM")) districtCode.setDistrictName(text);
                         break;
 
                     default:
