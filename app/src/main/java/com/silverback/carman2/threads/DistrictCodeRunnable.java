@@ -73,10 +73,10 @@ public class DistrictCodeRunnable implements Runnable {
 
                 final URL url = new URL(OPINET_AREA.concat(code));
                 conn = (HttpURLConnection)url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Content-type", "text/xml");
-                conn.setDoOutput(true);
-                conn.setDoInput(true);
+                //conn.setRequestMethod("GET");
+                //conn.setRequestProperty("Content-type", "text/xml");
+                //conn.setDoOutput(true);
+                //conn.setDoInput(true);
                 conn.setRequestProperty("Connection", "close");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);

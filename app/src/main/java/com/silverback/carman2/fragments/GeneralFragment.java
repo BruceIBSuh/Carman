@@ -315,6 +315,8 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        log.i("onResume");
+        pricePagerAdapter.notifyDataSetChanged();
     }
 
 

@@ -144,7 +144,8 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate the task to get the district codes provided by Opinet and save them in
                 // the internal storage. It may be replaced by downloading it from the server  every
                 // time the app starts for decreasing the app size
-                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
+                File priceFile = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
+                if(!priceFile.exists()) distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.

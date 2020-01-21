@@ -225,6 +225,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
+                log.i("District Code: %s", distCode);
                 gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;

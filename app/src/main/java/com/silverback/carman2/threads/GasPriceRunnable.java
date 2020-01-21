@@ -85,10 +85,12 @@ public class GasPriceRunnable implements Runnable {
         String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
         String stnId = task.getStationId();
+        log.i("District Code: %s, %s", sidoCode, sigunCode);
 
         URL url;
         InputStream in = null;
         HttpURLConnection conn = null;
+
 
         try {
             switch(category) {

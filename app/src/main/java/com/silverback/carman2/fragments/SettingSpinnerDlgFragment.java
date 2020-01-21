@@ -53,9 +53,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     // Fields
     private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
 
-
-
-    public SettingSpinnerDlgFragment() {
+    private SettingSpinnerDlgFragment() {
         // Required empty public constructor
     }
 
