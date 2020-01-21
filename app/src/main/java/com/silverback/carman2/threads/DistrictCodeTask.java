@@ -13,14 +13,12 @@ public class DistrictCodeTask extends ThreadTask
     private final LoggingHelper log = LoggingHelperFactory.create(DistrictCodeTask.class);
 
     // Objects
-    //private WeakReference<Activity> mWeakActivity;
     private OpinetViewModel model;
     private Runnable opinetDistCodeRunnable;
 
     // Constructor
     DistrictCodeTask(Context context, OpinetViewModel model) {
         super(); // ThreadTask
-        //mWeakActivity = new WeakReference<>((Activity)context);
         this.model = model;
         opinetDistCodeRunnable = new DistrictCodeRunnable(context, this);
     }
@@ -30,19 +28,10 @@ public class DistrictCodeTask extends ThreadTask
         return opinetDistCodeRunnable;
     }
 
-    void recycle() {
-        /*
-        if(mWeakActivity != null) {
-            mWeakActivity.clear();
-            mWeakActivity = null;
-        }
-         */
-    }
+    void recycle() {}
 
     @Override
     public void setDistCodeDownloadThread(Thread currentThread) {
-        log.i("Current Thread: " + currentThread);
-        // Inheritedd from the parent class of ThreadTask
         setCurrentThread(currentThread);
     }
 

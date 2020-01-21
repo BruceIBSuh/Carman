@@ -53,25 +53,20 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     // Fields
     private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
 
-
-
     public SettingSpinnerDlgFragment() {
         // Required empty public constructor
     }
 
     // Method for singleton instance
     static SettingSpinnerDlgFragment newInstance(String key, String code) {
-
         final SettingSpinnerDlgFragment fm = new SettingSpinnerDlgFragment();
-
         final Bundle args = new Bundle(2);
         args.putString(ARG_KEY, key);
-        args.putString("distCode", code);
+        args.putString("district_code", code);
         fm.setArguments(args);
 
         return fm;
     }
-
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -85,7 +80,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         spinnerPref= (SpinnerDialogPreference)getPreference();
 
-        String districtCode = getArguments().getString("distCode");
+        String districtCode = getArguments().getString("district_code");
         String sidoCode = districtCode.substring(0, 2);
         String sigunCode = districtCode.substring(2,4);
         log.i("District Code: %s, %s", sidoCode, sigunCode);

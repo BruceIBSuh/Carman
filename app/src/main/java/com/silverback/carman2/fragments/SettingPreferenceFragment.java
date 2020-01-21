@@ -16,7 +16,6 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
@@ -35,23 +34,21 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
+/*
+ * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
+ * hierarchy of Preference objects, automatically persisting values in SharedPreferences.
+ * Some preferences have custom dialog frragments which should implement the callbacks defined in
+ * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing
+ * params to the singleton constructor.
+ */
+public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
     // Objects
-    private FirebaseFirestore firestore;
-    private CarmanDatabase mDB;
     private SharedPreferences mSettings;
-    private FragmentSharedModel sharedModel;
-    //private LoadDistCodeTask mTask;
-
     private Preference cropImagePreference;
-    private NameDialogPreference namePref;
-
-    private JSONArray jsonDistrict;
-    private String sigunCode;
     private String nickname;
 
     @SuppressWarnings("ConstantConditions")
@@ -64,23 +61,9 @@ public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Indicates that the fragment may initialize the contents of the Activity's standard options menu.
         //setHasOptionsMenu(true);
 
-        firestore = FirebaseFirestore.getInstance();
-        mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         //df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-
-        // Retrvie the district info saved in SharedPreferences from the parent activity as a type
-        // of JSONArray
-        //String[] district = getArguments().getStringArray("district");
-        //sigunCode = district[2];
-        String district = mSettings.getString(Constants.DISTRICT, null);
-        try {
-            jsonDistrict = new JSONArray(district);
-            sigunCode = jsonDistrict.getString(2);
-        }catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -101,7 +84,6 @@ public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
         // ShredPreferences doesn't supprot the string array.
         mSettings.edit().putString(Constants.VEHICLE, jsonAutoData).apply();
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
-
 
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
@@ -150,6 +132,7 @@ public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
 
 
+        JSONArray jsonDistrict = getDistrictJSONArray();
         SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
         spinnerPref.setSummary(String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
 
@@ -182,20 +165,14 @@ public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        //if (mTask != null) mTask = null;
-    }
 
-
-    // Callback from PreferenceManager.OnDisplayPreferenceDialogListener when the preference
-    // requests to display a CUSTOM DIALOG
+    // Callbacks defined in PreferenceMaanger.OnDisplayPreferenceDialogListener which should be
+    // implemented when A CUSTOM DIALOG FRAGMENT is called by clicking a preference.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
-        log.i("onDisplayPreferenceDialog");
         if (pref instanceof SpinnerDialogPreference) {
+            String sigunCode = getDistrictJSONArray().optString(2);
             DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             spinnerFragment.setTargetFragment(this, 0);
             spinnerFragment.show(getFragmentManager(), null);
@@ -204,10 +181,24 @@ public class    SettingPreferenceFragment extends PreferenceFragmentCompat {
             DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), nickname);
             nameFragment.setTargetFragment(this, 1);
             nameFragment.show(getFragmentManager(), null);
+
         } else {
             super.onDisplayPreferenceDialog(pref);
         }
 
+    }
+
+    // Get the name and code of the default district which is saved in SharedPreferences as JSONString,
+    // by converting JSONString to JSONArray.
+    private JSONArray getDistrictJSONArray() {
+        String distJSONString = mSettings.getString(Constants.DISTRICT, null);
+        try {
+            return new JSONArray(distJSONString);
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
+        return null;
     }
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove

@@ -57,6 +57,7 @@
             app:key="pref_location_update"
             app:title="@string/pref_title_autoupdate"
             app:summary="@string/pref_summary_autoupdate" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
