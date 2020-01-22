@@ -12,6 +12,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.TypedValue;
 
 import com.google.android.material.tabs.TabLayout;
@@ -105,6 +106,21 @@ public class BaseActivity extends AppCompatActivity {
             JSONArray jsonArray = new JSONArray(jsonString);
             for(int i = 0; i < jsonArray.length(); i++) distCodeList.add(jsonArray.get(i).toString());
             return distCodeList;
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
+        return null;
+    }
+
+
+    public static JSONArray getDistrictNameCode() {
+        String jsonString = mSettings.getString(Constants.DISTRICT, null);
+        try {
+            return (TextUtils.isEmpty(jsonString))?
+                    new JSONArray(Arrays.asList("서울", "종로구", "0101")):
+                    new JSONArray(jsonString);
+
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }

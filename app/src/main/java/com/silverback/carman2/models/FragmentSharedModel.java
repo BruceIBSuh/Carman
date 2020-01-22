@@ -37,6 +37,10 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<String> firstPlaceholderId;
 
+    // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
+    // to show the names in the summary of the preference.
+    private MutableLiveData<String[]> defaultDistCode;
+
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -154,5 +158,10 @@ public class FragmentSharedModel extends ViewModel {
         return firstPlaceholderId;
     }
 
+
+    public MutableLiveData<String[]> getDefaultDistNames() {
+        if(defaultDistCode == null) defaultDistCode = new MutableLiveData<>();
+        return defaultDistCode;
+    }
 
 }

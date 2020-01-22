@@ -21,6 +21,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
+/*
+ * This class is to get the Sigun codes based on each Sido code defined in the string-array from the
+ * Opinet. Once downloading the Sigun codes completes, it will be saved in the internal storage.
+ */
 public class DistrictCodeRunnable implements Runnable {
 
     // Logging
@@ -67,9 +71,7 @@ public class DistrictCodeRunnable implements Runnable {
         try {
             // Get all siguncodes at a time with all sido codes given
             for(String code : sido) {
-                if(Thread.interrupted()) {
-                    throw new InterruptedException();
-                }
+                if(Thread.interrupted()) throw new InterruptedException();
 
                 final URL url = new URL(OPINET_AREA.concat(code));
                 conn = (HttpURLConnection)url.openConnection();

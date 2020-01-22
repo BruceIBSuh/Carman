@@ -64,8 +64,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * This fragment belongs to MainActivity and it  contains the price information and the latest
+/*
+ * This fragment belongs to MainActivity and it contains the price information and the latest
  * expenditure of gas and service, and stations in the neighborhood. MainActivity may extend
  * to multi fragments at a time when an additional fragment such as general information ahead of the
  * current fragment is introduced.
@@ -139,7 +139,6 @@ public class GeneralFragment extends Fragment implements
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
@@ -315,8 +314,7 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume");
-        pricePagerAdapter.notifyDataSetChanged();
+        priceViewPager.setAdapter(pricePagerAdapter);
     }
 
 

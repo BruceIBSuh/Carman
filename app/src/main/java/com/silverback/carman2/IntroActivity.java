@@ -21,6 +21,7 @@ import com.silverback.carman2.threads.DistrictCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -141,11 +142,12 @@ public class IntroActivity extends BaseActivity  {
                     }
                 }).addOnFailureListener(e -> log.e("Add user failed: %s", e.getMessage()));
 
-                // Initiate the task to get the district codes provided by Opinet and save them in
-                // the internal storage. It may be replaced by downloading it from the server  every
-                // time the app starts for decreasing the app size
-                File priceFile = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
-                if(!priceFile.exists()) distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
+                // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
+                // them in the internal storage. It may be replaced by downloading it from the server
+                // every time the app starts for decreasing the app size
+                //distCodeFile = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
+                //if(!distCodeFile.exists())
+                    distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.
@@ -171,17 +173,19 @@ public class IntroActivity extends BaseActivity  {
     // retrieved from the Room database.
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
-        String defaultCode;
+        //File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
+
         // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL has lapsed.
         if(checkPriceUpdate()) {
             log.i("Receiving the oil price");
-            List<String> district = convJSONArrayToList();
-            if(district == null) defaultCode = "0101";
-            else defaultCode = district.get(2);
-            // Retrieve the first placeholder of the favorite, then run the task to get the price data.
-            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId ->
-                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, defaultCode, stnId)
-            );
+            //List<String> district = convJSONArrayToList();
+            //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
+
+            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
+                JSONArray json = BaseActivity.getDistrictNameCode();
+                String distCode = (json != null)?json.optString(2) : "0101";
+                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+            });
 
         } else {
             startActivity(new Intent(this, MainActivity.class));

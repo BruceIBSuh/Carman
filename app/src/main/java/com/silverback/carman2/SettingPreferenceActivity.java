@@ -155,6 +155,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
             return true;
 
+        } else if(item.getItemId() == android.R.id.home) {
+            startActivity(new Intent(this, MainActivity.class));
+            return true;
+
         } else return super.onOptionsItemSelected(item);
     }
 
@@ -225,7 +229,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.DISTRICT:
                 log.i("District changed");
                 distCode = convJSONArrayToList().get(2);
-                log.i("District Code: %s", distCode);
+                log.i("District Code : %s", distCode);
                 gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 break;
