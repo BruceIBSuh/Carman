@@ -180,10 +180,10 @@ public class IntroActivity extends BaseActivity  {
             log.i("Receiving the oil price");
             //List<String> district = convJSONArrayToList();
             //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
-
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 JSONArray json = BaseActivity.getDistrictNameCode();
                 String distCode = (json != null)?json.optString(2) : "0101";
+                log.i("District code: %s", distCode);
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
             });
 

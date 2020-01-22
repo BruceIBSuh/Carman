@@ -314,7 +314,6 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        priceViewPager.setAdapter(pricePagerAdapter);
     }
 
 

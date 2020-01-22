@@ -153,14 +153,6 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
             // Share the district names with SettingPreferenceFragemnt to display the names in
             // the summary of the District preference.
             fragmentSharedModel.getDefaultDistNames().setValue(new String[]{sidoName, sigunName, distCode});
-
-            /*
-            JSONArray jsonArray = new JSONArray(Arrays.asList(sidoName, sigunName, distCode));
-            spinnerPref.callChangeListener(jsonArray); // invoke OnPreferenceChange()
-            // Save the sigun code as the default district code in SharedPreferences
-            //mSettings.edit().putString(Constants.DISTRICT, distCode).apply();
-            mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
-            */
         }
     }
 
