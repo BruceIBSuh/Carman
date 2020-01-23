@@ -185,9 +185,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
     }
 
-
-    // Callbacks defined in PreferenceMaanger.OnDisplayPreferenceDialogListener which should be
-    // implemented when A CUSTOM DIALOG FRAGMENT is called by clicking a preference.
+    // Preferrence.OnDisplayPreferenceDialogListener is implemented by the following callback which
+    // defines an action to pop up an custom DialogFragment when a preferenece clicks.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {

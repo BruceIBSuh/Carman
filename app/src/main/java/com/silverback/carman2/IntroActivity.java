@@ -79,9 +79,9 @@ public class IntroActivity extends BaseActivity  {
         mDB = CarmanDatabase.getDatabaseInstance(this);
         opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
+        mProgBar = findViewById(R.id.progbar);
         // On clicking the start button, fork the process into the first-time launching or
         // the regular one based upon whether the Firebase anonymous authentication
-        mProgBar = findViewById(R.id.progbar);
         findViewById(R.id.btn_start).setOnClickListener(view -> {
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
@@ -173,13 +173,9 @@ public class IntroActivity extends BaseActivity  {
     // retrieved from the Room database.
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
-        //File file = new File(getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
-
-        // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL has lapsed.
+        // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
         if(checkPriceUpdate()) {
             log.i("Receiving the oil price");
-            //List<String> district = convJSONArrayToList();
-            //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 JSONArray json = BaseActivity.getDistrictNameCode();
                 String distCode = (json != null)?json.optString(2) : "0101";

@@ -31,9 +31,9 @@ import java.util.Arrays;
 
 /**
  * A simple {@link Fragment} subclass.
+ * This class is a custom PreferenceDiglogFragmentCompat which contains the dual spinners, one of
+ * which enlists the Sido name, the other enlists the Sigun names of the selected sido.
  *
- * PreferenceDialogFragmentCompat containing SpinnerDialogPreference which is a custom dialog preference
- * to create the input form of the sido and sigun code.
  *
  */
 public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat implements
@@ -64,7 +64,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         final SettingSpinnerDlgFragment fm = new SettingSpinnerDlgFragment();
         final Bundle args = new Bundle(2);
         args.putString(ARG_KEY, key);
-        args.putString("district_code", code);
+        args.putString("distCode", code);
         fm.setArguments(args);
 
         return fm;
@@ -81,31 +81,32 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
 
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         spinnerPref= (SpinnerDialogPreference)getPreference();
+        distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
-        String districtCode = getArguments().getString("district_code");
+        String districtCode = getArguments().getString("distCode");
         String sidoCode = districtCode.substring(0, 2);
         String sigunCode = districtCode.substring(2,4);
         log.i("District Code: %s, %s", sidoCode, sigunCode);
 
-        mSidoItemPos = Integer.valueOf(sidoCode) - 1; //Integer.valueOf("01") translates into 1
-        mSigunItemPos = Integer.valueOf(sigunCode) - 1;
+        mSidoItemPos = Integer.valueOf(sidoCode) - 1;//Integer.valueOf("01") translates into 1
+        mSigunItemPos = Integer.valueOf(sigunCode) - 1;// same as the aforementioned casting
         log.i("Item position: %s, %s", mSidoItemPos, mSigunItemPos);
 
-        // Sets sidoSpinner and sidoAdapter.
         sidoAdapter = ArrayAdapter.createFromResource(getContext(),
                 R.array.sido_name, android.R.layout.simple_spinner_item);
         sidoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sidoSpinner.setAdapter(sidoAdapter);
-        sidoSpinner.setSelection(mSidoItemPos);
+        sidoSpinner.setSelection(mSidoItemPos, true);
 
         sigunAdapter = new DistrictSpinnerAdapter(getContext(), R.dimen.largeText);
 
-        distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         distModel.getSpinnerDataList().observe(this, dataList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             for(Opinet.DistrictCode obj : dataList) sigunAdapter.addItem(obj);
+
             sigunSpinner.setAdapter(sigunAdapter);
+            sigunSpinner.setSelection(mSigunItemPos, true);
         });
     }
 
@@ -118,32 +119,46 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         log.i("onItemSelected: %s", position);
+
         if(parent == sidoSpinner) {
+            log.i("Sido position: %s", position);
             // Initiate the task to retrieve sigun codes with the position of the Sigun spinner
             // which indicates the Sido code and the dataset returns via DistrictViewModel.
             // getSpinnerDataList()
             spinnerTask = ThreadManager.loadSpinnerDistCodeTask(getContext(), distModel, position);
-            tmpSidoPos = position;
+            //tmpSidoPos = position;
 
             // Set the sigun spinner position to 0 only if mSidoItemPos changes.
-            if(position != mSidoItemPos) mSigunItemPos = 0;
+            if(position != mSidoItemPos) {
+                mSidoItemPos = position;
+                mSigunItemPos = 0;
+                log.i("mSidoItemPos: %s", mSidoItemPos);
+            }
 
-        } else {
-            tmpSigunPos = position;
+        } else if(parent == sigunSpinner) {
+            log.i("SigunSpinner position: %s", position);
+            //tmpSigunPos = position;
+            mSigunItemPos = position;
         }
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> parent) {}
+    public void onNothingSelected(AdapterView<?> parent) {
+        log.i("onNothingSelected");
+    }
 
     // Should override onDialogClosed() defined in SpinnerDialogPreference to be invoked
     @Override
     public void onDialogClosed(boolean positiveResult) {
 
         if(positiveResult) {
+            log.i("Save the code: %s, %s", mSidoItemPos, mSigunItemPos);
+            //mSidoItemPos = tmpSidoPos;
+            //mSigunItemPos = tmpSigunPos;
 
-            mSidoItemPos = tmpSidoPos;
-            mSigunItemPos = tmpSigunPos;
+            //tmpSidoPos = 0;
+            //tmpSigunPos = 0;
+            //log.i("Save the code: %s, %s", mSidoItemPos, mSigunItemPos);
 
             String sidoName = (String)sidoAdapter.getItem(mSidoItemPos);
             String sigunName = sigunAdapter.getItem(mSigunItemPos).getDistrictName();
