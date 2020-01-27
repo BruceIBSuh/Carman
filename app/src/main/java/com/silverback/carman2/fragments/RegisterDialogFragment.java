@@ -15,7 +15,6 @@ import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
 import android.util.SparseArray;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -24,7 +23,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -41,12 +39,10 @@ import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.threads.GeocoderReverseTask;
 import com.silverback.carman2.threads.GeocoderTask;
-import com.silverback.carman2.threads.LoadDistCodeTask;
-import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.DistCodeSpinnerTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import java.util.HashMap;
@@ -74,7 +70,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     private SharedPreferences mSettings;
     private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentModel;
-    private LoadDistCodeTask spinnerTask;
+    private DistCodeSpinnerTask spinnerTask;
     private GeocoderReverseTask geocoderReverseTask;
     private GeocoderTask geocoderTask;
     private ThreadTask locationTask;
@@ -216,7 +212,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos);
 
-        sigunAdapter = new DistrictSpinnerAdapter(getContext(), R.dimen.smallText);
+        sigunAdapter = new DistrictSpinnerAdapter(getContext());
 
         // Create the spinner for Comany list.
         ArrayAdapter companyAdapter = ArrayAdapter.createFromResource(
@@ -265,9 +261,12 @@ public class RegisterDialogFragment extends DialogFragment implements
         // Enlist the sigun names in SigunSpinner based upon a given sigun name.
         distModel.getSpinnerDataList().observe(this, dataList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
+            sigunAdapter.addSigunList(dataList);
+            /*
             for(Opinet.DistrictCode obj : dataList) {
-                sigunAdapter.addItem(obj);
+                //sigunAdapter.addItem(obj);
             }
+             */
             sigunSpinner.setAdapter(sigunAdapter);
             sigunSpinner.setSelection(mSigunItemPos);
         });
@@ -328,7 +327,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         if(parent == sidoSpinner) {
-            spinnerTask = ThreadManager.loadSpinnerDistCodeTask(getContext(), distModel, position);
+            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), distModel, position);
             if(position != mSidoItemPos) mSigunItemPos = 0;
             tmpSidoPos = position;
         } else {

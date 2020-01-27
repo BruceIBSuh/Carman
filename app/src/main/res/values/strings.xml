@@ -227,6 +227,9 @@
     <string name="pref_spinner_sido_ulsan">울산시</string>
     <string name="pref_spinner_sido_sejong">세종시</string>
     <string name="setting_null">지정안함</string>
+    <!--SettingPreferenceActivity$SettingNameDlgFragment-->
+    <string name="pref_username_msg_invalid">이미 사용중입니다</string>
+    <string name="pref_username_msg_available">사용 가능합니다</string>
 
     <!--DialogFragment-->
     <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>

@@ -12,6 +12,8 @@ import com.silverback.carman2.database.FavoriteProviderEntity;
 
 import org.json.JSONObject;
 
+import java.util.List;
+
 public class FragmentSharedModel extends ViewModel {
 
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
@@ -39,7 +41,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
     // to show the names in the summary of the preference.
-    private MutableLiveData<String[]> defaultDistCode;
+    private MutableLiveData<List<String>> defaultDistCode;
 
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
@@ -159,7 +161,7 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    public MutableLiveData<String[]> getDefaultDistNames() {
+    public MutableLiveData<List<String>> getDefaultDistrict() {
         if(defaultDistCode == null) defaultDistCode = new MutableLiveData<>();
         return defaultDistCode;
     }

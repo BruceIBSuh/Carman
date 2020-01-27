@@ -63,7 +63,7 @@ public class GasPriceRunnable implements Runnable {
      */
     public interface OpinetPriceListMethods {
         void setPriceDownloadThread(Thread currentThread);
-        void handlePriceTaskState(int state);
+        //void handlePriceTaskState(int state);
         void addPriceCount();
         int getTaskCount();
         String getDistrictCode();
@@ -118,6 +118,7 @@ public class GasPriceRunnable implements Runnable {
                 case SIDO: // Sido price
                     log.i("SidoPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
+                    log.i("Sido Code: %s", sidoCode);
                     url = new URL(URLsido + sidoCode);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
@@ -126,7 +127,7 @@ public class GasPriceRunnable implements Runnable {
 
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
-                        log.i("Sido price fetched");
+                        log.i("Sido price fetched: %s", sidoList.get(0));
                         savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                     }
 
@@ -175,21 +176,21 @@ public class GasPriceRunnable implements Runnable {
 
         } catch (MalformedURLException e) {
             log.e("MalformedURLException: %s", e.getMessage());
-            task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
+            //task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
         } catch (IOException e) {
             log.e("IOException: %s", e.getMessage());
-            task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
+            //task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
         } catch (InterruptedException e) {
             log.e("InterruptedException: %s", e.getMessage());
-            task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
+            //task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
         } finally {
 
             if(task.getTaskCount() == 4) {
                 log.i("Runnable count: %s", task.getTaskCount());
-                task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
+                //task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
             }
 
             if(in != null) {

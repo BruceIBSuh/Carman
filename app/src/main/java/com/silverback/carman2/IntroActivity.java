@@ -21,14 +21,12 @@ import com.silverback.carman2.threads.DistrictCodeTask;
 import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /*
@@ -147,7 +145,7 @@ public class IntroActivity extends BaseActivity  {
                 // every time the app starts for decreasing the app size
                 //distCodeFile = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
                 //if(!distCodeFile.exists())
-                    distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
+                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.
@@ -177,7 +175,7 @@ public class IntroActivity extends BaseActivity  {
         if(checkPriceUpdate()) {
             log.i("Receiving the oil price");
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                JSONArray json = BaseActivity.getDistrictNameCode();
+                JSONArray json = BaseActivity.getDistrictJSONArray();
                 String distCode = (json != null)?json.optString(2) : "0101";
                 log.i("District code: %s", distCode);
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);

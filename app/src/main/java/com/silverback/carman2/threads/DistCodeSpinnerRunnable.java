@@ -16,14 +16,14 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LoadDistCodeRunnable implements Runnable {
+public class DistCodeSpinnerRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(LoadDistCodeRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(DistCodeSpinnerRunnable.class);
 
     // Constants
-    static final int SPINNER_DIST_CODE_COMPLETE = 1;
-    static final int SPINNER_DIST_CODE_FAIL = -1;
+    //static final int SPINNER_DIST_CODE_COMPLETE = 1;
+    //static final int SPINNER_DIST_CODE_FAIL = -1;
 
     // Objects
     private Context context;
@@ -32,12 +32,13 @@ public class LoadDistCodeRunnable implements Runnable {
 
     public interface DistCodeMethods {
         int getSidoCode();
-        SpinnerDistrictModel getSpinnerDistrictModel();
+        //SpinnerDistrictModel getSpinnerDistrictModel();
+        void setSigunCode(List<Opinet.DistrictCode> distCode);
         void setSpinnerDistCodeThread(Thread currentThread);
-        void handleSpinnerDistCodeTask(int state);
+        //void handleSpinnerDistCodeTask(int state);
     }
 
-    LoadDistCodeRunnable(Context context, DistCodeMethods task) {
+    DistCodeSpinnerRunnable(Context context, DistCodeMethods task) {
         this.context = context;
         this.task = task;
     }
@@ -46,12 +47,12 @@ public class LoadDistCodeRunnable implements Runnable {
     @SuppressWarnings("unchecked")
     @Override
     public void run() {
-
         task.setSpinnerDistCodeThread(Thread.currentThread());
         int code = task.getSidoCode();
 
         // Make int position to String sidoCode
-        String sidoCode = convertCode(code);
+        final String sidoCode = convertCode(code);
+        log.i("converted sidoCode: %s", sidoCode);
         List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
 
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
@@ -66,20 +67,23 @@ public class LoadDistCodeRunnable implements Runnable {
                 }
             }
 
+            task.setSigunCode(distCodeList);
+
             // Post(Set) value in SpinnerDistriceModel, which is notified to the parent fragment,
             // SettingSpinnerDlgFragment as LiveData.
-            task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
+            //task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
 
         } catch (IOException e) {
             log.w("IOException: %s", e.getMessage());
-            task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_FAIL);
+            //task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_FAIL);
         } catch (ClassNotFoundException e) {
             log.w("ClassNotFoundException: %s", e.getMessage());
-            task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_FAIL);
+            //task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_FAIL);
         }
     }
 
-    // Converts a position set by SidoSpinner to a Sido string format.
+    // Converts a position set by SidoSpinner to a Sido string format to handle exceptions that the
+    // item position is not identical with the Sido code.
     private String convertCode(int code) {
         String sidoCode = "01";
         switch(code) {

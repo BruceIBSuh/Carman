@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
@@ -16,6 +17,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman2.R;
@@ -26,7 +29,11 @@ import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.NameDialogPreference;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 
@@ -46,11 +53,11 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
     private Button btnVerify;
 
     // Fields
-    private String userName;
+    private String currentName, newName;
 
     // Default constructor
-    public SettingNameDlgFragment() {
-
+    private SettingNameDlgFragment() {
+        // default private constructor
     }
 
     // Method for singleton instance
@@ -71,7 +78,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
         super.onCreate(savedInstanceState);
         firestore = FirebaseFirestore.getInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-        userName = getArguments().getString("username");
+        currentName = getArguments().getString("username");
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -97,7 +104,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
         namePreference = (NameDialogPreference)getPreference();
-        etName.setText(userName);
+        etName.setText(currentName);
         etName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after){}
@@ -105,25 +112,26 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(Editable s) {
+                // Activate the verification button when inputting any character.
                 btnVerify.setEnabled(true);
                 //dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
             }
         });
 
         btnVerify.setOnClickListener(v -> {
-            String name = etName.getText().toString().trim();
+            newName = etName.getText().toString().trim();
             // Query the name to check if there exists the same name in Firestore
-            Query queryName = firestore.collection("users").whereEqualTo("user_name", name);
+            Query queryName = firestore.collection("users").whereEqualTo("user_name", newName);
             queryName.get().addOnSuccessListener(snapshot -> {
                 // A given name already exists
                 if(snapshot.size() > 0) {
                     dialog.getButton(BUTTON_POSITIVE).setEnabled(false);
                     btnVerify.setEnabled(false);
-                    Snackbar.make(rootView, "The same name is already occupied", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(rootView, getString(R.string.pref_username_msg_invalid), Snackbar.LENGTH_SHORT).show();
 
                 } else {
                     dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
-                    Snackbar.make(rootView, "Available", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(rootView, getString(R.string.pref_username_msg_available), Snackbar.LENGTH_SHORT).show();
                 }
 
             }).addOnFailureListener(e -> log.e("Query failed"));
@@ -134,17 +142,37 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
         return dialog;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onDialogClosed(boolean positiveResult) {
         if(positiveResult) {
             log.i("onDialogClosed");
             //mSettings.edit().putString(Constants.USER_NAME, etName.getText().toString()).apply();
-            namePreference.callChangeListener(etName.getText());
+            namePreference.callChangeListener(newName);
+            // Delete the previous username from Firestore
+            if(TextUtils.isEmpty(currentName) || currentName.equals(newName)) return;
+
+            // When a new username has replaced the current name, update the new name in Firestore.
+            try (FileInputStream fis = getActivity().openFileInput("userId");
+                 BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+                String userId = br.readLine();
+                DocumentReference docRef = firestore.collection("users").document(userId);
+                docRef.update("user_name", newName).addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        log.i("username is succeessfully updated");
+                    }
+                });
+
+            } catch(IOException e) {
+                log.e("IOException: %s", e.getMessage());
+            }
+
+
+
         }
     }
 
 
     @Override
-    public void onClick(View v) {
-    }
+    public void onClick(View v) {}
 }

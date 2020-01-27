@@ -41,6 +41,7 @@ public class DistrictCodeTask extends ThreadTask
         else model.distCodeComplete().postValue(false);
     }
 
+    /*
     @Override
     public void handleDistCodeTask(int state) {
         int outstate = -1;
@@ -57,5 +58,7 @@ public class DistrictCodeTask extends ThreadTask
 
         sThreadManager.handleState(this, outstate);
     }
+
+     */
 
 }

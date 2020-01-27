@@ -114,7 +114,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-    public static JSONArray getDistrictNameCode() {
+    public static JSONArray getDistrictJSONArray() {
         String jsonString = mSettings.getString(Constants.DISTRICT, null);
         try {
             return (TextUtils.isEmpty(jsonString))?

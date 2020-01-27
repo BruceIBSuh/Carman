@@ -10,9 +10,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
+import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
+import com.silverback.carman2.fragments.PricePagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
@@ -33,6 +35,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private final int REQ_SETTING = 1;
 
     // Objects
+    private Fragment generalFragment;
     private CarmanDatabase mDB;
     private OpinetViewModel opinetViewModel;
     //private ActionBarDrawerToggle drawerToggle;
@@ -58,7 +61,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
         bundle.putBoolean("notifyNetworkConnected", isNetworkConnected);
-        Fragment generalFragment = new GeneralFragment();
+        generalFragment = new GeneralFragment();
         generalFragment.setArguments(bundle);
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
@@ -70,6 +73,30 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Permission Check which is initiated by the parent activty(BaseActivity), so it is of no
         // use to initiate the permission check again here.
         //checkPermissions();
+    }
+
+    // Receive an intent containing the user name and the Sido and Sigun district reset in
+    // SettingPreferenceActivity. The toolbar title should be replace with the reset user name and
+    // PriceViewPager should be updated with the reset district and price data retrieved and saved
+    // in the storage.
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        boolean isDistReset = data.getBooleanExtra("resetDistrict", false);
+        String username = data.getStringExtra("resetName");
+        log.i("Setting result: %s, %s", isDistReset, username);
+
+        // Reset the username in the toolbar if the name has been reset in SettingPreferenceActivity.
+        if(username != null && getSupportActionBar() != null) getSupportActionBar().setTitle(username);
+
+        // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
+        GeneralFragment fragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
+        if(fragment != null && isDistReset) {
+            log.i("Reset requires the PriceViewPager refreshed");
+            fragment.resetPricePager();
+        }
+
     }
 
     /*
@@ -112,7 +139,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 return true;
 
             case R.id.action_setting:
-                startActivity(new Intent(MainActivity.this, SettingPreferenceActivity.class));
+                //startActivity(new Intent(MainActivity.this, SettingPreferenceActivity.class));
+                Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
+                startActivityForResult(settingIntent, REQ_SETTING);
                 return true;
 
             default:

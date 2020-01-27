@@ -127,11 +127,12 @@ public class GeneralFragment extends Fragment implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        log.i("onCreate() in GeneralFragment");
         super.onCreate(savedInstanceState);
+        isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
 
         favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         mSettings = ((MainActivity)getActivity()).getSettings();
-        isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
@@ -139,6 +140,7 @@ public class GeneralFragment extends Fragment implements
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
         fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
@@ -211,7 +213,6 @@ public class GeneralFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
-
 
         return childView;
     }
@@ -590,6 +591,11 @@ public class GeneralFragment extends Fragment implements
         }
 
         return null;
+    }
+
+    public void resetPricePager() {
+        pricePagerAdapter.setFuelCode(defaultFuel);
+        priceViewPager.setAdapter(pricePagerAdapter);
     }
 
 }

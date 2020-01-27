@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -35,6 +36,8 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.EditImageHelper;
 
+import org.json.JSONArray;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -65,11 +68,13 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private SettingPreferenceFragment settingFragment;
     private GasPriceTask gasPriceTask;
     private String distCode;
+    private String username;
 
     // UIs
     private FrameLayout frameLayout;
 
     // Fields
+    private boolean isDistrictReset;
     private Uri downloadUserImageUri;
 
 
@@ -96,9 +101,15 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name respectively.
+        /*
         List<String> district = convJSONArrayToList();
         if(district == null) distCode = "0101";
         else distCode = district.get(2);
+         */
+
+        JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
+        if(jsonDistArray == null) distCode = "0101";
+        else distCode = jsonDistArray.optString(2);
 
         /*
         Bundle args = new Bundle();
@@ -137,9 +148,15 @@ public class SettingPreferenceActivity extends BaseActivity implements
         log.i("NavUtils");
         /*
         Intent intent = new Intent();
-        intent.putExtra("setting", true);
+        intent.putExtra("setting_result", true);
         NavUtils.navigateUpTo(this, intent);
+        finish();
          */
+        log.i("Reset values: %s, %s", isDistrictReset, username);
+        Intent resultIntent = new Intent(this, MainActivity.class);
+        resultIntent.putExtra("resetDistrict", isDistrictReset);
+        resultIntent.putExtra("resetName", username);
+        setResult(Activity.RESULT_OK, resultIntent);
         finish();
     }
 
@@ -156,7 +173,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
             return true;
 
         } else if(item.getItemId() == android.R.id.home) {
-            startActivity(new Intent(this, MainActivity.class));
+            Intent resultIntent = new Intent(this, MainActivity.class);
+            resultIntent.putExtra("resetDistrict", isDistrictReset);
+            resultIntent.putExtra("resetName", username);
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
             return true;
 
         } else return super.onOptionsItemSelected(item);
@@ -193,19 +214,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
         return true;
     }
 
-    // Invoked when a value of any preference changes.
+    // SharedPreferences.OnSharedPreferenceChangeListener invokes this callback method if and only if
+    // any preference has changed.
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
             case Constants.USER_NAME:
+                log.i("nickname changed: %s", mSettings.getString(key, null));
                 // Change the nickname after verifying it, then upload it to the Firestore.
-                String username = mSettings.getString(key, null);
-                if(username == null || username.isEmpty()) return;
+                username = mSettings.getString(Constants.USER_NAME, null);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
-                Map<String, Object> data = new HashMap<>();
-                data.put("user_name", username);
-                uploadUserDataToFirestore(data);
+                if(username != null) {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("user_name", username);
+                    uploadUserDataToFirestore(data);
+                }
                 break;
 
             case Constants.VEHICLE:
@@ -228,10 +252,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
             case Constants.DISTRICT:
                 log.i("District changed");
-                distCode = convJSONArrayToList().get(2);
-                log.i("District Code : %s", distCode);
-                gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
-                mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+                JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
+                if(jsonDistArray != null) {
+                    distCode = BaseActivity.getDistrictJSONArray().optString(2);
+                    log.i("District Code : %s", distCode);
+                    gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
+                    mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+                    isDistrictReset = true;
+                }
                 break;
         }
 

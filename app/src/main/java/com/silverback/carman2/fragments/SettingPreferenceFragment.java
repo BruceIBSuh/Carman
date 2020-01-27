@@ -31,7 +31,6 @@ import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,7 +51,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     private SharedPreferences mSettings;
     private Preference cropImagePreference;
     private String nickname;
-    private FragmentSharedModel fragmentSharedModel;
 
     // Fields
     private String sigunCode;
@@ -68,17 +66,16 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         //setHasOptionsMenu(true);
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
-        //df = BaseActivity.getDecimalFormatInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        FragmentSharedModel sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
         NameDialogPreference namePref = findPreference(Constants.USER_NAME);
-        namePref.setSummary(mSettings.getString(Constants.USER_NAME, null));
+        String userName = mSettings.getString(Constants.USER_NAME, null);
+        namePref.setSummary(userName);
         if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.setting_null));
-        if(mSettings.getString(Constants.USER_NAME, null) != null)
-            nickname = namePref.getSummary().toString();
+        if(userName != null) nickname = namePref.getSummary().toString();
 
         Preference autoPref = findPreference(Constants.VEHICLE);
         String autoMaker = mSettings.getString("pref_auto_maker", null);
@@ -86,9 +83,10 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         String autoYear = mSettings.getString("pref_auto_year", null);
         String autoType = mSettings.getString("pref_auto_type", null);
 
+        // ShredPreferences doesn't supprot string array such that the array should be converted to
+        // JSONString and save it in SharedPreferences.
         String[] autoProfile = new String[] {autoMaker, autoType, autoModel, autoYear};
         String jsonAutoData = new JSONArray(Arrays.asList(autoProfile)).toString();
-        // ShredPreferences doesn't supprot the string array.
         mSettings.edit().putString(Constants.VEHICLE, jsonAutoData).apply();
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
 
@@ -133,6 +131,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         Preference svcCenter = findPreference("pref_favorite_svc");
         svcCenter.setSummary(R.string.pref_summary_svc);
 
+        // Set the standard of period between month and mileage.
         ListPreference svcPeriod = findPreference("pref_service_period");
         if(svcPeriod != null) {
             svcPeriod.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
@@ -141,17 +140,17 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         //JSONArray jsonDistrict = getDistrictJSONArray();
         SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
-        JSONArray json = BaseActivity.getDistrictNameCode();
+        JSONArray json = BaseActivity.getDistrictJSONArray();
         if(json != null) {
             spinnerPref.setSummary(String.format("%s %s", json.optString(0), json.optString(1)));
             sigunCode = json.optString(2);
         }
         // When the district changes, get the values via FragmentSharedModel from SettingSpinnerDlgFragment
         // and after coverting the values to JSONString, save it in SharedPreferences.
-        fragmentSharedModel.getDefaultDistNames().observe(this, name -> {
-            sigunCode = name[2];
-            spinnerPref.setSummary(String.format("%s %s", name[0], name[1]));
-            JSONArray jsonArray = new JSONArray(Arrays.asList(name[0], name[1], name[2]));
+        sharedModel.getDefaultDistrict().observe(this, distList -> {
+            sigunCode = distList.get(2);
+            spinnerPref.setSummary(String.format("%s %s", distList.get(0), distList.get(1)));
+            JSONArray jsonArray = new JSONArray(distList);
             mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
         });
 

@@ -34,43 +34,42 @@ public class ThreadManager {
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager.class);
 
     // Constants
-    static final int DOWNLOAD_PRICE_COMPLETED = 100;
+    //static final int DOWNLOAD_PRICE_COMPLETED = 100;
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
 
     static final int DOWNLOAD_IMAGE_FINISH = 201;
 
-    static final int SERVICE_ITEM_LIST_COMPLETED = 109;
+    //static final int SERVICE_ITEM_LIST_COMPLETED = 109;
     static final int FETCH_LOCATION_COMPLETED = 110;
     //static final int FETCH_ADDRESS_COMPLETED = 111;
-    static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
-    static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
-    static final int UPDATE_CLOCK = 114;
-    static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
+    //static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
+    //static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
+    //static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
 
     static final int FIRESTORE_STATION_GET_COMPLETED = 120;
     static final int FIRESTORE_STATION_SET_COMPLETED = 130;
 
-    static final int RECYCLER_ADAPTER_SERVICE_COMPLETED = 140;
-    static final int RECYCLER_ADAPTER_SERVICE_FAILED = -141;
+    //static final int RECYCLER_ADAPTER_SERVICE_COMPLETED = 140;
+    //static final int RECYCLER_ADAPTER_SERVICE_FAILED = -141;
 
     static final int GEOCODER_REVERSE_TASK_COMPLETED = 150;
     static final int GEOCODER_REVERSE_TASK_FAILED = -150;
 
-    static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
-    static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
-    static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
+    //static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
+    //static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
+    //static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
 
-    static final int DOWNLOAD_PRICE_FAILED = -100;
+    //static final int DOWNLOAD_PRICE_FAILED = -100;
     static final int DOWNLOAD_NEAR_STATIONS_FAILED = -2;
     static final int DOWNLOAD_CURRENT_STATION_FAILED = -4;
-    static final int POPULATE_STATION_LIST_FAILED = -3;
+    //static final int POPULATE_STATION_LIST_FAILED = -3;
     static final int DOWNLOAD_STATION_INFO_FAILED = -5;
     //static final int FETCH_ADDRESS_FAILED = -6;
-    static final int DOWNLOAD_DISTCODE_FAILED = -7;
+    //static final int DOWNLOAD_DISTCODE_FAILED = -7;
     static final int FETCH_LOCATION_FAILED = -8;
-    static final int SERVICE_ITEM_LIST_FAILED = -9;
+    //static final int SERVICE_ITEM_LIST_FAILED = -9;
 
     // Determine the threadpool parameters.
     // Sets the amount of time an idle thread will wait for a task before terminating
@@ -100,7 +99,7 @@ public class ThreadManager {
     private Queue<ThreadTask> mTaskWorkQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
-    private final Queue<LoadDistCodeTask> mLoadDistCodeTaskQueue;
+    private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final Queue<FavoritePriceTask> mFavoritePriceTaskQueue;
     private final Queue<TabPagerTask> mTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
@@ -132,7 +131,7 @@ public class ThreadManager {
         // Queues of tasks, which extends ThreadPool.
         mTaskWorkQueue = new LinkedBlockingQueue<>();
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
-        mLoadDistCodeTaskQueue = new LinkedBlockingQueue<>();
+        mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
@@ -157,7 +156,6 @@ public class ThreadManager {
          * constructor. The constructor is invoked when the class is first referenced, and that
          * happens when the View invokes startDownload. Since the View runs on the UI Thread, so
          * does the constructor and the Handler.
-         *
          * ViewModel may replace this with LiveData which send values from worker threads directly to
          * the main thread.
          */
@@ -226,15 +224,6 @@ public class ThreadManager {
                 thread.interrupt();
             }
         }
-
-        for (int taskArrayIndex = 0; taskArrayIndex < taskDecodeArrayLen; taskArrayIndex++) {
-            // Gets the task's current thread
-            Thread thread = taskDecodeArray[taskArrayIndex].mThreadThis;
-            // if the Thread exists, post an interrupt to it
-            if (null != thread) {
-                thread.interrupt();
-            }
-        }
     }
 
 
@@ -243,25 +232,25 @@ public class ThreadManager {
     public static DistrictCodeTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
 
         DistrictCodeTask task = sInstance.mDistrictCodeTaskQueue.poll();
-
         if(task == null) {
             task = new DistrictCodeTask(context, model);
         }
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
-
         return task;
     }
 
     // Retrieves Sigun list with a sido code given in SettingPreferenceActivity
-    public static LoadDistCodeTask loadSpinnerDistCodeTask(
-            Context context, SpinnerDistrictModel model, int code) {
+    // Bugs: no guarantee to coincide the position with the code. For example, Daegu is positioned
+    // at 12, whereas the Sido code is 14.
+    public static DistCodeSpinnerTask loadDistCodeSpinnerTask(
+            Context context, SpinnerDistrictModel model, int position) {
 
-        LoadDistCodeTask task = sInstance.mLoadDistCodeTaskQueue.poll();
-        if(task == null) task = new LoadDistCodeTask(context);
+        DistCodeSpinnerTask task = sInstance.mDistCodeSpinnerTaskQueue.poll();
+        if(task == null) task = new DistCodeSpinnerTask(context);
 
-        task.initSpinnerDistCodeTask(model, code);
-        sInstance.mDecodeThreadPool.execute(task.getLoadDistCodeRunnable());
+        task.initSpinnerDistCodeTask(model, position);
+        sInstance.mDecodeThreadPool.execute(task.getDistCodeSpinnerRunnable());
 
         return task;
     }
@@ -396,6 +385,7 @@ public class ThreadManager {
 
     }
 
+    /*
     public static DownloadImageTask downloadImageTask(
             Context context, int position, String url, ImageViewModel model) {
 
@@ -406,6 +396,7 @@ public class ThreadManager {
 
         return imageTask;
     }
+     */
 
     // Upload the downsized user image to Firebase Storage
     public static UploadBitmapTask startBitmapUploadTask(Context context, Uri uri, ImageViewModel model) {
@@ -451,8 +442,8 @@ public class ThreadManager {
     private void recycleTask(ThreadTask task) {
         log.i("RecycleTask: %s", task);
         if(task instanceof LocationTask) {
+            ((LocationTask)task).recycle();
             mLocationTaskQueue.offer((LocationTask)task);
-
         } else if(task instanceof StationListTask) {
             mStationListTaskQueue.offer((StationListTask)task);
 
@@ -470,6 +461,9 @@ public class ThreadManager {
 
         } else if(task instanceof DownloadImageTask) {
             mTaskWorkQueue.offer(task);
+        } else if(task instanceof DistCodeSpinnerTask) {
+            ((DistCodeSpinnerTask)task).recycle();
+            mDistCodeSpinnerTaskQueue.offer((DistCodeSpinnerTask)task);
         }
 
         if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();

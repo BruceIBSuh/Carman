@@ -76,6 +76,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         if(index == 4) viewModel.distPriceComplete().postValue(true);
     }
 
+    /*
     @Override
     public void handlePriceTaskState(int state) {
         int outstate = -1;
@@ -92,8 +93,11 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
 
         sThreadManager.handleState(this, outstate);
     }
+     */
 
     public void recycle(){
+        stnId = null;
+        distCode = null;
         index = 0;
     }
 
