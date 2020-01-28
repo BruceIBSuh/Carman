@@ -276,12 +276,14 @@ public class GeneralFragment extends Fragment implements
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             // Manage to show the message in case that Location failed to fetch.
             if(location == null) {
+                log.i("Location failed");
                 SpannableString msg = new SpannableString("Location failed to fetch");
                 stationRecyclerView.showTextView(msg);
                 return;
             }
 
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
+                log.i("Location succeeded");
                 mPrevLocation = location;
                 stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaults);
             } else {

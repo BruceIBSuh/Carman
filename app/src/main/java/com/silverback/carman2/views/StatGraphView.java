@@ -25,8 +25,7 @@ public class StatGraphView extends View {
     private static final LoggingHelper log = LoggingHelperFactory.create(StatGraphView.class);
 
     // Constants
-    //private final int BACKGROUND_COLOR = Color.parseColor("#383838");
-    private final String[] bottomTextList = new String[] {
+    private final String[] monthLabel = new String[] {
             "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" };
 
     private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
@@ -77,14 +76,10 @@ public class StatGraphView extends View {
 
             }
 
-            if (needNewFrame) {
-                postDelayed(this, 5);
-            }
-
+            if (needNewFrame) postDelayed(this, 5);
             invalidate();
         }
     };
-
 
     // Constructor
     public StatGraphView(Context context) {
@@ -97,9 +92,7 @@ public class StatGraphView extends View {
         this.context = context;
         getAttributes(context, attrs);
         init();
-        log.i("StatGraphView constructor");
     }
-
 
     // Get Attributes
     private void getAttributes(Context context, AttributeSet attrs) {
@@ -121,37 +114,40 @@ public class StatGraphView extends View {
         WIDEN_FIRST_INTERVAL = DisplayResolutionUtils.dip2px(context, 5);
         TEXT_TOP_MARGIN = DisplayResolutionUtils.dip2px(context, 5);
 
-        // Set the margin, textSize and the width of graph bar
-        topMargin = DisplayResolutionUtils.dip2px(context, 25);
+        // Set the top margin and the bar width of the graph
+        topMargin = DisplayResolutionUtils.dip2px(context, 30);
         barWidth = DisplayResolutionUtils.dip2px(context, 15);
 
+        // Background color of the graph
         /*
         Paint bgPaint = new Paint();
         bgPaint.setAntiAlias(true);
         bgPaint.setColor(BACKGROUND_COLOR);
         */
 
+        // Foreground color of the graph
         fgPaint = new Paint();
         fgPaint.setColor(ContextCompat.getColor(context, R.color.graphBarColor));
 
         // Paint object for x-y axis of the graph
         axisPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        //axisPaint.setColor(graphAxisColor);
         axisPaint.setColor(ContextCompat.getColor(context, R.color.graphAxisColor));
         axisPaint.setStyle(Paint.Style.STROKE);
         axisPaint.setStrokeWidth(3);
 
-        // Paint to draw the monthly total expense on top of each graph bar
+        // Paint for drawing the monthly total expense on top of each graph bar
         expenseNumPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        //if(graphLabelColor != 0) expenseNumPaint.setColor(graphLabelColor);
+        //expenseNumPaint.setColor(graphLabelColor);
         expenseNumPaint.setColor(ContextCompat.getColor(context, R.color.graphLabelColor));
         expenseNumPaint.setTextSize(textSize);
         expenseNumPaint.setTextAlign(Paint.Align.CENTER);
 
-        // Paint to draw the graph labels
+        // Paint to draw the labels of month below the x_axis of the graph.
         textPaint = new Paint();
         textPaint.setAntiAlias(true);
         textPaint.setTextSize(textSize);
-        //if(graphLabelColor != 0) textPaint.setColor(graphLabelColor);
+        //textPaint.setColor(graphLabelColor);
         textPaint.setColor(ContextCompat.getColor(context, R.color.graphLabelColor));
         textPaint.setTextAlign(Paint.Align.CENTER);
 
@@ -159,7 +155,7 @@ public class StatGraphView extends View {
         rect = new Rect();
         percentList = new ArrayList<>();
 
-        // value to be added when calculating the bottom position value of graph bars and interval.
+        // value to be added when calculating the bottom position value of graph bars and the interval
         axisStroke = (int)axisPaint.getStrokeWidth();
     }
 
@@ -186,7 +182,7 @@ public class StatGraphView extends View {
         // Set the label width to the max text width. Here, it's not currently necessary to loop
         // to find the max width because each label has the same width, but remain not refactored
         // just for update in the future.
-        for(String s : bottomTextList) {
+        for(String s : monthLabel) {
             textPaint.getTextBounds(s, 0, s.length(), r);
             if(bottomTextHeight < r.height()) {
                 bottomTextHeight = r.height();
@@ -208,7 +204,7 @@ public class StatGraphView extends View {
         targetPercentList = new ArrayList<>();
         monthlyExpense = expense;
 
-        if(max == 0) max = 1; // prevents the possibility to be divided by zero
+        if(max == 0) max = 1; //prevents the possibility to be divided by zero
 
         for(Integer integer : expense) {
             targetPercentList.add(1 - (float)integer / (float)max);
@@ -239,11 +235,11 @@ public class StatGraphView extends View {
         // minus y-axis width, then divided by 12 months
         interval = (mViewWidth - GRAPH_SIDE_MARGIN * 2 - axisStroke) / 12;
         // Draw x_axis
-        canvas.drawLine(GRAPH_SIDE_MARGIN - WIDEN_FIRST_INTERVAL,   // startX
-                getHeight() - bottomTextHeight - TEXT_TOP_MARGIN,   // startY
-                mViewWidth - GRAPH_SIDE_MARGIN,                     // stopX
-                getHeight() - bottomTextHeight - TEXT_TOP_MARGIN,   // stopY
-                axisPaint);                                         // Paint
+        canvas.drawLine(GRAPH_SIDE_MARGIN - WIDEN_FIRST_INTERVAL, // startX
+                getHeight() - bottomTextHeight - TEXT_TOP_MARGIN, // startY
+                mViewWidth - GRAPH_SIDE_MARGIN,                   // endX
+                getHeight() - bottomTextHeight - TEXT_TOP_MARGIN, // endY
+                axisPaint);                                       // Paint
         // Draw y_axis
         canvas.drawLine(GRAPH_SIDE_MARGIN - WIDEN_FIRST_INTERVAL,
                 getHeight() - bottomTextHeight - TEXT_TOP_MARGIN,
@@ -278,7 +274,7 @@ public class StatGraphView extends View {
 
         // Draw the label text rigth under the x-axis
         index = 0;
-        for(String s : bottomTextList) {
+        for(String s : monthLabel) {
             canvas.drawText(s, GRAPH_SIDE_MARGIN + (interval * index) + interval / 2,
                     getHeight() - bottomTextDescent,
                     textPaint);
@@ -287,27 +283,23 @@ public class StatGraphView extends View {
 
         // Draw the label unit of the x_axis and y_axis
         canvas.drawText(getResources().getString(R.string.graph_x_axis_month), mViewWidth - GRAPH_SIDE_MARGIN - 10, getHeight() - bottomTextDescent, textPaint);
-        canvas.drawText(getResources().getString(R.string.graph_y_axis_unit), GRAPH_SIDE_MARGIN - WIDEN_FIRST_INTERVAL, topMargin - 40, textPaint);
+        canvas.drawText(getResources().getString(R.string.graph_y_axis_unit), GRAPH_SIDE_MARGIN - WIDEN_FIRST_INTERVAL, topMargin - 45, textPaint);
     }
 
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-
-        //Log.d(TAG, "MeasureSpec mode: " + MeasureSpec.getMode(widthMeasureSpec) + ", "+ MeasureSpec.getMode(heightMeasureSpec));
-
         mViewWidth = measureWidth(widthMeasureSpec);
         int mViewHeight = measureHeight(heightMeasureSpec);
 
-        //Log.d(TAG, "MeasureSpec size: " + mViewWidth + ", " + mViewHeight);
-
         setMeasuredDimension(mViewWidth, mViewHeight);
     }
-    //
+
+
     private int measureWidth(int measureSpec) {
         int preferred = 0;
-        if(bottomTextList != null) {
-            preferred = bottomTextList.length * interval + GRAPH_SIDE_MARGIN * 2;
+        if(monthLabel != null) {
+            preferred = monthLabel.length * interval + GRAPH_SIDE_MARGIN * 2;
             //Log.d(TAG, "Preferred Value: " + preferred);
         }
 
@@ -325,7 +317,6 @@ public class StatGraphView extends View {
         int measurement;
 
         switch(MeasureSpec.getMode(measureSpec)){
-
             case MeasureSpec.EXACTLY:
                 measurement = specSize;
                 //Log.d(TAG, "Mode: EXACTLY");
