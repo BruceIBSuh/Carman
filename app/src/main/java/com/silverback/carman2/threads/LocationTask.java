@@ -36,6 +36,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void recycle() {
+        log.i("LocationTask: %s", mLocation);
         if(mLocation != null) mLocation = null;
     }
 

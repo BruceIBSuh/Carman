@@ -10,11 +10,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 
-import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
-import com.silverback.carman2.fragments.PricePagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
@@ -24,9 +22,12 @@ import com.silverback.carman2.utils.Constants;
 import java.io.File;
 
 /*
- * This activity is a container holding GeneralFragment which displays the gas prices and the recent
- * expenditure of gas and service, and stations in the default radius based on the current location.
- * It should be replaced with alternative fragment that shows a content instead of the near stations.
+ * This activity is a container holding GeneralFragment which handles the district gas prices and
+ * the latest gas and service expenditure, and near stations located in the default radius.
+ * Additional fragment should be added to the activity at a later time to show a variety of contents
+ * ahead of displaying GeneralFragment. Alternatively, the recyclerview positioned at the bottom for
+ * showing near stations should be replaced with a view to display auto-related contents, making a
+ * button to call DialogFragment or activity to display the near stations.
  */
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
 
@@ -35,9 +36,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private final int REQ_SETTING = 1;
 
     // Objects
-    private Fragment generalFragment;
-    private CarmanDatabase mDB;
-    private OpinetViewModel opinetViewModel;
+    private GeneralFragment generalFragment;
     //private ActionBarDrawerToggle drawerToggle;
 
     @SuppressWarnings("ConstantConditions")
@@ -83,6 +82,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if(requestCode != REQ_SETTING || resultCode != RESULT_OK)  return;
+
         boolean isDistReset = data.getBooleanExtra("resetDistrict", false);
         String username = data.getStringExtra("resetName");
         log.i("Setting result: %s, %s", isDistReset, username);
@@ -91,10 +92,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(username != null && getSupportActionBar() != null) getSupportActionBar().setTitle(username);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
-        GeneralFragment fragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
-        if(fragment != null && isDistReset) {
+        generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
+        if(generalFragment != null && isDistReset) {
             log.i("Reset requires the PriceViewPager refreshed");
-            fragment.resetPricePager();
+            generalFragment.resetPricePager();
         }
 
     }
@@ -113,15 +114,13 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     }
     */
 
-    /*
-     * The following 2 overriding methods are invoked by Toolbar working as Appbar or ActionBar
-     */
+
+    //The following callback methods are invoked by Toolbar working as Appbar or ActionBar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_options_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -139,13 +138,13 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 return true;
 
             case R.id.action_setting:
-                //startActivity(new Intent(MainActivity.this, SettingPreferenceActivity.class));
+                // Apply startActivityForresult() to take the price data and the username back from
+                // SettingPreferenceActivity if the values have changed to onActivityResult().
                 Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
                 startActivityForResult(settingIntent, REQ_SETTING);
                 return true;
 
             default:
-                log.i("finish activity");
                 finish();
         }
 

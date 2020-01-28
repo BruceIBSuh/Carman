@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -30,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /*
- * This class downloads necessary resources not only from the server but also from the local db and
+ * This class downloads necessary resources not only from the server but also from the local db, then
  * starts the app. The process is forked as the first time initiation and the regular initiation,
  * according to whether the user is anonymously registered with Firebase anonymous authentication.
  *
@@ -61,7 +62,7 @@ public class IntroActivity extends BaseActivity  {
     private GasPriceTask gasPriceTask;
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
-    private File distCodeFile;
+    private String[] defaultDistrict;
 
     // UI's
     private ProgressBar mProgBar;
@@ -71,16 +72,17 @@ public class IntroActivity extends BaseActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_intro);
 
-        // Instantiate the objects
+        defaultDistrict = getResources().getStringArray(R.array.default_district);
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(this);
         opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
 
         mProgBar = findViewById(R.id.progbar);
-        // On clicking the start button, fork the process into the first-time launching or
-        // the regular one based upon whether the Firebase anonymous authentication
-        findViewById(R.id.btn_start).setOnClickListener(view -> {
+        // On clicking the start button, fork the process into the first-time launching or the regular
+        // process depending upon whether the Firebase anonymous authentication is registered.
+        Button btnStart = findViewById(R.id.btn_start);
+        btnStart.setOnClickListener(view -> {
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
@@ -143,14 +145,11 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
-                //distCodeFile = new File(getFilesDir(), Constants.FILE_DISTRICT_CODE);
-                //if(!distCodeFile.exists())
                 distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.
-                JSONArray jsonDistrictArray = new JSONArray(
-                        Arrays.asList(getResources().getStringArray(R.array.default_district)));
+                JSONArray jsonDistrictArray = new JSONArray(Arrays.asList(defaultDistrict));
                 mSettings.edit().putString(Constants.DISTRICT, jsonDistrictArray.toString()).apply();
 
                 // Retrive the default service items as JSONArray defined in BaseActvitiy and save
@@ -159,7 +158,7 @@ public class IntroActivity extends BaseActivity  {
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
             } else {
-                log.i("Anonymous Authentication failed");
+                log.e("Anonymous Authentication failed");
             }
         });
 
@@ -173,10 +172,9 @@ public class IntroActivity extends BaseActivity  {
         mProgBar.setVisibility(View.VISIBLE);
         // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
         if(checkPriceUpdate()) {
-            log.i("Receiving the oil price");
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 JSONArray json = BaseActivity.getDistrictJSONArray();
-                String distCode = (json != null)?json.optString(2) : "0101";
+                String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
                 log.i("District code: %s", distCode);
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
             });

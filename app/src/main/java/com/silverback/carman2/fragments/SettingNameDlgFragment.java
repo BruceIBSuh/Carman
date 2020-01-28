@@ -37,7 +37,7 @@ import java.io.InputStreamReader;
 
 import static android.content.DialogInterface.BUTTON_POSITIVE;
 
-public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat implements View.OnClickListener {
+public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
@@ -172,7 +172,4 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
         }
     }
 
-
-    @Override
-    public void onClick(View v) {}
 }

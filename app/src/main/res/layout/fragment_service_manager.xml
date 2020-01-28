@@ -73,8 +73,8 @@
 
         <ImageButton
             android:id="@+id/imgbtn_favorite"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_marginStart="3dp"
             android:contentDescription="@null"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_provider"

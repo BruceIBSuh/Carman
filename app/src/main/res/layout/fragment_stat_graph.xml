@@ -22,7 +22,7 @@
     <com.silverback.carman2.views.StatGraphView
         android:id="@+id/graphView"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="120dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -31,7 +31,7 @@
         android:id="@+id/btn_arrow_left"
         android:layout_width="30dp"
         android:layout_height="20dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:textSize="12sp"
         app:layout_constraintEnd_toStartOf="@+id/tv_year"
         app:layout_constraintHorizontal_bias="0.5"
@@ -60,14 +60,5 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_year"
         app:layout_constraintTop_toTopOf="@+id/tv_year" />
-    <!--
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World"
-        android:textSize="32sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    -->
+
 </androidx.constraintlayout.widget.ConstraintLayout>

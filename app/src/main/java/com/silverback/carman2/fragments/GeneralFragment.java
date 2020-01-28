@@ -274,6 +274,13 @@ public class GeneralFragment extends Fragment implements
         // do not initiate the task to get new near stations to prevent frequent connection to
         // the server.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
+            // Manage to show the message in case that Location failed to fetch.
+            if(location == null) {
+                SpannableString msg = new SpannableString("Location failed to fetch");
+                stationRecyclerView.showTextView(msg);
+                return;
+            }
+
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
                 mPrevLocation = location;
                 stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaults);

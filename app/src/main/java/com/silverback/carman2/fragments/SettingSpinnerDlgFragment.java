@@ -85,9 +85,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
         fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
 
-        sidoAdapter = ArrayAdapter.createFromResource(getContext(),
-                R.array.sido_name, android.R.layout.simple_spinner_item);
-        sidoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sidoAdapter = ArrayAdapter.createFromResource(getContext(), R.array.sido_name, R.layout.spinner_sido_entry);
+        sidoAdapter.setDropDownViewResource(R.layout.spinner_sigun_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos, true);
 

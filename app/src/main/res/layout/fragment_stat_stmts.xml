@@ -47,7 +47,7 @@
         android:id="@+id/tv_date"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginStart="24dp"
+        android:layout_marginStart="16dp"
         android:gravity="center_horizontal|center_vertical"
         android:text="@string/stat_header_date"
         android:textColor="@color/white"
