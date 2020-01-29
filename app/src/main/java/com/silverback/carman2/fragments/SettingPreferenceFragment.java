@@ -1,11 +1,14 @@
 package com.silverback.carman2.fragments;
 
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.MenuItem;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
@@ -18,6 +21,7 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.BaseActivity;
+import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
@@ -90,6 +94,10 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         mSettings.edit().putString(Constants.VEHICLE, jsonAutoData).apply();
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
 
+        //
+        ListPreference fuelList = findPreference(Constants.FUEL);
+        if(fuelList != null) fuelList.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
+
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
         // and ListPreference.
@@ -123,7 +131,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
                 if(provider.category == Constants.GAS) station = provider.favoriteName;
                 else if(provider.category == Constants.SVC) service = provider.favoriteName;
             }
-            favorite.setSummary(String.format("%s / %s", station, service));
+            favorite.setSummary(String.format("%s\n%s", station, service));
         });
 
         Preference gasStation = findPreference("pref_favorite_gas");
@@ -186,18 +194,21 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Preferrence.OnDisplayPreferenceDialogListener is implemented by the following callback which
     // defines an action to pop up an custom DialogFragment when a preferenece clicks.
+    // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
+    // getSupportFragmentManager()
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
         if (pref instanceof SpinnerDialogPreference) {
             DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             spinnerFragment.setTargetFragment(this, 0);
-            spinnerFragment.show(getFragmentManager(), null);
+            spinnerFragment.show(getActivity().getSupportFragmentManager(), null);
 
         } else if(pref instanceof NameDialogPreference) {
             DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), nickname);
             nameFragment.setTargetFragment(this, 1);
-            nameFragment.show(getFragmentManager(), null);
+            nameFragment.show(getActivity().getSupportFragmentManager(), null);
 
         } else {
             super.onDisplayPreferenceDialog(pref);

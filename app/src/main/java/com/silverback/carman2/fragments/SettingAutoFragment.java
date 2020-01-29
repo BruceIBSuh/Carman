@@ -58,7 +58,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         //getFragmentManager().popBackStack();
         //getAutoDataList();
-        return super.onOptionsItemSelected(item);
+        log.i("SettingAutoFragment menu: %s", item);
+        return true;
 
     }
 

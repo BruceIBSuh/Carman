@@ -14,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NavUtils;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -27,6 +28,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.SettingAutoFragment;
+import com.silverback.carman2.fragments.SettingFavorGasFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -69,6 +71,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private GasPriceTask gasPriceTask;
     private String distCode;
     private String username;
+    private String fuelCode;
 
     // UIs
     private FrameLayout frameLayout;
@@ -96,7 +99,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
 
-        priceModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
@@ -125,7 +128,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Attach SettingPreferencFragment in the FrameLayout
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
-                //.addToBackStack(null)
+                .addToBackStack(null)
                 .commit();
     }
 
@@ -160,16 +163,34 @@ public class SettingPreferenceActivity extends BaseActivity implements
         finish();
     }
 
+    //
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        getSupportFragmentManager().popBackStack();
 
-        if(getSupportFragmentManager().findFragmentById(R.id.frame_setting) instanceof SettingAutoFragment) {
+        if(fragment instanceof SettingPreferenceFragment) {
+            Intent resultIntent = new Intent(this, MainActivity.class);
+            resultIntent.putExtra("resetDistrict", isDistrictReset);
+            resultIntent.putExtra("resetName", username);
+            resultIntent.putExtra("fuelCode", fuelCode);
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
+            return true;
+
+        } else return false;
+        /*
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        if(fragment instanceof SettingAutoFragment) {
             log.i("SettingAutoFragment");
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.frame_setting, new SettingPreferenceFragment())
                     .addToBackStack(null)
                     .commit();
 
+            return true;
+
+        } else if(fragment instanceof SettingFavorGasFragment) {
             return true;
 
         } else if(item.getItemId() == android.R.id.home) {
@@ -181,6 +202,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
             return true;
 
         } else return super.onOptionsItemSelected(item);
+
+         */
     }
 
     /*
@@ -244,6 +267,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     uploadUserDataToFirestore(autoData);
                 }
 
+                break;
+
+            case Constants.FUEL:
+                log.i("Fuel: %s", mSettings.getString(Constants.FUEL, null));
+                fuelCode = mSettings.getString(Constants.FUEL, null);
                 break;
 
             case Constants.EDIT_IMAGE:

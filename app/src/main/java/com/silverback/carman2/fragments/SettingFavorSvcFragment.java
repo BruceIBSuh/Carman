@@ -108,7 +108,7 @@ public class SettingFavorSvcFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if(menuItem.getItemId() == android.R.id.home) {
-            /*
+
             List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
             int position = 0;
 
@@ -121,13 +121,10 @@ public class SettingFavorSvcFragment extends Fragment implements
 
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
 
-             */
             //getActivity().onBackPressed();
-            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+            //startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
             return true;
-        }
-
-        return false;
+        } else return false;
     }
 
     /*

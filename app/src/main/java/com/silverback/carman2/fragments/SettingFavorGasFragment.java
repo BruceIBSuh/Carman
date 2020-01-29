@@ -1,8 +1,14 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.util.SparseArray;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -10,16 +16,9 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.SparseArray;
-import android.view.LayoutInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.adapters.SettingFavoriteAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
@@ -27,7 +26,6 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.FavoritePriceTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
@@ -72,7 +70,6 @@ public class SettingFavorGasFragment extends Fragment implements
 
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        //opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
         sparseSnapshotArray = new SparseArray<>();
     }
 
@@ -97,12 +94,12 @@ public class SettingFavorGasFragment extends Fragment implements
 
             recyclerView.setAdapter(mAdapter);
 
+            // Retrieve the evaluation of favroite stations from Firestore, add it to the
+            // SparseArray, then make the partial binding of recyclerview items.
             for(int i = 0; i < favoriteList.size(); i++) {
                 final int pos = i;
                 final String stnId = favoriteList.get(pos).providerId;
 
-                // Retrieve the evaluation of favroite stations from Firestore, add it to the
-                // SparseArray, then make the partial binding of recyclerview items.
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
@@ -140,12 +137,16 @@ public class SettingFavorGasFragment extends Fragment implements
         if(favoritePriceTask != null) favoritePriceTask = null;
     }
 
-    // When clicking the back button in the toolbar, fetch the placeholder value of each items and
-    // update the local db, then back to the parent activity.
+
+    // To make onOptionsItemSelected() working in Fragment,  setHasOptionsMenu defined in onCreate()
+    // is set to true and the return value must be true. This callback concurrently invokes the same
+    // method defined in the parent Activity, in which the return value must be false in order to
+    // prevent invoking sequentially.
     @Override
-    public boolean onOptionsItemSelected(MenuItem menuItem) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem menuItem) {
 
         if(menuItem.getItemId() == android.R.id.home) {
+            log.i("settingFavorGas");
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
             // the edited fasvorte list.
             int position = 0;
@@ -158,16 +159,12 @@ public class SettingFavorGasFragment extends Fragment implements
 
             mDB.favoriteModel().updatePlaceHolder(favList);
 
-            // Have the favorite list updated.
-            for(FavoriteProviderEntity entity : favList) {
-                log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
-            }
-
-            startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
             return true;
+
         }
 
         return false;
+
     }
 
 

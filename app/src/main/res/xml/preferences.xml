@@ -20,7 +20,7 @@
 
         <ListPreference
             app:title="연료"
-            app:key="pref_fuel"
+            app:key="carman_pref_ls_fuel"
             app:entries="@array/spinner_fuel_name"
             app:entryValues="@array/spinner_fuel_code"
             app:defaultValue="B027"

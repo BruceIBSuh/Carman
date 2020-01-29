@@ -179,11 +179,10 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPreferenceFragment
     // and its price information is to display in the main page,
-    /*
     public List<FavoriteProviderEntity> getFavoriteList() {
         return favoriteList;
     }
-    */
+
 
     // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
     // any evaluation data from Firestore.
