@@ -39,6 +39,8 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<String> firstPlaceholderId;
 
+    private MutableLiveData<Integer> totalExpense;
+
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
     // to show the names in the summary of the preference.
     private MutableLiveData<List<String>> defaultDistCode;
@@ -164,6 +166,14 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<List<String>> getDefaultDistrict() {
         if(defaultDistCode == null) defaultDistCode = new MutableLiveData<>();
         return defaultDistCode;
+    }
+
+
+    // Shared the selected spinner item position in StatStmtsFragment with StatGraphFragment to set
+    // data queried by category.
+    public MutableLiveData<Integer> getExpenseCategory() {
+        if(totalExpense == null)  totalExpense = new MutableLiveData<>();
+        return totalExpense;
     }
 
 }

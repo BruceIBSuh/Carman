@@ -56,7 +56,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
 
         if (convertView == null) {
             viewHolder = new SpinnerViewHolder();
-            convertView = inflater.inflate(R.layout.spinner_sido_entry, viewGroup, false);
+            convertView = inflater.inflate(R.layout.spinner_district_entry, viewGroup, false);
             viewHolder.distName = convertView.findViewById(R.id.tv_spinner_entry);
             convertView.setTag(viewHolder);
 
@@ -71,7 +71,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
 
         if(dropdownView == null) {
             viewHolder = new SpinnerViewHolder();
-            dropdownView = inflater.inflate(R.layout.spinner_sigun_dropdown, parent, false);
+            dropdownView = inflater.inflate(R.layout.spinner_district_dropdown, parent, false);
             viewHolder.distName = dropdownView.findViewById(R.id.tv_spinner_dropdown);
             dropdownView.setTag(viewHolder);
 

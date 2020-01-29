@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
@@ -103,10 +104,18 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
-        // Define ViewModels.
+        // Define ViewModels. ViewModelProviders.of(this) is deprecated. Instead, use ViewModelProvider
+        // (requrieActivity())
+        /*
         locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
         fragmentSharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
         pagerModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
+        */
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        fragmentSharedModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
+        pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
+
+
 
         // Fetch the values from SharedPreferences
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
@@ -143,7 +152,7 @@ public class ExpenseActivity extends BaseActivity implements
             if(isGeofencing) topFrame.removeAllViews();
             topFrame.addView(expensePager);
 
-
+            locationTask = ThreadManager.fetchLocationTask(this, locationModel);
         });
 
 
@@ -154,7 +163,7 @@ public class ExpenseActivity extends BaseActivity implements
         super.onResume();
         // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
         // The task has been suspended by the completion of UIs for lessening the initial loading.
-        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+        //locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override

@@ -207,8 +207,8 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         // Create the spinners for sido and sigun name.
         ArrayAdapter sidoAdapter = ArrayAdapter.createFromResource(
-                getContext(), R.array.sido_name, R.layout.spinner_sido_entry);
-        sidoAdapter.setDropDownViewResource(R.layout.spinner_sigun_dropdown);
+                getContext(), R.array.sido_name, R.layout.spinner_district_entry);
+        sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos);
 
@@ -216,8 +216,8 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         // Create the spinner for Comany list.
         ArrayAdapter companyAdapter = ArrayAdapter.createFromResource(
-                getContext(), R.array.svc_company, R.layout.spinner_sido_entry);
-        companyAdapter.setDropDownViewResource(R.layout.spinner_sigun_dropdown);
+                getContext(), R.array.svc_company, R.layout.spinner_district_entry);
+        companyAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
         companySpinner.setAdapter(companyAdapter);
 
         dialog = new AlertDialog.Builder(getActivity())

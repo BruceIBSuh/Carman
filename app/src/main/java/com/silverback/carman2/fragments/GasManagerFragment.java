@@ -20,6 +20,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -147,9 +148,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
-        locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
-        stnListModel = ViewModelProviders.of(getActivity()).get(StationListViewModel.class);
-        opinetViewModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
+        //locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
+        locationModel = new ViewModelProvider(getActivity()).get(LocationViewModel.class);
+        stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
+        opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
         // Entity to retrieve list of favorite station to compare with a fetched current station
         // to tell whether it has registered with Favorite.
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());

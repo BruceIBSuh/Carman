@@ -10,23 +10,33 @@ import java.util.List;
 @Dao
 public interface ExpenseBaseDao {
 
-    // Retrieve monthly total expense which put gas and service expense in together.
-    @Query("SELECT * FROM ExpenseBaseEntity WHERE date_time BETWEEN :start AND :end")
-    LiveData<List<ExpenseBaseEntity>> loadExpenseLiveData(long start, long end);
+    // Retrieve monthly total expense used in gas and service as well, which is used in StatGraphFragment.
+    @Query("SELECT date_time, total_expense FROM ExpenseBaseEntity " +
+            "WHERE (category = :category1 OR category = :category2) " +
+            "AND date_time BETWEEN :start AND :end")
+    LiveData<List<ExpenseByMonth>> loadMonthlyExpense(int category1, int category2, long start, long end);
 
-    @Query("SELECT * FROM ExpenseBaseEntity ORDER BY date_time DESC")
-    LiveData<List<ExpenseBaseEntity>> loadAllExpense();
-
-    // Retrieve the expense statement used in StatStmtsFragment of ExpenseActivity
+    // Retrieve the expense by category, which is used in StatStmtsFragment. To fetch the gas expense,
+    // the service category is to be -1 to exclude the service expense. The service expense can be
+    // likewise fetched.
     @Query("SELECT date_time, mileage, total_expense, stn_name, service_center FROM ExpenseBaseEntity " +
             "LEFT JOIN GasManagerEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "LEFT JOIN ServiceManagerEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "WHERE category = :category1 OR category = :category2 ORDER BY mileage DESC")
     LiveData<List<ExpenseStatements>> loadExpenseByCategory(int category1, int category2);
 
-    // Subset of columns to return
-    class ExpenseStatements {
+    // Subset of columns to return from loadMonthlyExpense, which is used in StatGraphFragment.
+    class ExpenseByMonth {
+        @ColumnInfo(name = "date_time")
+        public long dateTime;
 
+        @ColumnInfo(name = "total_expense")
+        public int totalExpense;
+    }
+
+
+    // Subset of columns to return from loaddExpenseByCategory, which is used in StatStmtsFragment
+    class ExpenseStatements {
         @ColumnInfo(name = "date_time")
         public long dateTime;
 
