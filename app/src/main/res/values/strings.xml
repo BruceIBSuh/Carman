@@ -77,10 +77,8 @@
     <string name="exp_label_odometer">운행거리</string>
     <string name="exp_menuitem_title_save">저장</string>
     <string name="exp_snackbar_favorite_limit">즐겨찾기는 10개까지 지정할 수 있습니다</string>
-
     <!--ExpenseActivity$ExpensPagerFragment-->
     <string name="toast_expense_no_data">최근 데이터가 없습니다</string>
-
     <!--ExpenseActivity$GasMangerFragment-->
     <string name="gas_toolbar_title">주유 및 세차 지출</string>
     <string name="gas_subtitle_expense">주유 지출</string>
@@ -110,7 +108,6 @@
     <string name="gas_snackbar_alert_remove_favorite">즐겨찾는 주유소에서 제외합니다</string>
     <string name="gas_snackbar_favorite_removed">즐겨찾는 주유소에서 제외되었습니다</string>
     <string name="gas_snackbar_action_confirm">확인</string>
-
     <!--ExpenseActivity$ServiceManagerFragment-->
     <string name="svc_toolbar_title">정비 점검 관리</string>
     <string name="svc_label_date">정비 일자</string>
@@ -172,7 +169,9 @@
     <string name="pref_summary_autoupdate">배터리 소모량이 다소 증가할 수 있습니다</string>
     <string name="pref_category_favorites">주유소/카센터 설정</string>
     <string name="pref_designated_provider">단골 주유소/카센터</string>
-    <string name="pref_no_favorite">지정 안함</string>
+    <string name="pref_label_station">주유소:</string>
+    <string name="pref_label_service">카센터:</string>
+    <string name="pref_no_favorite">미지정</string>
     <string name="pref_summary_designated_station">지정된 주유소의 가격 정보가 제공됩니다</string>
     <string name="pref_favorite_gas">즐겨찾는 주유소 목록</string>
     <string name="pref_favorite_svc">즐겨찾는 카센터 목록</string>

@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
@@ -60,6 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,6 +107,7 @@ public class GeneralFragment extends Fragment implements
     // UI's
     private View childView;
     private ViewPager priceViewPager;
+    private Spinner fuelSpinner;
     private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
@@ -118,6 +121,7 @@ public class GeneralFragment extends Fragment implements
     private boolean bExpenseSort;
     private boolean hasNearStations;//flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
+    private boolean isCreatedBySetting;
     private String latestItems;
 
     public GeneralFragment() {
@@ -127,7 +131,6 @@ public class GeneralFragment extends Fragment implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        log.i("onCreate() in GeneralFragment");
         super.onCreate(savedInstanceState);
         isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
 
@@ -137,14 +140,15 @@ public class GeneralFragment extends Fragment implements
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
         // Create ViewModels
-        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
-        stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
         locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -155,7 +159,7 @@ public class GeneralFragment extends Fragment implements
         childView = inflater.inflate(R.layout.fragment_general, container, false);
 
         //TextView tvDate = childView.findViewById(R.id.tv_today);
-        Spinner fuelSpinner = childView.findViewById(R.id.spinner_fuel);
+        fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvExpLabel = childView.findViewById(R.id.tv_label_exp);
         tvLatestExp = childView.findViewById(R.id.tv_exp_stmts);
         tvExpenseSort = childView.findViewById(R.id.tv_expenses_sort);
@@ -274,14 +278,6 @@ public class GeneralFragment extends Fragment implements
         // do not initiate the task to get new near stations to prevent frequent connection to
         // the server.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            // Manage to show the message in case that Location failed to fetch.
-            if(location == null) {
-                log.i("Location failed");
-                SpannableString msg = new SpannableString("Location failed to fetch");
-                stationRecyclerView.showTextView(msg);
-                return;
-            }
-
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
                 log.i("Location succeeded");
                 mPrevLocation = location;
@@ -602,9 +598,21 @@ public class GeneralFragment extends Fragment implements
         return null;
     }
 
-    public void resetPricePager() {
-        pricePagerAdapter.setFuelCode(defaultFuel);
-        priceViewPager.setAdapter(pricePagerAdapter);
+    public void resetGeneralFragment(String fuelCode, boolean isDistrictReset) {
+        String code = (fuelCode == null)?defaultFuel:fuelCode;
+        if(isDistrictReset) {
+            pricePagerAdapter.setFuelCode(code);
+            priceViewPager.setAdapter(pricePagerAdapter);
+        }
+
+        String[] fuel = getResources().getStringArray(R.array.spinner_fuel_code);
+        for(int i = 0; i < fuel.length; i++) {
+            if(fuelCode != null && fuel[i].matches(fuelCode)){
+                fuelSpinner.setSelection(i);
+                defaultFuel = fuelCode;
+                break;
+            }
+        }
     }
 
 }

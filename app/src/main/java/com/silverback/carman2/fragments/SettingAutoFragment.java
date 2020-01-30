@@ -1,15 +1,22 @@
 package com.silverback.carman2.fragments;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
+
+import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -23,6 +30,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     private static final int LONGEVITY = 20;
 
     // Objects
+    private SharedPreferences mSettings;
+    private FragmentSharedModel fragmentSharedModel;
     private ListPreference autoMaker, autoType, autoModel, autoYear;
     private List<String> yearList;
 
@@ -31,12 +40,15 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     public SettingAutoFragment() {}
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
 
+        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         yearList = new ArrayList<>();
 
         autoMaker = findPreference("pref_auto_maker");
@@ -54,11 +66,16 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     }
 
+    // To make the Up button working in Fragment, it is required to invoke sethasOptionsMenu(true)
+    // and the return value should be true in onOptionsItemSelected(). The values of each preference
+    // is translated to List<String>, then converted to JSONString for transferring the json string
+    // to SettingPerrenceFragment to invalidate the preference summary.
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        //getFragmentManager().popBackStack();
-        //getAutoDataList();
-        log.i("SettingAutoFragment menu: %s", item);
+        JSONArray autoData = new JSONArray(getAutoDataList());
+        mSettings.edit().putString(Constants.VEHICLE, autoData.toString()).apply();
+        fragmentSharedModel.getJsonAutoData().setValue(autoData.toString());
+
         return true;
 
     }
@@ -76,7 +93,6 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         dataList.add(autoModel.getSummary().toString());
         dataList.add(autoYear.getSummary().toString());
 
-        for(String str : dataList) log.i("Summaries: %s", str);
         return dataList;
 
     }

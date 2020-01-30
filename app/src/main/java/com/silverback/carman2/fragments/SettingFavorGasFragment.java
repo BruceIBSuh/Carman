@@ -161,9 +161,7 @@ public class SettingFavorGasFragment extends Fragment implements
 
             return true;
 
-        }
-
-        return false;
+        } else return false;
 
     }
 

@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
@@ -74,24 +75,24 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
 
         // The integer Sido code is not always the same as the position in the spinner in terms not
         // only of the spinner position starting with 0, which is different from the Sido code starting
-        // with "01", but also of the Sido code the number of which is not sequentially numbered from
-        // the city of Daegu on. The city is positioned at 11 in the spinner but the code is numbered
+        // with "01", but also of the Sido code, the number of which is not sequentially numbered from
+        // the city of Daegu on. This city is positioned at 11 in the spinner but the code is numbered
         // as 14.
         String districtCode = getArguments().getString("distCode");
         // Integer.valueOf("01") fortunately translates into 1^^.
         int sidoCode = Integer.valueOf(districtCode.substring(0, 2));
         mSidoItemPos = (sidoCode < 14) ? sidoCode - 1 : sidoCode - 3;
 
-        distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
-        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
+        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         sidoAdapter = ArrayAdapter.createFromResource(getContext(), R.array.sido_name, R.layout.spinner_district_entry);
         sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos, true);
-
         sigunAdapter = new DistrictSpinnerAdapter(getContext());
 
+        // A Sigun list is notified as DistcodeSpinnerTask completes via SpinnerDistrictModel.
         distModel.getSpinnerDataList().observe(this, sigunList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             // Add the Sigun dataset received from DistrictCodeTask by SpinnerDistrictMode.

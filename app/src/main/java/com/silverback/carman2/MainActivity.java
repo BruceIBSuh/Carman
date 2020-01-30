@@ -8,14 +8,12 @@ import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 
@@ -33,11 +31,14 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
-    private final int REQ_SETTING = 1;
+    private final int REQ_SETTING = 1000;
 
     // Objects
     private GeneralFragment generalFragment;
     //private ActionBarDrawerToggle drawerToggle;
+
+    // Fields
+    private boolean isCreatedBySetting;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -78,27 +79,30 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     // SettingPreferenceActivity. The toolbar title should be replace with the reset user name and
     // PriceViewPager should be updated with the reset district and price data retrieved and saved
     // in the storage.
+
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
 
         if(requestCode != REQ_SETTING || resultCode != RESULT_OK)  return;
 
-        boolean isDistReset = data.getBooleanExtra("resetDistrict", false);
-        String username = data.getStringExtra("resetName");
-        log.i("Setting result: %s, %s", isDistReset, username);
+        boolean isDistrictReset = intent.getBooleanExtra("isDistrictChanged", false);
+        String username = intent.getStringExtra("username");
+        String fuelCode = intent.getStringExtra("fuelCode");
+        log.i("Setting result: %s, %s, %s", isDistrictReset, username, fuelCode);
 
         // Reset the username in the toolbar if the name has been reset in SettingPreferenceActivity.
         if(username != null && getSupportActionBar() != null) getSupportActionBar().setTitle(username);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
-        if(generalFragment != null && isDistReset) {
+        if(generalFragment != null) {
             log.i("Reset requires the PriceViewPager refreshed");
-            generalFragment.resetPricePager();
+            generalFragment.resetGeneralFragment(fuelCode, isDistrictReset);
         }
 
     }
+
 
     /*
     @Override
@@ -142,13 +146,15 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 // SettingPreferenceActivity if the values have changed to onActivityResult().
                 Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
                 startActivityForResult(settingIntent, REQ_SETTING);
+                //startActivity(new Intent(this, SettingPreferenceActivity.class));
                 return true;
 
             default:
                 finish();
+                break;
         }
 
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     @Override

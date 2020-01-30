@@ -98,37 +98,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-
         priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name respectively.
-        /*
-        List<String> district = convJSONArrayToList();
-        if(district == null) distCode = "0101";
-        else distCode = district.get(2);
-         */
-
         JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
 
-        /*
-        Bundle args = new Bundle();
-        args.putStringArray("district", convJSONArrayToList().toArray(new String[3]));
-        //args.putString("distCode", convJSONArrayToList().get(2));
-        args.putString("name", autoName);
-        //args.putString(Constants.ODOMETER, mileage);
-
-         */
         settingFragment = new SettingPreferenceFragment();
         //settingFragment.setArguments(args);
 
         // Attach SettingPreferencFragment in the FrameLayout
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
-                .addToBackStack(null)
+                //.addToBackStack(null)
                 .commit();
     }
 
@@ -147,69 +132,37 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
     @Override
-    public void onBackPressed() {
-        log.i("NavUtils");
-        /*
-        Intent intent = new Intent();
-        intent.putExtra("setting_result", true);
-        NavUtils.navigateUpTo(this, intent);
-        finish();
-         */
-        log.i("Reset values: %s, %s", isDistrictReset, username);
-        Intent resultIntent = new Intent(this, MainActivity.class);
-        resultIntent.putExtra("resetDistrict", isDistrictReset);
-        resultIntent.putExtra("resetName", username);
-        setResult(Activity.RESULT_OK, resultIntent);
-        finish();
-    }
+    public void onBackPressed() {}
 
-    //
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
-        getSupportFragmentManager().popBackStack();
-
         if(fragment instanceof SettingPreferenceFragment) {
-            Intent resultIntent = new Intent(this, MainActivity.class);
-            resultIntent.putExtra("resetDistrict", isDistrictReset);
-            resultIntent.putExtra("resetName", username);
+            log.i("targetFragment is SettingPreferenceFragment");
+            /*
+            Intent mainIntent = new Intent(this, MainActivity.class);
+            mainIntent.putExtra("settingback", true);
+            startActivity(mainIntent);
+             */
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("isDistrictChanged", true);
+            resultIntent.putExtra("username", username);
             resultIntent.putExtra("fuelCode", fuelCode);
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
             return true;
 
-        } else return false;
-        /*
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
-        if(fragment instanceof SettingAutoFragment) {
-            log.i("SettingAutoFragment");
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.frame_setting, new SettingPreferenceFragment())
-                    .addToBackStack(null)
-                    .commit();
-
-            return true;
-
-        } else if(fragment instanceof SettingFavorGasFragment) {
-            return true;
-
-        } else if(item.getItemId() == android.R.id.home) {
-            Intent resultIntent = new Intent(this, MainActivity.class);
-            resultIntent.putExtra("resetDistrict", isDistrictReset);
-            resultIntent.putExtra("resetName", username);
-            setResult(Activity.RESULT_OK, resultIntent);
-            finish();
-            return true;
-
-        } else return super.onOptionsItemSelected(item);
-
-         */
+        } else {
+            log.i("return from independent fragments");
+            getSupportFragmentManager().popBackStack();
+            return false;
+        }
     }
 
     /*
      * Invoked when a Preference with an associated Fragment is tabbed. If you do not implement
      * onPreferenceStartFragment(), a fallback implementation is used instead.
-     *
      * While this works in most cases, it is strongly recommend to implement this method, thereby
      * you can fully configure transitions b/w Fragment objects and update the title in the toolbar,
      * if applicable.
@@ -217,8 +170,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-
-        log.i("Preference tabbed: %s", pref);
         final Bundle args = pref.getExtras();
         Fragment fragment = getSupportFragmentManager().getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
@@ -259,8 +210,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 log.i("Auto data changed:");
                 String jsonAutoData = mSettings.getString(Constants.VEHICLE, null);
 
-                // Auto data should be saved both in SharedPreferences and Firestore for the stat's
-                // sake.
+                // Auto data should be saved both in SharedPreferences and Firestore for a statistical
+                // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
                     Map<String, Object> autoData = new HashMap<>();
                     autoData.put("auto_data", jsonAutoData);
