@@ -25,7 +25,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
@@ -61,7 +60,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -278,6 +276,11 @@ public class GeneralFragment extends Fragment implements
         // do not initiate the task to get new near stations to prevent frequent connection to
         // the server.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
+            if(location == null) {
+                log.e("Location failed to fetch");
+                return;
+            }
+
             if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
                 log.i("Location succeeded");
                 mPrevLocation = location;
@@ -287,16 +290,21 @@ public class GeneralFragment extends Fragment implements
             }
         });
 
+        locationModel.getLocationException().observe(getViewLifecycleOwner(), exception -> {
+            SpannableString spannableString = new SpannableString("No locaiont feteched");
+            stationRecyclerView.showTextView(spannableString);
+        });
+
         // Receive station(s) within the radius. If no stations exist, post the message that
         // indicate why it failed to fetch stations. It would be caused by any network problem or
         // no stations actually exist within the radius.
-        stnListModel.getStationListLiveData().observe(getViewLifecycleOwner(), stnList -> {
+        stnListModel.getNearStationList().observe(getViewLifecycleOwner(), stnList -> {
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
                 mAdapter = new StationListAdapter(mStationList, this);
                 stationRecyclerView.showStationListRecyclerView();
                 stationRecyclerView.setAdapter(mAdapter);
-                hasNearStations = true;
+                hasNearStations = true;//To control the switch button
             } else {
                 // No near stations post an message that contains the clickable span to link to the
                 // SettingPreferenceActivity for resetting the searching radius.
@@ -354,6 +362,11 @@ public class GeneralFragment extends Fragment implements
             // Attach the viewpager adatepr with a fuel code selected by the spinner.
             pricePagerAdapter.setFuelCode(defaults[0]);
             priceViewPager.setAdapter(pricePagerAdapter);
+
+            // Retrieve near stations based on a newly selected fuel code if the spinner selection
+            // has changed. Temporarily make this not working for preventing excessive access to the
+            // server.
+            //stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
         }
     }
     @Override
@@ -533,10 +546,11 @@ public class GeneralFragment extends Fragment implements
 
         if(isNetworkConnected) {
             fabLocation.setVisibility(View.VISIBLE);
-            String radius = mSettings.getString(Constants.RADIUS, null);
+            //String radius = mSettings.getString(Constants.RADIUS, null);
+            String radius = defaults[1];
             String msg = getString(R.string.general_no_station_fetched);
 
-            // In case the radius is already set to the max(5000m), no need to change the value.
+            // In case the radius is already set to the maximum value(5000m), no need to change the value.
             if(radius != null && radius.matches("5000")) {
                 msg = msg.substring(0, msg.indexOf("\n"));
                 return new SpannableString(radius + msg);
@@ -598,20 +612,34 @@ public class GeneralFragment extends Fragment implements
         return null;
     }
 
-    public void resetGeneralFragment(String fuelCode, boolean isDistrictReset) {
-        String code = (fuelCode == null)?defaultFuel:fuelCode;
-        if(isDistrictReset) {
+    public void resetGeneralFragment(boolean isDistrict, String fuelCode, String radius) {
+
+        // If the default district has changed, which has initiated GasPriceTask to fetch price data
+        // in SettingPreferenceActivity,  newly set the apdater to the pager.
+        if(isDistrict) {
+            String code = (fuelCode == null)?defaultFuel:fuelCode;
             pricePagerAdapter.setFuelCode(code);
             priceViewPager.setAdapter(pricePagerAdapter);
         }
 
-        String[] fuel = getResources().getStringArray(R.array.spinner_fuel_code);
-        for(int i = 0; i < fuel.length; i++) {
-            if(fuelCode != null && fuel[i].matches(fuelCode)){
-                fuelSpinner.setSelection(i);
-                defaultFuel = fuelCode;
-                break;
+        // When the fuel code has changed, reset the spinner selection to a new position, which
+        // implements onItemSelected() to invalidate a new price data with the fuel code.
+        if(fuelCode != null) {
+            String[] fuel = getResources().getStringArray(R.array.spinner_fuel_code);
+            for (int i = 0; i < fuel.length; i++) {
+                if (fuel[i].matches(fuelCode)) {
+                    fuelSpinner.setSelection(i);
+                    defaults[0] = fuelCode;//reset a fuel code to the defaultParams
+                    break;
+                }
             }
+        }
+
+        // if the radius has changed, it is required to retrieve near stations with the radius
+        if(radius != null) {
+            log.i("Location and params : %s, %s, %s, %s", mPrevLocation, defaults[0], defaults[1], defaults[2]);
+            defaults[1] = radius; //reset a new radius to the defaultParams
+            stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
         }
     }
 

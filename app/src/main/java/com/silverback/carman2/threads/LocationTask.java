@@ -43,7 +43,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     @Override
     public void setDownloadThread(Thread thread) {
         setCurrentThread(thread);
-        //Log.i(TAG, "Location Thread: " + thread);
     }
 
     @Override
@@ -53,6 +52,12 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         viewModel.getLocation().setValue(mLocation);
     }
 
+    @Override
+    public void notifyLocationException(String msg) {
+        viewModel.getLocationException().setValue(msg);
+    }
+
+    /*
     @Override
     public void handleLocationTask(int state) {
 
@@ -69,4 +74,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
         sThreadManager.handleState(this, outstate);
     }
+
+     */
 }

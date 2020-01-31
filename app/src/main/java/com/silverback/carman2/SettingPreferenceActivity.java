@@ -72,6 +72,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private String distCode;
     private String username;
     private String fuelCode;
+    private String radius;
 
     // UIs
     private FrameLayout frameLayout;
@@ -137,27 +138,31 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        // Check which fragment the parent activity contains at first, then if the fragment is
+        // SettingPreferenceFragment, send back an intent holding preference changes to MainActivity
+        // when clicking the Up button. Otherwise, if the parent activity contains any fragment other
+        // than SettingPreferenceFragment, just pop this fragment off the back stack, which works
+        // like the Back command.
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
         if(fragment instanceof SettingPreferenceFragment) {
-            log.i("targetFragment is SettingPreferenceFragment");
-            /*
-            Intent mainIntent = new Intent(this, MainActivity.class);
-            mainIntent.putExtra("settingback", true);
-            startActivity(mainIntent);
-             */
             Intent resultIntent = new Intent();
-            resultIntent.putExtra("isDistrictChanged", true);
+            resultIntent.putExtra("isDistrictReset", isDistrictReset);
             resultIntent.putExtra("username", username);
             resultIntent.putExtra("fuelCode", fuelCode);
+            resultIntent.putExtra("radius", radius);
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
             return true;
 
         } else {
-            log.i("return from independent fragments");
-            getSupportFragmentManager().popBackStack();
-            return false;
+            //
+            if(item.getItemId() == android.R.id.home) {
+                getSupportFragmentManager().popBackStack();
+                return false;
+            }
         }
+
+        return false;
     }
 
     /*
@@ -222,11 +227,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
             case Constants.FUEL:
                 log.i("Fuel: %s", mSettings.getString(Constants.FUEL, null));
-                fuelCode = mSettings.getString(Constants.FUEL, null);
-                break;
-
-            case Constants.EDIT_IMAGE:
-                log.i("Edit image");
+                fuelCode = mSettings.getString(key, null);
                 break;
 
             case Constants.DISTRICT:
@@ -240,6 +241,17 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     isDistrictReset = true;
                 }
                 break;
+
+            case Constants.RADIUS:
+                log.i("Radius changed");
+                radius = mSettings.getString(key, null);
+                break;
+
+            case Constants.EDIT_IMAGE:
+                log.i("Edit image");
+                break;
+
+
         }
 
 

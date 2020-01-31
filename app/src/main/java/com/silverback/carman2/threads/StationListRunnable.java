@@ -88,7 +88,6 @@ public class StationListRunnable implements Runnable{
 
         try {
             if(Thread.interrupted()) throw new InterruptedException();
-
             final URL url = new URL(OPINET_AROUND);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Connection", "close");

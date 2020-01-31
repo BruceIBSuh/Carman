@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -98,7 +99,7 @@ public class SettingServiceItemFragment extends Fragment implements
         // ViewModel to share data b/w SettingServiceItemFragment and SettingSvcItemDlgFragment.
         // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
         // which are passed here using FragmentSharedModel as the type of List<String>
-        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         fragmentSharedModel.getJsonServiceItemObject().observe(this, jsonObject -> {
             // This is kind of an expedient code to invoke getItemCount() in which a new item is added
@@ -150,8 +151,6 @@ public class SettingServiceItemFragment extends Fragment implements
 
         recyclerView.setAdapter(mAdapter);
 
-
-
         return localView;
     }
 
@@ -174,12 +173,12 @@ public class SettingServiceItemFragment extends Fragment implements
         switch(item.getItemId()) {
             case android.R.id.home:
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+                //startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
                 return true;
 
-            case R.id.menu_add:
-                if(getFragmentManager() != null) dlgFragment.show(getFragmentManager(), null);
-                return true;
+            case R.id.menu_add_item:
+                if(getActivity() != null) dlgFragment.show(getActivity().getSupportFragmentManager(), null);
+                return false;
         }
 
         return false;

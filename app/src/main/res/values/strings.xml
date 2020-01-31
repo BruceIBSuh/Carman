@@ -230,6 +230,12 @@
     <string name="pref_username_msg_invalid">이미 사용중입니다</string>
     <string name="pref_username_msg_available">사용 가능합니다</string>
 
+    <!-- Threads -->
+    <string name="location_notify_gps">gps 활성화에 실패하였습니다. 잠시뒤에 다시 시도해 주세요</string>
+    <string name="location_notify_network">네트워크 연결에 실패하였습니다. 네트워크를 확인해 주세요</string>
+    <string name="location_null">현재 위치를 찾지 못했습니다. 잠시후에 다시 시도해 주세요</string>
+    <string name="location_exception_security">보안문제가 발생하였습니다</string>
+
     <!--DialogFragment-->
     <string name="msg_finish_app">카르맨을 종료하시겠습니까?</string>
     <string name="dialog_btn_confirm">확인</string>

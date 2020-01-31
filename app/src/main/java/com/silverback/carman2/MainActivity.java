@@ -20,15 +20,14 @@ import com.silverback.carman2.utils.Constants;
 import java.io.File;
 
 /*
- * This activity is a container holding GeneralFragment which handles the district gas prices and
+ * This activity is a container holding GeneralFragment which is composed of the district gas prices,
  * the latest gas and service expenditure, and near stations located in the default radius.
  * Additional fragment should be added to the activity at a later time to show a variety of contents
  * ahead of displaying GeneralFragment. Alternatively, the recyclerview positioned at the bottom for
- * showing near stations should be replaced with a view to display auto-related contents, making a
- * button to call DialogFragment or activity to display the near stations.
+ * near stations should be replaced with a view to display other auto-related contents, creating a
+ * button to call the near station fragment.
  */
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
-
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
     private final int REQ_SETTING = 1000;
@@ -37,8 +36,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private GeneralFragment generalFragment;
     //private ActionBarDrawerToggle drawerToggle;
 
-    // Fields
-    private boolean isCreatedBySetting;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -86,10 +83,11 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
         if(requestCode != REQ_SETTING || resultCode != RESULT_OK)  return;
 
-        boolean isDistrictReset = intent.getBooleanExtra("isDistrictChanged", false);
+        boolean isDistrictReset = intent.getBooleanExtra("isDistrictReset", false);
         String username = intent.getStringExtra("username");
         String fuelCode = intent.getStringExtra("fuelCode");
-        log.i("Setting result: %s, %s, %s", isDistrictReset, username, fuelCode);
+        String radius = intent.getStringExtra("radius");
+        log.i("Setting result: %s, %s, %s, %s", isDistrictReset, radius, username, fuelCode);
 
         // Reset the username in the toolbar if the name has been reset in SettingPreferenceActivity.
         if(username != null && getSupportActionBar() != null) getSupportActionBar().setTitle(username);
@@ -98,7 +96,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
         if(generalFragment != null) {
             log.i("Reset requires the PriceViewPager refreshed");
-            generalFragment.resetGeneralFragment(fuelCode, isDistrictReset);
+            generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
         }
 
     }
@@ -146,7 +144,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 // SettingPreferenceActivity if the values have changed to onActivityResult().
                 Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
                 startActivityForResult(settingIntent, REQ_SETTING);
-                //startActivity(new Intent(this, SettingPreferenceActivity.class));
                 return true;
 
             default:

@@ -79,7 +79,7 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
         mStationList = list;
-        viewModel.getStationListLiveData().postValue(mStationList);
+        viewModel.getNearStationList().postValue(mStationList);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
         //postValue() used in worker thread. In UI thread, use setInputValue().
-        viewModel.getCurrentStationLiveData().postValue(station);
+        viewModel.getCurrentStation().postValue(station);
     }
 
     @Override
@@ -158,12 +158,12 @@ public class StationListTask extends ThreadTask implements
                 break;
 
             case DOWNLOAD_NEAR_STATIONS_FAIL:
-                viewModel.getStationListLiveData().postValue(mStationList);
+                viewModel.getNearStationList().postValue(mStationList);
                 outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
                 break;
 
             case DOWNLOAD_CURRENT_STATION_FAIL:
-                viewModel.getCurrentStationLiveData().postValue(null);
+                viewModel.getCurrentStation().postValue(null);
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
 

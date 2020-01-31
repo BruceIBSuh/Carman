@@ -18,6 +18,7 @@ public class LocationViewModel extends ViewModel {
     private MutableLiveData<Location> location;
     private MutableLiveData<String> address;
     private MutableLiveData<Location> geocoderLocation;
+    private MutableLiveData<String> locationException;
 
     public MutableLiveData<Location> getLocation() {
         if(location == null) {
@@ -25,6 +26,11 @@ public class LocationViewModel extends ViewModel {
         }
 
         return location;
+    }
+
+    public MutableLiveData<String> getLocationException() {
+        if(locationException == null) locationException = new MutableLiveData<>();
+        return locationException;
     }
 
     public MutableLiveData<String> getAddress() {

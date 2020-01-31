@@ -3,6 +3,7 @@ package com.silverback.carman2.viewholders;
 import android.content.Context;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.silverback.carman2.BaseActivity;
@@ -34,7 +35,6 @@ public class StationListHolder extends RecyclerView.ViewHolder {
         df = BaseActivity.getDecimalFormatInstance();
     }
 
-
     // Constructor
     public StationListHolder(CardView cardView) {
         super(cardView);
@@ -61,10 +61,10 @@ public class StationListHolder extends RecyclerView.ViewHolder {
                 context.getString(R.string.general_carwash_yes):
                 context.getString(R.string.general_carwash_no);
         tvWashValue.setText(strCarwash);
+
     }
 
     private static int getGasStationImage(String name) {
-
         int resId = -1;
         switch(name) {
             case "SKE": resId = R.drawable.logo_sk; break;

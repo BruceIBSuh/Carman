@@ -4,7 +4,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -38,6 +40,10 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     private DecimalFormat df;
     private List<Opinet.GasStnParcelable> stationList;
     private OnRecyclerItemClickListener mListener;
+    private ProgressBar progbar;
+
+    // Fields
+    private boolean isCarWashReady;
 
 
     // Interface
@@ -60,9 +66,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         this.context = parent.getContext();
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_gas_stations, parent, false);
+        progbar = cardView.findViewById(R.id.progbar_carwash);
 
         return new StationListHolder(cardView);
-
     }
 
     @Override
@@ -81,15 +87,24 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
+        isCarWashReady = true;
+
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
+            log.i("payloads empty");
 
         }else{
+            log.i("Carwash: %s", payloads.size());
+            // On receiving car wash values, set the progressbar to be View.GONE and set the message
+            // to the textview.
             for(Object obj : payloads) {
                 String msg = ((boolean)obj)?context.getString(R.string.general_carwash_yes):context.getString(R.string.general_carwash_no);
                 holder.tvWashValue.setText(msg);
             }
         }
+
+        progbar.setVisibility(View.GONE);
+
     }
 
     @Override
@@ -130,8 +145,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
         return null;
     }
-
-
 
     // Class for sorting the list by ascending price or descending distance, implementing Comparator<T>
     private class PriceAscCompare implements Comparator<Opinet.GasStnParcelable> {

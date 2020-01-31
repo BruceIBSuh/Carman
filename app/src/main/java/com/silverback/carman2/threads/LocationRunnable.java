@@ -16,6 +16,7 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.CarmanLocationHelper;
@@ -29,8 +30,8 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
 
     // Constants
     private static final int REQUEST_CHECK_LOCATION_SETTINGS = 1000;
-    static final int CURRENT_LOCATION_COMPLETE = 100;
-    static final int CURRENT_LOCATION_FAIL = -100;
+    //static final int CURRENT_LOCATION_COMPLETE = 100;
+    //static final int CURRENT_LOCATION_FAIL = -100;
 
     // Objects and Fields
     private Context context;
@@ -38,6 +39,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     private LocationMethods task;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest; //store the Location setting params
+    private Location currentLocation;
 
     static {
         mLocationHelper = CarmanLocationHelper.getLocationInstance();
@@ -47,7 +49,8 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     public interface LocationMethods {
         void setDownloadThread(Thread thread);
         void setCurrentLocation(Location location);
-        void handleLocationTask(int state);
+        void notifyLocationException(String msg);
+        //void handleLocationTask(int state);
     }
 
     // Constructor
@@ -71,13 +74,21 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 .addOnFailureListener(this);
     }
 
+    // Check if the Location setting is successful using CarmanLocationHelper
     @Override
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
         log.i("LocationCallback invoked");
 
         LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
-        if(locationStates.isGpsUsable()) log.i("GPS is working");
-        if(locationStates.isNetworkLocationUsable()) log.i("Network location is working");
+        if(!locationStates.isGpsUsable()) {
+            log.i("GPS is not working");
+            task.notifyLocationException(context.getString(R.string.location_notify_gps));
+        }
+
+        if(!locationStates.isNetworkLocationUsable()) {
+            log.i("Network location is not working");
+            task.notifyLocationException(context.getString(R.string.location_notify_network));
+        }
 
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
@@ -90,14 +101,18 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 if(location != null) {
                     log.e("Current Location: %s", location);
                     task.setCurrentLocation(location);
-                    task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
+                    //currentLocation = location;
+                    //task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
                 } else {
-                    task.handleLocationTask(CURRENT_LOCATION_FAIL);
+                    log.i("Failed to fetch location");
+                    task.notifyLocationException(context.getString(R.string.location_null));
+                    //task.handleLocationTask(CURRENT_LOCATION_FAIL);
                 }
             });
 
         } catch (SecurityException e) {
             log.e("Location_SecurityException: %s", e.getMessage());
+            task.notifyLocationException(context.getString(R.string.location_exception_security));
 
         } finally {
             log.e("Location finished");

@@ -72,12 +72,14 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     // to SettingPerrenceFragment to invalidate the preference summary.
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        JSONArray autoData = new JSONArray(getAutoDataList());
-        mSettings.edit().putString(Constants.VEHICLE, autoData.toString()).apply();
-        fragmentSharedModel.getJsonAutoData().setValue(autoData.toString());
+        if(item.getItemId() == android.R.id.home) {
+            JSONArray autoData = new JSONArray(getAutoDataList());
+            mSettings.edit().putString(Constants.VEHICLE, autoData.toString()).apply();
+            fragmentSharedModel.getJsonAutoData().setValue(autoData.toString());
+            return true;
+        }
 
-        return true;
-
+        return false;
     }
 
     private void createYearEntries() {

@@ -24,7 +24,7 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<SparseBooleanArray> hasCarWash;
 
     // Get a station list stationos of which are located within a given radius conditions.
-    public MutableLiveData<List<Opinet.GasStnParcelable>> getStationListLiveData() {
+    public MutableLiveData<List<Opinet.GasStnParcelable>> getNearStationList() {
         if(stnList == null) {
             stnList = new MutableLiveData<>();
         }
@@ -33,7 +33,7 @@ public class StationListViewModel extends ViewModel {
     }
 
     // Get a current station which is located within MIN_RADIUS
-    public MutableLiveData<Opinet.GasStnParcelable> getCurrentStationLiveData() {
+    public MutableLiveData<Opinet.GasStnParcelable> getCurrentStation() {
         if(currentStation == null) {
             currentStation = new MutableLiveData<>();
         }

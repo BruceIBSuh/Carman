@@ -21,7 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
@@ -34,7 +33,6 @@ import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.ExpenseBaseEntity;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -51,13 +49,11 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
-import java.io.File;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -316,7 +312,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Check if a fetched current station has registered with Favorite right after StationListModel
         // is notified to retrieve a current station. Then, get StationInfoTask started to get
         // its address, completion of which is notified by the same ViewModel.
-        stnListModel.getCurrentStationLiveData().observe(getViewLifecycleOwner(), curStn -> {
+        stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
             if(curStn != null) {
                 stnName = curStn.getStnName();
                 stnId = curStn.getStnId();

@@ -42,7 +42,7 @@ public class ThreadManager {
     static final int DOWNLOAD_IMAGE_FINISH = 201;
 
     //static final int SERVICE_ITEM_LIST_COMPLETED = 109;
-    static final int FETCH_LOCATION_COMPLETED = 110;
+    //static final int FETCH_LOCATION_COMPLETED = 110;
     //static final int FETCH_ADDRESS_COMPLETED = 111;
     //static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
     //static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
@@ -68,7 +68,7 @@ public class ThreadManager {
     static final int DOWNLOAD_STATION_INFO_FAILED = -5;
     //static final int FETCH_ADDRESS_FAILED = -6;
     //static final int DOWNLOAD_DISTCODE_FAILED = -7;
-    static final int FETCH_LOCATION_FAILED = -8;
+    //static final int FETCH_LOCATION_FAILED = -8;
     //static final int SERVICE_ITEM_LIST_FAILED = -9;
 
     // Determine the threadpool parameters.
