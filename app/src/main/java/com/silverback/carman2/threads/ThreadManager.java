@@ -276,20 +276,21 @@ public class ThreadManager {
         return gasPriceTask;
     }
 
-    // Retrieve the price of a favorite station or service.
-    // boolean isFirst indicates that when it is set to true, it is the first favorite which shows
-    // the price info in the main activity as the data is saved in the cache directory.
-    // Otherwise, it just fetches the price of a favorite when selected out the list.
+    // Retrieve the price of a favorite gas station. The boolean isFirst indicates that when it is
+    // set to true, the gas station is the first placeholder in the favorite list, the price of which
+    // is shown in GeneralFragment of MainActivity. The firstholder gas pirce is saved as the internal
+    // storage and by comparing the saved price and the current price, price difference will be
+    // calculated. Otherwise, it just fetches the price of a favorite when selected out the list.
     public static FavoritePriceTask startFavoritePriceTask(
             Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
 
-        FavoritePriceTask stnPriceTask = sInstance.mFavoritePriceTaskQueue.poll();
-        if(stnPriceTask == null) stnPriceTask = new FavoritePriceTask(context);
+        FavoritePriceTask favPriceTask = sInstance.mFavoritePriceTaskQueue.poll();
+        if(favPriceTask == null) favPriceTask = new FavoritePriceTask(context);
 
-        stnPriceTask.initTask(model, stnId, isFirst);
-        sInstance.mDownloadThreadPool.execute(stnPriceTask.getPriceRunnableStation());
+        favPriceTask.initTask(model, stnId, isFirst);
+        sInstance.mDownloadThreadPool.execute(favPriceTask.getPriceRunnableStation());
 
-        return stnPriceTask;
+        return favPriceTask;
     }
 
 

@@ -102,17 +102,6 @@
             cardview:layout_constraintHorizontal_bias="0.5"
             cardview:layout_constraintStart_toEndOf="@+id/tv_value_distance" />
 
-
-        <ProgressBar
-            android:id="@+id/progbar_carwash"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_carwash"
-            cardview:layout_constraintEnd_toEndOf="parent"
-            cardview:layout_constraintHorizontal_bias="0.5"
-            cardview:layout_constraintStart_toEndOf="@+id/tv_label_carwash"
-            cardview:layout_constraintTop_toTopOf="@+id/tv_label_carwash" />
-
         <TextView
             android:id="@+id/tv_value_carwash"
             android:layout_width="wrap_content"

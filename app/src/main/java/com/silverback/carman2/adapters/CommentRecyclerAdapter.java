@@ -2,6 +2,7 @@ package com.silverback.carman2.adapters;
 
 import android.content.Context;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -58,7 +59,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
         firestore.collection("users").document(userId).get().addOnSuccessListener(snapshot -> {
             if(snapshot != null && snapshot.exists()) {
                 String strUserPic = snapshot.getString("user_pic");
-                if (!strUserPic.isEmpty()) holder.bindImage(Uri.parse(strUserPic));
+                if (!TextUtils.isEmpty(strUserPic)) holder.bindImage(Uri.parse(strUserPic));
             }
         }).addOnFailureListener(e -> {});
 
@@ -86,7 +87,6 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
 
     @Override
     public int getItemCount() {
-        log.i("snapshotlist: %s", snapshotList.size());
         return snapshotList.size();
     }
 

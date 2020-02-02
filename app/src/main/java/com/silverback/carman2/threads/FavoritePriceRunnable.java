@@ -57,24 +57,21 @@ public class FavoritePriceRunnable implements Runnable {
 
     @Override
     public void run() {
-
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mCallback.setStnPriceThread(Thread.currentThread());
-
         stationId = mCallback.getStationId();
-        URL url;
+
         InputStream in = null;
         HttpURLConnection conn = null;
-        final File file = new File(mContext.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        //final File file = new File(mContext.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        final File file = new File(mContext.getFilesDir(), Constants.FILE_FAVORITE_PRICE);
 
         try {
-            url = new URL(URLStn + stationId);
+            if(Thread.interrupted()) throw new InterruptedException();
+
+            URL url = new URL(URLStn + stationId);
             conn = (HttpURLConnection) url.openConnection();
             in = conn.getInputStream();
-
-            if(Thread.interrupted()) {
-                throw new InterruptedException();
-            }
 
             Opinet.StationPrice stnPriceData = xmlHandler.parseStationPrice(in);
             if(stnPriceData != null) {
@@ -85,7 +82,7 @@ public class FavoritePriceRunnable implements Runnable {
                     //if(!file.exists()) savePriceInfo(stnPriceData);
                     //else saveDifferedPrice(file, stnPriceData);
 
-                // a provider selected in FavoriteListFragment, the price of which isn't saved.
+                // A favorite station selected in FavoriteListFragment, the price of which isn't saved.
                 } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());
 
             }
@@ -121,58 +118,4 @@ public class FavoritePriceRunnable implements Runnable {
             log.e("SavePriceInfo IOException: %s", e.getMessage());
         }
     }
-
-
-    // Retrieve the station price previously saved in the internal storage, then compare it
-    // with the current price to calculate the price difference, which is passed to Opinet.StationPrice
-    // and save the object in the internal storage
-    private synchronized void saveDifferedPrice(final File stnFile, Opinet.StationPrice stationPrice) {
-        Uri stnUri = Uri.fromFile(stnFile);
-        try(InputStream is = mContext.getContentResolver().openInputStream(stnUri);
-            ObjectInputStream ois = new ObjectInputStream(is)) {
-
-            Opinet.StationPrice savedPrice = (Opinet.StationPrice)ois.readObject();
-            log.i("Compare Station ids: %s, %s", savedPrice.getStnId(), stationId);
-
-            if(savedPrice.getStnId().matches(stationId)) {
-                Map<String, Float> current = stationPrice.getStnPrice();
-                Map<String, Float> prev = savedPrice.getStnPrice();
-                Map<String, Float> differedPrice = new HashMap<>();
-
-                for (String key : current.keySet()) {
-                    Float currentValue = current.get(key);
-                    Float prevValue = prev.get(key);
-
-                    log.i("price compared: %s, %s", currentValue, prevValue);
-
-                    // Handle the null condition of both prices.
-                    if(currentValue == null) throw new NullPointerException();
-                    if(prevValue == null) throw new NullPointerException();
-
-                    // Get the price difference of both prices.
-                    differedPrice.put(key, currentValue - prevValue);
-                }
-
-                // Set the price differrence as params to Opinet.StationPrice setPriceDiff() and save
-                // in the cached directory.
-                stationPrice.setPriceDiff(differedPrice);
-            }
-
-            savePriceInfo(stnFile, stationPrice);
-
-
-        } catch(FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e);
-        } catch(IOException e) {
-            log.e("IOException: %s", e);
-        } catch(ClassNotFoundException e) {
-            log.e("ClassNotFoundException: %s", e);
-        } catch(NullPointerException e) {
-            log.e("NullPointerException: %s", e);
-        }
-
-    }
-
-
-
 }

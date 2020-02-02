@@ -72,6 +72,7 @@ public class DistrictCodeRunnable implements Runnable {
             try {
                 if (Thread.interrupted()) throw new InterruptedException();
                 final URL url = new URL(OPINET_AREA + sidoCode);
+
                 conn = (HttpURLConnection)url.openConnection();
                 conn.setRequestProperty("Connection", "close");
                 conn.setConnectTimeout(5000);
@@ -91,63 +92,26 @@ public class DistrictCodeRunnable implements Runnable {
                     e.printStackTrace();
                 }
                 if(conn != null) conn.disconnect();
+
+                // Save the list of Opinet.DistrictCode in the internal file storage
+                if(distCodeList != null) {
+                    boolean isSaved = saveDistCode(distCodeList);
+                    if(isSaved) mTask.hasDistCodeSaved(true);
+                    else mTask.hasDistCodeSaved(false);
+                }
             }
 
+
+
+            /*
             if(saveDistCode(distCodeList)){
                 log.d("Sigun Numbers: %d", distCodeList.size());
                 for(Opinet.DistrictCode sigunCode : distCodeList)
                     log.i("Dist Code : %s, %s", sigunCode.getDistrictCode(), sigunCode.getDistrictName());
                 mTask.hasDistCodeSaved(true);
-
             } else mTask.hasDistCodeSaved(false);
+             */
         }
-
-        /*
-        try {
-            // Get all siguncodes at a time with all sido codes given
-            for(String code : sido) {
-                if(Thread.interrupted()) throw new InterruptedException();
-
-                final URL url = new URL(OPINET_AREA.concat(code));
-                conn = (HttpURLConnection)url.openConnection();
-                //conn.setRequestMethod("GET");
-                //conn.setRequestProperty("Content-type", "text/xml");
-                //conn.setDoOutput(true);
-                //conn.setDoInput(true);
-                conn.setRequestProperty("Connection", "close");
-                conn.setConnectTimeout(5000);
-                conn.setReadTimeout(5000);
-                conn.connect();
-                bis = new BufferedInputStream(conn.getInputStream());
-                //bis = new BufferedInputStream(url.openStream());
-                distCodeList = xmlHandler.parseDistrictCode(bis);
-
-            }
-
-            if(saveDistCode(distCodeList)){
-                log.d("Sigun Numbers: %d", distCodeList.size());
-                for(Opinet.DistrictCode sigunCode : distCodeList)
-                    log.i("Dist Code : %s, %s", sigunCode.getDistrictCode(), sigunCode.getDistrictName());
-                mTask.hasDistCodeSaved(true);
-                //mTask.handleDistCodeTask(DOWNLOAD_DISTCODE_SUCCEED);
-
-            } else mTask.hasDistCodeSaved(false);
-
-        } catch (IOException e) {
-            log.e("InputStream failed: " + e);
-        } catch (InterruptedException e) {
-            log.e("Thread Interrupted: " + e);
-        } finally {
-            try {
-                if (bis != null) bis.close();
-            } catch(IOException e) {
-                e.printStackTrace();
-            }
-
-            if(conn != null) conn.disconnect();
-        }
-         */
-
     }
 
     private boolean saveDistCode(List<Opinet.DistrictCode> list) {

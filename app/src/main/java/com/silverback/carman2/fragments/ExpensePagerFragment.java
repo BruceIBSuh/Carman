@@ -1,28 +1,23 @@
 package com.silverback.carman2.fragments;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.GasManagerDao;
-import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.database.ServiceManagerDao;
-import com.silverback.carman2.database.ServiceManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.utils.Constants;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.ViewModelProviders;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -74,10 +69,9 @@ public class ExpensePagerFragment extends Fragment {
 
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-
         // Create ViewModel to get data of which fragment is attached in the tab-linked ViewPager
         // from the viewpager-containing fragments.
-        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
     }
 
     @Override
@@ -89,9 +83,16 @@ public class ExpensePagerFragment extends Fragment {
         tvLastInfo = localView.findViewById(R.id.tv_lastInfo);
         tvPage = localView.findViewById(R.id.tv_page);
 
+
+        return localView;
+    }
+
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
         fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
+            log.i("current fragment: %s", fragment);
             currentFragment = fragment;
             if(getArguments() != null) numPage = getArguments().getInt("page");
 
@@ -105,7 +106,7 @@ public class ExpensePagerFragment extends Fragment {
                     log.i("Last Info: %s", lastInfo);
                 });
 
-            }else if(currentFragment instanceof ServiceManagerFragment) {
+            } else if(currentFragment instanceof ServiceManagerFragment) {
                 mDB.serviceManagerModel().loadRecentServiceData().observe(this, data -> {
                     serviceList = data;
                     lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
@@ -116,7 +117,6 @@ public class ExpensePagerFragment extends Fragment {
             }
         });
 
-        return localView;
     }
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments

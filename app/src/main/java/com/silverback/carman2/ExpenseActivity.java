@@ -1,26 +1,26 @@
 package com.silverback.carman2;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.ExpRecentPagerAdapter;
 import com.silverback.carman2.adapters.ExpTabPagerAdapter;
-import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.GasManagerFragment;
 import com.silverback.carman2.fragments.ServiceManagerFragment;
 import com.silverback.carman2.fragments.StatGraphFragment;
@@ -29,13 +29,17 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.PagerAdapterViewModel;
-import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.TabPagerTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.ExpenseViewPager;
 
+/**
+ * This activity is composed of the tab viewpager to show the recent expenditures at the top, and the
+ * the framelayout to contain the fragments to lay out the form to fill in the gas and service exepnse
+ * at the bottom. As to StatStmtFragment, a graph is displayed in the viewpager and statments are
+ * enlisted in the recyclerview, both of which are related each other.
+ */
 public class ExpenseActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
@@ -81,7 +85,8 @@ public class ExpenseActivity extends BaseActivity implements
 
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action
-        if(getIntent() != null && getIntent().getAction() != null) {
+        // If the activity is initiated by clicking notification that
+        if(getIntent().getAction() != null) {
             String action = getIntent().getAction();
             log.i("Intent Action: %s", action);
             if(action.equals(Constants.NOTI_GEOFENCE)) {
@@ -89,6 +94,12 @@ public class ExpenseActivity extends BaseActivity implements
                 isGeofencing = true;
             }
         }
+
+        // Define ViewModels. ViewModelProviders.of(this) is deprecated. Instead, use ViewModelProvider
+        // (requrieActivity()).  ViewModelProviders.of(this) is deprecated as well.
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        fragmentSharedModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
+        pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
 
         appBar = findViewById(R.id.appBar);
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -104,25 +115,15 @@ public class ExpenseActivity extends BaseActivity implements
         tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
-        // Define ViewModels. ViewModelProviders.of(this) is deprecated. Instead, use ViewModelProvider
-        // (requrieActivity())
-        /*
-        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
-        fragmentSharedModel = ViewModelProviders.of(this).get(FragmentSharedModel.class);
-        pagerModel = ViewModelProviders.of(this).get(PagerAdapterViewModel.class);
-        */
-        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        fragmentSharedModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
-        pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
-
-
+        expTabLayout.setupWithViewPager(tabPager);
 
         // Fetch the values from SharedPreferences
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
+
         // Start the thread to create ExpTabpagerAdapter and pass arguments to GasManagerFragment
         // and ServiceManagerFragment respectively and, at the same time, convert JSONServiceItems
-        // to JSONArray in advance for the recyclerview in ServiceManager
+        // to JSONArray in advance for the recyclerview in ServiceManagerj
         tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
 
@@ -143,27 +144,12 @@ public class ExpenseActivity extends BaseActivity implements
             expTabLayout.setupWithViewPager(tabPager);
 
             addTabIconAndTitle(this, expTabLayout);
-            animSlideTabLayout();
+            animSlideTabLayout(this);
 
             // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
             // attach it in the top FrameLayout.
-            expensePager.setAdapter(recentPagerAdapter);
-            expensePager.setCurrentItem(0);
-            if(isGeofencing) topFrame.removeAllViews();
-            topFrame.addView(expensePager);
-
             locationTask = ThreadManager.fetchLocationTask(this, locationModel);
         });
-
-
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-        // Get the current location, which is passed back to GasManagerFragment via LocationViewModel
-        // The task has been suspended by the completion of UIs for lessening the initial loading.
-        //locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override
@@ -171,8 +157,6 @@ public class ExpenseActivity extends BaseActivity implements
         super.onPause();
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
-        // Destroy the static CarmanDatabase instance.
-        CarmanDatabase.destroyInstance();
     }
 
     @Override
@@ -189,16 +173,13 @@ public class ExpenseActivity extends BaseActivity implements
     // in SQLite
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        
         switch(item.getItemId()) {
-
             case android.R.id.home:
                 finish();
                 return true;
 
             case MENU_ITEM_ID:
                 Fragment fragment = tabPagerAdapter.getItem(currentPage);
-                log.i("Current Page: %s, %s", currentPage, fragment);
                 boolean isSaved = false;
 
                 if(fragment instanceof GasManagerFragment) {
@@ -211,11 +192,7 @@ public class ExpenseActivity extends BaseActivity implements
                 if(isSaved) {
                     finish();
                     return true;
-
-                } else {
-                    Toast.makeText(this, "Failed to save the data", Toast.LENGTH_SHORT).show();
-                    return false;
-                }
+                } else return false;
         }
 
         return super.onOptionsItemSelected(item);
@@ -292,19 +269,36 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
-    private void animSlideTabLayout() {
+    private void animSlideTabLayout(Context context) {
 
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
+        AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", tabEndValue);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(1000);
+        /*
         slideTab.start();
         slideViewPager.start();
+        */
+        animSet.play(slideTab).before(slideViewPager);
+        animSet.addListener(new AnimatorListenerAdapter(){
+            public void onAnimationEnd(Animator animator) {
+                expensePager.setAdapter(recentPagerAdapter);
+                expensePager.setCurrentItem(0);
+                if(isGeofencing) topFrame.removeAllViews();
+                topFrame.addView(expensePager);
 
-        isTabVisible = !isTabVisible;
+                //locationTask = ThreadManager.fetchLocationTask(context, locationModel);
+                isTabVisible = !isTabVisible;
+            }
+        });
+
+        animSet.start();
+
+
 
     }
 

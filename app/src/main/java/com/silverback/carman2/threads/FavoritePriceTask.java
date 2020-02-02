@@ -22,7 +22,7 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     void initTask(OpinetViewModel model, String stnId, boolean isFirst) {
         viewModel = model;
         this.stnId = stnId;
-        this.isFirst = isFirst;
+        this.isFirst = isFirst;//check whether it is the firstholder or a station in the list.
     }
 
     Runnable getPriceRunnableStation() {
@@ -44,7 +44,8 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
         setCurrentThread(thread);
     }
 
-
+    // OpinetViewModel LiveData having price data of a favroite gas station in the favorite list
+    // which pops up by clicking the fav button in GasManagerFragment
     @Override
     public void setFavoritePrice(Map<String, Float> data) {
         viewModel.getFavoritePriceData().postValue(data);

@@ -24,7 +24,6 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
-
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
     private MutableLiveData<String> favoriteStnId;

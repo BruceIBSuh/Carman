@@ -551,7 +551,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         basicEntity.dateTime = milliseconds;
         basicEntity.mileage = mileage;
-        basicEntity.category = 2;
+        basicEntity.category = Constants.SVC;
         basicEntity.totalExpense = totalExpense;
 
         serviceEntity.serviceCenter = etServiceName.getText().toString();

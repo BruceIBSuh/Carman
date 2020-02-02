@@ -95,14 +95,12 @@ public class GasPriceRunnable implements Runnable {
         try {
             switch(category) {
                 case AVG: // Average oil price
-                    log.i("AvgPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
+                    if(Thread.interrupted()) throw new InterruptedException();
+
                     url = new URL(URLavg);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
-
-                    if(Thread.interrupted()) throw new InterruptedException();
-
                     List<Opinet.OilPrice> avgList = xmlHandler.parseOilPrice(in);
                     if(!avgList.isEmpty()) {
                         log.i("average price fetched");
@@ -116,15 +114,12 @@ public class GasPriceRunnable implements Runnable {
                     break;
 
                 case SIDO: // Sido price
-                    log.i("SidoPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
-                    log.i("Sido Code: %s", sidoCode);
+                    if(Thread.interrupted()) throw new InterruptedException();
+
                     url = new URL(URLsido + sidoCode);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
-
-                    if(Thread.interrupted()) throw new InterruptedException();
-
                     List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(in);
                     if(!sidoList.isEmpty()) {
                         log.i("Sido price fetched: %s", sidoList.get(0));
@@ -135,14 +130,12 @@ public class GasPriceRunnable implements Runnable {
                     break;
 
                 case SIGUN: // Sigun price
-                    log.i("sigunPrice thread: %s", Thread.currentThread());
                     task.setPriceDownloadThread(Thread.currentThread());
+                    if(Thread.interrupted()) throw new InterruptedException();
+
                     url = new URL(URLsigun + sidoCode + SigunCode + sigunCode);
                     conn = (HttpURLConnection)url.openConnection();
                     in = conn.getInputStream();
-
-                    if(Thread.interrupted()) throw new InterruptedException();
-
                     List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(in);
                     if(!sigunList.isEmpty()) {
                         log.i("sigun price list fetched");
@@ -154,14 +147,12 @@ public class GasPriceRunnable implements Runnable {
 
                 case STATION:
                     if(stnId != null) {
-                        log.i("Station price thread:%s", Thread.currentThread());
                         task.setPriceDownloadThread(Thread.currentThread());
+                        if (Thread.interrupted()) throw new InterruptedException();
+
                         url = new URL(URLStn + stnId);
                         conn = (HttpURLConnection) url.openConnection();
                         in = conn.getInputStream();
-
-                        if (Thread.interrupted()) throw new InterruptedException();
-
                         Opinet.StationPrice stationPrice = xmlHandler.parseStationPrice(in);
                         if (stationPrice != null) {
                             // Save the object in the cache with the price difference if the favorite
@@ -205,7 +196,8 @@ public class GasPriceRunnable implements Runnable {
         }
     }
 
-    // Save price data
+    // Save price data of the district(Avg, Sido, Sigun data) in the cache directory which will be
+    // deleted when leaving the app.
     private synchronized void savePriceInfo(Object obj, String fName) {
 
         File file = new File(context.getCacheDir(), fName);
@@ -219,19 +211,21 @@ public class GasPriceRunnable implements Runnable {
         }
     }
 
-
-    // As with the first-set favorite station, compare the current station id with the id previous
-    // id from saved in the internal cache storage to check whether it has unchanged.
-    // If it is unchanged, calculate the price difference b/w the current and the previously saved
-    // station and pass it to setPriceDiff() in Opinet.StationPrice, then save the object.
-    // Otherwise, just save the object the same as the other prices.
+    // As with the first-placeholder favorite station, compare the current station id with the id
+    // from saved in the internal file storage to check whether it has unchanged.
+    // If it is unchanged, calculate the difference b/w the current and the previously saved price
+    // and pass it to setPriceDiff() in Opinet.StationPrice, then save the object. Otherwise, just
+    // save the object the same as the other prices.
     private void saveStationPriceDiff(Opinet.StationPrice stnPrice) {
 
-        File stnFile = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        //File stnFile = new File(context.getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        File stnFile = new File(context.getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
 
         try(InputStream is = context.getContentResolver().openInputStream(stnUri);
-            ObjectInputStream ois = new ObjectInputStream(is)) {
+            ObjectInputStream ois = new ObjectInputStream(is);
+            FileOutputStream fos = new FileOutputStream(stnFile);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 
             Opinet.StationPrice savedPrice = (Opinet.StationPrice)ois.readObject();
             log.i("prevPrice: %s", savedPrice);
@@ -259,7 +253,9 @@ public class GasPriceRunnable implements Runnable {
                 log.i("Favorite station changes");
             }
 
-            savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
+
+            //savePriceInfo(stnPrice, Constants.FILE_CACHED_STATION_PRICE);
+            oos.writeObject(stnPrice);
 
         } catch(FileNotFoundException e) {
             log.e("FileNotFoundException: %s", e);

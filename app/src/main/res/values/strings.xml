@@ -16,7 +16,7 @@
     <string name="tab_board_popular">인기글</string>
     <string name="tab_board_community">우리차고</string>
 
-    <!--GeneralFragment-->
+    <!--MainActivity$GeneralFragment-->
     <string name="general_subtitle_stations">주변 주유소</string>
     <string name="general_subtitle_region">[관심 지역 / 주유소]</string>
     <string name="general_subtitle_expense">최근 지출 내역</string>
@@ -28,14 +28,14 @@
     <string name="general_expense_service">[ 서비스지출 ]</string>
     <string name="general_stations_distance">[ 거리순 ]</string>
     <string name="general_stations_price">[ 가격순 ]</string>
-    <!--GneralFragment$OpinetPriceView-->
+    <!--MainActivity$GneralFragment$OpinetPriceView-->
     <string name="general_opinet_subtitle_avgPrice">전국평균유가</string>
     <string name="general_opinet_avgPrice">Gasoline 1400</string>
     <string name="general_def_sido">서울</string>
     <string name="general_def_sigun">종로구</string>
     <string name="general_def_code">0101</string>
     <string name="general_opinet_stn_reset">다시 설정</string>
-    <!--GeneralFragment$LatestExpense-->
+    <!--MainActivity$GeneralFragment$LatestExpense-->
     <string name="general_label_gas_date">주유일자:</string>
     <string name="general_label_svc_date">서비스일자:</string>
     <string name="general_label_station">주유소:</string>
@@ -47,7 +47,7 @@
     <string name="general_label_svc_payment">서비스비용:</string>
     <string name="general_no_gas_history">최근 주유 이력이 없습니다</string>
     <string name="general_no_svc_history">최근 정비 이력이 없습니다</string>
-    <!--GeneralFragment$StatonRecyclerView-->
+    <!--MainActivity$GeneralFragment$StatonRecyclerView-->
     <string name="general_no_station">주유소 없습니다</string>
     <string name="general_station_price">가격</string>
     <string name="general_station_distance">거리</string>
@@ -57,6 +57,7 @@
     <string name="general_carwash_no">불가</string>
     <string name="general_no_station_fetched">미터 반경에서 주유소를 찾을 수 없습니다\n 탐색 반경을 변경해 주세요</string>
     <string name="general_index_reset">변경</string>
+    <string name="general_no_location">위치정보가 없습니다. 잠시후 다시 시도해 주세요</string>
 
 
     <!--StationMapActivity-->

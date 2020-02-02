@@ -2,7 +2,6 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.SharedPreferences;
-import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -18,7 +17,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -36,25 +34,21 @@ import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.FavoritePriceTask;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
+import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -66,7 +60,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
 
     // Objects
-    private LocationTask locationTask;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private LocationViewModel locationModel;
@@ -80,15 +73,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
-
-    private Calendar calendar;
-    private SimpleDateFormat sdf;
     private NumberPadFragment numPad;
-    private Location location;
 
     // UIs
     private View localView;
-    private ConstraintLayout constraintLayout;
     private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
     private EditText etUnitPrice, etExtraExpense, etGasComment;
     private RatingBar ratingBar;
@@ -122,9 +110,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // args from the parent activity which are passed in TapPagerRunnable
+        if(getArguments() != null) {
+            defaultParams = getArguments().getStringArray("defaultParams");
+            userId = getArguments().getString("userId");
+        }
+
         // In case the activity is initiated by tabbing the notification, which contains the intent
         // with action and extras for the geofance data.
-        if(getActivity().getIntent() != null && getActivity().getIntent().getAction() != null) {
+        if(getActivity().getIntent().getAction() != null) {
             String action = getActivity().getIntent().getAction();
             if(action.equals(Constants.NOTI_GEOFENCE)) {
                 isGeofenceIntent = true;
@@ -135,16 +129,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         }
 
-        // args from the parent activity which are passed in TapPagerRunnable
-        if(getArguments() != null) {
-            defaultParams = getArguments().getStringArray("defaultParams");
-            userId = getArguments().getString("userId");
-        }
-
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
-        //locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         locationModel = new ViewModelProvider(getActivity()).get(LocationViewModel.class);
         stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
@@ -161,8 +148,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Get the time that you have visited to the station. In case the parent activity gets started
         // by the stack builder, the time should be the time passed in the intent.
         dateFormat = getString(R.string.date_format_1);
-        calendar = Calendar.getInstance(Locale.getDefault());
-        sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
+        //Calendar calendar = Calendar.getInstance(Locale.getDefault());
+        //SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         date = BaseActivity.formatMilliseconds(dateFormat, visitTime);
 
@@ -181,7 +168,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
                 // The station is added to the favorite list in the first placeholder.
-                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(localView, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
 
@@ -203,7 +190,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 }
                 */
 
-                Snackbar.make(constraintLayout, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(localView, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
 
             }
@@ -224,8 +211,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Inflate the layout for this fragment
         localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
-
-        constraintLayout = localView.findViewById(R.id.constraint_gas);
         tvDateTime = localView.findViewById(R.id.tv_date_time);
         tvStnName = localView.findViewById(R.id.tv_station_name);
         pbStation = localView.findViewById(R.id.pb_search_station);
@@ -303,7 +288,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // StationListTask based on the value unless the fragment is initiated by the geo noti.
         // BTW, the location task is initiated in the parent activity.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            this.location = location;
             if(!isGeofenceIntent) {
                 stnListTask = ThreadManager.startStationListTask(stnListModel, location, defaultParams);
             }
@@ -363,23 +347,21 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onResume() {
         super.onResume();
         // Must define FragmentSharedModel.setCurrentFragment() in onResume() , not onActivityCreated()
-        // because the value of ragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
+        // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
         fragmentSharedModel.setCurrentFragment(this);
-
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        if(favPriceTask != null) favPriceTask = null;
+        if(stnListTask != null) stnListTask = null;
+        if(stnInfoTask != null) stnInfoTask = null;
     }
 
     @Override
     public void onDestroy() {
-        if(favPriceTask != null) favPriceTask = null;
-        if(stnListTask != null) stnListTask = null;
-        if(stnInfoTask != null) stnInfoTask = null;
-
         super.onDestroy();
     }
 
@@ -422,7 +404,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         args.putString("initValue", initValue);
         numPad.setArguments(args);
 
-        if(getFragmentManager() != null) numPad.show(getFragmentManager(), "InputPadDialog");
+        if(getActivity() != null)
+            numPad.show(getActivity().getSupportFragmentManager(), "InputPadDialog");
 
     }
 
@@ -460,7 +443,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
         } else if(isFavoriteGas) {
             Snackbar snackbar = Snackbar.make(
-                    getView(), getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
+                    localView, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
                 geofenceHelper.removeFavoriteGeofence(userId, stnName, stnId, Constants.GAS);
                 btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
@@ -474,7 +457,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // is less than
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
             if(placeholder == Constants.MAX_FAVORITE) {
-                Snackbar.make(constraintLayout, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(localView, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
 
             } else {
                 // Then, retrieve the station data which pass to FavoriteGeofenceHelper to register with
@@ -496,11 +479,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Method for inserting data to SQLite database
     public boolean saveGasData(){
-
         // Null check for the parent activity
         if(!doEmptyCheck()) return false;
-
-        //ContentValues values = new ContentValues();
+        fragmentSharedModel.setCurrentFragment(this);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
 
         // Create Entity instances both of which are correlated by Foreinkey
@@ -508,7 +489,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         GasManagerEntity gasEntity = new GasManagerEntity();
 
         basicEntity.dateTime = milliseconds;
-        basicEntity.category = Constants.SVC;
+        basicEntity.category = Constants.GAS;
         gasEntity.stnName = tvStnName.getText().toString();
         gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;
@@ -588,18 +569,19 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // those 2 values automatically fill the views. In this case, only the payment value will be
     // checked.
     private boolean doEmptyCheck() {
-
         // Check if the gas station name is empty
         if(TextUtils.isEmpty(tvStnName.getText())) {
             String msg = getResources().getString(R.string.toast_station_name);
-            Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
             return false;
         }
 
         // Check if the gas unit price is empty
         if(TextUtils.isEmpty(etUnitPrice.getText())) {
             String msg = getResources().getString(R.string.toast_unit_price);
-            Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
             etUnitPrice.requestFocus();
             return false;
         }
@@ -607,7 +589,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Check if the payment is empty.
         if(tvGasPaid.getText().toString().matches("0")) {
             String msg = getResources().getString(R.string.toast_payment);
-            Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
             return false;
         }
 

@@ -4,20 +4,17 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewholders.StationListHolder;
 
 import java.io.File;
@@ -25,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -37,14 +33,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     // Objects
     private Context context;
-    private DecimalFormat df;
+    //private DecimalFormat df;
     private List<Opinet.GasStnParcelable> stationList;
     private OnRecyclerItemClickListener mListener;
-    private ProgressBar progbar;
-
-    // Fields
-    private boolean isCarWashReady;
-
 
     // Interface
     public interface OnRecyclerItemClickListener {
@@ -54,7 +45,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     // Constructor
     public StationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
         super();
-        df = BaseActivity.getDecimalFormatInstance();
+        //df = BaseActivity.getDecimalFormatInstance();
         stationList = list;
         mListener = listener;
     }
@@ -66,7 +57,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         this.context = parent.getContext();
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_gas_stations, parent, false);
-        progbar = cardView.findViewById(R.id.progbar_carwash);
 
         return new StationListHolder(cardView);
     }
@@ -87,7 +77,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
-        isCarWashReady = true;
 
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
@@ -102,8 +91,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
                 holder.tvWashValue.setText(msg);
             }
         }
-
-        progbar.setVisibility(View.GONE);
 
     }
 

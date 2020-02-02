@@ -72,11 +72,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         //checkPermissions();
     }
 
-    // Receive an intent containing the user name and the Sido and Sigun district reset in
-    // SettingPreferenceActivity. The toolbar title should be replace with the reset user name and
-    // PriceViewPager should be updated with the reset district and price data retrieved and saved
-    // in the storage.
-
+    // startActivityForResult() have this callback invoked by getting an intent that contains new
+    // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
+    // and PriceViewPager should be updated with a new district, both of which have been reset
+    // in SettingPreferenceActivity.
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -87,21 +86,15 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         String username = intent.getStringExtra("username");
         String fuelCode = intent.getStringExtra("fuelCode");
         String radius = intent.getStringExtra("radius");
-        log.i("Setting result: %s, %s, %s, %s", isDistrictReset, radius, username, fuelCode);
 
         // Reset the username in the toolbar if the name has been reset in SettingPreferenceActivity.
         if(username != null && getSupportActionBar() != null) getSupportActionBar().setTitle(username);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
-        if(generalFragment != null) {
-            log.i("Reset requires the PriceViewPager refreshed");
-            generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
-        }
+        if(generalFragment != null) generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
 
     }
-
-
     /*
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -171,10 +164,13 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
         File cacheDir = getCacheDir();
+        // CacheDir contains not only the price data of the average, sido, sigun but also the near
+        // stations. On leaving the app, clear the cache directory as far as the checkPriceUpdate
+        // is satisfied.
         if(cacheDir != null && checkPriceUpdate()) {
             for (File file : cacheDir.listFiles()) {
-                if(!file.getName().equals(Constants.FILE_CACHED_STATION_PRICE))
-                    file.delete();
+                //if(!file.getName().equals(Constants.FILE_CACHED_STATION_PRICE))
+                file.delete();
             }
         }
 

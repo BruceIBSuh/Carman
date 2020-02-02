@@ -2,7 +2,6 @@ package com.silverback.carman2.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
@@ -18,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -31,7 +29,6 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.BaseActivity;
-import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.StationMapActivity;
@@ -65,10 +62,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
- * This fragment belongs to MainActivity and it contains the price information and the latest
- * expenditure of gas and service, and stations in the neighborhood. MainActivity may extend
- * to multi fragments at a time when an additional fragment such as general information ahead of the
- * current fragment is introduced.
+ * This fragment belongs to MainActivity and it contains the price information, the latest expenditure
+ * and near stations based on the current location. Multi fragments may be introduced in MainActivy
+ * to show a variety of auto-related contents.
  */
 
 public class GeneralFragment extends Fragment implements
@@ -83,7 +79,6 @@ public class GeneralFragment extends Fragment implements
     // Objects
     private CarmanDatabase mDB;
     private File favFile;
-    private SharedPreferences mSettings;
 
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
@@ -109,7 +104,6 @@ public class GeneralFragment extends Fragment implements
     private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
-    private ProgressBar progbarStnList;
 
     // Fields
     private String savedId;
@@ -119,7 +113,6 @@ public class GeneralFragment extends Fragment implements
     private boolean bExpenseSort;
     private boolean hasNearStations;//flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
-    private boolean isCreatedBySetting;
     private String latestItems;
 
     public GeneralFragment() {
@@ -132,8 +125,8 @@ public class GeneralFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
 
-        favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
-        mSettings = ((MainActivity)getActivity()).getSettings();
+        //favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
+        favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
@@ -165,7 +158,6 @@ public class GeneralFragment extends Fragment implements
         priceViewPager = childView.findViewById(R.id.pager_price);
         opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
-        progbarStnList = childView.findViewById(R.id.progbar_stn_list);
         fabLocation = childView.findViewById(R.id.fab_relocation);
 
         // Attach event listeners
@@ -219,8 +211,7 @@ public class GeneralFragment extends Fragment implements
         return childView;
     }
 
-    // Receive values of the ViewModels or queried results of Room which are synced with observe()
-    // defined in LiveData.
+    // It is appropriate that most of ViewModel LiveData be defined in this lifecycle.
     @Override
     public void onActivityCreated(Bundle savedStateInstance) {
         super.onActivityCreated(savedStateInstance);
@@ -289,10 +280,11 @@ public class GeneralFragment extends Fragment implements
                 Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
         });
-
+        // Location has failed to fetch.
         locationModel.getLocationException().observe(getViewLifecycleOwner(), exception -> {
-            SpannableString spannableString = new SpannableString("No locaiont feteched");
+            SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
             stationRecyclerView.showTextView(spannableString);
+            fabLocation.setVisibility(View.VISIBLE);
         });
 
         // Receive station(s) within the radius. If no stations exist, post the message that
@@ -593,25 +585,23 @@ public class GeneralFragment extends Fragment implements
         return spannableString;
     }
 
-    // To get the id of the first placeholder in the favorite station list, check the file, if any,
-    // which saves the first placeholder.
+    // To get the id of the gas station placed first in the list, check the file, if any,
+    // which has saved the first placeholder and get the stationId.
     private String getSavedFirstFavorite(Context context) {
         Uri uri = Uri.fromFile(favFile);
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
-
             Opinet.StationPrice savedFavorite = (Opinet.StationPrice) ois.readObject();
             if(savedFavorite != null) return savedFavorite.getStnId();
-
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         } catch(ClassNotFoundException e) {
             log.e("ClassNotFoundException: %s", e.getMessage());
         }
-
         return null;
     }
 
+    // Invalidate the views the data of which have changed in SettingPreferenceActivity
     public void resetGeneralFragment(boolean isDistrict, String fuelCode, String radius) {
 
         // If the default district has changed, which has initiated GasPriceTask to fetch price data
@@ -637,7 +627,6 @@ public class GeneralFragment extends Fragment implements
 
         // if the radius has changed, it is required to retrieve near stations with the radius
         if(radius != null) {
-            log.i("Location and params : %s, %s, %s, %s", mPrevLocation, defaults[0], defaults[1], defaults[2]);
             defaults[1] = radius; //reset a new radius to the defaultParams
             stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
         }

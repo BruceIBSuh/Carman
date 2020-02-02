@@ -83,6 +83,7 @@ public class IntroActivity extends BaseActivity  {
         // process depending upon whether the Firebase anonymous authentication is registered.
         Button btnStart = findViewById(R.id.btn_start);
         btnStart.setOnClickListener(view -> {
+            log.i("FirebaseAuth: %s", mAuth.getCurrentUser());
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });

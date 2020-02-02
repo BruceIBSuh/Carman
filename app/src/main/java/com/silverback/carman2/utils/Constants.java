@@ -2,9 +2,12 @@ package com.silverback.carman2.utils;
 
 public class Constants {
 
-    /**
-     * Global Setting Constants for Geofence, Opinet download interval, near station radius.
-     */
+    // Category
+    public static final int TOTAL = 0;
+    public static final int GAS = 1;
+    public static final int SVC = 2;
+    public static final int MAX_FAVORITE = 10;
+
     public static final String MIN_RADIUS = "250"; //Current station locating radius
 
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
@@ -18,28 +21,23 @@ public class Constants {
     static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.
     static final int MAX_WAIT = 1000 * 30; //Mas latency to receive location info.
 
-    // Category
-    public static final int GAS = 1;
-    public static final int SVC = 2;
-    public static final int MAX_FAVORITE = 10;
-
     // ExpensePagerFragment max pages of ExpRecentPagerAdapter
     public static final int NUM_RECENT_PAGES = 5;
-
     // Limit of the images attached with the post.
     public static final int MAX_ATTACHED_IMAGE = 6;
-
     // Board Pagination
     public static final int PAGINATION = 25;
 
     // File names for FileProvider
-    public static final String FILE_CACHED_AVG_PRICE = "avgPrice";
-    public static final String FILE_CACHED_SIDO_PRICE = "sidoPrice";
-    public static final String FILE_CACHED_SIGUN_PRICE = "sigunPrice";
-    public static final String FILE_CACHED_STATION_PRICE = "stationPrice";
-    public static final String FILE_DISTRICT_CODE = "districtCode";
-    public static final String FILE_CACHED_NEAR_STATIONS = "tmpStnList";
-    public static final String OPINET_LAST_UPDATE = "com.ibnco.carman.UPDATE";
+    public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";
+    public static final String FILE_CACHED_SIDO_PRICE = "com.silverback.carman2.SIDO_PRICE";
+    public static final String FILE_CACHED_SIGUN_PRICE = "com.silverback.carman2.SIGUN_PRICE";
+    public static final String FILE_CACHED_NEAR_STATIONS = "com.silverback.carman2.STN_LIST";
+    public static final String FILE_FAVORITE_PRICE = "com.silverback.carman2.FAV_PRICE";
+    //public static final String FILE_CACHED_STATION_PRICE = "stationPrice";
+    public static final String FILE_DISTRICT_CODE = "com.silverback.carman2.DIST_CODE";
+    public static final String OPINET_LAST_UPDATE = "com.silverback.carman2.UPDATE";
+
 
 
 

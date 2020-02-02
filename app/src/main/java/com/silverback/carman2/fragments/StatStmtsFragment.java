@@ -17,6 +17,7 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -75,31 +76,25 @@ public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSel
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        log.i("spinner item selected: %s", position);
+
         switch(position) {
-            case 0:
-                mDB.expenseBaseModel().loadExpenseByCategory(1, 2).observe(getViewLifecycleOwner(), data -> {
-                    log.i("All Expenses: %s", data.size());
-                    recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data));
-                });
+            case Constants.TOTAL:
+                mDB.expenseBaseModel().loadExpenseByCategory(1, 2).observe(getViewLifecycleOwner(),
+                        data -> recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data)));
                 break;
-            case 1:
-                mDB.expenseBaseModel().loadExpenseByCategory(1, -1).observe(getViewLifecycleOwner(), data -> {
-                    log.i("All Expenses: %s", data.size());
-                    recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data));
-                });
+            case Constants.GAS:
+                mDB.expenseBaseModel().loadExpenseByCategory(1, -1).observe(getViewLifecycleOwner(),
+                        data -> recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data)));
 
                 break;
-            case 2:
-                mDB.expenseBaseModel().loadExpenseByCategory(-1, 2).observe(getViewLifecycleOwner(), data -> {
-                    log.i("All Expenses: %s", data.size());
-                    recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data));
-                });
+            case Constants.SVC:
+                mDB.expenseBaseModel().loadExpenseByCategory(-1, 2).observe(getViewLifecycleOwner(),
+                        data -> recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data)));
                 break;
         }
 
-        // FragmentSharedModel to share the item position with StatGraphFragments to redraw the graph
-        // with data retrieved by category.
+        // Queried expense of the category selected by the spinner is shared with StatGraphFragmeht
+        // which is another component of StatAc
         fragmentSharedModel.getExpenseCategory().setValue(position);
     }
 

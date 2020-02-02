@@ -25,9 +25,6 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
             new GasManagerFragment(),
             new ServiceManagerFragment(),
             new StatStmtsFragment()
-            //new DummyFragment(),
-            //new DummyFragment()
-
     };
 
 
@@ -41,10 +38,6 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int pos) {
         return fragments[pos];
-    }
-
-    public static class DummyFragment extends Fragment {
-        public DummyFragment(){}
     }
 
 
