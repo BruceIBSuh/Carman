@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -24,6 +25,7 @@ import com.silverback.carman2.threads.ThreadManager;
 import org.json.JSONArray;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -51,10 +53,8 @@ import java.util.Map;
  */
 
 public class IntroActivity extends BaseActivity  {
-
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(IntroActivity.class);
-
     // Objects
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
@@ -76,7 +76,7 @@ public class IntroActivity extends BaseActivity  {
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(this);
-        opinetViewModel = ViewModelProviders.of(this).get(OpinetViewModel.class);
+        opinetViewModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         mProgBar = findViewById(R.id.progbar);
         // On clicking the start button, fork the process into the first-time launching or the regular
@@ -90,12 +90,17 @@ public class IntroActivity extends BaseActivity  {
 
         // Notified of having the district codes(sigun codes) complete, which was running in the
         // background by DistrictCodeTask only during firstInitProcess().
+
         opinetViewModel.distCodeComplete().observe(this, isComplete -> {
-            if(isComplete) {
-                mProgBar.setVisibility(View.INVISIBLE);
-                regularInitProcess();
-            } else {
-                Toast.makeText(this, "District Code failed to fetch", Toast.LENGTH_SHORT).show();
+            try {
+                if (isComplete) {
+                    mProgBar.setVisibility(View.INVISIBLE);
+                    regularInitProcess();
+                } else {
+                    throw new FileNotFoundException();
+                }
+            } catch(FileNotFoundException e) {
+                log.e("District Code FileNotFoundException: %s", e.getMessage());
             }
         });
 

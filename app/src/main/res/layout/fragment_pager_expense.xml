@@ -12,7 +12,6 @@
         android:id="@+id/tv_lastInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textColor="@android:color/primary_text_light"
         app:layout_constraintEnd_toStartOf="@+id/tv_page"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

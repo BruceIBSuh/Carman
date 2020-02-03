@@ -117,7 +117,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             etAvg.setSummaryProvider(preference -> String.format("%s%3s", etAvg.getText(), "km"));
         }
 
-        ListPreference searchingRadius = findPreference(Constants.RADIUS);
+        ListPreference searchingRadius = findPreference(Constants.SEARCHING_RADIUS);
         if(searchingRadius != null) {
             searchingRadius.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }

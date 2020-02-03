@@ -538,7 +538,7 @@ public class GeneralFragment extends Fragment implements
 
         if(isNetworkConnected) {
             fabLocation.setVisibility(View.VISIBLE);
-            //String radius = mSettings.getString(Constants.RADIUS, null);
+            //String radius = mSettings.getString(Constants.SEARCHING_RADIUS, null);
             String radius = defaults[1];
             String msg = getString(R.string.general_no_station_fetched);
 

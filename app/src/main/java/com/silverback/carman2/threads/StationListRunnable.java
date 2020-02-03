@@ -93,23 +93,22 @@ public class StationListRunnable implements Runnable{
             conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
-            //conn.connect();
-
+            conn.connect();
             is = new BufferedInputStream(conn.getInputStream());
             mStationList = xmlHandler.parseStationListParcelable(is);
 
-            // Fetch the current station which is located within MIN_RADIUS. This is invoked from
-            // GasManagerActivity
+            // Get near stations which may be the current station if MIN_RADIUS is given as param or
+            // it should be near stations located within SEARCHING_RADIUS.
             if(mStationList.size() > 0) {
+                // Fetch the current station located within the radius
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     mTask.setCurrentStation(mStationList.get(0));
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
-
+                // Fetch near stations within the searching radius.
                 } else {
                     mTask.setStationList(mStationList);
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
                 }
-
             } else {
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);

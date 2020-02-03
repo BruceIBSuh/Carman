@@ -27,7 +27,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -85,7 +84,7 @@ public class BaseActivity extends AppCompatActivity {
 
         String[] defaultParams = new String[3];
         defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
-        defaultParams[1] = mSettings.getString(Constants.RADIUS, "2500");
+        defaultParams[1] = mSettings.getString(Constants.SEARCHING_RADIUS, "2500");
         defaultParams[2] = mSettings.getString(Constants.ORDER, "2");
 
         return defaultParams;

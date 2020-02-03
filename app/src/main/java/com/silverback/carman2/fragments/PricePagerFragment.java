@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.R;
@@ -59,8 +60,8 @@ public class PricePagerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        opinetModel = ViewModelProviders.of(getActivity()).get(OpinetViewModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        opinetModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
 
     }
 
@@ -74,7 +75,6 @@ public class PricePagerFragment extends Fragment {
         }
 
         switch(page) {
-
             case DISTRICT_PRICE:
                 View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
                 OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);

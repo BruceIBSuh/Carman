@@ -11,6 +11,30 @@ import androidx.annotation.NonNull;
 
 public class Opinet  {
 
+    public static class DistrictCode implements Serializable {
+
+        private String districtCode;
+        private String districtName;
+
+        public String getDistrictCode() { return districtCode; }
+        void setDistrictCode(String districtCode) {
+            this.districtCode = districtCode;
+        }
+        public String getDistrictName() {
+            return districtName;
+        }
+        void setDistrictName(String districtName) {
+            this.districtName = districtName;
+        }
+
+        @NonNull
+        @Override
+        public String toString(){
+            return "districtCode: " + getDistrictCode()
+                    + "\ndistrictName: " + getDistrictName();
+        }
+    }
+
     public static class OilPrice implements Serializable {
         private String tradeDate;
         private String productCode;
@@ -247,28 +271,7 @@ public class Opinet  {
 
 
 
-    public static class DistrictCode implements Serializable {
 
-        private String districtCode;
-        private String districtName;
-
-        public String getDistrictCode() { return districtCode; }
-        void setDistrictCode(String districtCode) {
-            this.districtCode = districtCode;
-        }
-        public String getDistrictName() {
-            return districtName;
-        }
-        void setDistrictName(String districtName) {
-            this.districtName = districtName;
-        }
-
-        @Override
-        public String toString(){
-            return "districtCode: " + getDistrictCode()
-                    + "\ndistrictName: " + getDistrictName();
-        }
-    }
 
     /**
      * Retrieve data of a specific station with the station id given.

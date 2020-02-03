@@ -59,7 +59,7 @@ public class Constants {
     public static final String FUEL = "carman_pref_ls_fuel";
     public static final String DISTRICT = "pref_dialog_district";
     public static final String DISTRICT_NAME = "carman_pref_dialog_district_name";
-    public static final String RADIUS = "pref_searching_radius";
+    public static final String SEARCHING_RADIUS = "pref_searching_radius";
     public static final String ORDER = "carman_pref_ls_station_order";
     public static final String LOCATION_UPDATE = "pref_location_update";
     public static final String FAVORITE = "pref_favorite_list";

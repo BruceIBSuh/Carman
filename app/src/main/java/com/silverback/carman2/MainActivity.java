@@ -134,7 +134,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
             case R.id.action_setting:
                 // Apply startActivityForresult() to take the price data and the username back from
-                // SettingPreferenceActivity if the values have changed to onActivityResult().
+                // SettingPreferenceActivity to onActivityResult() if the values have changed.
                 Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
                 startActivityForResult(settingIntent, REQ_SETTING);
                 return true;

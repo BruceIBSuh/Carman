@@ -17,6 +17,9 @@ public class FirestoreGetRunnable implements Runnable {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(FirestoreGetRunnable.class);
 
+    // Constants
+    private static final int CARWASH_OK = 1;
+
 
     // Objects
     private FireStoreGetMethods mCallback;
@@ -78,6 +81,7 @@ public class FirestoreGetRunnable implements Runnable {
                 if (snapshot != null && snapshot.exists()){
                     if(snapshot.get("carwash") != null) {
                         mCallback.setCarWashInfo(pos, (boolean)snapshot.get("carwash"));
+                        mCallback.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                     } else {
                         log.e("carwash value is null:%s", snapshot.getString("stnName"));
                         mCallback.setCarWashInfo(pos, false);

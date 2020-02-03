@@ -11,11 +11,9 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NavUtils;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -27,8 +25,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
-import com.silverback.carman2.fragments.SettingAutoFragment;
-import com.silverback.carman2.fragments.SettingFavorGasFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -46,7 +42,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -242,7 +237,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 }
                 break;
 
-            case Constants.RADIUS:
+            case Constants.SEARCHING_RADIUS:
                 log.i("Radius changed");
                 radius = mSettings.getString(key, null);
                 break;

@@ -39,7 +39,6 @@ import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.FavoritePriceTask;
-import com.silverback.carman2.threads.StationInfoTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -69,7 +68,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     private FavoriteGeofenceHelper geofenceHelper;
     private StationListTask stnListTask;
-    private StationInfoTask stnInfoTask;
     private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
@@ -357,7 +355,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         super.onPause();
         if(favPriceTask != null) favPriceTask = null;
         if(stnListTask != null) stnListTask = null;
-        if(stnInfoTask != null) stnInfoTask = null;
     }
 
     @Override

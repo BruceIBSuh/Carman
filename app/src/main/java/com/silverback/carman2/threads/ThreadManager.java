@@ -47,19 +47,15 @@ public class ThreadManager {
     //static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
     //static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
     //static final int LOAD_SPINNER_DIST_CODE_FAILED = -113;
+    static final int FIRESTORE_STATION_GET_COMPLETED = 202;
+    static final int FIRESTORE_STATION_SET_COMPLETED = 203;
 
-    static final int FIRESTORE_STATION_GET_COMPLETED = 120;
-    static final int FIRESTORE_STATION_SET_COMPLETED = 130;
 
     //static final int RECYCLER_ADAPTER_SERVICE_COMPLETED = 140;
     //static final int RECYCLER_ADAPTER_SERVICE_FAILED = -141;
 
     static final int GEOCODER_REVERSE_TASK_COMPLETED = 150;
     static final int GEOCODER_REVERSE_TASK_FAILED = -150;
-
-    //static final int DOWNLOAD_AVG_PRICE_COMPLETED = 201;
-    //static final int DOWNLOAD_SIDO_PRICE_COMPLETED = 202;
-    //static final int DOWNLOAD_SIGUN_PRICE_COMPLETED = 203;
 
     //static final int DOWNLOAD_PRICE_FAILED = -100;
     static final int DOWNLOAD_NEAR_STATIONS_FAILED = -2;
@@ -181,21 +177,30 @@ public class ThreadManager {
         Message msg = mMainHandler.obtainMessage(state, task);
 
         switch(state) {
+            // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
+            // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
+            // in different URLs. This process will continue until Firetore will complete to hold up
+            // the data in a unified form.
+
+            // StationListRunnable downloads near stations or the current station from the Opinet,
+            // the id(s) of which is used to check if the station(s) has been already saved in
+            // Firestore. Otherwise, add the station(s) to Firestore w/ the carwash field left null.
+            // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
+            // from the Opinet and update other fields including the carwash field in Firestore.
             case DOWNLOAD_NEAR_STATIONS_COMPLETED:
                 mDownloadThreadPool.execute(((StationListTask)task).getFireStoreRunnable());
-                msg.sendToTarget();
+                //msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                mDecodeThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
-                msg.sendToTarget();
+                mDownloadThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
+                //msg.sendToTarget();
                 break;
 
-            default:
+            case FIRESTORE_STATION_SET_COMPLETED:
                 msg.sendToTarget();
-                break;
         }
     }
 
@@ -445,7 +450,9 @@ public class ThreadManager {
         if(task instanceof LocationTask) {
             ((LocationTask)task).recycle();
             mLocationTaskQueue.offer((LocationTask)task);
+
         } else if(task instanceof StationListTask) {
+            // Offer() should be invoked when FirestoreSetRunnable completes.
             mStationListTaskQueue.offer((StationListTask)task);
 
         } else if(task instanceof GasPriceTask) {
