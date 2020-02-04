@@ -200,7 +200,12 @@ public class ThreadManager {
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
+                //msg.sendToTarget();
+                break;
+
+            default:
                 msg.sendToTarget();
+                break;
         }
     }
 
@@ -299,11 +304,8 @@ public class ThreadManager {
     }
 
 
-    public static TabPagerTask startTabPagerTask(
-            Context context,
-            FragmentManager fragmentManager,
-            PagerAdapterViewModel model,
-            String[] defaults, String jsonDistrict, String jsonSvcItem){
+    public static TabPagerTask startTabPagerTask(Context context, FragmentManager fragmentManager,
+            PagerAdapterViewModel model, String[] defaults, String jsonDistrict, String jsonSvcItem){
 
         TabPagerTask tabPagerTask = sInstance.mTabPagerTaskQueue.poll();
 
@@ -311,7 +313,7 @@ public class ThreadManager {
             tabPagerTask = new TabPagerTask(context);
         }
 
-        tabPagerTask.initViewPagerTask(fragmentManager, model, defaults, jsonDistrict, jsonSvcItem);
+        tabPagerTask.initPagerTask(fragmentManager, model, defaults, jsonDistrict, jsonSvcItem);
 
         sInstance.mDecodeThreadPool.execute(tabPagerTask.getTabPagerRunnable());
         sInstance.mDecodeThreadPool.execute(tabPagerTask.getServiceItemsRunnable());
@@ -469,6 +471,7 @@ public class ThreadManager {
 
         } else if(task instanceof DownloadImageTask) {
             mTaskWorkQueue.offer(task);
+
         } else if(task instanceof DistCodeSpinnerTask) {
             ((DistCodeSpinnerTask)task).recycle();
             mDistCodeSpinnerTaskQueue.offer((DistCodeSpinnerTask)task);

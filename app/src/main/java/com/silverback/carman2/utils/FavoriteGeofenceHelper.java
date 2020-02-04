@@ -58,9 +58,9 @@ public class FavoriteGeofenceHelper {
     // Constructor
     public FavoriteGeofenceHelper(Context context) {
         this.context = context;
-        mGeofencingClient = LocationServices.getGeofencingClient(context);
         mDB = CarmanDatabase.getDatabaseInstance(context.getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
+        mGeofencingClient = LocationServices.getGeofencingClient(context);
         favoriteModel = new FavoriteProviderEntity();
 
     }
@@ -88,20 +88,17 @@ public class FavoriteGeofenceHelper {
     private PendingIntent getGeofencePendingIntent() {
 
         // Reuse the PendingIntent if we have already have it
-        if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
+        //if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
         Intent intent = new Intent(context, GeofenceTransitionService.class);
         intent.setAction(Constants.NOTI_GEOFENCE);
 
-        mGeofencePendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        return mGeofencePendingIntent;
+        return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     // Add a station to Geofence and the Favorite table at the same time.
     // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
     @SuppressWarnings("ConstantConditions")
-    public void addFavoriteGeofence(
-            final String userId, final DocumentSnapshot snapshot, final int placeHolder, final int category) {
-
+    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final int placeHolder, final int category) {
         final String providerId = snapshot.getId();
         String providerName;
         String providerCode;
@@ -209,7 +206,7 @@ public class FavoriteGeofenceHelper {
     // removeGeofences() with its requestId which has been already set by setGeofenceParam() and
     // provided when adding it to Favorite.
     @SuppressWarnings("ConstantConditions")
-    public void removeFavoriteGeofence(String userId, @Nullable String name, @Nullable String id, int category) {
+    public void removeFavoriteGeofence(@Nullable String name, @Nullable String id, int category) {
         // Create the list which contains requestId's to remove.
         List<String> geofenceId = new ArrayList<>();
         geofenceId.add(id);

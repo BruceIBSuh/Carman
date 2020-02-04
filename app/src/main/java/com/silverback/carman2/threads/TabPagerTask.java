@@ -33,11 +33,8 @@ public class TabPagerTask extends ThreadTask implements
         mServiceItemsRunnable = new ServiceItemsRunnable(this);
     }
 
-    void initViewPagerTask(FragmentManager fm,
-                           PagerAdapterViewModel viewModel,
-                           String[] defaults,
-                           String jsonDistrict,
-                           String jsonSvcItems) {
+    void initPagerTask(FragmentManager fm, PagerAdapterViewModel viewModel,
+                       String[] defaults, String jsonDistrict, String jsonSvcItems) {
 
         fragmentManager = fm;
         pagerModel = viewModel;

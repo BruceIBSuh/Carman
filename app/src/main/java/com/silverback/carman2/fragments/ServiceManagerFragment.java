@@ -20,7 +20,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -91,12 +91,14 @@ public class ServiceManagerFragment extends Fragment implements
     private String svcCompany;
 
     // UIs
+
     private RelativeLayout relativeLayout;
     private RecyclerView recyclerServiceItems;
     private ProgressBar progbar;
     private EditText etServiceName;
     private TextView tvDate, tvMileage, tvTotalCost;
-    private ImageButton btnFavorite;
+    private ImageButton btnSvcFavorite;
+    private TextView targetView;
 
 
     // Fields
@@ -106,13 +108,14 @@ public class ServiceManagerFragment extends Fragment implements
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isSvcFavorite;
 
+    private String userId;
     private String svcId;
-    private float svcRating;
     private String svcName;
     private String svcComment;
-    private String userId;
-    private String geoSvcName, geoSvcId;
+    private String geoSvcName;
+    private float svcRating;
     private long geoTime;
+    private int category;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -122,6 +125,11 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // userId will be used when svc_eval is prepared.
+        if(getArguments() != null) {
+            distCode = getArguments().getString("distCode");
+            userId = getArguments().getString("userId");
+        }
 
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action and extras for the geofance data.
@@ -132,26 +140,13 @@ public class ServiceManagerFragment extends Fragment implements
                 geoSvcName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
                 //geoSvcId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
                 geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
+                category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
+
                 log.i("isGeofenceIntent: %s", isGeofenceIntent);
             }
         }
 
-        if(getArguments() != null) {
-            distCode = getArguments().getString("distCode");
-            userId = getArguments().getString("userId");
 
-            /*
-            log.i("District Code: %s", distCode);
-            try {
-                JSONArray jsonArray = new JSONArray(getArguments().getString("district"));
-                distCode = jsonArray.optString(2);
-
-            } catch(JSONException e) {
-
-            }
-
-             */
-        }
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
@@ -161,7 +156,7 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         adapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
-        svcCenterModel = ViewModelProviders.of(this).get(ServiceCenterViewModel.class);
+        svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
 
 
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
@@ -233,13 +228,13 @@ public class ServiceManagerFragment extends Fragment implements
         tvMileage = localView.findViewById(R.id.tv_service_mileage);
         Button btnDate = localView.findViewById(R.id.btn_svc_date);
         Button btnReg = localView.findViewById(R.id.btn_register);
-        btnFavorite = localView.findViewById(R.id.imgbtn_favorite);
+        btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_total_cost);
 
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
         btnReg.setOnClickListener(this);
-        btnFavorite.setOnClickListener(view -> addServiceFavorite());
+        btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
 
         svcName = etServiceName.getText().toString();
 
@@ -249,20 +244,22 @@ public class ServiceManagerFragment extends Fragment implements
         tvTotalCost.setText("0");
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
-        btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+        btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
         recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerServiceItems.setHasFixedSize(true);
         //recyclerServiceItems.setAdapter(mAdapter);
 
-        // In case the activity and this fragment are invoked by tabbing the notification
-        if(isGeofenceIntent) {
+        // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
+        // only if the parent activity gets started by the notification and its category should be
+        // Constants.SVC
+        if(isGeofenceIntent && category == Constants.SVC) {
             log.i("Handling isGeofenceIntent");
             etServiceName.setText(geoSvcName);
             etServiceName.clearFocus();
             isSvcFavorite = true;
 
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             btnDate.setVisibility(View.GONE);
 
         }
@@ -289,6 +286,8 @@ public class ServiceManagerFragment extends Fragment implements
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
             if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
 
+            // Query the latest service history from ServiceManagerEntity and update the adapter, making
+            // partial bindings to RecycerView.
             for(int i = 0; i < jsonServiceArray.length(); i++) {
                 try {
                     final int pos = i;
@@ -308,7 +307,7 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
-        // Codes should be added in accordance to the progress of the service center db as like
+        // Codes should added in accordance to the progress of the service centre database as like
         // in the gas station db.
         svcCenterModel.getCurrentSVC().observe(getViewLifecycleOwner(), svcData -> {
             //checkSvcFavorite(svcData, Constants.SVC);
@@ -320,8 +319,6 @@ public class ServiceManagerFragment extends Fragment implements
             final int value = data.valueAt(0);
             switch(viewId) {
                 case R.id.tv_service_mileage:
-                    //targetView = localView.findViewById(viewId);
-                    //targetView.setText(df.format(value));
                     tvMileage.setText(df.format(value));
                     break;
 
@@ -342,7 +339,7 @@ public class ServiceManagerFragment extends Fragment implements
             svcName = entity.providerName;
             svcId = entity.providerId;
             etServiceName.setText(svcName);
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             isSvcFavorite = true;
         });
 
@@ -388,7 +385,8 @@ public class ServiceManagerFragment extends Fragment implements
                 args.putString("initValue", tvMileage.getText().toString());
                 args.putInt("viewId", v.getId());
                 numPad.setArguments(args);
-                if(getFragmentManager() != null) numPad.show(getFragmentManager(), null);
+                if(getActivity().getSupportFragmentManager() != null)
+                    numPad.show(getActivity().getSupportFragmentManager(), null);
                 break;
 
             case R.id.btn_register:
@@ -402,7 +400,8 @@ public class ServiceManagerFragment extends Fragment implements
                     Snackbar.make(relativeLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
                     return;
                 } else {
-                    RegisterDialogFragment.newInstance(svcName, distCode).show(getFragmentManager(), null);
+                    RegisterDialogFragment.newInstance(svcName, distCode)
+                            .show(getActivity().getSupportFragmentManager(), null);
                 }
 
                 break;
@@ -426,7 +425,7 @@ public class ServiceManagerFragment extends Fragment implements
         args.putInt("viewId", targetView.getId());
         numPad.setArguments(args);
 
-        if(getFragmentManager() != null) numPad.show(getFragmentManager(), null);
+        if(getActivity() != null) numPad.show(getActivity().getSupportFragmentManager(), null);
 
     }
 
@@ -440,7 +439,7 @@ public class ServiceManagerFragment extends Fragment implements
         args.putInt("viewId", targetView.getId());
         memoPad.setArguments(args);
 
-        if(getFragmentManager() != null) memoPad.show(getFragmentManager(), null);
+        if(getActivity() != null) memoPad.show(getActivity().getSupportFragmentManager(), null);
     }
 
     @Override
@@ -468,10 +467,10 @@ public class ServiceManagerFragment extends Fragment implements
         mDB.favoriteModel().findFavoriteSvcName(name, category).observe(this, favorite -> {
             if (TextUtils.isEmpty(favorite)) {
                 isSvcFavorite = false;
-                btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
             } else {
                 isSvcFavorite = true;
-                btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             }
         });
     }
@@ -480,18 +479,25 @@ public class ServiceManagerFragment extends Fragment implements
     @SuppressWarnings("ConstantConditions")
     private void addServiceFavorite() {
 
-        if(isGeofenceIntent) return;
+        //if(isGeofenceIntent) return;
 
         // Retrieve a service center from the favorite list, the value of which is sent via
         // fragmentSharedModel.getFavoriteName()
         if(TextUtils.isEmpty(etServiceName.getText())) {
             String title = "Favorite Service Center";
-            FavoriteListFragment.newInstance(title, Constants.SVC).show(getFragmentManager(), null);
+            FavoriteListFragment.newInstance(title, Constants.SVC).show(getActivity().getSupportFragmentManager(), null);
 
         // Remove the center out of the favorite list and the geofence
         } else if(isSvcFavorite) {
-            geofenceHelper.removeFavoriteGeofence(userId, svcName, svcId, Constants.SVC);
-            btnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            Snackbar snackbar = Snackbar.make(
+                    relativeLayout, getString(R.string.svc_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
+            snackbar.setAction(R.string.popup_msg_confirm, view -> {
+                geofenceHelper.removeFavoriteGeofence(svcName, svcId, Constants.SVC);
+                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
+            });
+
+            snackbar.show();
+
             //firestore.collection("svc_eval").document(svcId).update("favorite_num", FieldValue.increment(-1));
 
         // Add the service center with the favorite list and geofence as far as it has been
@@ -516,8 +522,8 @@ public class ServiceManagerFragment extends Fragment implements
                         if (task.isSuccessful()) {
                             DocumentSnapshot snapshot = task.getResult();
                             if (snapshot != null && snapshot.exists()) {
-                                btnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-                                geofenceHelper.addFavoriteGeofence(userId, snapshot, placeholder, Constants.SVC);
+                                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                                geofenceHelper.addFavoriteGeofence(snapshot, placeholder, Constants.SVC);
                             }
                         }
                     });

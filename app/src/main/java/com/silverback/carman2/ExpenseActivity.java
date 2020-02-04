@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
@@ -34,7 +33,7 @@ import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.ExpenseViewPager;
 
-/**
+/*
  * This activity is largely compolsed of two viewpagers. The viewpager which is synced w/ the tab
  * is at the bottom for holding such fragments as GasManagerFragment, ServiceManagerFragment, and
  * StatStmtsFragment. The other is at the top to hold PricePagerFragment w/ PricePagerAdapter which,
@@ -83,10 +82,12 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     // Fields
-    private int currentPage = 0;
+    private int mPosition = 0;
+    private int category;
     private boolean isTabVisible = false;
     private String pageTitle;
     private boolean isGeofencing;
+    private String jsonSvcItems, jsonDistrict;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -95,14 +96,11 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
-        // In case the activity is initiated by tabbing the notification, which sent the intent w/
-        // action
-        // If the activity is initiated by clicking notification that
         if(getIntent().getAction() != null) {
             String action = getIntent().getAction();
-            log.i("Intent Action: %s", action);
             if(action.equals(Constants.NOTI_GEOFENCE)) {
-                currentPage = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1) - 1;
+                category = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
+                log.i("Category of notification: %s", category);
                 isGeofencing = true;
             }
         }
@@ -130,14 +128,9 @@ public class ExpenseActivity extends BaseActivity implements
         expTabLayout.setupWithViewPager(tabPager);
 
         // Fetch the values from SharedPreferences
-        String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
+        jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
 
-        // Start the thread to create ExpTabpagerAdapter and pass arguments to GasManagerFragment
-        // and ServiceManagerFragment respectively and, at the same time, convert JSONServiceItems
-        // to JSONArray in advance for the recyclerview in ServiceManagerj
-        tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
-                getDefaultParams(), jsonDistrict, jsonSvcItems);
 
         // LiveData observer of PagerAdapterViewModel to listen to whether ExpTabPagerAdapter has
         // finished to instantiate the fragments to display, then launch LocationTask to have
@@ -145,12 +138,15 @@ public class ExpenseActivity extends BaseActivity implements
         pagerModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
-            tabPager.setCurrentItem(currentPage);
+
+            log.i("page: %s", mPosition);
+            tabPager.setCurrentItem(mPosition);
             expTabLayout.setupWithViewPager(tabPager);
 
             // Create ViewPager for the last 5 recent expense statements in the top frame.
             // Required to use FrameLayout.addView() b/c StatFragment should be applied as a fragment,
-            // not ViewPager.
+            // not ViewPager. The viewpager is set to the apdater inanimSlideTabLayout for preventing
+            // the animation from slowing down.
             expensePager = new ExpenseViewPager(this);
             expensePager.setId(View.generateViewId());
             recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
@@ -158,15 +154,27 @@ public class ExpenseActivity extends BaseActivity implements
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
 
-            // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
-            // attach it in the top FrameLayout.
-            locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+
         });
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public void onStart() {
+        super.onStart();
+        // Start the thread to create ExpTabpagerAdapter and pass arguments to GasManagerFragment
+        // and ServiceManagerFragment respectively and, at the same time, convert JSONServiceItems
+        // to JSONArray in advance for the recyclerview in ServiceManagerj
+        tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
+                getDefaultParams(), jsonDistrict, jsonSvcItems);
+
+        // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
+        // attach it in the top FrameLayout.
+        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
     }
@@ -191,7 +199,7 @@ public class ExpenseActivity extends BaseActivity implements
                 return true;
 
             case MENU_ITEM_ID:
-                Fragment fragment = tabPagerAdapter.getItem(currentPage);
+                Fragment fragment = tabPagerAdapter.getItem(mPosition);
                 boolean isSaved = false;
 
                 if(fragment instanceof GasManagerFragment) {
@@ -232,25 +240,23 @@ public class ExpenseActivity extends BaseActivity implements
 
         switch(position) {
             case 0: // GasManagerFragment
-                currentPage = 0;
+                mPosition = 0;
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
                 break;
 
             case 1:
-                currentPage = 1;
+                mPosition = 1;
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
-                
                 break;
 
             case 2:
-                currentPage = 2;
+                mPosition = 2;
                 pageTitle = getString(R.string.exp_title_stat);
                 StatGraphFragment statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
-
                 break;
         }
 
@@ -297,10 +303,9 @@ public class ExpenseActivity extends BaseActivity implements
             public void onAnimationEnd(Animator animator) {
                 expensePager.setAdapter(recentPagerAdapter);
                 expensePager.setCurrentItem(0);
-                if(isGeofencing) topFrame.removeAllViews();
+                topFrame.removeAllViews();
                 topFrame.addView(expensePager);
 
-                //locationTask = ThreadManager.fetchLocationTask(context, locationModel);
                 isTabVisible = !isTabVisible;
             }
         });

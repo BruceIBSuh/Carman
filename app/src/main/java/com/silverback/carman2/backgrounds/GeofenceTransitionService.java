@@ -35,7 +35,8 @@ import java.util.Locale;
 
 
 /**
- *
+ * This class subclasses IntentService for purposes of showing Notification when a location is within
+ * the Geofence
  */
 
 public class GeofenceTransitionService extends IntentService {
@@ -167,21 +168,6 @@ public class GeofenceTransitionService extends IntentService {
 
     }
 
-
-
-    private PendingIntent createSnoozePendingIntent(int notiId, String providerId, String name, int category) {
-        Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
-        snoozeIntent.setAction(Constants.NOTI_SNOOZE);
-        snoozeIntent.putExtra(Constants.GEO_ID, providerId);
-        snoozeIntent.putExtra(Constants.GEO_NAME, name);
-        snoozeIntent.putExtra(Constants.GEO_CATEGORY, category);
-        snoozeIntent.putExtra(Constants.GEO_TIME, geoTime);
-        snoozeIntent.putExtra(Constants.NOTI_ID,  notiId);
-
-        return PendingIntent.getBroadcast(this, notiId, snoozeIntent, 0);
-    }
-
-
     private PendingIntent createResultPendingIntent(int notiId, String providerId, String name, int category) {
         //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
         // Create an Intent for the activity you want to start
@@ -205,6 +191,18 @@ public class GeofenceTransitionService extends IntentService {
 
     }
 
+    private PendingIntent createSnoozePendingIntent(int notiId, String providerId, String name, int category) {
+        Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
+        snoozeIntent.setAction(Constants.NOTI_SNOOZE);
+        snoozeIntent.putExtra(Constants.GEO_ID, providerId);
+        snoozeIntent.putExtra(Constants.GEO_NAME, name);
+        snoozeIntent.putExtra(Constants.GEO_CATEGORY, category);
+        snoozeIntent.putExtra(Constants.GEO_TIME, geoTime);
+        snoozeIntent.putExtra(Constants.NOTI_ID,  notiId);
+
+        return PendingIntent.getBroadcast(this, notiId, snoozeIntent, 0);
+    }
+
     // Create a unique notification id.
     private int createID() {
         Calendar calendar = Calendar.getInstance();
@@ -216,10 +214,9 @@ public class GeofenceTransitionService extends IntentService {
 
     // Create Notification Channel only for Android 8+
     private NotificationChannel createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
+        // Create the NotificationChannel, but only on API 26+ because the NotificationChannel class
+        // is newly introduced, not in the support library
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
             CharSequence name = getString(R.string.noti_ch_name);
             String description = getString(R.string.noti_ch_description);
             int importance = NotificationManager.IMPORTANCE_DEFAULT;

@@ -37,7 +37,6 @@ public class ServiceItemsRunnable implements Runnable {
 
         task.setServiceItemsThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
         String jsonItemsString = task.getJsonServiceItems();
 
         try {

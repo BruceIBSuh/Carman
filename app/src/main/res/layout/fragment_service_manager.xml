@@ -20,10 +20,9 @@
             android:id="@+id/view_boxing"
             android:layout_width="0dp"
             android:layout_height="160dp"
-            android:layout_margin="2dp"
+            android:layout_margin="1dp"
             android:background="@drawable/bg_service_boxing"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -44,6 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
+            android:textSize="@dimen/smallText"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
             app:layout_constraintStart_toEndOf="@+id/tv_label_date"
             app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
@@ -72,7 +72,7 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
 
         <ImageButton
-            android:id="@+id/imgbtn_favorite"
+            android:id="@+id/btn_svc_favorite"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginStart="3dp"
@@ -185,8 +185,8 @@
 
     <!--Issue of RecyclerView Item Cutoff
     In the layout structure which contains AppBarLayout, CollapsingToolbarLayout, NestedScrollView
-    and Fragment in FrameLayout, it happnes that last item(s) of RecyclerView located in Fragment
-    is cut off. This might be caused by the reason that RecyclerView computes the top scrolling
+    and Fragment in FrameLayout, it happens that last item(s) of RecyclerView located in Fragment
+    may be cut off. This  might be caused by the reason that RecyclerView computes the top scrolling
     position and the top position of the view height in a different manner. It is the case that some
     other layoouts exist before RecyclerView in NestedScrollView,  which makes difference b/w those
     two values, as much as which last few items of RecyclerView will hide.
