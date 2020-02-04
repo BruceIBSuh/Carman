@@ -125,15 +125,10 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // userId will be used when svc_eval is prepared.
-        if(getArguments() != null) {
-            distCode = getArguments().getString("distCode");
-            userId = getArguments().getString("userId");
-        }
 
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action and extras for the geofance data.
-        if(getActivity().getIntent() != null && getActivity().getIntent().getAction() != null) {
+        if(getActivity().getIntent().getAction() != null) {
             String action = getActivity().getIntent().getAction();
             if(action.equals(Constants.NOTI_GEOFENCE)) {
                 isGeofenceIntent = true;
@@ -146,7 +141,11 @@ public class ServiceManagerFragment extends Fragment implements
             }
         }
 
-
+        // userId will be used when svc_eval is prepared.
+        if(getArguments() != null) {
+            distCode = getArguments().getString("distCode");
+            userId = getArguments().getString("userId");
+        }
 
         // Instantiate objects.
         mSettings = ((ExpenseActivity)getActivity()).getSettings();
