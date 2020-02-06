@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
@@ -40,7 +41,7 @@ public class BoardActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board_posting);
 
-        Toolbar toolbar = findViewById(R.id.toolbar_main);
+        Toolbar toolbar = findViewById(R.id.board_toolbar);
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);
         ViewPager boardPager = findViewById(R.id.viewpager_board);
         AppBarLayout appBar = findViewById(R.id.appBar);
@@ -52,7 +53,7 @@ public class BoardActivity extends BaseActivity implements
         fabWrite.setOnClickListener(view -> {
             // Initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
             // automatically invoking startActivityForResult() when the fragment pops up.
-            FragmentSharedModel model = ViewModelProviders.of(this).get(FragmentSharedModel.class);
+            FragmentSharedModel model = new ViewModelProvider(this).get(FragmentSharedModel.class);
             model.getImageChooser().setValue(-1);
             // Pop up the dialog to write the post.
             BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();

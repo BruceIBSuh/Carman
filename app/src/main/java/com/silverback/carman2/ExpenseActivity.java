@@ -58,6 +58,7 @@ import com.silverback.carman2.views.ExpenseViewPager;
  * viewpager is prepared. Otherwise, it makes an error b/c the expense view in ServiceManagerFragment
  * may be null.
  */
+
 public class ExpenseActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
@@ -102,6 +103,7 @@ public class ExpenseActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_expense);
 
+        // Check if the activity gets started by tabbing the geofence notification.
         if(getIntent().getAction() != null) {
             if(getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
                 isGeofencing = true;
@@ -109,8 +111,7 @@ public class ExpenseActivity extends BaseActivity implements
             }
         }
 
-        // Define ViewModels. ViewModelProviders.of(this) is deprecated. Instead, use ViewModelProvider
-        // (requrieActivity()).  ViewModelProviders.of(this) is deprecated as well.
+        // Define ViewModels. ViewModelProviders.of(this) is deprecated.
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         fragmentSharedModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
         pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
@@ -135,8 +136,8 @@ public class ExpenseActivity extends BaseActivity implements
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
 
-        // Create ExpTabPagerAdapter that have GeneralFragment and ServiceFragment created as well
-        // in the background, trasferring params to each fragment and return the adapter.
+        // Create ExpTabPagerAdapter that containts GeneralFragment and ServiceFragment in the
+        // background, trasferring params to each fragment and return the adapter.
         tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
 
@@ -283,8 +284,9 @@ public class ExpenseActivity extends BaseActivity implements
     }
 
 
-    // Animate TabLayout and the tap-syned viewpager sequentially, then as the animation completes,
-    // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame.
+    // Animate TabLayout and the tap-syned viewpager sequentially. As the animation completes,
+    // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
+    // start LocationTask.
     private void animSlideTabLayout(Context context) {
         float toolbarHeight = getActionbarHeight();
         float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
@@ -294,7 +296,6 @@ public class ExpenseActivity extends BaseActivity implements
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", tabEndValue);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(1000);
-
         animSet.play(slideTab).before(slideViewPager);
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
