@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -39,6 +40,7 @@ import com.silverback.carman2.models.LocationViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.FavoritePriceTask;
+import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationListTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -67,11 +69,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private OpinetViewModel opinetViewModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
+    private LocationTask locationTask;
     private StationListTask stnListTask;
     private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
     private DecimalFormat df;
     private NumberPadFragment numPad;
+    private Location mPrevLocation;
 
     // UIs
     private View localView;
@@ -90,7 +94,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private String date;
     private String nickname;
     private String userId;
-    private boolean isCommentUploaded;
     private String geoStnName, geoStnId;
     private long geoTime;
 
@@ -132,7 +135,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
-        locationModel = new ViewModelProvider(getActivity()).get(LocationViewModel.class);
+        locationModel = ((ExpenseActivity)getActivity()).getLocationViewModel();
         stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
         // Entity to retrieve list of favorite station to compare with a fetched current station
@@ -233,7 +236,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
         stnProgbar.setVisibility(View.VISIBLE);
 
-        // Attach event handlers
+        // Attach the event listeners
         etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
         tvOdometer.setOnClickListener(this);
         tvGasPaid.setOnClickListener(this);
@@ -241,6 +244,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvExtraPaid.setOnClickListener(this);
         btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
         btnStnFavorite.setOnClickListener(view -> addGasFavorite());
+        imgRefresh.setOnClickListener(view -> {
+            locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+            stnProgbar.setVisibility(View.VISIBLE);
+            imgRefresh.setVisibility(View.GONE);
+        });
 
 
         // Manager the comment and the rating bar which should be allowed to make as far as the
@@ -263,18 +271,24 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // In case the activity and this fragment get started by tabbing the geofence notification,
         // the pendingintent passes the name, id, time.
-        if(isGeofenceIntent && category == Constants.GAS) {
-            tvStnName.setText(geoStnName);
-            stnId = geoStnId;
-            isFavoriteGas = true;
+        if(isGeofenceIntent) {
+            if(category == Constants.GAS) {
+                tvStnName.setText(geoStnName);
+                stnId = geoStnId;
+                isFavoriteGas = true;
 
-            // Hanldinthe UIs
-            btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            stnProgbar.setVisibility(View.GONE);
-            btnChangeDate.setVisibility(View.GONE);
+                // Hanldinthe UIs
+                btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                stnProgbar.setVisibility(View.GONE);
+                btnChangeDate.setVisibility(View.GONE);
 
-            // Task to fetch the gas price of a station with the station ID.
-            favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, false);
+                // Task to fetch the gas price of a station with the station ID.
+                favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, false);
+
+            } else if(category == Constants.SVC) {
+                stnProgbar.setVisibility(View.GONE);
+                imgRefresh.setVisibility(View.VISIBLE);
+            }
         }
 
         return localView;
@@ -297,12 +311,19 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         });
 
         // Attach an observer to fetch a current location from LocationTask, then initiate
-        // StationListTask based on the value unless the fragment is initiated by the geo noti.
+        // StationListTask based on the value unless the parent activity gets started by the geo noti.
         // BTW, the location task is initiated in the parent activity.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             // Exclude the case that the fragment gets started by GeofenceIntent
-            if(!isGeofenceIntent) {
+            if(isGeofenceIntent) return;
+
+            // Fetch the current station only if the current location is out of the update distance.
+            if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                 stnListTask = ThreadManager.startStationListTask(stnListModel, location, defaultParams);
+                mPrevLocation = location;
+            } else {
+                stnProgbar.setVisibility(View.GONE);
+                imgRefresh.setVisibility(View.VISIBLE);
             }
         });
 
@@ -362,6 +383,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onPause() {
         super.onPause();
+        if(locationTask != null) locationTask = null;
         if(favPriceTask != null) favPriceTask = null;
         if(stnListTask != null) stnListTask = null;
     }
@@ -542,13 +564,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 commentData.put("comments", etGasComment.getText().toString());
                 commentData.put("rating", ratingBar.getRating());
 
-                firestore.collection("gas_eval").document(stnId).collection("comments")
-                        .document(userId)
-                        .set(commentData)
-                        .addOnCompleteListener(task -> {
+                firestore.collection("gas_eval").document(stnId).collection("comments").document(userId)
+                        .set(commentData).addOnCompleteListener(task -> {
                             if(task.isSuccessful()) {
                                 log.e("Commments successfully uploaded");
-                                isCommentUploaded = true;
                             } else {
                                 log.e("Comments upload failed: %s", task.getException());
                             }

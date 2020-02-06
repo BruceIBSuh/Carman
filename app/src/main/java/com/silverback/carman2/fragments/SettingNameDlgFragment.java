@@ -147,7 +147,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     public void onDialogClosed(boolean positiveResult) {
         if(positiveResult) {
             log.i("onDialogClosed");
-            //mSettings.edit().putString(Constants.USER_NAME, etName.getText().toString()).apply();
+            mSettings.edit().putString(Constants.USER_NAME, etName.getText().toString()).apply();
             namePreference.callChangeListener(newName);
             // Delete the previous username from Firestore
             if(TextUtils.isEmpty(currentName) || currentName.equals(newName)) return;

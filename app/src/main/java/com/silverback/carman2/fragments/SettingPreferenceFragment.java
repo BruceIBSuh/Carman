@@ -173,7 +173,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
-        cropImagePreference = findPreference("pref_edit_image");
+        cropImagePreference = findPreference(Constants.IMAGES);
         cropImagePreference.setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
@@ -187,7 +187,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
         // Set the circle image to the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
-        String imageUri = mSettings.getString("croppedImageUri", null);
+        /*
+        String imageUri = mSettings.getString(Constants.FILE_IMAGES, null);
         if(!TextUtils.isEmpty(imageUri)) {
             try {
                 EditImageHelper cropHelper = new EditImageHelper(getContext());
@@ -197,6 +198,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
                 log.e("IOException: %s", e.getMessage());
             }
         }
+         */
     }
 
     // Preferrence.OnDisplayPreferenceDialogListener is implemented by the following callback which

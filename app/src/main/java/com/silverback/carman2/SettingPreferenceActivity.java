@@ -3,6 +3,8 @@ package com.silverback.carman2;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -11,6 +13,7 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -41,10 +44,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * This activity contains PreferenceFragmentCompat which is a special fragment to persist values
+ * of preferences in SharedPreferences. Any value that has changed will be back to MainActivty
+ * b/c this activity has been started by startActivityForResult() in MainActivity.
+ *
+ * CropImageDialogFragment is to select which media to use out of Gallery or Camera, the result of
+ * which returns by the attached listener.
+ */
 public class SettingPreferenceActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         CropImageDialogFragment.OnSelectImageMediumListener,
@@ -64,16 +75,17 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private OpinetViewModel priceModel;
     private SettingPreferenceFragment settingFragment;
     private GasPriceTask gasPriceTask;
-    private String distCode;
-    private String username;
-    private String fuelCode;
-    private String radius;
 
     // UIs
     private FrameLayout frameLayout;
 
     // Fields
     private boolean isDistrictReset;
+    private String distCode;
+    private String userName;
+    private String fuelCode;
+    private String radius;
+    private String uriStringImage;
     private Uri downloadUserImageUri;
 
 
@@ -116,6 +128,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onResume(){
         super.onResume();
+        String imageUri = mSettings.getString(Constants.FILE_IMAGES, null);
+        Drawable drawable = setUserImageToIcon(imageUri);
+        settingFragment.getCropImagePreference().setIcon(drawable);
+
         mSettings.registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -142,9 +158,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(fragment instanceof SettingPreferenceFragment) {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("isDistrictReset", isDistrictReset);
-            resultIntent.putExtra("username", username);
+            resultIntent.putExtra("userName", userName);
             resultIntent.putExtra("fuelCode", fuelCode);
             resultIntent.putExtra("radius", radius);
+            resultIntent.putExtra("userImage", uriStringImage);
             setResult(Activity.RESULT_OK, resultIntent);
             finish();
             return true;
@@ -194,22 +211,18 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
             case Constants.USER_NAME:
-                log.i("nickname changed: %s", mSettings.getString(key, null));
-                // Change the nickname after verifying it, then upload it to the Firestore.
-                username = mSettings.getString(Constants.USER_NAME, null);
+                userName = mSettings.getString(Constants.USER_NAME, null);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
-                if(username != null) {
+                if(userName != null) {
                     Map<String, Object> data = new HashMap<>();
-                    data.put("user_name", username);
+                    data.put("user_name", userName);
                     uploadUserDataToFirestore(data);
                 }
                 break;
 
             case Constants.VEHICLE:
-                log.i("Auto data changed:");
                 String jsonAutoData = mSettings.getString(Constants.VEHICLE, null);
-
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
@@ -221,12 +234,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case Constants.FUEL:
-                log.i("Fuel: %s", mSettings.getString(Constants.FUEL, null));
                 fuelCode = mSettings.getString(key, null);
                 break;
 
             case Constants.DISTRICT:
-                log.i("District changed");
                 JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
                 if(jsonDistArray != null) {
                     distCode = BaseActivity.getDistrictJSONArray().optString(2);
@@ -241,18 +252,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 log.i("Radius changed");
                 radius = mSettings.getString(key, null);
                 break;
-
-            case Constants.EDIT_IMAGE:
-                log.i("Edit image");
-                break;
-
-
         }
 
 
     }
 
-    // Callback by CropImageDialogFragment.OnSelectImageMediumListener to notify which
+    // Implement the callback of CropImageDialogFragment.OnSelectImageMediumListener to notify which
     // image media to select in the dialog.
     @Override
     public void onSelectImageMedia(int which) {
@@ -274,29 +279,28 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case 1: // Camera
+                // Check if the carmear is available for the device.
+                if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) return;
+
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+                //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
 
                 if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(chooser, REQUEST_CODE_CAMERA);
+                    startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
                 }
                 break;
 
-            case 2: // Delete
-
-                String uriString = mSettings.getString("croppedImageUri", null);
-                log.i("Delete: %s", uriString);
-
-                // BUG: it can't found the file.
+            case 2: // Delete the user image
+                String uriString = mSettings.getString(Constants.FILE_IMAGES, null);
                 if(!TextUtils.isEmpty(uriString)) {
-                    File file = new File(Uri.parse(uriString).getPath());
-                    if(file.exists()) {
-                        log.i("File exists");
-                        mSettings.edit().putString("croppedImageUri", null).apply();
+                    log.i("uriString: %s", uriString);
+                    int delete = getContentResolver().delete(Uri.parse(uriString), null, null);
+                    if(delete != 0) {
+                        settingFragment.getCropImagePreference().setIcon(null);
+                        mSettings.edit().putString(Constants.FILE_IMAGES, null).apply();
+                        uriStringImage = null;
+                        Snackbar.make(frameLayout, "Deleted!", Snackbar.LENGTH_SHORT).show();
                     }
-
-                    settingFragment.getCropImagePreference().setIcon(null);
-                    if(file.delete()) Snackbar.make(frameLayout, "Deleted!", Snackbar.LENGTH_SHORT).show();
                 }
 
                 break;
@@ -304,7 +308,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         }
     }
 
-    // Callback by startActivityForResult defined in OnSelectImageMedia, receiving the uri of
+    // Callback by startActivityForResult() defined in OnSelectImageMedia, receiving the uri of
     // a selected image back from Gallery or Camera with REQUEST_CODE_GALLERY OR REQUEST_CODE_CAMERA,
     // then creating an intent w/ the Uri to instantiate CropImageActivity to edit the image,
     // the result of which is sent to REQUEST_CROP_IMAGE.
@@ -314,73 +318,67 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(resultCode != RESULT_OK) return;
 
         EditImageHelper cropHelper = new EditImageHelper(this);
+        Uri imageUri = null;
         int orientation;
 
         switch(requestCode) {
 
             case REQUEST_CODE_GALLERY:
-                Uri galleryUri = data.getData();
-                if(galleryUri == null) return;
+                //Uri galleryUri = data.getData();
+                imageUri = data.getData();
+                if(imageUri == null) return;
 
-                orientation = cropHelper.getImageOrientation(galleryUri);
-                if(orientation != 0) galleryUri = cropHelper.rotateBitmapUri(galleryUri, orientation);
-
-                log.i("galleryUri: %s", galleryUri);
+                orientation = cropHelper.getImageOrientation(imageUri);
+                if(orientation != 0) imageUri = cropHelper.rotateBitmapUri(imageUri, orientation);
+                log.i("galleryUri: %s", imageUri);
 
                 Intent galleryIntent = new Intent(this, CropImageActivity.class);
-                galleryIntent.setData(galleryUri);
+                galleryIntent.setData(imageUri);
                 startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
 
-                File tmpRotated = new File(galleryUri.getPath());
+                /*
+                File tmpRotated = new File(imageUri.getPath());
                 log.i("tmpRoated file Path: %s", tmpRotated);
                 if(tmpRotated.exists() && tmpRotated.delete()) log.i("Deleted");
-
-
+                */
                 break;
 
             case REQUEST_CODE_CAMERA:
-                Uri cameraUri = data.getData();
-                if(cameraUri == null) return;
+                imageUri = data.getData();
+                if(imageUri == null) return;
 
                 // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
-                orientation = cropHelper.getImageOrientation(cameraUri);
-                if(orientation != 0) cameraUri = cropHelper.rotateBitmapUri(cameraUri, orientation);
+                orientation = cropHelper.getImageOrientation(imageUri);
+                if(orientation != 0) imageUri = cropHelper.rotateBitmapUri(imageUri, orientation);
 
                 Intent cameraIntent = new Intent(this, CropImageActivity.class);
-                cameraIntent.setData(cameraUri);
+                cameraIntent.setData(imageUri);
                 startActivityForResult(cameraIntent, REQUEST_CODE_CROP);
 
                 break;
 
-
+            // Result from CropImageActivity with a cropped image uri attached and set the image to
+            // Preference.setIcon().
             case REQUEST_CODE_CROP:
-
                 final Uri croppedImageUri = data.getData();
                 if(croppedImageUri != null) {
-
                     // Save the image uri in SharedPreferenes.
-                    mSettings.edit().putString("croppedImageUri", croppedImageUri.toString()).apply();
+                    mSettings.edit().putString(Constants.FILE_IMAGES, croppedImageUri.toString()).apply();
+                    // set resultIntent extra to change the user image in MainActivity.
+                    uriStringImage = croppedImageUri.toString();
+
                     // Fetch the uid generated by Firestore and saved in the internal storage.
                     try (FileInputStream fis = openFileInput("userId");
                          BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
                         final String userId = br.readLine();
                         loadUserImageToFirebase(croppedImageUri, userId);
 
                     } catch(IOException e) {
-                        log.e("IOException: %s", e.getMessage());
+                        e.printStackTrace();
                     }
 
-
-                }
-
-                // Create the bitmap based on the Uri which is passed from CropImageActivity.
-                try {
-                    RoundedBitmapDrawable roundedBitmap = cropHelper.drawRoundedBitmap(croppedImageUri);
-                    settingFragment.getCropImagePreference().setIcon(roundedBitmap);
-
-                } catch(IOException e) {
-                    log.e("IOException: %s", e.getMessage());
+                    Drawable drawable = setUserImageToIcon(croppedImageUri.toString());
+                    settingFragment.getCropImagePreference().setIcon(drawable);
                 }
 
                 break;

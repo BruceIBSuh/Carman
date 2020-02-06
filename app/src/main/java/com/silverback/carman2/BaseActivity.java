@@ -7,9 +7,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -19,6 +21,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,6 +40,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.preference.PreferenceManager;
 
 public class BaseActivity extends AppCompatActivity {
@@ -45,15 +50,18 @@ public class BaseActivity extends AppCompatActivity {
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
     // Constants
-    protected static final int REQUEST_PERMISSION_ACCESS_FINE_LOCATION = 1000;
+    protected static final int REQUEST_PERMISSION_LOCATION = 1000;
+    protected static final int REQUEST_PERMISSION_CAMERA = 1001;
 
     // Objects
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
+    protected EditImageHelper editImageHelper;
 
     // Fields
     protected boolean isNetworkConnected;
     protected boolean hasLocationPermission;
+    protected boolean hasCameraPermission;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -162,16 +170,23 @@ public class BaseActivity extends AppCompatActivity {
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
-            log.d("permission still not granted");
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        REQUEST_PERMISSION_ACCESS_FINE_LOCATION);
-            }
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION_LOCATION);
 
-        } else hasLocationPermission = true;
+            } else hasLocationPermission = true;
+
+
+
+        } else if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
+
+            } else hasCameraPermission = true;
+        }
+
 
     }
 
@@ -182,7 +197,7 @@ public class BaseActivity extends AppCompatActivity {
 
         switch (requestCode) {
 
-            case REQUEST_PERMISSION_ACCESS_FINE_LOCATION:
+            case REQUEST_PERMISSION_LOCATION:
                 // When clicking Accept button on the dialog
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     hasLocationPermission = true;
@@ -198,6 +213,18 @@ public class BaseActivity extends AppCompatActivity {
                 }
 
                 break;
+
+            case REQUEST_PERMISSION_CAMERA:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    hasCameraPermission = true;
+                else {
+                    hasCameraPermission = false;
+                    if(!ActivityCompat.shouldShowRequestPermissionRationale(this,
+                            Manifest.permission.CAMERA)) {
+                        log.i("Never Ask Again");
+                    }
+                }
+
 
             default:
                 break;
@@ -239,38 +266,6 @@ public class BaseActivity extends AppCompatActivity {
         return df;
     }
 
-    /*
-    public static Thread runCurrentTime(final Fragment fragment, String format, final TextView view){
-
-        final Calendar calendar = Calendar.getInstance(Locale.getDefault());
-        final SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
-
-        Thread timeThread = new Thread(){
-            @Override
-            public void run() {
-                while (!isInterrupted()) {
-                    fragment.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            calendar.setTimeInMillis(System.currentTimeMillis());
-                            view.setText(sdf.format(calendar.getTime()));
-
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                log.e("InterruptedException: %s", e.getMessage());
-                            }
-                        }
-                    });
-
-                }
-            }
-        };
-
-        return timeThread;
-
-    }
-    */
 
     // Programatically, add titles and icons on the TabLayout, which must be invoked after
     // setupWithViewPager when it is linked to ViewPager.
@@ -407,6 +402,28 @@ public class BaseActivity extends AppCompatActivity {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
+    }
+
+    // Set the user image to the icon of MainActivity Toolbar and SettingPreferenceActivit with the
+    // size based on DP which is converted to px.
+    public Drawable setUserImageToIcon(String uriString) {
+
+        if(TextUtils.isEmpty(uriString)) return null;
+        if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
+
+        // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
+        // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
+        // adding the float, it will be round up to 2.0.
+        final float scale = getResources().getDisplayMetrics().density;
+        int px_x = (int)(Constants.ICON_SIZE * scale + 0.5f);
+        int px_y = (int)(Constants.ICON_SIZE * scale + 0.5f);
+
+        Bitmap resized = editImageHelper.resizeBitmap(this, Uri.parse(uriString), px_x, px_y);
+        RoundedBitmapDrawable rounded = RoundedBitmapDrawableFactory.create(this.getResources(), resized);
+        rounded.setCircular(true);
+
+        return rounded;
+
     }
 
 

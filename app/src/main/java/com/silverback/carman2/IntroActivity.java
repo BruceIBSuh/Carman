@@ -90,7 +90,6 @@ public class IntroActivity extends BaseActivity  {
 
         // Notified of having the district codes(sigun codes) complete, which was running in the
         // background by DistrictCodeTask only during firstInitProcess().
-
         opinetViewModel.distCodeComplete().observe(this, isComplete -> {
             try {
                 if (isComplete) {

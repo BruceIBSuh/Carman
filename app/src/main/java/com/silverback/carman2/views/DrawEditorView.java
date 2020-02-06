@@ -28,6 +28,10 @@ import com.silverback.carman2.utils.EdgeDots;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * This class is a custom view which draws the cropping area in CropImageActivity, managing to resize
+ * the shape of rectangle or circle by the mode the user set(rectangle currently not wokring).
+ */
 public class DrawEditorView extends View {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(DrawEditorView.class);

@@ -26,6 +26,7 @@ public class Constants {
     public static final int MAX_ATTACHED_IMAGE = 6;
     // Board Pagination
     public static final int PAGINATION = 25;
+    public static final int ICON_SIZE = 34;
 
     // File names for FileProvider
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";
@@ -33,11 +34,9 @@ public class Constants {
     public static final String FILE_CACHED_SIGUN_PRICE = "com.silverback.carman2.SIGUN_PRICE";
     public static final String FILE_CACHED_NEAR_STATIONS = "com.silverback.carman2.STN_LIST";
     public static final String FILE_FAVORITE_PRICE = "com.silverback.carman2.FAV_PRICE";
-    //public static final String FILE_CACHED_STATION_PRICE = "stationPrice";
     public static final String FILE_DISTRICT_CODE = "com.silverback.carman2.DIST_CODE";
     public static final String OPINET_LAST_UPDATE = "com.silverback.carman2.UPDATE";
-
-
+    public static final String FILE_IMAGES = "com.silverback.carman2.fileprovider";
 
 
     // SharedPreferences key name, which is the key name of each preference.xml
@@ -47,8 +46,6 @@ public class Constants {
     public static final String AUTO_MODEL = "pref_auto_model";
     public static final String AUTO_TYPE = "pref_auto_type";
     public static final String AUTO_YEAR = "pref_auto_year";
-
-    public static final String EDIT_IMAGE = "pref_edit_image";
 
     public static final String NUMBER = "carman_pref_cb_number";
     public static final String MODEL = "carman_pref_et_model";
@@ -63,7 +60,7 @@ public class Constants {
     public static final String LOCATION_UPDATE = "pref_location_update";
     public static final String FAVORITE = "pref_favorite_list";
     public static final String SERVICE_PERIOD = "carman_pref_ls_service_period";
-    public static final String IMAGE = "carman_pref_change_image";
+    public static final String IMAGES = "carman_pref_profile_image";
     public static final String THEME = "carman_pref_ls_theme";
     public static final String GUIDE = "carman_pref_intro_guide";
     public static final String CoverImageWidth = "com.ibnco.carman.coverimage.width";

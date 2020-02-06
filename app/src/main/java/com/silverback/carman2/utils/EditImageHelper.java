@@ -60,14 +60,13 @@ public class EditImageHelper {
             }
         });
     }
-     */
+    */
 
 
     // Make the cropped image be circular.
     public RoundedBitmapDrawable drawRoundedBitmap(Uri uri) throws IOException {
 
         Bitmap srcBitmap;
-
         if(android.os.Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             // This method was deprecated in API level 29.
             // Loading of images should be performed through ImageDecoder#createSource(ContentResolver, Uri)
@@ -86,8 +85,8 @@ public class EditImageHelper {
     // Rotate Bitmap as appropriate when taken by camera.
     // Use ExifInterface to get meta-data on image taken by camera and Metrix to rotate
     // it vertically if necessary.
-    public int getImageOrientation(Uri cameraUri) {
-        Cursor cursor = mContext.getContentResolver().query(cameraUri,
+    public int getImageOrientation(Uri uri) {
+        Cursor cursor = mContext.getContentResolver().query(uri,
                 new String[] { MediaStore.Images.ImageColumns.ORIENTATION },
                 null, null, null);
 
@@ -106,32 +105,28 @@ public class EditImageHelper {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public Uri rotateBitmapUri(Uri uri, int orientation) {
-
+        Bitmap rotatedBitmap;
+        Matrix matrix = new Matrix();
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
 
         try {
             BitmapFactory.decodeStream(mContext.getContentResolver().openInputStream(uri), null, options);
         } catch(IOException e) {
-            log.e("IOException: %s", e.getMessage());
+            e.printStackTrace();
         }
 
-        log.i("Bitmap Size: %s, %s", options.outWidth, options.outHeight);
-
-
-        Matrix matrix = new Matrix();
         switch(orientation) {
             case 90: matrix.postRotate(90); break;
             case 180: matrix.postRotate(180); break;
             case 270: matrix.postRotate(270); break;
         }
 
-        // Save the rotated image in the cache directory, which will be erased on exiting
-        // programatically in onBackPressed in MainActivity.
+        // Temporarily save the rotated image in the cache directory, which will be deleted on exiting
+        // the app.
         File imagePath = new File(mContext.getCacheDir(), "images/");
         if(!imagePath.exists()) imagePath.mkdir();
         File fRotated = new File(imagePath, "tmpRotated.jpg");
-        Bitmap rotatedBitmap;
 
         // try-resources statement
         try (FileOutputStream fos = new FileOutputStream(fRotated) ){
@@ -140,10 +135,10 @@ public class EditImageHelper {
                     bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
             rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
 
-            return FileProvider.getUriForFile(mContext, "com.silverback.carman2.fileprovider", fRotated);
+            return FileProvider.getUriForFile(mContext, Constants.FILE_IMAGES, fRotated);
 
         } catch(IOException e) {
-            //Log.e(LOG_TAG, "IOException: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return null;
@@ -187,22 +182,8 @@ public class EditImageHelper {
 
     }
 
-    public String encodeBitmapToBase64(Bitmap bitmap) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-        return android.util.Base64.encodeToString(byteArray, android.util.Base64.DEFAULT);
-    }
-
-    public Bitmap decodeBase64ToBitmap(String input) {
-        byte[] decodeBytes = android.util.Base64.decode(input, android.util.Base64.DEFAULT);
-        return BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.length);
-    }
-
-
     // Resize the image by calculating BitmapFactory.Options.inSampleSize.
-    public static Bitmap resizeBitmap(Context context, Uri uri, int reqWidth, int reqHeight) {
+    public Bitmap resizeBitmap(Context context, Uri uri, int reqWidth, int reqHeight) {
 
         try (InputStream is = context.getApplicationContext().getContentResolver().openInputStream(uri)){
             log.i("InputStream: %s", is);
@@ -234,12 +215,25 @@ public class EditImageHelper {
                 return BitmapFactory.decodeStream(in, null, options);
 
             }
-
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
 
         return null;
+    }
+
+    // Convert Bitmap to Base64 which translates bitmaps to String format or vice versa.
+    public String encodeBitmapToBase64(Bitmap bitmap) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+        return android.util.Base64.encodeToString(byteArray, android.util.Base64.DEFAULT);
+    }
+
+    public Bitmap decodeBase64ToBitmap(String input) {
+        byte[] decodeBytes = android.util.Base64.decode(input, android.util.Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.length);
     }
 
 }

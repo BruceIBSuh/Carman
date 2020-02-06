@@ -100,7 +100,7 @@
             app:key="notification" />
         <Preference
             app:title="@string/pref_app_coverimage"
-            app:key="pref_edit_image" />
+            app:key="carman_pref_profile_image" />
 
     </PreferenceCategory>
 

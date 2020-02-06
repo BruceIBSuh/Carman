@@ -68,6 +68,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     @Override
     protected void onBindDialogView(View view) {
         super.onBindDialogView(view);
+
         sidoSpinner = view.findViewById(R.id.spinner_sido);
         sigunSpinner = view.findViewById(R.id.spinner_sigun);
         sidoSpinner.setOnItemSelectedListener(this);

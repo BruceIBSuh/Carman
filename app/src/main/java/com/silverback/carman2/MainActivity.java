@@ -2,7 +2,9 @@ package com.silverback.carman2;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -35,6 +37,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     // Objects
     private GeneralFragment generalFragment;
     //private ActionBarDrawerToggle drawerToggle;
+    // Fields
+    private Drawable appbarIcon;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -46,14 +50,20 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
         String title = mSettings.getString(Constants.USER_NAME, null);
+        getSupportActionBar().setHomeButtonEnabled(false);
         if(title != null) getSupportActionBar().setTitle(title);
+
+        // Get the user image uri, if any, from SharedPreferences
+        String userimgUri = mSettings.getString(Constants.FILE_IMAGES, null);
+        appbarIcon = setUserImageToIcon(userimgUri);
+        getSupportActionBar().setIcon(appbarIcon);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);
         */
 
-        // Get the default value of fuel, searching radius, and listing order from BaseActivity
+        // Get the default value of fuel, searching radius, and listing order from BaseActivityR.drawable.logo_e1g
         // and set it to be bundled to pass it to GeneralFragment
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
@@ -72,10 +82,11 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         //checkPermissions();
     }
 
-    // startActivityForResult() have this callback invoked by getting an intent that contains new
+    // startActivityForResult() has this callback invoked by getting an intent that contains new
     // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
     // and PriceViewPager should be updated with a new district, both of which have been reset
     // in SettingPreferenceActivity.
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -83,16 +94,22 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(requestCode != REQ_SETTING || resultCode != RESULT_OK)  return;
 
         boolean isDistrictReset = intent.getBooleanExtra("isDistrictReset", false);
-        String username = intent.getStringExtra("username");
+        String userName = intent.getStringExtra("userName");
         String fuelCode = intent.getStringExtra("fuelCode");
         String radius = intent.getStringExtra("radius");
+        String uriImage = intent.getStringExtra("userImage");
 
-        // Reset the username in the toolbar if the name has been reset in SettingPreferenceActivity.
-        if(username != null && getSupportActionBar() != null) getSupportActionBar().setTitle(username);
+        // Must make the null check, not String.isEmpty() because the blank name should be included.
+        if(userName != null) getSupportActionBar().setTitle(userName);
+        if(uriImage != null) {
+            Drawable newIcon = setUserImageToIcon(uriImage);
+            getSupportActionBar().setIcon(newIcon);
+        } else getSupportActionBar().setIcon(appbarIcon);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
         if(generalFragment != null) generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
+
 
     }
     /*
@@ -116,6 +133,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         getMenuInflater().inflate(R.menu.menu_options_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -181,9 +199,12 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
+
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+
 
 
 }

@@ -2,6 +2,7 @@ package com.silverback.carman2;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.widget.ImageView;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.DrawEditorView;
 
 import java.io.BufferedOutputStream;
@@ -27,18 +29,23 @@ import java.util.Locale;
 
 import static androidx.core.content.FileProvider.getUriForFile;
 
+
+/**
+ * This activity is an image editor that may crop an specific area of images by the shape of circle
+ * or rectangle(not working now). DrawEditorView makes a drawing of the shape to crop. The cropped
+ * image
+ */
 public class CropImageActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(CropImageActivity.class);
 
     // Objects
     private Uri mUri;
+    //private EditImageHelper editImage;
     private DrawEditorView drawView;
 
     // UIs
-    private Toolbar cropImageToolbar;
     private ImageView mImageView;
-    private Button btnConfirm;
 
 
     @Override
@@ -46,13 +53,14 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_crop_image);
 
-        cropImageToolbar = findViewById(R.id.toolbar_crop_Image);
+        Toolbar cropImageToolbar = findViewById(R.id.toolbar_crop_Image);
         setSupportActionBar(cropImageToolbar);
 
         if(getIntent() != null) mUri = getIntent().getData();
 
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        //EditImageHelper editImage = new EditImageHelper(this);
 
         mImageView = findViewById(R.id.img_userpic);
         drawView = findViewById(R.id.view_custom_drawEditorView);
@@ -74,39 +82,37 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    // Save the cropped image
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onClick(View v) {
 
         switch(v.getId()) {
-
             case R.id.btn_editor_confirm:
                 // Get the cropped image from DrawView.getCroppedBitmap
                 Bitmap croppedBitmap = drawView.getCroppedBitmap();
                 if(croppedBitmap == null) return;
 
                 // Save the cropped image in the cache directory, which is removed on exiting the app.
-                File imagePath = new File(getCacheDir(), "images/");
+                File imagePath = new File(getFilesDir(), "images/");
                 if(!imagePath.exists()) imagePath.mkdir();
 
                 SimpleDateFormat sdf = new SimpleDateFormat("hhmmss", Locale.US);
                 String filename = sdf.format(Calendar.getInstance().getTimeInMillis());
 
                 File fCropImage = new File(imagePath, filename + ".jpg");
-                if(fCropImage.exists()) {
-                    fCropImage.delete();
-                }
+                if(fCropImage.exists()) fCropImage.delete();
 
                 try(FileOutputStream fos = new FileOutputStream(fCropImage);
                     BufferedOutputStream bos = new BufferedOutputStream(fos)) {
                     croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
 
                 } catch(IOException e) {
-                    //Log.e(LOG_TAG, "IOException: " + e.getMessage());
+                    e.printStackTrace();
 
                 } finally {
-
-                    Uri cropUri = getUriForFile(this, "com.silverback.carman2.fileprovider", fCropImage);
+                    // FileProvider
+                    Uri cropUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, fCropImage);
 
                     Intent resultIntent = new Intent();
                     resultIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -115,7 +121,6 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
 
                     finish();
                 }
-
 
                 break;
 

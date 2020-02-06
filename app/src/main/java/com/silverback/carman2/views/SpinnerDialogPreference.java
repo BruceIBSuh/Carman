@@ -44,9 +44,7 @@ public class SpinnerDialogPreference extends DialogPreference implements Prefere
         getAttributes(context, attrs);
     }
 
-
     private void getAttributes(Context context, AttributeSet attrs) {
-
         setDialogLayoutResource(R.layout.dialog_setting_spinner);
         setOnPreferenceChangeListener(this);
         setPositiveButtonText("CONFIRM");

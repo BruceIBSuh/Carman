@@ -74,7 +74,7 @@ public class ServiceManagerFragment extends Fragment implements
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentSharedModel;
-    private PagerAdapterViewModel adapterModel;
+    private PagerAdapterViewModel pagerAdapterModel;
     private LocationViewModel locationModel;
     private ServiceCenterViewModel svcCenterModel;
     private ServiceCenterTask serviceCenterTask;
@@ -91,7 +91,6 @@ public class ServiceManagerFragment extends Fragment implements
     private String svcCompany;
 
     // UIs
-
     private RelativeLayout relativeLayout;
     private RecyclerView recyclerServiceItems;
     private ProgressBar progbar;
@@ -129,8 +128,7 @@ public class ServiceManagerFragment extends Fragment implements
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action and extras for the geofance data.
         if(getActivity().getIntent().getAction() != null) {
-            String action = getActivity().getIntent().getAction();
-            if(action.equals(Constants.NOTI_GEOFENCE)) {
+            if(getActivity().getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
                 isGeofenceIntent = true;
                 geoSvcName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
                 //geoSvcId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
@@ -153,7 +151,7 @@ public class ServiceManagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
 
         fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
-        adapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
+        pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
 
@@ -197,14 +195,11 @@ public class ServiceManagerFragment extends Fragment implements
             public void notifyAddGeofenceCompleted(int placeholder) {
                 isSvcFavorite = true;
                 Snackbar.make(relativeLayout, R.string.svc_msg_add_favorite, Snackbar.LENGTH_SHORT).show();
-
-                // Add a new geofence to Geofence list saved in SharedPreferences
-                // as type of JSONString in order to reload in GeofenceResetService when rebooting.
             }
             @Override
             public void notifyRemoveGeofenceCompleted(int placeholder) {
                 isSvcFavorite = false;
-                Snackbar.make(relativeLayout, "Successfully removed", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(relativeLayout, R.string.svc_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
             }
             @Override
             public void notifyAddGeofenceFailed() {
@@ -280,7 +275,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Notified of the service items by TabPagerTask, ServiceItemRunnable of which converts
         // JSONString to JSONArray in backgorund,
-        adapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
+        pagerAdapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
             if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
@@ -460,20 +455,6 @@ public class ServiceManagerFragment extends Fragment implements
         return -1;
     }
 
-    // Query Favorite with the fetched station name or station id to tell whether the station
-    // has registered with Favorite, and the result is notified as a LiveData.
-    private void checkSvcFavorite(String name, int category) {
-        mDB.favoriteModel().findFavoriteSvcName(name, category).observe(this, favorite -> {
-            if (TextUtils.isEmpty(favorite)) {
-                isSvcFavorite = false;
-                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
-            } else {
-                isSvcFavorite = true;
-                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            }
-        });
-    }
-
     // Register the service center with the favorite list and the geofence.
     @SuppressWarnings("ConstantConditions")
     private void addServiceFavorite() {
@@ -597,17 +578,21 @@ public class ServiceManagerFragment extends Fragment implements
     private boolean doEmptyCheck() {
 
         if(TextUtils.isEmpty(etServiceName.getText())) {
-            String msg = getString(R.string.toast_stn_name);
+            String msg = getString(R.string.svc_snackbar_stnname);
             Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
             etServiceName.requestFocus();
             return false;
         }
 
         if(TextUtils.isEmpty(tvMileage.getText())) {
-            String msg = getString(R.string.toast_mileage);
-            Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+            Snackbar.make(relativeLayout, R.string.svc_snackbar_mileage, Snackbar.LENGTH_SHORT).show();
             tvMileage.requestFocus();
             return false;
+        }
+
+        if(tvTotalCost.getText().toString().equals("0")) {
+            Snackbar.make(relativeLayout, R.string.svc_snackbar_cost, Snackbar.LENGTH_SHORT).show();
+
         }
 
         return true;

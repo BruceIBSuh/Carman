@@ -90,6 +90,7 @@ public class ExpensePagerFragment extends Fragment {
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
         fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
+            log.i("target fragment: %s", fragment);
             currentFragment = fragment;
             if(getArguments() != null) numPage = getArguments().getInt("page");
 

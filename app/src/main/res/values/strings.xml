@@ -118,9 +118,11 @@
     <string name="svc_label_cost">소요 비용</string>
     <string name="svc_label_info">추가 정보</string>
     <string name="svc_btn_modify">수정</string>
-    <string name="toast_stn_name">정비 업체명을 입력해 주세요</string>
-    <string name="toast_mileage">누적 운행거리를 입력해 주세요</string>
+    <string name="svc_snackbar_stnname">정비 업체명을 입력해 주세요</string>
+    <string name="svc_snackbar_mileage">누적 운행거리를 입력해 주세요</string>
+    <string name="svc_snackbar_cost">정비/점검 내역이 입력되지 않았습니다</string>
     <string name="svc_snackbar_alert_remove_favorite">즐겨찾는 서비스센터에서 제외합니다</string>
+    <string name="svc_snackbar_favorite_removed">즐겨찾는 서비스센터에서 제외되었습니다</string>
     <string name="svc_msg_add_favorite">즐겨찾는 서비스센터에 추가되었습니다</string>
     <string name="service_dialog_label_memo">메 모:</string>
     <string name="svc_msg_empty_name">서비스센터 이름을 입력해 주세요</string>
