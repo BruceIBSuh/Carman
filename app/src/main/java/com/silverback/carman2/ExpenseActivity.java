@@ -4,7 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
@@ -43,7 +43,7 @@ import com.silverback.carman2.views.ExpenseViewPager;
  * may extend to multi pages at a later time.
  *
  * Considerable components and resources to load at the same time may cause the top viewpager animation
- * to be slow such that it is preferable to load sequentially. TabPagerTask is intiated first to
+ * to be slow such that it is preferable to load sequentially. ExpenseTabPagerTask is intiated first to
  * intantiate ExpTabPagerAdapter which creates the fragments to hold. On completing the task, the
  * tab-snyced viewpager is set up with the adapter and synced with the tab. Then, create the top
  * viewpager and the adapter to have the recent expenses and start animating the tab and the viewpager
@@ -92,7 +92,7 @@ public class ExpenseActivity extends BaseActivity implements
     // Fields
     private int position = 0;
     private int category;
-    private boolean isTabVisible = false;
+    //private boolean isTabVisible = false;
     private String pageTitle;
     private boolean isGeofencing;
 
@@ -138,7 +138,7 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Create ExpTabPagerAdapter that containts GeneralFragment and ServiceFragment in the
         // background, trasferring params to each fragment and return the adapter.
-        tabPagerTask = ThreadManager.startTabPagerTask(this, getSupportFragmentManager(), pagerModel,
+        tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
 
         //
@@ -156,10 +156,14 @@ public class ExpenseActivity extends BaseActivity implements
             recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
             addTabIconAndTitle(this, expTabLayout);
-            animSlideTabLayout(this);
+            animSlideTabLayout();
 
 
         });
+
+        // On finishing ExpenseTabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
+        // attach it in the top FrameLayout.
+        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override
@@ -191,11 +195,12 @@ public class ExpenseActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
-                finish();
+                if(isGeofencing) startActivity(new Intent(this, MainActivity.class));
+                else finish();
+
                 return true;
 
             case MENU_ITEM_ID:
-                log.i("current position: %s", position);
                 Fragment fragment = tabPagerAdapter.getItem(position);
                 boolean isSaved = false;
 
@@ -287,20 +292,19 @@ public class ExpenseActivity extends BaseActivity implements
     // Animate TabLayout and the tap-syned viewpager sequentially. As the animation completes,
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.
-    private void animSlideTabLayout(Context context) {
+    private void animSlideTabLayout() {
         float toolbarHeight = getActionbarHeight();
-        float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
 
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", tabEndValue);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", tabEndValue);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(1000);
-        animSet.play(slideTab).before(slideViewPager);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", toolbarHeight);
+        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
+        slideTab.setDuration(1500);
+        slideViewPager.setDuration(0);
+        animSet.play(slideViewPager).before(slideTab);
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
-                isTabVisible = !isTabVisible;
-
+                super.onAnimationEnd(animator);
+                //isTabVisible = !isTabVisible;
                 expensePager.setAdapter(recentPagerAdapter);
                 expensePager.setCurrentItem(0);
                 topFrame.removeAllViews();
@@ -311,9 +315,7 @@ public class ExpenseActivity extends BaseActivity implements
                 // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
                 if(isGeofencing && category == 2) tabPager.setCurrentItem(category - 1);
 
-                // On finishing TabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
-                // attach it in the top FrameLayout.
-                locationTask = ThreadManager.fetchLocationTask(context, locationModel);
+
 
             }
         });

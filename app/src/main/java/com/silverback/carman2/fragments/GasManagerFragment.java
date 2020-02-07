@@ -112,7 +112,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Argument(s) from the parent activity which TabPagerTask has set to notify the defaults.
+        // Argument(s) from the parent activity which ExpenseTabPagerTask has set to notify the defaults.
         if(getArguments() != null) {
             defaultParams = getArguments().getStringArray("defaultParams");
             userId = getArguments().getString("userId");

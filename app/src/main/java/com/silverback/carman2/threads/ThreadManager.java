@@ -97,7 +97,7 @@ public class ThreadManager {
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final Queue<FavoritePriceTask> mFavoritePriceTaskQueue;
-    private final Queue<TabPagerTask> mTabPagerTaskQueue;
+    private final Queue<ExpenseTabPagerTask> mExpenseTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
@@ -129,7 +129,7 @@ public class ThreadManager {
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
-        mTabPagerTaskQueue = new LinkedBlockingQueue<>();
+        mExpenseTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
@@ -304,23 +304,23 @@ public class ThreadManager {
     }
 
 
-    public static TabPagerTask startTabPagerTask(Context context, FragmentManager fragmentManager,
-            PagerAdapterViewModel model, String[] defaults, String jsonDistrict, String jsonSvcItem){
+    public static ExpenseTabPagerTask startExpenseTabPagerTask(
+            Context context, FragmentManager fragmentManager, PagerAdapterViewModel model,
+            String[] defaults, String jsonDistrict, String jsonSvcItem){
 
-        TabPagerTask tabPagerTask = sInstance.mTabPagerTaskQueue.poll();
+        ExpenseTabPagerTask expenseTabPagerTask = sInstance.mExpenseTabPagerTaskQueue.poll();
 
-        if(tabPagerTask == null) {
-            tabPagerTask = new TabPagerTask(context);
+        if(expenseTabPagerTask == null) {
+            expenseTabPagerTask = new ExpenseTabPagerTask(context);
         }
 
-        tabPagerTask.initPagerTask(fragmentManager, model, defaults, jsonDistrict, jsonSvcItem);
+        expenseTabPagerTask.initPagerTask(fragmentManager, model, defaults, jsonDistrict, jsonSvcItem);
 
-        sInstance.mDecodeThreadPool.execute(tabPagerTask.getTabPagerRunnable());
-        sInstance.mDecodeThreadPool.execute(tabPagerTask.getServiceItemsRunnable());
+        sInstance.mDecodeThreadPool.execute(expenseTabPagerTask.getTabPagerRunnable());
+        sInstance.mDecodeThreadPool.execute(expenseTabPagerTask.getServiceItemsRunnable());
 
-        return tabPagerTask;
+        return expenseTabPagerTask;
     }
-
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 

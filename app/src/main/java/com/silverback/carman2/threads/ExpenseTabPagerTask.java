@@ -11,14 +11,14 @@ import com.silverback.carman2.models.PagerAdapterViewModel;
 
 import org.json.JSONArray;
 
-public class TabPagerTask extends ThreadTask implements
-        TabPagerRunnable.TabPagerMethods, ServiceItemsRunnable.ServiceItemsMethods {
+public class ExpenseTabPagerTask extends ThreadTask implements
+        ExpenseTabPagerRunnable.TabPagerMethods, ServiceItemsRunnable.ServiceItemsMethods {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(TabPagerTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTabPagerTask.class);
 
     // Objects
     private Context context;
-    private TabPagerRunnable mTabPagerRunnable;
+    private ExpenseTabPagerRunnable mExpenseTabPagerRunnable;
     private ServiceItemsRunnable mServiceItemsRunnable;
     private FragmentManager fragmentManager;
     private PagerAdapterViewModel pagerModel;
@@ -27,9 +27,9 @@ public class TabPagerTask extends ThreadTask implements
     private String jsonSvcItems;
 
     // Constructor
-    TabPagerTask(Context context) {
+    ExpenseTabPagerTask(Context context) {
         super();
-        mTabPagerRunnable = new TabPagerRunnable(context, this);
+        mExpenseTabPagerRunnable = new ExpenseTabPagerRunnable(context, this);
         mServiceItemsRunnable = new ServiceItemsRunnable(this);
     }
 
@@ -44,7 +44,7 @@ public class TabPagerTask extends ThreadTask implements
     }
 
     Runnable getTabPagerRunnable() {
-        return mTabPagerRunnable;
+        return mExpenseTabPagerRunnable;
     }
     Runnable getServiceItemsRunnable() {
         return mServiceItemsRunnable;

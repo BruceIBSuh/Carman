@@ -19,9 +19,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class TabPagerRunnable implements Runnable {
+public class ExpenseTabPagerRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(TabPagerRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTabPagerRunnable.class);
 
     // Objects
     private Context context;
@@ -36,7 +36,7 @@ public class TabPagerRunnable implements Runnable {
     }
 
     // Constructor
-    TabPagerRunnable(Context context, TabPagerMethods task) {
+    ExpenseTabPagerRunnable(Context context, TabPagerMethods task) {
         this.context = context;
         this.task = task;
     }

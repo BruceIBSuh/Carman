@@ -3,6 +3,7 @@ package com.silverback.carman2.models;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -17,8 +18,10 @@ public class PagerAdapterViewModel extends ViewModel {
     private static final LoggingHelper log = LoggingHelperFactory.create(PagerAdapterViewModel.class);
 
     private MutableLiveData<ExpTabPagerAdapter> pagerAdapter;
+
     private MutableLiveData<ExpServiceItemAdapter> serviceAdapter;
     private MutableLiveData<JSONArray> jsonServiceArray;
+
 
     // Should conform to the Java Bean Convention when creating setter and getter.
     public MutableLiveData<ExpTabPagerAdapter> getPagerAdapter() {
@@ -42,4 +45,5 @@ public class PagerAdapterViewModel extends ViewModel {
         if(jsonServiceArray == null) jsonServiceArray = new MutableLiveData<>();
         return jsonServiceArray;
     }
+
 }

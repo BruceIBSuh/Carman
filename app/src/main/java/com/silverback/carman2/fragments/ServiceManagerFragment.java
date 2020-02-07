@@ -273,7 +273,7 @@ public class ServiceManagerFragment extends Fragment implements
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
 
-        // Notified of the service items by TabPagerTask, ServiceItemRunnable of which converts
+        // Notified of the service items by ExpenseTabPagerTask, ServiceItemRunnable of which converts
         // JSONString to JSONArray in backgorund,
         pagerAdapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;

@@ -1,5 +1,7 @@
 package com.silverback.carman2;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -8,7 +10,6 @@ import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -30,10 +31,10 @@ public class BoardActivity extends BaseActivity implements
     // Objects
     private TabLayout boardTabLayout;
     private FloatingActionButton fabWrite;
-    private BoardPagerAdapter pagerAdapter;
+
 
     // Fields
-    private boolean isTabVisible;
+    //private boolean isTabVisible;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -48,8 +49,24 @@ public class BoardActivity extends BaseActivity implements
         boardTabLayout = findViewById(R.id.tab_board);
         fabWrite = findViewById(R.id.fab_write);
 
-        // Add an listener to AppBarLayout
+        // Set Toolbar and its title as AppBar
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(getString(R.string.billboard_title));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
+        boardPager.setAdapter(pagerAdapter);
+        boardTabLayout.setupWithViewPager(boardPager);
+
+        addTabIconAndTitle(this, boardTabLayout);
+        animSlideTabLayout();
+
+        // Add the listeners to the viewpager and AppbarLayout
+        boardPager.addOnPageChangeListener(this);
         appBar.addOnOffsetChangedListener(this);
+
+        // Floating Action Button
+        fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(view -> {
             // Initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
             // automatically invoking startActivityForResult() when the fragment pops up.
@@ -62,20 +79,6 @@ public class BoardActivity extends BaseActivity implements
                     .commit();
 
         });
-
-        // Set Toolbar and its title as AppBar
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(getString(R.string.billboard_title));
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
-        boardPager.setAdapter(pagerAdapter);
-        boardPager.addOnPageChangeListener(this);
-        boardTabLayout.setupWithViewPager(boardPager);
-
-        addTabIconAndTitle(this, boardTabLayout);
-        animSlideTabLayout();
-
     }
 
     @Override
@@ -112,16 +115,11 @@ public class BoardActivity extends BaseActivity implements
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
         float toolbarHeight = getActionbarHeight();
-        float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
-        log.i("tabEndValue: %s", tabEndValue);
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "Y", tabEndValue);
-        //ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frameTop, "translationY", tabEndValue);
-        slideTab.setDuration(1000);
-        //slideViewPager.setDuration(1000);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", toolbarHeight);
+        slideTab.setDuration(1500);
         slideTab.start();
-        //slideViewPager.start();
 
-        isTabVisible = !isTabVisible;
+        //isTabVisible = !isTabVisible;
 
     }
 

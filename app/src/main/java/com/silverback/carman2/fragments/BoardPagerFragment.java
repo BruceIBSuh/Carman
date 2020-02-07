@@ -44,9 +44,8 @@ public class BoardPagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
-    private FirebaseFirestore firestore;
+    //private FirebaseFirestore firestore;
     private BoardPostingAdapter recyclerAdapter;
-    private PaginationHelper paginationHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
 
@@ -57,7 +56,7 @@ public class BoardPagerFragment extends Fragment implements
     private int page;
 
     // Constructor
-    public BoardPagerFragment() {
+    private BoardPagerFragment() {
         // Required empty public constructor
     }
 
@@ -77,7 +76,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getActivity() == null) return;
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
-        firestore = FirebaseFirestore.getInstance();
+        //firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
@@ -85,8 +84,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        final int limit = Constants.PAGINATION;
 
         View localView = inflater.inflate(R.layout.fragment_board_list, container, false);
         pagingProgressBar = localView.findViewById(R.id.progressBar);
@@ -98,7 +95,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // Paginate the recyclerview with the preset limit.
         //final CollectionReference colRef = firestore.collection("board_general");
-        paginationHelper = new PaginationHelper();
+        PaginationHelper paginationHelper = new PaginationHelper();
         paginationHelper.setOnPaginationListener(this);
         recyclerView.addOnScrollListener(paginationHelper);
 
@@ -107,11 +104,11 @@ public class BoardPagerFragment extends Fragment implements
 
         switch(page) {
             case 0: // Recent post
-                paginationHelper.setPostingQuery("timestamp", limit);
+                paginationHelper.setPostingQuery("timestamp", Constants.PAGINATION);
                 break;
 
             case 1: // Popular post
-                paginationHelper.setPostingQuery("cnt_view", limit);
+                paginationHelper.setPostingQuery("cnt_view", Constants.PAGINATION);
                 break;
 
             case 2: // Info n Tips
@@ -130,8 +127,8 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // The following 3 callbacks are invoked by PaginationHelper.OnPaginationListener which
-    // notifies the adapter of the first and the next query result.
+    // Implement the callbacks of PaginationHelper.OnPaginationListener which notifies the adapter
+    // of the first and the next query result.
     @Override
     public void setFirstQuery(QuerySnapshot snapshot) {
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);
