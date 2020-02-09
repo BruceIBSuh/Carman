@@ -127,7 +127,4 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         }
 
     }
-
-
-
 }

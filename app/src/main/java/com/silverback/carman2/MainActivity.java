@@ -53,9 +53,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(title != null) getSupportActionBar().setTitle(title);
 
         // Get the user image uri, if any, from SharedPreferences
-        String userimgUri = mSettings.getString(Constants.FILE_IMAGES, null);
+        String userimgUri = mSettings.getString(Constants.USER_IMAGE, null);
         appbarIcon = setUserImageToIcon(userimgUri);
-        getSupportActionBar().setIcon(appbarIcon);
+        getSupportActionBar().setIcon(null);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
@@ -103,7 +103,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(uriImage != null) {
             Drawable newIcon = setUserImageToIcon(uriImage);
             getSupportActionBar().setIcon(newIcon);
-        } else getSupportActionBar().setIcon(appbarIcon);
+        } else getSupportActionBar().setIcon(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));

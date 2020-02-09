@@ -2,12 +2,10 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
@@ -26,14 +24,11 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-
-import java.io.IOException;
 
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
@@ -79,12 +74,13 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // the fragment, the preference values are notified here as the JSONString and reset the
         // preference summary.
         Preference autoPref = findPreference(Constants.VEHICLE);
-        String autoMaker = mSettings.getString("pref_auto_maker", null);
-        String autoModel = mSettings.getString("pref_auto_model", null);
-        String autoYear = mSettings.getString("pref_auto_year", null);
-        String autoType = mSettings.getString("pref_auto_type", null);
+        String autoMaker = mSettings.getString(Constants.AUTO_MAKER, null);
+        String autoModel = mSettings.getString(Constants.AUTO_MODEL, null);
+        String autoYear = mSettings.getString(Constants.AUTO_YEAR, null);
+        String autoType = mSettings.getString(Constants.AUTO_TYPE, null);
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
-
+        // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
+        // summary simultaneously.
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
                 JSONArray json = new JSONArray(data);
@@ -173,7 +169,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
-        cropImagePreference = findPreference(Constants.IMAGES);
+        cropImagePreference = findPreference(Constants.USER_IMAGE);
         cropImagePreference.setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
@@ -201,10 +197,9 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
          */
     }
 
-    // Preferrence.OnDisplayPreferenceDialogListener is implemented by the following callback which
-    // defines an action to pop up an custom DialogFragment when a preferenece clicks.
+    // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
+    // action to pop up an custom PreferenceDialogFragmnetCompat when a preferenece clicks.
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
-    // getSupportFragmentManager()
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {

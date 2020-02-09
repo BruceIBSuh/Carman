@@ -31,7 +31,7 @@ import static androidx.core.content.FileProvider.getUriForFile;
 
 
 /**
- * This activity is an image editor that may crop an specific area of images by the shape of circle
+ * This activity is an image editor that crops an specific area of images to the shape of circle
  * or rectangle(not working now). DrawEditorView makes a drawing of the shape to crop. The cropped
  * image
  */
@@ -93,7 +93,8 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
                 Bitmap croppedBitmap = drawView.getCroppedBitmap();
                 if(croppedBitmap == null) return;
 
-                // Save the cropped image in the cache directory, which is removed on exiting the app.
+                // Save the cropped image in the internal storage with the path of "/images/fimename",
+                // then return its uri using FileProvder
                 File imagePath = new File(getFilesDir(), "images/");
                 if(!imagePath.exists()) imagePath.mkdir();
 
@@ -111,7 +112,8 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
                     e.printStackTrace();
 
                 } finally {
-                    // FileProvider
+                    // FileProvider which convert the file format to Uri and defines the file path
+                    // in file_path.xml.
                     Uri cropUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, fCropImage);
 
                     Intent resultIntent = new Intent();

@@ -25,6 +25,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+
+/**
+ * This RecyclerView.Adapter is to display posting items of
+ */
 public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapter.BoardItemHolder> {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
@@ -79,13 +83,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         holder.tvCommentCount.setText(String.valueOf(document.getLong("cnt_comment")));
         holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
 
-
         List<String> imgList = (ArrayList<String>)document.get("post_images");
         if(imgList != null && imgList.size() > 0) {
             log.i("imagList: %s", imgList.get(0));
             holder.bindAttachedImage(Uri.parse(imgList.get(0)));
         }
-
 
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {

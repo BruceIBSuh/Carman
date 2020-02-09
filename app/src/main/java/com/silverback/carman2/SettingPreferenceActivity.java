@@ -13,8 +13,6 @@ import android.view.MenuItem;
 import android.widget.FrameLayout;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.FileProvider;
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
@@ -40,11 +38,9 @@ import com.silverback.carman2.utils.EditImageHelper;
 import org.json.JSONArray;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,6 +71,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private OpinetViewModel priceModel;
     private SettingPreferenceFragment settingFragment;
     private GasPriceTask gasPriceTask;
+    private Map<String, Object> uploadData;
 
     // UIs
     private FrameLayout frameLayout;
@@ -85,7 +82,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private String userName;
     private String fuelCode;
     private String radius;
-    private String uriStringImage;
+    private String userImage;
     private Uri downloadUserImageUri;
 
 
@@ -107,6 +104,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+        uploadData = new HashMap<>();
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
@@ -128,7 +126,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onResume(){
         super.onResume();
-        String imageUri = mSettings.getString(Constants.FILE_IMAGES, null);
+
+        String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
         Drawable drawable = setUserImageToIcon(imageUri);
         settingFragment.getCropImagePreference().setIcon(drawable);
 
@@ -155,14 +154,20 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // than SettingPreferenceFragment, just pop this fragment off the back stack, which works
         // like the Back command.
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+
         if(fragment instanceof SettingPreferenceFragment) {
+            // Upload user data to Firebase
+            uploadUserDataToFirebase(uploadData);
+            // Create Intent back to MainActivity which contains extras to notify the activity of
+            // which have been changed.
             Intent resultIntent = new Intent();
             resultIntent.putExtra("isDistrictReset", isDistrictReset);
             resultIntent.putExtra("userName", userName);
             resultIntent.putExtra("fuelCode", fuelCode);
             resultIntent.putExtra("radius", radius);
-            resultIntent.putExtra("userImage", uriStringImage);
+            resultIntent.putExtra("userImage", userImage);
             setResult(Activity.RESULT_OK, resultIntent);
+
             finish();
             return true;
 
@@ -210,14 +215,16 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
+
             case Constants.USER_NAME:
                 userName = mSettings.getString(Constants.USER_NAME, null);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
                 if(userName != null) {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("user_name", userName);
-                    uploadUserDataToFirestore(data);
+                    //Map<String, Object> data = new HashMap<>();
+                    //data.put("user_name", userName);
+                    //uploadUserDataToFirebase(data);
+                    uploadData.put("user_name", userName);
                 }
                 break;
 
@@ -226,15 +233,17 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
-                    Map<String, Object> autoData = new HashMap<>();
-                    autoData.put("auto_data", jsonAutoData);
-                    uploadUserDataToFirestore(autoData);
+                    //Map<String, Object> autoData = new HashMap<>();
+                    //autoData.put("auto_data", jsonAutoData);
+                    //uploadUserDataToFirebase(autoData);
+                    uploadData.put("auto_data", jsonAutoData);
                 }
 
                 break;
 
             case Constants.FUEL:
                 fuelCode = mSettings.getString(key, null);
+                log.i("SharedPreferences: %s", sharedPreferences.getString(key, null));
                 break;
 
             case Constants.DISTRICT:
@@ -251,6 +260,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
             case Constants.SEARCHING_RADIUS:
                 log.i("Radius changed");
                 radius = mSettings.getString(key, null);
+                break;
+
+            case Constants.USER_IMAGE:
+                log.i("user image changed");
+                userImage = mSettings.getString(key, null);
                 break;
         }
 
@@ -291,15 +305,16 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case 2: // Delete the user image
-                String uriString = mSettings.getString(Constants.FILE_IMAGES, null);
+                String uriString = mSettings.getString(Constants.USER_IMAGE, null);
                 if(!TextUtils.isEmpty(uriString)) {
-                    log.i("uriString: %s", uriString);
                     int delete = getContentResolver().delete(Uri.parse(uriString), null, null);
                     if(delete != 0) {
+                        log.i("delete image file: %s", delete);
                         settingFragment.getCropImagePreference().setIcon(null);
-                        mSettings.edit().putString(Constants.FILE_IMAGES, null).apply();
-                        uriStringImage = null;
-                        Snackbar.make(frameLayout, "Deleted!", Snackbar.LENGTH_SHORT).show();
+                        //mSettings.edit().putString(Constants.FILE_IMAGES, null).apply();
+                        mSettings.edit().putString(Constants.USER_IMAGE, null).apply();
+                        userImage = null;
+                        Snackbar.make(frameLayout, getString(R.string.pref_snackbar_image_deleted), Snackbar.LENGTH_SHORT).show();
                     }
                 }
 
@@ -318,7 +333,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(resultCode != RESULT_OK) return;
 
         EditImageHelper cropHelper = new EditImageHelper(this);
-        Uri imageUri = null;
+        Uri imageUri;
         int orientation;
 
         switch(requestCode) {
@@ -357,28 +372,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
                 break;
 
-            // Result from CropImageActivity with a cropped image uri attached and set the image to
-            // Preference.setIcon().
+            // Result from CropImageActivity with a cropped image uri and set the image to
             case REQUEST_CODE_CROP:
                 final Uri croppedImageUri = data.getData();
                 if(croppedImageUri != null) {
-                    // Save the image uri in SharedPreferenes.
-                    mSettings.edit().putString(Constants.FILE_IMAGES, croppedImageUri.toString()).apply();
-                    // set resultIntent extra to change the user image in MainActivity.
-                    uriStringImage = croppedImageUri.toString();
-
-                    // Fetch the uid generated by Firestore and saved in the internal storage.
+                    // Upload the cropped user image to Firestore with the user id fetched
                     try (FileInputStream fis = openFileInput("userId");
                          BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
                         final String userId = br.readLine();
-                        loadUserImageToFirebase(croppedImageUri, userId);
+                        uploadUserImageToFirebase(croppedImageUri, userId);
 
                     } catch(IOException e) {
                         e.printStackTrace();
                     }
 
-                    Drawable drawable = setUserImageToIcon(croppedImageUri.toString());
-                    settingFragment.getCropImagePreference().setIcon(drawable);
+
                 }
 
                 break;
@@ -386,7 +395,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     // Upload the data to Firestore.
-    private void uploadUserDataToFirestore(Map<String, Object> data) {
+    private void uploadUserDataToFirebase(Map<String, Object> data) {
         // Read the user id containing file which is saved in the internal storage.
         try (FileInputStream fis = openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
@@ -403,20 +412,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
 
-    // Upload the edited user image, the uri of which is saved in the internal storage, to the
-    // firebase storage, then move on to get the download url from there.
+    // Upload the cropped user image, the uri of which is saved in the internal storage, to Firebase
+    // storage, then move on to get the download url. The url, in turn, is uploaded to "user" collection
+    // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void loadUserImageToFirebase(Uri uriSource, String userId) {
+    private void uploadUserImageToFirebase(Uri uri, String userId) {
 
         final StorageReference storageRef = storage.getReference();
         final StorageReference userImgRef = storageRef.child("user_pic/" + userId + ".jpg");
 
-        UploadTask uploadTask = userImgRef.putFile(uriSource);
+        // Upload the user image file to Firebase.Storage.
+        UploadTask uploadTask = userImgRef.putFile(uri);
         uploadTask.addOnProgressListener(listener -> log.i("progresslistener")
         ).addOnSuccessListener(taskSnapshot -> log.i("task succeeded")
         ).addOnFailureListener(e -> log.e("Upload failed"));
 
-        // Fetch the download uri of the uploaded image and upload the uri to "users" collection
+        // On completing upload, return the download url which goes to Firebase.Firestore
         uploadTask.continueWithTask(task -> {
             if(!task.isSuccessful()) task.getException();
             return userImgRef.getDownloadUrl();
@@ -429,12 +440,18 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 Map<String, String> uriUserImage = new HashMap<>();
                 uriUserImage.put("user_pic", downloadUserImageUri.toString());
 
-                firestore.collection("users").document(userId)
-                        .set(uriUserImage, SetOptions.merge())
+                firestore.collection("users").document(userId).set(uriUserImage, SetOptions.merge())
                         .addOnCompleteListener(listener -> {
-                            if(listener.isSuccessful()) log.i("upload the image uri to Firestore");
+                            if(listener.isSuccessful()) {
+                                // On compeleting the upload, save the uri in SharedPreferences and
+                                // set the drawable to the preferernce icon.
+                                mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
+                                Drawable drawable = setUserImageToIcon(uri.toString());
+                                settingFragment.getCropImagePreference().setIcon(drawable);
+                            }
                         });
-            } else log.w("No uri fetched");
+
+            } //else log.w("No uri fetched");
         });
     }
 

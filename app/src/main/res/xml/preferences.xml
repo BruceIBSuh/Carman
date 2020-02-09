@@ -7,7 +7,7 @@
         app:key="pref_basic_info" >
 
         <com.silverback.carman2.views.NameDialogPreference
-            app:key="pref_nickname"
+            app:key="carman_pref_nickname"
             app:title="@string/setting_nickname"
             app:dialogTitle="@string/setting_nickname"
             app:positiveButtonText="Confirm"
@@ -15,7 +15,7 @@
 
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingAutoFragment"
-            app:key="pref_auto"
+            app:key="carman_pref_auto"
             app:title="@string/setting_model" />
 
         <ListPreference

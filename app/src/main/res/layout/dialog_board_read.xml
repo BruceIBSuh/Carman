@@ -9,6 +9,142 @@
     android:layout_height="match_parent"
     tools:context=".fragments.BoardReadDlgFragment">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fitsSystemWindows="true"
+            app:contentScrim="?attr/colorPrimary"
+            app:titleEnabled="false"
+            app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed" >
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/board_toolbar_read"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/bgToolbar"
+                android:elevation="2dp"
+                app:titleTextColor="#FFFFFF"
+                app:layout_collapseMode="pin" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="?attr/actionBarSize"
+                android:padding="8dp"
+                android:background="@color/boardTabColor"
+                app:layout_collapseMode="pin">
+
+                <TextView
+                    android:id="@+id/tv_post_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/extraLargeText"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/img_userpic"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    app:layout_constraintStart_toStartOf="@+id/tv_post_title"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
+                    tools:src="@tools:sample/avatars[0]" />
+
+                <TextView
+                    android:id="@+id/tv_username"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="3dp"
+                    android:text="TEST"
+                    android:textSize="@dimen/smallText"
+                    app:layout_constraintStart_toEndOf="@+id/img_userpic"
+                    app:layout_constraintTop_toTopOf="@+id/img_userpic" />
+
+                <ImageView
+                    android:id="@+id/img_compathy"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:src="@android:drawable/btn_star_big_on"
+                    app:layout_constraintBottom_toBottomOf="@+id/tv_username"
+                    app:layout_constraintEnd_toStartOf="@+id/tv_cnt_compathy"
+                    app:layout_constraintTop_toTopOf="@+id/tv_username" />
+
+                <TextView
+                    android:id="@+id/tv_cnt_compathy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="@dimen/extraSmallText"
+                    app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
+                    app:layout_constraintEnd_toStartOf="@+id/img_comment"
+                    app:layout_constraintTop_toTopOf="@+id/img_compathy" />
+
+                <ImageView
+                    android:id="@+id/img_comment"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:contentDescription="@null"
+                    android:src="@android:drawable/ic_btn_speak_now"
+                    app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
+                    app:layout_constraintEnd_toStartOf="@+id/tv_cnt_comment"
+                    app:layout_constraintTop_toTopOf="@+id/img_compathy"
+                    app:layout_constraintVertical_bias="0.100000024" />
+
+                <TextView
+                    android:id="@+id/tv_cnt_comment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:textSize="@dimen/extraSmallText"
+                    app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/img_compathy" />
+
+
+                <TextView
+                    android:id="@+id/tv_autoinfo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="3dp"
+                    android:text="TEST"
+                    android:textSize="@dimen/extraSmallText"
+                    app:layout_constraintBottom_toBottomOf="@+id/img_userpic"
+                    app:layout_constraintStart_toStartOf="@+id/tv_username" />
+
+                <TextView
+                    android:id="@+id/tv_posting_date"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="end"
+                    android:textSize="@dimen/extraSmallText"
+                    app:layout_constraintBottom_toBottomOf="@+id/tv_autoinfo"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tv_autoinfo" />
+
+
+
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!--
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/vg_constraint_top"
         android:layout_width="match_parent"
@@ -16,7 +152,6 @@
         android:background="@color/bgToolbar"
         android:padding="5dp"
         app:layout_insetEdge="top">
-
         <ImageButton
             android:id="@+id/imgbtn_dismiss"
             android:layout_width="wrap_content"
@@ -40,16 +175,19 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
 
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+    -->
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/vg_nestedscrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="80dp"
+        android:layout_marginBottom="30dp"
         android:fillViewport="true"
         android:scrollbars="vertical"
-        app:layout_dodgeInsetEdges="top">
+        app:layout_dodgeInsetEdges="top"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraint_posting"
@@ -57,7 +195,7 @@
             android:layout_height="match_parent"
             android:background="@android:color/background_light"
             tools:context=".fragments.BoardReadDlgFragment">
-
+            <!--
             <TextView
                 android:id="@+id/tv_post_title"
                 android:layout_width="0dp"
@@ -153,7 +291,7 @@
                 app:layout_constraintBottom_toBottomOf="@+id/tv_autoinfo"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/tv_autoinfo" />
-
+            -->
             <View
                 android:id="@+id/view_underline_header"
                 android:layout_width="0dp"
@@ -162,7 +300,7 @@
                 android:background="#C8C8C8"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/img_userpic" />
+                app:layout_constraintTop_toBottomOf="parent" />
 
             <!--
             <TextView
@@ -182,7 +320,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/view_underline_header" />
+                app:layout_constraintTop_toBottomOf="parent" />
             <!--
             <View
                 android:id="@+id/view_add_comment"

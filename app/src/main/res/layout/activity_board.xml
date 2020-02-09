@@ -60,12 +60,21 @@
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <androidx.viewpager.widget.ViewPager
+            android:visibility="gone"
             android:id="@+id/viewpager_board"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
     </androidx.core.widget.NestedScrollView>
 
+    <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
+        android:id="@+id/progbar_board"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true" />
+
+    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_write"
         android:layout_width="wrap_content"
@@ -78,5 +87,6 @@
         app:layout_anchorGravity="right|bottom"
         app:backgroundTint="@color/colorAccent"
         app:rippleColor="@color/colorPrimary" />
+    -->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

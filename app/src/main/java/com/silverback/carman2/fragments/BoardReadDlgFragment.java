@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -53,7 +52,6 @@ import com.silverback.carman2.utils.PaginationHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.w3c.dom.Document;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -75,13 +73,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         PaginationHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
-    // Constants
-    private final int LIMIT = 25;
-
-    // Constants
-    private final int SPANNED_FLAG = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
-    private final int LEADING = 20;
-    private final Source source = Source.CACHE;
 
     // Objects
     private FirebaseFirestore firestore;
@@ -108,7 +99,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private ImageView attachedImage;
 
     // Fields
-    private StringBuilder autoData;
+    private String autoData;
     private String userId, documentId;
     private int cntImages;
     private int cntComment, cntCompathy;
@@ -132,15 +123,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
-            imgUriList = getArguments().getStringArrayList("imageUriList");
+            imgUriList = getArguments().getStringArrayList("uriImgList");
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
             documentId = getArguments().getString("documentId");
             log.i("DocumentID: %s", documentId);
         }
-
-
 
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
         // a margin-formatted spannable string, which, in turn, set the image spans to display
@@ -159,18 +148,20 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // displaying it in the post header.
         if(getActivity() != null) mSettings = ((BoardActivity)getActivity()).getSettings();
         String json = mSettings.getString(Constants.VEHICLE, null);
+        log.i("Auto data as Json: %s", json);
+        if(TextUtils.isEmpty(json)) {
+            autoData = null;
+        } else {
+            try {
+                JSONArray jsonArray = new JSONArray(json);
+                autoData = jsonArray.optString(0) + ", "
+                        + jsonArray.optString(1) + ", "
+                        + jsonArray.optString(2) + ", "
+                        + jsonArray.optString(3);
 
-        try {
-            JSONArray jsonArray = new JSONArray(json);
-            autoData = new StringBuilder();
-
-            // Refactor required
-            autoData.append(jsonArray.get(0)).append(" ")
-                    .append(jsonArray.get(2)).append(" ")
-                    .append(jsonArray.get(3));
-
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
+            } catch (JSONException e) {
+                log.e("JSONException: %s", e.getMessage());
+            }
         }
     }
 
@@ -189,7 +180,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
         ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
         etComment = localView.findViewById(R.id.et_comment);
-        ImageButton btnDismiss = localView.findViewById(R.id.imgbtn_dismiss);
+        //ImageButton btnDismiss = localView.findViewById(R.id.imgbtn_dismiss);
         ImageButton btnSendComment = localView.findViewById(R.id.imgbtn_comment);
         Button btnComment = localView.findViewById(R.id.btn_comment);
         Button btnCompathy = localView.findViewById(R.id.btn_compathy);
@@ -202,7 +193,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
-        tvAutoInfo.setText(autoData.toString());
+        tvAutoInfo.setText(autoData);
         tvDate.setText(getArguments().getString("timestamp"));
         tvCommentCnt.setText(String.valueOf(cntComment));
         tvCompathyCnt.setText(String.valueOf(cntCompathy));
@@ -216,10 +207,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
         PaginationHelper pagingUtil = new PaginationHelper();
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
-        pagingUtil.setCommentQuery("timestamp", documentId, LIMIT);
+        pagingUtil.setCommentQuery("timestamp", documentId, Constants.PAGINATION);
 
         // Event handler for clicking buttons
-        btnDismiss.setOnClickListener(view -> dismiss());
+        //btnDismiss.setOnClickListener(view -> dismiss());
         btnComment.setOnClickListener(view -> {
             if(isCommentVisible) commentLayout.setVisibility(View.INVISIBLE);
             else commentLayout.setVisibility(View.VISIBLE);
@@ -264,7 +255,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
 
         // Rearrange the text by paragraphs
-        createParagraphView(postContent);
+        createContentView(postContent);
 
         // Set the user image
         Uri uriUserPic = Uri.parse(userPic);
@@ -368,7 +359,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         if(bitmapTask != null) bitmapTask = null;
     }
      */
-    private void createParagraphView(String text) {
+
+    // Create ConstraintLayouts
+    private void createContentView(String text) {
         // When an image is attached as the post writes, the line separator is supposed to put in at
         // before and after the image. That's why the regex contains the line separator in order to
         // get the right end position.
@@ -426,7 +419,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Corrdinate the position b/w the last part, no matter what is image or text in the content,
         // and the following recycler view by the patterns.
-
         // No imaage attached.
         if(start == 0) {
             TextView noImageText = new TextView(context);

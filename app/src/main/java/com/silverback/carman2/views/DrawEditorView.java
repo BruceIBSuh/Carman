@@ -23,7 +23,6 @@ import android.widget.Toast;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.EdgeDots;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class DrawEditorView extends View {
     // Constants
     private static final int CROP_MODE_RECTANGLE = 1;
     private static final int CROP_MODE_CIRCLE = 2;
-    private static final int INIT_SIZE = 200; //deault size of EdgeDots
+    private static final int INIT_SIZE = 200; // deault size of EdgeDots
 
     // Objects
     private Context context;
@@ -457,6 +456,61 @@ public class DrawEditorView extends View {
         float dest = (radius * 2) / scale;
 
         return Bitmap.createBitmap(mBitmap, (int)left, (int)top, (int)dest, (int)dest, cropMatrix, false);
+    }
+
+    // Draw the area-indicating dots
+    class EdgeDots {
+        private Bitmap bitmap;
+        private Point point;
+        private int id;
+
+        // Constructor
+        EdgeDots(Context context, int resId, Point point, int id) {
+            //this.context = context;
+            this.id = id;
+            this.point = point;
+            bitmap = BitmapFactory.decodeResource(context.getResources(), resId);
+        }
+
+        int getDotWidth() {
+            return bitmap.getWidth();
+        }
+
+        int getDotHeight() {
+            return bitmap.getHeight();
+        }
+
+        Bitmap getBitmap() {
+            return bitmap;
+        }
+
+        int getX() {
+            return point.x;
+        }
+
+        int getY() {
+            return point.y;
+        }
+
+        int getID() {
+            return id;
+        }
+
+        void setX(int x) {
+            point.x = x;
+        }
+
+        void setY(int y) {
+            point.y = y;
+        }
+
+        void moveX(int x) {
+            point.x = point.x + x;
+        }
+
+        void moveY(int y) {
+            point.y = point.y + y;
+        }
     }
 
 }

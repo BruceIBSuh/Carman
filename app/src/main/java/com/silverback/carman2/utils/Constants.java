@@ -40,12 +40,13 @@ public class Constants {
 
 
     // SharedPreferences key name, which is the key name of each preference.xml
-    public static final String USER_NAME = "pref_nickname";
-    public static final String VEHICLE = "pref_auto";
-    public static final String AUTO_MAKER = "pref_auto_maker";
-    public static final String AUTO_MODEL = "pref_auto_model";
-    public static final String AUTO_TYPE = "pref_auto_type";
-    public static final String AUTO_YEAR = "pref_auto_year";
+    public static final String USER_NAME = "carman_pref_nickname";
+    public static final String USER_IMAGE = "carman_pref_profile_image";
+    public static final String VEHICLE = "carman_pref_auto";
+    public static final String AUTO_MAKER = "carman_pref_auto_maker";
+    public static final String AUTO_MODEL = "carman_pref_auto_model";
+    public static final String AUTO_TYPE = "carman_pref_auto_type";
+    public static final String AUTO_YEAR = "carman_pref_auto_year";
 
     public static final String NUMBER = "carman_pref_cb_number";
     public static final String MODEL = "carman_pref_et_model";
@@ -60,7 +61,7 @@ public class Constants {
     public static final String LOCATION_UPDATE = "pref_location_update";
     public static final String FAVORITE = "pref_favorite_list";
     public static final String SERVICE_PERIOD = "carman_pref_ls_service_period";
-    public static final String IMAGES = "carman_pref_profile_image";
+
     public static final String THEME = "carman_pref_ls_theme";
     public static final String GUIDE = "carman_pref_intro_guide";
     public static final String CoverImageWidth = "com.ibnco.carman.coverimage.width";

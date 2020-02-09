@@ -7,19 +7,18 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
-import com.silverback.carman2.fragments.BoardWriteDlgFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
 
 public class BoardActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
@@ -30,7 +29,10 @@ public class BoardActivity extends BaseActivity implements
 
     // Objects
     private TabLayout boardTabLayout;
+    private ViewPager boardPager;
     private FloatingActionButton fabWrite;
+    private ProgressBar pbBoard;
+
 
 
     // Fields
@@ -40,14 +42,15 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_board_posting);
+        setContentView(R.layout.activity_board);
 
         Toolbar toolbar = findViewById(R.id.board_toolbar);
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);
-        ViewPager boardPager = findViewById(R.id.viewpager_board);
+        boardPager = findViewById(R.id.viewpager_board);
         AppBarLayout appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
-        fabWrite = findViewById(R.id.fab_write);
+        //fabWrite = findViewById(R.id.fab_write);
+        pbBoard = findViewById(R.id.progbar_board);
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
@@ -66,6 +69,7 @@ public class BoardActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
 
         // Floating Action Button
+        /*
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(view -> {
             // Initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
@@ -79,6 +83,7 @@ public class BoardActivity extends BaseActivity implements
                     .commit();
 
         });
+         */
     }
 
     @Override
@@ -104,11 +109,11 @@ public class BoardActivity extends BaseActivity implements
     // ViewPager.OnPageChangeListener invokes the following 3 overriding methods.
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
-
     @Override
     public void onPageSelected(int position) {
         log.i("ViewPager onPageSelected: %s", position);
     }
+
     @Override
     public void onPageScrollStateChanged(int state) {}
 
@@ -116,11 +121,17 @@ public class BoardActivity extends BaseActivity implements
     private void animSlideTabLayout() {
         float toolbarHeight = getActionbarHeight();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", toolbarHeight);
-        slideTab.setDuration(1500);
+        slideTab.setDuration(1000);
+        slideTab.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                boardPager.setVisibility(View.VISIBLE);
+                pbBoard.setVisibility(View.GONE);
+            }
+        });
         slideTab.start();
-
         //isTabVisible = !isTabVisible;
-
     }
 
     // Referenced by the child fragments

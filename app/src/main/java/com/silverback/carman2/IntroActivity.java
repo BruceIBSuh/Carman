@@ -6,10 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -24,7 +22,6 @@ import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -78,7 +75,7 @@ public class IntroActivity extends BaseActivity  {
         mDB = CarmanDatabase.getDatabaseInstance(this);
         opinetViewModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
-        mProgBar = findViewById(R.id.progbar);
+        mProgBar = findViewById(R.id.pb_intro);
         // On clicking the start button, fork the process into the first-time launching or the regular
         // process depending upon whether the Firebase anonymous authentication is registered.
         Button btnStart = findViewById(R.id.btn_start);

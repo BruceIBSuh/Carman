@@ -298,7 +298,7 @@ public class ExpenseActivity extends BaseActivity implements
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", toolbarHeight);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
-        slideTab.setDuration(1500);
+        slideTab.setDuration(1000);
         slideViewPager.setDuration(0);
         animSet.play(slideViewPager).before(slideTab);
         animSet.addListener(new AnimatorListenerAdapter(){

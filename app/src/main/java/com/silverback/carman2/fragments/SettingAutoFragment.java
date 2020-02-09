@@ -51,10 +51,10 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         yearList = new ArrayList<>();
 
-        autoMaker = findPreference("pref_auto_maker");
-        autoType = findPreference("pref_auto_type");
-        autoModel = findPreference("pref_auto_model");
-        autoYear = findPreference("pref_auto_year");
+        autoMaker = findPreference(Constants.AUTO_MAKER);
+        autoType = findPreference(Constants.AUTO_TYPE);
+        autoModel = findPreference(Constants.AUTO_MODEL);
+        autoYear = findPreference(Constants.AUTO_YEAR);
 
         String[] type = {"Sedan", "SUV", "Mini Bus", "Cargo", "Bus"};
         autoType.setEntries(type);
