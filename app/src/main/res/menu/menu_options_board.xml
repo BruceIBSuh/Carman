@@ -13,4 +13,5 @@
         android:icon="@drawable/ic_board_white"
         android:title="@string/toolbar_board"
         app:showAsAction="ifRoom|withText" />
+
 </menu>
