@@ -27,14 +27,15 @@
             app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed" >
 
             <androidx.appcompat.widget.Toolbar
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                 android:id="@+id/toolbar_board_read"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
                 android:elevation="2dp"
-                app:contentInsetLeft="0dp"
-                app:contentInsetStart="0dp"
-                app:contentInsetStartWithNavigation="0dp"
+                app:contentInsetLeft="8dp"
+                app:contentInsetStart="8dp"
                 app:titleTextColor="#FFFFFF"
                 app:layout_collapseMode="pin" />
 
@@ -85,7 +86,7 @@
                     android:id="@+id/img_compathy"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:contentDescription="@null"
+                    android:contentDescription="@null" 
                     android:src="@drawable/ic_compathy"
                     app:layout_constraintBottom_toBottomOf="@+id/tv_username"
                     app:layout_constraintEnd_toStartOf="@+id/tv_cnt_compathy"
@@ -158,7 +159,7 @@
         android:id="@+id/vg_nestedscrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="40dp"
         android:fillViewport="true"
         android:scrollbars="vertical"
         app:layout_dodgeInsetEdges="top"
@@ -174,7 +175,7 @@
                 android:id="@+id/view_underline_header"
                 android:layout_width="0dp"
                 android:layout_height="2dp"
-                android:background="#FF8000"
+                android:background="#FFFFFF"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"  />
@@ -193,7 +194,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraint_comment"
-        android:visibility="invisible"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -253,9 +254,10 @@
 
         <Button
             android:id="@+id/btn_compathy"
-            android:layout_width="90dp"
+            android:layout_width="wrap_content"
             android:layout_height="30dp"
             android:padding="0dp"
+            android:drawableStart="@android:drawable/ic_menu_search"
             android:text="compathy"
             android:textSize="@dimen/extraSmallText"
             app:layout_constraintEnd_toStartOf="@+id/btn_comment"
@@ -265,9 +267,10 @@
 
         <Button
             android:id="@+id/btn_comment"
-            android:layout_width="90dp"
+            android:layout_width="wrap_content"
             android:layout_height="30dp"
             android:padding="0dp"
+            android:background="@null"
             android:text="comment"
             android:textSize="@dimen/extraSmallText"
             app:layout_constraintEnd_toEndOf="parent"

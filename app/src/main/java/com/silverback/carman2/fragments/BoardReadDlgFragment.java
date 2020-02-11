@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
@@ -37,6 +38,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
@@ -45,9 +47,11 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
@@ -76,10 +80,14 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BoardReadDlgFragment extends DialogFragment implements
-        PaginationHelper.OnPaginationListener, AppBarLayout.OnOffsetChangedListener  {
+public class BoardReadDlgFragment extends DialogFragment implements PaginationHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
+
+    // Constants
+    private static final int STATE_COLLAPSED = 0;
+    private static final int STATE_EXPANDED = 1;
+    private static final int STATE_IDLE = 2;
 
     // Objects
     private FirebaseFirestore firestore;
@@ -98,6 +106,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private Uri uriUserImage;
 
     // UIs
+    private AppBarLayout appbarLayout;
     private ConstraintLayout constraintHeader, constraintPosting;
     private Toolbar toolbar;
     private View underline;
@@ -108,9 +117,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private ImageView attachedImage;
 
     // Fields
+    private String tabTitle;
     private String autoData;
     private String userId, documentId;
     private int cntImages;
+    private int tabPage;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
 
@@ -128,6 +139,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         if(getArguments() != null) {
+            tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
@@ -137,7 +149,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
             documentId = getArguments().getString("documentId");
-            log.i("DocumentID: %s", documentId);
+            log.i("DocumentID: %s, %s", tabPage, documentId);
         }
 
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
@@ -181,7 +193,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         View localView = inflater.inflate(R.layout.dialog_board_read, container, false);
 
-        AppBarLayout appbar = localView.findViewById(R.id.appbar_board_read);
+        appbarLayout = localView.findViewById(R.id.appbar_board_read);
         toolbar = localView.findViewById(R.id.toolbar_board_read);
         constraintHeader = localView.findViewById(R.id.constraint_header);
         constraintPosting = localView.findViewById(R.id.constraint_posting);
@@ -200,9 +212,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         underline = localView.findViewById(R.id.view_underline_header);
         recyclerComment = localView.findViewById(R.id.recycler_comments);
 
-        // Set the Stand-alone toolabr which works in the same way that the action bar in Activity does.
-        // In DialogFragment, onCreateOptionsMenu(), onOptionsItem Seletected() do not work. Instead,
-        // implement the listener on its own to enable options menu.
+        // Set the stand-alone toolabr which works in the same way that the action bar does in most
+        // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
+        // need to manually populate the toolbar with content and actions as folowing.
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener(){
             @Override
             public boolean onMenuItemClick(MenuItem item) {
@@ -213,12 +225,24 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     case R.id.menu_board_read_spam:
                         break;
                 }
+
+
                 return true;
             }
         });
         toolbar.inflateMenu(R.menu.menu_board_read);
-        // Attach the AppbarLayout listener to animate the title and the user image in the toolbar.
-        appbar.addOnOffsetChangedListener(this);
+        tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
+        toolbar.setTitle(tabTitle);
+
+        // Implements the abstract method of AppBarStateChangeListener to be notified of the state
+        // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
+        // scroling state.
+        appbarLayout.addOnOffsetChangedListener(new AppBarStateChangeListener() {
+            @Override
+            public void onStateChanged(AppBarLayout appBarLayout, int state) {
+                setToolbarTitleIcon(state);
+            }
+        });
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
@@ -307,36 +331,32 @@ public class BoardReadDlgFragment extends DialogFragment implements
         return dialog;
     }
 
-    // Implement the callback of AppbarLayout.OnOffsetChangedListener
+
+
+    // Implement the callback of AppbarLayout.OnOffsetChangedListene
+    /*
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-        int headerHeight = constraintHeader.getHeight();
-        int tbHeight = toolbar.getHeight();
+        log.i("onOffsetChanged: %s", verticalOffset);
+        //if(Math.abs(verticalOffset) == constraintHeader.getHeight()) {
 
-        if(Math.abs(verticalOffset) == headerHeight) {
-            toolbar.setTitle(postTitle);
-            toolbar.setSubtitle(userName);
-
-            Glide.with(context).load(uriUserImage).override(tbHeight - 10).circleCrop().into(new CustomTarget<Drawable>(){
-                @Override
-                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                    toolbar.setLogo(resource);
-                    toolbar.setContentInsetStartWithNavigation(0);
-                }
-
-                @Override
-                public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                }
-            });
-
-
-        } else if(verticalOffset == 0){
-            toolbar.setTitle("");
+        // AppBarLayout collapsed
+        if(verticalOffset == 0) {
+            toolbar.setTitle(tabTitle);
             toolbar.setSubtitle("");
             toolbar.setLogo(null);
+
+        // AppBarLayout expanded
+        } else if(Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+            toolbar.setTitle(postTitle);
+
+
+        } else {
+
         }
     }
+    */
+
 
 
     // The following 3 callbacks are invoked by PaginationHelper to query a collection reference
@@ -540,8 +560,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-
-
     // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span
     // for making the leading margin to every single line.
     /*
@@ -625,5 +643,78 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
     }
     */
+
+    // This abstract class notifies the state of the appbarlayout by implementing the listener.
+    // The reason that the listener should be implemented first is that the listener notifies every
+    // scrolling changes which keep the view being invalidated. The abstract class may, in turn,
+    // receive changes and only notifies the specified state to the view.
+    abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
+
+        private int mCurrentState = STATE_IDLE;
+
+        @Override
+        public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+
+            if (verticalOffset == 0) {
+                if (mCurrentState != STATE_EXPANDED) {
+                    onStateChanged(appBarLayout, STATE_EXPANDED);
+                }
+                mCurrentState = STATE_EXPANDED;
+            } else if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+                if (mCurrentState != STATE_COLLAPSED) {
+                    onStateChanged(appBarLayout, STATE_COLLAPSED);
+                }
+                mCurrentState = STATE_COLLAPSED;
+            } else {
+                log.i("vertical offset: %s", verticalOffset);
+                if (mCurrentState != STATE_IDLE) {
+                    onStateChanged(appBarLayout, STATE_IDLE);
+                }
+                mCurrentState = STATE_IDLE;
+            }
+        }
+
+
+        abstract void onStateChanged(AppBarLayout appBarLayout, int state);
+    }
+
+    // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by the
+    // the abstract class of AppBarStateChangeListener.
+    private void setToolbarTitleIcon(int state) {
+
+        int titleId = getResources().getIdentifier("anction_bar_title", "id", "android");
+        log.i("title id:%s", titleId);
+
+        switch(state) {
+            case STATE_COLLAPSED:
+                toolbar.setTitle(postTitle);
+                toolbar.setSubtitle(userName);
+
+                Glide.with(context).load(uriUserImage).override(toolbar.getHeight() - 15).circleCrop()
+                        .into(new CustomTarget<Drawable>(){
+                            @Override
+                            public void onResourceReady(
+                                    @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+
+                                toolbar.setLogo(resource);
+                                toolbar.setContentInsetStartWithNavigation(0);
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {}
+                        });
+                break;
+
+            case STATE_EXPANDED:
+                toolbar.setTitle(tabTitle);
+                toolbar.setSubtitle("");
+                toolbar.setLogo(null);
+                break;
+
+            case STATE_IDLE:
+                break;
+
+        }
+    }
 
 }

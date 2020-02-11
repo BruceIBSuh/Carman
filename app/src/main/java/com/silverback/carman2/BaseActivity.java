@@ -287,7 +287,7 @@ public class BaseActivity extends AppCompatActivity {
         } else if(context instanceof BoardActivity) {
 
             log.i("context: %s", context);
-            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_billboard_title));
+            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
 
         }
 

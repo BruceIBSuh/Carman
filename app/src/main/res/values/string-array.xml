@@ -8,7 +8,7 @@
         <!--<item>@string/tab_setting</item>-->
     </string-array>
 
-    <string-array name="tab_billboard_title">
+    <string-array name="board_tab_title">
         <item>Recent</item>
         <item>Popular</item>
         <item>Info n Tips</item>

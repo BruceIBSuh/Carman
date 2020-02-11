@@ -71,7 +71,7 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(getActivity() == null) return;
+        //if(getActivity() == null) return;
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
         //firestore = FirebaseFirestore.getInstance();
@@ -167,6 +167,7 @@ public class BoardPagerFragment extends Fragment implements
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
+        bundle.putInt("tabPage", page);
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("postTitle", snapshot.getString("post_title"));
