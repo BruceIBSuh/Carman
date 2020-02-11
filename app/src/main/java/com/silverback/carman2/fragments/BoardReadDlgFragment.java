@@ -9,7 +9,13 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.SpannedString;
 import android.text.TextUtils;
+import android.text.style.AbsoluteSizeSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -122,7 +128,9 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
     private String userId, documentId;
     private int cntImages;
     private int tabPage;
+    private int appbarOffset;
     private int cntComment, cntCompathy;
+    private int mCurrentState;
     private boolean isCommentVisible;
 
     public BoardReadDlgFragment() {
@@ -225,8 +233,6 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                     case R.id.menu_board_read_spam:
                         break;
                 }
-
-
                 return true;
             }
         });
@@ -560,8 +566,87 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
     }
 
+
+    // This abstract class notifies the state of the appbarlayout by implementing the listener.
+    // The reason that the listener should be implemented first is that the listener notifies every
+    // scrolling changes which keep the view being invalidated. The abstract class may, in turn,
+    // receive changes and only notifies the specified state to the view.
+    abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
+
+        int mCurrentState = STATE_IDLE;
+
+        @Override
+        public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+
+            if (verticalOffset == 0) {
+                if (mCurrentState != STATE_EXPANDED) {
+                    onStateChanged(appBarLayout, STATE_EXPANDED);
+                }
+                mCurrentState = STATE_EXPANDED;
+            } else if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
+                if (mCurrentState != STATE_COLLAPSED) {
+                    onStateChanged(appBarLayout, STATE_COLLAPSED);
+                }
+                mCurrentState = STATE_COLLAPSED;
+            } else {
+                log.i("vertical offset: %s", verticalOffset);
+                //if (mCurrentState != STATE_IDLE) {
+                if(appbarOffset != verticalOffset) {
+                    appbarOffset = verticalOffset;
+                    onStateChanged(appBarLayout, STATE_IDLE);
+                }
+                mCurrentState = STATE_IDLE;
+            }
+        }
+
+
+        abstract void onStateChanged(AppBarLayout appBarLayout, int state);
+    }
+
+    // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by the
+    // the abstract class of AppBarStateChangeListener.
+    private void setToolbarTitleIcon(int state) {
+
+        SpannableString spannable = new SpannableString(postTitle);
+        int size = Math.abs(appbarOffset) / 6;
+        spannable.setSpan(new AbsoluteSizeSpan(size), 0, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        toolbar.setTitle(spannable);
+
+        switch(state) {
+            case STATE_COLLAPSED:
+                toolbar.setTitle(spannable);
+                toolbar.setSubtitle(userName);
+
+                Glide.with(context).load(uriUserImage).override(toolbar.getHeight() - 15).circleCrop()
+                        .into(new CustomTarget<Drawable>(){
+                            @Override
+                            public void onResourceReady(
+                                    @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                                toolbar.setLogo(resource);
+                                toolbar.setContentInsetStartWithNavigation(0);
+                            }
+
+                            @Override
+                            public void onLoadCleared(@Nullable Drawable placeholder) {}
+                        });
+                break;
+
+            case STATE_EXPANDED:
+                toolbar.setTitle(tabTitle);
+                toolbar.setSubtitle("");
+                toolbar.setLogo(null);
+                break;
+
+            case STATE_IDLE:
+                log.i("STATE_IDLE");
+                break;
+
+        }
+    }
+
+
     // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span
-    // for making the leading margin to every single line.
+    // for making the leading margin to every single line. Alternative solution but not applied here.
     /*
     private SpannableStringBuilder translateParagraphSpan(String text) {
 
@@ -644,77 +729,5 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
     }
     */
 
-    // This abstract class notifies the state of the appbarlayout by implementing the listener.
-    // The reason that the listener should be implemented first is that the listener notifies every
-    // scrolling changes which keep the view being invalidated. The abstract class may, in turn,
-    // receive changes and only notifies the specified state to the view.
-    abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
-
-        private int mCurrentState = STATE_IDLE;
-
-        @Override
-        public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-
-            if (verticalOffset == 0) {
-                if (mCurrentState != STATE_EXPANDED) {
-                    onStateChanged(appBarLayout, STATE_EXPANDED);
-                }
-                mCurrentState = STATE_EXPANDED;
-            } else if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
-                if (mCurrentState != STATE_COLLAPSED) {
-                    onStateChanged(appBarLayout, STATE_COLLAPSED);
-                }
-                mCurrentState = STATE_COLLAPSED;
-            } else {
-                log.i("vertical offset: %s", verticalOffset);
-                if (mCurrentState != STATE_IDLE) {
-                    onStateChanged(appBarLayout, STATE_IDLE);
-                }
-                mCurrentState = STATE_IDLE;
-            }
-        }
-
-
-        abstract void onStateChanged(AppBarLayout appBarLayout, int state);
-    }
-
-    // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by the
-    // the abstract class of AppBarStateChangeListener.
-    private void setToolbarTitleIcon(int state) {
-
-        int titleId = getResources().getIdentifier("anction_bar_title", "id", "android");
-        log.i("title id:%s", titleId);
-
-        switch(state) {
-            case STATE_COLLAPSED:
-                toolbar.setTitle(postTitle);
-                toolbar.setSubtitle(userName);
-
-                Glide.with(context).load(uriUserImage).override(toolbar.getHeight() - 15).circleCrop()
-                        .into(new CustomTarget<Drawable>(){
-                            @Override
-                            public void onResourceReady(
-                                    @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-
-                                toolbar.setLogo(resource);
-                                toolbar.setContentInsetStartWithNavigation(0);
-                            }
-
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {}
-                        });
-                break;
-
-            case STATE_EXPANDED:
-                toolbar.setTitle(tabTitle);
-                toolbar.setSubtitle("");
-                toolbar.setLogo(null);
-                break;
-
-            case STATE_IDLE:
-                break;
-
-        }
-    }
 
 }
