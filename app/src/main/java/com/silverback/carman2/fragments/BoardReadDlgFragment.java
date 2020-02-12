@@ -11,11 +11,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +28,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
@@ -44,7 +40,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
@@ -55,6 +50,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.MetadataChanges;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.google.firebase.firestore.Transaction;
@@ -132,6 +128,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
     private int cntComment, cntCompathy;
     private int mCurrentState;
     private boolean isCommentVisible;
+    private boolean hasCompathy, hasComment;
 
     public BoardReadDlgFragment() {
         // Required empty public constructor
@@ -191,6 +188,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                 log.e("JSONException: %s", e.getMessage());
             }
         }
+
     }
 
 
@@ -211,10 +209,12 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         TextView tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
         ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
+        ImageView imgCompathy = localView.findViewById(R.id.img_compathy);
+        ImageView imgComment = localView.findViewById(R.id.img_comment);
         etComment = localView.findViewById(R.id.et_comment);
-        ImageButton btnSendComment = localView.findViewById(R.id.imgbtn_comment);
-        Button btnComment = localView.findViewById(R.id.btn_comment);
-        Button btnCompathy = localView.findViewById(R.id.btn_compathy);
+        ImageButton btnSendComment = localView.findViewById(R.id.imgbtn_send_comment);
+        ImageButton btnComment = localView.findViewById(R.id.imgbtn_comment);
+        ImageButton btnCompathy = localView.findViewById(R.id.imgbtn_compathy);
         tvCommentCnt = localView.findViewById(R.id.tv_cnt_comment);
         tvCompathyCnt = localView.findViewById(R.id.tv_cnt_compathy);
         underline = localView.findViewById(R.id.view_underline_header);
@@ -268,6 +268,39 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         recyclerComment.addOnScrollListener(pagingUtil);
         pagingUtil.setCommentQuery("timestamp", documentId, Constants.PAGINATION);
 
+
+
+        // Check if the user has done compathy and comment
+        DocumentReference docRef = firestore.collection("board_general").document(documentId);
+        docRef.collection("compathy").document(userId).get()
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        DocumentSnapshot snapshot = task.getResult();
+                        hasCompathy = (snapshot != null && snapshot.exists());
+                    }
+
+                    int imgCompathyRes = (hasCompathy)?R.drawable.img_compathy_selected:R.drawable.img_compathy_unselected;
+                    imgCompathy.setImageResource(imgCompathyRes);
+                });
+
+        docRef.collection("comment").whereEqualTo("user", userId).get()
+                .addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        for(QueryDocumentSnapshot snapshot : task.getResult()) {
+                            if(snapshot != null && snapshot.exists()) {
+                                hasComment = true;
+                                break;
+                            } else hasComment = false;
+                        }
+                    }
+
+                    // TEST CODING BOTH SELECTED IMAGE REQUIRED TO CHANGE
+                    int imgCommentRes = (hasComment)?R.drawable.img_comment_selected:R.drawable.img_comment_selected;
+                    imgComment.setImageResource(imgCommentRes);
+                });
+
+
+
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
         btnComment.setOnClickListener(view -> {
@@ -276,15 +309,15 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
             isCommentVisible = !isCommentVisible;
         });
 
+        // Button to set compathy which increase the compathy number if the user has never picked it up.
         btnCompathy.setOnClickListener(view -> {
-            firestore.collection("board_general").document(documentId)
-                    .update("cnt_compathy", FieldValue.increment(1));
+            setCompathyCount();
         });
 
         // Upload the comment to Firestore, which needs to refactor for filtering text.
         btnSendComment.setOnClickListener(view -> {
             if(TextUtils.isEmpty(etComment.getText())) {
-                Snackbar.make(localView, "Emapty comment", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(localView, "no comment exists", Snackbar.LENGTH_SHORT).show();
                 return;
             }
 
@@ -301,8 +334,8 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         });
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
-        final DocumentReference docRef = firestore.collection("board_general").document(documentId);
-        docRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+        final DocumentReference postRef = firestore.collection("board_general").document(documentId);
+        postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
                 long countComment = snapshot.getLong("cnt_comment");
@@ -473,7 +506,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         // If the content contains images, which means the markup(s) exists in the content, the content
-        // is split into part of text or image and is respectively connected to ConstraintSet.
+        // is split into parts of texts and images and respectively connected to ConstraintSet.
         while(m.find()) {
             String paragraph = text.substring(start, m.start());
             TextView tv = new TextView(context);
@@ -518,8 +551,6 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
         // Corrdinate the position b/w the last part, no matter what is image or text in the content,
         // and the following recycler view by the patterns.
-
-        log.i("start position: %s", start);
         // No imaage attached.
         if(start == 0) {
             TextView noImageText = new TextView(context);
@@ -589,8 +620,6 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                 }
                 mCurrentState = STATE_COLLAPSED;
             } else {
-                log.i("vertical offset: %s", verticalOffset);
-                //if (mCurrentState != STATE_IDLE) {
                 if(appbarOffset != verticalOffset) {
                     appbarOffset = verticalOffset;
                     onStateChanged(appBarLayout, STATE_IDLE);
@@ -643,6 +672,55 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
         }
     }
+
+
+    private void checkCompathy() {
+
+        final DocumentReference docRef = firestore.collection("board_general").document(documentId);
+        final DocumentReference compathyRef = docRef.collection("compathy").document(userId);
+
+        compathyRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                hasCompathy = (snapshot != null && snapshot.exists());
+            }
+        });
+    }
+
+    // Check if the user has already picked a post as favorite doing queries the compathy collection,
+    // documents of which contains user ids
+    @SuppressWarnings("ConstantConditions")
+    private void setCompathyCount() {
+
+        final DocumentReference docRef = firestore.collection("board_general").document(documentId);
+        final DocumentReference compathyRef = docRef.collection("compathy").document(userId);
+
+        compathyRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                if(snapshot != null && snapshot.exists()) {
+                    log.i("Compathethic");
+                    //docRef.update("cnt_compathy", FieldValue.increment(-1));
+                    //compathyRef.delete();
+                    Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+                } else {
+                    log.i("No compathetic");
+                    docRef.update("cnt_compathy", FieldValue.increment(1));
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("timestamp", FieldValue.serverTimestamp());
+                    compathyRef.set(data);
+                }
+            }
+
+        }).addOnSuccessListener(aVoid -> {
+            log.i("isCompathy exists");
+        }).addOnFailureListener(e -> {
+            log.e("isCompathy does not exist: %s", e.getMessage());
+        });
+
+    }
+
+
 
 
     // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span
