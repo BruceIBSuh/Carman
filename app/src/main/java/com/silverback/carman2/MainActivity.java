@@ -53,9 +53,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(title != null) getSupportActionBar().setTitle(title);
 
         // Get the user image uri, if any, from SharedPreferences
-        String userimgUri = mSettings.getString(Constants.USER_IMAGE, null);
-        appbarIcon = setUserImageToIcon(userimgUri);
-        getSupportActionBar().setIcon(null);
+        String userImage = mSettings.getString(Constants.USER_IMAGE, null);
+        appbarIcon = setUserImageToIcon(userImage); //REFACTOR USING GLIDE!!!
+        getSupportActionBar().setIcon(appbarIcon);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);

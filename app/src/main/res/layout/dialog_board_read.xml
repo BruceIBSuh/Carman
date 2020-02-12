@@ -37,6 +37,7 @@
                 app:contentInsetStart="8dp"
                 app:titleMarginStart="16dp"
                 app:titleTextColor="#FFFFFF"
+                app:navigationIcon="?homeAsUpIndicator"
                 app:layout_collapseMode="pin" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -87,6 +88,7 @@
                     android:layout_width="15dp"
                     android:layout_height="15dp"
                     android:layout_marginEnd="8dp"
+                    android:src="@drawable/img_compathy"
                     android:scaleType="fitCenter"
                     android:contentDescription="@null"
                     app:layout_constraintEnd_toStartOf="@+id/tv_cnt_compathy"
@@ -108,8 +110,9 @@
                     android:layout_width="15dp"
                     android:layout_height="15dp"
                     android:layout_marginEnd="8dp"
+                    android:src="@drawable/img_comment"
+                    android:scaleType="fitCenter"
                     android:contentDescription="@null"
-                    android:src="@android:drawable/ic_btn_speak_now"
                     app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
                     app:layout_constraintEnd_toStartOf="@+id/tv_cnt_comment"
                     app:layout_constraintTop_toTopOf="@+id/img_compathy"

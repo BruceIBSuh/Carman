@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -48,12 +47,9 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.MetadataChanges;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
@@ -61,6 +57,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.AttachedBitmapTask;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.utils.PaginationHelper;
 
 import org.json.JSONArray;
@@ -82,7 +79,9 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class BoardReadDlgFragment extends DialogFragment implements PaginationHelper.OnPaginationListener {
+public class BoardReadDlgFragment extends DialogFragment implements
+        View.OnClickListener,
+        PaginationHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -93,11 +92,10 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
     // Objects
     private FirebaseFirestore firestore;
+    private EditImageHelper editImageHelper;
     private Context context;
     private DocumentSnapshot document;
     private BoardCommentAdapter commentAdapter;
-    //private SpannableStringBuilder spannable;
-    //private ImageViewModel imageModel;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     private List<Integer> viewIdList;
@@ -108,15 +106,15 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
     private Uri uriUserImage;
 
     // UIs
+    private View localView;
     private AppBarLayout appbarLayout;
-    private ConstraintLayout constraintHeader, constraintPosting;
+    private ConstraintLayout constPostingLayout, constCommentLayout;
     private Toolbar toolbar;
     private View underline;
     private RecyclerView recyclerComment;
     private EditText etComment;
     private TextView tvCompathyCnt, tvCommentCnt;
 
-    private ImageView attachedImage;
 
     // Fields
     private String tabTitle;
@@ -141,6 +139,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
+        editImageHelper = new EditImageHelper(getContext());
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         if(getArguments() != null) {
@@ -197,20 +196,18 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View localView = inflater.inflate(R.layout.dialog_board_read, container, false);
+        localView = inflater.inflate(R.layout.dialog_board_read, container, false);
 
         appbarLayout = localView.findViewById(R.id.appbar_board_read);
         toolbar = localView.findViewById(R.id.toolbar_board_read);
-        constraintHeader = localView.findViewById(R.id.constraint_header);
-        constraintPosting = localView.findViewById(R.id.constraint_posting);
-        ConstraintLayout commentLayout = localView.findViewById(R.id.constraint_comment);
+        //constraintHeader = localView.findViewById(R.id.constraint_header);
+        constPostingLayout = localView.findViewById(R.id.constraint_posting);
+        constCommentLayout = localView.findViewById(R.id.constraint_comment);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
         TextView tvUserName = localView.findViewById(R.id.tv_username);
         TextView tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
         TextView tvDate = localView.findViewById(R.id.tv_posting_date);
         ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
-        ImageView imgCompathy = localView.findViewById(R.id.img_compathy);
-        ImageView imgComment = localView.findViewById(R.id.img_comment);
         etComment = localView.findViewById(R.id.et_comment);
         ImageButton btnSendComment = localView.findViewById(R.id.imgbtn_send_comment);
         ImageButton btnComment = localView.findViewById(R.id.imgbtn_comment);
@@ -223,20 +220,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as folowing.
-        toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener(){
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch(item.getItemId()) {
-                    case R.id.menu_board_read_close:
-                        dismiss();//close the dialogfragment
-                        break;
-                    case R.id.menu_board_read_spam:
-                        break;
-                }
-                return true;
-            }
-        });
-        toolbar.inflateMenu(R.menu.menu_board_read);
+        toolbar.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
         toolbar.setTitle(tabTitle);
 
@@ -269,52 +253,24 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         pagingUtil.setCommentQuery("timestamp", documentId, Constants.PAGINATION);
 
 
-
-        // Check if the user has done compathy and comment
-        DocumentReference docRef = firestore.collection("board_general").document(documentId);
-        docRef.collection("compathy").document(userId).get()
-                .addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
-                        DocumentSnapshot snapshot = task.getResult();
-                        hasCompathy = (snapshot != null && snapshot.exists());
-                    }
-
-                    int imgCompathyRes = (hasCompathy)?R.drawable.img_compathy_selected:R.drawable.img_compathy_unselected;
-                    imgCompathy.setImageResource(imgCompathyRes);
-                });
-
-        docRef.collection("comment").whereEqualTo("user", userId).get()
-                .addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
-                        for(QueryDocumentSnapshot snapshot : task.getResult()) {
-                            if(snapshot != null && snapshot.exists()) {
-                                hasComment = true;
-                                break;
-                            } else hasComment = false;
-                        }
-                    }
-
-                    // TEST CODING BOTH SELECTED IMAGE REQUIRED TO CHANGE
-                    int imgCommentRes = (hasComment)?R.drawable.img_comment_selected:R.drawable.img_comment_selected;
-                    imgComment.setImageResource(imgCommentRes);
-                });
-
-
-
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
+        // On clicking the comment button, show the comment input form.
+        btnComment.setOnClickListener(this);
+        /*
         btnComment.setOnClickListener(view -> {
-            if(isCommentVisible) commentLayout.setVisibility(View.INVISIBLE);
-            else commentLayout.setVisibility(View.VISIBLE);
+            if(isCommentVisible) constCommentLayout.setVisibility(View.INVISIBLE);
+            else constCommentLayout.setVisibility(View.VISIBLE);
             isCommentVisible = !isCommentVisible;
         });
+        */
 
         // Button to set compathy which increase the compathy number if the user has never picked it up.
-        btnCompathy.setOnClickListener(view -> {
-            setCompathyCount();
-        });
+        btnCompathy.setOnClickListener(view -> setCompathyCount());
 
         // Upload the comment to Firestore, which needs to refactor for filtering text.
+        btnSendComment.setOnClickListener(this);
+        /*
         btnSendComment.setOnClickListener(view -> {
             if(TextUtils.isEmpty(etComment.getText())) {
                 Snackbar.make(localView, "no comment exists", Snackbar.LENGTH_SHORT).show();
@@ -328,10 +284,11 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                         .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
                 // Make the comment view invisible
-                commentLayout.setVisibility(View.INVISIBLE);
+                constCommentLayout.setVisibility(View.INVISIBLE);
                 isCommentVisible = !isCommentVisible;
             }
         });
+         */
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
         final DocumentReference postRef = firestore.collection("board_general").document(documentId);
@@ -370,31 +327,39 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         return dialog;
     }
 
-
-
-    // Implement the callback of AppbarLayout.OnOffsetChangedListene
-    /*
+    @SuppressWarnings("ConstantConditions")
     @Override
-    public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-        log.i("onOffsetChanged: %s", verticalOffset);
-        //if(Math.abs(verticalOffset) == constraintHeader.getHeight()) {
+    public void onClick(View v) {
+        switch(v.getId()) {
+            case R.id.imgbtn_comment:
+                if(isCommentVisible) constCommentLayout.setVisibility(View.INVISIBLE);
+                else constCommentLayout.setVisibility(View.VISIBLE);
+                isCommentVisible = !isCommentVisible;
+                break;
 
-        // AppBarLayout collapsed
-        if(verticalOffset == 0) {
-            toolbar.setTitle(tabTitle);
-            toolbar.setSubtitle("");
-            toolbar.setLogo(null);
+            case R.id.imgbtn_send_comment:
+                if(TextUtils.isEmpty(etComment.getText())) {
+                    Snackbar.make(localView, "no comment exists", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
 
-        // AppBarLayout expanded
-        } else if(Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
-            toolbar.setTitle(postTitle);
+                // On finishing upload, close the soft input and the comment view.
+                if(uploadComment()) {
+                    // Close the soft input mehtod when clicking the upload button
+                    ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                            .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
+                    // Make the comment view invisible
+                    constCommentLayout.setVisibility(View.INVISIBLE);
+                    isCommentVisible = !isCommentVisible;
+                }
 
-        } else {
+                break;
+
 
         }
+
     }
-    */
 
 
 
@@ -431,7 +396,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
 
         // First, get the document with a given id, then add data
-        final DocumentReference documentRef = firestore.collection("board_general").document(documentId);
+        DocumentReference documentRef = firestore.collection("board_general").document(documentId);
         documentRef.get().addOnSuccessListener(document -> {
             if(document.exists()) {
                 final CollectionReference colRef = document.getReference().collection("comments");
@@ -452,8 +417,6 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                 }).addOnFailureListener(e -> log.e("Add comments failed"));
             }
         });
-
-
 
         return true;
     }
@@ -496,7 +459,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
         int index = 0; //
         int start = 0;
-        int constraintId = constraintPosting.getId();
+        int constraintId = constPostingLayout.getId();
         int topConstraint;
         int prevImageId = 0;
 
@@ -505,6 +468,9 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
+        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
         // If the content contains images, which means the markup(s) exists in the content, the content
         // is split into parts of texts and images and respectively connected to ConstraintSet.
         while(m.find()) {
@@ -512,30 +478,29 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
             TextView tv = new TextView(context);
             tv.setId(View.generateViewId());
             tv.setText(paragraph);
-            constraintPosting.addView(tv, params);
+            constPostingLayout.addView(tv, params);
             topConstraint = (start == 0) ? underline.getId() : prevImageId;
 
             ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(constraintPosting);
+            tvSet.clone(constPostingLayout);
             tvSet.connect(tv.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(tv.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(tv.getId(), ConstraintSet.TOP, topConstraint, ConstraintSet.BOTTOM, 32);
-            tvSet.applyTo(constraintPosting);
+            tvSet.applyTo(constPostingLayout);
 
             ImageView imgView = new ImageView(context);
-            imgView.setBackgroundColor(Color.RED);
             imgView.setId(View.generateViewId());
             prevImageId = imgView.getId();
-            constraintPosting.addView(imgView, params);
+            constPostingLayout.addView(imgView, params);
+            //constPostingLayout.addView(imgView, imgParams);
 
             ConstraintSet imgSet = new ConstraintSet();
-            imgSet.clone(constraintPosting);
+            imgSet.clone(constPostingLayout);
             imgSet.connect(imgView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 0);
             imgSet.connect(imgView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 0);
             imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 16);
-            imgSet.applyTo(constraintPosting);
+            imgSet.applyTo(constPostingLayout);
 
-            // Image rotation issue occurred!
             Glide.with(context)
                     .asBitmap()
                     .load(imgUriList.get(index))
@@ -556,17 +521,17 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
             TextView noImageText = new TextView(context);
             noImageText.setId(View.generateViewId());
             noImageText.setText(text);
-            constraintPosting.addView(noImageText, params);
+            constPostingLayout.addView(noImageText, params);
 
             ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(constraintPosting);
+            tvSet.clone(constPostingLayout);
             tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 0);
             //tvSet.connect(noImageText.getId(), ConstraintSet.TOP, constraintId, ConstraintSet.BOTTOM, 0);
             //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 32);
 
-            tvSet.applyTo(constraintPosting);
+            tvSet.applyTo(constPostingLayout);
 
         // Text exists after the last image. The last TextView is constrained to the previous ImageView
         // and the RecyclerView constrained to the TextView.
@@ -576,26 +541,28 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
             TextView lastView = new TextView(context);
             lastView.setId(View.generateViewId());
             lastView.setText(lastParagraph);
-            constraintPosting.addView(lastView, params);
+            constPostingLayout.addView(lastView, params);
 
             ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(constraintPosting);
+            tvSet.clone(constPostingLayout);
             tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
             tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 32);
-            tvSet.applyTo(constraintPosting);
+            tvSet.applyTo(constPostingLayout);
 
         // In case no text exists after the last image, the RecyclerView is constrained to the last
         // ImageView.
         } else if(start == text.length()) {
             ConstraintSet recyclerSet = new ConstraintSet();
-            recyclerSet.clone(constraintPosting);
+            recyclerSet.clone(constPostingLayout);
             recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 32);
-            recyclerSet.applyTo(constraintPosting);
+            recyclerSet.applyTo(constPostingLayout);
         }
 
     }
+
+
 
 
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
@@ -605,7 +572,6 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
     abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
 
         int mCurrentState = STATE_IDLE;
-
         @Override
         public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
 
@@ -643,10 +609,10 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
 
         switch(state) {
             case STATE_COLLAPSED:
+                toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-
-                Glide.with(context).load(uriUserImage).override(toolbar.getHeight() - 15).circleCrop()
+                Glide.with(context).load(uriUserImage).override(toolbar.getHeight() - 15).fitCenter().circleCrop()
                         .into(new CustomTarget<Drawable>(){
                             @Override
                             public void onResourceReady(
@@ -661,6 +627,7 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
                 break;
 
             case STATE_EXPANDED:
+                toolbar.setNavigationIcon(R.drawable.ic_action_navigation);
                 toolbar.setTitle(tabTitle);
                 toolbar.setSubtitle("");
                 toolbar.setLogo(null);
@@ -673,24 +640,16 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
         }
     }
 
-
-    private void checkCompathy() {
-
-        final DocumentReference docRef = firestore.collection("board_general").document(documentId);
-        final DocumentReference compathyRef = docRef.collection("compathy").document(userId);
-
-        compathyRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                DocumentSnapshot snapshot = task.getResult();
-                hasCompathy = (snapshot != null && snapshot.exists());
-            }
-        });
-    }
-
     // Check if the user has already picked a post as favorite doing queries the compathy collection,
     // documents of which contains user ids
     @SuppressWarnings("ConstantConditions")
     private void setCompathyCount() {
+        // Prevent repeated connection to Firestore every time when users click the button.
+        if(hasCompathy) {
+            log.i("First click");
+            Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+            return;
+        }
 
         final DocumentReference docRef = firestore.collection("board_general").document(documentId);
         final DocumentReference compathyRef = docRef.collection("compathy").document(userId);
@@ -699,12 +658,12 @@ public class BoardReadDlgFragment extends DialogFragment implements PaginationHe
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
-                    log.i("Compathethic");
+                    hasCompathy = true;
                     //docRef.update("cnt_compathy", FieldValue.increment(-1));
                     //compathyRef.delete();
                     Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+
                 } else {
-                    log.i("No compathetic");
                     docRef.update("cnt_compathy", FieldValue.increment(1));
                     Map<String, Object> data = new HashMap<>();
                     data.put("timestamp", FieldValue.serverTimestamp());
