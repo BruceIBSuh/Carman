@@ -29,6 +29,7 @@ import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
@@ -68,7 +69,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Objects
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
+    private EditImageHelper editImageHelper;
     private OpinetViewModel priceModel;
+    private ImageViewModel imgModel;
     private SettingPreferenceFragment settingFragment;
     private GasPriceTask gasPriceTask;
     private Map<String, Object> uploadData;
@@ -103,7 +106,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
+        editImageHelper = new EditImageHelper(this);
         priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         uploadData = new HashMap<>();
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
@@ -112,6 +117,15 @@ public class SettingPreferenceActivity extends BaseActivity implements
         JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
+
+        // Set the user image to its preference icon using EditImageHelper.setUserImageToIcon() and
+        // receive a drawable as a LiveData that Glide transforms the user image for fitting to
+        // a given size.
+        String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
+        editImageHelper.setUserImageToIcon(imageUri, 40, imgModel);
+        imgModel.getGlideTarget().observe(this, drawable ->
+                settingFragment.getCropImagePreference().setIcon(drawable)
+        );
 
         settingFragment = new SettingPreferenceFragment();
         //settingFragment.setArguments(args);
@@ -126,11 +140,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onResume(){
         super.onResume();
-
-        String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
-        Drawable drawable = setUserImageToIcon(imageUri);
-        settingFragment.getCropImagePreference().setIcon(drawable);
-
         mSettings.registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -345,7 +354,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
                 orientation = cropHelper.getImageOrientation(imageUri);
                 if(orientation != 0) imageUri = cropHelper.rotateBitmapUri(imageUri, orientation);
-                log.i("galleryUri: %s", imageUri);
+                log.i("galleryUri: %s, %s", orientation, imageUri);
 
                 Intent galleryIntent = new Intent(this, CropImageActivity.class);
                 galleryIntent.setData(imageUri);
@@ -375,6 +384,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
             // Result from CropImageActivity with a cropped image uri and set the image to
             case REQUEST_CODE_CROP:
                 final Uri croppedImageUri = data.getData();
+
                 if(croppedImageUri != null) {
                     // Upload the cropped user image to Firestore with the user id fetched
                     try (FileInputStream fis = openFileInput("userId");
@@ -446,8 +456,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                                 // On compeleting the upload, save the uri in SharedPreferences and
                                 // set the drawable to the preferernce icon.
                                 mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
-                                Drawable drawable = setUserImageToIcon(uri.toString());
-                                settingFragment.getCropImagePreference().setIcon(drawable);
+                                editImageHelper.setUserImageToIcon(uri.toString(), 40, imgModel);
                             }
                         });
 

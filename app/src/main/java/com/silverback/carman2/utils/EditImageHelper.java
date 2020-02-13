@@ -1,26 +1,37 @@
 package com.silverback.carman2.utils;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
 import android.graphics.Matrix;
+import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CameraAccessException;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.widget.ImageView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ImageViewModel;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -87,6 +98,7 @@ public class EditImageHelper {
     // Use ExifInterface to get meta-data on image taken by camera and Metrix to rotate
     // it vertically if necessary.
     public int getImageOrientation(Uri uri) {
+
         Cursor cursor = mContext.getContentResolver().query(uri,
                 new String[] { MediaStore.Images.ImageColumns.ORIENTATION },
                 null, null, null);
@@ -101,6 +113,30 @@ public class EditImageHelper {
         cursor.close();
 
         return orientation;
+
+    }
+
+    // Uris coming from cameras will mostly have "file://" scheme whereas uris coming from gallery or
+    // other content providers usually have "content://" which is a type of FileProvider.
+    public int getExifImageOrientation(Uri uri)  {
+
+
+        //Cursor cursor = null;
+        String[] projection = { MediaStore.Images.Media.DATA };
+        try(Cursor cursor = mContext.getContentResolver().query(uri, projection, null, null, null)){
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            log.i("decoded uri: %s", cursor.getString(column_index));
+            ExifInterface exif = new ExifInterface(cursor.getString(column_index));
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            log.i("orientation: %s", orientation);
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        //int rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+        //log.i("Current Rotation: %s", rotation);
+        return -1;
 
     }
 
@@ -222,6 +258,34 @@ public class EditImageHelper {
 
         return null;
     }
+
+    public void setUserImageToIcon(String uriString, int size, ImageViewModel model) {
+
+        if(TextUtils.isEmpty(uriString)) return;
+        //if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
+
+        // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
+        // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
+        // adding the float, it will be round up to 2.0.
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int px_x = (int)(size * scale + 0.5f);
+        int px_y = (int)(size * scale + 0.5f);
+
+        Glide.with(mContext).load(Uri.parse(uriString)).override(px_x, px_y)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fitCenter()
+                .circleCrop()
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        model.getGlideTarget().setValue(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
+
+    }
+
 
     // Convert Bitmap to Base64 which translates bitmaps to String format or vice versa.
     public String encodeBitmapToBase64(Bitmap bitmap) {

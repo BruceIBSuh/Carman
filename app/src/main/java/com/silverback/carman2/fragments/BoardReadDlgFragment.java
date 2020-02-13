@@ -32,6 +32,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -55,6 +56,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.AttachedBitmapTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.EditImageHelper;
@@ -63,6 +65,7 @@ import com.silverback.carman2.utils.PaginationHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -93,6 +96,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // Objects
     private FirebaseFirestore firestore;
     private EditImageHelper editImageHelper;
+    private ImageViewModel imgViewModel;
     private Context context;
     private DocumentSnapshot document;
     private BoardCommentAdapter commentAdapter;
@@ -132,6 +136,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -140,6 +145,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
         editImageHelper = new EditImageHelper(getContext());
+        imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         if(getArguments() != null) {
@@ -219,7 +225,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
-        // need to manually populate the toolbar with content and actions as folowing.
+        // need to manually populate the toolbar with content and actions as folowing. Also, the
+        // navigation icon(back arrow) should be handled in setToolbarTitleIcon().
         toolbar.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
         toolbar.setTitle(tabTitle);
@@ -306,13 +313,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Rearrange the text by paragraphs
         createContentView(postContent);
 
-        // Set the user image
+        // Set the user image in the header.
         uriUserImage = Uri.parse(userPic);
-        Glide.with(context)
-                .asBitmap()
-                .load(uriUserImage)
+        Glide.with(context).asBitmap().load(uriUserImage)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .circleCrop()
+                .fitCenter().circleCrop()
                 .into(imgUserPic);
 
         return localView;
@@ -325,6 +330,19 @@ public class BoardReadDlgFragment extends DialogFragment implements
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle bundle) {
+        super.onActivityCreated(bundle);
+
+        // ImageViewModel receives a drawable as LiveData from EditImageHelper.setUserImageToIcon()
+        // in which Glide creates the custom target that translates an image fitting to a given
+        // size and returns a drawable.
+        imgViewModel.getGlideTarget().observe(getViewLifecycleOwner(), drawable -> {
+            toolbar.setLogo(drawable);
+            toolbar.setContentInsetStartWithNavigation(0);
+        });
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -360,6 +378,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
 
     }
+
+
 
 
 
@@ -421,21 +441,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         return true;
     }
 
+
+
     /*
-    @Override
-    public void onActivityCreated(Bundle bundle) {
-        super.onActivityCreated(bundle);
-
-        // Set the image span to the post content as the image span instances are retrieved from
-        // AttachedBitmapTask.
-        imageModel.getImageSpanArray().observe(getViewLifecycleOwner(), spanArray -> {
-            //log.i("ImageSpan: %s", spanArray.keyAt(0));
-            //SpannableStringBuilder imgSpannable = createImageSpanString(spanArray);
-            //tvContent.setText(imgSpannable);
-
-        });
-    }
-
     @Override
     public void onPause() {
         super.onPause();
@@ -468,8 +476,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
         // If the content contains images, which means the markup(s) exists in the content, the content
         // is split into parts of texts and images and respectively connected to ConstraintSet.
@@ -500,6 +506,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             imgSet.connect(imgView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 0);
             imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 16);
             imgSet.applyTo(constPostingLayout);
+
 
             Glide.with(context)
                     .asBitmap()
@@ -612,18 +619,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-                Glide.with(context).load(uriUserImage).override(toolbar.getHeight() - 15).fitCenter().circleCrop()
-                        .into(new CustomTarget<Drawable>(){
-                            @Override
-                            public void onResourceReady(
-                                    @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                                toolbar.setLogo(resource);
-                                toolbar.setContentInsetStartWithNavigation(0);
-                            }
+                editImageHelper.setUserImageToIcon(userPic, 50, imgViewModel);
 
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {}
-                        });
                 break;
 
             case STATE_EXPANDED:

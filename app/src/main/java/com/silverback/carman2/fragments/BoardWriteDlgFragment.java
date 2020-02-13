@@ -5,21 +5,13 @@ import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.widget.NestedScrollView;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.provider.MediaStore;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -40,6 +32,16 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.widget.NestedScrollView;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -52,15 +54,17 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
-import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.threads.UploadPostTask;
 import com.silverback.carman2.utils.BoardImageSpanHandler;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,8 +140,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         mSettings = ((BoardActivity)getActivity()).getSettings();
         uriImageList = new ArrayList<>();
         strImgUriList = new ArrayList<>();
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        bitmapModel = ViewModelProviders.of(this).get(ImageViewModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        bitmapModel = new ViewModelProvider(this).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         ssb = new SpannableStringBuilder();
     }
@@ -251,7 +255,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             }
         });
 
-        // Upload the post whic
+        // When uploading the post, check if any attached image exists.
         btnUpload.setOnClickListener(btn -> {
             if(!doEmptyCheck()) return;
 
@@ -372,7 +376,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        log.i("Write Result");
         if(resultCode != RESULT_OK || data == null) return;
         Uri imgUri = null;
 
@@ -386,7 +390,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 break;
         }
 
-        // Insert ImageSpan into SpannalbeStringBuilder
+        // Attach images with ImageSpans of SpannalbeStringBuilder
         Glide.with(getContext().getApplicationContext()).asBitmap().override(80).fitCenter()
                 .load(imgUri)
                 .into(new CustomTarget<Bitmap>() {
@@ -422,9 +426,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         imageAdapter.notifyItemChanged(position);
 
 
-        // Resize the image
-        //handleAttachedBitmap(uriImageList.get(position));
-        //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), bitmapModel);
+        // Resize the image: TEST CODING!!!!!
+        bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), bitmapModel);
         super.onActivityResult(requestCode, resultCode, data);
 
     }

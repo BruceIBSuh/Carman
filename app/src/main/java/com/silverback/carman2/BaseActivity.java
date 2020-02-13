@@ -33,9 +33,14 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.TypedValue;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.EditImageHelper;
 
@@ -53,6 +58,7 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -422,25 +428,39 @@ public class BaseActivity extends AppCompatActivity {
 
     // Set the user image to the icon of MainActivity Toolbar and SettingPreferenceActivit with the
     // size based on DP which is converted to px.
-    public Drawable setUserImageToIcon(String uriString) {
+    /*
+    public void setUserImageToIcon(String uriString, int size, ImageViewModel model) {
 
-        if(TextUtils.isEmpty(uriString)) return null;
-        if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
+        if(TextUtils.isEmpty(uriString)) return;
+        //if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
 
         // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
         // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
         // adding the float, it will be round up to 2.0.
         final float scale = getResources().getDisplayMetrics().density;
-        int px_x = (int)(Constants.ICON_SIZE * scale + 0.5f);
-        int px_y = (int)(Constants.ICON_SIZE * scale + 0.5f);
+        int px_x = (int)(size * scale + 0.5f);
+        int px_y = (int)(size * scale + 0.5f);
+
 
         Bitmap resized = editImageHelper.resizeBitmap(this, Uri.parse(uriString), px_x, px_y);
         RoundedBitmapDrawable rounded = RoundedBitmapDrawableFactory.create(this.getResources(), resized);
         rounded.setCircular(true);
 
-        return rounded;
+        Glide.with(this).load(Uri.parse(uriString)).override(px_x, px_y)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fitCenter()
+                .circleCrop()
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        model.getGlideTarget().setValue(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
 
     }
+    */
 
 
 }

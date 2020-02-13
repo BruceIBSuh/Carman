@@ -9,14 +9,17 @@ import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.File;
 
@@ -35,6 +38,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     // Objects
     private GeneralFragment generalFragment;
+    private EditImageHelper editImageHelper;
+    private ImageViewModel imgViewModel;
     //private ActionBarDrawerToggle drawerToggle;
     // Fields
     private Drawable appbarIcon;
@@ -46,16 +51,22 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        editImageHelper = new EditImageHelper(this);
+        imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
+
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
         String title = mSettings.getString(Constants.USER_NAME, null);
         getSupportActionBar().setHomeButtonEnabled(false);
         if(title != null) getSupportActionBar().setTitle(title);
 
-        // Get the user image uri, if any, from SharedPreferences
+        // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
+        // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
         String userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        appbarIcon = setUserImageToIcon(userImage); //REFACTOR USING GLIDE!!!
-        getSupportActionBar().setIcon(appbarIcon);
+        editImageHelper.setUserImageToIcon(userImage, 50, imgViewModel);
+        imgViewModel.getGlideTarget().observe(this, resource -> getSupportActionBar().setIcon(resource));
+
+        //getSupportActionBar().setIcon(appbarIcon);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
@@ -79,6 +90,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Permission Check which is initiated by the parent activty(BaseActivity), so it is of no
         // use to initiate the permission check again here.
         //checkPermissions();
+
+
     }
 
     // startActivityForResult() has this callback invoked by getting an intent that contains new
@@ -101,8 +114,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Must make the null check, not String.isEmpty() because the blank name should be included.
         if(userName != null) getSupportActionBar().setTitle(userName);
         if(uriImage != null) {
-            Drawable newIcon = setUserImageToIcon(uriImage);
-            getSupportActionBar().setIcon(newIcon);
+            //Drawable newIcon = setUserImageToIcon(uriImage, imgViewModel);
+            editImageHelper.setUserImageToIcon(uriImage, 50, imgViewModel);
+            //getSupportActionBar().setIcon(newIcon);
         } else getSupportActionBar().setIcon(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.

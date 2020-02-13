@@ -1,6 +1,8 @@
 package com.silverback.carman2.adapters;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -18,7 +20,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -124,8 +125,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     class BoardItemHolder extends RecyclerView.ViewHolder {
 
-        EditImageHelper imageHelper;
-
         TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
         ImageView imgProfile;
         ImageView imgAttached;
@@ -141,14 +140,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
             imgProfile = cardview.findViewById(R.id.img_user);
             imgAttached = cardview.findViewById(R.id.img_attached);
 
-            imageHelper = new EditImageHelper(cardview.getContext());
-
         }
 
+        // Null check of the uri shouldn't be needed b/c Glide handles it on its own.
         void bindProfileImage(Uri uri) {
-            RequestOptions myOptions = new RequestOptions().fitCenter().override(30, 30).circleCrop();
+            RequestOptions myOptions = new RequestOptions().fitCenter().override(35, 35).circleCrop();
             Glide.with(context)
                     .asBitmap()
+                    //.placeholder(new ColorDrawable(Color.BLUE))
                     .load(uri)
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .apply(myOptions)
@@ -158,6 +157,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         void bindAttachedImage(Uri uri) {
             Glide.with(context)
                     .asBitmap()
+                    //.placeholder(new ColorDrawable(Color.BLUE))
                     .load(uri)
                     .centerCrop()
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)

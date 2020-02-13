@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -23,6 +24,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
 
@@ -35,7 +37,6 @@ import java.util.Locale;
  * A simple {@link Fragment} subclass.
  */
 public class BoardPagerFragment extends Fragment implements
-        View.OnClickListener,
         PaginationHelper.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
@@ -79,6 +80,7 @@ public class BoardPagerFragment extends Fragment implements
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -95,8 +97,19 @@ public class BoardPagerFragment extends Fragment implements
         // Floating Action Button to show BoardReadDlgFragment which reads a post when clicking it.
         // Also, as the reyclcerview scrolls, the button hides itself and the button appears again
         // when the scroll stops.
-        fabWrite.setOnClickListener(this);
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
+        fabWrite.setOnClickListener(view -> {
+            // MUST initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
+            // automatically invoking startActivityForResult() when the fragment pops up.
+            FragmentSharedModel model = new ViewModelProvider(this).get(FragmentSharedModel.class);
+            model.getImageChooser().setValue(-1);
+
+            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
+            getActivity().getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, writePostFragment)
+                    .commit();
+        });
+
         recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -204,10 +217,5 @@ public class BoardPagerFragment extends Fragment implements
                 recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
             }
         });
-    }
-
-    @Override
-    public void onClick(View v) {
-
     }
 }

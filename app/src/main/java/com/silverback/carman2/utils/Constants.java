@@ -26,7 +26,7 @@ public class Constants {
     public static final int MAX_ATTACHED_IMAGE = 6;
     // Board Pagination
     public static final int PAGINATION = 25;
-    public static final int ICON_SIZE = 34;
+    //public static final int ICON_SIZE = 50;
 
     // File names for FileProvider
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";
