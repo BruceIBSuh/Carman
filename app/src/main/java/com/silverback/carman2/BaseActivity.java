@@ -23,26 +23,19 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.TypedValue;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,12 +51,9 @@ import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.preference.PreferenceManager;
 
 public class BaseActivity extends AppCompatActivity {
@@ -78,7 +68,7 @@ public class BaseActivity extends AppCompatActivity {
     // Objects
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
-    protected EditImageHelper editImageHelper;
+    protected ApplyImageResourceUtil applyImageResourceUtil;
 
     // Fields
     protected boolean isNetworkConnected;
@@ -429,10 +419,10 @@ public class BaseActivity extends AppCompatActivity {
     // Set the user image to the icon of MainActivity Toolbar and SettingPreferenceActivit with the
     // size based on DP which is converted to px.
     /*
-    public void setUserImageToIcon(String uriString, int size, ImageViewModel model) {
+    public void applyGlideToDrawable(String uriString, int size, ImageViewModel model) {
 
         if(TextUtils.isEmpty(uriString)) return;
-        //if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
+        //if(applyImageResourceUtil == null) applyImageResourceUtil = new ApplyImageResourceUtil(this);
 
         // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
         // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
@@ -442,7 +432,7 @@ public class BaseActivity extends AppCompatActivity {
         int px_y = (int)(size * scale + 0.5f);
 
 
-        Bitmap resized = editImageHelper.resizeBitmap(this, Uri.parse(uriString), px_x, px_y);
+        Bitmap resized = applyImageResourceUtil.resizeBitmap(this, Uri.parse(uriString), px_x, px_y);
         RoundedBitmapDrawable rounded = RoundedBitmapDrawableFactory.create(this.getResources(), resized);
         rounded.setCircular(true);
 

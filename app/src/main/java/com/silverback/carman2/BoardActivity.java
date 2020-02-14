@@ -88,7 +88,7 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        //getMenuInflater().inflate(R.menu.menu_options_board, menu);
+        //getMenuInflater().inflate(R.menu.menu_board_write, menu);
         return super.onCreateOptionsMenu(menu);
     }
 

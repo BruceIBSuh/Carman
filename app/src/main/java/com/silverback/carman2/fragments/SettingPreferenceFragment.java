@@ -187,7 +187,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         String imageUri = mSettings.getString(Constants.FILE_IMAGES, null);
         if(!TextUtils.isEmpty(imageUri)) {
             try {
-                EditImageHelper cropHelper = new EditImageHelper(getContext());
+                ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(getContext());
                 RoundedBitmapDrawable drawable = cropHelper.drawRoundedBitmap(Uri.parse(imageUri));
                 cropImagePreference.setIcon(drawable);
             } catch (IOException e) {

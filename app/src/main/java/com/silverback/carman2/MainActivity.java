@@ -18,8 +18,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.File;
 
@@ -38,7 +38,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     // Objects
     private GeneralFragment generalFragment;
-    private EditImageHelper editImageHelper;
+    private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgViewModel;
     //private ActionBarDrawerToggle drawerToggle;
     // Fields
@@ -51,7 +51,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        editImageHelper = new EditImageHelper(this);
+        applyImageResourceUtil = new ApplyImageResourceUtil(this);
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -63,8 +63,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
         String userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        editImageHelper.setUserImageToIcon(userImage, 50, imgViewModel);
-        imgViewModel.getGlideTarget().observe(this, resource -> getSupportActionBar().setIcon(resource));
+        applyImageResourceUtil.applyGlideToDrawable(userImage, 50, imgViewModel);
+        imgViewModel.getGlideDrawableTarget().observe(this, resource -> getSupportActionBar().setIcon(resource));
 
         //getSupportActionBar().setIcon(appbarIcon);
 
@@ -114,8 +114,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Must make the null check, not String.isEmpty() because the blank name should be included.
         if(userName != null) getSupportActionBar().setTitle(userName);
         if(uriImage != null) {
-            //Drawable newIcon = setUserImageToIcon(uriImage, imgViewModel);
-            editImageHelper.setUserImageToIcon(uriImage, 50, imgViewModel);
+            //Drawable newIcon = applyGlideToDrawable(uriImage, imgViewModel);
+            applyImageResourceUtil.applyGlideToDrawable(uriImage, 50, imgViewModel);
             //getSupportActionBar().setIcon(newIcon);
         } else getSupportActionBar().setIcon(null);
 

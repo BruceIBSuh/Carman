@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -33,8 +32,8 @@ import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
 
@@ -69,7 +68,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Objects
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
-    private EditImageHelper editImageHelper;
+    private ApplyImageResourceUtil applyImageResourceUtil;
     private OpinetViewModel priceModel;
     private ImageViewModel imgModel;
     private SettingPreferenceFragment settingFragment;
@@ -106,7 +105,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-        editImageHelper = new EditImageHelper(this);
+        applyImageResourceUtil = new ApplyImageResourceUtil(this);
         priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         uploadData = new HashMap<>();
@@ -118,12 +117,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
 
-        // Set the user image to its preference icon using EditImageHelper.setUserImageToIcon() and
+        // Set the user image to its preference icon using ApplyImageResourceUtil.applyGlideToDrawable() and
         // receive a drawable as a LiveData that Glide transforms the user image for fitting to
         // a given size.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
-        editImageHelper.setUserImageToIcon(imageUri, 40, imgModel);
-        imgModel.getGlideTarget().observe(this, drawable ->
+        applyImageResourceUtil.applyGlideToDrawable(imageUri, 40, imgModel);
+        imgModel.getGlideDrawableTarget().observe(this, drawable ->
                 settingFragment.getCropImagePreference().setIcon(drawable)
         );
 
@@ -341,7 +340,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode != RESULT_OK) return;
 
-        EditImageHelper cropHelper = new EditImageHelper(this);
+        ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(this);
         Uri imageUri;
         int orientation;
 
@@ -456,7 +455,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                                 // On compeleting the upload, save the uri in SharedPreferences and
                                 // set the drawable to the preferernce icon.
                                 mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
-                                editImageHelper.setUserImageToIcon(uri.toString(), 40, imgModel);
+                                applyImageResourceUtil.applyGlideToDrawable(uri.toString(), 40, imgModel);
                             }
                         });
 

@@ -41,7 +41,7 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
 
     // Objects
     private Uri mUri;
-    //private EditImageHelper editImage;
+    //private ApplyImageResourceUtil editImage;
     private DrawEditorView drawView;
 
     // UIs
@@ -60,7 +60,7 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
 
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        //EditImageHelper editImage = new EditImageHelper(this);
+        //ApplyImageResourceUtil editImage = new ApplyImageResourceUtil(this);
 
         mImageView = findViewById(R.id.img_userpic);
         drawView = findViewById(R.id.view_custom_drawEditorView);

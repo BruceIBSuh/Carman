@@ -3,15 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_garage"
-        android:icon="@drawable/ic_garage"
-        android:title="@string/toolbar_mycar"
+        android:id="@+id/action_board_filter"
+        android:icon="@drawable/ic_filter"
+        android:title="autoclub"
         app:showAsAction="ifRoom|withText" />
 
     <item
-        android:id="@+id/action_board"
-        android:icon="@drawable/ic_board_white"
-        android:title="@string/toolbar_board"
+        android:id="@+id/action_board_upload"
+        android:icon="@drawable/ic_upload"
+        android:title="save"
         app:showAsAction="ifRoom|withText" />
 
 </menu>

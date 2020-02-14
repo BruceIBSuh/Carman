@@ -5,8 +5,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -14,7 +12,6 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -26,7 +23,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
@@ -38,8 +34,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
@@ -56,16 +50,20 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.AttachedBitmapTask;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.utils.PaginationHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -95,7 +93,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private EditImageHelper editImageHelper;
+    private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgViewModel;
     private Context context;
     private DocumentSnapshot document;
@@ -144,7 +142,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
-        editImageHelper = new EditImageHelper(getContext());
+        applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
@@ -264,38 +262,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //btnDismiss.setOnClickListener(view -> dismiss());
         // On clicking the comment button, show the comment input form.
         btnComment.setOnClickListener(this);
-        /*
-        btnComment.setOnClickListener(view -> {
-            if(isCommentVisible) constCommentLayout.setVisibility(View.INVISIBLE);
-            else constCommentLayout.setVisibility(View.VISIBLE);
-            isCommentVisible = !isCommentVisible;
-        });
-        */
-
         // Button to set compathy which increase the compathy number if the user has never picked it up.
         btnCompathy.setOnClickListener(view -> setCompathyCount());
-
         // Upload the comment to Firestore, which needs to refactor for filtering text.
         btnSendComment.setOnClickListener(this);
-        /*
-        btnSendComment.setOnClickListener(view -> {
-            if(TextUtils.isEmpty(etComment.getText())) {
-                Snackbar.make(localView, "no comment exists", Snackbar.LENGTH_SHORT).show();
-                return;
-            }
-
-            // On finishing upload, close the soft input and the comment view.
-            if(uploadComment()) {
-                // Close the soft input mehtod when clicking the upload button
-                ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                        .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-                // Make the comment view invisible
-                constCommentLayout.setVisibility(View.INVISIBLE);
-                isCommentVisible = !isCommentVisible;
-            }
-        });
-         */
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
         final DocumentReference postRef = firestore.collection("board_general").document(documentId);
@@ -308,6 +278,34 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 tvCompathyCnt.setText(String.valueOf(countCompathy));
             }
         });
+
+
+        // If the post is written by the user, show the menu for editting the post. Consider that
+        // a new dialogfragment should be created or reuse BoardWriteDlgFragment with putting the
+        // data in the fragment.
+        try (FileInputStream fis = getActivity().openFileInput("userId");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
+            String id = br.readLine();
+            if(userId.equals(id)) {
+                toolbar.inflateMenu(R.menu.menu_board_read);
+                toolbar.setOnMenuItemClickListener(item -> {
+                    FragmentSharedModel model = new ViewModelProvider(this).get(FragmentSharedModel.class);
+                    model.getImageChooser().setValue(-1);
+
+                    BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
+                    writePostFragment.setArguments(getArguments());
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .add(android.R.id.content, writePostFragment)
+                            .commit();
+
+                    return true;
+                });
+            }
+
+        } catch(IOException e) {
+            log.e("IOException: %s", e.getMessage());
+        }
 
 
         // Rearrange the text by paragraphs
@@ -336,10 +334,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
-        // ImageViewModel receives a drawable as LiveData from EditImageHelper.setUserImageToIcon()
+        // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
         // in which Glide creates the custom target that translates an image fitting to a given
         // size and returns a drawable.
-        imgViewModel.getGlideTarget().observe(getViewLifecycleOwner(), drawable -> {
+        imgViewModel.getGlideDrawableTarget().observe(getViewLifecycleOwner(), drawable -> {
             toolbar.setLogo(drawable);
             toolbar.setContentInsetStartWithNavigation(0);
         });
@@ -619,7 +617,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-                editImageHelper.setUserImageToIcon(userPic, 50, imgViewModel);
+                applyImageResourceUtil.applyGlideToDrawable(userPic, 50, imgViewModel);
 
                 break;
 
