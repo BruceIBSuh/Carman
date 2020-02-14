@@ -429,7 +429,7 @@ public class BaseActivity extends AppCompatActivity {
     // Set the user image to the icon of MainActivity Toolbar and SettingPreferenceActivit with the
     // size based on DP which is converted to px.
     /*
-    public void setUserImageToIcon(String uriString, int size, ImageViewModel model) {
+    public void applyGlideToImageSize(String uriString, int size, ImageViewModel model) {
 
         if(TextUtils.isEmpty(uriString)) return;
         //if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
@@ -453,7 +453,7 @@ public class BaseActivity extends AppCompatActivity {
                 .into(new CustomTarget<Drawable>() {
                     @Override
                     public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        model.getGlideTarget().setValue(resource);
+                        model.getGlideDrawableTarget().setValue(resource);
                     }
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}

@@ -1,6 +1,5 @@
 package com.silverback.carman2.utils;
 
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -12,11 +11,8 @@ import android.hardware.camera2.CameraAccessException;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,7 +22,6 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -39,6 +34,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * This class is to handle image-related jobs. In particular Glide is applied.
+ * MUST make this singleton!!!
+ */
 public class EditImageHelper {
 
     // Logging
@@ -119,8 +118,6 @@ public class EditImageHelper {
     // Uris coming from cameras will mostly have "file://" scheme whereas uris coming from gallery or
     // other content providers usually have "content://" which is a type of FileProvider.
     public int getExifImageOrientation(Uri uri)  {
-
-
         //Cursor cursor = null;
         String[] projection = { MediaStore.Images.Media.DATA };
         try(Cursor cursor = mContext.getContentResolver().query(uri, projection, null, null, null)){
@@ -259,11 +256,9 @@ public class EditImageHelper {
         return null;
     }
 
-    public void setUserImageToIcon(String uriString, int size, ImageViewModel model) {
+    public void applyGlideToImageSize(String uriString, int size, ImageViewModel model) {
 
         if(TextUtils.isEmpty(uriString)) return;
-        //if(editImageHelper == null) editImageHelper = new EditImageHelper(this);
-
         // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
         // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
         // adding the float, it will be round up to 2.0.
@@ -271,14 +266,16 @@ public class EditImageHelper {
         int px_x = (int)(size * scale + 0.5f);
         int px_y = (int)(size * scale + 0.5f);
 
-        Glide.with(mContext).load(Uri.parse(uriString)).override(px_x, px_y)
+        Glide.with(mContext).load(Uri.parse(uriString))
+                .override(px_x, px_y)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .fitCenter()
                 .circleCrop()
                 .into(new CustomTarget<Drawable>() {
                     @Override
-                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        model.getGlideTarget().setValue(resource);
+                    public void onResourceReady(
+                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        model.getGlideDrawableTarget().setValue(resource);
                     }
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
@@ -301,4 +298,24 @@ public class EditImageHelper {
         return BitmapFactory.decodeByteArray(decodeBytes, 0, decodeBytes.length);
     }
 
+
+    class GlideCustomTarget<T> extends CustomTarget<T> {
+
+        private ImageViewModel model;
+
+       GlideCustomTarget(ImageViewModel model) {
+            this.model = model;
+        }
+
+        @Override
+        public void onResourceReady(@NonNull T resource, @Nullable Transition<? super T> transition) {
+            if(resource instanceof Drawable) model.getGlideDrawableTarget().setValue((Drawable)resource);
+            else if(resource instanceof Bitmap) model.getGlideBitmapTarget().setValue((Bitmap)resource);
+        }
+
+        @Override
+        public void onLoadCleared(@Nullable Drawable placeholder) {}
+
+
+    }
 }

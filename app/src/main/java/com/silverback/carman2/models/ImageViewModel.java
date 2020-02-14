@@ -1,5 +1,6 @@
 package com.silverback.carman2.models;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.style.ImageSpan;
@@ -15,7 +16,9 @@ public class ImageViewModel extends ViewModel {
     private MutableLiveData<String> uploadBitmap;
     private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
 
-    public MutableLiveData<Drawable> glideTarget;
+    private MutableLiveData<Drawable> glideDrawableTarget;
+    private MutableLiveData<Bitmap> glideBitmapTarget;
+
 
     public void setDownloadImage(int key, RoundedBitmapDrawable drawable) {
         SparseArray<RoundedBitmapDrawable> sparseArray = new SparseArray<>();
@@ -34,8 +37,13 @@ public class ImageViewModel extends ViewModel {
         return sparseImageSpanArray;
     }
 
-    public MutableLiveData<Drawable> getGlideTarget() {
-        if(glideTarget == null) glideTarget = new MutableLiveData<>();
-        return glideTarget;
+    public MutableLiveData<Drawable> getGlideDrawableTarget() {
+        if(glideDrawableTarget == null) glideDrawableTarget = new MutableLiveData<>();
+        return glideDrawableTarget;
+    }
+
+    public MutableLiveData<Bitmap> getGlideBitmapTarget() {
+        if(glideBitmapTarget == null) glideBitmapTarget = new MutableLiveData<>();
+        return glideBitmapTarget;
     }
 }

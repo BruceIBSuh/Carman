@@ -5,8 +5,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -14,7 +12,6 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -26,7 +23,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
@@ -38,8 +34,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
@@ -65,7 +59,6 @@ import com.silverback.carman2.utils.PaginationHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -336,10 +329,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
-        // ImageViewModel receives a drawable as LiveData from EditImageHelper.setUserImageToIcon()
+        // ImageViewModel receives a drawable as LiveData from EditImageHelper.applyGlideToImageSize()
         // in which Glide creates the custom target that translates an image fitting to a given
         // size and returns a drawable.
-        imgViewModel.getGlideTarget().observe(getViewLifecycleOwner(), drawable -> {
+        imgViewModel.getGlideDrawableTarget().observe(getViewLifecycleOwner(), drawable -> {
             toolbar.setLogo(drawable);
             toolbar.setContentInsetStartWithNavigation(0);
         });
@@ -619,7 +612,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-                editImageHelper.setUserImageToIcon(userPic, 50, imgViewModel);
+                editImageHelper.applyGlideToImageSize(userPic, 50, imgViewModel);
 
                 break;
 

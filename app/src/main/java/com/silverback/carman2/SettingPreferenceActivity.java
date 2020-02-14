@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -118,12 +117,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
 
-        // Set the user image to its preference icon using EditImageHelper.setUserImageToIcon() and
+        // Set the user image to its preference icon using EditImageHelper.applyGlideToImageSize() and
         // receive a drawable as a LiveData that Glide transforms the user image for fitting to
         // a given size.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
-        editImageHelper.setUserImageToIcon(imageUri, 40, imgModel);
-        imgModel.getGlideTarget().observe(this, drawable ->
+        editImageHelper.applyGlideToImageSize(imageUri, 40, imgModel);
+        imgModel.getGlideDrawableTarget().observe(this, drawable ->
                 settingFragment.getCropImagePreference().setIcon(drawable)
         );
 
@@ -456,7 +455,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                                 // On compeleting the upload, save the uri in SharedPreferences and
                                 // set the drawable to the preferernce icon.
                                 mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
-                                editImageHelper.setUserImageToIcon(uri.toString(), 40, imgModel);
+                                editImageHelper.applyGlideToImageSize(uri.toString(), 40, imgModel);
                             }
                         });
 

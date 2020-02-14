@@ -5,11 +5,9 @@ import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 
-import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -59,12 +57,11 @@ import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.threads.UploadPostTask;
 import com.silverback.carman2.utils.BoardImageSpanHandler;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,14 +97,15 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     // Objects
     private SharedPreferences mSettings;
+    private EditImageHelper editImageHelper;
     private FragmentSharedModel fragmentModel;
+    private ImageViewModel imageModel;
     private BoardAttachImageAdapter imageAdapter;
     private List<Uri> uriImageList;
     private List<String> strImgUriList;
     private ImageSpan[] arrImageSpan;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
-    private ImageViewModel bitmapModel;
     //private FirestoreViewModel uploadPostModel;
     private SpannableStringBuilder ssb;
     private BoardImageSpanHandler spanHandler;
@@ -138,10 +136,11 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         mSettings = ((BoardActivity)getActivity()).getSettings();
+        editImageHelper = new EditImageHelper(getContext());
         uriImageList = new ArrayList<>();
         strImgUriList = new ArrayList<>();
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        bitmapModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        imageModel = new ViewModelProvider(this).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         ssb = new SpannableStringBuilder();
     }
@@ -202,15 +201,11 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             animStatusView.start();
         }
 
-
-
         // Create RecyclerView with attched pictures which are handled in onActivityResult()
         recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
         imageAdapter = new BoardAttachImageAdapter(uriImageList, this);
         recyclerImageView.setAdapter(imageAdapter);
-
-
 
         // Set the event listeners to the buttons.
         btnDismiss.setOnClickListener(btn -> {
@@ -239,11 +234,11 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 DialogFragment dialog = new BoardChooserDlgFragment();
                 dialog.show(getChildFragmentManager(), "@null");
 
-                // Put a line feed into the EditTex when the image interleaves b/w the lines
+                // Put a line feed into the EditText when the image interleaves b/w the lines
                 /*
                  * This works for both, inserting a text at the current position and replacing
                  * whatever text is selected by the user. The Math.max() is necessary in the first
-                 * and second line because, if there is no selection or cursor in the EditText,
+                 * and second line because, if there is no selection or cursor in the edittext,
                  * getSelectionStart() and getSelectionEnd() will both return -1. The Math.min()
                  * and Math.max() in the third line is necessary because the user could have selected
                  * the text backwards and thus start would have a higher value than end which is not
@@ -270,7 +265,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 // the background, the result of which is notified to getUploadBitmap() of ImageViewModel
                 // one by one and all of images has processed, start to upload the post to Firestore.
                 for (Uri uri : uriImageList) {
-                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, bitmapModel);
+                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, imageModel);
                 }
             }
 
@@ -292,6 +287,65 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
+    }
+
+    // Receive the intent sent from what is selected b/w Gallery and Camera in BoardChooserDlgFragment.
+    // The intent contains the uri of an image that you select in the gallery or take by Camera.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode != RESULT_OK || data == null) return;
+        Uri imgUri = null;
+
+        switch(requestCode) {
+            case REQUEST_CODE_GALLERY:
+                imgUri = data.getData();
+                uriImageList.add(imgUri);
+                break;
+
+            case REQUEST_CODE_CAMERA:
+                // Build codes required here!!
+                break;
+        }
+
+
+        // Attach images with ImageSpans of SpannalbeStringBuilder
+        Glide.with(getContext().getApplicationContext()).asBitmap().override(120).fitCenter()
+                .load(imgUri)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+
+                        ImageSpan imgSpan = new ImageSpan(getContext(), resource);
+                        // Manage the image spans using BoardImageSpanHandler helper class.
+                        spanHandler.setImageSpanToPosting(imgSpan);
+                        //spanHandler.setImageSpanInputFilter();
+
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        log.i("onLoadCleard");
+                        // this is called when imageView is cleared on lifecycle call or for
+                        // some other reason.
+                        // if you are referencing the bitmap somewhere else too other than this imageView
+                        // clear it here as you can no longer have the bitmap
+
+                    }
+                });
+
+        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
+        // additional pics.
+        final int position = uriImageList.size() - 1;
+        //imageAdapter.notifyItemInserted(position);
+        imageAdapter.notifyItemChanged(position);
+
+
+        // Resize the image: TEST CODING!!!!!
+        bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), imageModel);
+        super.onActivityResult(requestCode, resultCode, data);
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -348,16 +402,17 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         });
 
+
         // Notified of having attached images uploaded to Firebase Storage and retreive each uri
         // of uploaded images by ImageViewModel
-        bitmapModel.getUploadBitmap().observe(getViewLifecycleOwner(), uriString -> {
+        imageModel.getUploadBitmap().observe(getViewLifecycleOwner(), uriString -> {
             log.i("UploadedImageUri: %s", uriString);
             strImgUriList.add(uriString);
 
             // Start uploading only when attached images finised downsizing and uploading to Storage.
             // Otherwise, the image uris fail to upload to Firestore.
             if(strImgUriList.size() == uriImageList.size()) {
-                uploadPostToFirestore();
+                //uploadPostToFirestore();
                 //dismiss();
             }
 
@@ -373,64 +428,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     }
 
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        log.i("Write Result");
-        if(resultCode != RESULT_OK || data == null) return;
-        Uri imgUri = null;
-
-        switch(requestCode) {
-            case REQUEST_CODE_GALLERY:
-                imgUri = data.getData();
-                uriImageList.add(imgUri);
-                break;
-
-            case REQUEST_CODE_CAMERA:
-                break;
-        }
-
-        // Attach images with ImageSpans of SpannalbeStringBuilder
-        Glide.with(getContext().getApplicationContext()).asBitmap().override(80).fitCenter()
-                .load(imgUri)
-                .into(new CustomTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(
-                            @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-
-                        ImageSpan imgSpan = new ImageSpan(getContext(), resource);
-                        // Manage the image spans using BoardImageSpanHandler helper class.
-                        spanHandler.setImageSpanToPosting(imgSpan);
-                        //spanHandler.setImageSpanInputFilter();
-
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                        log.i("onLoadCleard");
-                        // this is called when imageView is cleared on lifecycle call or for
-                        // some other reason.
-                        // if you are referencing the bitmap somewhere else too other than this imageView
-                        // clear it here as you can no longer have the bitmap
-
-                    }
-                });
-
-
-
-
-        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
-        // additional pics.
-        final int position = uriImageList.size() - 1;
-        //imageAdapter.notifyItemInserted(position);
-        imageAdapter.notifyItemChanged(position);
-
-
-        // Resize the image: TEST CODING!!!!!
-        bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), bitmapModel);
-        super.onActivityResult(requestCode, resultCode, data);
-
-    }
 
 
     // Callback by Checkboxes

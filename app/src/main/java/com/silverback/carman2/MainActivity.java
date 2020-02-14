@@ -63,8 +63,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
         String userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        editImageHelper.setUserImageToIcon(userImage, 50, imgViewModel);
-        imgViewModel.getGlideTarget().observe(this, resource -> getSupportActionBar().setIcon(resource));
+        editImageHelper.applyGlideToImageSize(userImage, 50, imgViewModel);
+        imgViewModel.getGlideDrawableTarget().observe(this, resource -> getSupportActionBar().setIcon(resource));
 
         //getSupportActionBar().setIcon(appbarIcon);
 
@@ -114,8 +114,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Must make the null check, not String.isEmpty() because the blank name should be included.
         if(userName != null) getSupportActionBar().setTitle(userName);
         if(uriImage != null) {
-            //Drawable newIcon = setUserImageToIcon(uriImage, imgViewModel);
-            editImageHelper.setUserImageToIcon(uriImage, 50, imgViewModel);
+            //Drawable newIcon = applyGlideToImageSize(uriImage, imgViewModel);
+            editImageHelper.applyGlideToImageSize(uriImage, 50, imgViewModel);
             //getSupportActionBar().setIcon(newIcon);
         } else getSupportActionBar().setIcon(null);
 
