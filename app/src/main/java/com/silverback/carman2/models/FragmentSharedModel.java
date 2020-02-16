@@ -20,10 +20,18 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<SparseIntArray> selectedValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> selectedMemo = new MutableLiveData<>();
     private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
-    private final MutableLiveData<Boolean> alertResult = new MutableLiveData<>();
+
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
+
+    private MutableLiveData<Boolean> alertPostResult;
+    private MutableLiveData<String> newPosting;
+    private MutableLiveData<String> removedPosting;
+
+
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
+
+
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
     private MutableLiveData<String> favoriteStnId;
@@ -34,7 +42,7 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<String> strData;
 
-    private MutableLiveData<String> newPosting;
+
 
     private MutableLiveData<String> firstPlaceholderId;
 
@@ -83,13 +91,16 @@ public class FragmentSharedModel extends ViewModel {
         return jsonServiceItemObj;
     }
 
+    public MutableLiveData<Boolean> getAlertPostResult() {
+        if(alertPostResult == null) alertPostResult = new MutableLiveData<>();
+        return alertPostResult;
+    }
     // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
-    public void setAlert(boolean b) {
-        alertResult.setValue(b);
+    public MutableLiveData<String> getRemovedPosting() {
+        if(removedPosting == null) removedPosting = new MutableLiveData<>();
+        return removedPosting;
     }
-    public LiveData<Boolean> getAlert() {
-        return alertResult;
-    }
+
 
     // Commmunicate b/w RegisterDialogFragment and ServiceManagerFragment
     public void setServiceLocation(SparseArray sparseArray) {

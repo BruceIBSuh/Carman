@@ -93,9 +93,7 @@ public class UploadBitmapRunnable implements Runnable {
                 cursor.moveToFirst();
                 orientation = cursor.getInt(0);
                 log.i("orientation: %s", orientation);
-
             }
-
 
             // Recall InputStream once again b/c it is auto closeable. Otherwise, it returns null.
             try(InputStream in = context.getContentResolver().openInputStream(uri)) {
@@ -107,7 +105,8 @@ public class UploadBitmapRunnable implements Runnable {
                     log.i("Orientation of image is not 0");
                     Matrix matrix = new Matrix();
                     matrix.postRotate(orientation);
-                    resizedBitmap = Bitmap.createBitmap(resizedBitmap, 0, 0, resizedBitmap.getWidth(),resizedBitmap.getHeight(), matrix, true);
+                    resizedBitmap = Bitmap.createBitmap(
+                            resizedBitmap, 0, 0, resizedBitmap.getWidth(),resizedBitmap.getHeight(), matrix, true);
                 }
 
 

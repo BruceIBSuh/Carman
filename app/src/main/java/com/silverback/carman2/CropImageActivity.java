@@ -20,6 +20,7 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.DrawEditorView;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,26 +28,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-import static androidx.core.content.FileProvider.getUriForFile;
-
 
 /**
  * This activity is an image editor that crops an specific area of images to the shape of circle
  * or rectangle(not working now). DrawEditorView makes a drawing of the shape to crop. The cropped
- * image
+ * image should be scaled down using scaledownBitmap(), then send the uri of the crooped and down
+ * scaled image back to the caller.
  */
 public class CropImageActivity extends AppCompatActivity implements View.OnClickListener{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(CropImageActivity.class);
-
     // Objects
     private Uri mUri;
-    //private EditImageHelper editImage;
     private DrawEditorView drawView;
-
     // UIs
     private ImageView mImageView;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +56,6 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
 
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        //EditImageHelper editImage = new EditImageHelper(this);
 
         mImageView = findViewById(R.id.img_userpic);
         drawView = findViewById(R.id.view_custom_drawEditorView);
@@ -93,7 +88,7 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
                 Bitmap croppedBitmap = drawView.getCroppedBitmap();
                 if(croppedBitmap == null) return;
 
-                // Save the cropped image in the internal storage with the path of "/images/fimename",
+                // Save the cropped image in the internal storage with the path of "images/",
                 // then return its uri using FileProvder
                 File imagePath = new File(getFilesDir(), "images/");
                 if(!imagePath.exists()) imagePath.mkdir();
@@ -102,18 +97,21 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
                 String filename = sdf.format(Calendar.getInstance().getTimeInMillis());
 
                 File fCropImage = new File(imagePath, filename + ".jpg");
-                if(fCropImage.exists()) fCropImage.delete();
+                //if(fCropImage.exists()) fCropImage.delete();
+
+                // Scale down the cropped image to the default size(50kb)
+                byte[] byteUserImage = scaleDownCroppedBitmap(croppedBitmap);
 
                 try(FileOutputStream fos = new FileOutputStream(fCropImage);
                     BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                    croppedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bos);
+                    bos.write(byteUserImage);
 
                 } catch(IOException e) {
                     e.printStackTrace();
 
                 } finally {
-                    // FileProvider which convert the file format to Uri and defines the file path
-                    // in file_path.xml.
+                    // FileProvider which convert the file format to the content uri.  It defines
+                    // the file path in file_path.xml as a meta data.
                     Uri cropUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, fCropImage);
 
                     Intent resultIntent = new Intent();
@@ -131,5 +129,26 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
                 break;
         }
 
+    }
+
+    // Compress the bitmap based on a given compress density, then repeat to compress with
+    // a decresing density until the length of the byte array is larger than the preset one.
+    private byte[] scaleDownCroppedBitmap(final Bitmap bitmap)  {
+        int compressDensity = 100;
+        int streamLength;
+        ByteArrayOutputStream baos;
+        byte[] bmpByteArray;
+        // Compress the raw image down to the MAX_IMAGE_SIZE
+        do{
+            baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, compressDensity, baos);
+            bmpByteArray = baos.toByteArray();
+            streamLength = bmpByteArray.length;
+            compressDensity -= 5;
+            log.i("compress density: %s", streamLength / 1024 + " kb");
+
+        } while(streamLength >= Constants.MAX_ICON_SIZE);
+
+        return bmpByteArray;
     }
 }

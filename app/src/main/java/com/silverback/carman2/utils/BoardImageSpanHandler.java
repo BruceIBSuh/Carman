@@ -134,9 +134,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // When an image is removed from the GridView, the span containing the image and the markup string
     // should be removed at the same time.
-    public void removeImageSpan(int position) {
-        int start = editable.getSpanStart(arrImgSpan[position]);
-        editable.removeSpan(arrImgSpan[position]);//remove the image span
+    public void removeImageSpan(int pos) {
+        if(arrImgSpan[pos] == null) return;
+        int start = editable.getSpanStart(arrImgSpan[pos]);
+        editable.removeSpan(arrImgSpan[pos]);//remove the image span
         editable.replace(start, start + markup.length(), "");//delete the markkup
         imageTag -= 1;
     }

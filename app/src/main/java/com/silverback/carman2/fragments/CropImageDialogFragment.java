@@ -12,6 +12,11 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+/**
+ * This class is a custom DialogFragment to select which media to pick out of Gallery and Camera, or
+ * remove the user image. The selection is notified to the parent activity, SettingPreferenceActivity
+ * with the listener that paases the position of a selected item.
+ */
 public class CropImageDialogFragment extends DialogFragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(CropImageDialogFragment.class);

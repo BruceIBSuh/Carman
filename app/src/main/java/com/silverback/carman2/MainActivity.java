@@ -18,8 +18,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import java.io.File;
 
@@ -38,7 +38,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     // Objects
     private GeneralFragment generalFragment;
-    private EditImageHelper editImageHelper;
+    private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgViewModel;
     //private ActionBarDrawerToggle drawerToggle;
     // Fields
@@ -51,7 +51,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        editImageHelper = new EditImageHelper(this);
+        applyImageResourceUtil = new ApplyImageResourceUtil(this);
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -63,10 +63,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
         String userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        editImageHelper.applyGlideToImageSize(userImage, 50, imgViewModel);
-        imgViewModel.getGlideDrawableTarget().observe(this, resource -> getSupportActionBar().setIcon(resource));
-
-        //getSupportActionBar().setIcon(appbarIcon);
+        applyImageResourceUtil.applyGlideToDrawable(userImage, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
@@ -94,6 +91,18 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
+        // is sent in onActivityResult() as a result of startActivityForResult() which called
+        // SettingPreferenceActivity. The img uri is processed to Drawable by Glide, the custom target
+        // of which is passed via ImageViewModel and reset to the Icon when the activity resumes
+        imgViewModel.getGlideDrawableTarget().observe(this, resource -> {
+            if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
+        });
+    }
+
     // startActivityForResult() has this callback invoked by getting an intent that contains new
     // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
     // and PriceViewPager should be updated with a new district, both of which have been reset
@@ -113,11 +122,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
         // Must make the null check, not String.isEmpty() because the blank name should be included.
         if(userName != null) getSupportActionBar().setTitle(userName);
-        if(uriImage != null) {
-            //Drawable newIcon = applyGlideToImageSize(uriImage, imgViewModel);
-            editImageHelper.applyGlideToImageSize(uriImage, 50, imgViewModel);
-            //getSupportActionBar().setIcon(newIcon);
-        } else getSupportActionBar().setIcon(null);
+
+        if(uriImage != null)
+            applyImageResourceUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
+        else imgViewModel.getGlideDrawableTarget().setValue(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));

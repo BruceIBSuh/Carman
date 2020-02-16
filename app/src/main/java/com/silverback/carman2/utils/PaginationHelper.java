@@ -15,11 +15,16 @@ import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+/**
+ * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
+ * OnPaginationListener to have document snaoshots from FireStore.
+ */
 public class PaginationHelper extends RecyclerView.OnScrollListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PaginationHelper.class);
 
     // Objects
+    private FirebaseFirestore firestore;
     private CollectionReference colRef;
     private QuerySnapshot querySnapshot;
     private OnPaginationListener mListener;
@@ -27,7 +32,6 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     // Fields
     private boolean isScrolling;
     private boolean isLastItem;
-    private int pagingLimit;
     private String field;
 
     // Interface w/ BoardPagerFragment to notify the state of querying process and pagination.
@@ -37,9 +41,9 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         void setNextQueryComplete(QuerySnapshot querySnapshot);
     }
 
-    // Constructor
+    // private constructor
     public PaginationHelper() {
-        // default constructor left empty.
+        firestore = FirebaseFirestore.getInstance();
     }
 
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of
@@ -48,31 +52,25 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-    public void setPostingQuery(final String field, final int limit) {
+    public void setPostingQuery(final String field) {
         this.field = field;
-        pagingLimit = limit;
-
         // Initate the first query
-        //Source source = Source.CACHE;
-        colRef = FirebaseFirestore.getInstance().collection("board_general");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
+        colRef = firestore.collection("board_general");
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                .get(Source.CACHE)
                 .addOnSuccessListener(querySnapshot -> {
-                    log.i("First query");
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
-                });
+                })
+                .addOnFailureListener(e -> log.e("Query failed"));
     }
 
 
-    public void setCommentQuery(final String field, final String docId, final int limit) {
-
+    public void setCommentQuery(final String field, final String docId) {
         this.field = field;
-        pagingLimit = limit;
-
-        colRef = FirebaseFirestore.getInstance()
-                .collection("board_general").document(docId).collection("comments");
-
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(limit).get()
+        colRef = firestore.collection("board_general").document(docId).collection("comments");
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                .get(Source.CACHE)
                 .addOnSuccessListener(querySnapshot -> {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
@@ -83,7 +81,6 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
-
         if (newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
             isScrolling = true;
         }
@@ -112,13 +109,13 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
             log.i("last doc: %s", lastDoc.getString("post_title"));
             Query nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
-                    .startAfter(lastDoc).limit(pagingLimit);
+                    .startAfter(lastDoc).limit(Constants.PAGINATION);
 
             nextQuery.get().addOnSuccessListener(nextSnapshot -> {
-                log.i("isLastItem: %s, %s", nextSnapshot.size(), pagingLimit);
+                log.i("isLastItem: %s, %s", nextSnapshot.size(), Constants.PAGINATION);
 
                 // Check if the next query reaches the last document.
-                if((nextSnapshot.size()) < pagingLimit) isLastItem = true;
+                if((nextSnapshot.size()) < Constants.PAGINATION) isLastItem = true;
 
                 mListener.setNextQueryComplete(nextSnapshot);
                 querySnapshot = nextSnapshot;

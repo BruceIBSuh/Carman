@@ -10,15 +10,16 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+/**
+ * This class subclasses ViewModel to instantiate LiveData concerning image resources.
+ */
 public class ImageViewModel extends ViewModel {
 
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
     private MutableLiveData<String> uploadBitmap;
     private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
-
-    private MutableLiveData<Drawable> glideDrawableTarget;
     private MutableLiveData<Bitmap> glideBitmapTarget;
-
+    private MutableLiveData<Drawable> glideDrawableTarget;
 
     public void setDownloadImage(int key, RoundedBitmapDrawable drawable) {
         SparseArray<RoundedBitmapDrawable> sparseArray = new SparseArray<>();
@@ -37,13 +38,15 @@ public class ImageViewModel extends ViewModel {
         return sparseImageSpanArray;
     }
 
-    public MutableLiveData<Drawable> getGlideDrawableTarget() {
-        if(glideDrawableTarget == null) glideDrawableTarget = new MutableLiveData<>();
-        return glideDrawableTarget;
-    }
-
+    // Glide creates CustomTarget which has bitmap as resource set it generally to views.
     public MutableLiveData<Bitmap> getGlideBitmapTarget() {
         if(glideBitmapTarget == null) glideBitmapTarget = new MutableLiveData<>();
         return glideBitmapTarget;
+    }
+
+    // Glide creates CustomTarget which has drawable as resource and set it mostly to icons.
+    public MutableLiveData<Drawable> getGlideDrawableTarget() {
+        if(glideDrawableTarget == null) glideDrawableTarget = new MutableLiveData<>();
+        return glideDrawableTarget;
     }
 }

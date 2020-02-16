@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_board_edit"
+        android:icon="@drawable/ic_action_edit_post"
+        android:title="edit"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/action_board_delete"
+        android:icon="@drawable/ic_action_del_post"
+        android:title="delete"
+        app:showAsAction="ifRoom|withText" />
+
+</menu>

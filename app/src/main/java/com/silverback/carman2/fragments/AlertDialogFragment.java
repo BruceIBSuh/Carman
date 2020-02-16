@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.View;
 import android.widget.TextView;
@@ -29,7 +29,7 @@ public class AlertDialogFragment extends DialogFragment {
 
     // Objects
     private static AlertDialogFragment alertFragment;
-    private FragmentSharedModel fragmentSharedModel;
+    private FragmentSharedModel sharedModel;
     private String title, message;
     private int category;
 
@@ -54,7 +54,7 @@ public class AlertDialogFragment extends DialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        fragmentSharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         title = getArguments().getString("title");
         message = getArguments().getString("message");
         category = getArguments().getInt("category");
@@ -77,26 +77,28 @@ public class AlertDialogFragment extends DialogFragment {
         tvMessage.setText(message);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(localView)
-                .setPositiveButton("confirm", (dialog, which) -> {
-                    switch(category) {
-                        case Constants.GAS:
-                            fragmentSharedModel.setAlertGasResult(true);
-                            break;
+        builder.setView(localView).setPositiveButton("confirm", (dialog, which) -> {
+            switch(category) {
+                case Constants.GAS:
+                    sharedModel.setAlertGasResult(true);
+                    break;
 
-                        case Constants.SVC:
-                            fragmentSharedModel.setAlertSvcResult(true);
-                            break;
+                case Constants.SVC:
+                    sharedModel.setAlertSvcResult(true);
+                    break;
 
-                        case 3:
-                            fragmentSharedModel.setAlert(true);
-                            break;
-                    }
-                })
-                .setNegativeButton("cancel", (dialog, which) -> {
-                    fragmentSharedModel.setAlert(false);
-                    dismiss();
-                });
+                case Constants.POST:
+                    sharedModel.getAlertPostResult().setValue(true);
+                    break;
+            }
+            dismiss();
+
+        }).setNegativeButton("cancel", (dialog, which) -> {
+            sharedModel.getAlertPostResult().setValue(false);
+            dismiss();
+        });
+
+
 
         return builder.create();
     }

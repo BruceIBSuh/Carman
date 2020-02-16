@@ -4,7 +4,6 @@ package com.silverback.carman2.fragments;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -50,15 +49,19 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
-import com.silverback.carman2.threads.AttachedBitmapTask;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 import com.silverback.carman2.utils.PaginationHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -88,23 +91,20 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private EditImageHelper editImageHelper;
+    private DocumentReference postRef;
+    private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgViewModel;
+    private FragmentSharedModel sharedModel;
     private Context context;
-    private DocumentSnapshot document;
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
-    private List<Integer> viewIdList;
-    private AttachedBitmapTask bitmapTask;
-    private List<Bitmap> bmpList;
     private SharedPreferences mSettings;
     private List<DocumentSnapshot> snapshotList;
-    private Uri uriUserImage;
+
 
     // UIs
     private View localView;
-    private AppBarLayout appbarLayout;
     private ConstraintLayout constPostingLayout, constCommentLayout;
     private Toolbar toolbar;
     private View underline;
@@ -117,13 +117,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private String tabTitle;
     private String autoData;
     private String userId, documentId;
-    private int cntImages;
     private int tabPage;
+    private int position;
     private int appbarOffset;
     private int cntComment, cntCompathy;
-    private int mCurrentState;
     private boolean isCommentVisible;
-    private boolean hasCompathy, hasComment;
+    private boolean hasCompathy;
 
     public BoardReadDlgFragment() {
         // Required empty public constructor
@@ -137,12 +136,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
-        editImageHelper = new EditImageHelper(getContext());
+        applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
+        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
+            position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
@@ -154,6 +155,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
             documentId = getArguments().getString("documentId");
             log.i("DocumentID: %s, %s", tabPage, documentId);
         }
+
+        // Get the current document reference which should be shared in the fragment.
+        postRef = firestore.collection("board_general").document(documentId);
 
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
         // a margin-formatted spannable string, which, in turn, set the image spans to display
@@ -197,9 +201,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         localView = inflater.inflate(R.layout.dialog_board_read, container, false);
 
-        appbarLayout = localView.findViewById(R.id.appbar_board_read);
+        AppBarLayout appbarLayout = localView.findViewById(R.id.appbar_board_read);
         toolbar = localView.findViewById(R.id.toolbar_board_read);
-        //constraintHeader = localView.findViewById(R.id.constraint_header);
         constPostingLayout = localView.findViewById(R.id.constraint_posting);
         constCommentLayout = localView.findViewById(R.id.constraint_comment);
         TextView tvTitle = localView.findViewById(R.id.tv_post_title);
@@ -250,48 +253,22 @@ public class BoardReadDlgFragment extends DialogFragment implements
         PaginationHelper pagingUtil = new PaginationHelper();
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
-        pagingUtil.setCommentQuery("timestamp", documentId, Constants.PAGINATION);
+        pagingUtil.setCommentQuery("timestamp", documentId);
 
 
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
         // On clicking the comment button, show the comment input form.
         btnComment.setOnClickListener(this);
-        /*
-        btnComment.setOnClickListener(view -> {
-            if(isCommentVisible) constCommentLayout.setVisibility(View.INVISIBLE);
-            else constCommentLayout.setVisibility(View.VISIBLE);
-            isCommentVisible = !isCommentVisible;
-        });
-        */
-
         // Button to set compathy which increase the compathy number if the user has never picked it up.
         btnCompathy.setOnClickListener(view -> setCompathyCount());
-
         // Upload the comment to Firestore, which needs to refactor for filtering text.
         btnSendComment.setOnClickListener(this);
-        /*
-        btnSendComment.setOnClickListener(view -> {
-            if(TextUtils.isEmpty(etComment.getText())) {
-                Snackbar.make(localView, "no comment exists", Snackbar.LENGTH_SHORT).show();
-                return;
-            }
-
-            // On finishing upload, close the soft input and the comment view.
-            if(uploadComment()) {
-                // Close the soft input mehtod when clicking the upload button
-                ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                        .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-                // Make the comment view invisible
-                constCommentLayout.setVisibility(View.INVISIBLE);
-                isCommentVisible = !isCommentVisible;
-            }
-        });
-         */
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
-        final DocumentReference postRef = firestore.collection("board_general").document(documentId);
+        // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
+        // whether the document has local changes that haven't been written to the backend yet.
+        // This property may determine the source of events
         postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
@@ -302,12 +279,16 @@ public class BoardReadDlgFragment extends DialogFragment implements
             }
         });
 
+        // Toolbar menu: if the post is written by the user, show the menu for editting the post.
+        // Consider that a new dialogfragment should be created or reuse BoardWriteDlgFragment with
+        // putting the data in the fragment.
+        inflateEditMenuInToolbar();
 
         // Rearrange the text by paragraphs
         createContentView(postContent);
 
         // Set the user image in the header.
-        uriUserImage = Uri.parse(userPic);
+        Uri uriUserImage = Uri.parse(userPic);
         Glide.with(context).asBitmap().load(uriUserImage)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .fitCenter().circleCrop()
@@ -325,23 +306,46 @@ public class BoardReadDlgFragment extends DialogFragment implements
         return dialog;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
 
-        // ImageViewModel receives a drawable as LiveData from EditImageHelper.applyGlideToImageSize()
+        // SET THE USER IMAGE ICON
+        // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
         // in which Glide creates the custom target that translates an image fitting to a given
         // size and returns a drawable.
         imgViewModel.getGlideDrawableTarget().observe(getViewLifecycleOwner(), drawable -> {
             toolbar.setLogo(drawable);
             toolbar.setContentInsetStartWithNavigation(0);
         });
+
+        // The user reads one's own posting and pick the delete button in the toolbar to pop up
+        // the alert dialog. Picking the confirm button, FragmentSharedModel.getPostRemoved()
+        // notifies BoardPagerFragment that the user has deleted the post w/ the item position.
+        // To prevent the model from autmatically invoking the method, set the value to false;
+        sharedModel.getAlertPostResult().setValue(false);
+        sharedModel.getAlertPostResult().observe(getActivity(), result -> {
+            // The post will be deleted from Firestore.
+            log.i("Alert confirms to delete the post");
+            if(result) {
+                postRef.delete().addOnSuccessListener(aVoid -> {
+                    //Snackbar.make(getView(), R.string.board_msg_delete, Snackbar.LENGTH_SHORT).show();
+                    sharedModel.getRemovedPosting().setValue(documentId);
+                    dismiss();
+                })
+                // Method reference in Lambda which uses class name and method name w/o parenthesis
+                .addOnFailureListener(Throwable::printStackTrace);
+            }
+        });
+
     }
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {
         switch(v.getId()) {
+
             case R.id.imgbtn_comment:
                 if(isCommentVisible) constCommentLayout.setVisibility(View.INVISIBLE);
                 else constCommentLayout.setVisibility(View.VISIBLE);
@@ -371,10 +375,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
 
     }
-
-
-
-
 
     // The following 3 callbacks are invoked by PaginationHelper to query a collection reference
     // up to the limit and on showing the last one, another query get started.
@@ -409,15 +409,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
 
         // First, get the document with a given id, then add data
-        DocumentReference documentRef = firestore.collection("board_general").document(documentId);
-        documentRef.get().addOnSuccessListener(document -> {
+        //DocumentReference documentRef = firestore.collection("board_general").document(documentId);
+        postRef.get().addOnSuccessListener(document -> {
             if(document.exists()) {
                 final CollectionReference colRef = document.getReference().collection("comments");
                 colRef.add(comment).addOnSuccessListener(commentDoc -> {
-
                     // increase the cnt_cooment in the parent document.
-                    documentRef.update("cnt_comment", FieldValue.increment(1));
-
+                    postRef.update("cnt_comment", FieldValue.increment(1));
                     // Update the recycler adapter to enlist the pending comment. Don't have to use
                     // SnapshotListener, even thoug it may not update the RecyclerView of other users
                     // simultaneously.
@@ -433,8 +431,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         return true;
     }
-
-
 
     /*
     @Override
@@ -500,7 +496,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 16);
             imgSet.applyTo(constPostingLayout);
 
-
+            // Consider to apply Glide thumbnail() method.
             Glide.with(context)
                     .asBitmap()
                     .load(imgUriList.get(index))
@@ -562,9 +558,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-
-
-
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every
     // scrolling changes which keep the view being invalidated. The abstract class may, in turn,
@@ -572,6 +565,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
 
         int mCurrentState = STATE_IDLE;
+
         @Override
         public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
 
@@ -612,7 +606,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-                editImageHelper.applyGlideToImageSize(userPic, 50, imgViewModel);
+                applyImageResourceUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
 
                 break;
 
@@ -641,8 +635,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
             return;
         }
 
-        final DocumentReference docRef = firestore.collection("board_general").document(documentId);
-        final DocumentReference compathyRef = docRef.collection("compathy").document(userId);
+        //final DocumentReference docRef = firestore.collection("board_general").document(documentId);
+        final DocumentReference compathyRef = postRef.collection("compathy").document(userId);
 
         compathyRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
@@ -654,22 +648,62 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
 
                 } else {
-                    docRef.update("cnt_compathy", FieldValue.increment(1));
+                    postRef.update("cnt_compathy", FieldValue.increment(1));
                     Map<String, Object> data = new HashMap<>();
                     data.put("timestamp", FieldValue.serverTimestamp());
                     compathyRef.set(data);
                 }
             }
 
-        }).addOnSuccessListener(aVoid -> {
-            log.i("isCompathy exists");
-        }).addOnFailureListener(e -> {
-            log.e("isCompathy does not exist: %s", e.getMessage());
-        });
+        }).addOnSuccessListener(aVoid -> log.i("isCompathy exists"))
+                .addOnFailureListener(e -> log.e("isCompathy does not exist: %s", e.getMessage()));
 
     }
 
+    // If a user reads his/her own post, show the menus in the toolbar which edit or delete the post.
+    @SuppressWarnings("ConstantConditions")
+    private void inflateEditMenuInToolbar() {
+        // Use try-resource for autocloseable.
+        try (FileInputStream fis = getActivity().openFileInput("userId");
+             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
+            String id = br.readLine();
+            if(userId.equals(id)) {
+                toolbar.inflateMenu(R.menu.menu_board_read);
+                toolbar.setOnMenuItemClickListener(item -> {
+
+                    switch(item.getItemId()) {
+                        case R.id.action_board_edit:
+                            sharedModel.getImageChooser().setValue(-1);
+                            // Create the dialog fragment with arguments which have been passed from
+                            // BoardPagerFragment when an item was picked.
+                            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
+                            writePostFragment.setArguments(getArguments());
+
+                            getActivity().getSupportFragmentManager().beginTransaction()
+                                    .add(android.R.id.content, writePostFragment)
+                                    .commit();
+
+                            return true;
+
+                        case R.id.action_board_delete:
+                            String title = getString(R.string.board_alert_delete);
+                            String msg = getString(R.string.board_alert_msg);
+                            AlertDialogFragment.newInstance(title, msg, Constants.POST)
+                                    .show(getActivity().getSupportFragmentManager(), null);
+                            return true;
+
+                        default: return false;
+
+                    }
+
+                });
+            }
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
     // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span

@@ -6,8 +6,9 @@ public class Constants {
     public static final int TOTAL = 0;
     public static final int GAS = 1;
     public static final int SVC = 2;
-    public static final int MAX_FAVORITE = 10;
+    public static final int POST = 3;
 
+    public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 60; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
@@ -25,8 +26,14 @@ public class Constants {
     // Limit of the images attached with the post.
     public static final int MAX_ATTACHED_IMAGE = 6;
     // Board Pagination
-    public static final int PAGINATION = 25;
+    static final int PAGINATION = 25;
     //public static final int ICON_SIZE = 50;
+
+    // Image and Icon Size
+    public static final int ICON_SIZE_TOOLBAR = 50;
+    public static final int ICON_SIZE_PREFERENCE = 40;
+    public static final int MAX_ICON_SIZE = 50 * 1024;
+    public static final int MAX_ATTACHED_IMAGE_SIZE = 1024 * 1024;
 
     // File names for FileProvider
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";

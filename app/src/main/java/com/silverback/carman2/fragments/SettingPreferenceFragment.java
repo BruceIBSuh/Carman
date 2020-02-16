@@ -169,6 +169,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
+        // Consider to replace this with the custom preference defined as ProgressBarPreference.
         cropImagePreference = findPreference(Constants.USER_IMAGE);
         cropImagePreference.setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
@@ -187,7 +188,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         String imageUri = mSettings.getString(Constants.FILE_IMAGES, null);
         if(!TextUtils.isEmpty(imageUri)) {
             try {
-                EditImageHelper cropHelper = new EditImageHelper(getContext());
+                ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(getContext());
                 RoundedBitmapDrawable drawable = cropHelper.drawRoundedBitmap(Uri.parse(imageUri));
                 cropImagePreference.setIcon(drawable);
             } catch (IOException e) {
@@ -198,7 +199,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     }
 
     // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
-    // action to pop up an custom PreferenceDialogFragmnetCompat when a preferenece clicks.
+    // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
     @SuppressWarnings("ConstantConditions")
     @Override

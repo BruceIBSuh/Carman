@@ -2,17 +2,17 @@ package com.silverback.carman2.fragments;
 
 
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ProgressBar;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentReference;
@@ -25,7 +25,6 @@ import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
 
 import java.text.SimpleDateFormat;
@@ -35,6 +34,7 @@ import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
+ *
  */
 public class BoardPagerFragment extends Fragment implements
         PaginationHelper.OnPaginationListener,
@@ -43,13 +43,15 @@ public class BoardPagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
-    //private FirebaseFirestore firestore;
-    private BoardPostingAdapter recyclerAdapter;
+    private FragmentSharedModel sharedModel;
+    private BoardPostingAdapter postingAdapter;
+    private PaginationHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
 
     // UIs
-    private ProgressBar pagingPB;
+    private ProgressBar pagingProgbar;
+    private FloatingActionButton fabWrite;
 
     // Fields
     private int page;
@@ -68,16 +70,19 @@ public class BoardPagerFragment extends Fragment implements
         return fragment;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //if(getActivity() == null) return;
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
-        //firestore = FirebaseFirestore.getInstance();
-        snapshotList = new ArrayList<>();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        snapshotList = new ArrayList<>();
+        postingAdapter = new BoardPostingAdapter(snapshotList, this);
+        pageHelper = new PaginationHelper();
+        pageHelper.setOnPaginationListener(this);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -86,30 +91,13 @@ public class BoardPagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
-        pagingPB = localView.findViewById(R.id.progbar_paging);
-        FloatingActionButton fabWrite = localView.findViewById(R.id.fab_board_write);
+        pagingProgbar = localView.findViewById(R.id.progbar_paging);
+        fabWrite = localView.findViewById(R.id.fab_board_write);
         RecyclerView recyclerPostView = localView.findViewById(R.id.recycler_board);
+
         recyclerPostView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        recyclerAdapter = new BoardPostingAdapter(snapshotList, this);
-        recyclerPostView.setAdapter(recyclerAdapter);
-
-        // Floating Action Button to show BoardReadDlgFragment which reads a post when clicking it.
-        // Also, as the reyclcerview scrolls, the button hides itself and the button appears again
-        // when the scroll stops.
-        fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
-        fabWrite.setOnClickListener(view -> {
-            // MUST initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
-            // automatically invoking startActivityForResult() when the fragment pops up.
-            FragmentSharedModel model = new ViewModelProvider(this).get(FragmentSharedModel.class);
-            model.getImageChooser().setValue(-1);
-
-            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
-            getActivity().getSupportFragmentManager().beginTransaction()
-                    .add(android.R.id.content, writePostFragment)
-                    .commit();
-        });
-
+        recyclerPostView.setAdapter(postingAdapter);
+        // Show/hide Floating Action Button as the recyclerview scrolls.
         recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -121,33 +109,68 @@ public class BoardPagerFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
+        // Paginate the recyclerview with the preset limit. PaginationHelper subclasses RecyclerView.
+        // OnScrollListner.
+        recyclerPostView.addOnScrollListener(pageHelper);
 
+        // Floating Action Button to show BoardReadDlgFragment which reads a post when clicking it.
+        // Also, as the reyclcerview scrolls, the button hides itself and the button appears again
+        // when the scroll stops.
+        fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
+        fabWrite.setOnClickListener(view -> {
+            // MUST initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
+            // automatically invoking startActivityForResult() when the fragment pops up.
+            sharedModel.getImageChooser().setValue(-1);
 
-        // Paginate the recyclerview with the preset limit.
-        //final CollectionReference colRef = firestore.collection("board_general");
-        PaginationHelper paginationHelper = new PaginationHelper();
-        paginationHelper.setOnPaginationListener(this);
-        recyclerPostView.addOnScrollListener(paginationHelper);
+            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
+            getActivity().getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, writePostFragment)
+                    .commit();
+        });
 
-        if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
-        //if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
-        switch(page) {
-            case 0: // Recent post
-                paginationHelper.setPostingQuery("timestamp", Constants.PAGINATION);
-                break;
-            case 1: // Popular post
-                paginationHelper.setPostingQuery("cnt_view", Constants.PAGINATION);
-                break;
-            case 2: // Info n Tips
-                //if(getActivity() != null) ((BoardActivity)getActivity()).handleFabVisibility();
-                break;
-            case 3: // Auto Club
-                break;
-            default:
-                break;
-        }
+        // Get the field name of each fragment in the viewpager and query the posting items using
+        // PaginationHelper which sends the dataset back to the callbacks such as setFirstQuery(),
+        // setNextQueryStart(), and setNextQueryComplete().
+        //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
+        String field = getQueryFieldToViewPager(page);
+        pageHelper.setPostingQuery(field);
 
         return localView;
+    }
+
+    // This lifecycle is invoked at the time not only the viewpager sets the adapter first time,
+    // but also each time the viewpager chages the page. Thus, the viewmodels should prevent
+    // listeners from running automatically with params given as conditions.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityCreated(Bundle bundle) {
+        super.onActivityCreated(bundle);
+        log.i("onActivityCreated");
+        // Notified that uploading the post has completed by UploadPostTask.
+        // It seems not working. What if Srouce.CACHE options are applied?
+        sharedModel.getNewPosting().observe(getActivity(), documentId -> {
+            log.i("New posting: %s", page);
+            if(!TextUtils.isEmpty(documentId)) {
+                snapshotList.clear();
+                String field = getQueryFieldToViewPager(page);
+                pageHelper.setPostingQuery(field);
+            }
+        });
+
+        // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
+        // for confirmation and the result sent back, then deleted the posting item from Firestore.
+        // With All done, receive another LiveData containing the postion of the deleted posting item
+        // and update the adapter.
+        sharedModel.getRemovedPosting().observe(getActivity(), docId -> {
+            log.i("Posting removed: %s", docId);
+            if(!TextUtils.isEmpty(docId)) {
+                snapshotList.clear();
+                String field = getQueryFieldToViewPager(page);
+                pageHelper.setPostingQuery(field);
+            }
+        });
+
+
     }
 
 
@@ -156,19 +179,19 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setFirstQuery(QuerySnapshot snapshot) {
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);
-        recyclerAdapter.notifyDataSetChanged();
+        postingAdapter.notifyDataSetChanged();
 
     }
     @Override
     public void setNextQueryStart(boolean b) {
-        pagingPB.setVisibility(View.VISIBLE);
+        pagingProgbar.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void setNextQueryComplete(QuerySnapshot querySnapshot) {
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
-        pagingPB.setVisibility(View.INVISIBLE);
-        recyclerAdapter.notifyDataSetChanged();
+        pagingProgbar.setVisibility(View.INVISIBLE);
+        postingAdapter.notifyDataSetChanged();
     }
 
 
@@ -181,6 +204,7 @@ public class BoardPagerFragment extends Fragment implements
         BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", page);
+        bundle.putInt("position", position);
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("postTitle", snapshot.getString("post_title"));
@@ -213,9 +237,24 @@ public class BoardPagerFragment extends Fragment implements
             //String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
             if(data != null && data.exists()) {
                 //log.i("source: %s", source + "data: %s" + data.getData());
-                recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                recyclerAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
+                postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
             }
         });
     }
+
+    private String getQueryFieldToViewPager(int page) {
+        switch(page) {
+            case 0: // Recent
+                return "timestamp";
+            case 1: // Popular
+                return "cnt_view";
+            case 2: // Auto Club
+                return "autoclub";
+            case 3: // Notification
+                return "notificaiton";
+            default: return null;
+        }
+    }
+
 }

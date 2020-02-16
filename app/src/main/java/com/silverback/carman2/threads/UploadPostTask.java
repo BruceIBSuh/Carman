@@ -1,6 +1,7 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -44,8 +45,8 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     }
 
     @Override
-    public void notifyUploadDone(String id) {
-        log.i("notifyUploadDone: %s", id);
-        viewModel.getNewPosting().postValue(id);
+    public void notifyUploadDone(String documentId) {
+        log.i("notifyUploadDone: %s", documentId);
+        if(!TextUtils.isEmpty(documentId)) viewModel.getNewPosting().postValue(documentId);
     }
 }

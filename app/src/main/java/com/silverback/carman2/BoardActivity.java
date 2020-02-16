@@ -49,7 +49,6 @@ public class BoardActivity extends BaseActivity implements
         boardPager = findViewById(R.id.viewpager_board);
         AppBarLayout appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
-        //fabWrite = findViewById(R.id.fab_write);
         pbBoard = findViewById(R.id.progbar_board);
 
         // Set Toolbar and its title as AppBar
@@ -67,28 +66,11 @@ public class BoardActivity extends BaseActivity implements
         // Add the listeners to the viewpager and AppbarLayout
         boardPager.addOnPageChangeListener(this);
         appBar.addOnOffsetChangedListener(this);
-
-        // Floating Action Button
-        /*
-        fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
-        fabWrite.setOnClickListener(view -> {
-            // Initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
-            // automatically invoking startActivityForResult() when the fragment pops up.
-            FragmentSharedModel model = new ViewModelProvider(this).get(FragmentSharedModel.class);
-            model.getImageChooser().setValue(-1);
-            // Pop up the dialog to write the post.
-            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
-            getSupportFragmentManager().beginTransaction()
-                    .add(android.R.id.content, writePostFragment)
-                    .commit();
-
-        });
-         */
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        //getMenuInflater().inflate(R.menu.menu_options_board, menu);
+        //getMenuInflater().inflate(R.menu.menu_board_write, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -121,7 +103,7 @@ public class BoardActivity extends BaseActivity implements
     private void animSlideTabLayout() {
         float toolbarHeight = getActionbarHeight();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", toolbarHeight);
-        slideTab.setDuration(1000);
+        slideTab.setDuration(500);
         slideTab.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
@@ -138,16 +120,4 @@ public class BoardActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
-
-    // Turn the floating action button on and off. doubtful if the usage is right!!!!!
-    public void handleFabVisibility() {
-        //CoordinatorLayout.LayoutParams p = (CoordinatorLayout.LayoutParams)fabWrite.getLayoutParams();
-        //p.setAnchorId(View.NO_ID);
-        //fabWrite.setLayoutParams(p);
-        if(fabWrite.isOrWillBeShown()) fabWrite.hide();
-        else if(fabWrite.isOrWillBeHidden()) fabWrite.show();
-
-    }
-
-
 }

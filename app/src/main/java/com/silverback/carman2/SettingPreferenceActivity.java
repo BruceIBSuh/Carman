@@ -32,8 +32,8 @@ import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.EditImageHelper;
 
 import org.json.JSONArray;
 
@@ -68,7 +68,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Objects
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
-    private EditImageHelper editImageHelper;
+    private ApplyImageResourceUtil applyImageResourceUtil;
     private OpinetViewModel priceModel;
     private ImageViewModel imgModel;
     private SettingPreferenceFragment settingFragment;
@@ -79,6 +79,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private FrameLayout frameLayout;
 
     // Fields
+    private String userId;
     private boolean isDistrictReset;
     private String distCode;
     private String userName;
@@ -94,6 +95,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_general_setting);
 
+        userId = getUserId();
+        log.i("user id: %s", userId);
+
         Toolbar settingToolbar = findViewById(R.id.toolbar_setting);
         setSupportActionBar(settingToolbar);
         // Get a support ActionBar corresponding to this toolbar
@@ -105,7 +109,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-        editImageHelper = new EditImageHelper(this);
+        applyImageResourceUtil = new ApplyImageResourceUtil(this);
         priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         uploadData = new HashMap<>();
@@ -117,11 +121,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
 
-        // Set the user image to its preference icon using EditImageHelper.applyGlideToImageSize() and
+        // Set the user image to its preference icon using ApplyImageResourceUtil.applyGlideToDrawable() and
         // receive a drawable as a LiveData that Glide transforms the user image for fitting to
         // a given size.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
-        editImageHelper.applyGlideToImageSize(imageUri, 40, imgModel);
+        applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
         imgModel.getGlideDrawableTarget().observe(this, drawable ->
                 settingFragment.getCropImagePreference().setIcon(drawable)
         );
@@ -132,7 +136,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Attach SettingPreferencFragment in the FrameLayout
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment)
-                //.addToBackStack(null)
+                .addToBackStack(null)
                 .commit();
     }
 
@@ -161,9 +165,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // when clicking the Up button. Otherwise, if the parent activity contains any fragment other
         // than SettingPreferenceFragment, just pop this fragment off the back stack, which works
         // like the Back command.
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
 
-        if(fragment instanceof SettingPreferenceFragment) {
+        if(targetFragment instanceof SettingPreferenceFragment) {
             // Upload user data to Firebase
             uploadUserDataToFirebase(uploadData);
             // Create Intent back to MainActivity which contains extras to notify the activity of
@@ -279,8 +283,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    // Implement the callback of CropImageDialogFragment.OnSelectImageMediumListener to notify which
-    // image media to select in the dialog.
+    // Implement the callback of CropImageDialogFragment.OnSelectImageMediumListener to have the
+    // image mediastore selected in the dialog.
     @Override
     public void onSelectImageMedia(int which) {
 
@@ -312,17 +316,24 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 }
                 break;
 
-            case 2: // Delete the user image
+            case 2: // Remove image
+                // Bugs: to remove the image, the image should be removed not only from SahredPreferences
+                // but also FireStorage and FireStore. Here the image is removed only from Shared.
                 String uriString = mSettings.getString(Constants.USER_IMAGE, null);
                 if(!TextUtils.isEmpty(uriString)) {
+                    // Actually, delete the file provided as the contentUri in FileProvider.
+                    // Consider that the cropped image file remains in the storage while  the uri
+                    // saved in SharedPreferences should be deleted.
                     int delete = getContentResolver().delete(Uri.parse(uriString), null, null);
-                    if(delete != 0) {
-                        log.i("delete image file: %s", delete);
+                    if(delete > 0) {
+                        // Delete the file in SharedPreferences
+                        log.i("delete image file: %s, %s", uriString, delete);
                         settingFragment.getCropImagePreference().setIcon(null);
-                        //mSettings.edit().putString(Constants.FILE_IMAGES, null).apply();
                         mSettings.edit().putString(Constants.USER_IMAGE, null).apply();
                         userImage = null;
-                        Snackbar.make(frameLayout, getString(R.string.pref_snackbar_image_deleted), Snackbar.LENGTH_SHORT).show();
+
+                        // Delete the file in Firebase.
+                        uploadUserImageToFirebase(null);
                     }
                 }
 
@@ -331,16 +342,16 @@ public class SettingPreferenceActivity extends BaseActivity implements
         }
     }
 
-    // Callback by startActivityForResult() defined in OnSelectImageMedia, receiving the uri of
-    // a selected image back from Gallery or Camera with REQUEST_CODE_GALLERY OR REQUEST_CODE_CAMERA,
-    // then creating an intent w/ the Uri to instantiate CropImageActivity to edit the image,
-    // the result of which is sent to REQUEST_CROP_IMAGE.
+    // Callback by startActivityForResult() defined in onSelectImageMedia(), receiving the uri of
+    // a selected image back from Gallery or Camera w/ each request code, then creating an intent
+    // w/ the Uri to instantiate CropImageActivity to edit the image. The result is, in turn, sent
+    // back here once again.
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode != RESULT_OK) return;
 
-        EditImageHelper cropHelper = new EditImageHelper(this);
+        ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(this);
         Uri imageUri;
         int orientation;
 
@@ -351,6 +362,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 imageUri = data.getData();
                 if(imageUri == null) return;
 
+                // Get the image orinetation and check if it is 0 degree. Otherwise, the image
+                // requires to be rotated.
                 orientation = cropHelper.getImageOrientation(imageUri);
                 if(orientation != 0) imageUri = cropHelper.rotateBitmapUri(imageUri, orientation);
                 log.i("galleryUri: %s, %s", orientation, imageUri);
@@ -383,20 +396,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
             // Result from CropImageActivity with a cropped image uri and set the image to
             case REQUEST_CODE_CROP:
                 final Uri croppedImageUri = data.getData();
-
+                log.i("croppedImageUri: %s", croppedImageUri);
                 if(croppedImageUri != null) {
                     // Upload the cropped user image to Firestore with the user id fetched
-                    try (FileInputStream fis = openFileInput("userId");
-                         BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
-                        final String userId = br.readLine();
-                        uploadUserImageToFirebase(croppedImageUri, userId);
-
-                    } catch(IOException e) {
-                        e.printStackTrace();
-                    }
-
-
+                    uploadUserImageToFirebase(croppedImageUri);
                 }
 
                 break;
@@ -406,18 +409,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Upload the data to Firestore.
     private void uploadUserDataToFirebase(Map<String, Object> data) {
         // Read the user id containing file which is saved in the internal storage.
-        try (FileInputStream fis = openFileInput("userId");
-             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
-            final String id = br.readLine();
-            final DocumentReference docRef = firestore.collection("users").document(id);
-            docRef.set(data, SetOptions.merge())
-                    .addOnSuccessListener(aVoid -> log.i("Successful"))
-                    .addOnFailureListener(e -> log.e("Failed"));
-
-        } catch(IOException e) {
-            log.e("IOException: %s", e.getMessage());
-        }
+        final DocumentReference docRef = firestore.collection("users").document(userId);
+        docRef.set(data, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> log.i("Successful"))
+                .addOnFailureListener(e -> log.e("Failed"));
     }
 
 
@@ -425,16 +420,31 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // storage, then move on to get the download url. The url, in turn, is uploaded to "user" collection
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void uploadUserImageToFirebase(Uri uri, String userId) {
-
+    private void uploadUserImageToFirebase(Uri uri) {
         final StorageReference storageRef = storage.getReference();
         final StorageReference userImgRef = storageRef.child("user_pic/" + userId + ".jpg");
 
-        // Upload the user image file to Firebase.Storage.
+        // Delete the file from FireStorage and, if successful, it goes to FireStore to delete the
+        // Url of the image.
+        if(uri == null) {
+            userImgRef.delete().addOnSuccessListener(aVoid -> {
+
+                DocumentReference docref = firestore.collection("users").document(userId);
+                docref.update("user_pic", null).addOnSuccessListener(bVoid -> {
+                    Snackbar.make(frameLayout, getString(R.string.pref_snackbar_image_deleted),
+                            Snackbar.LENGTH_SHORT).show();
+                }).addOnFailureListener(Throwable::printStackTrace);
+
+            }).addOnFailureListener(Throwable::printStackTrace);
+
+            return;
+        }
+
+        // Upload a new user image file to Firebase.Storage.
         UploadTask uploadTask = userImgRef.putFile(uri);
-        uploadTask.addOnProgressListener(listener -> log.i("progresslistener")
-        ).addOnSuccessListener(taskSnapshot -> log.i("task succeeded")
-        ).addOnFailureListener(e -> log.e("Upload failed"));
+        uploadTask.addOnProgressListener(listener -> log.i("progresslistener"))
+                .addOnSuccessListener(taskSnapshot -> log.i("task succeeded"))
+                .addOnFailureListener(e -> log.e("Upload failed"));
 
         // On completing upload, return the download url which goes to Firebase.Firestore
         uploadTask.continueWithTask(task -> {
@@ -446,21 +456,38 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 downloadUserImageUri = task.getResult();
                 log.i("Download uri: %s", downloadUserImageUri);
 
+                // Receive the image uri from Firebase Storage and upload the uri to FireStore to
+                // reference the user image.
                 Map<String, String> uriUserImage = new HashMap<>();
                 uriUserImage.put("user_pic", downloadUserImageUri.toString());
 
                 firestore.collection("users").document(userId).set(uriUserImage, SetOptions.merge())
-                        .addOnCompleteListener(listener -> {
-                            if(listener.isSuccessful()) {
+                        .addOnCompleteListener(userimgTask -> {
+                            if(userimgTask.isSuccessful()) {
                                 // On compeleting the upload, save the uri in SharedPreferences and
                                 // set the drawable to the preferernce icon.
+                                // ProgressBar should be come in here!!!
                                 mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
-                                editImageHelper.applyGlideToImageSize(uri.toString(), 40, imgModel);
+                                applyImageResourceUtil.applyGlideToDrawable(
+                                        uri.toString(), Constants.ICON_SIZE_PREFERENCE, imgModel);
                             }
                         });
 
             } //else log.w("No uri fetched");
         });
+    }
+
+
+    // Get the user id
+    private String getUserId() {
+        try(FileInputStream fis = openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
+            return br.readLine();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 

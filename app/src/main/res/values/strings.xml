@@ -155,10 +155,15 @@
     <string name="boardwrite_label_title">제 목:</string>
     <string name="board_msg_image">이미지 첨부는 6개까지 가능합니다</string>
     <string name="board_write_category">분 류</string>
+    <string name="board_msg_no_title">글의 제목을 넣어주세요</string>
+    <string name="board_msg_no_content">글의 본문이 없습니다</string>
     <!--BoardActivity$BoardReadDlgFragment-->
     <string name="board_btn_compathy">공감</string>
     <string name="board_btn_comment">댓글</string>
     <string name="board_msg_compathy">이미 공감 표시를 하였습니다</string>
+    <string name="board_alert_delete">글 삭제</string>
+    <string name="board_alert_msg">확인버튼을 누르면 글이 삭제됩니다</string>
+    <string name="board_msg_delete">글이 삭제되었습니다</string>
 
     <!--SettingPreferenceActivity-->
     <string name="setting_toolbar_title">차량정보/앱 설정</string>
