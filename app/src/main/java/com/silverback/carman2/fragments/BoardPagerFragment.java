@@ -15,11 +15,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -43,6 +47,7 @@ public class BoardPagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
+    private Source source;
     private FragmentSharedModel sharedModel;
     private BoardPostingAdapter postingAdapter;
     private PaginationHelper pageHelper;
@@ -83,6 +88,30 @@ public class BoardPagerFragment extends Fragment implements
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
         pageHelper = new PaginationHelper();
         pageHelper.setOnPaginationListener(this);
+
+
+        // When initially connecting to Firestore, the snapshot listener checks if there is any
+        // changes in the borad and upadte the posting board. On completing the inital update,
+        // the lisitener should be detached for purpose of preventing excessive connection to the
+        // server.
+        CollectionReference postRef = FirebaseFirestore.getInstance().collection("board_general");
+        ListenerRegistration postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
+            if(e != null) return;
+            source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
+                   Source.CACHE  : Source.SERVER ;
+            log.i("Source: %s", source);
+        });
+        postListener.remove();
+
+        CollectionReference userRef = FirebaseFirestore.getInstance().collection("users");
+        ListenerRegistration userListener = userRef.addSnapshotListener((querySnapshot, e) -> {
+            if(e != null) return;
+            String source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
+                    "Local" : "Server";
+            log.i("Source: %s", source);
+        });
+        userListener.remove();
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -133,7 +162,7 @@ public class BoardPagerFragment extends Fragment implements
         // setNextQueryStart(), and setNextQueryComplete().
         //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
         String field = getQueryFieldToViewPager(page);
-        pageHelper.setPostingQuery(field);
+        pageHelper.setPostingQuery(source, field);
 
         return localView;
     }
@@ -153,7 +182,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(documentId)) {
                 snapshotList.clear();
                 String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(field);
+                pageHelper.setPostingQuery(Source.CACHE, field);
             }
         });
 
@@ -166,7 +195,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) {
                 snapshotList.clear();
                 String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(field);
+                pageHelper.setPostingQuery(Source.CACHE, field);
             }
         });
 

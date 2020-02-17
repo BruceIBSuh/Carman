@@ -52,12 +52,12 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-    public void setPostingQuery(final String field) {
+    public void setPostingQuery(Source source, final String field) {
         this.field = field;
         // Initate the first query
         colRef = firestore.collection("board_general");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .get(Source.CACHE)
+                .get(source)
                 .addOnSuccessListener(querySnapshot -> {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
@@ -66,11 +66,11 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
 
-    public void setCommentQuery(final String field, final String docId) {
+    public void setCommentQuery(Source source, final String field, final String docId) {
         this.field = field;
         colRef = firestore.collection("board_general").document(docId).collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .get(Source.CACHE)
+                .get(source)
                 .addOnSuccessListener(querySnapshot -> {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);

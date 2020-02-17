@@ -421,6 +421,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadUserImageToFirebase(Uri uri) {
+
         final StorageReference storageRef = storage.getReference();
         final StorageReference userImgRef = storageRef.child("user_pic/" + userId + ".jpg");
 

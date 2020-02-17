@@ -41,6 +41,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
@@ -49,6 +50,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -92,6 +94,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // Objects
     private FirebaseFirestore firestore;
     private DocumentReference postRef;
+    private Source source;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgViewModel;
     private FragmentSharedModel sharedModel;
@@ -157,7 +160,24 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
 
         // Get the current document reference which should be shared in the fragment.
+        // Initially attach SnapshotListener to have the comment collection updated, then remove
+        // the listener to prevent connecting to the server. Instead, update the collection using
+        // Source.Cache.
         postRef = firestore.collection("board_general").document(documentId);
+        postRef.get().addOnSuccessListener(aVoid -> {
+
+            ListenerRegistration commentListener = postRef.collection("comments")
+                    .addSnapshotListener((querySnapshot, e) -> {
+                        if(e != null) return;
+                        source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())
+                                ? Source.CACHE : Source.SERVER;
+                        log.i("BoardRadDlgFragment Source: %s", source);
+                    });
+
+            commentListener.remove();
+        });
+
+
 
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
         // a margin-formatted spannable string, which, in turn, set the image spans to display
@@ -190,6 +210,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 log.e("JSONException: %s", e.getMessage());
             }
         }
+
 
     }
 
@@ -253,7 +274,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         PaginationHelper pagingUtil = new PaginationHelper();
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
-        pagingUtil.setCommentQuery("timestamp", documentId);
 
 
         // Event handler for clicking buttons
@@ -265,11 +285,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Upload the comment to Firestore, which needs to refactor for filtering text.
         btnSendComment.setOnClickListener(this);
 
+        // BoardPagerFragment has already updatedd the posting items when created, the comment list
+        // shouldn't be updated from the server.
+        pagingUtil.setCommentQuery(source, "timestamp", documentId);
         // Realtime update of the comment count and compathy count using SnapshotListener.
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
         // whether the document has local changes that haven't been written to the backend yet.
         // This property may determine the source of events
         postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+            log.i("comment snapshot listener: %s", snapshot.getMetadata().hasPendingWrites());
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
                 long countComment = snapshot.getLong("cnt_comment");
@@ -395,18 +419,25 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
     // Method for uploading the comment to Firestore.
+    @SuppressWarnings("ConstantConditions")
     private boolean uploadComment() {
-
-        Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-        Date date = calendar.getTime();
-        log.i("date: %s", date);
 
         Map<String, Object> comment = new HashMap<>();
         comment.put("comment", etComment.getText().toString());
-        comment.put("user", userId);
+        // Required to determine the standard to set time b/w server and local.
         //comment.put("timestamp", FieldValue.serverTimestamp());
+        Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
+        Date date = calendar.getTime();
         comment.put("timestamp", new Timestamp(date));
-
+        log.i("date: %s", date);
+        // Fetch the comment user id saved in the storage
+        try(FileInputStream fis = getActivity().openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
+            String commentId =  br.readLine();
+            comment.put("user", commentId);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
 
         // First, get the document with a given id, then add data
         //DocumentReference documentRef = firestore.collection("board_general").document(documentId);
@@ -418,9 +449,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     postRef.update("cnt_comment", FieldValue.increment(1));
                     // Update the recycler adapter to enlist the pending comment. Don't have to use
                     // SnapshotListener, even thoug it may not update the RecyclerView of other users
-                    // simultaneously.
-                    Source source = Source.CACHE;
-                    commentDoc.get(source).addOnSuccessListener(commentSnapshot -> {
+                    // simultaneously
+
+                    commentDoc.get(Source.CACHE).addOnSuccessListener(commentSnapshot -> {
                         snapshotList.add(0, commentSnapshot);
                         commentAdapter.notifyItemInserted(0);
                     });
@@ -588,7 +619,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
             }
         }
 
-
         abstract void onStateChanged(AppBarLayout appBarLayout, int state);
     }
 
@@ -618,7 +648,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 break;
 
             case STATE_IDLE:
-                log.i("STATE_IDLE");
+                //log.i("STATE_IDLE");
                 break;
 
         }

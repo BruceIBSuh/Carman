@@ -43,6 +43,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     //private ActionBarDrawerToggle drawerToggle;
     // Fields
     private Drawable appbarIcon;
+    private String userImage;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -59,11 +60,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         String title = mSettings.getString(Constants.USER_NAME, null);
         getSupportActionBar().setHomeButtonEnabled(false);
         if(title != null) getSupportActionBar().setTitle(title);
-
-        // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
-        // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
-        String userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        applyImageResourceUtil.applyGlideToDrawable(userImage, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
+        userImage = mSettings.getString(Constants.USER_IMAGE, null);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
@@ -94,6 +91,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public void onResume() {
         super.onResume();
+        // MUST be located here b/c it has to be redrawn when startActivityForResult() is called.
+        // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
+        // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
+        applyImageResourceUtil.applyGlideToDrawable(userImage, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
         // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
         // is sent in onActivityResult() as a result of startActivityForResult() which called
         // SettingPreferenceActivity. The img uri is processed to Drawable by Glide, the custom target

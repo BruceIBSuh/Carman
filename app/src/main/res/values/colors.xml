@@ -7,6 +7,8 @@
     <color name="bgToolbar">#778899</color>
     <color name="bgBoardComment">#F5F5F5</color>
     <color name="bgBoardComment2">#B0C4DE</color>
+    <color name="bgBoardBottom">#F5F5DC</color>
+    <color name="bgBoardHeader">#F5F5DC</color>
 
 
     <color name="white">#F3F3F3</color>

@@ -46,6 +46,7 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:layout_marginTop="?attr/actionBarSize"
+                android:background="@color/bgBoardHeader"
                 app:layout_collapseMode="parallax" >
 
                 <TextView
@@ -178,7 +179,8 @@
                 android:id="@+id/view_underline_header"
                 android:layout_width="0dp"
                 android:layout_height="2dp"
-                android:background="#FFFFFF"
+                android:layout_marginTop="8dp"
+                android:background="@android:color/transparent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -253,7 +255,8 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_gravity="bottom"
-        android:background="#F5F5F5"
+        android:background="@color/bgBoardBottom"
+        android:elevation="1dp"
         android:padding="5dp"
         app:layout_insetEdge="bottom">
 
