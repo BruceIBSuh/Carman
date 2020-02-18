@@ -25,6 +25,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.NameDialogPreference;
+import com.silverback.carman2.views.ProgbarPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
@@ -169,7 +170,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
-        // Consider to replace this with the custom preference defined as ProgressBarPreference.
+        // Consider to replace this with the custom preference defined as ProgbarPreference.
         cropImagePreference = findPreference(Constants.USER_IMAGE);
         cropImagePreference.setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
@@ -181,6 +182,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             dialogFragment.show(getActivity().getSupportFragmentManager(), null);
             return true;
         });
+
 
         // Set the circle image to the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.

@@ -99,10 +99,15 @@
         <SwitchPreferenceCompat
             app:title="@string/pref_app_notification"
             app:key="notification" />
-        <Preference
-            app:title="@string/pref_app_coverimage"
+
+        <com.silverback.carman2.views.ProgbarPreference
             app:key="carman_pref_profile_image" />
 
+        <!--
+        <Preference
+            app:title="@string/pref_app_userImage"
+            app:key="carman_pref_profile_image" />
+        -->
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

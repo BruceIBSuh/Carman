@@ -30,16 +30,13 @@ public class OpinetSidoPriceView extends OpinetPriceView {
 
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
-
     public OpinetSidoPriceView(Context context) {
         super(context);
     }
-
     public OpinetSidoPriceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
-
     public OpinetSidoPriceView(Context context, AttributeSet attrs, int defaultStyle) {
         super(context, attrs, defaultStyle);
         getAttributes(context, attrs);
@@ -47,7 +44,6 @@ public class OpinetSidoPriceView extends OpinetPriceView {
 
 
     protected void getAttributes(Context context, AttributeSet attrs) {
-
         //LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         //linearLayout = (LinearLayout)inflater.inflate(R.layout.view_avg_price, this, true);
         LayoutInflater.from(context).inflate(R.layout.view_sido_price, this, true);
