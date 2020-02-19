@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
@@ -128,9 +129,9 @@ public class RegisterDialogFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
 
         // ViewModel to fetch the sigun list of a given sido name
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
-        distModel = ViewModelProviders.of(this).get(SpinnerDistrictModel.class);
-        locationModel = ViewModelProviders.of(this).get(LocationViewModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
 
 
     }

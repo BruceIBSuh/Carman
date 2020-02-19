@@ -220,7 +220,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
         btnStnFavorite = localView.findViewById(R.id.btn_gas_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
-        tvOdometer = localView.findViewById(R.id.tv_gas_mileage);
+        tvOdometer = localView.findViewById(R.id.tv_mileage);
         tvGasPaid = localView.findViewById(R.id.tv_total_cost);
         tvGasLoaded = localView.findViewById(R.id.tv_amount);
         tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
@@ -396,27 +396,28 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onClick(final View v) {
         Bundle args = new Bundle();
+        String itemTitle = null;
         String initValue = null;
         targetView = (TextView)v;
         // Pass the current saved value to NumberPadFragment
         switch(v.getId()) {
-            case R.id.tv_gas_mileage:
-                //title = tvOdometer.getText().toString();
+            case R.id.tv_mileage:
+                itemTitle = tvOdometer.getText().toString();
                 initValue = tvOdometer.getText().toString();
                 break;
 
             case R.id.tv_total_cost:
-                //title = tvGasPaid.getText().toString();
+                itemTitle = tvGasPaid.getText().toString();
                 initValue = tvGasPaid.getText().toString();
                 break;
 
             case R.id.tv_carwash:
-                //title = tvCarwashPaid.getText().toString();
+                itemTitle = tvCarwashPaid.getText().toString();
                 initValue = tvCarwashPaid.getText().toString();
                 break;
 
             case R.id.tv_extra:
-                //title = tvExtraPaid.getText().toString();
+                itemTitle = tvExtraPaid.getText().toString();
                 initValue = tvExtraPaid.getText().toString();
                 break;
         }
@@ -424,7 +425,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Pass the id of TextView to NumberPadFragment for which TextView is being focused to wait
         // for a new value.
         //NumberPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
-        args.putString("title", null);
+        args.putString("title", itemTitle);
         args.putInt("viewId", v.getId());
         args.putString("initValue", initValue);
         numPad.setArguments(args);

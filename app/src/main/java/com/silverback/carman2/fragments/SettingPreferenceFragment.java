@@ -23,9 +23,9 @@ import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.NameDialogPreference;
-import com.silverback.carman2.views.ProgbarPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
@@ -45,7 +45,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Objects
     private SharedPreferences mSettings;
-    private Preference cropImagePreference;
+    private Preference userImagePref;
     private String nickname;
 
     // Fields
@@ -61,6 +61,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -170,9 +171,11 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
-        // Consider to replace this with the custom preference defined as ProgbarPreference.
-        cropImagePreference = findPreference(Constants.USER_IMAGE);
-        cropImagePreference.setOnPreferenceClickListener(view -> {
+        // Consider to replace this with the custom preference defined as ProgressImagePreference.
+        //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
+        userImagePref = findPreference(Constants.USER_IMAGE);
+        userImagePref.setOnPreferenceClickListener(view -> {
+            log.i("ProgressImagePreference clicked");
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;
@@ -184,6 +187,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         });
 
 
+
         // Set the circle image to the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
         /*
@@ -192,7 +196,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             try {
                 ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(getContext());
                 RoundedBitmapDrawable drawable = cropHelper.drawRoundedBitmap(Uri.parse(imageUri));
-                cropImagePreference.setIcon(drawable);
+                userImagePreference.setIcon(drawable);
             } catch (IOException e) {
                 log.e("IOException: %s", e.getMessage());
             }
@@ -223,9 +227,10 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
     }
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
-    // the profile image icon.
-    public Preference getCropImagePreference() {
-        return cropImagePreference;
+    // the profile image icon
+    //public Preference getProgImagePreference() {
+    public Preference getUserImagePreference() {
+        return userImagePref;
     }
 
 }

@@ -30,10 +30,7 @@ public class BoardActivity extends BaseActivity implements
     // Objects
     private TabLayout boardTabLayout;
     private ViewPager boardPager;
-    private FloatingActionButton fabWrite;
     private ProgressBar pbBoard;
-
-
 
     // Fields
     //private boolean isTabVisible;

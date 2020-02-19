@@ -20,11 +20,13 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
+import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -121,24 +123,29 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
 
-        // Set the user image to its preference icon using ApplyImageResourceUtil.applyGlideToDrawable() and
-        // receive a drawable as a LiveData that Glide transforms the user image for fitting to
-        // a given size.
-        String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
-        applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
-        imgModel.getGlideDrawableTarget().observe(this, drawable ->
-                settingFragment.getCropImagePreference().setIcon(drawable)
-        );
-
         settingFragment = new SettingPreferenceFragment();
         //settingFragment.setArguments(args);
 
         // Attach SettingPreferencFragment in the FrameLayout
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_setting, settingFragment)
+                .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
                 .addToBackStack(null)
                 .commit();
+
+        // Set the user image to the custom preference icon using ApplyImageResourceUtil
+        // .applyGlideToDrawable() and receive a drawable as a LiveData that Glide transforms
+        // the user image for fitting to a given size.
+        String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
+        applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
+
+        // ViewModel listener to have drawable for the user icon processed by Glide each time when
+        // the activity is created or the icon image is chaged or removed.
+        imgModel.getGlideDrawableTarget().observe(this, drawable -> {
+            //settingFragment.setUserImageIcon(drawable);
+            settingFragment.getUserImagePreference().setIcon(drawable);
+        });
     }
+
 
     @Override
     public void onResume(){
@@ -195,11 +202,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     /*
-     * Invoked when a Preference with an associated Fragment is tabbed. If you do not implement
-     * onPreferenceStartFragment(), a fallback implementation is used instead.
-     * While this works in most cases, it is strongly recommend to implement this method, thereby
-     * you can fully configure transitions b/w Fragment objects and update the title in the toolbar,
-     * if applicable.
+     * Invoked when a preference with an associated (dialog)fragment is tabbed. If you do not implement
+     * onPreferenceStartFragment(), a fallback implementation is used instead. While this works
+     * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
+     * transitions b/w Fragment objects and update the title in the toolbar, if applicable.
      */
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -328,7 +334,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     if(delete > 0) {
                         // Delete the file in SharedPreferences
                         log.i("delete image file: %s, %s", uriString, delete);
-                        settingFragment.getCropImagePreference().setIcon(null);
+                        settingFragment.getUserImagePreference().setIcon(null);
                         mSettings.edit().putString(Constants.USER_IMAGE, null).apply();
                         userImage = null;
 
@@ -419,9 +425,18 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Upload the cropped user image, the uri of which is saved in the internal storage, to Firebase
     // storage, then move on to get the download url. The url, in turn, is uploaded to "user" collection
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
+    // At the same time, the new uri has to be uploaded in the documents written by the user.
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadUserImageToFirebase(Uri uri) {
+        // Popup the progressbar displaying dialogfragment.
+        ProgbarDialogFragment progbarFragment = new ProgbarDialogFragment();
+        String msg = (uri == null)?
+                getString(R.string.setting_msg_remove_image):getString(R.string.setting_msg_upload_image);
 
+        progbarFragment.setProgressMsg(msg);
+        getSupportFragmentManager().beginTransaction().add(android.R.id.content, progbarFragment).commit();
+
+        // Instantiate Firebase Storage.
         final StorageReference storageRef = storage.getReference();
         final StorageReference userImgRef = storageRef.child("user_pic/" + userId + ".jpg");
 
@@ -429,11 +444,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Url of the image.
         if(uri == null) {
             userImgRef.delete().addOnSuccessListener(aVoid -> {
-
+                // Delete(update) the document with null value.
                 DocumentReference docref = firestore.collection("users").document(userId);
                 docref.update("user_pic", null).addOnSuccessListener(bVoid -> {
                     Snackbar.make(frameLayout, getString(R.string.pref_snackbar_image_deleted),
                             Snackbar.LENGTH_SHORT).show();
+
+                    // Dismiss the progbar dialogfragment
+                    progbarFragment.dismiss();
                 }).addOnFailureListener(Throwable::printStackTrace);
 
             }).addOnFailureListener(Throwable::printStackTrace);
@@ -462,17 +480,37 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 Map<String, String> uriUserImage = new HashMap<>();
                 uriUserImage.put("user_pic", downloadUserImageUri.toString());
 
+                // Update the "user_pic" field of the document in the "users" collection
                 firestore.collection("users").document(userId).set(uriUserImage, SetOptions.merge())
                         .addOnCompleteListener(userimgTask -> {
                             if(userimgTask.isSuccessful()) {
+                                log.i("user image update in Firestore");
                                 // On compeleting the upload, save the uri in SharedPreferences and
                                 // set the drawable to the preferernce icon.
                                 // ProgressBar should be come in here!!!
                                 mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
                                 applyImageResourceUtil.applyGlideToDrawable(
                                         uri.toString(), Constants.ICON_SIZE_PREFERENCE, imgModel);
+
+                                // Dismiss the prgbar dialogfragment
+                                progbarFragment.dismiss();
                             }
                         });
+
+                // Update the user image in the posting items wrtiiten by the user.
+                // Consider that all documents should be updated. Otherwise, limit condition would
+                // be added.
+                firestore.collection("board_general").whereEqualTo("user_id", userId).get()
+                        .addOnCompleteListener(postTask -> {
+                            if(postTask.isSuccessful() && postTask.getResult() != null) {
+                                for(QueryDocumentSnapshot document : postTask.getResult()) {
+                                    DocumentReference docRef = document.getReference();
+                                    docRef.update("user_pic", downloadUserImageUri.toString());
+                                }
+
+                            }
+                        });
+
 
             } //else log.w("No uri fetched");
         });
@@ -490,6 +528,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         return null;
     }
+
+
 
 
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.

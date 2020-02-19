@@ -31,6 +31,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.PaginationHelper;
 
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +54,10 @@ public class BoardPagerFragment extends Fragment implements
     private PaginationHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
+    private WeakReference<ProgressBar> weakProgbar;//prevent progressbar from leaking in static fragment
 
     // UIs
-    private ProgressBar pagingProgbar;
+    //private ProgressBar pagingProgbar;
     private FloatingActionButton fabWrite;
 
     // Fields
@@ -90,10 +92,15 @@ public class BoardPagerFragment extends Fragment implements
         pageHelper.setOnPaginationListener(this);
 
 
-        // When initially connecting to Firestore, the snapshot listener checks if there is any
-        // changes in the borad and upadte the posting board. On completing the inital update,
-        // the lisitener should be detached for purpose of preventing excessive connection to the
-        // server.
+        /**
+         * Realtime update SnapshotListener: server vs cache policy.
+         *
+         * When initially connecting to Firestore, the snapshot listener checks if there is any
+         * changes in the borad and upadte the posting board. On completing the inital update,
+         * the lisitener should be detached for purpose of preventing excessive connection to the
+         * server.
+         */
+
         CollectionReference postRef = FirebaseFirestore.getInstance().collection("board_general");
         ListenerRegistration postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
@@ -111,7 +118,6 @@ public class BoardPagerFragment extends Fragment implements
             log.i("Source: %s", source);
         });
         userListener.remove();
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -120,7 +126,10 @@ public class BoardPagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
-        pagingProgbar = localView.findViewById(R.id.progbar_paging);
+        ProgressBar pagingProgbar = localView.findViewById(R.id.progbar_paging);
+        weakProgbar = new WeakReference<>(pagingProgbar);
+
+
         fabWrite = localView.findViewById(R.id.fab_board_write);
         RecyclerView recyclerPostView = localView.findViewById(R.id.recycler_board);
 
@@ -213,13 +222,15 @@ public class BoardPagerFragment extends Fragment implements
     }
     @Override
     public void setNextQueryStart(boolean b) {
-        pagingProgbar.setVisibility(View.VISIBLE);
+        //pagingProgbar.setVisibility(View.VISIBLE);
+        weakProgbar.get().setVisibility(View.VISIBLE);
     }
 
     @Override
     public void setNextQueryComplete(QuerySnapshot querySnapshot) {
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
-        pagingProgbar.setVisibility(View.INVISIBLE);
+        //pagingProgbar.setVisibility(View.INVISIBLE);
+        weakProgbar.get().setVisibility(View.INVISIBLE);
         postingAdapter.notifyDataSetChanged();
     }
 

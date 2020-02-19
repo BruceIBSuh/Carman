@@ -141,7 +141,6 @@ public class ExpenseActivity extends BaseActivity implements
         tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
 
-        //
         pagerModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
@@ -184,7 +183,7 @@ public class ExpenseActivity extends BaseActivity implements
         menu.add(Menu.NONE, MENU_ITEM_ID, Menu.NONE, R.string.exp_menuitem_title_save);
         MenuItem item = menu.findItem(MENU_ITEM_ID);
         item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        item.setIcon(R.drawable.ic_toolbar_save);
+        item.setIcon(R.drawable.ic_save_room);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -193,6 +192,7 @@ public class ExpenseActivity extends BaseActivity implements
     // in SQLite
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         switch(item.getItemId()) {
             case android.R.id.home:
                 if(isGeofencing) startActivity(new Intent(this, MainActivity.class));
@@ -211,13 +211,14 @@ public class ExpenseActivity extends BaseActivity implements
                     isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
                 }
 
-                if(isSaved) {
-                    finish();
-                    return true;
-                } else return false;
+                finish();
+                return isSaved;
+
+            default: return false;
         }
 
-        return super.onOptionsItemSelected(item);
+
+        //return super.onOptionsItemSelected(item);
     }
 
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.

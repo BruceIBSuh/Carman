@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
 
     <PreferenceCategory
         app:title="@string/pref_category_basic_info"
@@ -100,14 +100,16 @@
             app:title="@string/pref_app_notification"
             app:key="notification" />
 
-        <com.silverback.carman2.views.ProgbarPreference
-            app:key="carman_pref_profile_image" />
-
         <!--
-        <Preference
-            app:title="@string/pref_app_userImage"
+        <com.silverback.carman2.views.ProgressImagePreference
+            app:enabled="true"
             app:key="carman_pref_profile_image" />
         -->
+
+        <Preference
+            app:key="carman_pref_profile_image"
+            app:title="@string/pref_app_userImage" />
+
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

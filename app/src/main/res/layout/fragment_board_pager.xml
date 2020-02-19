@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coord_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragments.BoardPagerFragment">
@@ -11,9 +12,9 @@
         android:id="@+id/recycler_board"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        
         android:clipToPadding="false"
         app:layout_insetEdge="top" />
+
 
     <ProgressBar style="?android:attr/progressBarStyleSmall"
         android:visibility="invisible"

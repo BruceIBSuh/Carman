@@ -219,7 +219,7 @@ public class ServiceManagerFragment extends Fragment implements
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etServiceName = localView.findViewById(R.id.et_service_provider);
-        tvMileage = localView.findViewById(R.id.tv_service_mileage);
+        tvMileage = localView.findViewById(R.id.tv_mileage);
         Button btnDate = localView.findViewById(R.id.btn_svc_date);
         Button btnReg = localView.findViewById(R.id.btn_register);
         btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
@@ -312,7 +312,7 @@ public class ServiceManagerFragment extends Fragment implements
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
             switch(viewId) {
-                case R.id.tv_service_mileage:
+                case R.id.tv_mileage:
                     tvMileage.setText(df.format(value));
                     break;
 
@@ -373,7 +373,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
         // via FragmentViewModel in the textview.
         switch(v.getId()) {
-            case R.id.tv_service_mileage:
+            case R.id.tv_mileage:
                 Bundle args = new Bundle();
                 args.putString("title", getString(R.string.svc_label_mileage));
                 args.putString("initValue", tvMileage.getText().toString());

@@ -8,9 +8,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -55,7 +54,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getActivity() != null)
-            viewModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+            viewModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
             itemTitle = getArguments().getString("title");
@@ -74,8 +73,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        LayoutInflater inflater = requireActivity().getLayoutInflater();
-        View localView = inflater.inflate(R.layout.fragment_input_pad, null);
+        View localView = View.inflate(getContext(), R.layout.dialog_number_pad, null);
 
         TextView tvTitle = localView.findViewById(R.id.tv_title);
         tvValue = localView.findViewById(R.id.defaultValue);
@@ -95,14 +93,15 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         btn3.setOnClickListener(this);
         btn4.setOnClickListener(this);
 
-        // Get arguments from the parent activity dialog title, unit name, and button numbers.
+        // Get arguments from the parent activity as to dialog title, unit name, and button numbers.
+        /*
         switch(textViewId) {
-            case R.id.tv_gas_mileage:
+            case R.id.tv_mileage:
                 itemTitle = getString(R.string.exp_label_odometer);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
-            case R.id.tv_service_mileage:
+            case R.id.tv_mileage:
                 itemTitle = getString(R.string.exp_label_odometer);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
@@ -137,6 +136,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
 
 
         }
+        */
 
         tvTitle.setText(itemTitle);
         tvValue.setText(initValue);
