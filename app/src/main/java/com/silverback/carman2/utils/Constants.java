@@ -26,7 +26,7 @@ public class Constants {
     // Limit of the images attached with the post.
     public static final int MAX_ATTACHED_IMAGE = 6;
     // Board Pagination
-    static final int PAGINATION = 25;
+    static final int PAGINATION = 20;
     //public static final int ICON_SIZE = 50;
 
     // Image and Icon Size

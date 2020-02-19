@@ -118,38 +118,41 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             userId = getArguments().getString("userId");
         }
 
-        // The parent activity gets started by tabbing the Geofence notification which passes a
-        // PendingIntent that contains the station id, name, geofencing time, and category. The data
-        // automatically fill in the gas or service form by transferred category.
-        if(getActivity().getIntent().getAction() != null) {
-            String action = getActivity().getIntent().getAction();
-            if(action.equals(Constants.NOTI_GEOFENCE)) {
-                isGeofenceIntent = true;
-                geoStnName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
-                geoStnId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
-                geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
-                category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
-            }
+        // The parent activity gets started by tabbing the Geofence notification w/ a PendingIntent
+        // that contains the station id, name, geofencing time, and category. The data fill out
+        // the gas or service form acoording to the transferred category.
+        String action = getActivity().getIntent().getAction();
+        if(action.equals(Constants.NOTI_GEOFENCE)) {
+            isGeofenceIntent = true;
+            geoStnName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
+            geoStnId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
+            geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
+            category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
         }
+
 
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
-        sharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+
+        // ViewModels: reconsider why the models references the ones defined in the parent activity;
+        // it would rather  be better to redefine them here.
+        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         locationModel = ((ExpenseActivity)getActivity()).getLocationViewModel();
         stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
-        // Entity to retrieve list of favorite station to compare with a fetched current station
-        // to tell whether it has registered with Favorite.
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+
+        // Instantiate other miscellanies
         df = BaseActivity.getDecimalFormatInstance();
         numPad = new NumberPadFragment();
 
         // Get the time that you have visited to the station. In case the parent activity gets started
-        // by the stack builder, the time should be the time passed in the intent.
+        // by the stack builder, which means isGeofence is true, the PendingIntent contains the time.
         dateFormat = getString(R.string.date_format_1);
         //Calendar calendar = Calendar.getInstance(Locale.getDefault());
         //SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
@@ -158,19 +161,18 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
 
         /*
-         * Implements the interface of FavoriteGeofenceHelper.SetGefenceListener to notify the UI
-         * controller of having the favroite station added or removed, re-setting the flag and
-         * pop up the snackbar.
+         * Implements the interface of FavoriteGeofenceHelper.SetGefenceListener to notify the
+         * favorite button of having the favroite station added or removed, re-setting the flag
+         * and pop up the snackbar.
          *
-         * At the same time, handle exceptional conditions under which the current station becomes
-         * the first-set favorite when it is added first time, or the removed station is the first
-         * set station.
+         * At the same time, handle some exceptional conditions; the current station becomes the
+         * first priority favorite it is added first time, or a removed station  is the first priority
+         * one such that the second one becomes the first priority.
          */
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
-                // The station is added to the favorite list in the first placeholder.
                 Snackbar.make(localView, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
@@ -230,8 +232,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         etGasComment = localView.findViewById(R.id.et_service_comment);
         Button btnChangeDate = localView.findViewById(R.id.padButton2);
         Button btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
-
-
 
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));

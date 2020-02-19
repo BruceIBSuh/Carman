@@ -74,7 +74,6 @@ public class ExpenseActivity extends BaseActivity implements
     private ExpenseViewPager expensePager;
 
     private LocationViewModel locationModel;
-    private FragmentSharedModel fragmentSharedModel;
     private PagerAdapterViewModel pagerModel;
 
     private ExpTabPagerAdapter tabPagerAdapter;
@@ -113,7 +112,6 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Define ViewModels. ViewModelProviders.of(this) is deprecated.
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        fragmentSharedModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
         pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
 
         appBar = findViewById(R.id.appBar);
@@ -156,8 +154,6 @@ public class ExpenseActivity extends BaseActivity implements
 
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
-
-
         });
 
         // On finishing ExpenseTabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
@@ -353,7 +349,6 @@ public class ExpenseActivity extends BaseActivity implements
         return mSettings;
     }
     public LocationViewModel getLocationViewModel() { return locationModel; }
-    public FragmentSharedModel getFragmentSharedModel() { return fragmentSharedModel; }
     public PagerAdapterViewModel getPagerModel() { return pagerModel; }
 
 }

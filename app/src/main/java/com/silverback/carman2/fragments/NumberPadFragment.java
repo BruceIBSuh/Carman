@@ -124,7 +124,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
                 break;
 
             // This case is only applied to Service Items, the name of which is passed by
-            // the itemLabel argument.
+            // the argument under the name of "itemLabel"
             case R.id.tv_value_cost:
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;

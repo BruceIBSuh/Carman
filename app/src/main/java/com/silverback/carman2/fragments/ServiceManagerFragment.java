@@ -150,7 +150,7 @@ public class ServiceManagerFragment extends Fragment implements
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
 
-        fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
+        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
