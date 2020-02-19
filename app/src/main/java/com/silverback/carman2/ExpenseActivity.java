@@ -201,22 +201,26 @@ public class ExpenseActivity extends BaseActivity implements
                 return true;
 
             case MENU_ITEM_ID:
+                log.i("Tabpager position: %s", position);
                 Fragment fragment = tabPagerAdapter.getItem(position);
                 boolean isSaved = false;
+                if(position == 0) isSaved = ((GasManagerFragment) fragment).saveGasData();
+                else if(position == 1) isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
 
+                /*
                 if(fragment instanceof GasManagerFragment) {
                     isSaved = ((GasManagerFragment) fragment).saveGasData();
 
                 } else if(fragment instanceof ServiceManagerFragment) {
                     isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
                 }
+                 */
 
                 finish();
                 return isSaved;
 
             default: return false;
         }
-
 
         //return super.onOptionsItemSelected(item);
     }

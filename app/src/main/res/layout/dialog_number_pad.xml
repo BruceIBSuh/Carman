@@ -11,7 +11,7 @@
         android:id="@+id/titleView"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:background="@android:color/holo_blue_dark"
+        android:background="@color/bgNumPadTitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -86,14 +86,14 @@
         android:padding="0dp"
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_gas_date"
+        app:layout_constraintEnd_toStartOf="@+id/padButton2"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toEndOf="@+id/btn_sign"
         app:layout_constraintTop_toBottomOf="@+id/titleView" />
 
     <Button
-        android:id="@+id/btn_gas_date"
+        android:id="@+id/padButton2"
         android:layout_width="50dp"
         android:layout_height="40dp"
         android:background="@android:color/holo_green_light"
@@ -117,7 +117,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/padButton1"
         app:layout_constraintEnd_toStartOf="@+id/padButton4"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/btn_gas_date"
+        app:layout_constraintStart_toEndOf="@+id/padButton2"
         app:layout_constraintTop_toTopOf="@+id/padButton1"
         app:layout_constraintVertical_bias="0.0" />
 

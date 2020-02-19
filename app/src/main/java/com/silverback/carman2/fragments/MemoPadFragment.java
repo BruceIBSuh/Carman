@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.View;
 import android.widget.EditText;
@@ -28,7 +28,7 @@ public class MemoPadFragment extends DialogFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(MemoPadFragment.class);
 
     // Objects
-    private FragmentSharedModel sharedModel;
+    private FragmentSharedModel fragmentModel;
 
     public MemoPadFragment() {
         // Required empty public constructor
@@ -38,7 +38,7 @@ public class MemoPadFragment extends DialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getActivity() != null)
-            sharedModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+            fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -53,7 +53,7 @@ public class MemoPadFragment extends DialogFragment {
 
         // Set the dialog style: no title
         //if(getDialog().getWindow() != null) getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        final String itemName = getArguments().getString("title");
+        final String itemName = getArguments().getString("itemLabel");
         final int viewId = getArguments().getInt("viewId");
 
         TextView tvItemName = localView.findViewById(R.id.tv_memo_title);
@@ -65,7 +65,7 @@ public class MemoPadFragment extends DialogFragment {
         builder.setView(localView)
                 .setPositiveButton(R.string.dialog_btn_confirm, (dialog, which) -> {
                     String memo = etMemo.getText().toString();
-                    sharedModel.setSelectedMemo(viewId, memo);
+                    fragmentModel.setSelectedMemo(viewId, memo);
                     dismiss();
                 })
                 .setNegativeButton(R.string.dialog_btn_cancel, (dialog, which) -> dismiss());

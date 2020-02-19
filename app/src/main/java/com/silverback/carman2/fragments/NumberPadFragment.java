@@ -25,6 +25,8 @@ import java.text.ParseException;
 
 /**
  * A simple {@link Fragment} subclass.
+ * This class subclasses DialogFragment to input numbers in a view of assocaited forms, no matter
+ * what is currency or mileage, with params that receive a view title or unit name.
  */
 public class NumberPadFragment extends DialogFragment implements View.OnClickListener{
 
@@ -36,7 +38,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     private String[] arrCurrency = { "5만", "1만", "5천", "1천" };
 
     // Objects
-    private FragmentSharedModel viewModel;
+    private FragmentSharedModel fragmentModel;
     private DecimalFormat df;
 
     // UIs
@@ -46,7 +48,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     // Fields
     private int textViewId;
     private int selectedValue;
-    private String initValue, itemTitle;
+    private String initValue, itemLabel;
     private boolean isCurrency;
     private boolean isPlus;
 
@@ -54,13 +56,13 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getActivity() != null)
-            viewModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+            fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
-            itemTitle = getArguments().getString("title");
+            itemLabel = getArguments().getString("itemLabel");
             textViewId = getArguments().getInt("viewId");
             initValue = getArguments().getString("initValue");
-            log.i("Dialog: %s, %s, %s", itemTitle, textViewId, initValue);
+            log.i("Dialog: %s, %s, %s", itemLabel, textViewId, initValue);
         }
 
         df = BaseActivity.getDecimalFormatInstance();
@@ -80,7 +82,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         tvUnit = localView.findViewById(R.id.unit);
         btnSign = localView.findViewById(R.id.btn_sign);
         btn1 = localView.findViewById(R.id.padButton1);
-        btn2 = localView.findViewById(R.id.btn_gas_date);
+        btn2 = localView.findViewById(R.id.padButton2);
         btn3 = localView.findViewById(R.id.padButton3);
         btn4 = localView.findViewById(R.id.padButton4);
 
@@ -94,58 +96,51 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         btn4.setOnClickListener(this);
 
         // Get arguments from the parent activity as to dialog title, unit name, and button numbers.
-        /*
         switch(textViewId) {
+            // This case is shared by Gas and Service in common.
             case R.id.tv_mileage:
-                itemTitle = getString(R.string.exp_label_odometer);
+                itemLabel = getString(R.string.exp_label_odometer);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
 
-            case R.id.tv_mileage:
-                itemTitle = getString(R.string.exp_label_odometer);
-                isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
-                break;
-
-            case R.id.tv_total_cost:
-                itemTitle = getString(R.string.gas_label_expense);
+            case R.id.tv_gas_payment:
+                itemLabel = getString(R.string.gas_label_expense);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
-            case R.id.tv_amount:
-                itemTitle = getString(R.string.gas_label_amount);
+            case R.id.tv_gas_amount:
+                itemLabel = getString(R.string.gas_label_amount);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_liter));
                 break;
 
-            case R.id.tv_carwash:
-                itemTitle = getString(R.string.gas_label_expense_wash);
+            case R.id.tv_carwash_payment:
+                itemLabel = getString(R.string.gas_label_expense_wash);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
-            case R.id.tv_extra:
-                itemTitle = getString(R.string.gas_label_expense_misc);
+            case R.id.tv_extra_payment:
+                itemLabel = getString(R.string.gas_label_expense_misc);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
+            // This case is only applied to Service Items, the name of which is passed by
+            // the itemLabel argument.
             case R.id.tv_value_cost:
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;
 
-            default:
-                log.i("Title: %s", itemTitle);
-                break;
-
-
+            default: break;
         }
-        */
 
-        tvTitle.setText(itemTitle);
+
+        tvTitle.setText(itemLabel);
         tvValue.setText(initValue);
 
         // Set texts and values of the buttons on the pad in InputBtnPadView.
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
                 .setPositiveButton("confirm", (dialog, which) ->
-                    viewModel.setSelectedValue(textViewId, selectedValue))
+                    fragmentModel.setSelectedValue(textViewId, selectedValue))
                 .setNegativeButton("cancel", (dialog, which) -> {});
 
 
@@ -167,24 +162,24 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         switch(v.getId()) {
             case R.id.btn_sign:
                 isPlus = !isPlus;
-                String sign = (isPlus)? "+" : "-";
+                String sign = (isPlus)? getString(R.string.sign_plus) : getString(R.string.sign_minus);
                 btnSign.setText(sign);
                 break;
 
             case R.id.padButton1:
-                number = (isCurrency)?50000:100;
+                number = (isCurrency) ? 50000 : 100;
                 break;
 
-            case R.id.btn_gas_date:
-                number = (isCurrency)?10000:50;
+            case R.id.padButton2:
+                number = (isCurrency) ? 10000 : 50;
                 break;
 
             case R.id.padButton3:
-                number = (isCurrency)?5000:10;
+                number = (isCurrency) ? 5000 : 10;
                 break;
 
             case R.id.padButton4:
-                number = (isCurrency)?1000:1;
+                number = (isCurrency) ? 1000 : 1;
                 break;
         }
 
@@ -193,13 +188,14 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         if((selectedValue = (isPlus)? selectedValue + number : selectedValue - number) < 0) {
             selectedValue = 0;
             isPlus = !isPlus;
-            btnSign.setText((isPlus)? "+" : "-");
+            btnSign.setText((isPlus)?getString(R.string.sign_plus) : getString(R.string.sign_minus));
         }
 
         tvValue.setText(df.format(selectedValue));
 
     }
 
+    // Set the button name and unit accroding to whether the unit is currency or amount
     private boolean setInputNumberPad(String[] name, String unit) {
         btn1.setText(name[0]);
         btn2.setText(name[1]);

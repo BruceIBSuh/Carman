@@ -65,7 +65,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FirebaseFirestore firestore;
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
-    private FragmentSharedModel fragmentSharedModel;
+    private FragmentSharedModel sharedModel;
     private OpinetViewModel opinetViewModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
@@ -134,7 +134,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
-        fragmentSharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
+        sharedModel = ((ExpenseActivity)getActivity()).getFragmentSharedModel();
         locationModel = ((ExpenseActivity)getActivity()).getLocationViewModel();
         stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
@@ -221,15 +221,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         btnStnFavorite = localView.findViewById(R.id.btn_gas_favorite);
         etUnitPrice = localView.findViewById(R.id.et_unit_price);
         tvOdometer = localView.findViewById(R.id.tv_mileage);
-        tvGasPaid = localView.findViewById(R.id.tv_total_cost);
-        tvGasLoaded = localView.findViewById(R.id.tv_amount);
-        tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
-        tvExtraPaid = localView.findViewById(R.id.tv_extra);
+        tvGasPaid = localView.findViewById(R.id.tv_gas_payment);
+        tvGasLoaded = localView.findViewById(R.id.tv_gas_amount);
+        tvCarwashPaid = localView.findViewById(R.id.tv_carwash_payment);
+        tvExtraPaid = localView.findViewById(R.id.tv_extra_payment);
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
         ratingBar = localView.findViewById(R.id.ratingBar);
         etGasComment = localView.findViewById(R.id.et_service_comment);
-        Button btnChangeDate = localView.findViewById(R.id.btn_gas_date);
+        Button btnChangeDate = localView.findViewById(R.id.padButton2);
         Button btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
+
+
 
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
@@ -298,12 +300,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        // Share the value input in NumberPadFragment as the view id passes to NumberPadFragment when
+        // Share a value input in NumberPadFragment as the view id passes to NumberPadFragment when
         // clicking, then returns an input value as SparseArray which contains the view id, which
         // may identify the view invoking NumberPadFragment and fill in the value into the view.
-        fragmentSharedModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
+        sharedModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
             log.i("View ID: %s", data.keyAt(0));
-            targetView = localView.findViewById(data.keyAt(0));
+            //targetView = localView.findViewById(data.keyAt(0));
             if(targetView != null) {
                 targetView.setText(df.format(data.valueAt(0)));
                 calculateGasAmount();
@@ -351,7 +353,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // In doing so, this fragment communicates w/ FavoriteListFragment to retrieve a favorite
         // station picked out of FavoriteListFragment using FragmentSharedModel. With the station id,
         // FavoritePriceTask gets started to have the gas price.
-        fragmentSharedModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), entity -> {
+        sharedModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), entity -> {
             tvStnName.setText(entity.providerName);
             btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             stnId = entity.providerId;
@@ -377,7 +379,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Must define FragmentSharedModel.setCurrentFragment() in onResume(), not onActivityCreated()
         // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // of ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        fragmentSharedModel.setCurrentFragment(this);
+        sharedModel.setCurrentFragment(this);
     }
 
     @Override
@@ -396,42 +398,38 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public void onClick(final View v) {
         Bundle args = new Bundle();
-        String itemTitle = null;
         String initValue = null;
         targetView = (TextView)v;
+
         // Pass the current saved value to NumberPadFragment
         switch(v.getId()) {
             case R.id.tv_mileage:
-                itemTitle = tvOdometer.getText().toString();
-                initValue = tvOdometer.getText().toString();
+                initValue = tvOdometer.getHint().toString();
                 break;
 
-            case R.id.tv_total_cost:
-                itemTitle = tvGasPaid.getText().toString();
-                initValue = tvGasPaid.getText().toString();
+            case R.id.tv_gas_payment:
+                initValue = tvGasPaid.getHint().toString();
                 break;
 
-            case R.id.tv_carwash:
-                itemTitle = tvCarwashPaid.getText().toString();
-                initValue = tvCarwashPaid.getText().toString();
+            case R.id.tv_carwash_payment:
+                initValue = tvCarwashPaid.getHint().toString();
                 break;
 
-            case R.id.tv_extra:
-                itemTitle = tvExtraPaid.getText().toString();
-                initValue = tvExtraPaid.getText().toString();
+            case R.id.tv_extra_payment:
+                initValue = tvExtraPaid.getHint().toString();
                 break;
         }
 
         // Pass the id of TextView to NumberPadFragment for which TextView is being focused to wait
         // for a new value.
         //NumberPadFragment.newInstance(null, initValue, v.getId()).show(getFragmentManager(), "numPad");
-        args.putString("title", itemTitle);
+        //args.putString("title", itemTitle);
         args.putInt("viewId", v.getId());
         args.putString("initValue", initValue);
         numPad.setArguments(args);
 
         if(getActivity() != null)
-            numPad.show(getActivity().getSupportFragmentManager(), "NumberPad");
+            numPad.show(getActivity().getSupportFragmentManager(), "numberPad");
 
     }
 
@@ -500,7 +498,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public boolean saveGasData(){
         // Null check for the parent activity
         if(!doEmptyCheck()) return false;
-        fragmentSharedModel.setCurrentFragment(this);
+
+        sharedModel.setCurrentFragment(this);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
 
         // Create Entity instances both of which are correlated by Foreinkey

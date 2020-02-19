@@ -9,7 +9,7 @@
     tools:context=".fragments.RegisterDialogFragment">
 
     <View
-        android:id="@+id/view_title"
+        android:id="@+id/view_memo_title"
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:background="@android:color/holo_blue_light"
@@ -28,8 +28,8 @@
         android:textColor="@android:color/white"
         android:textSize="@dimen/extraLargeText"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/view_title"
-        app:layout_constraintStart_toStartOf="@+id/view_title"
+        app:layout_constraintBottom_toBottomOf="@+id/view_memo_title"
+        app:layout_constraintStart_toStartOf="@+id/view_memo_title"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
@@ -66,7 +66,7 @@
         android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view_title" />
+        app:layout_constraintTop_toBottomOf="@+id/view_memo_title" />
 
     <TextView
         android:id="@+id/tv_sido"

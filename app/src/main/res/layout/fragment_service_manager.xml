@@ -148,7 +148,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:labelFor="@id/tv_total_cost"
+            android:labelFor="@id/tv_gas_payment"
             android:minWidth="80dp"
             android:text="@string/svc_label_payment"
             android:textSize="@dimen/largeText"
@@ -156,7 +156,7 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
 
         <TextView
-            android:id="@+id/tv_total_cost"
+            android:id="@+id/tv_gas_payment"
             android:layout_width="100dp"
             android:layout_height="25dp"
             android:padding="5dp"
@@ -177,9 +177,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:text="@string/unit_won"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_total_cost"
-            app:layout_constraintStart_toEndOf="@+id/tv_total_cost"
-            app:layout_constraintTop_toTopOf="@+id/tv_total_cost" />
+            app:layout_constraintBottom_toBottomOf="@+id/tv_gas_payment"
+            app:layout_constraintStart_toEndOf="@+id/tv_gas_payment"
+            app:layout_constraintTop_toTopOf="@+id/tv_gas_payment" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

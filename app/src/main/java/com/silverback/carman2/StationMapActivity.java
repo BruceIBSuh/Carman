@@ -69,7 +69,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         // UIs
         tvName = findViewById(R.id.tv_service_item);
         tvAddrs = findViewById(R.id.tv_address);
-        tvCarwash = findViewById(R.id.tv_carwash);
+        tvCarwash = findViewById(R.id.tv_carwash_payment);
         tvService = findViewById(R.id.tv_service);
         tvCVS = findViewById(R.id.tv_cvs);
         FloatingActionButton fabNavi = findViewById(R.id.fab_navi);

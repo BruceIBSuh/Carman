@@ -223,7 +223,7 @@ public class ServiceManagerFragment extends Fragment implements
         Button btnDate = localView.findViewById(R.id.btn_svc_date);
         Button btnReg = localView.findViewById(R.id.btn_register);
         btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
-        tvTotalCost = localView.findViewById(R.id.tv_total_cost);
+        tvTotalCost = localView.findViewById(R.id.tv_gas_payment);
 
         tvMileage.setOnClickListener(this);
         btnDate.setOnClickListener(this);
@@ -375,7 +375,7 @@ public class ServiceManagerFragment extends Fragment implements
         switch(v.getId()) {
             case R.id.tv_mileage:
                 Bundle args = new Bundle();
-                args.putString("title", getString(R.string.svc_label_mileage));
+                //args.putString("itemLabel", getString(R.string.svc_label_mileage));
                 args.putString("initValue", tvMileage.getText().toString());
                 args.putInt("viewId", v.getId());
                 numPad.setArguments(args);
@@ -410,11 +410,11 @@ public class ServiceManagerFragment extends Fragment implements
     // ExpServiceItemAdapter.OnParentFragmentListener invokes the following 4 methods
     // to pop up NumberPadFragment and input the amount of expense in a service item.
     @Override
-    public void inputItemCost(String title, TextView targetView, int position) {
+    public void inputItemCost(String label, TextView targetView, int position) {
         itemPos = position;
 
         Bundle args = new Bundle();
-        args.putString("title", title);
+        args.putString("itemLabel", label);
         args.putString("initValue", targetView.getText().toString());
         args.putInt("viewId", targetView.getId());
         numPad.setArguments(args);
@@ -429,7 +429,7 @@ public class ServiceManagerFragment extends Fragment implements
         itemPos = position;
 
         Bundle args = new Bundle();
-        args.putString("title", title);
+        args.putString("itemLabel", title);
         args.putInt("viewId", targetView.getId());
         memoPad.setArguments(args);
 

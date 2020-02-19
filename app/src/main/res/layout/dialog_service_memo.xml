@@ -7,10 +7,10 @@
     tools:context=".fragments.MemoPadFragment">
 
     <View
-        android:id="@+id/view_title"
+        android:id="@+id/view_memo_title"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:background="@android:color/holo_blue_light"
+        android:background="@color/bgMemoPadTitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -22,9 +22,9 @@
         android:layout_margin="8dp"
         android:textColor="@android:color/white"
         android:textSize="@dimen/extraLargeText"
-        app:layout_constraintBottom_toBottomOf="@+id/view_title"
-        app:layout_constraintStart_toStartOf="@+id/view_title"
-        app:layout_constraintTop_toTopOf="@+id/view_title" />
+        app:layout_constraintBottom_toBottomOf="@+id/view_memo_title"
+        app:layout_constraintStart_toStartOf="@+id/view_memo_title"
+        app:layout_constraintTop_toTopOf="@+id/view_memo_title" />
 
     <TextView
         android:id="@+id/tv_label_memo"
@@ -39,7 +39,7 @@
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view_title" />
+        app:layout_constraintTop_toBottomOf="@+id/view_memo_title" />
 
     <EditText
         android:id="@+id/et_item_memo"

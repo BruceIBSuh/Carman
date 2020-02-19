@@ -93,7 +93,7 @@
                     app:layout_constraintTop_toBottomOf="@+id/tv_address" />
 
                 <TextView
-                    android:id="@+id/tv_carwash"
+                    android:id="@+id/tv_carwash_payment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:layout_constraintStart_toStartOf="parent"
@@ -104,8 +104,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
-                    app:layout_constraintStart_toEndOf="@+id/tv_carwash"
-                    app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash"/>
+                    app:layout_constraintStart_toEndOf="@+id/tv_carwash_payment"
+                    app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash_payment"/>
 
                 <TextView
                     android:id="@+id/tv_cvs"
@@ -113,7 +113,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     app:layout_constraintStart_toEndOf="@+id/tv_service"
-                    app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash" />
+                    app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash_payment" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -123,7 +123,7 @@
                 android:layout_height="match_parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_carwash"/>
+                app:layout_constraintTop_toBottomOf="@id/tv_carwash_payment"/>
 
         </LinearLayout>
 
