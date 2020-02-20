@@ -87,10 +87,11 @@ public class AlertDialogFragment extends DialogFragment {
                     sharedModel.setAlertSvcResult(true);
                     break;
 
-                case Constants.POST:
+                case Constants.BOARD:
                     sharedModel.getAlertPostResult().setValue(true);
                     break;
             }
+
             dismiss();
 
         }).setNegativeButton("cancel", (dialog, which) -> {

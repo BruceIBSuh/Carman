@@ -9,6 +9,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
 import android.util.SparseArray;
@@ -70,7 +71,6 @@ public class GeofenceTransitionService extends IntentService {
                 final Location geofenceLocation = geofencingEvent.getTriggeringLocation();
                 Location favLocation = new Location("@null");
 
-
                 // Retrieve all the favorite list.
                 // What if multiple providers are closely located within the radius?
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
@@ -81,14 +81,15 @@ public class GeofenceTransitionService extends IntentService {
                 for(FavoriteProviderEntity entity : entities) {
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
-
+                    //
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
                         final int notiId = createID();
                         final String name = entity.providerName;
                         final String id = entity.providerId;
+                        final String addrs = entity.address;
                         final int category = entity.category;
 
-                        createNotification(notiId, id, name, category);
+                        createNotification(notiId, id, name, addrs, category);
                         //sparseNotiArray.put(notiId++, createNotification(notiId++, providerName, category));
                     }
                 }
@@ -99,35 +100,36 @@ public class GeofenceTransitionService extends IntentService {
             case Constants.NOTI_SNOOZE:
                 String providerId = intent.getStringExtra(Constants.GEO_ID);
                 String providerName = intent.getStringExtra(Constants.GEO_NAME);
+                String providerAddrs = intent.getStringExtra(Constants.GEO_ADDRS);
                 int category = intent.getIntExtra(Constants.GEO_CATEGORY, -1);
                 int snoozeNotiId = intent.getIntExtra(Constants.NOTI_ID, -1);
                 geoTime = intent.getLongExtra(Constants.GEO_TIME, -1);
 
-                createNotification(snoozeNotiId, providerId, providerName, category);
+                createNotification(snoozeNotiId, providerId, providerName, providerAddrs, category);
                 //Notification notiSnooze = createNotification(notiId++, providerName, category);
                 //notiManager.notify(notiId++, notiSnooze);
                 break;
         }
     }
 
-    private void createNotification(int notiId, String providerId, String name, int category) {
-        log.i("notification ID: %s", notiId);
+    private void createNotification(int notiId, String providerId, String name, String addrs, int category) {
+
+        // Make the notification title and bigText(contentText and extendedText).
         String title = null;
         String extendedText = null;
-
-        final String strTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
-        final String contentText = String.format("%s %s", name, strTime);
-        log.i("Content Text: %s", contentText);
+        String contentText = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
 
         switch(category) {
             case Constants.GAS: // gas station
-                title = getString(R.string.noti_geofence_title_gas);
-                extendedText = getResources().getString(R.string.noti_geofence_content_gas);
+                title = String.format("%s %s", getString(R.string.noti_geofence_title_gas), name);
+                extendedText = String.format(
+                        "%s\n%s", addrs, getResources().getString(R.string.noti_geofence_content_gas));
                 break;
 
             case Constants.SVC: // car center
-                title = getString(R.string.noti_geofence_title_svc);
-                extendedText = getResources().getString(R.string.noti_geofence_content_svc);
+                title = String.format("%s %s", getString(R.string.noti_geofence_title_svc), name);
+                extendedText = String.format(
+                        "%s\n%s", addrs, getResources().getString(R.string.noti_geofence_content_svc));
                 break;
 
             default:
@@ -137,9 +139,10 @@ public class GeofenceTransitionService extends IntentService {
         // Create PendingIntents for setContentIntent and addAction(Snooze)
         PendingIntent resultPendingIntent = createResultPendingIntent(notiId, providerId, name, category);
         PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, providerId, name, category);
+        int icon = (category == Constants.GAS)? R.drawable.ic_gas_station:R.drawable.ic_service_center;
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID);
-        mBuilder.setSmallIcon(R.mipmap.ic_launcher)
+        mBuilder.setSmallIcon(icon)
                 .setShowWhen(true)
                 .setContentTitle(title)
                 .setContentText(contentText)
@@ -147,7 +150,7 @@ public class GeofenceTransitionService extends IntentService {
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
                 .setContentIntent(resultPendingIntent)
                 .setAutoCancel(true)
-                .addAction(-1, "Snooze", snoozePendingIntent)
+                .addAction(R.drawable.ic_notification_snooze, "Snooze", snoozePendingIntent)
                 .build();
 
 
@@ -169,10 +172,10 @@ public class GeofenceTransitionService extends IntentService {
     }
 
     private PendingIntent createResultPendingIntent(int notiId, String providerId, String name, int category) {
-        //private PendingIntent createResultPendingIntent(final Class<? extends Activity> cls) {
         // Create an Intent for the activity you want to start
-        //Intent resultIntent = new Intent(this, cls);
         Intent resultIntent = new Intent(this, ExpenseActivity.class);
+        //no idea how it works.
+        //resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         resultIntent.setAction(Constants.NOTI_GEOFENCE);
         resultIntent.putExtra(Constants.GEO_ID, providerId);
         resultIntent.putExtra(Constants.GEO_CATEGORY, category);

@@ -50,7 +50,6 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -719,7 +718,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                         case R.id.action_board_delete:
                             String title = getString(R.string.board_alert_delete);
                             String msg = getString(R.string.board_alert_msg);
-                            AlertDialogFragment.newInstance(title, msg, Constants.POST)
+                            AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
                                     .show(getActivity().getSupportFragmentManager(), null);
                             return true;
 

@@ -17,9 +17,13 @@ import com.silverback.carman2.fragments.GeneralFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
+
+import org.json.JSONArray;
 
 import java.io.File;
 
@@ -37,6 +41,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private final int REQ_SETTING = 1000;
 
     // Objects
+    private CarmanDatabase mDB;
+    private GasPriceTask gasPriceTask;
+    private OpinetViewModel opinetModel;
     private GeneralFragment generalFragment;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgViewModel;
@@ -52,8 +59,13 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Instantiation
+        mDB = CarmanDatabase.getDatabaseInstance(this);
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+
+
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
@@ -86,11 +98,27 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         //checkPermissions();
 
 
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
+
+        // The activity gets started by the Geofence notification which launches GasManagerFragment
+        // or ServiceManagerFragment at first and when clikcing the up button, the activity receives
+        // the boolean extra that indicates how the app launches. This process has to call the price
+        // task for displaying the price information.
+        if(getIntent() != null && getIntent().getBooleanExtra("isGeofencing", false)) {
+            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
+                JSONArray json = BaseActivity.getDistrictJSONArray();
+                String distCode = (json != null) ?
+                        json.optString(2) :
+                        getResources().getStringArray(R.array.default_district)[2];
+                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
+            });
+        }
+
         // MUST be located here b/c it has to be redrawn when startActivityForResult() is called.
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.

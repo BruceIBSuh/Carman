@@ -255,7 +255,6 @@ public class ServiceManagerFragment extends Fragment implements
 
             btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             btnDate.setVisibility(View.GONE);
-
         }
 
         return localView;

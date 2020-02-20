@@ -3,17 +3,18 @@ package com.silverback.carman2.utils;
 public class Constants {
 
     // Category
-    public static final int TOTAL = 0;
-    public static final int GAS = 1;
-    public static final int SVC = 2;
-    public static final int POST = 3;
+    public static final int GAS = 0;
+    public static final int SVC = 1;
+    public static final int TOTAL = 2;
+    public static final int BOARD = 3;
 
+    //
     public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 60; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
-    //public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
+    public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
 
     public static final long OPINET_UPDATE_INTERVAL = 1000 * 60;// * 60 * 6;//Interval for downloading gas prices from Opinet (6 hrs)
     public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
@@ -28,6 +29,9 @@ public class Constants {
     // Board Pagination
     static final int PAGINATION = 20;
     //public static final int ICON_SIZE = 50;
+
+    // Notification Snooze
+    public static final int SNOOZE_DURATION = 1000 * 60 * 60;
 
     // Image and Icon Size
     public static final int ICON_SIZE_TOOLBAR = 50;
@@ -78,7 +82,7 @@ public class Constants {
 
     public static final String GEOFENCE_LIST = "geofence_list_for_reboot";
 
-    // Notification
+    // Geofence Notification
     public static final String CHANNEL_ID = "com.silverback.carman2";
     public static final String NOTI_TAG = "com.silverback.carman2.notification";
     public static final String NOTI_ID = "com.silverback.carman2.notiId";
@@ -88,11 +92,12 @@ public class Constants {
 
     // Geofence Keys
     public static final String GEO_CATEGORY = "com.silverback.carman2.geofence.category";
-    public static final String GEO_INTENT = "com.ibnco.carman.geofence.pendingintent";
-    public static final String GEO_NAME = "com.ibnco.carman.geofence.name";
-    public static final String GEO_ID = "com.ibnco.carman.geofence.id";
-    public static final String GEO_TIME = "com.ibnco.carman.geofence.time";
-    public static final String GEO_LOCATION = "com.ibnco.carman.geofence.location";
+    public static final String GEO_INTENT = "com.silverback.carman2.geofence.pendingintent";
+    public static final String GEO_NAME = "com.silverback.carman2.geofence.name";
+    public static final String GEO_ID = "com.silverback.carman2.geofence.id";
+    public static final String GEO_TIME = "com.silverback.carman2.geofence.time";
+    public static final String GEO_ADDRS = "com.silverback.carman2.geofence.addrs";
+    public static final String GEO_LOCATION = "com.silverback.carman2.geofence.location";
 
 
 

@@ -191,8 +191,13 @@ public class ExpenseActivity extends BaseActivity implements
 
         switch(item.getItemId()) {
             case android.R.id.home:
-                if(isGeofencing) startActivity(new Intent(this, MainActivity.class));
-                else finish();
+                log.i("isGeofencing: %s", isGeofencing);
+                if(isGeofencing) {
+                    Intent mainIntent = new Intent(this, MainActivity.class);
+                    mainIntent.putExtra("isGeofencing", true);
+                    startActivity(mainIntent);
+
+                } else finish();
 
                 return true;
 
@@ -314,10 +319,7 @@ public class ExpenseActivity extends BaseActivity implements
                 // In case that this activity is started by the geofence notification, ServiceFragment
                 // must be set to the current page only after the viewpager at the top has added to
                 // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
-                if(isGeofencing && category == 2) tabPager.setCurrentItem(category - 1);
-
-
-
+                if(isGeofencing && category == Constants.SVC) tabPager.setCurrentItem(category);
             }
         });
 

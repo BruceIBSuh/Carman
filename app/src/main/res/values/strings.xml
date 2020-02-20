@@ -257,10 +257,10 @@
 
 
     <!--GeofenceTransitionService-->
-    <string name="noti_geofence_title_gas">주유정보</string>
-    <string name="noti_geofence_title_svc">서비스정보</string>
-    <string name="noti_geofence_content_gas">알림창을 누르시면 주유정보 페이지로 이동합니다</string>
-    <string name="noti_geofence_content_svc">알림창을 누리시면 서비스정보 페이지로 이동합니다</string>
+    <string name="noti_geofence_title_gas">주유정보: </string>
+    <string name="noti_geofence_title_svc">서비스정보: </string>
+    <string name="noti_geofence_content_gas">주유정보 페이지로 바로 이동합니다</string>
+    <string name="noti_geofence_content_svc">서비스정보 페이지로 바로 이동합니다</string>
     <string name="noti_action_snooze">나중에 알림</string>
     <string name="noti_action_dismis">그냥 닫기</string>
     <string name="noti_ch_name">geofence_carman</string>

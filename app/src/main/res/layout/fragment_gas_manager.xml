@@ -45,20 +45,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
         app:layout_constraintStart_toEndOf="@+id/tv_label_date"
         app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
-    <!--
-    <Button
-        android:id="@+id/btn_gas_date"
-        android:visibility="gone"
-        android:layout_width="40dp"
-        android:layout_height="30dp"
-        android:layout_marginStart="8dp"
-        android:padding="0dp"
-        android:text="@string/gas_btn_change"
-        android:textSize="@dimen/extraSmallText"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_date_time"
-        app:layout_constraintStart_toEndOf="@+id/tv_date_time"
-        app:layout_constraintTop_toTopOf="@+id/tv_date_time" />
-    -->
+
     <TextView
         android:id="@+id/tv_label_name"
         android:layout_width="wrap_content"

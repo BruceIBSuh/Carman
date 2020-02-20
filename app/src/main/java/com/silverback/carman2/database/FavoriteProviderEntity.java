@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+/*
+ * This entity(table) is to have favroite gas stations or service centers by category.
+ * Getter and setter are not required as far as fields are set to public. Otherwise, they have to
+ * be defined to handle values in the entity.
+ */
 @Entity
 public class FavoriteProviderEntity {
 

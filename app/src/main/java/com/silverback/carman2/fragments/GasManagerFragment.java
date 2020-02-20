@@ -122,7 +122,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // that contains the station id, name, geofencing time, and category. The data fill out
         // the gas or service form acoording to the transferred category.
         String action = getActivity().getIntent().getAction();
-        if(action.equals(Constants.NOTI_GEOFENCE)) {
+        if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
             isGeofenceIntent = true;
             geoStnName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
             geoStnId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
@@ -230,12 +230,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
         ratingBar = localView.findViewById(R.id.ratingBar);
         etGasComment = localView.findViewById(R.id.et_service_comment);
-        Button btnChangeDate = localView.findViewById(R.id.padButton2);
         Button btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
 
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
-        tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
+        //tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
         stnProgbar.setVisibility(View.VISIBLE);
 
         // Attach the event listeners
@@ -282,7 +281,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 // Hanldinthe UIs
                 btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                 stnProgbar.setVisibility(View.GONE);
-                btnChangeDate.setVisibility(View.GONE);
+                //btnChangeDate.setVisibility(View.GONE);
 
                 // Task to fetch the gas price of a station with the station ID.
                 favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, false);
@@ -377,7 +376,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onResume() {
         super.onResume();
         // Must define FragmentSharedModel.setCurrentFragment() in onResume(), not onActivityCreated()
-        // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
+        // because the value of FragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // of ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
         sharedModel.setCurrentFragment(this);
     }
@@ -404,7 +403,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Pass the current saved value to NumberPadFragment
         switch(v.getId()) {
             case R.id.tv_mileage:
-                initValue = tvOdometer.getHint().toString();
+                initValue = tvOdometer.getText().toString();
                 break;
 
             case R.id.tv_gas_payment:
@@ -458,7 +457,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS)
                     .show(getActivity().getSupportFragmentManager(), null);
         // Remove the station both from the local db and Firestore, the result of which is notified
-        // by FavoriteGeofenceHelper.OnGeofenceListener, changing the boolean value of isFavoriteGas;
+        // to FavoriteGeofenceHelper.OnGeofenceListener which implements the boolean value set to false.
         } else if(isFavoriteGas) {
             Snackbar snackbar = Snackbar.make(
                     localView, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
@@ -471,7 +470,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         } else {
             // Add a station both to the local db and Firestore as far as the number of favorite stations
-            // is less than
+            // is less than Constants.MAX_FAVORITE, currently set to 10.
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
             if(placeholder == Constants.MAX_FAVORITE) {
                 Snackbar.make(localView, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();

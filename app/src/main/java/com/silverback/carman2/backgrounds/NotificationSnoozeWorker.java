@@ -35,10 +35,14 @@ public class NotificationSnoozeWorker extends Worker {
          * More research is required.
          */
         AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        final long delay = 1000 * 60 * 10;
+
+        // MAKE THE SNOOZE DURATION SET IN SETTINGPREFERENCEACTIVITY WITH ANDROID N OR BELOW.(NOT CODED YET)
+        // ANDROID O AND HIGHER, THE DURATION IS SET BY EMBEDDED FUNCTION.
+        final long delay = Constants.SNOOZE_DURATION;
 
         String providerName = getInputData().getString(Constants.GEO_NAME);
         String providerId = getInputData().getString(Constants.GEO_ID);
+        String providerAddrs = getInputData().getString(Constants.GEO_ADDRS);
         int category = getInputData().getInt(Constants.GEO_CATEGORY, -1);
         long geoTime = getInputData().getLong(Constants.GEO_TIME, 0L);
         int notiId = getInputData().getInt(Constants.NOTI_ID, -1);
@@ -49,6 +53,7 @@ public class NotificationSnoozeWorker extends Worker {
         geoIntent.setAction(Constants.NOTI_SNOOZE);
         geoIntent.putExtra(Constants.GEO_ID, providerId);
         geoIntent.putExtra(Constants.GEO_NAME, providerName);
+        geoIntent.putExtra(Constants.GEO_ADDRS, providerAddrs);
         geoIntent.putExtra(Constants.GEO_CATEGORY, category);
         geoIntent.putExtra(Constants.GEO_TIME, geoTime);
         PendingIntent pendingIntent = PendingIntent.getService(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);

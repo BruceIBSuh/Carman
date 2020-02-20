@@ -95,10 +95,17 @@ public class FavoriteGeofenceHelper {
         return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    // Add a station to Geofence and the Favorite table at the same time.
-    // when removing it, not sure how it is safely removed from Geofence, it is deleted from DB, though.
+    /**
+     * Add a gas station or service center not only to Geofence but also to the FavoriteProviderEntitby
+     * accroding to the category given as a param.
+     * @param snapshot DocumentSnapshot queried from Firestore
+     * @param placeHolder the last placeholder retrieved from FavoriteProviderEntity.
+     * @param category Service provier b/w Constants.GAS and Constants.SVC.
+     */
     @SuppressWarnings("ConstantConditions")
-    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final int placeHolder, final int category) {
+    public void addFavoriteGeofence(
+            final DocumentSnapshot snapshot, final int placeHolder, final int category) {
+
         final String providerId = snapshot.getId();
         String providerName;
         String providerCode;
@@ -106,7 +113,9 @@ public class FavoriteGeofenceHelper {
 
         switch(category) {
             case Constants.GAS:
-                // Get the location data saved as KATEC and convert the data into GEO
+                // Get the location data saved as KATEC which is provided by Opinet and convert it
+                // to GeoPoint b/c Google map is used to display the station. At a later time when
+                // a local map is used, KATEC coords should be applied.
                 GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
                 geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
 
@@ -137,8 +146,7 @@ public class FavoriteGeofenceHelper {
                 throw new IllegalStateException("Unexpected value: " + category);
         }
 
-        // Add the station to Geofence.
-        //createGeofence(providerId, geoPoint);
+        // Instantiate Genfence.Builder which requires List<Geofence> to add to Geofence.
         if(mGeofenceList == null) mGeofenceList = new ArrayList<>();
         mGeofenceList.add(new Geofence.Builder()
                 .setRequestId(providerId)
@@ -150,7 +158,7 @@ public class FavoriteGeofenceHelper {
                 .build()
         );
 
-        // Set the fields in FavoriteProviderEntity of the local db
+        // Set the fields of FavoriteProviderEntity with the snapshot data.
         favoriteModel.providerName = providerName;
         favoriteModel.category = category;
         favoriteModel.providerId = providerId;
@@ -162,8 +170,8 @@ public class FavoriteGeofenceHelper {
 
 
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.
-        // Then, geofences should be saved in the Favorite table as far as they successfully added to
-        // geofences. Otherwise, show the error messages using GeofenceStatusCodes
+        // Geofences should be saved in FavoriteProviderEntity as far as they have successfully done
+        // Otherwise, show the error messages using GeofenceStatusCodes
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
