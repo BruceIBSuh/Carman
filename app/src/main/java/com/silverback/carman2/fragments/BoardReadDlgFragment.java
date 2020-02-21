@@ -696,8 +696,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         try (FileInputStream fis = getActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
-            String id = br.readLine();
-            if(userId.equals(id)) {
+            String viewerId = br.readLine();
+            if(userId.equals(viewerId)) {
                 toolbar.inflateMenu(R.menu.menu_board_read);
                 toolbar.setOnMenuItemClickListener(item -> {
 

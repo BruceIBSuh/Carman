@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 
 import androidx.lifecycle.ViewModelProvider;
@@ -78,7 +79,8 @@ public class IntroActivity extends BaseActivity  {
         mProgBar = findViewById(R.id.pb_intro);
         // On clicking the start button, fork the process into the first-time launching or the regular
         // process depending upon whether the Firebase anonymous authentication is registered.
-        Button btnStart = findViewById(R.id.btn_start);
+
+        ImageButton btnStart = findViewById(R.id.btn_start);
         btnStart.setOnClickListener(view -> {
             log.i("FirebaseAuth: %s", mAuth.getCurrentUser());
             if(mAuth.getCurrentUser() == null) firstInitProcess();

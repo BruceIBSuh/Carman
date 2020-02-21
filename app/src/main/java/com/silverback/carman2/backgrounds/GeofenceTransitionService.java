@@ -117,19 +117,18 @@ public class GeofenceTransitionService extends IntentService {
         // Make the notification title and bigText(contentText and extendedText).
         String title = null;
         String extendedText = null;
-        String contentText = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
+        String visitingTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
+        String contentText = String.format("%s\n%s", visitingTime, addrs);
 
         switch(category) {
             case Constants.GAS: // gas station
-                title = String.format("%s %s", getString(R.string.noti_geofence_title_gas), name);
-                extendedText = String.format(
-                        "%s\n%s", addrs, getResources().getString(R.string.noti_geofence_content_gas));
+                title = String.format("%-8s%s", getString(R.string.noti_geofence_title_gas), name);
+                extendedText = getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                title = String.format("%s %s", getString(R.string.noti_geofence_title_svc), name);
-                extendedText = String.format(
-                        "%s\n%s", addrs, getResources().getString(R.string.noti_geofence_content_svc));
+                title = String.format("%-8s%s", getString(R.string.noti_geofence_title_svc), name);
+                extendedText = getResources().getString(R.string.noti_geofence_content_svc);
                 break;
 
             default:
@@ -141,26 +140,28 @@ public class GeofenceTransitionService extends IntentService {
         PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, providerId, name, category);
         int icon = (category == Constants.GAS)? R.drawable.ic_gas_station:R.drawable.ic_service_center;
 
+
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID);
         mBuilder.setSmallIcon(icon)
                 .setShowWhen(true)
                 .setContentTitle(title)
                 .setContentText(contentText)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText + "\n" + extendedText))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText + "\n\n" + extendedText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
                 .setContentIntent(resultPendingIntent)
                 .setAutoCancel(true)
+                // addAction(drawable, charsequence, pendingintent) is deprecated as of Android 7.
+                // The icon is not available any more but it should be provided for the under 7.
                 .addAction(R.drawable.ic_notification_snooze, "Snooze", snoozePendingIntent)
                 .build();
-
 
         // Set an vibrator to the notification by the build version
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = createNotificationChannel();
-            if(channel != null) channel.setVibrationPattern(new long[]{0, 500, 500, 500});
+            if(channel != null) channel.setVibrationPattern(new long[]{0, 500, 500, 500, 500, 500});
 
         } else {
-            mBuilder.setVibrate(new long[]{0, 500, 500, 500}); //Vibarate on receiving notification
+            mBuilder.setVibrate(new long[]{0, 500, 500, 500, 500, 500}); //Vibarate on receiving notification
         }
 
         Notification notification = mBuilder.build();
@@ -187,6 +188,9 @@ public class GeofenceTransitionService extends IntentService {
         stackBuilder.addNextIntentWithParentStack(resultIntent);
         //stackBuilder.addParentStack(MainActivity.class);
         //stackBuilder.addNextIntent(resultIntent);
+
+        // More research on what this works for.
+        //resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);)
 
 
         // Get the PendingIntent containing the entire back stack

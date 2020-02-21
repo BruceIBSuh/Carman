@@ -257,8 +257,8 @@
 
 
     <!--GeofenceTransitionService-->
-    <string name="noti_geofence_title_gas">주유정보: </string>
-    <string name="noti_geofence_title_svc">서비스정보: </string>
+    <string name="noti_geofence_title_gas">주유정보:</string>
+    <string name="noti_geofence_title_svc">서비스정보:</string>
     <string name="noti_geofence_content_gas">주유정보 페이지로 바로 이동합니다</string>
     <string name="noti_geofence_content_svc">서비스정보 페이지로 바로 이동합니다</string>
     <string name="noti_action_snooze">나중에 알림</string>
@@ -267,7 +267,7 @@
     <string name="noti_ch_description">frequently_visited_station</string>
 
 
-    <!--Formatter-->
+    <!--Time Formatter-->
     <string name="date_format_1">yyyy년 MM월dd일(E) HH시 mm분</string>
     <string name="date_format_2">yyyy/MM/dd(E)HH:mm</string>
     <!--<string name="date_format_3">%d년%d월%d일(%s)</string>-->

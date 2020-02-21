@@ -23,6 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.ServerTimestamp;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
@@ -31,11 +32,17 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.utils.PaginationHelper;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -62,6 +69,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Fields
     private int page;
+    private boolean hasReadPost;
 
     // Constructor
     private BoardPagerFragment() {
@@ -196,7 +204,7 @@ public class BoardPagerFragment extends Fragment implements
         });
 
         // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
-        // for confirmation and the result sent back, then deleted the posting item from Firestore.
+        // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the postion of the deleted posting item
         // and update the adapter.
         sharedModel.getRemovedPosting().observe(getActivity(), docId -> {
@@ -207,7 +215,6 @@ public class BoardPagerFragment extends Fragment implements
                 pageHelper.setPostingQuery(Source.CACHE, field);
             }
         });
-
 
     }
 
@@ -270,6 +277,8 @@ public class BoardPagerFragment extends Fragment implements
         DocumentReference docref = snapshot.getReference();
         docref.update("cnt_view", FieldValue.increment(1));
 
+
+
         // Listener to events for local changes, which will be notified with the new data before
         // the data is sent to the backend.
         docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
@@ -283,6 +292,7 @@ public class BoardPagerFragment extends Fragment implements
         });
     }
 
+    // Indicate a field to query according to which page to reside in.
     private String getQueryFieldToViewPager(int page) {
         switch(page) {
             case 0: // Recent
@@ -297,4 +307,27 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
+    // Get the user id and query the "viewers" collection to check if the viewer has read the post.
+    // If so, do not increase the view count.
+    @SuppressWarnings("ConstantConditions")
+    private void addViewCount(DocumentReference docref) {
+        try(FileInputStream fis = getActivity().openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
+            String viewerId = br.readLine();
+            docref.collection("viewers").document(viewerId).get().addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    DocumentSnapshot viewerDoc = task.getResult();
+                    hasReadPost = (viewerDoc != null);
+                }
+            });
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
+
+
