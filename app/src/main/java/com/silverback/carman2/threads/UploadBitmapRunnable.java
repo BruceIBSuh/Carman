@@ -14,10 +14,16 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
+import com.silverback.carman2.utils.Constants;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 /*
  * FIREBASE STORAGE SECURITY RULE OF UPLOADING IMAGE SIZE
@@ -37,17 +43,19 @@ public class UploadBitmapRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadBitmapRunnable.class);
 
-
     // Objects
     private Context context;
+    private ApplyImageResourceUtil imageUtil;
     private BitmapResizeMethods callback;
     private FirebaseStorage firestorage;
 
     // Interface
     public interface BitmapResizeMethods {
-        Uri getImageUri();
+        Uri getAttachedImageUri();
+        int getImagePosition();
         void setBitmapTaskThread(Thread thread);
-        void setBitmapUri(String uriString);
+        void setDownloadBitmapUri(String uri, int position);
+        void handleUploadBitmapState(int state);
     }
 
     // Constructor
@@ -55,6 +63,7 @@ public class UploadBitmapRunnable implements Runnable {
         this.context = context;
         this.callback = task;
         firestorage = FirebaseStorage.getInstance();
+        imageUtil = new ApplyImageResourceUtil(context);
     }
 
 
@@ -64,7 +73,9 @@ public class UploadBitmapRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         callback.setBitmapTaskThread(Thread.currentThread());
 
-        final Uri uri = callback.getImageUri();
+
+        final Uri uri = callback.getAttachedImageUri();
+        final int position = callback.getImagePosition();
         int orientation = 0;
         log.i("uri: %s", uri);
 
@@ -109,40 +120,10 @@ public class UploadBitmapRunnable implements Runnable {
                             resizedBitmap, 0, 0, resizedBitmap.getWidth(),resizedBitmap.getHeight(), matrix, true);
                 }
 
-
                 byte[] bmpByteArray = compressBitmap(resizedBitmap, options);
                 // Upload the compressed image(less than 1 MB) to Firebase Storage
-                uploadBitmapToStorage(bmpByteArray);
-
-                /*
-                UploadTask uploadTask = uploadReference.putBytes(bmpByteArray);
-                uploadTask.addOnProgressListener(listener -> log.i("upload progressing"))
-                        .addOnSuccessListener(snapshot -> log.i("File metadata: %s", snapshot.getMetadata()))
-                        .addOnFailureListener(e -> log.e("UploadFailed: %s", e.getMessage()));
-
-                uploadTask.continueWithTask(task -> {
-                    if(!task.isSuccessful()) {
-                        task.getException();
-                    }
-
-                    return uploadReference.getDownloadUrl();
-
-                }).addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
-                        Uri uriUploaded = task.getResult();
-                        callback.setBitmapUri(uriUploaded);
-
-                    } else log.w("No uri fetched");
-                });
-
-                 */
-
-
+                uploadBitmapToStorage(bmpByteArray, position);
             }
-
-
-
-
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
@@ -198,9 +179,8 @@ public class UploadBitmapRunnable implements Runnable {
     }
 
 
-
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void uploadBitmapToStorage(byte[] bitmapByteArray) {
+    private void uploadBitmapToStorage(byte[] bitmapByteArray, int position) {
 
         // Create the storage reference of an image uploading to Firebase Storage
         final StorageReference imgReference = firestorage.getReference().child("images");
@@ -221,10 +201,14 @@ public class UploadBitmapRunnable implements Runnable {
 
         }).addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
-                Uri uriUploaded = task.getResult();
-                callback.setBitmapUri(uriUploaded.toString());
+                Uri downloadUri = task.getResult();
+                if(downloadUri != null) callback.setDownloadBitmapUri(downloadUri.toString(), position);
+                callback.handleUploadBitmapState(UploadBitmapTask.UPLOAD_BITMAP_COMPLETE);
 
-            } else log.w("No uri fetched");
+            } else {
+                log.w("No uri fetched");
+                callback.handleUploadBitmapState(UploadBitmapTask.UPLOAD_BITMAP_FAIL);
+            }
         });
     }
 }

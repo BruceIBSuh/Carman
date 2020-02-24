@@ -15,15 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.ServerTimestamp;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
@@ -39,10 +38,13 @@ import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -61,7 +63,8 @@ public class BoardPagerFragment extends Fragment implements
     private PaginationHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
-    private WeakReference<ProgressBar> weakProgbar;//prevent progressbar from leaking in static fragment
+    // prevent the progressbar from leaking in the static fragment, use the weak reference.
+    private WeakReference<ProgressBar> weakProgbar;
 
     // UIs
     //private ProgressBar pagingProgbar;
@@ -69,7 +72,6 @@ public class BoardPagerFragment extends Fragment implements
 
     // Fields
     private int page;
-    private boolean hasReadPost;
 
     // Constructor
     private BoardPagerFragment() {
@@ -92,15 +94,17 @@ public class BoardPagerFragment extends Fragment implements
 
         if(getArguments() != null) page = getArguments().getInt("fragment");
 
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
+
         pageHelper = new PaginationHelper();
         pageHelper.setOnPaginationListener(this);
 
 
-        /**
+        /*
          * Realtime update SnapshotListener: server vs cache policy.
          *
          * When initially connecting to Firestore, the snapshot listener checks if there is any
@@ -108,8 +112,7 @@ public class BoardPagerFragment extends Fragment implements
          * the lisitener should be detached for purpose of preventing excessive connection to the
          * server.
          */
-
-        CollectionReference postRef = FirebaseFirestore.getInstance().collection("board_general");
+        CollectionReference postRef = firestore.collection("board_general");
         ListenerRegistration postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
@@ -118,7 +121,7 @@ public class BoardPagerFragment extends Fragment implements
         });
         postListener.remove();
 
-        CollectionReference userRef = FirebaseFirestore.getInstance().collection("users");
+        CollectionReference userRef = firestore.collection("users");
         ListenerRegistration userListener = userRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             String source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
@@ -164,10 +167,11 @@ public class BoardPagerFragment extends Fragment implements
         // when the scroll stops.
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(view -> {
-            // MUST initialize the model to prevent getImageObserver() in BoardWriteDlgFragment from
+            // MUST initialize the model to prevent getImageObserver() of BoardWriteDlgFragment from
             // automatically invoking startActivityForResult() when the fragment pops up.
             sharedModel.getImageChooser().setValue(-1);
 
+            // The dialog covers the full screen by adding it in android.R.id.content.
             BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
             getActivity().getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, writePostFragment)
@@ -275,21 +279,12 @@ public class BoardPagerFragment extends Fragment implements
 
         // Update the field of "cnt_view" increasing the number.
         DocumentReference docref = snapshot.getReference();
-        docref.update("cnt_view", FieldValue.increment(1));
+        addViewCount(docref, position);
+        //docref.update("cnt_view", FieldValue.increment(1));
 
 
 
-        // Listener to events for local changes, which will be notified with the new data before
-        // the data is sent to the backend.
-        docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
-            if(e != null) return;
-            //String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
-            if(data != null && data.exists()) {
-                //log.i("source: %s", source + "data: %s" + data.getData());
-                postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
-            }
-        });
+
     }
 
     // Indicate a field to query according to which page to reside in.
@@ -307,18 +302,57 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
-    // Get the user id and query the "viewers" collection to check if the viewer has read the post.
-    // If so, do not increase the view count.
+    // Get the user id and query the "viewers" collection to check if the user id exists in the
+    // documents, which means whether the user has read the post before. If so, do not increase
+    // the view count. Otherwise, add the user id to the "viewers" collection and increase the
+    // view count;
     @SuppressWarnings("ConstantConditions")
-    private void addViewCount(DocumentReference docref) {
+    private void addViewCount(DocumentReference docref, int position) {
         try(FileInputStream fis = getActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+            final String viewerId = br.readLine();
 
-            String viewerId = br.readLine();
-            docref.collection("viewers").document(viewerId).get().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    DocumentSnapshot viewerDoc = task.getResult();
-                    hasReadPost = (viewerDoc != null);
+            CollectionReference viewerCollection = docref.collection("viewers");
+            viewerCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
+                // In case the user does not exists in the "viewers" collection
+                if(snapshot == null || !snapshot.exists()) {
+                  log.i("vierer not exists");
+                  // Increase the view count
+                  docref.update("cnt_view", FieldValue.increment(1));
+
+                  // Set timestamp and the user ip with the user id used as the document id.
+                  Map<String, Object> viewerData = new HashMap<>();
+                  Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
+                  Date date = calendar.getTime();
+
+                  viewerData.put("timestamp", new Timestamp(date));
+                  viewerData.put("viewer_ip", "");
+
+                  viewerCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {
+                      log.i("Successfully set the data");
+
+                      // Listener to events for local changes, which is notified with the new data
+                      // before the data is sent to the backend.
+                      docref.get(Source.CACHE).addOnSuccessListener(data -> {
+                          if(data != null && data.exists()) {
+                              //log.i("source: %s", source + "data: %s" + data.getData());
+                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
+                          }
+                      });
+
+                      /*
+                      docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
+                          if(e != null) return;
+                          //String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
+                          if(data != null && data.exists()) {
+                              //log.i("source: %s", source + "data: %s" + data.getData());
+                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
+                          }
+                      });
+                       */
+                  });
                 }
             });
 

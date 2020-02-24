@@ -86,7 +86,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
         List<String> imgList = (ArrayList<String>)document.get("post_images");
         if(imgList != null && imgList.size() > 0) {
-            log.i("imagList: %s", imgList.get(0));
+            log.i("imagList: %s, %s", imgList.size(), imgList.get(0));
             holder.bindAttachedImage(Uri.parse(imgList.get(0)));
         }
 

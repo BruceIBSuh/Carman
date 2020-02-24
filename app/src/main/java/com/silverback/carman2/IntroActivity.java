@@ -107,8 +107,8 @@ public class IntroActivity extends BaseActivity  {
         // SharedPreferences to check whether the price should be updated for the next initiation.
         opinetViewModel.distPriceComplete().observe(this, isDone -> {
             mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-            mProgBar.setVisibility(View.GONE);
             startActivity(new Intent(this, MainActivity.class));
+            mProgBar.setVisibility(View.GONE);
             finish();
         });
     }
@@ -175,6 +175,8 @@ public class IntroActivity extends BaseActivity  {
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
         // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
+        // As GasPriceTask completes, updated prices is notified as LiveData to OpinetViewModel.
+        // distPriceComplete().
         if(checkPriceUpdate()) {
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 JSONArray json = BaseActivity.getDistrictJSONArray();
@@ -185,6 +187,7 @@ public class IntroActivity extends BaseActivity  {
 
         } else {
             startActivity(new Intent(this, MainActivity.class));
+            mProgBar.setVisibility(View.GONE);
             finish();
         }
     }

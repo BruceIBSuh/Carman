@@ -24,8 +24,7 @@ public class Constants {
 
     // ExpensePagerFragment max pages of ExpRecentPagerAdapter
     public static final int NUM_RECENT_PAGES = 5;
-    // Limit of the images attached with the post.
-    public static final int MAX_ATTACHED_IMAGE = 6;
+
     // Board Pagination
     static final int PAGINATION = 20;
     //public static final int ICON_SIZE = 50;
@@ -37,7 +36,9 @@ public class Constants {
     public static final int ICON_SIZE_TOOLBAR = 50;
     public static final int ICON_SIZE_PREFERENCE = 40;
     public static final int MAX_ICON_SIZE = 50 * 1024;
-    public static final int MAX_ATTACHED_IMAGE_SIZE = 1024 * 1024;
+    public static final int MAX_IMAGE_SIZE = 1024 * 1024;
+    // Limit of the images attached with the post.
+    public static final int MAX_ATTACHED_IMAGE_NUMS = 6;
 
     // File names for FileProvider
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";

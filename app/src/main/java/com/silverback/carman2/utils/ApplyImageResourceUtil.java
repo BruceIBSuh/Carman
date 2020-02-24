@@ -22,6 +22,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,22 +49,19 @@ public class ApplyImageResourceUtil {
     // Use ExifInterface to get meta-data on image taken by camera and Metrix to rotate
     // it vertically if necessary.
     public int getImageOrientation(Uri uri) {
-
+        int orientation;
         Cursor cursor = mContext.getContentResolver().query(uri,
                 new String[] { MediaStore.Images.ImageColumns.ORIENTATION },
                 null, null, null);
 
-        if(cursor == null || cursor.getCount() != 1) {
-            //cursor.close();
-            return -1;
-        }
+        if(cursor != null && cursor.getCount() >= 1) {
+            cursor.moveToFirst();
+            orientation = cursor.getInt(0);
+            cursor.close();
 
-        cursor.moveToFirst();
-        int orientation = cursor.getInt(0);
-        cursor.close();
+        } else orientation = -1;
 
         return orientation;
-
     }
 
 
@@ -106,6 +104,33 @@ public class ApplyImageResourceUtil {
         }
 
         return null;
+    }
+
+    /**
+     * Scale down an image as much as the max size.
+     * @param bitmap target to scale down
+     * @param maxSize extent to scale down
+     * @return bytearray.
+     */
+    public synchronized byte[] compressBitmap(Bitmap bitmap, int maxSize)  {
+
+        int compressDensity = 100;
+        int streamLength;
+        ByteArrayOutputStream baos;
+        byte[] bmpByteArray;
+
+        // Compress the raw image down to the MAX_IMAGE_SIZE
+        do{
+            baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, compressDensity, baos);
+            bmpByteArray = baos.toByteArray();
+            streamLength = bmpByteArray.length;
+            compressDensity -= 5;
+            log.i("compress density: %s", streamLength / 1024 + " kb");
+
+        } while(streamLength >= maxSize);
+
+        return bmpByteArray;
     }
 
     // Glide applies images to Drawable which should be mostly set to icons.

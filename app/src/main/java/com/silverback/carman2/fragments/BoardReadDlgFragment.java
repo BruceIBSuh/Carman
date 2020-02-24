@@ -527,12 +527,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
             imgSet.applyTo(constPostingLayout);
 
             // Consider to apply Glide thumbnail() method.
-            Glide.with(context)
-                    .asBitmap()
-                    .load(imgUriList.get(index))
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .fitCenter()
-                    .into(imgView);
+            Glide.with(context).asBitmap().load(imgUriList.get(index))
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).fitCenter().into(imgView);
 
             start = m.end();
             index++;
@@ -540,7 +536,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
 
 
-        // Corrdinate the position b/w the last part, no matter what is image or text in the content,
+        // Coordinate the position b/w the last part, no matter what is image or text in the content,
         // and the following recycler view by the patterns.
         // No imaage attached.
         if(start == 0) {

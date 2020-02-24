@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -8,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.silverback.carman2.R;
@@ -17,8 +19,9 @@ import com.silverback.carman2.models.FragmentSharedModel;
 
 
 /**
- * Dialog to select which media to use b/w camera and gallery for picking images which post to
- * the billboard, uploading to Firebase storage.
+ * This dialog fragmnet is to select which media to use b/w camera and gallery for picking images,
+ * which would be attached to the board and updated with Firebase Storage.
+ *
  */
 public class BoardChooserDlgFragment extends DialogFragment {
 
@@ -42,7 +45,7 @@ public class BoardChooserDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fragmentModel = ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -76,18 +79,15 @@ public class BoardChooserDlgFragment extends DialogFragment {
     }
 
     // Override the Fragment.onAttach() method to instantiate the OnImageChooserListener
-    /*
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
 
         try {
-            mListener = (OnImageChooserListener) context;
+            //mListener = (OnImageChooserListener) context;
         } catch(ClassCastException e) {
             throw new ClassCastException(getActivity().toString() + "must implement OnImageChooserListener");
         }
     }
-
-     */
 
 }

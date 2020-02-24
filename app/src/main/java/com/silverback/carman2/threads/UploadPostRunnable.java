@@ -23,7 +23,7 @@ public class UploadPostRunnable implements Runnable {
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadPostRunnable.class);
 
     // Objects
-    private Context mContext;
+    //private Context mContext;
     private UploadPostMethods mTask;
     private FirebaseFirestore firestore;
     private String postId;
@@ -37,7 +37,7 @@ public class UploadPostRunnable implements Runnable {
 
 
     UploadPostRunnable(Context context, UploadPostMethods task){
-        mContext = context;
+        //mContext = context;
         mTask = task;
         firestore = FirebaseFirestore.getInstance();
     }
@@ -53,9 +53,7 @@ public class UploadPostRunnable implements Runnable {
         final String userId = (String) post.get("user_id");
         log.i("User ID: %s", userId);
 
-
-        // Retrieve the user name and user pic with the user Id and contain them in the Map, then
-        // upload the Map to Firestore
+        // Retrieve the user name and pic based on the Id and contain them in the Map
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
             String userName = document.getString("user_name");
             String userPic = document.getString("user_pic");
@@ -64,7 +62,6 @@ public class UploadPostRunnable implements Runnable {
 
             // Upload the post along with the queried user data, which may prevent latency to load
             // the user data if the post retrieves the user data from different collection.
-
             firestore.collection("board_general").add(post)
                     .addOnSuccessListener(docref -> {
                         log.i("Uploade completed");

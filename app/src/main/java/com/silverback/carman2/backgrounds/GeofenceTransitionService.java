@@ -36,8 +36,8 @@ import java.util.Locale;
 
 
 /**
- * This class subclasses IntentService for purposes of showing Notification when a location is within
- * the Geofence
+ * This class subclasses IntentService for purposes of an issuing notification when the current
+ * location is within the geofence radius preset in Constants.GEOFENCE_RADIUS.
  */
 
 public class GeofenceTransitionService extends IntentService {
@@ -48,7 +48,7 @@ public class GeofenceTransitionService extends IntentService {
     private NotificationManagerCompat notiManager;
     private long geoTime;
 
-
+    // Default constructor
     public GeofenceTransitionService() {
         super("GeofenceTransitionService");
     }
@@ -122,12 +122,12 @@ public class GeofenceTransitionService extends IntentService {
 
         switch(category) {
             case Constants.GAS: // gas station
-                title = String.format("%-8s%s", getString(R.string.noti_geofence_title_gas), name);
+                title = String.format("%-6s%s", getString(R.string.noti_geofence_title_gas), name);
                 extendedText = getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                title = String.format("%-8s%s", getString(R.string.noti_geofence_title_svc), name);
+                title = String.format("%-6s%s", getString(R.string.noti_geofence_title_svc), name);
                 extendedText = getResources().getString(R.string.noti_geofence_content_svc);
                 break;
 
@@ -139,7 +139,6 @@ public class GeofenceTransitionService extends IntentService {
         PendingIntent resultPendingIntent = createResultPendingIntent(notiId, providerId, name, category);
         PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, providerId, name, category);
         int icon = (category == Constants.GAS)? R.drawable.ic_gas_station:R.drawable.ic_service_center;
-
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, Constants.CHANNEL_ID);
         mBuilder.setSmallIcon(icon)

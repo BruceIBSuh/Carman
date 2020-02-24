@@ -9,9 +9,9 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
+import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,16 +24,14 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
-import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -67,6 +65,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
  * A simple {@link Fragment} subclass.
+ * This fragment is to upload any writing to post in the board with images attached.
  */
 public class BoardWriteDlgFragment extends DialogFragment implements
         CheckBox.OnCheckedChangeListener,
@@ -82,35 +81,26 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     //private static int imageTag;
     //private static String markup;
-
     static final int GALLERY = 1;
     static final int CAMERA = 2;
-
-
 
     // Objects
     private ApplyImageResourceUtil applyImageResourceUtil;
     private SharedPreferences mSettings;
     private FragmentSharedModel shardModel;
+    private ImageViewModel imgViewModel;
     private BoardAttachImageAdapter imageAdapter;
-    private List<Uri> uriImageList;
-    private List<String> strImgUriList;
-    private ImageSpan[] arrImageSpan;
+    private List<Uri> attachedImages;
+    private SparseArray<String> downloadImages;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
-    private ImageViewModel imgViewModel;
-    //private FirestoreViewModel uploadPostModel;
-    private SpannableStringBuilder ssb;
     private BoardImageSpanHandler spanHandler;
-    private ProgressBar progressBar;
 
 
     // UIs
     private View localView;
-    private NestedScrollView nestedScrollView;
-    private HorizontalScrollView hScrollView;
-    private ConstraintLayout statusLayout, nestedLayout;
-    private RecyclerView recyclerImageView;
+    //private NestedScrollView nestedScrollView;
+    private ConstraintLayout nestedLayout;
     private EditText etPostTitle, etPostBody;
 
     // Fields
@@ -132,12 +122,15 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         mSettings = ((BoardActivity)getActivity()).getSettings();
-        uriImageList = new ArrayList<>();
-        strImgUriList = new ArrayList<>();
+
+        attachedImages = new ArrayList<>();
+        //strImgList = new ArrayList<>();
+        downloadImages = new SparseArray<>();
+
         shardModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
-        ssb = new SpannableStringBuilder();
+        //ssb = new SpannableStringBuilder();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -147,7 +140,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         localView = inflater.inflate(R.layout.dialog_board_write, container, false);
         Toolbar toolbar = localView.findViewById(R.id.toolbar_board_write);
         //nestedScrollView = localView.findViewById(R.id.nestedScrollView);
-        hScrollView = localView.findViewById(R.id.scrollview_horizontal);
+        HorizontalScrollView hScrollView = localView.findViewById(R.id.scrollview_horizontal);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
 
         CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_maker);
@@ -158,7 +151,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         etPostTitle = localView.findViewById(R.id.et_board_title);
         etPostBody = localView.findViewById(R.id.et_board_body);
 
-        recyclerImageView = localView.findViewById(R.id.vg_recycler_images);
+        RecyclerView recyclerImageView = localView.findViewById(R.id.vg_recycler_images);
         Button btnAttach = localView.findViewById(R.id.btn_attach_image);
         //ImageButton btnDismiss = localView.findViewById(R.id.btn_dismiss);
         //ImageButton btnUpload = localView.findViewById(R.id.btn_upload);
@@ -194,37 +187,41 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             animStatusView.start();
         }
 
-        // Create RecyclerView with attched pictures which are handled in onActivityResult()
-        recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        // Create RecyclerView for holding attched pictures which are handled in onActivityResult()
+        LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
+        linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerImageView.setLayoutManager(linearLayout);
+        //recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
-        imageAdapter = new BoardAttachImageAdapter(uriImageList, this);
+        imageAdapter = new BoardAttachImageAdapter(attachedImages, this);
         recyclerImageView.setAdapter(imageAdapter);
 
 
-        // DialogFragment requires Toolbar to create the menu as like the following methods, which is
-        // different from general Fragment in which the menu is created by overriding onCreateOptions
-        // menu and onOptionSelectedItem().
+        // DialogFragment requires Toolbar to create the menu as like the following methods, which
+        // appears different from other general fragments in which the menu is created by overriding
+        // onCreateOptions menu and onOptionSelectedItem().
         toolbar.inflateMenu(R.menu.menu_board_write);
         toolbar.setNavigationOnClickListener(view -> dismiss());
-        // Upload the post to FireStore
         toolbar.setOnMenuItemClickListener(item -> {
-
+            // Upload button event
             if(item.getItemId() == R.id.action_board_upload) {
                 ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                         .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-                // Posting with no attached image immediately starts to upload. Otherwise, takes
-                // the uploading process that starts image uploading, then receives uris, and
-                // finally, upload the post.
-                if(uriImageList.size() == 0) {
+                // No image posting makes an immediate uploading but postings with images attached
+                // should take the uploading process that images starts uploading first and image
+                // URIs would be sent back if uploading images is successful,then uploading gets
+                // started with image URIs which should be added in a document of Firestore.
+                if(attachedImages.size() == 0) {
                     log.i("upload clicked");
                     uploadPostToFirestore();
                 } else {
-                    // Downsize and compress attached images and upload them to Storage running in
-                    // the background, the result of which is notified to getUploadBitmap() of ImageViewModel
-                    // one by one and all of images has processed, start to upload the post to Firestore.
-                    for (Uri uri : uriImageList) {
-                        bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, imgViewModel);
+                    // Downsize and compress attached images ahead of uploading them to Storage in
+                    // the background at all once, the result of which is notified to getDownloadBitmapUri() of
+                    // ImageViewModel as SparseArray live data one by one and all of images has processed,
+                    // start to upload the post to Firestore.
+                    for(int i = 0; i < attachedImages.size(); i++) {
+                        bitmapTask = ThreadManager.startBitmapUploadTask(
+                                getContext(), attachedImages.get(i), i, imgViewModel);
                     }
                 }
 
@@ -243,9 +240,10 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
-            if(uriImageList.size() > Constants.MAX_ATTACHED_IMAGE) {
-                log.i("Image count: %s", uriImageList.size());
+            if(attachedImages.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
+                log.i("Image count: %s", attachedImages.size());
                 Snackbar.make(nestedLayout, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
+
             } else {
                 // Pop up the dialog to select which media to use bewteen the camera and gallery, then
                 // create an intent by the selection.
@@ -277,13 +275,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // No attached image immediately makes uploading started.
-            if(uriImageList.size() == 0) uploadPostToFirestore();
+            if(attachedImages.size() == 0) uploadPostToFirestore();
             else {
 
                 // Downsize and compress attached images and upload them to Storage running in
-                // the background, the result of which is notified to getUploadBitmap() of ImageViewModel
+                // the background, the result of which is notified to getDownloadBitmapUri() of ImageViewModel
                 // one by one and all of images has processed, start to upload the post to Firestore.
-                for (Uri uri : uriImageList) {
+                for (Uri uri : attachedImages) {
                     bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, imgViewModel);
                 }
             }
@@ -317,7 +315,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         // ViewModel to be Notified of which media(camera or gallery) to select in BoardChooserDlgFragment
         shardModel.getImageChooser().observe(getActivity(), chooser -> {
-
             switch(chooser) {
                 case GALLERY:
                     // MULTI-SELECTION: special handling of Samsung phone.
@@ -346,6 +343,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     galleryIntent.setType("image/*");
                     //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
+                    // Bugs likely due to the lifecycler issue, that is, this fragment not attached
+                    // to the activity.
                     startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
                     break;
 
@@ -385,19 +384,20 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         // Notified of having attached images uploaded to Firebase Storage and retreive each uri
         // of uploaded images by ImageViewModel
-        imgViewModel.getUploadBitmap().observe(getViewLifecycleOwner(), uriString -> {
-            log.i("UploadedImageUri: %s", uriString);
-            // Receive the uris of uploaded images sequentially.
-            strImgUriList.add(uriString);
-
-            // Start uploading only when attached images finised downsizing and uploading to Storage.
-            // Otherwise, the image uris fail to upload to Firestore.
-            if(strImgUriList.size() == uriImageList.size()) {
-                log.i("Image numbers: %s", strImgUriList.size());
-                uploadPostToFirestore();
-            }
+        imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
+            // Check if the number of attached images equals to the number of uris that are down
+            // loaded from Storage.
+            downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
+            if(attachedImages.size() == downloadImages.size()) uploadPostToFirestore();
 
         });
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //if(bitmapTask != null) bitmapTask = null;
+        //if(postTask != null) postTask = null;
     }
 
     // Receive the uri of an selected image from BoardChooserDlgFragment as the resulf of
@@ -411,7 +411,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         switch(requestCode) {
             case REQUEST_CODE_GALLERY:
                 imgUri = data.getData();
-                uriImageList.add(imgUri);
+                attachedImages.add(imgUri);
                 break;
 
             case REQUEST_CODE_CAMERA:
@@ -421,17 +421,18 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // Glide creates a processed bitmap with the uri which the result intent from MediaStore
         // contains and as the process completes, the bitmap is sent to ImageViewModel for putting
         // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
-        applyImageResourceUtil.applyGlideToBitmap(imgUri, 80, imgViewModel);
+        applyImageResourceUtil.applyGlideToBitmap(imgUri, 48, imgViewModel);
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
-        final int position = uriImageList.size() - 1;
+        final int position = attachedImages.size() - 1;
         //imageAdapter.notifyItemInserted(position);
         imageAdapter.notifyItemChanged(position);
 
 
         // Resize the image: TEST CODING!!!!!
-        //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriImageList.get(position), imgViewModel);
+        // Pay attention to where super.onActivityResult() is located
+        //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), attachedImages.get(position), imgViewModel);
         super.onActivityResult(requestCode, resultCode, data);
 
     }
@@ -466,7 +467,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         spanHandler.removeImageSpan(position);
         //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
         imageAdapter.notifyItemRemoved(position);
-        uriImageList.remove(position);
+        attachedImages.remove(position);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -483,11 +484,14 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             log.e("IOException: %s", e.getMessage());
         }
 
-        String[] arrUriString = new String[strImgUriList.size()];
-        for (int i = 0; i < strImgUriList.size(); i++) arrUriString[i] = strImgUriList.get(i);
-
         //if(TextUtils.isEmpty(userId)) return;
         if(userId == null || userId.isEmpty()) return;
+
+        // Cast SparseArray containing download urls from Storage to String array
+        List<String> downlaodUriList = new ArrayList<>(downloadImages.size());
+        for(int i = 0; i < downloadImages.size(); i++) {
+            downlaodUriList.add(downloadImages.keyAt(i), downloadImages.valueAt(i));
+        }
 
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
@@ -497,7 +501,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         post.put("cnt_compathy", 0);
         post.put("cnt_view", 0);
         post.put("post_content", etPostBody.getText().toString());
-        post.put("post_images",  Arrays.asList(arrUriString));
+        post.put("post_images",  downlaodUriList);
 
         // Nested fields to filter the post by category
         Map<String, Object> filter = new HashMap<>();
@@ -523,7 +527,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             return false;
 
         } else if(TextUtils.isEmpty(etPostBody.getText())){
-            Snackbar.make(localView, "Title is empty", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(localView, "Content is empty", Snackbar.LENGTH_SHORT).show();
             return false;
 
         } else return true;

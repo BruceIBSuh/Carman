@@ -188,6 +188,15 @@
                 app:layout_constraintTop_toBottomOf="@+id/view_underline"
                 tools:ignore="autofill" />
 
+
+            <HorizontalScrollView
+                android:id="@+id/hsv_images"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/vg_recycler_images"
                 android:layout_width="0dp"
@@ -195,7 +204,7 @@
                 android:layout_marginTop="32dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/et_board_body" />
+                app:layout_constraintBottom_toBottomOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

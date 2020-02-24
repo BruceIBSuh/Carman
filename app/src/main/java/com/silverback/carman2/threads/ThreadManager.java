@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.SparseArray;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
@@ -21,6 +22,7 @@ import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -40,6 +42,9 @@ public class ThreadManager {
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
 
     static final int DOWNLOAD_IMAGE_FINISH = 201;
+
+    static final int UPLOAD_BITMAP_COMPLETED = 1000;
+    static final int UPLOAD_BITMA_COMPLETED = 1001;
 
     //static final int SERVICE_ITEM_LIST_COMPLETED = 109;
     //static final int FETCH_LOCATION_COMPLETED = 110;
@@ -100,6 +105,7 @@ public class ThreadManager {
     private final Queue<ExpenseTabPagerTask> mExpenseTabPagerTaskQueue;
     private final Queue<StationListTask> mStationListTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
+    private final Queue<UploadBitmapTask> mUploadBitmapTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
 
     // A managed pool of background download threads
@@ -133,6 +139,7 @@ public class ThreadManager {
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mStationListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
 
         // Instantiates ThreadPoolExecutor
@@ -198,10 +205,11 @@ public class ThreadManager {
                 mDownloadThreadPool.execute(((StationListTask) task).setFireStoreRunnalbe());
                 //msg.sendToTarget();
                 break;
-
+            /*
             case FIRESTORE_STATION_SET_COMPLETED:
                 //msg.sendToTarget();
                 break;
+            */
 
             default:
                 msg.sendToTarget();
@@ -407,15 +415,17 @@ public class ThreadManager {
      */
 
     // Upload the downsized user image to Firebase Storage
-    public static UploadBitmapTask startBitmapUploadTask(Context context, Uri uri, ImageViewModel model) {
+    public static UploadBitmapTask startBitmapUploadTask(
+            Context context, Uri uriImage, int position, ImageViewModel model) {
 
-        ThreadTask bitmapTask = sInstance.mTaskWorkQueue.poll();
+        UploadBitmapTask uploadBitmapTask = sInstance.mUploadBitmapTaskQueue.poll();
 
-        if(bitmapTask == null) bitmapTask = new UploadBitmapTask(context);
-        ((UploadBitmapTask)bitmapTask).initBitmapTask(uri, model);
-        sInstance.mDownloadThreadPool.execute(((UploadBitmapTask)bitmapTask).getmBitmapResizeRunnable());
+        if(uploadBitmapTask == null) uploadBitmapTask = new UploadBitmapTask(context);
 
-        return (UploadBitmapTask)bitmapTask;
+        uploadBitmapTask.initBitmapTask(uriImage, position, model);
+        sInstance.mDownloadThreadPool.execute(uploadBitmapTask.getBitmapResizeRunnable());
+
+        return uploadBitmapTask;
     }
 
     /*
@@ -466,8 +476,12 @@ public class ThreadManager {
             mFavoritePriceTaskQueue.offer((FavoritePriceTask)task);
 
         } else if(task instanceof GeocoderReverseTask) {
-            ((GeocoderReverseTask)task).recycle();
+            ((GeocoderReverseTask) task).recycle();
             mTaskWorkQueue.offer(task);
+
+        } else if(task instanceof UploadBitmapTask) {
+            ((UploadBitmapTask)task).recycle();
+            mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
 
         } else if(task instanceof DownloadImageTask) {
             mTaskWorkQueue.offer(task);

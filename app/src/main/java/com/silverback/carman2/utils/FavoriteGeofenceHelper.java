@@ -29,6 +29,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class performs to add a gas station or service center to Geofence. At the same time, adds
+ * it to FavoriteProviderEntity in the Room, receiving
+ */
 public class FavoriteGeofenceHelper {
 
     // Constants
@@ -44,7 +48,6 @@ public class FavoriteGeofenceHelper {
     private DocumentReference evalReference;//Set or update the "favorite_num" by category.
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
-    private PendingIntent mGeofencePendingIntent;
     private OnGeofenceListener mListener;
     private GeoPoint geoPoint;
 
@@ -95,7 +98,7 @@ public class FavoriteGeofenceHelper {
         return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    /**
+    /*
      * Add a gas station or service center not only to Geofence but also to the FavoriteProviderEntitby
      * accroding to the category given as a param.
      * @param snapshot DocumentSnapshot queried from Firestore
