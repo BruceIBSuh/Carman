@@ -3,7 +3,9 @@ package com.silverback.carman2;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,6 +13,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -19,6 +22,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.ImageViewModel;
 
 public class BoardActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
@@ -27,10 +31,15 @@ public class BoardActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
+    // Constants
+    public static final int REQUEST_CODE_CAMERA = 1000;
+    public static final int REQUEST_CODE_GALLERY = 1001;
+
     // Objects
     private TabLayout boardTabLayout;
     private ViewPager boardPager;
     private ProgressBar pbBoard;
+    private ImageViewModel imageViewModel;
 
     // Fields
     //private boolean isTabVisible;
@@ -40,6 +49,8 @@ public class BoardActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
+
+        imageViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         Toolbar toolbar = findViewById(R.id.board_toolbar);
         //FrameLayout framePager = findViewById(R.id.frame_pager_board);
@@ -64,6 +75,17 @@ public class BoardActivity extends BaseActivity implements
         boardPager.addOnPageChangeListener(this);
         appBar.addOnOffsetChangedListener(this);
     }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(resultCode != RESULT_OK || data == null) return;
+        log.i("data from startActivityForResult defined in BoardWriteDlgFragment: %s", data);
+        imageViewModel.getUriFromImageChooser().setValue(data.getData());
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

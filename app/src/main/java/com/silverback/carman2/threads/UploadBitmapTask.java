@@ -8,8 +8,6 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 
-import java.util.List;
-
 public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable.BitmapResizeMethods{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadBitmapTask.class);
@@ -20,7 +18,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     // Objects
     private Runnable mBitmapResizeRunnable;
     private ImageViewModel viewModel;
-    private Uri uriAttached;
+    private Uri imageUri;
     private int position;
     private SparseArray<String> sparseImageArray;
 
@@ -33,7 +31,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     }
 
     void initBitmapTask(Uri uri, int position, ImageViewModel viewModel) {
-        uriAttached = uri;
+        imageUri = uri;
         this.position = position;
         this.viewModel = viewModel;
     }
@@ -49,7 +47,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
 
     @Override
     public Uri getAttachedImageUri() {
-        return uriAttached;
+        return imageUri;
     }
 
     @Override
@@ -63,7 +61,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     }
 
     @Override
-    public void setDownloadBitmapUri(String uri, int key) {
+    public void setDownloadBitmapUri(int key, String uri) {
 
         // Create SparseArray with the uri downloaded from Storage as the value and the position
         // that the attached image is located as the key for purpose of put images in sequentially

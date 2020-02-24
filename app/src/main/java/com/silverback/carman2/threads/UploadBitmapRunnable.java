@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Process;
 import android.provider.MediaStore;
@@ -54,7 +55,7 @@ public class UploadBitmapRunnable implements Runnable {
         Uri getAttachedImageUri();
         int getImagePosition();
         void setBitmapTaskThread(Thread thread);
-        void setDownloadBitmapUri(String uri, int position);
+        void setDownloadBitmapUri(int position, String uri);
         void handleUploadBitmapState(int state);
     }
 
@@ -73,11 +74,9 @@ public class UploadBitmapRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         callback.setBitmapTaskThread(Thread.currentThread());
 
-
         final Uri uri = callback.getAttachedImageUri();
         final int position = callback.getImagePosition();
-        int orientation = 0;
-        log.i("uri: %s", uri);
+        int orientation;
 
         // Create the storage reference of an image uploading to Firebase Storage
         /*
@@ -87,27 +86,33 @@ public class UploadBitmapRunnable implements Runnable {
         */
 
         // Set BitmapFactory.Options
-        try(InputStream is = context.getContentResolver().openInputStream(uri);
+        try(InputStream is = context.getContentResolver().openInputStream(uri)) {
+
+            /*
             Cursor cursor = context.getContentResolver().query(
                     uri, new String[]{ MediaStore.Images.ImageColumns.ORIENTATION }, null, null, null)){
-
+            */
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             BitmapFactory.decodeStream(is, null, options);
+            orientation = imageUtil.getImageOrientation(uri);
+            options.inSampleSize = imageUtil.calculateInSampleSize(options, orientation);
 
-            //options.inSampleSize = calculateInSampleSize(options, 800, 800);
-            options.inJustDecodeBounds = false;
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
             // Get the image orientation. Unless it is 0, rotate the image
+            /*
             if(cursor.getCount() >= 1) {
                 cursor.moveToFirst();
                 orientation = cursor.getInt(0);
                 log.i("orientation: %s", orientation);
             }
+            */
 
             // Recall InputStream once again b/c it is auto closeable. Otherwise, it returns null.
             try(InputStream in = context.getContentResolver().openInputStream(uri)) {
+                options.inJustDecodeBounds = false;
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;//default value. no need to define.
+
                 // Compress the Bitmap which already resized down by calculating the inSampleSize.
                 Bitmap resizedBitmap = BitmapFactory.decodeStream(in, null, options);
                 log.i("Resized Bitmap: %s", resizedBitmap);
@@ -117,10 +122,10 @@ public class UploadBitmapRunnable implements Runnable {
                     Matrix matrix = new Matrix();
                     matrix.postRotate(orientation);
                     resizedBitmap = Bitmap.createBitmap(
-                            resizedBitmap, 0, 0, resizedBitmap.getWidth(),resizedBitmap.getHeight(), matrix, true);
+                            resizedBitmap, 0, 0, resizedBitmap.getWidth(), resizedBitmap.getHeight(), matrix, true);
                 }
 
-                byte[] bmpByteArray = compressBitmap(resizedBitmap, options);
+                byte[] bmpByteArray = imageUtil.compressBitmap(resizedBitmap, Constants.MAX_IMAGE_SIZE);
                 // Upload the compressed image(less than 1 MB) to Firebase Storage
                 uploadBitmapToStorage(bmpByteArray, position);
             }
@@ -130,6 +135,7 @@ public class UploadBitmapRunnable implements Runnable {
 
     }
 
+    /*
     private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
 
         // Raw dimension of the image
@@ -177,7 +183,7 @@ public class UploadBitmapRunnable implements Runnable {
         return bmpByteArray;
 
     }
-
+    */
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadBitmapToStorage(byte[] bitmapByteArray, int position) {
@@ -202,7 +208,7 @@ public class UploadBitmapRunnable implements Runnable {
         }).addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 Uri downloadUri = task.getResult();
-                if(downloadUri != null) callback.setDownloadBitmapUri(downloadUri.toString(), position);
+                if(downloadUri != null) callback.setDownloadBitmapUri(position, downloadUri.toString());
                 callback.handleUploadBitmapState(UploadBitmapTask.UPLOAD_BITMAP_COMPLETE);
 
             } else {

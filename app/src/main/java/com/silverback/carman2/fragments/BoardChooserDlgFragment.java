@@ -57,6 +57,10 @@ public class BoardChooserDlgFragment extends DialogFragment {
         TextView tvGallery = localView.findViewById(R.id.tv_gallery);
         TextView tvCamera = localView.findViewById(R.id.tv_camera);
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Select Image Media")
+                .setView(localView);
+
         tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
             //mListener.selectMedia(BoardWritingActivity.GALLERY);
@@ -71,9 +75,7 @@ public class BoardChooserDlgFragment extends DialogFragment {
             dismiss();
         });
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Select Image Media")
-                .setView(localView);
+
 
         return builder.create();
     }

@@ -5,7 +5,6 @@ import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -55,7 +54,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +73,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     // Constants
     private static final int MENU_ITEM_ID = 1001;
-    private static final int REQUEST_CODE_CAMERA = 1002;
-    private static final int REQUEST_CODE_GALLERY = 1003;
+
     private static final int REQUEST_CODE_SAMSUNG = 1004;
 
     //private static int imageTag;
@@ -128,7 +125,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         downloadImages = new SparseArray<>();
 
         shardModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
         //uploadPostModel = ViewModelProviders.of(getActivity()).get(FirestoreViewModel.class);
         //ssb = new SpannableStringBuilder();
     }
@@ -175,10 +172,9 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         });
         */
 
-        // Animate the status bar up to the actionbar height.
+        // Animate the status bar up to the actionbar height which may be calculated by TypeValue
         TypedValue typedValue = new TypedValue();
         if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
-            log.i("animation filter bar");
             float actionBarHeight = TypedValue.complexToDimensionPixelSize(
                     typedValue.data, getResources().getDisplayMetrics());
 
@@ -202,6 +198,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // onCreateOptions menu and onOptionSelectedItem().
         toolbar.inflateMenu(R.menu.menu_board_write);
         toolbar.setNavigationOnClickListener(view -> dismiss());
+
         toolbar.setOnMenuItemClickListener(item -> {
             // Upload button event
             if(item.getItemId() == R.id.action_board_upload) {
@@ -215,10 +212,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     log.i("upload clicked");
                     uploadPostToFirestore();
                 } else {
-                    // Downsize and compress attached images ahead of uploading them to Storage in
-                    // the background at all once, the result of which is notified to getDownloadBitmapUri() of
-                    // ImageViewModel as SparseArray live data one by one and all of images has processed,
-                    // start to upload the post to Firestore.
+                    // Image Attachment button that starts UploadBitmapTask as many as the number of
+                    // images. In case the task starts with UploadBitmapTask multi-threading which
+                    // runs in ThreadManager, thread contentions may occur, replacing one with the
+                    // other which makes last image cover the other ones.
+                    // A download url from Storage each time when an attached image is successfully
+                    // downsized and scaled down, then uploaded to Storage is transferred via
+                    // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
                     for(int i = 0; i < attachedImages.size(); i++) {
                         bitmapTask = ThreadManager.startBitmapUploadTask(
                                 getContext(), attachedImages.get(i), i, imgViewModel);
@@ -248,7 +248,11 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 // Pop up the dialog to select which media to use bewteen the camera and gallery, then
                 // create an intent by the selection.
                 DialogFragment dialog = new BoardChooserDlgFragment();
-                dialog.show(getChildFragmentManager(), "@null");
+                // BUGS FREQUENTLY OCCURRED!!!!
+                //java.lang.IllegalStateException: Fragment BoardWriteDlgFragment{984f0c5}
+                // (4b73b12d-9e70-4e32-95bb-52f209a6b8a1)} not attached to Activity
+                //dialog.show(getChildFragmentManager(), "@null");
+                dialog.show(getParentFragmentManager(), "chooserDialog");
 
                 // Put a line feed into the EditTex when the image interleaves b/w the lines
                 /*
@@ -345,7 +349,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
                     // Bugs likely due to the lifecycler issue, that is, this fragment not attached
                     // to the activity.
-                    startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                    // startActivityForResult() in Fragment
+                    getActivity().startActivityForResult(galleryIntent, BoardActivity.REQUEST_CODE_GALLERY);
                     break;
 
                 case CAMERA: // Camera
@@ -354,13 +359,30 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
                     if(cameraIntent.resolveActivity(getActivity().getPackageManager()) != null) {
                         log.i("Camera Intent");
-                        startActivityForResult(cameraChooser, REQUEST_CODE_CAMERA);
+                        getActivity().startActivityForResult(cameraChooser, BoardActivity.REQUEST_CODE_CAMERA);
                     }
                     break;
             }
 
 
         });
+
+        imgViewModel.getUriFromImageChooser().observe(getViewLifecycleOwner(), imgUri -> {
+            log.i("result from startActivityForResult which is transferred from the parent activity");
+            // Glide creates a processed bitmap with the uri which the result intent from MediaStore
+            // contains and as the process completes, the bitmap is sent to ImageViewModel for putting
+            // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
+            applyImageResourceUtil.applyGlideToBitmap(imgUri, Constants.IMAGESPAN_THUMBNAIL_SIZE, imgViewModel);
+
+            // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
+            // additional pics.
+            attachedImages.add(imgUri);
+            final int position = attachedImages.size() - 1;
+            //imageAdapter.notifyItemInserted(position);
+            imageAdapter.notifyItemChanged(position);
+        });
+
+
 
         imgViewModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
             log.i("Bitmap received");
@@ -404,17 +426,17 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     // startActivityForResult().
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        /*
         if(resultCode != RESULT_OK || data == null) return;
         Uri imgUri = null;
 
         switch(requestCode) {
-            case REQUEST_CODE_GALLERY:
+            case BoardActivity.REQUEST_CODE_GALLERY:
                 imgUri = data.getData();
                 attachedImages.add(imgUri);
                 break;
 
-            case REQUEST_CODE_CAMERA:
+            case BoardActivity.REQUEST_CODE_CAMERA:
                 break;
         }
 
@@ -434,7 +456,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // Pay attention to where super.onActivityResult() is located
         //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), attachedImages.get(position), imgViewModel);
         super.onActivityResult(requestCode, resultCode, data);
-
+        */
     }
 
 

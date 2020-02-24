@@ -421,6 +421,7 @@ public class ThreadManager {
         UploadBitmapTask uploadBitmapTask = sInstance.mUploadBitmapTaskQueue.poll();
 
         if(uploadBitmapTask == null) uploadBitmapTask = new UploadBitmapTask(context);
+        else log.i("recycler task");
 
         uploadBitmapTask.initBitmapTask(uriImage, position, model);
         sInstance.mDownloadThreadPool.execute(uploadBitmapTask.getBitmapResizeRunnable());
@@ -480,6 +481,7 @@ public class ThreadManager {
             mTaskWorkQueue.offer(task);
 
         } else if(task instanceof UploadBitmapTask) {
+            log.i("Recycle UploadBitmapTask");
             ((UploadBitmapTask)task).recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
 

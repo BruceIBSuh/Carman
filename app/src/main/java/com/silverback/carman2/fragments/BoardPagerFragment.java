@@ -282,9 +282,6 @@ public class BoardPagerFragment extends Fragment implements
         addViewCount(docref, position);
         //docref.update("cnt_view", FieldValue.increment(1));
 
-
-
-
     }
 
     // Indicate a field to query according to which page to reside in.

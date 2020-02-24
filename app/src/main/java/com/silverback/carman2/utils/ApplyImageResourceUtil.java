@@ -5,10 +5,13 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.view.Display;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,17 +42,28 @@ public class ApplyImageResourceUtil {
 
     // Objects
     private Context mContext;
+    private int orientation;
     //private BitmapTypeRequest<ModelType> bitmapTypeReq;
 
+    // Constructor
     public ApplyImageResourceUtil(Context context) {
         mContext = context;
+    }
+
+    // Calculate the screen size
+    private Point getDisplaySize() {
+        WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+        Display display = wm.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+
+        return size;
     }
 
     // Rotate Bitmap as appropriate when taken by camera.
     // Use ExifInterface to get meta-data on image taken by camera and Metrix to rotate
     // it vertically if necessary.
     public int getImageOrientation(Uri uri) {
-        int orientation;
         Cursor cursor = mContext.getContentResolver().query(uri,
                 new String[] { MediaStore.Images.ImageColumns.ORIENTATION },
                 null, null, null);
@@ -104,6 +118,46 @@ public class ApplyImageResourceUtil {
         }
 
         return null;
+    }
+
+    public int calculateInSampleSize(BitmapFactory.Options options, int orientation) {
+
+        Point size = getDisplaySize();
+        int reqWidth = size.x;
+        int reqHeight = size.y;
+        log.i("Display Size: %s, %s", reqWidth, reqHeight);
+
+        // Raw dimension of the image
+        final int rawWidth = options.outWidth;
+        final int rawHeight = options.outHeight;
+        int inSampleSize = 1;
+        log.i("Raw image: %s, %s, %s", orientation, rawWidth, rawHeight);
+
+        if(orientation == 0 || orientation == 180) {
+            //if (rawHeight > reqHeight || rawWidth > reqWidth) {
+            if(rawWidth > reqWidth) {
+                //final int halfHeight = rawHeight / 2;
+                final int halfWidth = rawWidth / 2;
+
+                //while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                while(halfWidth / inSampleSize >= reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+        } else {
+            //if(rawHeight > reqWidth || rawWidth > reqHeight / 2) {
+            if(rawHeight > reqWidth) {
+                //final int halftHeight = rawWidth / 2;
+                final int halfWidth = rawHeight / 2;
+                while(halfWidth / inSampleSize >= reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+        }
+
+        log.i("scale: %s", inSampleSize);
+
+        return inSampleSize;
     }
 
     /**

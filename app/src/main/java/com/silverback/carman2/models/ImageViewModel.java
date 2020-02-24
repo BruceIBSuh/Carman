@@ -23,6 +23,7 @@ public class ImageViewModel extends ViewModel {
     private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
     private MutableLiveData<Bitmap> glideBitmapTarget;
     private MutableLiveData<Drawable> glideDrawableTarget;
+    private MutableLiveData<Uri> uriFromImageChooser;
 
     public void setDownloadImage(int key, RoundedBitmapDrawable drawable) {
         SparseArray<RoundedBitmapDrawable> sparseArray = new SparseArray<>();
@@ -51,5 +52,10 @@ public class ImageViewModel extends ViewModel {
     public MutableLiveData<Drawable> getGlideDrawableTarget() {
         if(glideDrawableTarget == null) glideDrawableTarget = new MutableLiveData<>();
         return glideDrawableTarget;
+    }
+
+    public MutableLiveData<Uri> getUriFromImageChooser() {
+        if(uriFromImageChooser == null) uriFromImageChooser = new MutableLiveData<>();
+        return uriFromImageChooser;
     }
 }
