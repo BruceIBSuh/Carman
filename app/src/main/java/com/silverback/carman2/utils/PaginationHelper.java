@@ -52,7 +52,8 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-    public void setPostingQuery(Source source, final String field) {
+    public void setPostingQuery(Source source, int page, final String field) {
+        /*
         this.field = field;
         // Initate the first query
         colRef = firestore.collection("board_general");
@@ -63,6 +64,39 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                     mListener.setFirstQuery(querySnapshot);
                 })
                 .addOnFailureListener(e -> log.e("Query failed"));
+
+         */
+        colRef = firestore.collection("board_general");
+        switch(page) {
+            case 0: // Recent
+                this.field = "timestamp";
+                colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                        .get(source)
+                        .addOnSuccessListener(querySnapshot -> {
+                            this.querySnapshot = querySnapshot;
+                            mListener.setFirstQuery(querySnapshot);
+                        })
+                        .addOnFailureListener(Throwable::printStackTrace);
+                break;
+
+            case 1: // Popular
+                this.field = "cnt_view";
+                colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                        .get(source)
+                        .addOnSuccessListener(querySnapshot -> {
+                            this.querySnapshot = querySnapshot;
+                            mListener.setFirstQuery(querySnapshot);
+                        })
+                        .addOnFailureListener(Throwable::printStackTrace);
+                break;
+
+            case 2: // auto club
+
+                break;
+
+            case 3: // notification
+                break;
+        }
     }
 
 
@@ -75,7 +109,6 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
                 });
-
     }
 
     @Override

@@ -206,7 +206,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:padding="8dp"
-        android:background="@color/bgDarkerGray"
+        android:background="#D3D3D3"
         app:layout_dodgeInsetEdges="bottom">
 
         <TextView
@@ -250,7 +250,6 @@
             app:layout_constraintBottom_toBottomOf="@+id/et_comment"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/et_comment" />
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

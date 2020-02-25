@@ -57,6 +57,7 @@ public class BoardPagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
+    private FirebaseFirestore firestore;
     private Source source;
     private FragmentSharedModel sharedModel;
     private BoardPostingAdapter postingAdapter;
@@ -81,7 +82,7 @@ public class BoardPagerFragment extends Fragment implements
     public static BoardPagerFragment newInstance(int page) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
-        args.putInt("fragment", page);
+        args.putInt("fragmetPage", page);
         fragment.setArguments(args);
 
         return fragment;
@@ -92,9 +93,9 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(getArguments() != null) page = getArguments().getInt("fragment");
+        if(getArguments() != null) page = getArguments().getInt("fragmetPage");
 
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         snapshotList = new ArrayList<>();
@@ -183,15 +184,16 @@ public class BoardPagerFragment extends Fragment implements
         // PaginationHelper which sends the dataset back to the callbacks of setFirstQuery(),
         // setNextQueryStart(), and setNextQueryComplete().
         //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
+        log.i("fragment page: %s", page);
         String field = getQueryFieldToViewPager(page);
-        pageHelper.setPostingQuery(source, field);
+        pageHelper.setPostingQuery(source, page, field);
 
         return localView;
     }
 
     // This lifecycle is invoked at the time not only the viewpager sets the adapter first time,
-    // but also each time the viewpager chages the page. Thus, the viewmodels should prevent
-    // listeners from running automatically with params given as conditions.
+    // but also each time the viewpager chages the page. Thus, the viewmodels must prevent
+    // observe from running automatically by setting an appripriate param.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
@@ -204,7 +206,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(documentId)) {
                 snapshotList.clear();
                 String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, field);
+                pageHelper.setPostingQuery(Source.CACHE, page, field);
             }
         });
 
@@ -217,7 +219,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) {
                 snapshotList.clear();
                 String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, field);
+                pageHelper.setPostingQuery(Source.CACHE, page, field);
             }
         });
 
@@ -258,8 +260,8 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putInt("tabPage", page);
         bundle.putInt("position", position);
         bundle.putString("documentId", snapshot.getId());
-        bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("postTitle", snapshot.getString("post_title"));
+        bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("userName", snapshot.getString("user_name"));
         bundle.putString("userPic", snapshot.getString("user_pic"));
         bundle.putInt("cntComment", snapshot.getLong("cnt_comment").intValue());
@@ -268,15 +270,34 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putStringArrayList("uriImgList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
 
-        postDialogFragment.setArguments(bundle);
+        // With the user id given as an argument, query the user(posting writer) to fetch the auto data
+        // which contains auto_maker, auto_type, auto_model and auto_year in JSON string. On completion,
+        // set it to the dialog fragment and pop it up.
+        firestore.collection("users").document(snapshot.getString("user_id")).get()
+                .addOnSuccessListener(document -> {
+                    if(document.exists()) {
+                        String auto = document.getString("auto_data");
+                        if(!TextUtils.isEmpty(auto)) bundle.putString("autoData", auto);
 
+                        postDialogFragment.setArguments(bundle);
+                        // What if Fragment calls another fragment? What is getChildFragmentManager() for?
+                        // android.R.id.content makes DialogFragment fit to the full screen.
+                        getActivity().getSupportFragmentManager().beginTransaction()
+                                .add(android.R.id.content, postDialogFragment)
+                                .addToBackStack(null)
+                                .commit();
+                    }
+                });
+
+        /*
+        postDialogFragment.setArguments(bundle);
         // What if Fragment calls another fragment? What is getChildFragmentManager() for?
         // android.R.id.content makes DialogFragment fit to the full screen.
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, postDialogFragment)
                 .addToBackStack(null)
                 .commit();
-
+        */
 
         // Update the field of "cnt_view" increasing the number.
         DocumentReference docref = snapshot.getReference();

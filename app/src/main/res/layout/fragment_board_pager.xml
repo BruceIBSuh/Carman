@@ -12,9 +12,7 @@
         android:id="@+id/recycler_board"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:clipToPadding="false"
         app:layout_insetEdge="top" />
-
 
     <ProgressBar style="?android:attr/progressBarStyleSmall"
         android:visibility="invisible"

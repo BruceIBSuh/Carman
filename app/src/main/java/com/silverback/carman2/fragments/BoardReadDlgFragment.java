@@ -150,6 +150,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
+            autoData = getArguments().getString("autoData");
             imgUriList = getArguments().getStringArrayList("uriImgList");
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
@@ -157,6 +158,22 @@ public class BoardReadDlgFragment extends DialogFragment implements
             documentId = getArguments().getString("documentId");
             log.i("DocumentID: %s, %s", tabPage, documentId);
         }
+
+        // Get the auto data arguemnt from BoardPagerFragment, which is of JSON string tyepe and
+        // it requires to create JSONArray that may be converted to StringBuilder.
+        if(!TextUtils.isEmpty(autoData)) {
+            try {
+                JSONArray jsonArray = new JSONArray(autoData);
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < jsonArray.length(); i++)
+                    sb.append(jsonArray.optString(i)).append(String.format("%3s", " "));
+
+                autoData = sb.toString();
+
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+        } else autoData = null;
 
         // Get the current document reference which should be shared in the fragment.
         // Initially attach SnapshotListener to have the comment collection updated, then remove
@@ -175,8 +192,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
             commentListener.remove();
         });
 
-
-
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
         // a margin-formatted spannable string, which, in turn, set the image spans to display
         // attached images as images are notified to retrieve by the task.
@@ -189,27 +204,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
         */
 
-
-
-        /*
-        if(getActivity() != null) mSettings = ((BoardActivity)getActivity()).getSettings();
-        String json = mSettings.getString(Constants.VEHICLE, null);
-
-        if(TextUtils.isEmpty(json)) autoData = null;
-        else {
-            try {
-                JSONArray jsonArray = new JSONArray(json);
-                autoData = jsonArray.optString(0) + ", "
-                        + jsonArray.optString(1) + ", "
-                        + jsonArray.optString(2) + ", "
-                        + jsonArray.optString(3);
-
-            } catch (JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
-            }
-        }
-
-         */
 
 
     }
@@ -260,15 +254,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
-
-        //tvAutoInfo.setText(autoData);
-
+        tvAutoInfo.setText(autoData);
         tvDate.setText(getArguments().getString("timestamp"));
         tvCommentCnt.setText(String.valueOf(cntComment));
         tvCompathyCnt.setText(String.valueOf(cntCompathy));
 
         // Retreive the auto data from the server and set it to the view
-        setAutoDataString(tvAutoInfo);
+        //setAutoDataString(tvAutoInfo);
 
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
@@ -701,7 +693,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // If a user reads his/her own post, show the menus in the toolbar which edit or delete the post.
     @SuppressWarnings("ConstantConditions")
     private void inflateEditMenuInToolbar() {
-        // Use try-resource for autocloseable.
+        // The userId here means the id of user who writes the posting item whereas the viewId means
+        // the id of who reads the item. If both ids are equal, the edit buttons(revise and delete)
+        // are visible, which means the writer(userId) can edit one's own post.
         try (FileInputStream fis = getActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
@@ -709,7 +703,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
             if(userId.equals(viewerId)) {
                 toolbar.inflateMenu(R.menu.menu_board_read);
                 toolbar.setOnMenuItemClickListener(item -> {
-
                     switch(item.getItemId()) {
                         case R.id.action_board_edit:
                             sharedModel.getImageChooser().setValue(-1);

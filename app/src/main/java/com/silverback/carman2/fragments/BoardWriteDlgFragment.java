@@ -485,14 +485,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         post.put("post_images",  downlaodUriList);
 
         // Nested fields to filter the post by category
-        /*
         Map<String, Object> filter = new HashMap<>();
         filter.put("auto_maker", isAutoMaker);
         filter.put("auto_type", isAutoType);
         filter.put("auto_model", isAutoModel);
         filter.put("auto_year", isAutoYear);
         post.put("post_filter", filter);
-        */
+
 
 
 
