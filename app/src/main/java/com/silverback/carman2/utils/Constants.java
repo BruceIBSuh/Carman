@@ -35,8 +35,9 @@ public class Constants {
     // Image and Icon Size
     public static final int ICON_SIZE_TOOLBAR = 50;
     public static final int ICON_SIZE_PREFERENCE = 40;
+    public static final int ICON_SIZE_POSTING_LIST = 35;
     public static final int IMAGESPAN_THUMBNAIL_SIZE = 36;
-    public static final int MAX_ICON_SIZE = 50 * 1024;
+    public static final int MAX_ICON_SIZE = (1024 * 1024) / 2;
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
     public static final int MAX_ATTACHED_IMAGE_NUMS = 6;//limit of the images attached with the post.
 

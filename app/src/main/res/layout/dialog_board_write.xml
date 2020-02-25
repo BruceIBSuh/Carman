@@ -197,7 +197,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/et_board_body"
-                app:layout_constraintVertical_bias="0.8" />
+                app:layout_constraintVertical_bias="1.0" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -210,8 +210,7 @@
         android:layout_gravity="bottom"
         android:gravity="center_vertical"
         android:background="#F5F5F5"
-        android:elevation="1dp"
-        app:layout_insetEdge="bottom">
+        android:elevation="1dp" >
 
         <Button
             android:id="@+id/btn_attach_image"

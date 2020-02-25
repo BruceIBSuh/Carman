@@ -46,7 +46,7 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:layout_marginTop="?attr/actionBarSize"
-                android:background="@color/bgBoardHeader"
+                android:background="@color/bgDarkerGray"
                 app:layout_collapseMode="parallax" >
 
                 <TextView
@@ -54,7 +54,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@android:color/white"
                     android:textSize="@dimen/extraLargeText"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -79,7 +79,7 @@
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="3dp"
                     android:text="@null"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@android:color/white"
                     android:textSize="@dimen/smallText"
                     app:layout_constraintStart_toEndOf="@+id/img_userpic"
                     app:layout_constraintTop_toTopOf="@+id/img_userpic" />
@@ -100,7 +100,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="24dp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@android:color/white"
                     android:textSize="@dimen/extraSmallText"
                     app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
                     app:layout_constraintEnd_toStartOf="@+id/img_comment"
@@ -124,7 +124,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@android:color/white"
                     android:textSize="@dimen/extraSmallText"
                     app:layout_constraintBottom_toBottomOf="@+id/img_compathy"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -137,7 +137,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginBottom="3dp"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@android:color/white"
                     android:textSize="@dimen/extraSmallText"
                     app:layout_constraintBottom_toBottomOf="@+id/img_userpic"
                     app:layout_constraintStart_toEndOf="@+id/img_userpic" />
@@ -148,7 +148,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:gravity="end"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@android:color/white"
                     android:textSize="@dimen/extraSmallText"
                     app:layout_constraintBottom_toBottomOf="@+id/img_userpic"
                     app:layout_constraintEnd_toEndOf="parent" />
@@ -201,21 +201,24 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraint_comment"
-        android:visibility="gone"
+        android:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:padding="8dp"
-        android:background="#E0E0E0"
+        android:background="@color/bgDarkerGray"
         app:layout_dodgeInsetEdges="bottom">
 
         <TextView
             android:id="@+id/tv_label_comment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:labelFor="@id/et_comment"
-            android:text="Comment"
+            android:text="@string/board_title_comment"
             android:textSize="@dimen/smallText"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -225,8 +228,8 @@
             android:layout_height="60dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            android:layout_marginEnd="16dp"
-            android:background="@color/white"
+            android:layout_marginStart="8dp"
+            android:background="@android:color/white"
             android:gravity="top|start"
             android:inputType="textMultiLine"
             android:padding="8dp"
@@ -243,6 +246,7 @@
             android:contentDescription="@null"
             android:padding="8dp"
             android:src="@android:drawable/ic_menu_send"
+            android:background="@android:color/transparent"
             app:layout_constraintBottom_toBottomOf="@+id/et_comment"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/et_comment" />
@@ -256,7 +260,7 @@
         android:layout_height="40dp"
         android:layout_gravity="bottom"
         android:background="@color/bgBoardBottom"
-        android:elevation="1dp"
+        android:elevation="2dp"
         android:padding="5dp"
         app:layout_insetEdge="bottom">
 

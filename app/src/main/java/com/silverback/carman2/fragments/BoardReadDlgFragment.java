@@ -164,7 +164,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Source.Cache.
         postRef = firestore.collection("board_general").document(documentId);
         postRef.get().addOnSuccessListener(aVoid -> {
-
             ListenerRegistration commentListener = postRef.collection("comments")
                     .addSnapshotListener((querySnapshot, e) -> {
                         if(e != null) return;
@@ -191,8 +190,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         */
 
 
-        // Get the auto data, which is saved as the type of json string in SharedPreferences, for
-        // displaying it in the post header.
+
+        /*
         if(getActivity() != null) mSettings = ((BoardActivity)getActivity()).getSettings();
         String json = mSettings.getString(Constants.VEHICLE, null);
 
@@ -209,6 +208,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 log.e("JSONException: %s", e.getMessage());
             }
         }
+
+         */
 
 
     }
@@ -259,10 +260,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
-        tvAutoInfo.setText(autoData);
+
+        //tvAutoInfo.setText(autoData);
+
         tvDate.setText(getArguments().getString("timestamp"));
         tvCommentCnt.setText(String.valueOf(cntComment));
         tvCompathyCnt.setText(String.valueOf(cntCompathy));
+
+        // Retreive the auto data from the server and set it to the view
+        setAutoDataString(tvAutoInfo);
 
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
@@ -283,6 +289,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         btnCompathy.setOnClickListener(view -> setCompathyCount());
         // Upload the comment to Firestore, which needs to refactor for filtering text.
         btnSendComment.setOnClickListener(this);
+
 
         // BoardPagerFragment has already updatedd the posting items when created, the comment list
         // shouldn't be updated from the server.
@@ -311,12 +318,18 @@ public class BoardReadDlgFragment extends DialogFragment implements
         createContentView(postContent);
 
         // Set the user image in the header.
-        Uri uriUserImage = Uri.parse(userPic);
-        Glide.with(context).asBitmap().load(uriUserImage)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .fitCenter().circleCrop()
-                .into(imgUserPic);
-
+        if(TextUtils.isEmpty(userPic)) {
+            Glide.with(context).load(R.drawable.ic_user_blank_gray)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .fitCenter().circleCrop()
+                    .into(imgUserPic);
+        } else {
+            Uri uriUserImage = Uri.parse(userPic);
+            Glide.with(context).asBitmap().load(uriUserImage)
+                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                    .fitCenter().circleCrop()
+                    .into(imgUserPic);
+        }
         return localView;
     }
 
@@ -377,7 +390,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
             case R.id.imgbtn_send_comment:
                 if(TextUtils.isEmpty(etComment.getText())) {
-                    Snackbar.make(localView, "no comment exists", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(localView, getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -815,5 +828,30 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
     */
 
+    private void setAutoDataString(TextView autoInfo) {
+        // Get the auto data, which is saved as the type of json string in SharedPreferences, for
+        // displaying it in the post header.
+        firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if(document != null && document.exists()) {
+                    String jsonAutoInfo = document.getString("auto_data");
+                    log.i("auto data: %s", jsonAutoInfo);
+                    try {
+                        JSONArray jsonArray = new JSONArray(jsonAutoInfo);
+                        StringBuilder sb = new StringBuilder();
+                        for(int i = 0; i < jsonArray.length(); i++) {
+                            sb.append(jsonArray.optString(i)).append(" ");
+                        }
 
+                        autoData = sb.toString();
+                        autoInfo.setText(sb.toString());
+
+                    } catch(JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
 }

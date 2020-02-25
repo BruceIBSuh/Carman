@@ -9,17 +9,19 @@
     </string-array>
 
     <string-array name="board_tab_title">
-        <item>Recent</item>
-        <item>Popular</item>
-        <item>Auto Club</item>
-        <item>Notification</item>
+        <item>@string/board_tab_title_recent</item>
+        <item>@string/board_tab_title_popular</item>
+        <item>@string/board_tab_title_autoclub</item>
+        <item>@string/board_tab_title_notification</item>
     </string-array>
 
+    <!--
     <string-array name="tap_board_title">
         <item>@string/tab_board_recent</item>
         <item>@string/tab_board_popular</item>
         <item>@string/tab_board_community</item>
     </string-array>
+    -->
 
     <string-array name="spinner_fuel_name">
         <item>@string/general_spinner_gasoline</item>

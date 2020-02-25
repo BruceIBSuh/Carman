@@ -82,6 +82,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     static final int CAMERA = 2;
 
     // Objects
+    private ProgbarDialogFragment progbarFragment;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private SharedPreferences mSettings;
     private FragmentSharedModel shardModel;
@@ -198,20 +199,26 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // onCreateOptions menu and onOptionSelectedItem().
         toolbar.inflateMenu(R.menu.menu_board_write);
         toolbar.setNavigationOnClickListener(view -> dismiss());
-
         toolbar.setOnMenuItemClickListener(item -> {
             // Upload button event
             if(item.getItemId() == R.id.action_board_upload) {
                 ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                         .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+                progbarFragment = new ProgbarDialogFragment();
                 // No image posting makes an immediate uploading but postings with images attached
                 // should take the uploading process that images starts uploading first and image
                 // URIs would be sent back if uploading images is successful,then uploading gets
                 // started with image URIs which should be added in a document of Firestore.
                 if(attachedImages.size() == 0) {
                     log.i("upload clicked");
+                    // start ProgressDialog in DialogFragment with the message of "uploading"
                     uploadPostToFirestore();
                 } else {
+                    // start ProgressDialog in DialogFragment w/ the message of "optimizing"
+                    progbarFragment.setProgressMsg(getString(R.string.board_msg_optimize_image));
+                    getActivity().getSupportFragmentManager().beginTransaction()
+                            .add(android.R.id.content, progbarFragment).commit();
                     // Image Attachment button that starts UploadBitmapTask as many as the number of
                     // images. In case the task starts with UploadBitmapTask multi-threading which
                     // runs in ThreadManager, thread contentions may occur, replacing one with the
@@ -270,30 +277,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             }
         });
 
-        // When uploading the post, check if any attached image exists.
-        /*
-        btnUpload.setOnClickListener(btn -> {
-            if(!doEmptyCheck()) return;
-
-            ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                    .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-            // No attached image immediately makes uploading started.
-            if(attachedImages.size() == 0) uploadPostToFirestore();
-            else {
-
-                // Downsize and compress attached images and upload them to Storage running in
-                // the background, the result of which is notified to getDownloadBitmapUri() of ImageViewModel
-                // one by one and all of images has processed, start to upload the post to Firestore.
-                for (Uri uri : attachedImages) {
-                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uri, imgViewModel);
-                }
-            }
-
-            //dismiss();
-
-        });
-        */
 
         // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to handle
         // SpannableStringBuilder in order to protect image spans from while editing.
@@ -347,9 +330,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     galleryIntent.setType("image/*");
                     //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
-                    // Bugs likely due to the lifecycler issue, that is, this fragment not attached
-                    // to the activity.
-                    // startActivityForResult() in Fragment
+                    // The result should go to the parent activity
                     getActivity().startActivityForResult(galleryIntent, BoardActivity.REQUEST_CODE_GALLERY);
                     break;
 
@@ -367,8 +348,10 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         });
 
+        // The result of startActivityForResult() invoked in the parent activity should be notified
+        // to the activity and it is, in turn, sent back here via a viewmodel livedata with the image
+        // uri, with which the image span and the recyclerview are displayed with a new image.
         imgViewModel.getUriFromImageChooser().observe(getViewLifecycleOwner(), imgUri -> {
-            log.i("result from startActivityForResult which is transferred from the parent activity");
             // Glide creates a processed bitmap with the uri which the result intent from MediaStore
             // contains and as the process completes, the bitmap is sent to ImageViewModel for putting
             // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
@@ -383,7 +366,9 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         });
 
 
-
+        // The imgUri received as a result of startActivityForResult() is applied to applyGlideToBitmap().
+        // This util method translates an image to an appropriate extent for fitting the imagespan and
+        // the result is provided
         imgViewModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
             log.i("Bitmap received");
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
@@ -399,18 +384,22 @@ public class BoardWriteDlgFragment extends DialogFragment implements
          */
 
 
-        // Upload process consists of three steps, which should be considered to refactor.
-        // First, upload attached images to Firebase Storage, if any.
-        // Second, check whether the attached images safely completes uploading.
-        // Third, start to upload the post to FireStore, then on notifying completion, dismiss.
-
-        // Notified of having attached images uploaded to Firebase Storage and retreive each uri
-        // of uploaded images by ImageViewModel
+        /*
+         * The process of uploading the post consists of three steps.
+         * First, upload attached images to Firebase Storage, if any.
+         * Second, check whether the attached images safely completes uploading.
+         * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
+         */
+        // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
+        // the result is notified as SparseArray which indicates the position and uriString of image.
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
             downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
-            if(attachedImages.size() == downloadImages.size()) uploadPostToFirestore();
+            if(attachedImages.size() == downloadImages.size()) {
+                // On completing optimization of attached images, start uploading a post.
+                uploadPostToFirestore();
+            }
 
         });
     }
@@ -420,43 +409,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         super.onPause();
         //if(bitmapTask != null) bitmapTask = null;
         //if(postTask != null) postTask = null;
-    }
-
-    // Receive the uri of an selected image from BoardChooserDlgFragment as the resulf of
-    // startActivityForResult().
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        /*
-        if(resultCode != RESULT_OK || data == null) return;
-        Uri imgUri = null;
-
-        switch(requestCode) {
-            case BoardActivity.REQUEST_CODE_GALLERY:
-                imgUri = data.getData();
-                attachedImages.add(imgUri);
-                break;
-
-            case BoardActivity.REQUEST_CODE_CAMERA:
-                break;
-        }
-
-        // Glide creates a processed bitmap with the uri which the result intent from MediaStore
-        // contains and as the process completes, the bitmap is sent to ImageViewModel for putting
-        // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
-        applyImageResourceUtil.applyGlideToBitmap(imgUri, 48, imgViewModel);
-
-        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
-        // additional pics.
-        final int position = attachedImages.size() - 1;
-        //imageAdapter.notifyItemInserted(position);
-        imageAdapter.notifyItemChanged(position);
-
-
-        // Resize the image: TEST CODING!!!!!
-        // Pay attention to where super.onActivityResult() is located
-        //bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), attachedImages.get(position), imgViewModel);
-        super.onActivityResult(requestCode, resultCode, data);
-        */
     }
 
 
@@ -501,13 +453,20 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         try (FileInputStream fis = getActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             userId = br.readLine();
-
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
 
-        //if(TextUtils.isEmpty(userId)) return;
-        if(userId == null || userId.isEmpty()) return;
+
+        // String.isEmpty() throws NullPointerException when the value is null but TextUtils.isEmpty()
+        // always returns a boolean value, no matter what value is.
+        //if(userId == null || userId.isEmpty()) return;
+        if(TextUtils.isEmpty(userId)) return;
+
+        // Start ProgbarDialogFragment to show the progressdialog and message
+        progbarFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .replace(android.R.id.content, progbarFragment).commit();
 
         // Cast SparseArray containing download urls from Storage to String array
         List<String> downlaodUriList = new ArrayList<>(downloadImages.size());
@@ -526,30 +485,32 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         post.put("post_images",  downlaodUriList);
 
         // Nested fields to filter the post by category
+        /*
         Map<String, Object> filter = new HashMap<>();
-        filter.put("general", isGeneral);
         filter.put("auto_maker", isAutoMaker);
         filter.put("auto_type", isAutoType);
         filter.put("auto_model", isAutoModel);
         filter.put("auto_year", isAutoYear);
-
         post.put("post_filter", filter);
+        */
+
+
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager.startUploadPostTask(getContext(), post, shardModel);
+        progbarFragment.dismiss();
         dismiss();
     }
 
 
     private boolean doEmptyCheck() {
-
         if(TextUtils.isEmpty(etPostTitle.getText())) {
-            Snackbar.make(localView, "Title is empty", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(localView, getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
             return false;
 
         } else if(TextUtils.isEmpty(etPostBody.getText())){
-            Snackbar.make(localView, "Content is empty", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(localView, getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
             return false;
 
         } else return true;

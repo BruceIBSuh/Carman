@@ -76,13 +76,14 @@ public class BoardActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
     }
 
-
+    // Receive the image uri as a result of startActivityForResult() revoked in BoardWriteDlgFragment,
+    // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteDlgFragment
+    // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
+    // content area and adding it to the image list so as to update the recyclerview adapter.
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if(resultCode != RESULT_OK || data == null) return;
-        log.i("data from startActivityForResult defined in BoardWriteDlgFragment: %s", data);
         imageViewModel.getUriFromImageChooser().setValue(data.getData());
     }
 

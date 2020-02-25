@@ -158,8 +158,9 @@ public class BoardPagerFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
-        // Paginate the recyclerview with the preset limit. PaginationHelper subclasses RecyclerView.
-        // OnScrollListner.
+
+        // Paginate the recyclerview with the preset limit attaching OnScrollListener because
+        // PaginationHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
 
         // Floating Action Button to show BoardReadDlgFragment which reads a post when clicking it.
@@ -179,7 +180,7 @@ public class BoardPagerFragment extends Fragment implements
         });
 
         // Get the field name of each fragment in the viewpager and query the posting items using
-        // PaginationHelper which sends the dataset back to the callbacks such as setFirstQuery(),
+        // PaginationHelper which sends the dataset back to the callbacks of setFirstQuery(),
         // setNextQueryStart(), and setNextQueryComplete().
         //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
         String field = getQueryFieldToViewPager(page);

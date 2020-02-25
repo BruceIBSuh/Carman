@@ -12,9 +12,11 @@
     <string name="toolbar_mycar">my car</string>
     <string name="toolbar_board">board</string>
     <string name="toolbar_login">login</string>
+    <!--
     <string name="tab_board_recent">최근글</string>
     <string name="tab_board_popular">인기글</string>
     <string name="tab_board_community">우리차고</string>
+    -->
 
     <!--MainActivity$GeneralFragment-->
     <string name="general_subtitle_stations">주변 주유소</string>
@@ -151,15 +153,23 @@
     <!--BoardActivity-->
     <string name="billboard_title">카르맨 광장</string>
     <string name="board_report">신고</string>
+    <string name="board_tab_title_recent">최근글</string>
+    <string name="board_tab_title_popular">인기글</string>
+    <string name="board_tab_title_autoclub">오토클럽</string>
+    <string name="board_tab_title_notification">공지사항</string>
     <!--BoardActivity$BoardWriteDlgFragment -->
     <string name="boardwrite_label_title">제 목:</string>
     <string name="board_msg_image">이미지 첨부는 6개까지 가능합니다</string>
     <string name="board_write_category">분 류</string>
     <string name="board_msg_no_title">글의 제목을 넣어주세요</string>
     <string name="board_msg_no_content">글의 본문이 없습니다</string>
+    <string name="board_msg_optimize_image">첨부이미지 최적화</string>
+    <string name="board_msg_uploading">업로드 진행중</string>
     <!--BoardActivity$BoardReadDlgFragment-->
+    <string name="board_title_comment">댓글 작성</string>
     <string name="board_btn_compathy">공감</string>
     <string name="board_btn_comment">댓글</string>
+    <string name="board_msg_no_comment">댓글 내용이 없습니다</string>
     <string name="board_msg_compathy">이미 공감 표시를 하였습니다</string>
     <string name="board_alert_delete">글 삭제</string>
     <string name="board_alert_msg">확인버튼을 누르면 글이 삭제됩니다</string>

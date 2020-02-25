@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -20,6 +21,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -74,7 +76,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         // Retreive an board item queried in and passed from BoardPagerFragment
         //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
         DocumentSnapshot document = snapshotList.get(position);
-        log.i("viewcount: %s", document.getLong("cnt_view"));
+        log.i("User Profile Pic: %s", document.getString("user_pic"));
 
         holder.tvPostTitle.setText(document.getString("post_title"));
         holder.tvNumber.setText(String.valueOf(position + 1));
@@ -82,11 +84,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         holder.tvUserName.setText(document.getString("user_name"));
         holder.tvViewCount.setText(String.valueOf(document.getLong("cnt_view")));
         holder.tvCommentCount.setText(String.valueOf(document.getLong("cnt_comment")));
-        holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
+
+        //
+        if(!TextUtils.isEmpty(document.getString("user_pic"))) {
+            holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
+        } else holder.bindProfileImage(null);
 
         List<String> imgList = (ArrayList<String>)document.get("post_images");
         if(imgList != null && imgList.size() > 0) {
-            log.i("imagList: %s, %s", imgList.size(), imgList.get(0));
             holder.bindAttachedImage(Uri.parse(imgList.get(0)));
         }
 
@@ -100,11 +105,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position, @NonNull List<Object> payloads) {
-        log.i("payloads: %s", payloads.size());
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            log.i("Partial Binding of BoardPosting: %s, %s, %s", payloads.size(), payloads.get(0), payloads.get(1));
             holder.tvViewCount.setText(String.valueOf(payloads.get(0)));
             holder.tvCommentCount.setText(String.valueOf(payloads.get(1)));
 
@@ -144,14 +147,24 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
         // Null check of the uri shouldn't be needed b/c Glide handles it on its own.
         void bindProfileImage(Uri uri) {
-            RequestOptions myOptions = new RequestOptions().fitCenter().override(35, 35).circleCrop();
-            Glide.with(context)
-                    .asBitmap()
-                    //.placeholder(new ColorDrawable(Color.BLUE))
-                    .load(uri)
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .apply(myOptions)
-                    .into(imgProfile);
+            RequestOptions myOptions = new RequestOptions()
+                    .fitCenter()
+                    .override(Constants.ICON_SIZE_POSTING_LIST, Constants.ICON_SIZE_POSTING_LIST)
+                    .circleCrop();
+
+            if(uri == null) {
+                Glide.with(context).load(R.drawable.ic_user_blank_white)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                        .apply(myOptions)
+                        .into(imgProfile);
+            } else {
+                Glide.with(context).asBitmap()
+                        //.placeholder(new ColorDrawable(Color.BLUE))
+                        .load(uri)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                        .apply(myOptions)
+                        .into(imgProfile);
+            }
         }
 
         void bindAttachedImage(Uri uri) {
