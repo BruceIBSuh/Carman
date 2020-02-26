@@ -42,7 +42,7 @@
                 app:layout_collapseMode="pin" />
 
             <HorizontalScrollView
-                android:id="@+id/scrollview_horizontal"
+                android:id="@+id/post_scroll_horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="37dp"
                 android:layout_marginTop="?attr/actionBarSize"
@@ -51,7 +51,7 @@
                 app:layout_collapseMode="parallax"  >
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/vg_constraint_status"
+                    android:id="@+id/cl_post_filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="8dp"
@@ -69,7 +69,7 @@
                         app:layout_constraintBottom_toBottomOf="parent" />
 
                     <CheckBox
-                        android:id="@+id/chkbox_maker"
+                        android:id="@+id/chkbox_filter_maker"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -79,31 +79,31 @@
                         app:layout_constraintVertical_bias="0.0" />
 
                     <CheckBox
-                        android:id="@+id/chkbox_type"
+                        android:id="@+id/chkbox_filter_type"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_maker"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_maker"
-                        app:layout_constraintTop_toTopOf="@+id/chkbox_maker" />
+                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_maker"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_maker"
+                        app:layout_constraintTop_toTopOf="@+id/chkbox_filter_maker" />
 
                     <CheckBox
-                        android:id="@+id/chkbox_model"
+                        android:id="@+id/chkbox_filter_model"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_type"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_type"
-                        app:layout_constraintTop_toTopOf="@+id/chkbox_type" />
+                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_type"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_type"
+                        app:layout_constraintTop_toTopOf="@+id/chkbox_filter_type" />
 
                     <CheckBox
-                        android:id="@+id/chkbox_year"
+                        android:id="@+id/chkbox_filter_year"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_model"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_model"
-                        app:layout_constraintTop_toTopOf="@+id/chkbox_model" />
+                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_model"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_model"
+                        app:layout_constraintTop_toTopOf="@+id/chkbox_filter_model" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 

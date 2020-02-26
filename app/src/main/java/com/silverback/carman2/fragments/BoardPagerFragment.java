@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -74,10 +75,12 @@ public class BoardPagerFragment extends Fragment implements
     // Fields
     private int page;
 
+
     // Constructor
     private BoardPagerFragment() {
         // Required empty public constructor
     }
+
 
     public static BoardPagerFragment newInstance(int page) {
         BoardPagerFragment fragment = new BoardPagerFragment();
@@ -191,7 +194,8 @@ public class BoardPagerFragment extends Fragment implements
         return localView;
     }
 
-    // This lifecycle is invoked at the time not only the viewpager sets the adapter first time,
+
+    // This callback should be invoked at the time not only the viewpager sets the adapter first time,
     // but also each time the viewpager chages the page. Thus, the viewmodels must prevent
     // observe from running automatically by setting an appripriate param.
     @SuppressWarnings("ConstantConditions")

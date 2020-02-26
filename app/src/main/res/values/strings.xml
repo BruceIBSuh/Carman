@@ -157,6 +157,7 @@
     <string name="board_tab_title_popular">인기글</string>
     <string name="board_tab_title_autoclub">오토클럽</string>
     <string name="board_tab_title_notification">공지사항</string>
+    <string name="board_post_filter_title">오토클럽</string>
     <!--BoardActivity$BoardWriteDlgFragment -->
     <string name="boardwrite_label_title">제 목:</string>
     <string name="board_msg_image">이미지 첨부는 6개까지 가능합니다</string>

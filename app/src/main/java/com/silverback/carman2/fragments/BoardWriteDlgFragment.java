@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static android.app.Activity.RESULT_OK;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
@@ -138,13 +137,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         localView = inflater.inflate(R.layout.dialog_board_write, container, false);
         Toolbar toolbar = localView.findViewById(R.id.toolbar_board_write);
         //nestedScrollView = localView.findViewById(R.id.nestedScrollView);
-        HorizontalScrollView hScrollView = localView.findViewById(R.id.scrollview_horizontal);
+        HorizontalScrollView hScrollView = localView.findViewById(R.id.post_scroll_horizontal);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
 
-        CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_maker);
-        CheckBox chkboxType = localView.findViewById(R.id.chkbox_type);
-        CheckBox chkboxModel = localView.findViewById(R.id.chkbox_model);
-        CheckBox chkboxYear = localView.findViewById(R.id.chkbox_year);
+        CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_filter_maker);
+        CheckBox chkboxType = localView.findViewById(R.id.chkbox_filter_type);
+        CheckBox chkboxModel = localView.findViewById(R.id.chkbox_filter_model);
+        CheckBox chkboxYear = localView.findViewById(R.id.chkbox_filter_year);
 
         etPostTitle = localView.findViewById(R.id.et_board_title);
         etPostBody = localView.findViewById(R.id.et_board_body);
@@ -416,19 +415,19 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         switch(buttonView.getId()) {
-            case R.id.chkbox_maker:
+            case R.id.chkbox_filter_maker:
                 isAutoMaker = isChecked;
                 break;
 
-            case R.id.chkbox_model:
+            case R.id.chkbox_filter_model:
                 isAutoModel = isChecked;
                 break;
 
-            case R.id.chkbox_type:
+            case R.id.chkbox_filter_type:
                 isAutoType = isChecked;
                 break;
 
-            case R.id.chkbox_year:
+            case R.id.chkbox_filter_year:
                 isAutoYear = isChecked;
                 break;
         }

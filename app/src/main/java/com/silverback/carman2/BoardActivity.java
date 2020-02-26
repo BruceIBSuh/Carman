@@ -10,9 +10,12 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.HorizontalScrollView;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
@@ -20,9 +23,11 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
+import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.utils.Constants;
 
 public class BoardActivity extends BaseActivity implements
         ViewPager.OnPageChangeListener,
@@ -32,16 +37,23 @@ public class BoardActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Constants
+    public static final int PAGE_RECENT = 0;
+    public static final int PAGE_POPULAR = 1;
+    public static final int PAGE_AUTOCLUB = 2;
+    public static final int PAGE_NOTIFICATION = 3;
     public static final int REQUEST_CODE_CAMERA = 1000;
     public static final int REQUEST_CODE_GALLERY = 1001;
+    public static final int MENU_ITEM_FILTER = 1002;
 
     // Objects
     private TabLayout boardTabLayout;
+    private HorizontalScrollView filterLayout;
     private ViewPager boardPager;
     private ProgressBar pbBoard;
     private ImageViewModel imageViewModel;
 
     // Fields
+    private boolean isAutoClub;
     //private boolean isTabVisible;
 
     @SuppressWarnings("ConstantConditions")
@@ -50,14 +62,19 @@ public class BoardActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
 
+
         imageViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         Toolbar toolbar = findViewById(R.id.board_toolbar);
-        //FrameLayout framePager = findViewById(R.id.frame_pager_board);
         boardPager = findViewById(R.id.viewpager_board);
         AppBarLayout appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
+        filterLayout = findViewById(R.id.post_scroll_horizontal);
         pbBoard = findViewById(R.id.progbar_board);
+        CheckBox chkboxAutoMaker = findViewById(R.id.chkbox_filter_maker);
+        CheckBox chkboxAutoType = findViewById(R.id.chkbox_filter_type);
+        CheckBox chkboxAutoModel = findViewById(R.id.chkbox_filter_model);
+        CheckBox chkboxAutoYear = findViewById(R.id.chkbox_filter_year);
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
@@ -67,6 +84,11 @@ public class BoardActivity extends BaseActivity implements
         BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         boardPager.setAdapter(pagerAdapter);
         boardTabLayout.setupWithViewPager(boardPager);
+
+        chkboxAutoMaker.setText(mSettings.getString(Constants.AUTO_MAKER, null));
+        chkboxAutoType.setText(mSettings.getString(Constants.AUTO_TYPE, null));
+        chkboxAutoModel.setText(mSettings.getString(Constants.AUTO_MODEL, null));
+        chkboxAutoYear.setText(mSettings.getString(Constants.AUTO_YEAR, null));
 
         addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
@@ -94,14 +116,38 @@ public class BoardActivity extends BaseActivity implements
         return super.onCreateOptionsMenu(menu);
     }
 
+    /**
+     * On Android 3.0 and higher, the options menu is considered to always be open when menu items
+     * are presented in the app bar. When an event occurs and you want to perform a menu update,
+     * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
+     */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.clear();
+        if(isAutoClub) {
+            menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
+                    //.setIcon(R.drawable.logo_gs)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
 
-        return super.onOptionsItemSelected(item);
+        switch(item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+
+            case MENU_ITEM_FILTER:
+                animSlideFilterLayout();
+                isAutoClub = !isAutoClub;
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     // AppBarLayout.OnOffsetChangedListener invokes this.
@@ -114,10 +160,20 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onPageSelected(int position) {
         log.i("ViewPager onPageSelected: %s", position);
+        if(position == PAGE_AUTOCLUB) isAutoClub = true;
+        else {
+            isAutoClub = false;
+            animSlideFilterLayout();
+        }
+
+        // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
+        // higher.
+        invalidateOptionsMenu();
     }
 
     @Override
     public void onPageScrollStateChanged(int state) {}
+
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
@@ -136,8 +192,25 @@ public class BoardActivity extends BaseActivity implements
         //isTabVisible = !isTabVisible;
     }
 
+    private void animSlideFilterLayout() {
+        // Visibillity control
+        //int visibility = (isAutoClub)? View.VISIBLE : View.INVISIBLE;
+        //filterLayout.setVisibility(visibility);
+
+        ObjectAnimator slideDown = ObjectAnimator.ofFloat(filterLayout, "y", getActionbarHeight());
+        ObjectAnimator slideUp = ObjectAnimator.ofFloat(filterLayout, "y", 0);
+        slideUp.setDuration(500);
+        slideDown.setDuration(500);
+
+        if(isAutoClub) slideDown.start();
+        else slideUp.start();
+
+    }
+
     // Referenced by the child fragments
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+
 }
