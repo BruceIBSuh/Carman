@@ -7,7 +7,7 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.silverback.carman2.fragments.BoardPagerFragment;
 
-/**
+/*
  * This viewpager adapter subclasses FragmentStatePagerAdapter instead of FragmentPagerAdapter.
  * In general, FragmentPagerAdapter is preferred when displaying the tab-synced fragments that do not
  * contain lots of heavy data. However, displaying not a few items with bitmaps may burden the adapter.

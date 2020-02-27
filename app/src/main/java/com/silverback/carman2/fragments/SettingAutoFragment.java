@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -44,6 +47,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         void notifyResetTitle();
     }
 
+    // Set the listener to the parent activity for reverting the toolbar title.
     public void addTitleListener(OnToolbarTitleListener titleListener) {
         mToolbarListener = titleListener;
     }
@@ -57,7 +61,6 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
-
 
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);

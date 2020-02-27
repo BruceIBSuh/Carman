@@ -33,6 +33,11 @@ import com.silverback.carman2.utils.Constants;
 
 import java.util.List;
 
+/**
+ * This activity contains a tab-linked viewpager which currently consists of a single fragment shared
+ * by 4 pages.
+ *
+ */
 public class BoardActivity extends BaseActivity implements
         CheckBox.OnCheckedChangeListener,
         ViewPager.OnPageChangeListener,
@@ -51,14 +56,15 @@ public class BoardActivity extends BaseActivity implements
     public static final int MENU_ITEM_FILTER = 1002;
 
     // Objects
-    private TabLayout boardTabLayout;
-    private HorizontalScrollView filterLayout;
-    private ViewPager boardPager;
+    private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
-    private ProgressBar pbBoard;
     private ImageViewModel imageViewModel;
 
     // UIs
+    private TabLayout boardTabLayout;
+    private HorizontalScrollView filterLayout;
+    private ViewPager boardPager;
+    private ProgressBar pbBoard;
     private CheckBox cbAutoMaker, cbAutoType, cbAutoModel, cbAutoYear;
 
     // Fields
@@ -66,12 +72,21 @@ public class BoardActivity extends BaseActivity implements
     private boolean[] autoclubValues;
     //private boolean isTabVisible;
 
+    // Interface for passing the checkbox values to BoardPagerAdapter to update the AutoClub board.
+    // Intial values are passed via the adapter.set
+    public interface OnFilterCheckBoxListener {
+        void setCheckBoxValues(boolean[] values);
+    }
+
+    public void addAutoClubListener(OnFilterCheckBoxListener listener) {
+        mListener = listener;
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
-
 
         imageViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
@@ -102,16 +117,14 @@ public class BoardActivity extends BaseActivity implements
         cbAutoMaker.setOnCheckedChangeListener(this);
         cbAutoType.setOnCheckedChangeListener(this);
         cbAutoModel.setOnCheckedChangeListener(this);
-        cbAutoModel.setOnCheckedChangeListener(this);
+        cbAutoYear.setOnCheckedChangeListener(this);
 
         // Create FragmentStatePagerAdapter with the checkbox values attached as arugments
-        autoclubValues = new boolean[4];
+        autoclubValues = new boolean[]{true, false, false, false};
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setCheckBoxValues(autoclubValues);
         boardPager.setAdapter(pagerAdapter);
         boardTabLayout.setupWithViewPager(boardPager);
-
-
 
         addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
@@ -137,23 +150,28 @@ public class BoardActivity extends BaseActivity implements
 
         switch(buttonView.getId()) {
             case R.id.chkbox_filter_maker:
+                log.i("autoMaker: %s", cbAutoMaker.isChecked());
                 autoclubValues[0] = cbAutoMaker.isChecked();
                 break;
 
             case R.id.chkbox_filter_type:
+                log.i("autoType: %s", cbAutoType.isChecked());
                 autoclubValues[1] = cbAutoType.isChecked();
                 break;
 
             case R.id.chkbox_filter_model:
+                log.i("autoModel: %s", cbAutoModel.isChecked());
                 autoclubValues[2] = cbAutoModel.isChecked();
                 break;
 
             case R.id.chkbox_filter_year:
+                log.i("autoYear: %s", cbAutoYear.isChecked());
                 autoclubValues[3] = cbAutoYear.isChecked();
                 break;
         }
 
         pagerAdapter.setCheckBoxValues(autoclubValues);
+        mListener.setCheckBoxValues(autoclubValues);
     }
 
 

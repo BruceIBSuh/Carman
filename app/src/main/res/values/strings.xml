@@ -187,7 +187,7 @@
     <string name="setting_nickname">사용자(차량) 이름</string>
     <string name="pref_title_auto_data">차량 정보(브랜드, 타입, 모델명, 연식)</string>
     <string name="pref_fragment_auto_title">차량 정보</string>
-    <string name="pref_entry_void">설정안함</string>
+    <string name="pref_entry_void">미설정</string>
     <string name="pref_category_location">위치 관련</string>
     <string name="pref_location_radius">주유소 탐색 반경</string>
     <string name="pref_title_autoupdate">위치 자동 업데이트</string>

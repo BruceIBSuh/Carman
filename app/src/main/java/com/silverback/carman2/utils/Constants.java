@@ -26,6 +26,7 @@ public class Constants {
     public static final int NUM_RECENT_PAGES = 5;
 
     // Board Pagination
+    public static final int NUM_BOARD_PAGES = 4;
     static final int PAGINATION = 20;
     //public static final int ICON_SIZE = 50;
 

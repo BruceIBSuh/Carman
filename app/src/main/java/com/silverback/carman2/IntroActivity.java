@@ -11,7 +11,10 @@ import android.widget.ProgressBar;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -26,8 +29,10 @@ import org.json.JSONArray;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -174,6 +179,12 @@ public class IntroActivity extends BaseActivity  {
     // retrieved from the Room database.
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
+
+        // TEST CODING: Retrieve the auto data from Firestore
+        doAutoDataFromFirestore();
+
+
+
         // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
         // As GasPriceTask completes, updated prices is notified as LiveData to OpinetViewModel.
         // distPriceComplete().
@@ -190,6 +201,33 @@ public class IntroActivity extends BaseActivity  {
             mProgBar.setVisibility(View.GONE);
             finish();
         }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void doAutoDataFromFirestore() {
+
+        final CollectionReference autoMakerRef = firestore.collection("autodata");
+        List<String> autoMakerList = new ArrayList<>();
+        List<String> autoModelList = new ArrayList<>();
+
+        // Retrieve the auto makers
+        autoMakerRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                for(QueryDocumentSnapshot automaker : task.getResult()) {
+                    log.i("AutoMaker: %s", automaker.getString("auto_maker_en"));
+                    autoMakerList.add(automaker.getString("auto_maker_ko"));
+                    automaker.getReference().collection("auto_model").get().addOnCompleteListener(model -> {
+                        if(model.isSuccessful()) {
+                            for(QueryDocumentSnapshot autoModel : model.getResult()) {
+                                log.i("AutoModel: %s", autoModel.getString("model_name_ko"));
+                                autoModelList.add(autoModel.getString("model_name_ko"));
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
     }
 
 

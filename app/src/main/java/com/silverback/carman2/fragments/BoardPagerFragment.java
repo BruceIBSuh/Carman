@@ -7,6 +7,8 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
@@ -25,6 +27,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -53,7 +56,7 @@ import java.util.TimeZone;
  *
  */
 public class BoardPagerFragment extends Fragment implements
-        PaginationHelper.OnPaginationListener,
+        PaginationHelper.OnPaginationListener, CheckBox.OnCheckedChangeListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
@@ -83,7 +86,6 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-
     public static BoardPagerFragment newInstance(int page, boolean[] chkboxValues) {
         BoardPagerFragment fragment = new BoardPagerFragment();
 
@@ -105,9 +107,6 @@ public class BoardPagerFragment extends Fragment implements
             autoFilter = getArguments().getBooleanArray("chkboxValues");
         }
 
-        if(page == Constants.BOARD_AUTOCLUB)
-            autoFilter = getArguments().getBooleanArray("chkboxValues");
-
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
@@ -117,10 +116,19 @@ public class BoardPagerFragment extends Fragment implements
         pageHelper = new PaginationHelper();
         pageHelper.setOnPaginationListener(this);
 
+        // Implement the callback of OnFilterCheckBoxListener to receive values of the CheckBoxes
+        // each time the checking event occurs.
+        ((BoardActivity)getActivity()).addAutoClubListener(new BoardActivity.OnFilterCheckBoxListener() {
+            @Override
+            public void setCheckBoxValues(boolean[] values) {
+                autoFilter = values;
+                pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autoFilter);
+            }
+        });
+
 
         /*
          * Realtime update SnapshotListener: server vs cache policy.
-         *
          * When initially connecting to Firestore, the snapshot listener checks if there is any
          * changes in the borad and upadte the posting board. On completing the inital update,
          * the lisitener should be detached for purpose of preventing excessive connection to the
@@ -395,8 +403,10 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-
-
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        log.i("CheckBox callback");
+    }
 }
 
 

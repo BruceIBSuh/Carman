@@ -23,7 +23,7 @@ public class PagerAdapterViewModel extends ViewModel {
     private MutableLiveData<JSONArray> jsonServiceArray;
 
 
-    // Should conform to the Java Bean Convention when creating setter and getter.
+    // Should conform to the Java Bean Convention when creating setter and getter. Is this for sure?
     public MutableLiveData<ExpTabPagerAdapter> getPagerAdapter() {
         if(pagerAdapter == null) {
             pagerAdapter = new MutableLiveData<>();

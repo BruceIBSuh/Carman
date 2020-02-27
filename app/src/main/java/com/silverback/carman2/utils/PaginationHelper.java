@@ -58,7 +58,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     public void setPostingQuery(Source source, int page, boolean[] filter) {
         colRef = firestore.collection("board_general");
         switch(page) {
-            case Constants.BOARD_RECENT: // Recent
+            case Constants.BOARD_RECENT:
                 this.field = "timestamp";
                 colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
@@ -69,7 +69,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                         .addOnFailureListener(Throwable::printStackTrace);
                 break;
 
-            case Constants.BOARD_POPULAR: // Popular
+            case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
@@ -80,7 +80,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                         .addOnFailureListener(Throwable::printStackTrace);
                 break;
 
-            case Constants.BOARD_AUTOCLUB: // auto club
+            case Constants.BOARD_AUTOCLUB:
                 this.field = "post_filter";
                 if(filter != null) for(boolean b : filter) log.i("filter values: %s", b);
 
