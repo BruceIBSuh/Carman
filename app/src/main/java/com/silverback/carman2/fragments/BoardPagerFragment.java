@@ -30,6 +30,7 @@ import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
 
 import java.io.BufferedReader;
@@ -73,6 +74,7 @@ public class BoardPagerFragment extends Fragment implements
     private FloatingActionButton fabWrite;
 
     // Fields
+    private boolean[] autoFilter;
     private int page;
 
 
@@ -82,9 +84,11 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    public static BoardPagerFragment newInstance(int page) {
+    public static BoardPagerFragment newInstance(int page, boolean[] chkboxValues) {
         BoardPagerFragment fragment = new BoardPagerFragment();
+
         Bundle args = new Bundle();
+        args.putBooleanArray("chkboxValues", chkboxValues);
         args.putInt("fragmetPage", page);
         fragment.setArguments(args);
 
@@ -96,7 +100,13 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(getArguments() != null) page = getArguments().getInt("fragmetPage");
+        if(getArguments() != null) {
+            page = getArguments().getInt("fragmetPage");
+            autoFilter = getArguments().getBooleanArray("chkboxValues");
+        }
+
+        if(page == Constants.BOARD_AUTOCLUB)
+            autoFilter = getArguments().getBooleanArray("chkboxValues");
 
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -189,7 +199,7 @@ public class BoardPagerFragment extends Fragment implements
         //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
         log.i("fragment page: %s", page);
         String field = getQueryFieldToViewPager(page);
-        pageHelper.setPostingQuery(source, page, field);
+        pageHelper.setPostingQuery(source, page, autoFilter);
 
         return localView;
     }
@@ -210,7 +220,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(documentId)) {
                 snapshotList.clear();
                 String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, page, field);
+                pageHelper.setPostingQuery(Source.CACHE, page, autoFilter);
             }
         });
 
@@ -223,7 +233,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) {
                 snapshotList.clear();
                 String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, page, field);
+                pageHelper.setPostingQuery(Source.CACHE, page, autoFilter);
             }
         });
 
@@ -383,6 +393,8 @@ public class BoardPagerFragment extends Fragment implements
             e.printStackTrace();
         }
     }
+
+
 
 
 }

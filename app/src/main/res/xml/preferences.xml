@@ -4,7 +4,7 @@
 
     <PreferenceCategory
         app:title="@string/pref_category_basic_info"
-        app:key="pref_basic_info" >
+        app:key="carman_pref_basic_info">
 
         <com.silverback.carman2.views.NameDialogPreference
             app:key="carman_pref_nickname"
@@ -16,7 +16,7 @@
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingAutoFragment"
             app:key="carman_pref_auto"
-            app:title="@string/setting_model" />
+            app:title="@string/pref_title_auto_data" />
 
         <ListPreference
             app:title="연료"

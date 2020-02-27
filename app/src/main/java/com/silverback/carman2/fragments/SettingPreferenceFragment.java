@@ -58,10 +58,11 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
+
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
+        //ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -72,25 +73,29 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         if(userName != null) nickname = namePref.getSummary().toString();
 
 
-        // Call SettingAutoFragment which has preferences of its own. On clicking the Up button in
-        // the fragment, the preference values are notified here as the JSONString and reset the
-        // preference summary.
-        Preference autoPref = findPreference(Constants.VEHICLE);
+        // Call SettingAutoFragment which contains the preferences to have the auto data which will
+        // be used as filter for querying the board. On clicking the Up button, the preference values
+        // are notified here as the JSONString and reset the preference summary.
+        Preference autoPref = findPreference(Constants.AUTO_DATA);
         String autoMaker = mSettings.getString(Constants.AUTO_MAKER, null);
         String autoModel = mSettings.getString(Constants.AUTO_MODEL, null);
         String autoYear = mSettings.getString(Constants.AUTO_YEAR, null);
         String autoType = mSettings.getString(Constants.AUTO_TYPE, null);
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
+
         // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
         // summary simultaneously.
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
                 JSONArray json = new JSONArray(data);
-                autoPref.setSummary(String.format("%s, %s, %s, %s",
-                        json.optString(0), json.optString(1), json.optString(2), json.optString(3)));
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < json.length(); i++) sb.append(String.format("%s%3s", json.optString(i), " "));
+                autoPref.setSummary(sb.toString());
+
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
             }
+
         });
 
         // Preference for selecting a fuel out of gas, diesel, lpg and premium, which should be
@@ -228,7 +233,6 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon
-    //public Preference getProgImagePreference() {
     public Preference getUserImagePreference() {
         return userImagePref;
     }

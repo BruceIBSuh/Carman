@@ -27,6 +27,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.ProgbarDialogFragment;
+import com.silverback.carman2.fragments.SettingAutoFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -56,6 +57,7 @@ import java.util.Map;
  */
 public class SettingPreferenceActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
+        SettingAutoFragment.OnToolbarTitleListener, //when leaving SettingAutoFragment, reset the toolbar title
         CropImageDialogFragment.OnSelectImageMediumListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -78,6 +80,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private Map<String, Object> uploadData;
 
     // UIs
+    public Toolbar settingToolbar;
     private FrameLayout frameLayout;
 
     // Fields
@@ -100,13 +103,15 @@ public class SettingPreferenceActivity extends BaseActivity implements
         userId = getUserId();
         log.i("user id: %s", userId);
 
-        Toolbar settingToolbar = findViewById(R.id.toolbar_setting);
+        settingToolbar = findViewById(R.id.toolbar_setting);
         setSupportActionBar(settingToolbar);
         // Get a support ActionBar corresponding to this toolbar
         //ActionBar ab = getSupportActionBar();
         // Enable the Up button which enables it as an action button such that when the user presses
         // it, the parent activity receives a call to onOptionsItemSelected().
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
+
         frameLayout = findViewById(R.id.frame_setting);
 
         firestore = FirebaseFirestore.getInstance();
@@ -162,7 +167,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
     @Override
-    public void onBackPressed() {}
+    public void onBackPressed() {
+        log.i("onBackPressed");
+    }
 
 
     @Override
@@ -217,7 +224,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
         fragment.setArguments(args);
         fragment.setTargetFragment(caller, 0);
 
-        getSupportActionBar().setTitle(pref.getTitle());
+        // In case a preference calls PreferenceFragmentCompat and newly set the title again, it makes
+        // the activity toolbar title changed as well.
+        if(fragment instanceof SettingAutoFragment) {
+            getSupportActionBar().setTitle(getString(R.string.pref_fragment_auto_title));
+            ((SettingAutoFragment) fragment).addTitleListener(this);
+        }
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         getSupportFragmentManager().beginTransaction()
@@ -228,12 +240,18 @@ public class SettingPreferenceActivity extends BaseActivity implements
         return true;
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void notifyResetTitle() {
+        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
+    }
+
     // SharedPreferences.OnSharedPreferenceChangeListener invokes this callback method if and only if
     // any preference has changed.
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        switch(key) {
 
+        switch(key) {
             case Constants.USER_NAME:
                 userName = mSettings.getString(Constants.USER_NAME, null);
                 // Check first if the user id file exists. If so, set the user data or update the
@@ -246,8 +264,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 }
                 break;
 
-            case Constants.VEHICLE:
-                String jsonAutoData = mSettings.getString(Constants.VEHICLE, null);
+            case Constants.AUTO_DATA:
+                String jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
@@ -529,11 +547,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
         return null;
     }
 
-
-
-
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+
 }

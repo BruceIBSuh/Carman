@@ -177,15 +177,17 @@
     <string name="board_msg_delete">글이 삭제되었습니다</string>
 
     <!--SettingPreferenceActivity-->
-    <string name="setting_toolbar_title">차량정보/앱 설정</string>
+    <string name="setting_toolbar_title">기본 정보 및 앱 설정</string>
     <string name="setting_toolbar_menu_add">추가</string>
     <string name="setting_toolbar_menu_edit">편집</string>
     <string name="setting_msg_remove_image">이미지 삭제</string>
     <string name="setting_msg_upload_image">이미지 업로드</string>
     <!--SettingPreferenceActivity$SettingPreferenceFragment$preferences.xml-->
     <string name="pref_category_basic_info">차량 정보</string>
-    <string name="setting_nickname">차량 이름</string>
-    <string name="setting_model">차량 모델</string>
+    <string name="setting_nickname">사용자(차량) 이름</string>
+    <string name="pref_title_auto_data">차량 정보(브랜드, 타입, 모델명, 연식)</string>
+    <string name="pref_fragment_auto_title">차량 정보</string>
+    <string name="pref_entry_void">설정안함</string>
     <string name="pref_category_location">위치 관련</string>
     <string name="pref_location_radius">주유소 탐색 반경</string>
     <string name="pref_title_autoupdate">위치 자동 업데이트</string>

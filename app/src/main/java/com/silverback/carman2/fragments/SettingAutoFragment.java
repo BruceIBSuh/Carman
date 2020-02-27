@@ -31,6 +31,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     // Objects
     private SharedPreferences mSettings;
+    private OnToolbarTitleListener mToolbarListener;
     private FragmentSharedModel fragmentSharedModel;
     private ListPreference autoMaker, autoType, autoModel, autoYear;
     private List<String> yearList;
@@ -38,6 +39,16 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     // fields
     private String[] entries;
 
+    // Interface for reverting the actionbar title
+    public interface OnToolbarTitleListener {
+        void notifyResetTitle();
+    }
+
+    public void addTitleListener(OnToolbarTitleListener titleListener) {
+        mToolbarListener = titleListener;
+    }
+
+    // Constructor
     public SettingAutoFragment() {}
 
     @SuppressWarnings("ConstantConditions")
@@ -46,6 +57,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
+
 
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
@@ -56,13 +68,15 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         autoModel = findPreference(Constants.AUTO_MODEL);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
-        String[] type = {"Sedan", "SUV", "Mini Bus", "Cargo", "Bus"};
+        String[] type = { getString(R.string.pref_entry_void),"Sedan", "SUV", "Mini Bus", "Cargo", "Bus"};
         autoType.setEntries(type);
         autoType.setEntryValues(type);
 
         createYearEntries();
         autoYear.setEntries(entries);
         autoYear.setEntryValues(entries);
+
+        log.i("autoMaker value: %s, %s", autoMaker.getEntry(), autoMaker.getValue());
 
     }
 
@@ -73,9 +87,16 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
+            // Invalidate the summary of the parent preference transferring the changed data to
+            // as JSON string type.
             JSONArray autoData = new JSONArray(getAutoDataList());
-            mSettings.edit().putString(Constants.VEHICLE, autoData.toString()).apply();
+            mSettings.edit().putString(Constants.AUTO_DATA, autoData.toString()).apply();
             fragmentSharedModel.getJsonAutoData().setValue(autoData.toString());
+
+            // Revert the toolbar title when leaving this fragment b/c SettingPreferenceFragment and
+            // SettingAutoFragment share the toolbar under the same parent activity.
+            mToolbarListener.notifyResetTitle();
+
             return true;
         }
 
@@ -84,12 +105,14 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     private void createYearEntries() {
         int year = Calendar.getInstance().get(Calendar.YEAR);
+        yearList.add(0, "설정안함");
         for(int i = year; i >= (year - LONGEVITY); i--) yearList.add(String.valueOf(i));
         entries = yearList.toArray(new String[LONGEVITY]);
     }
 
     private  List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
+
         dataList.add(autoMaker.getSummary().toString());
         dataList.add(autoType.getSummary().toString());
         dataList.add(autoModel.getSummary().toString());

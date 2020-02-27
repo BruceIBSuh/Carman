@@ -11,8 +11,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.HorizontalScrollView;
 import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -29,7 +31,10 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
 
+import java.util.List;
+
 public class BoardActivity extends BaseActivity implements
+        CheckBox.OnCheckedChangeListener,
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener {
 
@@ -49,11 +54,16 @@ public class BoardActivity extends BaseActivity implements
     private TabLayout boardTabLayout;
     private HorizontalScrollView filterLayout;
     private ViewPager boardPager;
+    private BoardPagerAdapter pagerAdapter;
     private ProgressBar pbBoard;
     private ImageViewModel imageViewModel;
 
+    // UIs
+    private CheckBox cbAutoMaker, cbAutoType, cbAutoModel, cbAutoYear;
+
     // Fields
     private boolean isAutoClub;
+    private boolean[] autoclubValues;
     //private boolean isTabVisible;
 
     @SuppressWarnings("ConstantConditions")
@@ -71,24 +81,37 @@ public class BoardActivity extends BaseActivity implements
         boardTabLayout = findViewById(R.id.tab_board);
         filterLayout = findViewById(R.id.post_scroll_horizontal);
         pbBoard = findViewById(R.id.progbar_board);
-        CheckBox chkboxAutoMaker = findViewById(R.id.chkbox_filter_maker);
-        CheckBox chkboxAutoType = findViewById(R.id.chkbox_filter_type);
-        CheckBox chkboxAutoModel = findViewById(R.id.chkbox_filter_model);
-        CheckBox chkboxAutoYear = findViewById(R.id.chkbox_filter_year);
+        cbAutoMaker = findViewById(R.id.chkbox_filter_maker);
+        cbAutoType = findViewById(R.id.chkbox_filter_type);
+        cbAutoModel = findViewById(R.id.chkbox_filter_model);
+        cbAutoYear = findViewById(R.id.chkbox_filter_year);
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        BoardPagerAdapter pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
+        cbAutoMaker.setText(mSettings.getString(Constants.AUTO_MAKER, "AutoMaker"));
+        cbAutoType.setText(mSettings.getString(Constants.AUTO_TYPE, "AutoType"));
+        cbAutoModel.setText(mSettings.getString(Constants.AUTO_MODEL, "AutoModel"));
+        cbAutoYear.setText(mSettings.getString(Constants.AUTO_YEAR, "AutoYear"));
+
+        // CheckBox values as to auto data which shows in the filter layout for purposes of querying
+        // the posting items. The values should be transferred to the adapter which, in turn, passsed
+        // to the Auto Club page.
+        cbAutoMaker.setOnCheckedChangeListener(this);
+        cbAutoType.setOnCheckedChangeListener(this);
+        cbAutoModel.setOnCheckedChangeListener(this);
+        cbAutoModel.setOnCheckedChangeListener(this);
+
+        // Create FragmentStatePagerAdapter with the checkbox values attached as arugments
+        autoclubValues = new boolean[4];
+        pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
+        pagerAdapter.setCheckBoxValues(autoclubValues);
         boardPager.setAdapter(pagerAdapter);
         boardTabLayout.setupWithViewPager(boardPager);
 
-        chkboxAutoMaker.setText(mSettings.getString(Constants.AUTO_MAKER, null));
-        chkboxAutoType.setText(mSettings.getString(Constants.AUTO_TYPE, null));
-        chkboxAutoModel.setText(mSettings.getString(Constants.AUTO_MODEL, null));
-        chkboxAutoYear.setText(mSettings.getString(Constants.AUTO_YEAR, null));
+
 
         addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
@@ -107,6 +130,30 @@ public class BoardActivity extends BaseActivity implements
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode != RESULT_OK || data == null) return;
         imageViewModel.getUriFromImageChooser().setValue(data.getData());
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+        switch(buttonView.getId()) {
+            case R.id.chkbox_filter_maker:
+                autoclubValues[0] = cbAutoMaker.isChecked();
+                break;
+
+            case R.id.chkbox_filter_type:
+                autoclubValues[1] = cbAutoType.isChecked();
+                break;
+
+            case R.id.chkbox_filter_model:
+                autoclubValues[2] = cbAutoModel.isChecked();
+                break;
+
+            case R.id.chkbox_filter_year:
+                autoclubValues[3] = cbAutoYear.isChecked();
+                break;
+        }
+
+        pagerAdapter.setCheckBoxValues(autoclubValues);
     }
 
 
@@ -160,7 +207,10 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onPageSelected(int position) {
         log.i("ViewPager onPageSelected: %s", position);
-        if(position == PAGE_AUTOCLUB) isAutoClub = true;
+        // If the value of isAutoClub becomes true, the filter button shows up in the toolbar and
+        // pressing the button calls animSlideFilterLayout() to make the filter layout slide down,
+        // which is defined in onOptionsItemSelected()
+        if(position == Constants.BOARD_AUTOCLUB) isAutoClub = true;
         else {
             isAutoClub = false;
             animSlideFilterLayout();
@@ -170,7 +220,6 @@ public class BoardActivity extends BaseActivity implements
         // higher.
         invalidateOptionsMenu();
     }
-
     @Override
     public void onPageScrollStateChanged(int state) {}
 
@@ -189,9 +238,13 @@ public class BoardActivity extends BaseActivity implements
             }
         });
         slideTab.start();
-        //isTabVisible = !isTabVisible;
+
     }
 
+    // When BoardPagerFragment is set to page 2 indicating AutoClub, the filter layout that consists
+    // of the checkboxes to make the querying the board conditioned slides down to cover the tab
+    // menu by clicking the filter button. Clicking the button again or switching the page, it
+    // slides up.
     private void animSlideFilterLayout() {
         // Visibillity control
         //int visibility = (isAutoClub)? View.VISIBLE : View.INVISIBLE;
@@ -211,6 +264,7 @@ public class BoardActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
 
 
 }

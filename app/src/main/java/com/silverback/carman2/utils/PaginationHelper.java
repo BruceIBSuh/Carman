@@ -15,6 +15,8 @@ import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import org.json.JSONArray;
+
 /**
  * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
  * OnPaginationListener to have document snaoshots from FireStore.
@@ -52,23 +54,11 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-    public void setPostingQuery(Source source, int page, final String field) {
-        /*
-        this.field = field;
-        // Initate the first query
-        colRef = firestore.collection("board_general");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .get(source)
-                .addOnSuccessListener(querySnapshot -> {
-                    this.querySnapshot = querySnapshot;
-                    mListener.setFirstQuery(querySnapshot);
-                })
-                .addOnFailureListener(e -> log.e("Query failed"));
-
-         */
+    // Create queries for each page.
+    public void setPostingQuery(Source source, int page, boolean[] filter) {
         colRef = firestore.collection("board_general");
         switch(page) {
-            case 0: // Recent
+            case Constants.BOARD_RECENT: // Recent
                 this.field = "timestamp";
                 colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
@@ -79,7 +69,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                         .addOnFailureListener(Throwable::printStackTrace);
                 break;
 
-            case 1: // Popular
+            case Constants.BOARD_POPULAR: // Popular
                 this.field = "cnt_view";
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
@@ -90,11 +80,13 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                         .addOnFailureListener(Throwable::printStackTrace);
                 break;
 
-            case 2: // auto club
+            case Constants.BOARD_AUTOCLUB: // auto club
+                this.field = "post_filter";
+                if(filter != null) for(boolean b : filter) log.i("filter values: %s", b);
 
                 break;
 
-            case 3: // notification
+            case Constants.BOARD_NOTIFICATION: // notification
                 break;
         }
     }
