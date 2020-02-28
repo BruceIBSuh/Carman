@@ -27,12 +27,13 @@ public class Opinet  {
             this.districtName = districtName;
         }
 
+
         @NonNull
         @Override
         public String toString(){
-            return "districtCode: " + getDistrictCode()
-                    + "\ndistrictName: " + getDistrictName();
+            return "districtCode: " + getDistrictCode() + "\ndistrictName: " + getDistrictName();
         }
+
     }
 
     public static class OilPrice implements Serializable {

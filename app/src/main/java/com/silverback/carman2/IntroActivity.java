@@ -3,11 +3,14 @@ package com.silverback.carman2;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,9 +29,13 @@ import com.silverback.carman2.threads.ThreadManager;
 
 import org.json.JSONArray;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,6 +73,7 @@ public class IntroActivity extends BaseActivity  {
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
     private String[] defaultDistrict;
+    private AutoData autoData;
 
     // UI's
     private ProgressBar mProgBar;
@@ -87,6 +95,9 @@ public class IntroActivity extends BaseActivity  {
 
         ImageButton btnStart = findViewById(R.id.btn_start);
         btnStart.setOnClickListener(view -> {
+            // TEST CODING
+            doAutoDataFromFirestore();
+
             log.i("FirebaseAuth: %s", mAuth.getCurrentUser());
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
@@ -179,12 +190,6 @@ public class IntroActivity extends BaseActivity  {
     // retrieved from the Room database.
     private void regularInitProcess() {
         mProgBar.setVisibility(View.VISIBLE);
-
-        // TEST CODING: Retrieve the auto data from Firestore
-        doAutoDataFromFirestore();
-
-
-
         // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
         // As GasPriceTask completes, updated prices is notified as LiveData to OpinetViewModel.
         // distPriceComplete().
@@ -205,28 +210,96 @@ public class IntroActivity extends BaseActivity  {
 
     @SuppressWarnings("ConstantConditions")
     private void doAutoDataFromFirestore() {
-
+        List<AutoData> autoDataList = new ArrayList<>();
         final CollectionReference autoMakerRef = firestore.collection("autodata");
-        List<String> autoMakerList = new ArrayList<>();
-        List<String> autoModelList = new ArrayList<>();
 
         // Retrieve the auto makers
-        autoMakerRef.get().addOnCompleteListener(task -> {
-            if(task.isSuccessful()) {
-                for(QueryDocumentSnapshot automaker : task.getResult()) {
-                    log.i("AutoMaker: %s", automaker.getString("auto_maker_en"));
-                    autoMakerList.add(automaker.getString("auto_maker_ko"));
-                    automaker.getReference().collection("auto_model").get().addOnCompleteListener(model -> {
-                        if(model.isSuccessful()) {
-                            for(QueryDocumentSnapshot autoModel : model.getResult()) {
-                                log.i("AutoModel: %s", autoModel.getString("model_name_ko"));
-                                autoModelList.add(autoModel.getString("model_name_ko"));
+        autoMakerRef.get().addOnCompleteListener(makerTask -> {
+            if(makerTask.isSuccessful()) {
+                for(QueryDocumentSnapshot automaker : makerTask.getResult()) {
+                    final String company = automaker.getString("auto_maker");
+                    log.i("auto maker: %s", company);
+                    automaker.getReference().collection("auto_model").get().addOnCompleteListener(modelTask -> {
+                        if(modelTask.isSuccessful()) {
+                            for(QueryDocumentSnapshot autoModel : modelTask.getResult()) {
+                                final String modelName = autoModel.getString("model_name");
+                                log.i("model name: %s", modelName);
+                                // Make data be serializable and save it in the file.
+                                autoData = new AutoData(company, modelName, 0);
+                                autoData.setAutoMaker(company);
+                                autoData.setAutoModel(modelName);
+                                autoData.setAutoType(0);
                             }
                         }
+                    }).continueWithTask(continuation1 -> {
+                        log.i("contiuned Task 1");
+                        autoDataList.add(autoData);
+                        log.i("AutoData size: %s", autoDataList.size());
+                        return continuation1;
                     });
                 }
             }
+        }).continueWith(continuation2 -> {
+            log.i("continuedTask2");
+            File file = new File(getFilesDir(), Constants.FILE_AUTO_DATA);
+            try(FileOutputStream fos = new FileOutputStream(file);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                oos.writeObject(autoDataList);
+
+            } catch (FileNotFoundException e) {
+                log.e("FileNotFoundException: %s", e.getMessage());
+            } catch (IOException e) {
+                log.e("IOException: %s", e.getMessage());
+            }
+
+            return continuation2;
         });
+    }
+
+
+    // Serialize the auto data to save it in the file.
+    public class AutoData implements Serializable {
+
+        private String autoMaker;
+        private String autoModel;
+        private int autoType;
+
+        public AutoData(String maker, String model, int type) {
+            this.autoMaker = maker;
+            this.autoModel = model;
+            this.autoType = type;
+        }
+
+        public String getAutoMaker() {
+            return autoMaker;
+        }
+
+        public void setAutoMaker(String autoMaker) {
+            this.autoMaker = autoMaker;
+        }
+
+        public String getAutoModel() {
+            return autoModel;
+        }
+
+        public void setAutoModel(String autoModel) {
+            this.autoModel = autoModel;
+        }
+
+        public int getAutoType() {
+            return autoType;
+        }
+
+        public void setAutoType(int autoType) {
+            this.autoType = autoType;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            log.i("Auto Data: %s, %s", getAutoMaker(), getAutoModel());
+            return getAutoMaker() + getAutoModel();
+        }
 
     }
 

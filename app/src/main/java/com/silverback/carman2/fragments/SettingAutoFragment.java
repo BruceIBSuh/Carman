@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -9,18 +10,30 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -65,6 +78,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         yearList = new ArrayList<>();
+
+        List<IntroActivity.AutoData> autoDataList = getAutoData();
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
@@ -113,7 +128,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         entries = yearList.toArray(new String[LONGEVITY]);
     }
 
-    private  List<String> getAutoDataList() {
+    private List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
 
         dataList.add(autoMaker.getSummary().toString());
@@ -125,5 +140,26 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     }
 
+    @SuppressWarnings("unchecked")
+    private List<IntroActivity.AutoData> getAutoData() {
+
+        try (FileInputStream fis = new FileInputStream(Constants.FILE_AUTO_DATA);
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
+
+            ArrayList<IntroActivity.AutoData> dataSet = (ArrayList<IntroActivity.AutoData>)ois.readObject();
+            log.i("dataSet: %s", dataSet.size());
+            for (IntroActivity.AutoData data : dataSet) {
+                log.i("Auto Maker: %s", data.getAutoMaker());
+                log.i("Auto Model: %s", data.getAutoModel());
+            }
+
+            return dataSet;
+
+        } catch(ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
 }

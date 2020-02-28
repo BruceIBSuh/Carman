@@ -57,6 +57,7 @@ public class Constants {
     public static final String FILE_DISTRICT_CODE = "com.silverback.carman2.DIST_CODE";
     public static final String OPINET_LAST_UPDATE = "com.silverback.carman2.UPDATE";
     public static final String FILE_IMAGES = "com.silverback.carman2.fileprovider";
+    public static final String FILE_AUTO_DATA = "com.silverback.carman2.autodata";
 
 
     // SharedPreferences key name, which is the key name of each preference.xml
