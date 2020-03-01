@@ -41,7 +41,6 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
-
     @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
     LiveData<String> findFavoriteSvcName(String svcName, int category);
 

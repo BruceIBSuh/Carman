@@ -6,13 +6,13 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.SparseArray;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
 import com.silverback.carman2.models.ImageViewModel;
 import com.silverback.carman2.models.LocationViewModel;
@@ -22,7 +22,6 @@ import com.silverback.carman2.models.ServiceCenterViewModel;
 import com.silverback.carman2.models.SpinnerDistrictModel;
 import com.silverback.carman2.models.StationListViewModel;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -98,6 +97,7 @@ public class ThreadManager {
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
+    private final Queue<FirestoreResTask> mFirestoreResQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
@@ -132,6 +132,7 @@ public class ThreadManager {
 
         // Queues of tasks, which extends ThreadPool.
         mTaskWorkQueue = new LinkedBlockingQueue<>();
+        mFirestoreResQueue = new LinkedBlockingQueue<>();
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
@@ -244,6 +245,15 @@ public class ThreadManager {
         }
     }
 
+    public static FirestoreResTask startFirestoreResTask(Context context, FirestoreViewModel model) {
+        FirestoreResTask task = sInstance.mFirestoreResQueue.poll();
+
+        if(task == null) task = new FirestoreResTask(context);
+        task.initResourceTask(model);
+        sInstance.mDownloadThreadPool.execute(task.getFirestoreResRunnable());
+
+        return task;
+    }
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
@@ -460,7 +470,10 @@ public class ThreadManager {
 
     private void recycleTask(ThreadTask task) {
         log.i("RecycleTask: %s", task);
-        if(task instanceof LocationTask) {
+        if(task instanceof FirestoreResTask) {
+            ((FirestoreResTask)task).recycle();
+            mFirestoreResQueue.offer((FirestoreResTask)task);
+        } else if(task instanceof LocationTask) {
             ((LocationTask)task).recycle();
             mLocationTaskQueue.offer((LocationTask)task);
 

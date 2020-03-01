@@ -30,13 +30,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.TypedValue;
-import android.view.Menu;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
+import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -50,12 +55,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.preference.PreferenceManager;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -363,7 +362,6 @@ public class BaseActivity extends AppCompatActivity {
 
         return resId;
     }
-
 
     public static JSONArray getJsonServiceItemArray() {
         String jsonServiceItem =

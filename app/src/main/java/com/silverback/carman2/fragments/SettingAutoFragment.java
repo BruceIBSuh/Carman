@@ -79,7 +79,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         yearList = new ArrayList<>();
 
-        List<IntroActivity.AutoData> autoDataList = getAutoData();
+        //List<IntroActivity.AutoData> autoDataList = getAutoData();
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
@@ -140,6 +140,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     }
 
+    /*
     @SuppressWarnings("unchecked")
     private List<IntroActivity.AutoData> getAutoData() {
 
@@ -161,5 +162,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
         return null;
     }
+
+     */
 
 }
