@@ -96,16 +96,18 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
 
         // Set the initial entries and entryvalues
         String carMaker = mSettings.getString(Constants.AUTO_MAKER, null);
-        autoModel.setSummary(Constants.AUTO_MODEL);
         if(carMaker != null) setAutoModelEntries(carMaker);
-        /*
+        autoModel.setSummary(mSettings.getString(Constants.AUTO_MODEL, null));
+
         // For the autoModel preference summary depends on which automaker users select in the
         // autoMaker PreferenceChangeListener, SummaryProvider is set to false.
+        String model = mSettings.getString(Constants.AUTO_MODEL, null);
+
         autoModel.setOnPreferenceChangeListener((preference, value) -> {
-            //autoModel.setSummary((String)value);
+            autoModel.setSummary((String)value);
             return true;
         });
-        */
+
 
         String[] type = {"Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
         autoType.setEntries(type);

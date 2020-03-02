@@ -538,7 +538,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Get the user id
     private String getUserId() {
         try(FileInputStream fis = openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+            log.i("user id: %s", br.readLine());
             return br.readLine();
         } catch(IOException e) {
             e.printStackTrace();

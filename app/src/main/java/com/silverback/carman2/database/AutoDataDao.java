@@ -48,29 +48,4 @@ public abstract class AutoDataDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     public abstract void insertModel(AutoDataModelEntity entity);
 
-
-    public class AutoModels {
-
-        @ColumnInfo(name = "model_name")
-        String modelName;
-        @ColumnInfo(name = "auto_type")
-        String modelType;
-
-        public String getModelName() {
-            return modelName;
-        }
-
-        public void setModelName(String modelName) {
-            this.modelName = modelName;
-        }
-
-        public String getModelType() {
-            return modelType;
-        }
-
-        public void setModelType(String modelType) {
-            this.modelType = modelType;
-        }
-    }
-
 }
