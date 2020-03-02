@@ -2,20 +2,27 @@ package com.silverback.carman2.database;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.ForeignKey;
 import androidx.room.Ignore;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity
-public class AutoDataEntity {
+
+@Entity(foreignKeys = @ForeignKey(
+        entity = AutoDataMakerEntity.class, parentColumns = "_id", childColumns = "parent_id"),
+        indices = @Index("parent_id"))
+
+
+public class AutoDataModelEntity {
 
     @PrimaryKey(autoGenerate = true)
-    public int id;
+    public int model_id;
 
-    @ColumnInfo(name = "auto_maker")
-    public String autoMaker;
+    @ColumnInfo(name = "parent_id")
+    public int parentId;
 
-    @ColumnInfo(name = "auto_model")
-    public String autoModel;
+    @ColumnInfo(name = "model_name")
+    public String modelName;
 
     @ColumnInfo(name = "auto_type")
     public int autoType;
@@ -28,4 +35,3 @@ public class AutoDataEntity {
     @ColumnInfo(name = "fuel_type")
     public int fuelType;
 }
-

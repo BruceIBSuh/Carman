@@ -282,7 +282,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         });
 
         // Fetch the current address and split it for inputting sido and sigun name respectively into
-        // its TextViews which replace the Spinners. Using StringBuffer, insert the space between
+        // its TextViews which replace the Spinners. Using StringBuffer, insertMaker the space between
         // the remaining address names.
         locationModel.getAddress().observe(this, address -> {
             mAddress = address;

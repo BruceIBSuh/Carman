@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -10,52 +9,46 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.silverback.carman2.IntroActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.models.Opinet;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 
 
-public class SettingAutoFragment extends PreferenceFragmentCompat {
+public class SettingAutoFragment extends PreferenceFragmentCompat implements PreferenceChangeListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingAutoFragment.class);
+
     // Constants
     private static final int LONGEVITY = 20;
 
     // Objects
+    private CarmanDatabase mDB;
     private SharedPreferences mSettings;
     private OnToolbarTitleListener mToolbarListener;
     private FragmentSharedModel fragmentSharedModel;
     private ListPreference autoMaker, autoType, autoModel, autoYear;
     private List<String> yearList;
+    private List<String> autoModels;
 
     // fields
-    private String[] entries;
+    private String[] yearEntries;
 
-    // Interface for reverting the actionbar title
+
+
+    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
+    // be reset to the current tile.
     public interface OnToolbarTitleListener {
         void notifyResetTitle();
     }
@@ -75,24 +68,52 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
 
+        mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         yearList = new ArrayList<>();
 
         //List<IntroActivity.AutoData> autoDataList = getAutoData();
-
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
         autoModel = findPreference(Constants.AUTO_MODEL);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
-        String[] type = { getString(R.string.pref_entry_void),"Sedan", "SUV", "Mini Bus", "Cargo", "Bus"};
+        // Query the auto makers and set yearEntries(entryValues) to the autoMaker listpreference.
+        List<String> autoMakers = mDB.autoDataModel().getAutoMaker();
+        final int size = autoMakers.size();
+        autoMaker.setEntries(autoMakers.toArray(new CharSequence[size]));
+        autoMaker.setEntryValues(autoMakers.toArray(new CharSequence[size]));
+        // Re-query auto models with a newly selected auto maker and set them to the autoModel
+        // preference at the time that the auto model preference changes the value.
+        autoMaker.setOnPreferenceChangeListener((preference, value)-> {
+            // Re-query auto models each time
+            //autoModel.setSummary(getString(R.string.pref_entry_void));
+            autoModel.setSummary("다시 지정");
+            setAutoModelEntries((String)value);
+            return true;
+        });
+
+        // Set the initial entries and entryvalues
+        String carMaker = mSettings.getString(Constants.AUTO_MAKER, null);
+        autoModel.setSummary(Constants.AUTO_MODEL);
+        if(carMaker != null) setAutoModelEntries(carMaker);
+        /*
+        // For the autoModel preference summary depends on which automaker users select in the
+        // autoMaker PreferenceChangeListener, SummaryProvider is set to false.
+        autoModel.setOnPreferenceChangeListener((preference, value) -> {
+            //autoModel.setSummary((String)value);
+            return true;
+        });
+        */
+
+        String[] type = {"Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
         autoType.setEntries(type);
         autoType.setEntryValues(type);
 
         createYearEntries();
-        autoYear.setEntries(entries);
-        autoYear.setEntryValues(entries);
+        autoYear.setEntries(yearEntries);
+        autoYear.setEntryValues(yearEntries);
 
         log.i("autoMaker value: %s, %s", autoMaker.getEntry(), autoMaker.getValue());
 
@@ -121,11 +142,15 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         return false;
     }
 
+    @Override
+    public void preferenceChange(PreferenceChangeEvent evt) {
+
+    }
+
     private void createYearEntries() {
         int year = Calendar.getInstance().get(Calendar.YEAR);
-        yearList.add(0, "설정안함");
         for(int i = year; i >= (year - LONGEVITY); i--) yearList.add(String.valueOf(i));
-        entries = yearList.toArray(new String[LONGEVITY]);
+        yearEntries = yearList.toArray(new String[LONGEVITY]);
     }
 
     private List<String> getAutoDataList() {
@@ -138,6 +163,13 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
         return dataList;
 
+    }
+
+    private void setAutoModelEntries(String autoMaker) {
+        List<String> autoModels = mDB.autoDataModel().queryAutoModels(autoMaker);
+        final int modelSize = autoModels.size();
+        autoModel.setEntries(autoModels.toArray(new CharSequence[modelSize]));
+        autoModel.setEntryValues(autoModels.toArray(new CharSequence[modelSize]));
     }
 
     /*

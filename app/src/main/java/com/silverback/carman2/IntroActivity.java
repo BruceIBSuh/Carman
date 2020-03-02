@@ -16,7 +16,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.threads.FirestoreResTask;
+import com.silverback.carman2.threads.AutoDataResourceTask;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.DistrictCodeTask;
@@ -59,7 +59,7 @@ public class IntroActivity extends BaseActivity  {
     private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
     private GasPriceTask gasPriceTask;
-    private FirestoreResTask resTask;
+    private AutoDataResourceTask resTask;
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
     private FirestoreViewModel fireViewModel;
@@ -87,9 +87,6 @@ public class IntroActivity extends BaseActivity  {
         ImageButton btnStart = findViewById(R.id.btn_start);
         btnStart.setOnClickListener(view -> {
             mProgBar.setVisibility(View.VISIBLE);
-
-            // TEST CODING
-            resTask = ThreadManager.startFirestoreResTask(this, fireViewModel);
 
             log.i("FirebaseAuth: %s", mAuth.getCurrentUser());
             if(mAuth.getCurrentUser() == null) firstInitProcess();
@@ -127,7 +124,15 @@ public class IntroActivity extends BaseActivity  {
         });
 
         // Notified of having completed to download auto data resources and to save it in the file.
-        fireViewModel.getResTaskDone().observe(this, isCompete -> log.i("FirestoreResTask done"));
+        fireViewModel.getResTaskDone().observe(this, isCompete -> {
+            log.i("AutoDataResourceTask done");
+            /*
+            startActivity(new Intent(this, MainActivity.class));
+            mProgBar.setVisibility(View.GONE);
+            finish();
+
+             */
+        });
     }
 
     @Override
@@ -203,6 +208,10 @@ public class IntroActivity extends BaseActivity  {
             });
 
         } else {
+
+            // TEST CODING for retrieving the auto data from Firestore.
+            resTask = ThreadManager.startFirestoreResTask(this, fireViewModel);
+
             startActivity(new Intent(this, MainActivity.class));
             mProgBar.setVisibility(View.GONE);
             finish();

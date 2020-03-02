@@ -6,19 +6,19 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.models.FirestoreViewModel;
 
-public class FirestoreResTask extends ThreadTask implements FirestoreResRunnable.FirestoreResMethods {
+public class AutoDataResourceTask extends ThreadTask implements AutoDataResourceRunnable.FirestoreResMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(FirestoreResTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(AutoDataResourceTask.class);
 
     // Objects
     private FirestoreViewModel model;
     private Runnable mFirestoreResRunnable;
 
     // Constructor
-    FirestoreResTask(Context context){
+    AutoDataResourceTask(Context context){
         super();
-        mFirestoreResRunnable = new FirestoreResRunnable(context, this);
+        mFirestoreResRunnable = new AutoDataResourceRunnable(context, this);
 
     }
 
@@ -41,11 +41,11 @@ public class FirestoreResTask extends ThreadTask implements FirestoreResRunnable
     public void handleState(int state) {
         int outState = 0;
         switch(state) {
-            case FirestoreResRunnable.DOWNLOAD_COMPLETED:
+            case AutoDataResourceRunnable.DOWNLOAD_COMPLETED:
                 model.getResTaskDone().postValue(true);
                 break;
 
-            case FirestoreResRunnable.DOWNLAOD_FAILED:
+            case AutoDataResourceRunnable.DOWNLOAD_FAILED:
                 model.getResTaskDone().postValue(false);
                 break;
 

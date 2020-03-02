@@ -797,8 +797,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Feed the line separator rigth before and after the image span
         ImageSpan[] arrSpans = spannable.getSpans(0, spannable.length(), ImageSpan.class);
         for(ImageSpan span : arrSpans) {
-            spannable.insert(spannable.getSpanStart(span) - 1, "\n");
-            spannable.insert(spannable.getSpanEnd(span) + 1, "\n");
+            spannable.insertMaker(spannable.getSpanStart(span) - 1, "\n");
+            spannable.insertMaker(spannable.getSpanEnd(span) + 1, "\n");
         }
 
         return spannable;

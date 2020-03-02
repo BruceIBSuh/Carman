@@ -97,7 +97,7 @@ public class ThreadManager {
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
-    private final Queue<FirestoreResTask> mFirestoreResQueue;
+    private final Queue<AutoDataResourceTask> mFirestoreResQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
@@ -245,10 +245,10 @@ public class ThreadManager {
         }
     }
 
-    public static FirestoreResTask startFirestoreResTask(Context context, FirestoreViewModel model) {
-        FirestoreResTask task = sInstance.mFirestoreResQueue.poll();
+    public static AutoDataResourceTask startFirestoreResTask(Context context, FirestoreViewModel model) {
+        AutoDataResourceTask task = sInstance.mFirestoreResQueue.poll();
 
-        if(task == null) task = new FirestoreResTask(context);
+        if(task == null) task = new AutoDataResourceTask(context);
         task.initResourceTask(model);
         sInstance.mDownloadThreadPool.execute(task.getFirestoreResRunnable());
 
@@ -470,9 +470,9 @@ public class ThreadManager {
 
     private void recycleTask(ThreadTask task) {
         log.i("RecycleTask: %s", task);
-        if(task instanceof FirestoreResTask) {
-            ((FirestoreResTask)task).recycle();
-            mFirestoreResQueue.offer((FirestoreResTask)task);
+        if(task instanceof AutoDataResourceTask) {
+            ((AutoDataResourceTask)task).recycle();
+            mFirestoreResQueue.offer((AutoDataResourceTask)task);
         } else if(task instanceof LocationTask) {
             ((LocationTask)task).recycle();
             mLocationTaskQueue.offer((LocationTask)task);

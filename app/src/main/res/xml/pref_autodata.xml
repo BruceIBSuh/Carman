@@ -5,29 +5,22 @@
     <ListPreference
         app:key="carman_pref_auto_maker"
         app:title="AutoMaker"
-        app:entries="@array/pref_automaker"
-        app:entryValues="@array/pref_automaker"
-        app:defaultValue="@string/pref_entry_void"
         app:useSimpleSummaryProvider="true"/>
-
-    <ListPreference
-        app:key="carman_pref_auto_type"
-        app:title="Vehicle Type"
-        app:defaultValue="@string/pref_entry_void"
-        app:useSimpleSummaryProvider="true" />
 
     <ListPreference
         app:key="carman_pref_auto_model"
         app:title="Auto Model"
-        app:entries="@array/pref_automaker"
-        app:entryValues="@array/pref_automaker"
-        app:defaultValue="@string/pref_entry_void"
-        app:useSimpleSummaryProvider="true"/>
+        app:useSimpleSummaryProvider="false"/>
+
+    <ListPreference
+        app:key="carman_pref_auto_type"
+        app:title="Vehicle Type"
+        app:useSimpleSummaryProvider="true" />
+
 
     <ListPreference
         app:key="carman_pref_auto_year"
         app:title="Auto Manufacturing Year"
-        app:defaultValue="@string/pref_entry_void"
         app:useSimpleSummaryProvider="true"/>
 
 </PreferenceScreen>
