@@ -13,5 +13,9 @@ public class AutoDataMakerEntity {
 
     @ColumnInfo(name = "auto_maker")
     public String autoMaker;
+
+    @ColumnInfo(name = "auto_type")
+    public String autoType;
+
 }
 

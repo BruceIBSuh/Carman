@@ -59,7 +59,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
 
-        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext().getApplicationContext());
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         //ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);

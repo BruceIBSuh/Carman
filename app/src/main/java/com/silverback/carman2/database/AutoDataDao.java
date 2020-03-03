@@ -25,6 +25,13 @@ public abstract class AutoDataDao {
      * so as to return the class. This is an alternative to using foreign keys.
      */
 
+    @Query("SELECT COUNT(_id) FROM AutoDataMakerEntity")
+    public abstract int getAutoDataMakerNum();
+
+    @Query("SELECT COUNT(model_id) FROM AutoDataModelEntity")
+    public abstract int getAutoDataModelNum();
+
+
     // Query model_name with auto_maker as condtion making AutoDataMakerEntity and AutoDataModelEntity
     // inner joined.
     @Query("SELECT model_name FROM AutoDataModelEntity INNER JOIN AutoDataMakerEntity " +
@@ -34,8 +41,11 @@ public abstract class AutoDataDao {
 
 
     // DELETE All Data
-    @Query("DELETE  FROM AutoDataMakerEntity")
-    public abstract void deleteAllData();
+    @Query("DELETE FROM AutoDataModelEntity")
+    public abstract void deleteModelData();
+
+    @Query("DELETE FROM AutoDataMakerEntity")
+    public abstract void deleteMakerData();
 
     // Query all the auto makers
     @Query("SELECT auto_maker FROM AutoDataMakerEntity ORDER BY _id ASC")
@@ -43,7 +53,8 @@ public abstract class AutoDataDao {
 
     // INSERT
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    public abstract void insertMaker(AutoDataMakerEntity entity);
+    public abstract void insertAutoMaker(AutoDataMakerEntity entity);
+
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     public abstract void insertModel(AutoDataModelEntity entity);

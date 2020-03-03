@@ -5,7 +5,7 @@
     <ListPreference
         app:key="carman_pref_auto_maker"
         app:title="AutoMaker"
-        app:useSimpleSummaryProvider="true"/>
+        app:useSimpleSummaryProvider="false"/>
 
     <ListPreference
         app:key="carman_pref_auto_model"

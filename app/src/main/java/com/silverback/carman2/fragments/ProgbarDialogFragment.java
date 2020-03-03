@@ -35,9 +35,11 @@ public class ProgbarDialogFragment extends DialogFragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         childView = inflater.inflate(R.layout.dialog_progbar_general, container, false);
         tvMessage = childView.findViewById(R.id.tv_progbar_msg);
         tvMessage.setText(progressMsg);
+
         return childView;
     }
 
@@ -53,10 +55,5 @@ public class ProgbarDialogFragment extends DialogFragment {
     public void setProgressMsg(final String msg) {
         progressMsg = msg;
     }
-
-
-
-
-
 
 }

@@ -59,10 +59,10 @@ public class IntroActivity extends BaseActivity  {
     private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
     private GasPriceTask gasPriceTask;
-    private AutoDataResourceTask resTask;
+    private AutoDataResourceTask autoDataResourceTask;
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
-    private FirestoreViewModel fireViewModel;
+    private FirestoreViewModel firestoreViewModel;
     private String[] defaultDistrict;
 
     // UI's
@@ -78,7 +78,7 @@ public class IntroActivity extends BaseActivity  {
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(this);
         opinetViewModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        fireViewModel = new ViewModelProvider(this).get(FirestoreViewModel.class);
+        firestoreViewModel = new ViewModelProvider(this).get(FirestoreViewModel.class);
 
         mProgBar = findViewById(R.id.pb_intro);
         // On clicking the start button, fork the process into the first-time launching or the regular
@@ -87,7 +87,6 @@ public class IntroActivity extends BaseActivity  {
         ImageButton btnStart = findViewById(R.id.btn_start);
         btnStart.setOnClickListener(view -> {
             mProgBar.setVisibility(View.VISIBLE);
-
             log.i("FirebaseAuth: %s", mAuth.getCurrentUser());
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
@@ -103,14 +102,20 @@ public class IntroActivity extends BaseActivity  {
         opinetViewModel.distCodeComplete().observe(this, isComplete -> {
             try {
                 if (isComplete) {
-                    mProgBar.setVisibility(View.INVISIBLE);
-                    regularInitProcess();
-                } else {
-                    throw new FileNotFoundException();
-                }
+                    //mProgBar.setVisibility(View.INVISIBLE);
+                    autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
+                    //regularInitProcess();
+                } else throw new FileNotFoundException();
+
             } catch(FileNotFoundException e) {
                 log.e("District Code FileNotFoundException: %s", e.getMessage());
             }
+        });
+
+        // Notified of having completed to download auto data resources and to save it in the file.
+        firestoreViewModel.getAutoResourceTaskDone().observe(this, isDone -> {
+            mProgBar.setVisibility(View.INVISIBLE);
+            regularInitProcess();
         });
 
         // Notified of having each price of average, sido, sigun and the first placeholder of the
@@ -123,16 +128,6 @@ public class IntroActivity extends BaseActivity  {
             finish();
         });
 
-        // Notified of having completed to download auto data resources and to save it in the file.
-        fireViewModel.getResTaskDone().observe(this, isCompete -> {
-            log.i("AutoDataResourceTask done");
-            /*
-            startActivity(new Intent(this, MainActivity.class));
-            mProgBar.setVisibility(View.GONE);
-            finish();
-
-             */
-        });
     }
 
     @Override
@@ -140,7 +135,9 @@ public class IntroActivity extends BaseActivity  {
         super.onPause();
         if(distCodeTask != null) distCodeTask = null;
         if(gasPriceTask != null) gasPriceTask = null;
+        if(autoDataResourceTask != null) autoDataResourceTask = null;
     }
+
 
     // Invoked when and only when the application initiates to authenticate the user in Firebase.Auth.
     // On authentication, add the user to the collection named "users" with the user data temporarily
@@ -195,7 +192,7 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-        //mProgBar.setVisibility(View.VISIBLE);
+        mProgBar.setVisibility(View.VISIBLE);
         // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
         // As GasPriceTask completes, updated prices is notified as LiveData to OpinetViewModel.
         // distPriceComplete().
@@ -208,10 +205,6 @@ public class IntroActivity extends BaseActivity  {
             });
 
         } else {
-
-            // TEST CODING for retrieving the auto data from Firestore.
-            resTask = ThreadManager.startFirestoreResTask(this, fireViewModel);
-
             startActivity(new Intent(this, MainActivity.class));
             mProgBar.setVisibility(View.GONE);
             finish();

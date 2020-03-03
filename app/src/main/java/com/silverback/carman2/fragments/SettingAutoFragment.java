@@ -9,12 +9,17 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.models.FirestoreViewModel;
 import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.threads.AutoDataResourceTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
@@ -22,11 +27,9 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 
 
-public class SettingAutoFragment extends PreferenceFragmentCompat implements PreferenceChangeListener {
+public class SettingAutoFragment extends PreferenceFragmentCompat {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingAutoFragment.class);
 
@@ -34,6 +37,9 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
     private static final int LONGEVITY = 20;
 
     // Objects
+    private AutoDataResourceTask mTask;
+    private FirebaseFirestore firestore;
+    private CollectionReference autoRef;
     private CarmanDatabase mDB;
     private SharedPreferences mSettings;
     private OnToolbarTitleListener mToolbarListener;
@@ -44,7 +50,6 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
 
     // fields
     private String[] yearEntries;
-
 
 
     // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
@@ -59,7 +64,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
     }
 
     // Constructor
-    public SettingAutoFragment() {}
+    public SettingAutoFragment() {
+    }
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -84,27 +90,24 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
         final int size = autoMakers.size();
         autoMaker.setEntries(autoMakers.toArray(new CharSequence[size]));
         autoMaker.setEntryValues(autoMakers.toArray(new CharSequence[size]));
+
+        autoMaker.setSummary(autoMaker.getValue());
+        autoModel.setSummary(autoModel.getValue());
+
         // Re-query auto models with a newly selected auto maker and set them to the autoModel
         // preference at the time that the auto model preference changes the value.
         autoMaker.setOnPreferenceChangeListener((preference, value)-> {
             // Re-query auto models each time
-            //autoModel.setSummary(getString(R.string.pref_entry_void));
-            autoModel.setSummary("다시 지정");
+            autoMaker.setSummary(value.toString());
+            autoModel.setSummary(getString(R.string.pref_entry_void));
             setAutoModelEntries((String)value);
             return true;
         });
 
-        // Set the initial entries and entryvalues
-        String carMaker = mSettings.getString(Constants.AUTO_MAKER, null);
-        if(carMaker != null) setAutoModelEntries(carMaker);
-        autoModel.setSummary(mSettings.getString(Constants.AUTO_MODEL, null));
-
         // For the autoModel preference summary depends on which automaker users select in the
         // autoMaker PreferenceChangeListener, SummaryProvider is set to false.
-        String model = mSettings.getString(Constants.AUTO_MODEL, null);
-
         autoModel.setOnPreferenceChangeListener((preference, value) -> {
-            autoModel.setSummary((String)value);
+            autoModel.setSummary(value.toString());
             return true;
         });
 
@@ -121,6 +124,12 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
 
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(mTask != null) mTask = null;
+    }
+
     // To make the Up button working in Fragment, it is required to invoke sethasOptionsMenu(true)
     // and the return value should be true in onOptionsItemSelected(). The values of each preference
     // is translated to List<String>, then converted to JSONString for transferring the json string
@@ -130,6 +139,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
         if(item.getItemId() == android.R.id.home) {
             // Invalidate the summary of the parent preference transferring the changed data to
             // as JSON string type.
+
             JSONArray autoData = new JSONArray(getAutoDataList());
             mSettings.edit().putString(Constants.AUTO_DATA, autoData.toString()).apply();
             fragmentSharedModel.getJsonAutoData().setValue(autoData.toString());
@@ -144,16 +154,12 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
         return false;
     }
 
-    @Override
-    public void preferenceChange(PreferenceChangeEvent evt) {
-
-    }
-
     private void createYearEntries() {
         int year = Calendar.getInstance().get(Calendar.YEAR);
-        for(int i = year; i >= (year - LONGEVITY); i--) yearList.add(String.valueOf(i));
+        for (int i = year; i >= (year - LONGEVITY); i--) yearList.add(String.valueOf(i));
         yearEntries = yearList.toArray(new String[LONGEVITY]);
     }
+
 
     private List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
@@ -164,8 +170,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
         dataList.add(autoYear.getSummary().toString());
 
         return dataList;
-
     }
+
 
     private void setAutoModelEntries(String autoMaker) {
         List<String> autoModels = mDB.autoDataModel().queryAutoModels(autoMaker);
@@ -175,28 +181,37 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
     }
 
     /*
-    @SuppressWarnings("unchecked")
-    private List<IntroActivity.AutoData> getAutoData() {
+    @SuppressWarnings("ConstantConditions")
+    private void setAutoModelEntries(String autoMaker) {
 
-        try (FileInputStream fis = new FileInputStream(Constants.FILE_AUTO_DATA);
-             ObjectInputStream ois = new ObjectInputStream(fis)) {
+        autoRef.whereEqualTo("auto_maker_ko", autoMaker).get().continueWith(task -> {
+            if(task.isSuccessful()) return task.getResult();
+            else return task.getResult(IOException.class);
 
-            ArrayList<IntroActivity.AutoData> dataSet = (ArrayList<IntroActivity.AutoData>)ois.readObject();
-            log.i("dataSet: %s", dataSet.size());
-            for (IntroActivity.AutoData data : dataSet) {
-                log.i("Auto Maker: %s", data.getAutoMaker());
-                log.i("Auto Model: %s", data.getAutoModel());
+        }).addOnSuccessListener(queries -> {
+            List<String> modelList = new ArrayList<>();
+            int size = queries.size();
+            for(QueryDocumentSnapshot model : queries) {
+                model.getReference().collection("auto_model").get().continueWith(task -> {
+                    if(task.isSuccessful()) {
+                        for (DocumentSnapshot document : task.getResult()) {
+                            log.i("Auto Model: %s", document.getString("model_name"));
+                            modelList.add(document.getString("model_name"));
+                        }
+
+                        return task.getResult();
+
+                    } else return task.getResult(IOException.class);
+
+                }).addOnSuccessListener(task -> {
+                    autoModel.setEntries(modelList.toArray(new CharSequence[size]));
+                    autoModel.setEntryValues(modelList.toArray(new CharSequence[size]));
+                });
             }
 
-            return dataSet;
 
-        } catch(ClassNotFoundException | IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        });
     }
 
      */
-
 }

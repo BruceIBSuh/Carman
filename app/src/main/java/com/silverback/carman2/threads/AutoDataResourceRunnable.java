@@ -69,9 +69,10 @@ public class AutoDataResourceRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mCallback.setResourceThread(Thread.currentThread());
 
-        mDB.autoDataModel().deleteAllData();
-        autoMakerEntity = new AutoDataMakerEntity();
+        if(mDB.autoDataModel().getAutoDataModelNum() > 0) mDB.autoDataModel().deleteModelData();
+        if(mDB.autoDataModel().getAutoDataMakerNum() > 0) mDB.autoDataModel().deleteMakerData();
 
+        autoMakerEntity = new AutoDataMakerEntity();
         autoList = new ArrayList<>();
         final List<String> autoMakerList = new ArrayList<>();
         final CollectionReference autoDataRef = firestore.collection("autodata");
@@ -95,8 +96,9 @@ public class AutoDataResourceRunnable implements Runnable {
             for(QueryDocumentSnapshot automaker : task.getResult()) {
                 autoMakerEntity = new AutoDataMakerEntity();
                 autoMakerEntity._id = Integer.valueOf(automaker.getId());
-                autoMakerEntity.autoMaker = automaker.getString("auto_maker_ko");
-                mDB.autoDataModel().insertMaker(autoMakerEntity);
+                autoMakerEntity.autoMaker = automaker.getString("auto_maker");
+
+                mDB.autoDataModel().insertAutoMaker(autoMakerEntity);
                 autoMakerList.add(automaker.getString("auto_maker"));
             }
 
@@ -105,14 +107,12 @@ public class AutoDataResourceRunnable implements Runnable {
         }).addOnCompleteListener(automakerList -> {
             // Then, loop the list to query auto_model with each auto maker.
             for(String autoMaker : automakerList.getResult()) {
-
                 autoDataRef.whereEqualTo("auto_maker", autoMaker).get().continueWith(task -> {
                     // Query results with an auto_maker matched
                     for(QueryDocumentSnapshot doc : task.getResult()) {
                         doc.getReference().collection("auto_model").get().addOnSuccessListener(models -> {
                             for(QueryDocumentSnapshot model : models) {
                                 log.i("auto model: %s", model.getString("model_name"));
-                                final String modelName = doc.getString("model_name");
                                 /*
                                 autoData = new AutoData(autoMaker, doc.getString("model_name"), 0);
                                 autoData.setAutoMaker(autoMaker);
@@ -126,7 +126,6 @@ public class AutoDataResourceRunnable implements Runnable {
                                 autoModelEntity.parentId = Integer.valueOf(doc.getId());
                                 autoModelEntity.modelName = model.getString("model_name");
 
-                                log.i("Auto model: %s, %s, %s", doc.getString("auto_model"), model.getString("model_name"), Integer.valueOf(doc.getId()));
                                 // NullPointerException occrrued!!
                                 //autoModelEntity.autoType = doc.getLong("auto_type").intValue();
                                 mDB.autoDataModel().insertModel(autoModelEntity);

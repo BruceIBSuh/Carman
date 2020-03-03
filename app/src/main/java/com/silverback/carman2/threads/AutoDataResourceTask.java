@@ -42,11 +42,11 @@ public class AutoDataResourceTask extends ThreadTask implements AutoDataResource
         int outState = 0;
         switch(state) {
             case AutoDataResourceRunnable.DOWNLOAD_COMPLETED:
-                model.getResTaskDone().postValue(true);
+                model.getAutoResourceTaskDone().postValue(true);
                 break;
 
             case AutoDataResourceRunnable.DOWNLOAD_FAILED:
-                model.getResTaskDone().postValue(false);
+                model.getAutoResourceTaskDone().postValue(false);
                 break;
 
             default:break;
