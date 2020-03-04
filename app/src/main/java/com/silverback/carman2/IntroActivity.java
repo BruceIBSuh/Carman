@@ -3,6 +3,7 @@ package com.silverback.carman2;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -102,9 +103,9 @@ public class IntroActivity extends BaseActivity  {
         opinetViewModel.distCodeComplete().observe(this, isComplete -> {
             try {
                 if (isComplete) {
-                    //mProgBar.setVisibility(View.INVISIBLE);
-                    autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
-                    //regularInitProcess();
+                    mProgBar.setVisibility(View.INVISIBLE);
+                    //autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
+                    regularInitProcess();
                 } else throw new FileNotFoundException();
 
             } catch(FileNotFoundException e) {
@@ -113,10 +114,12 @@ public class IntroActivity extends BaseActivity  {
         });
 
         // Notified of having completed to download auto data resources and to save it in the file.
+        /*
         firestoreViewModel.getAutoResourceTaskDone().observe(this, isDone -> {
             mProgBar.setVisibility(View.INVISIBLE);
             regularInitProcess();
         });
+        */
 
         // Notified of having each price of average, sido, sigun and the first placeholder of the
         // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
@@ -156,12 +159,16 @@ public class IntroActivity extends BaseActivity  {
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
 
+                // The user id is determined with the documantation id of a user data document, not
+                // using the FirebaseAuth id for a sequrity reason.
                 firestore.collection("users").add(userData).addOnSuccessListener(docref -> {
-                    final String id = docref.getId();
-                    try (final FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
-                        fos.write(id.getBytes());
-                    } catch (IOException e) {
-                        log.e("IOException: %s", e.getMessage());
+                    final String userDocument = docref.getId();
+                    if(!TextUtils.isEmpty(userDocument)) {
+                        try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
+                            fos.write(userDocument.getBytes());
+                        } catch (IOException e) {
+                            log.e("IOException: %s", e.getMessage());
+                        }
                     }
                 }).addOnFailureListener(e -> log.e("Add user failed: %s", e.getMessage()));
 

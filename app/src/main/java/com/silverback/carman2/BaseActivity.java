@@ -46,6 +46,11 @@ import com.silverback.carman2.utils.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -66,6 +71,7 @@ public class BaseActivity extends AppCompatActivity {
     protected static final int REQUEST_PERMISSION_CAMERA = 1001;
 
     // Objects
+    protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
     protected ApplyImageResourceUtil applyImageResourceUtil;
@@ -83,6 +89,7 @@ public class BaseActivity extends AppCompatActivity {
         // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
         // android:screenOrientation is not allowed with Android O_MR1 +
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        userId = getUserIdFromStorage(this);
 
         // SharedPreferences
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
@@ -413,6 +420,29 @@ public class BaseActivity extends AppCompatActivity {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
+    }
+
+
+    // The document id with which user data is uploaded to Firestore is used as USER ID. The Firebase
+    // Auth id is not used for a security reason. Open and close file is so expensive that BaseActivity
+    // opens the file and assign it to "userId" variable which is inherited to other activities.
+    // Keep it in mind that the API 7 and above supports file-based encryption(FBE) and Android 10
+    // and higher, FBE is required such that the code should be refactored at some time.
+    public String getUserIdFromStorage(Context context) {
+        StringBuilder sb = new StringBuilder();
+        try (FileInputStream fis = context.openFileInput("userId");
+             InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
+             BufferedReader br = new BufferedReader(isr)) {
+            String line = br.readLine();
+            while(line != null) {
+                sb.append(line);
+                line = br.readLine();
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+        return sb.toString();
     }
 
     // Set the user image to the icon of MainActivity Toolbar and SettingPreferenceActivit with the

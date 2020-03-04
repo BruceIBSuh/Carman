@@ -30,8 +30,8 @@ public abstract class CarmanDatabase extends RoomDatabase {
     // Constructor as a Singleton type
     public static CarmanDatabase getDatabaseInstance(Context context) {
         if(INSTANCE == null) {
-                INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)
-            //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
+            //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)
+            INSTANCE = Room.databaseBuilder(context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
                     .allowMainThreadQueries()
                     .enableMultiInstanceInvalidation()
                     //.fallbackToDestructiveMigration()
