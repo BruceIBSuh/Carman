@@ -11,6 +11,7 @@ import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -84,7 +85,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private FrameLayout frameLayout;
 
     // Fields
-    private String userId;
+    //private String userId;
     private boolean isDistrictReset;
     private String distCode;
     private String userName;
@@ -99,9 +100,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_general_setting);
-
-        userId = getUserId();
-        log.i("user id: %s", userId);
 
         settingToolbar = findViewById(R.id.toolbar_setting);
         setSupportActionBar(settingToolbar);
@@ -120,6 +118,12 @@ public class SettingPreferenceActivity extends BaseActivity implements
         priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         uploadData = new HashMap<>();
+
+        if(TextUtils.isEmpty(userId)) {
+            userId = getUserIdFromStorage(this);
+            log.i("user id: %s", userId);
+        }
+
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
@@ -151,6 +155,17 @@ public class SettingPreferenceActivity extends BaseActivity implements
         });
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putString("userId", userId);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        userId = savedInstanceState.getString("userId");
+    }
 
     @Override
     public void onResume(){
@@ -183,7 +198,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         if(targetFragment instanceof SettingPreferenceFragment) {
             // Upload user data to Firebase
-            uploadUserData(uploadData);
+            uploadUserDataToFirebase(uploadData);
             // Create Intent back to MainActivity which contains extras to notify the activity of
             // which have been changed.
             Intent resultIntent = new Intent();
@@ -259,7 +274,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 if(userName != null) {
                     //Map<String, Object> data = new HashMap<>();
                     //data.put("user_name", userName);
-                    //uploadUserData(data);
+                    //uploadUserDataToFirebase(data);
                     uploadData.put("user_name", userName);
                 }
                 break;
@@ -271,7 +286,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
                     //Map<String, Object> autoData = new HashMap<>();
                     //autoData.put("auto_data", jsonAutoData);
-                    //uploadUserData(autoData);
+                    //uploadUserDataToFirebase(autoData);
                     uploadData.put("auto_data", jsonAutoData);
                 }
 
@@ -357,7 +372,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                         userImage = null;
 
                         // Delete the file in Firebase.
-                        uploadUserImage(null);
+                        uploadUserImageToFirebase(null);
                     }
                 }
 
@@ -423,7 +438,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 log.i("croppedImageUri: %s", croppedImageUri);
                 if(croppedImageUri != null) {
                     // Upload the cropped user image to Firestore with the user id fetched
-                    uploadUserImage(croppedImageUri);
+                    uploadUserImageToFirebase(croppedImageUri);
                 }
 
                 break;
@@ -431,7 +446,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     // Upload the data to Firestore.
-    private void uploadUserData(Map<String, Object> data) {
+    private void uploadUserDataToFirebase(Map<String, Object> data) {
         // Read the user id containing file which is saved in the internal storage.
         final DocumentReference docRef = firestore.collection("users").document(userId);
         docRef.set(data, SetOptions.merge())
@@ -445,7 +460,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     // At the same time, the new uri has to be uploaded in the documents written by the user.
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void uploadUserImage(Uri uri) {
+    private void uploadUserImageToFirebase(Uri uri) {
+        log.i("user id of Image upaloading: %s", userId);
         // Popup the progressbar displaying dialogfragment.
         ProgbarDialogFragment progbarFragment = new ProgbarDialogFragment();
         String msg = (uri == null)?
@@ -536,17 +552,23 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
     // Get the user id
-    private String getUserId() {
+    /*
+    private String getUserIdFromStorage() {
+
         try(FileInputStream fis = openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             log.i("user id: %s", br.readLine());
+            userId = br.readLine();
             return br.readLine();
+
         } catch(IOException e) {
             e.printStackTrace();
         }
 
         return null;
     }
+
+     */
 
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {

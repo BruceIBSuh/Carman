@@ -64,6 +64,7 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private Source source;
+    private ListenerRegistration postListener;
     private FragmentSharedModel sharedModel;
     private BoardPostingAdapter postingAdapter;
     private PaginationHelper pageHelper;
@@ -135,13 +136,13 @@ public class BoardPagerFragment extends Fragment implements
          * server.
          */
         CollectionReference postRef = firestore.collection("board_general");
-        ListenerRegistration postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
+        postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
                    Source.CACHE  : Source.SERVER ;
             log.i("Source: %s", source);
         });
-        postListener.remove();
+
 
         CollectionReference userRef = firestore.collection("users");
         ListenerRegistration userListener = userRef.addSnapshotListener((querySnapshot, e) -> {
@@ -210,6 +211,11 @@ public class BoardPagerFragment extends Fragment implements
         pageHelper.setPostingQuery(source, page, autoFilter);
 
         return localView;
+    }
+
+    public void onPause() {
+        super.onPause();
+        postListener.remove();
     }
 
 

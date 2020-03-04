@@ -77,10 +77,27 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
         Preference autoPref = findPreference(Constants.AUTO_DATA);
-        String autoMaker = mSettings.getString(Constants.AUTO_MAKER, null);
-        String autoModel = mSettings.getString(Constants.AUTO_MODEL, null);
-        String autoYear = mSettings.getString(Constants.AUTO_YEAR, null);
-        String autoType = mSettings.getString(Constants.AUTO_TYPE, null);
+        /*
+        try {
+            String aVoid = getString(R.string.pref_entry_void);
+            JSONArray autoData = new JSONArray(mSettings.getString(Constants.AUTO_DATA, aVoid));
+
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0; i < autoData.length(); i++) sb.append(autoData.optString(i)).append(" ");
+
+            autoPref.setSummary(sb.toString());
+
+        }catch(JSONException e) {
+            e.printStackTrace();
+        }
+
+         */
+
+        String aVoid = getString(R.string.pref_entry_void);
+        String autoMaker = mSettings.getString(Constants.AUTO_MAKER, aVoid);
+        String autoModel = mSettings.getString(Constants.AUTO_MODEL, aVoid);
+        String autoYear = mSettings.getString(Constants.AUTO_YEAR, aVoid);
+        String autoType = mSettings.getString(Constants.AUTO_TYPE, aVoid);
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
 
         // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
@@ -89,14 +106,14 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             try {
                 JSONArray json = new JSONArray(data);
                 StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < json.length(); i++) sb.append(String.format("%s%3s", json.optString(i), " "));
+                for(int i = 0; i < json.length(); i++) sb.append(json.optString(i)).append(" ");
                 autoPref.setSummary(sb.toString());
 
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
             }
-
         });
+
 
         // Preference for selecting a fuel out of gas, diesel, lpg and premium, which should be
         // improved with more energy source such as eletricity and hydrogene provided.
