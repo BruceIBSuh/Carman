@@ -69,6 +69,7 @@ public class AutoDataResourceRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mCallback.setResourceThread(Thread.currentThread());
 
+        // Delete all data from both entities for retrieving new one.
         if(mDB.autoDataModel().getAutoDataModelNum() > 0) mDB.autoDataModel().deleteModelData();
         if(mDB.autoDataModel().getAutoDataMakerNum() > 0) mDB.autoDataModel().deleteMakerData();
 
@@ -98,6 +99,7 @@ public class AutoDataResourceRunnable implements Runnable {
                 autoMakerEntity._id = Integer.valueOf(automaker.getId());
                 autoMakerEntity.autoMaker = automaker.getString("auto_maker");
 
+
                 mDB.autoDataModel().insertAutoMaker(autoMakerEntity);
                 autoMakerList.add(automaker.getString("auto_maker"));
             }
@@ -123,8 +125,13 @@ public class AutoDataResourceRunnable implements Runnable {
 
                                 // Insert the data into the DB.
                                 autoModelEntity = new AutoDataModelEntity();
-                                autoModelEntity.parentId = Integer.valueOf(doc.getId());
-                                autoModelEntity.modelName = model.getString("model_name");
+                                try {
+                                    autoModelEntity.parentId = Integer.valueOf(doc.getId());
+                                    autoModelEntity.modelName = model.getString("model_name");
+                                    autoModelEntity.autoType = model.getLong("auto_type").intValue();
+                                } catch(NullPointerException | IllegalArgumentException e) {
+                                    e.printStackTrace();
+                                }
 
                                 // NullPointerException occrrued!!
                                 //autoModelEntity.autoType = doc.getLong("auto_type").intValue();
@@ -143,8 +150,6 @@ public class AutoDataResourceRunnable implements Runnable {
                 });
             }
         });
-
-
     }
 
     // OPTION: Serialize the auto data and save it in the file.

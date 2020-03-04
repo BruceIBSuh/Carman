@@ -183,7 +183,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         if(targetFragment instanceof SettingPreferenceFragment) {
             // Upload user data to Firebase
-            uploadUserDataToFirebase(uploadData);
+            uploadUserData(uploadData);
             // Create Intent back to MainActivity which contains extras to notify the activity of
             // which have been changed.
             Intent resultIntent = new Intent();
@@ -259,7 +259,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 if(userName != null) {
                     //Map<String, Object> data = new HashMap<>();
                     //data.put("user_name", userName);
-                    //uploadUserDataToFirebase(data);
+                    //uploadUserData(data);
                     uploadData.put("user_name", userName);
                 }
                 break;
@@ -271,7 +271,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
                     //Map<String, Object> autoData = new HashMap<>();
                     //autoData.put("auto_data", jsonAutoData);
-                    //uploadUserDataToFirebase(autoData);
+                    //uploadUserData(autoData);
                     uploadData.put("auto_data", jsonAutoData);
                 }
 
@@ -357,7 +357,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                         userImage = null;
 
                         // Delete the file in Firebase.
-                        uploadUserImageToFirebase(null);
+                        uploadUserImage(null);
                     }
                 }
 
@@ -423,7 +423,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 log.i("croppedImageUri: %s", croppedImageUri);
                 if(croppedImageUri != null) {
                     // Upload the cropped user image to Firestore with the user id fetched
-                    uploadUserImageToFirebase(croppedImageUri);
+                    uploadUserImage(croppedImageUri);
                 }
 
                 break;
@@ -431,7 +431,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     // Upload the data to Firestore.
-    private void uploadUserDataToFirebase(Map<String, Object> data) {
+    private void uploadUserData(Map<String, Object> data) {
         // Read the user id containing file which is saved in the internal storage.
         final DocumentReference docRef = firestore.collection("users").document(userId);
         docRef.set(data, SetOptions.merge())
@@ -445,7 +445,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     // At the same time, the new uri has to be uploaded in the documents written by the user.
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void uploadUserImageToFirebase(Uri uri) {
+    private void uploadUserImage(Uri uri) {
         // Popup the progressbar displaying dialogfragment.
         ProgbarDialogFragment progbarFragment = new ProgbarDialogFragment();
         String msg = (uri == null)?

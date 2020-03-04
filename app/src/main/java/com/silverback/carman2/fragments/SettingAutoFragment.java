@@ -9,8 +9,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.database.CarmanDatabase;
@@ -85,6 +88,27 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         autoModel = findPreference(Constants.AUTO_MODEL);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
+
+        firestore = FirebaseFirestore.getInstance();
+        firestore.collection("autodata").get().addOnSuccessListener(querySnapshot -> {
+            List<String> automakers = new ArrayList<>();
+            for(QueryDocumentSnapshot snapshot : querySnapshot) {
+                automakers.add(snapshot.getString("auto_maker"));
+            }
+            autoMaker.setEntries(automakers.toArray(new CharSequence[querySnapshot.size()]));
+            autoMaker.setEntryValues(automakers.toArray(new CharSequence[querySnapshot.size()]));
+            autoModel.setEntries(null);
+        });
+
+        autoMaker.setOnPreferenceChangeListener((preference, value)-> {
+            // Re-query auto models each time
+            autoMaker.setSummary(value.toString());
+            autoModel.setSummary(getString(R.string.pref_entry_void));
+
+            return true;
+        });
+
+        /*
         // Query the auto makers and set yearEntries(entryValues) to the autoMaker listpreference.
         List<String> autoMakers = mDB.autoDataModel().getAutoMaker();
         final int size = autoMakers.size();
@@ -110,7 +134,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
             autoModel.setSummary(value.toString());
             return true;
         });
-
+        */
 
         String[] type = {"Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
         autoType.setEntries(type);

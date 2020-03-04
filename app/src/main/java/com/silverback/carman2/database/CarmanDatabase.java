@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase;
         ServiceManagerEntity.class,
         ServicedItemEntity.class,
         FavoriteProviderEntity.class},
-        version = 1, exportSchema = false)
+        version = 2, exportSchema = false)
 
 public abstract class CarmanDatabase extends RoomDatabase {
 
@@ -30,8 +30,8 @@ public abstract class CarmanDatabase extends RoomDatabase {
     // Constructor as a Singleton type
     public static CarmanDatabase getDatabaseInstance(Context context) {
         if(INSTANCE == null) {
-                INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)
-            //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
+            //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)
+            INSTANCE = Room.databaseBuilder(context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
                     .allowMainThreadQueries()
                     .enableMultiInstanceInvalidation()
                     //.fallbackToDestructiveMigration()

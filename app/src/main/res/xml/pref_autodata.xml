@@ -8,14 +8,14 @@
         app:useSimpleSummaryProvider="false"/>
 
     <ListPreference
-        app:key="carman_pref_auto_model"
-        app:title="Auto Model"
-        app:useSimpleSummaryProvider="false"/>
-
-    <ListPreference
         app:key="carman_pref_auto_type"
         app:title="Vehicle Type"
         app:useSimpleSummaryProvider="true" />
+
+    <ListPreference
+        app:key="carman_pref_auto_model"
+        app:title="Auto Model"
+        app:useSimpleSummaryProvider="false"/>
 
 
     <ListPreference

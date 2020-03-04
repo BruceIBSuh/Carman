@@ -102,9 +102,9 @@ public class IntroActivity extends BaseActivity  {
         opinetViewModel.distCodeComplete().observe(this, isComplete -> {
             try {
                 if (isComplete) {
-                    //mProgBar.setVisibility(View.INVISIBLE);
-                    autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
-                    //regularInitProcess();
+                    mProgBar.setVisibility(View.INVISIBLE);
+                    //autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
+                    regularInitProcess();
                 } else throw new FileNotFoundException();
 
             } catch(FileNotFoundException e) {
@@ -113,10 +113,13 @@ public class IntroActivity extends BaseActivity  {
         });
 
         // Notified of having completed to download auto data resources and to save it in the file.
+        /*
         firestoreViewModel.getAutoResourceTaskDone().observe(this, isDone -> {
             mProgBar.setVisibility(View.INVISIBLE);
             regularInitProcess();
         });
+
+         */
 
         // Notified of having each price of average, sido, sigun and the first placeholder of the
         // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
