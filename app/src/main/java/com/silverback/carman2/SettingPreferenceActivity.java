@@ -41,10 +41,6 @@ import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -243,7 +239,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // the activity toolbar title changed as well.
         if(fragment instanceof SettingAutoFragment) {
             getSupportActionBar().setTitle(getString(R.string.pref_fragment_auto_title));
-            ((SettingAutoFragment) fragment).addTitleListener(this);
+            ((SettingAutoFragment) fragment).setTitleListener(this);
         }
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 

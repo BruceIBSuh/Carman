@@ -89,8 +89,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
             try {
                 JSONArray json = new JSONArray(data);
                 StringBuilder sb = new StringBuilder();
-                String blank = String.format("%-5s", "");
-                for(int i = 0; i < json.length(); i++) sb.append(json.optString(i)).append(blank);
+                for(int i = 0; i < json.length(); i++) sb.append(json.optString(i)).append(" ");
                 autoPref.setSummary(sb.toString());
 
             } catch(JSONException e) {
