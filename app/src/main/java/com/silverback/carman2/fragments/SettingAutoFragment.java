@@ -54,8 +54,6 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     private Source source;
     private ListenerRegistration autoListener;
     private CollectionReference autoRef;
-    private Task<QuerySnapshot> autoMakerTask;
-    private QueryDocumentSnapshot autoMakerSnapshot;
     private FragmentSharedModel fragmentSharedModel;
     private SharedPreferences mSettings;
     private OnToolbarTitleListener mToolbarListener;
@@ -158,7 +156,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         autoMaker.setOnPreferenceChangeListener((preference, maker)-> {
             log.i("source and value: %s, %s", source, autoMaker.getValue());
             // TEST CODING: pay attention to the position which is ahead of setSummary()
-            setRegistrationNumber(autoMaker, mAutoMaker);
+            decPrevRegNumber(autoMaker, mAutoMaker);
 
             mAutoMaker = maker.toString();
             setAutoModelEntries(mAutoMaker, -1);
@@ -298,11 +296,15 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         autoRef.whereEqualTo("auto_maker", mAutoMaker).get(source).addOnSuccessListener(queries -> {
             for(QueryDocumentSnapshot snapshot : queries) {
                 if(snapshot.exists()) {
-                    //autoMakerSnapshot = snapshot;
                     log.i("AutoMaker snapshot: %s", snapshot);
                     switch(pref.getKey()) {
+
                         case Constants.AUTO_MAKER:
-                            mRegNumber = snapshot.getLong("reg_number").intValue();
+                            snapshot.getReference().update("reg_number", FieldValue.increment(1));
+                            mRegNumber = snapshot.getLong("reg_number").intValue() + 1;
+                            log.i("mRegNumber: %s", mRegNumber);
+                            pref.setSummary(String.format("%s (%s)", value, mRegNumber));
+
                             break;
 
                         case Constants.AUTO_TYPE:
@@ -319,6 +321,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
                                         break;
                                     }
                                 }
+                                pref.setSummary(String.format("%s (%s)", value, mRegNumber));
                             }).addOnFailureListener(Throwable::printStackTrace);
 
                             break;
@@ -330,14 +333,16 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
                     break;
                 }
+
+
             }
         }).addOnFailureListener(Throwable::printStackTrace);
 
-        String result = String.format("%s%10s%s", value, getString(R.string.pref_auto_reg), mRegNumber);
+        String result = String.format("%s (%s)", value, String.valueOf(mRegNumber));
         pref.setSummary(result);
     }
 
-    private void setRegistrationNumber(Preference pref, String value) {
+    private void decPrevRegNumber(Preference pref, String value) {
         Query prevQuery = autoRef.whereEqualTo("auto_maker", autoMaker.getValue());
         Query currentQuery = autoRef.whereEqualTo("auto_maker", mAutoMaker);
 

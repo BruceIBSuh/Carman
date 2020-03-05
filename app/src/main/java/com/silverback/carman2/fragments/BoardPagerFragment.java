@@ -349,7 +349,7 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
-    // Get the user id and query the "viewers" collection to check if the user id exists in the
+    // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
     // documents, which means whether the user has read the post before. If so, do not increase
     // the view count. Otherwise, add the user id to the "viewers" collection and increase the
     // view count;
