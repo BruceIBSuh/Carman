@@ -77,36 +77,20 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
         Preference autoPref = findPreference(Constants.AUTO_DATA);
-        /*
-        try {
-            String aVoid = getString(R.string.pref_entry_void);
-            JSONArray autoData = new JSONArray(mSettings.getString(Constants.AUTO_DATA, aVoid));
-
-            StringBuilder sb = new StringBuilder();
-            for(int i = 0; i < autoData.length(); i++) sb.append(autoData.optString(i)).append(" ");
-
-            autoPref.setSummary(sb.toString());
-
-        }catch(JSONException e) {
-            e.printStackTrace();
-        }
-
-         */
-
         String aVoid = getString(R.string.pref_entry_void);
         String autoMaker = mSettings.getString(Constants.AUTO_MAKER, aVoid);
         String autoModel = mSettings.getString(Constants.AUTO_MODEL, aVoid);
         String autoYear = mSettings.getString(Constants.AUTO_YEAR, aVoid);
         String autoType = mSettings.getString(Constants.AUTO_TYPE, aVoid);
         autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
-
         // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
         // summary simultaneously.
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
                 JSONArray json = new JSONArray(data);
                 StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < json.length(); i++) sb.append(json.optString(i)).append(" ");
+                String blank = String.format("%-5s", "");
+                for(int i = 0; i < json.length(); i++) sb.append(json.optString(i)).append(blank);
                 autoPref.setSummary(sb.toString());
 
             } catch(JSONException e) {

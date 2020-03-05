@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 
 /**
  * This fragment is a split screen PreferenceFragmentCompat which may display multiple preferences
@@ -51,9 +53,11 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     private static final int LONGEVITY = 20;
 
     // Objects
+    private FirebaseFirestore firestore;
     private Source source;
     private ListenerRegistration autoListener;
     private CollectionReference autoRef;
+    private QueryDocumentSnapshot autoSnapshot;
     private FragmentSharedModel fragmentSharedModel;
     private SharedPreferences mSettings;
     private OnToolbarTitleListener mToolbarListener;
@@ -65,6 +69,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
     private String mAutoMaker;
     private int mRegNumber;
     private String[] mYearEntries;
+
+
 
 
     // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
@@ -94,13 +100,14 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         autoModel = findPreference(Constants.AUTO_MODEL);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         yearList = new ArrayList<>();
 
-        // Define CollectionReference of the auto data and attach the listener to it, which
-        // indicates.
+        // Attach the sanpshot listener to the basic collection, which initially downloades all
+        // the auto data from Firestore, then manage the data with Firestore cache framework
+        // once the listener is removed.
         autoRef = firestore.collection("autodata");
         autoListener = autoRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
@@ -109,13 +116,6 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
             log.i("Source: %s", source);
         });
 
-        String[] arrAutoType = {"No Type", "Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
-        autoType.setEntries(arrAutoType);
-        autoType.setEntryValues(arrAutoType);
-
-        createYearEntries();
-        autoYear.setEntries(mYearEntries);
-        autoYear.setEntryValues(mYearEntries);
 
         // Set the default summary and register number of the auto maker.
         setSummaryWithRegNumber(autoMaker, mSettings.getString(Constants.AUTO_MAKER, null));
@@ -136,6 +136,16 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         });
 
 
+        // Set the entries(values) to the auto type preference.
+        String[] arrAutoType = {"No Type", "Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
+        autoType.setEntries(arrAutoType);
+        autoType.setEntryValues(arrAutoType);
+
+        // Set the entries(values) to the auto year preference dynamically.
+        createYearEntries();
+        autoYear.setEntries(mYearEntries);
+        autoYear.setEntryValues(mYearEntries);
+
         // Initial sets for querying auto models with auto maker and auto type. As far as either of the fields
         // has the value, query auto models. Otherwise, the auto model preference is set to be
         // disabled.
@@ -155,16 +165,15 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         // the number of the previous auto maker, which can be retrieved by getValue();
         autoMaker.setOnPreferenceChangeListener((preference, maker)-> {
             log.i("source and value: %s, %s", source, autoMaker.getValue());
-            // TEST CODING: pay attention to the position which is ahead of setSummary()
-            decPrevRegNumber(autoMaker, mAutoMaker);
-
             mAutoMaker = maker.toString();
             setAutoModelEntries(mAutoMaker, -1);
             setSummaryWithRegNumber(autoMaker, maker.toString());
 
 
-
+            // Revert model and type preference to the void state when the auto maker preference
+            // has chagned.
             autoModel.setSummary(getString(R.string.pref_entry_void));
+            autoType.setSummary(getString(R.string.pref_entry_void));
 
             return true;
         });
@@ -172,6 +181,9 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         autoType.setOnPreferenceChangeListener((preference, type) -> {
             int typeNumber = autoType.findIndexOfValue(type.toString());
             setAutoModelEntries(mAutoMaker, typeNumber);
+            setSummaryWithRegNumber(autoType, type.toString());
+
+            // Revert the auto model preference when the auto type preference has changed.
             autoModel.setSummary(getString(R.string.pref_entry_void));
 
             return true;
@@ -188,6 +200,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
         super.onPause();
         autoListener.remove();
     }
+
 
     // To make the Up button working in Fragment, it is required to invoke sethasOptionsMenu(true)
     // and the return value should be true in onOptionsItemSelected(). The values of each preference
@@ -284,83 +297,65 @@ public class SettingAutoFragment extends PreferenceFragmentCompat {
 
 
     @SuppressWarnings("ConstantConditions")
-    private void setSummaryWithRegNumber(Preference pref, final String value) throws NullPointerException {
-
+    private void setSummaryWithRegNumber(Preference pref, final String value)  {
+        log.i("setSummaryWithRegNumber: %s, %s", pref, value);
         if(TextUtils.isEmpty(value)) {
             pref.setSummary(getString(R.string.pref_entry_void));
             return;
         }
 
-        // Instantiate the task which queries the auto maker with a value of the auto maker preference.
-        // As far as the task is successful,
-        autoRef.whereEqualTo("auto_maker", mAutoMaker).get(source).addOnSuccessListener(queries -> {
-            for(QueryDocumentSnapshot snapshot : queries) {
-                if(snapshot.exists()) {
-                    log.i("AutoMaker snapshot: %s", snapshot);
-                    switch(pref.getKey()) {
-
-                        case Constants.AUTO_MAKER:
-                            snapshot.getReference().update("reg_number", FieldValue.increment(1));
-                            mRegNumber = snapshot.getLong("reg_number").intValue() + 1;
-                            log.i("mRegNumber: %s", mRegNumber);
+        switch(pref.getKey()) {
+            case Constants.AUTO_MAKER:
+                log.i("Source: %s", source);
+                autoRef.whereEqualTo("auto_maker", value).get().addOnSuccessListener(makerQuery -> {
+                    for(QueryDocumentSnapshot makerShot : makerQuery) {
+                        if(makerShot.exists()) {
+                            makerShot.getReference().update("reg_number", FieldValue.increment(1));
+                            mRegNumber = makerShot.getLong("reg_number").intValue();
                             pref.setSummary(String.format("%s (%s)", value, mRegNumber));
 
                             break;
 
-                        case Constants.AUTO_TYPE:
-                            CollectionReference typeRef = snapshot.getReference().collection("auto_model");
-
-                            break;
-
-                        case Constants.AUTO_MODEL:
-                            CollectionReference modelRef = snapshot.getReference().collection("auto_model");
-                            modelRef.whereEqualTo("model_name", value).get(source).addOnSuccessListener(models -> {
-                                for(QueryDocumentSnapshot doc : models) {
-                                    if(doc.exists()) {
-                                        mRegNumber = doc.getLong("reg_number").intValue();
-                                        break;
-                                    }
-                                }
-                                pref.setSummary(String.format("%s (%s)", value, mRegNumber));
-                            }).addOnFailureListener(Throwable::printStackTrace);
-
-                            break;
-
-                        case Constants.AUTO_YEAR:
-                            log.i("Auto year");
-                            break;
+                        }
                     }
+                });
 
-                    break;
-                }
+                break;
+
+            case Constants.AUTO_TYPE:
+                pref.setSummary(value);
+                break;
+
+            case Constants.AUTO_MODEL:
+                log.i("Source: %s", source);
+                autoRef.whereEqualTo("auto_maker", mAutoMaker).get().addOnSuccessListener(makerQuery -> {
+                   for(QueryDocumentSnapshot makershot : makerQuery) {
+                       if(makershot.exists()) {
+                           makershot.getReference().collection("auto_model").whereEqualTo("model_name", value)
+                                   .get(source).addOnSuccessListener(modelquery -> {
+                                       for(QueryDocumentSnapshot modelshot : modelquery) {
+                                           if(modelshot.exists()) {
+                                               modelshot.getReference().update("reg_number", FieldValue.increment(1));
+                                               mRegNumber = modelshot.getLong("reg_number").intValue();
+                                               pref.setSummary(String.format("%s (%s)", value, mRegNumber));
+
+                                               break;
+                                           }
+                                       }
+                           });
+
+                           break;
+                       }
+                   }
+                });
 
 
-            }
-        }).addOnFailureListener(Throwable::printStackTrace);
+                break;
 
-        String result = String.format("%s (%s)", value, String.valueOf(mRegNumber));
-        pref.setSummary(result);
-    }
-
-    private void decPrevRegNumber(Preference pref, String value) {
-        Query prevQuery = autoRef.whereEqualTo("auto_maker", autoMaker.getValue());
-        Query currentQuery = autoRef.whereEqualTo("auto_maker", mAutoMaker);
-
-        currentQuery.get(source).addOnSuccessListener(queries -> {
-            for(QueryDocumentSnapshot snapshot : queries) {
-                if(snapshot.exists()) {
-                    switch(pref.getKey()) {
-                        case Constants.AUTO_MAKER:
-                            log.i("values: %s", snapshot.getString("auto_data"));
-                            snapshot.getReference().update("reg_number", FieldValue.increment(1));
-                            break;
-
-                        case Constants.AUTO_TYPE:
-                            break;
-                    }
-                }
-            }
-        });
+            case Constants.AUTO_YEAR:
+                pref.setSummary(value);
+                break;
+        }
     }
 
 }
