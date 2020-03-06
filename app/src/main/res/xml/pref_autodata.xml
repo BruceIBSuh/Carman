@@ -10,11 +10,13 @@
     <ListPreference
         app:key="carman_pref_auto_type"
         app:title="@string/pref_auto_type"
+        app:summary="@string/pref_entry_void"
         app:useSimpleSummaryProvider="false" />
 
     <ListPreference
         app:key="carman_pref_auto_model"
         app:title="@string/pref_auto_model"
+        app:summary="@string/pref_entry_void"
         app:dependency="carman_pref_auto_maker"
         app:useSimpleSummaryProvider="false"/>
 
