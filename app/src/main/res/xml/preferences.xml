@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto" >
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
         app:title="@string/pref_category_basic_info"
@@ -16,7 +16,11 @@
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingAutoFragment"
             app:key="carman_pref_auto"
-            app:title="@string/pref_title_auto_data" />
+            app:title="@string/pref_title_auto_data" >
+            <intent
+                android:targetPackage="com.silverback.carman2.fragments"
+                android:targetClass="com.silverback.carman2.fragments.SettingPreferenceFragment" />
+        </Preference>
 
         <ListPreference
             app:title="연료"

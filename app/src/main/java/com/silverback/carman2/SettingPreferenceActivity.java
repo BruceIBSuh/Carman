@@ -154,13 +154,13 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putString("userId", userId);
+        savedInstanceState.putString("userId", userId);//doubtful!!!
     }
 
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        userId = savedInstanceState.getString("userId");
+        userId = savedInstanceState.getString("userId");//doubtful!!!
     }
 
     @Override
@@ -220,8 +220,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     /*
-     * Invoked when a preference with an associated (dialog)fragment is tabbed. If you do not implement
-     * onPreferenceStartFragment(), a fallback implementation is used instead. While this works
+     * Invoked when a preference which has an associated (dialog)fragment is tapped. If you do not
+     * implement onPreferenceStartFragment(), a fallback implementation is used instead. While this works
      * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
      * transitions b/w Fragment objects and update the title in the toolbar, if applicable.
      */
@@ -241,8 +241,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
             getSupportActionBar().setTitle(getString(R.string.pref_fragment_auto_title));
             ((SettingAutoFragment) fragment).setTitleListener(this);
         }
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)
                 .addToBackStack(null)

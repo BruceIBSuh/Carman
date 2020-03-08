@@ -1,11 +1,15 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
@@ -14,7 +18,13 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -30,6 +40,8 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+
+import java.io.IOException;
 
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
@@ -58,7 +70,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
-
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
@@ -77,21 +89,22 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
         Preference autoPref = findPreference(Constants.AUTO_DATA);
+        StringBuilder sb = new StringBuilder();
         String aVoid = getString(R.string.pref_entry_void);
-        String autoMaker = mSettings.getString(Constants.AUTO_MAKER, aVoid);
-        String autoModel = mSettings.getString(Constants.AUTO_MODEL, aVoid);
-        String autoYear = mSettings.getString(Constants.AUTO_YEAR, aVoid);
-        String autoType = mSettings.getString(Constants.AUTO_TYPE, aVoid);
-        autoPref.setSummary(String.format("%s, %s, %s, %s", autoMaker, autoType, autoModel, autoYear));
+        sb.append(mSettings.getString(Constants.AUTO_MAKER, null)).append(" ");
+        sb.append(mSettings.getString(Constants.AUTO_MODEL, aVoid)).append(" ");
+        sb.append(mSettings.getString(Constants.AUTO_TYPE, aVoid)).append(" ");
+        sb.append(mSettings.getString(Constants.AUTO_YEAR, aVoid));
+        autoPref.setSummary(sb.toString());
+
+
         // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
         // summary simultaneously.
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
                 JSONArray json = new JSONArray(data);
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < json.length(); i++) sb.append(json.optString(i)).append(" ");
-                autoPref.setSummary(sb.toString());
-
+                String summary = String.format("%s %s", json.optString(0), json.optString(2));
+                autoPref.setSummary(summary);
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
             }
