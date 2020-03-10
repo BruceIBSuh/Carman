@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.viewmodels.Opinet;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewholders.StationListHolder;
 

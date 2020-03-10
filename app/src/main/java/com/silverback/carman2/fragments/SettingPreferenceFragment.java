@@ -1,30 +1,21 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
-import android.text.Spannable;
-import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -32,16 +23,13 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
-
-import java.io.IOException;
 
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
@@ -50,18 +38,24 @@ import java.io.IOException;
  * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing
  * params to the singleton constructor.
  */
-public class SettingPreferenceFragment extends PreferenceFragmentCompat {
+public class SettingPreferenceFragment extends SettingBaseFragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
     // Objects
+    private FirebaseFirestore firestore;
     private SharedPreferences mSettings;
     private Preference userImagePref;
     private String nickname;
 
+    // UIs
+    private Preference autoPref;
+
     // Fields
     private String sigunCode;
+    private QueryDocumentSnapshot makershot;
+    private int regMakerNumber, regModelNumber;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -70,7 +64,7 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
@@ -84,18 +78,13 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.setting_null));
         if(userName != null) nickname = namePref.getSummary().toString();
 
-
         // Call SettingAutoFragment which contains the preferences to have the auto data which will
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
-        Preference autoPref = findPreference(Constants.AUTO_DATA);
-        StringBuilder sb = new StringBuilder();
+        autoPref = findPreference(Constants.AUTO_DATA);
         String aVoid = getString(R.string.pref_entry_void);
-        sb.append(mSettings.getString(Constants.AUTO_MAKER, null)).append(" ");
-        sb.append(mSettings.getString(Constants.AUTO_MODEL, aVoid)).append(" ");
-        sb.append(mSettings.getString(Constants.AUTO_TYPE, aVoid)).append(" ");
-        sb.append(mSettings.getString(Constants.AUTO_YEAR, aVoid));
-        autoPref.setSummary(sb.toString());
+        String autoData = mSettings.getString(Constants.AUTO_DATA, aVoid);
+        setAutoDataNumAndSummary(autoPref, autoData);
 
 
         // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
@@ -103,8 +92,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
                 JSONArray json = new JSONArray(data);
-                String summary = String.format("%s %s", json.optString(0), json.optString(2));
-                autoPref.setSummary(summary);
+                setAutoDataNumAndSummary(autoPref, autoData);
+
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
             }
@@ -243,6 +232,8 @@ public class SettingPreferenceFragment extends PreferenceFragmentCompat {
         }
 
     }
+
+
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

@@ -28,7 +28,7 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
 
 import org.json.JSONArray;

@@ -2,32 +2,19 @@ package com.silverback.carman2.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.location.Location;
 import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.StationListViewModel;
 import com.silverback.carman2.threads.StationListTask;
-import com.silverback.carman2.threads.ThreadManager;
 
 import java.lang.ref.WeakReference;
 

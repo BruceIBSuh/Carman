@@ -8,7 +8,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.viewmodels.ImageViewModel;
 
 public class DownloadImageTask extends ThreadTask implements
         DownloadImageRunnable.DownloadImageMethods{

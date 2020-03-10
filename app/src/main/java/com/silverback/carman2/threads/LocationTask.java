@@ -3,12 +3,9 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.location.Location;
 
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.viewmodels.LocationViewModel;
 
 public class LocationTask extends ThreadTask implements LocationRunnable.LocationMethods {
 

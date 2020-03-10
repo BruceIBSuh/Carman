@@ -5,7 +5,7 @@ import android.location.Location;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ServiceCenterViewModel;
+import com.silverback.carman2.viewmodels.ServiceCenterViewModel;
 
 public class ServiceCenterTask extends ThreadTask implements ServiceCenterRunnable.ServiceCenterMethods {
 

@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
+import com.silverback.carman2.viewmodels.FirestoreViewModel;
 
 public class AutoDataResourceTask extends ThreadTask implements AutoDataResourceRunnable.FirestoreResMethods {
 

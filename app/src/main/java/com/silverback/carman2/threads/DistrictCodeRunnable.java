@@ -7,8 +7,8 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.XmlPullParserHandler;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.XmlPullParserHandler;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -17,7 +17,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 

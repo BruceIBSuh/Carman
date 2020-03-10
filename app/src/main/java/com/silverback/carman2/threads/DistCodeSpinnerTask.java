@@ -4,8 +4,8 @@ import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.SpinnerDistrictModel;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
 import android.util.SparseArray;
 import android.util.SparseIntArray;

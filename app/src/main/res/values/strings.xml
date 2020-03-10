@@ -256,10 +256,10 @@
     <string name="pref_username_msg_invalid">이미 사용중입니다</string>
     <string name="pref_username_msg_available">사용 가능합니다</string>
     <!--SettingPreferenceActivity$SettingAutoFragment-->
-    <string name="pref_auto_maker">브랜드</string>
-    <string name="pref_auto_type">타입</string>
-    <string name="pref_auto_model">모델</string>
-    <string name="pref_auto_year">연식</string>
+    <string name="pref_auto_maker">제조사/브랜드</string>
+    <string name="pref_auto_type">차량 타입</string>
+    <string name="pref_auto_model">모델 이름</string>
+    <string name="pref_auto_year">생산년도(연식)</string>
     <string name="pref_auto_reg">등록: </string>
 
     <!-- Threads -->

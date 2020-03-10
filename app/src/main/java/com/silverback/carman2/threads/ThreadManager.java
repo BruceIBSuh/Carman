@@ -12,15 +12,15 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FirestoreViewModel;
-import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.models.ImageViewModel;
-import com.silverback.carman2.models.LocationViewModel;
-import com.silverback.carman2.models.OpinetViewModel;
-import com.silverback.carman2.models.PagerAdapterViewModel;
-import com.silverback.carman2.models.ServiceCenterViewModel;
-import com.silverback.carman2.models.SpinnerDistrictModel;
-import com.silverback.carman2.models.StationListViewModel;
+import com.silverback.carman2.viewmodels.FirestoreViewModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.ImageViewModel;
+import com.silverback.carman2.viewmodels.LocationViewModel;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
+import com.silverback.carman2.viewmodels.PagerAdapterViewModel;
+import com.silverback.carman2.viewmodels.ServiceCenterViewModel;
+import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
+import com.silverback.carman2.viewmodels.StationListViewModel;
 
 import java.util.Map;
 import java.util.Queue;

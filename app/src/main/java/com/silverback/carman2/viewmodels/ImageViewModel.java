@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -9,8 +9,6 @@ import android.util.SparseArray;
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-
-import java.util.List;
 
 /**
  * This class subclasses ViewModel to instantiate LiveData concerning image resources.

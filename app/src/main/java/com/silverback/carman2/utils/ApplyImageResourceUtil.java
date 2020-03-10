@@ -23,7 +23,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.viewmodels.ImageViewModel;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

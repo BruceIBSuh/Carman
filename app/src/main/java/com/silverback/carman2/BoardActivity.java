@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,24 +13,18 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.HorizontalScrollView;
 import android.widget.ProgressBar;
-import android.widget.RadioGroup;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
-import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
-
-import java.util.List;
 
 /**
  * This activity contains a tab-linked viewpager which currently consists of a single fragment shared

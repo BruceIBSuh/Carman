@@ -7,7 +7,7 @@ import androidx.fragment.app.FragmentManager;
 import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.PagerAdapterViewModel;
+import com.silverback.carman2.viewmodels.PagerAdapterViewModel;
 
 import org.json.JSONArray;
 

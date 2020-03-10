@@ -6,11 +6,10 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.XmlPullParserHandler;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.XmlPullParserHandler;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

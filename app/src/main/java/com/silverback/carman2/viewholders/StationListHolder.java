@@ -1,16 +1,14 @@
 package com.silverback.carman2.viewholders;
 
 import android.content.Context;
-import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.viewmodels.Opinet;
 
 import java.text.DecimalFormat;
 

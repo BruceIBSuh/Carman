@@ -2,7 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 
-import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;

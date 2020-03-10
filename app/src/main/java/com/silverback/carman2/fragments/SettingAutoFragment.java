@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
@@ -26,7 +25,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
@@ -44,13 +43,13 @@ import java.util.List;
  * upon completion of auto colleciton all at once, transactions should be made with Source.Cache.
  *
  */
-public class SettingAutoFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceChangeListener {
+public class SettingAutoFragment extends SettingBaseFragment implements Preference.OnPreferenceChangeListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingAutoFragment.class);
 
     // Constants
     private static final int LONGEVITY = 20;
-    private String[] arrAutoType = {"No Type", "Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
+    private String[] arrAutoType = {"Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
 
     // Objects
     private FirebaseFirestore firestore;
@@ -163,6 +162,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
         // queried with the maker and type id.
         final String name = value.toString();
         final String aVoid = getString(R.string.pref_entry_void);
+        log.i("preference name: %s", name);
 
         switch(preference.getKey()) {
             // If the auto maker preference changes the value, query the registration number, setting
@@ -170,6 +170,16 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
             // At the same time, increase the registration number of the current auto maker and decrease
             // the number of the previous auto maker, which can be retrieved by getValue();
             case Constants.AUTO_MAKER:
+
+                queryAutoMaker(name);
+                setFirestoreCompleteListener(new OnFirestoreTaskCompleteListener() {
+                    @Override
+                    public void setAutoMakerSnapshot(QueryDocumentSnapshot snapshot) {
+                        log.i("automaker listener: %s",snapshot.getString("auto_maker"));
+                    }
+                });
+
+
                 setAutoMakerPreference(name, -1).addOnCompleteListener(task -> {
                     log.i("setAutoMakerPreference task completed");
                     setAutoModelPreference(name);
@@ -222,6 +232,7 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
         return false;
     }
 
+
     // Set an initiall summary to the auto maker preference with tne number registered.
     // If successful, set the auto model preference to be enabled and set entries to it
     // queried with the maker and type id.
@@ -242,13 +253,8 @@ public class SettingAutoFragment extends PreferenceFragmentCompat implements Pre
 
         // One shot code used before the autumaker preference hasn't be set.
         } else {
-            CharSequence[] voidEntries = new CharSequence[]{};
-            autoModel.setEntries(voidEntries);
-            autoModel.setEntryValues(voidEntries);
-
-            autoMaker.setSummary(aVoid);
-            autoType.setSummary(aVoid);
-            autoModel.setSummary(aVoid);
+            autoModel.setEntries(new CharSequence[]{});
+            autoModel.setEntryValues(new CharSequence[]{});
         }
 
     }

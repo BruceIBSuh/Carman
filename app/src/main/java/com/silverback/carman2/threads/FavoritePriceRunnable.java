@@ -1,13 +1,12 @@
 package com.silverback.carman2.threads;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Process;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.XmlPullParserHandler;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.XmlPullParserHandler;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.File;
@@ -15,12 +14,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 public class FavoritePriceRunnable implements Runnable {

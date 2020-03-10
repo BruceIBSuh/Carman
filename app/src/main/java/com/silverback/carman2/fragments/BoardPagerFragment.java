@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -32,7 +31,7 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
 

@@ -6,7 +6,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.viewmodels.Opinet;
 
 import java.util.HashMap;
 import java.util.List;

@@ -6,8 +6,8 @@ import android.net.Uri;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.SpinnerDistrictModel;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
 
 import java.io.File;
 import java.io.IOException;

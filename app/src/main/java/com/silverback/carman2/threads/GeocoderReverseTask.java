@@ -5,7 +5,7 @@ import android.location.Location;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.viewmodels.LocationViewModel;
 
 public class GeocoderReverseTask extends ThreadTask implements GeocoderReverseRunnable.GeocoderMethods {
 

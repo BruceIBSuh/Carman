@@ -1,17 +1,14 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.ExpServiceItemAdapter;
 import com.silverback.carman2.adapters.ExpTabPagerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import org.json.JSONArray;
-
-import java.util.List;
 
 public class PagerAdapterViewModel extends ViewModel {
 

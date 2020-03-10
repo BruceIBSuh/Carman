@@ -4,7 +4,7 @@ import android.content.Context;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.OpinetViewModel;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 
 public class DistrictCodeTask extends ThreadTask
         implements DistrictCodeRunnable.OpinetDistCodeMethods {

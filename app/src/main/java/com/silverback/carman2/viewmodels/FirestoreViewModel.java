@@ -1,6 +1,5 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
-import android.graphics.Bitmap;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 
@@ -8,8 +7,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.google.firebase.firestore.DocumentSnapshot;
-
-import java.util.List;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class FirestoreViewModel extends ViewModel {
 
@@ -18,6 +16,8 @@ public class FirestoreViewModel extends ViewModel {
     private MutableLiveData<DocumentSnapshot> userSnapshot;
     private MutableLiveData<Boolean> hasUploadPosted;
     private MutableLiveData<Boolean> autoResourceTaskDone;
+
+    private MutableLiveData<QueryDocumentSnapshot> autoMakerSnapshot;
 
 
     private MutableLiveData<SparseArray<ImageSpan>> attachedImageSpan;
@@ -51,5 +51,10 @@ public class FirestoreViewModel extends ViewModel {
     public MutableLiveData<Boolean> getAutoResourceTaskDone() {
         if(autoResourceTaskDone == null) autoResourceTaskDone = new MutableLiveData<>();
         return autoResourceTaskDone;
+    }
+
+    public MutableLiveData<QueryDocumentSnapshot> getAutoMakerSnapshot() {
+        if(autoMakerSnapshot == null) autoMakerSnapshot = new MutableLiveData<>();
+        return autoMakerSnapshot;
     }
 }

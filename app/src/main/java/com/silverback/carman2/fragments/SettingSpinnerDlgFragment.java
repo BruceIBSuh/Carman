@@ -9,15 +9,14 @@ import android.widget.Spinner;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
-import com.silverback.carman2.models.SpinnerDistrictModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
 import com.silverback.carman2.threads.DistCodeSpinnerTask;
 import com.silverback.carman2.threads.ThreadManager;
 

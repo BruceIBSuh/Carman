@@ -1,9 +1,7 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
-import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 

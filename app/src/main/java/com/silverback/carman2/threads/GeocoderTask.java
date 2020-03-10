@@ -3,7 +3,7 @@ package com.silverback.carman2.threads;
 import android.content.Context;
 import android.location.Location;
 
-import com.silverback.carman2.models.LocationViewModel;
+import com.silverback.carman2.viewmodels.LocationViewModel;
 
 public class GeocoderTask extends ThreadTask implements GeocoderRunnable.GeocoderMethods {
 

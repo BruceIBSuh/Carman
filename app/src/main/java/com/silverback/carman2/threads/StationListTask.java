@@ -6,8 +6,8 @@ import android.util.SparseBooleanArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.Opinet;
-import com.silverback.carman2.models.StationListViewModel;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.StationListViewModel;
 
 import java.util.List;
 

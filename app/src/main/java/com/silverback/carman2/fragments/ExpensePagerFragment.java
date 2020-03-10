@@ -17,7 +17,7 @@ import com.silverback.carman2.database.GasManagerDao;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
 import java.text.DecimalFormat;
 import java.util.List;

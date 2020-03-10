@@ -8,7 +8,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.models.Opinet;
+import com.silverback.carman2.viewmodels.Opinet;
 
 import java.util.ArrayList;
 import java.util.List;

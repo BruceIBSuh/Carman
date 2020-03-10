@@ -6,7 +6,7 @@ import android.util.SparseArray;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.models.ImageViewModel;
+import com.silverback.carman2.viewmodels.ImageViewModel;
 
 public class AttachedBitmapTask extends ThreadTask implements
         AttachedBitmapRunnable.DownloadBitmapMethods {

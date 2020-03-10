@@ -1,4 +1,4 @@
-package com.silverback.carman2.models;
+package com.silverback.carman2.viewmodels;
 
 import android.os.Parcel;
 import android.os.Parcelable;
