@@ -130,7 +130,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
 
             // Inital setting of the preference summaries, querying an auto maker with a name
             // fetched from SharedPreferences.
-            initPreferences();
+            //initPreferences();
         });
 
         // Set the entries(values) to the auto type preference.
@@ -144,6 +144,26 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
         String[] mYearEntries = yearList.toArray(new String[LONGEVITY]);
         autoYear.setEntries(mYearEntries);
         autoYear.setEntryValues(mYearEntries);
+
+        String aVoid = getString(R.string.pref_entry_void);
+        String makerName = mSettings.getString(Constants.AUTO_MAKER, aVoid);
+        String typeName = mSettings.getString(Constants.AUTO_TYPE, aVoid);
+        String modelName = mSettings.getString(Constants.AUTO_MODEL, aVoid);
+        //String yearName = mSettings.getString(Constants.AUTO_YEAR, aVoid);
+        typeId = Arrays.asList(arrAutoType).indexOf(typeName);
+
+        queryAutoRegistrationNums(makerName);
+        setFirestoreCompleteListener(new OnFirestoreCompleteListener() {
+            @Override
+            public void setRegistrationNumber(String makerNum, String modelNum) {
+                autoMaker.setSummary(String.format("%s (%s)", makerName, makerNum));
+                autoModel.setSummary(String.format("%s (%s)", modelName, modelNum));
+                autoType.setSummary(typeName);
+
+                setAutoModelEntries(makerName, typeId);
+
+            }
+        });
     }
 
     @Override
@@ -171,15 +191,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
             // the number of the previous auto maker, which can be retrieved by getValue();
             case Constants.AUTO_MAKER:
 
-                queryAutoMaker(name);
-                setFirestoreCompleteListener(new OnFirestoreTaskCompleteListener() {
-                    @Override
-                    public void setAutoMakerSnapshot(QueryDocumentSnapshot snapshot) {
-                        log.i("automaker listener: %s",snapshot.getString("auto_maker"));
-                    }
-                });
-
-
                 setAutoMakerPreference(name, -1).addOnCompleteListener(task -> {
                     log.i("setAutoMakerPreference task completed");
                     setAutoModelPreference(name);
@@ -193,6 +204,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
 
             case Constants.AUTO_TYPE:
                 typeId = Arrays.asList(arrAutoType).indexOf(name);
+
                 setAutoModelEntries(mAutoMaker, typeId);
                 autoType.setSummary(value.toString());
                 return true;
@@ -232,32 +244,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
         return false;
     }
 
-
-    // Set an initiall summary to the auto maker preference with tne number registered.
-    // If successful, set the auto model preference to be enabled and set entries to it
-    // queried with the maker and type id.
-    private void initPreferences() {
-        String aVoid = getString(R.string.pref_entry_void);
-        String makerName = mSettings.getString(Constants.AUTO_MAKER, null);
-        String typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-        String modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-        typeId = Arrays.asList(arrAutoType).indexOf(typeName);
-
-        log.i("Auto Maker name: %s", makerName);
-        if(!TextUtils.isEmpty(makerName)) {
-            Task<QuerySnapshot> task = setAutoMakerPreference(makerName, typeId);
-            task.addOnCompleteListener(autoTask -> {
-                setAutoModelPreference(modelName);
-                autoType.setSummary(typeName);
-            });
-
-        // One shot code used before the autumaker preference hasn't be set.
-        } else {
-            autoModel.setEntries(new CharSequence[]{});
-            autoModel.setEntryValues(new CharSequence[]{});
-        }
-
-    }
 
     @SuppressWarnings("ConstantConditions")
     private Task<QuerySnapshot> setAutoMakerPreference(String value, int typeId) {
@@ -354,7 +340,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
     private void setAutoModelEntries(String maker, int type) {
         if(TextUtils.isEmpty(maker)) return;
 
-        autoRef.whereEqualTo("auto_maker", maker).get(source).continueWith(makerTask -> {
+        autoRef.whereEqualTo("auto_maker", maker).get().continueWith(makerTask -> {
             if(makerTask.isSuccessful()) return makerTask.getResult();
             else return makerTask.getResult(IOException.class);
 
@@ -366,7 +352,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
                 final CollectionReference modelRef = model.getReference().collection("auto_model");
                 Query modelQuery = (type > 0)? modelRef.whereEqualTo("auto_type", type) : modelRef;
 
-                modelQuery.get(source).continueWith(modelTask -> {
+                modelQuery.get().continueWith(modelTask -> {
                     if(modelTask.isSuccessful()) {
                         for (DocumentSnapshot document : modelTask.getResult()) {
                             //log.i("Auto Model: %s", document.getString("model_name"));
@@ -391,7 +377,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
 
     private List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
-
+        log.i("preference value: %s, %s", autoMaker.getValue(), autoModel.getValue());
         dataList.add(autoMaker.getValue());
         dataList.add(autoType.getValue());
         dataList.add(autoModel.getValue());

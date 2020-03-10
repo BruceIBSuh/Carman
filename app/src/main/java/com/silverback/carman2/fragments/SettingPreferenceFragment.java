@@ -54,8 +54,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
     // Fields
     private String sigunCode;
-    private QueryDocumentSnapshot makershot;
-    private int regMakerNumber, regModelNumber;
+    private String makerName, modelName, typeName, year;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -83,17 +82,35 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
         String aVoid = getString(R.string.pref_entry_void);
-        String autoData = mSettings.getString(Constants.AUTO_DATA, aVoid);
-        setAutoDataNumAndSummary(autoPref, autoData);
+        makerName = mSettings.getString(Constants.AUTO_MAKER, aVoid);
+        modelName = mSettings.getString(Constants.AUTO_MODEL, aVoid);
+        typeName = mSettings.getString(Constants.AUTO_TYPE, aVoid);
+        year = mSettings.getString(Constants.AUTO_YEAR, aVoid);
 
+        //queryAutoRegistrationNums(makerName, modelName);
+        log.i("auto maker: %s", makerName);
+        queryAutoRegistrationNums(makerName);
+        setFirestoreCompleteListener((makerNum, modelNum) -> {
+            log.i("Numbers: %s, %s", makerNum, modelNum);
+            //String autoData = mSettings.getString(Constants.AUTO_DATA, aVoid);
+            String summary = String.format("%s(%s), %s(%s), %s, %s",
+                    makerName, makerNum, modelName, modelNum, typeName, year);
+
+            setSpannableAutoDataSummary(autoPref, summary);
+        });
 
         // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
         // summary simultaneously.
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
+                log.i("new auto data");
                 JSONArray json = new JSONArray(data);
-                setAutoDataNumAndSummary(autoPref, autoData);
-
+                makerName = json.optString(0);
+                modelName = json.optString(2);
+                typeName = json.optString(1);
+                year = json.optString(3);
+                log.i("new autodata: %s, %s", json.optString(0), json.optString(2));
+                queryAutoRegistrationNums(makerName);
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
             }

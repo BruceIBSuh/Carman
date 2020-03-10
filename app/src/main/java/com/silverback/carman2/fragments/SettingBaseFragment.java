@@ -23,6 +23,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.FirestoreViewModel;
@@ -49,22 +50,24 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
     private CollectionReference autoRef;
     private SharedPreferences mSettings;
     private QueryDocumentSnapshot makershot, modelshot;
-    private OnFirestoreTaskCompleteListener mListener;
+    private OnFirestoreCompleteListener mListener;
 
     // fields
     private Preference autoPreference;
     private String makerName, modelName, typeName, year;
     private String makerNum, modelNum;
 
-    public interface OnFirestoreTaskCompleteListener {
-        void setAutoMakerSnapshot(QueryDocumentSnapshot snapshot);
-        void setAutoModelSnapshot(QueryDocumentSnapshot snapshot);
+    public interface OnFirestoreCompleteListener {
+        void setRegistrationNumber(String makerNum, String modelNum);
     }
 
     // Attach the listener
-    void setFirestoreCompleteListener(OnFirestoreTaskCompleteListener listener) {
+    void setFirestoreCompleteListener(OnFirestoreCompleteListener listener) {
         mListener = listener;
     }
+
+    @Override
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
 
     public SettingBaseFragment() {
         super();
@@ -73,158 +76,64 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
 
     }
 
-    class QueryAutoData implements OnFirestoreTaskCompleteListener {
-
-        String makerName, modelName;
-        QueryDocumentSnapshot makershot, modelshot;
-
-        public QueryAutoData() {}
-
-
-
-        @Override
-        public void setAutoMakerSnapshot(QueryDocumentSnapshot snapshot) {
-            makerName = snapshot.getString("auto_maker");
-            makershot = snapshot;
-        }
-
-        @Override
-        public void setAutoModelSnapshot(QueryDocumentSnapshot snapshot) {
-            modelshot = snapshot;
-        }
-
-
-        public void queryMaker(String name) {
-            autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(query -> {
-                for(QueryDocumentSnapshot makershot : query) {
-                    if(makershot.exists()) {
-                        mListener.setAutoMakerSnapshot(makershot);
-                        break;
-                    }
-                }
-            });
-        }
-
-        public void queryModelNum(String name) {
-            makershot.getReference().collection("auto_model").whereEqualTo("model_name", name).get()
-                    .addOnSuccessListener(query -> {
-                        for(QueryDocumentSnapshot snapshot : query) {
-                            if(snapshot.exists()) {
-                                mListener.setAutoModelSnapshot(snapshot);
-                                break;
-                            }
-                        }
-                    });
-
-        }
-
-
-    }
-
-    @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
-
-    // Query the QueryDocumentSnapshot of an auto maker. Upon completion of querying the snapshot,
-    // notify it to the callee of SettingAutoFragment
-    void queryAutoMaker(String name) {
-        autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(query -> {
-            for(QueryDocumentSnapshot makershot : query) {
+    // Query the auto maker first. Upon completion, sequentially query the auto model with the queried
+    // auto maker document reference.
+    @SuppressWarnings("ConstantConditions")
+    //void queryAutoRegistrationNums(String makerName, String modelName) {
+    void queryAutoRegistrationNums(String name) {
+        autoRef.whereEqualTo("auto_maker", makerName).get().addOnSuccessListener(makers -> {
+            for(QueryDocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
-                    mListener.setAutoMakerSnapshot(makershot);
+                    queryAutoModelNum(makershot, modelName);
+                    /*
+                    // Upon completion of querying the auto maker, query
+                    makershot.getReference().collection("auto_model")
+                            .whereEqualTo("model_name", modelName).get()
+                            .addOnSuccessListener(models -> {
+                                for(QueryDocumentSnapshot modelshot : models) {
+                                    if(modelshot.exists()) {
+                                        log.i("modelshot: %s", modelshot.getLong("reg_number"));
+                                        mListener.setRegistrationNumber(
+                                                makershot.getLong("reg_number").toString(),
+                                                modelshot.getLong("reg_number").toString());
+
+                                        break;
+                                    }
+                                }
+                            });
+                    */
                     break;
                 }
             }
+        }).addOnFailureListener(e -> {
+            log.i("automaker queried failed");
         });
     }
 
-
-    @SuppressWarnings("ConstantConditions")
-    void setAutoDataNumAndSummary(Preference pref, String json) {
-
-        try {
-            JSONArray jsonArray = new JSONArray(json);
-            makerName = jsonArray.optString(0);
-            modelName = jsonArray.optString(2);
-            typeName = jsonArray.optString(1);
-            year = jsonArray.optString(3);
-            log.i("Auto Data: %s, %s, %s, %s", makerName, modelName, typeName, year);
-
-        } catch(JSONException e) {
-            e.printStackTrace();
-        }
-
-        final Task<QuerySnapshot> makerTask = autoRef.whereEqualTo("auto_maker", makerName).get();
-
-        makerTask.continueWith(task -> {
-            if(task.isSuccessful()) return task.getResult();
-            else return task.getResult(IOException.class);
-
-        }).continueWith(task -> {
-            for (QueryDocumentSnapshot makerShot : task.getResult()) {
-                if (makerShot.exists()) {
-                    makerNum = makerShot.getLong("reg_number").toString();
-                    makerName = makerShot.getString("auto_maker");
-                    log.i("makerNum: %s", makerNum);
-                    return makerShot;
-                }
-            }
-            return null;
-
-        }).addOnCompleteListener(task -> {
-            if(task.isSuccessful()) {
-                String autoMaker = task.getResult().getString("auto_maker");
-                log.i("autoMaker: %s", autoMaker);
-                setAutoModelNum(pref, task.getResult(), modelName);
-            }
-        });
+    void queryAutoModelNum(QueryDocumentSnapshot snapshot, String model) {
+        autoRef.document(snapshot.getId()).collection("auto_model").whereEqualTo("model_name", model)
+                .get().addOnSuccessListener(query -> {
+                    for(QueryDocumentSnapshot modelshot : query) {
+                        if(modelshot.exists()) {
+                            log.i("Query modelshot: %s", modelshot.getLong("reg_number"));
+                            break;
+                        }
+                    }
+                });
     }
 
-    @SuppressWarnings("ConstantConditions")
-    private void setAutoModelNum(Preference pref, QueryDocumentSnapshot snapshot, String model) {
 
-        Task<QuerySnapshot> modelTask = snapshot.getReference().collection("auto_model")
-                .whereEqualTo("model_name", model).get();
+    public void setSpannableAutoDataSummary(Preference pref, String summary) {
 
-        modelTask.continueWith(task -> {
-            if(task.isSuccessful()) return task.getResult();
-            else return task.getResult(IOException.class);
-
-        }).continueWith(task -> {
-            for(QueryDocumentSnapshot modelShot : task.getResult()) {
-                if(modelShot.exists()) {
-                    modelNum = modelShot.getLong("reg_number").toString();
-                    modelName = modelShot.getString("model_name");
-                    log.i("model: %s, %s", modelName, modelNum);
-                    break;
-                }
-            }
-
-            return modelshot;
-
-        }).addOnCompleteListener(task -> {
-            if(task.isSuccessful()) setAutoDataSummary(pref, typeName, year);
-
-        });
-
-    }
-
-    private void setAutoDataSummary(Preference pref, String typeName, String year) {
-        String summary = String.format(
-                "%s(%s), %s(%s), %s, %s", makerName, makerNum, modelName, modelNum, typeName, year);
 
         SpannableString sb = new SpannableString(summary);
         String reg = "\\(\\d+\\)";
         Matcher m = Pattern.compile(reg).matcher(summary);
         while(m.find()) {
-            sb.setSpan(new ForegroundColorSpan(Color.BLUE), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new ForegroundColorSpan(Color.BLUE), m.start(), m.end(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         pref.setSummary(sb);
-
-    }
-
-    public String[] getAutoDataNums() {
-        return new String[]{makerNum, modelNum};
-
     }
 }
