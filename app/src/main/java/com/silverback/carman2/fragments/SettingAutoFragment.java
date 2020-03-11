@@ -10,16 +10,13 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
@@ -30,7 +27,6 @@ import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -49,23 +45,27 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
 
     // Constants
     private static final int LONGEVITY = 20;
-    private String[] arrAutoType = {"Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
+
 
     // Objects
+    private String[] arrAutoType;
     private FirebaseFirestore firestore;
     private Source source;
     private ListenerRegistration autoListener;
     private CollectionReference autoRef;
     private DocumentReference autoDoc;
+    private QueryDocumentSnapshot autoMakerShot;
     private FragmentSharedModel fragmentSharedModel;
     private SharedPreferences mSettings;
     private OnToolbarTitleListener mToolbarListener;
     private ListPreference autoMaker, autoType, autoModel, autoYear;
 
+
     // fields
-    private String mAutoMaker;
+    private String prevMaker, prevModel;
+    private String makerId, modelId;
     private int typeId;
-    private int regNum;
+    private boolean isMakerChanged, isModelChanged;
 
 
 
@@ -90,6 +90,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
 
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
+
+        arrAutoType = new String[]{
+                getString(R.string.pref_entry_void), "Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
@@ -145,25 +148,72 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
         autoYear.setEntries(mYearEntries);
         autoYear.setEntryValues(mYearEntries);
 
-        String aVoid = getString(R.string.pref_entry_void);
-        String makerName = mSettings.getString(Constants.AUTO_MAKER, aVoid);
-        String typeName = mSettings.getString(Constants.AUTO_TYPE, aVoid);
-        String modelName = mSettings.getString(Constants.AUTO_MODEL, aVoid);
-        //String yearName = mSettings.getString(Constants.AUTO_YEAR, aVoid);
-        typeId = Arrays.asList(arrAutoType).indexOf(typeName);
 
-        queryAutoRegistrationNums(makerName);
+        String makerName = mSettings.getString(Constants.AUTO_MAKER, null);
+        String modelName = mSettings.getString(Constants.AUTO_MODEL, null);
+        String typeName = mSettings.getString(Constants.AUTO_TYPE, null);
+
+        if(!TextUtils.isEmpty(typeName)) autoType.setSummary(typeName);
+        // Query the auto maker to retrieve the registration number, the query result of which is
+        // notified to the OnFirestoreCompleteListener. Sequentially, upon completion of the auto
+        // maker query, make an auto model query to have the registration number notified to the
+        // same listener.
+        if(TextUtils.isEmpty(makerName)) {
+            autoModel.setEnabled(false);
+        } else {
+            // set the autoModel preference enabled only after the auto maker query has been completed
+            // to invoke setAutoModelEntres()
+            queryAutoMaker(makerName);
+        }
+
         setFirestoreCompleteListener(new OnFirestoreCompleteListener() {
             @Override
-            public void setRegistrationNumber(String makerNum, String modelNum) {
-                autoMaker.setSummary(String.format("%s (%s)", makerName, makerNum));
-                autoModel.setSummary(String.format("%s (%s)", modelName, modelNum));
-                autoType.setSummary(typeName);
+            public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
+                // Property for sharing the automaker document id until the current automaker has
+                // changed.
+                makerId = makershot.getId();
+                // On completion of the automaker query, set entries of the auto model preference
+                typeId = Arrays.asList(arrAutoType).indexOf(typeName);
+                setAutoModelEntries(makerId, typeId);
+                log.i("typeId: %s", typeId);
+                // When the auto maker changes, which means the prevMaker value is not null, update
+                // the current registration number to be increased.
+                int num = makershot.getLong("reg_number").intValue();
+                if(isMakerChanged) {
+                    log.i("Increase the current maker reg number");
+                    num ++;
+                    makershot.getReference().update("reg_number", FieldValue.increment(1));
+                }
 
-                setAutoModelEntries(makerName, typeId);
+                String name = makershot.getString("auto_maker");
+                autoMaker.setSummary(String.format("%s %s %s", name, "reg:", num));
+
+                // Continue to query the auto model with the automaker snapshot to retrieve the
+                // auto model registration number and set it to the summary
+                if(!TextUtils.isEmpty(modelName)) queryAutoModel(makerId, modelName);
 
             }
+
+            @Override
+            public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
+                modelId = modelshot.getId();
+
+                int num = modelshot.getLong("reg_number").intValue();
+                if(isModelChanged) {
+                    log.i("Increase the current model reg number");
+                    num ++;
+                    autoRef.document(makerId).collection("auto_model").document(modelId)
+                            .update("reg_number", FieldValue.increment(1))
+                            .addOnSuccessListener(aVoid -> log.i("update regnum successfully"));
+                }
+
+                autoModel.setSummary(String.format("%s %s %s",
+                        modelshot.getString("model_name"), "reg:", num));
+            }
+
+
         });
+
     }
 
     @Override
@@ -180,9 +230,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
         // Set an initiall summary to the auto maker preference with tne number registered.
         // If successful, set the auto model preference to be enabled and set entries to it
         // queried with the maker and type id.
-        final String name = value.toString();
-        final String aVoid = getString(R.string.pref_entry_void);
-        log.i("preference name: %s", name);
+        final String valueName = (String)value;
 
         switch(preference.getKey()) {
             // If the auto maker preference changes the value, query the registration number, setting
@@ -190,27 +238,45 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
             // At the same time, increase the registration number of the current auto maker and decrease
             // the number of the previous auto maker, which can be retrieved by getValue();
             case Constants.AUTO_MAKER:
+                isMakerChanged = true;
+                log.i("VALUE COMPARED: %s, %s", autoMaker.getValue(), value);
+                if(!TextUtils.isEmpty(autoMaker.getValue())){
+                    log.i("Decrease the previous automaker reg number");
+                    autoRef.document(makerId).update("reg_number", FieldValue.increment(-1));
+                }
 
-                setAutoMakerPreference(name, -1).addOnCompleteListener(task -> {
-                    log.i("setAutoMakerPreference task completed");
-                    setAutoModelPreference(name);
-                    autoType.setValue(autoType.getEntries()[0].toString());
-                    autoType.setSummary(aVoid);
-                    autoModel.setSummary(aVoid);
+                // Set the auto model preference summary to void and make it disabled until the
+                // entries are prepared by setAutoModelEntries()
+                autoModel.setEnabled(false);
+                autoModel.setValue(null);
+                autoModel.setSummary(getString(R.string.pref_entry_void));
+                // Revert the auto type preference with the summary attached as void.
+                autoType.setValue(null);
+                autoType.setSummary(getString(R.string.pref_entry_void));
 
-                });
+                // Set the flag to true, which indicates the auto make has changed.
+
+                queryAutoMaker(valueName);
 
                 return true;
 
             case Constants.AUTO_TYPE:
-                typeId = Arrays.asList(arrAutoType).indexOf(name);
-
-                setAutoModelEntries(mAutoMaker, typeId);
                 autoType.setSummary(value.toString());
+                typeId = Arrays.asList(arrAutoType).indexOf(valueName);
+                log.i("Type ID changed: %s", typeId);
+                setAutoModelEntries(makerId, typeId);
+
                 return true;
 
             case Constants.AUTO_MODEL:
-                setAutoModelPreference(name);
+                isModelChanged = true;
+                if(!TextUtils.isEmpty(autoModel.getValue())) {
+                    autoRef.document(makerId).collection("auto_model").document(modelId)
+                            .update("reg_number", FieldValue.increment(-1));
+                }
+
+                // Set the flag to true, which indicates the auto model has changed.
+                queryAutoModel(makerId, valueName);
                 return true;
 
             default: return false;
@@ -245,142 +311,40 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
     }
 
 
-    @SuppressWarnings("ConstantConditions")
-    private Task<QuerySnapshot> setAutoMakerPreference(String value, int typeId) {
-
-        final String prevValue = autoMaker.getValue();
-        final Task<QuerySnapshot> task = autoRef.whereEqualTo("auto_maker", value).get(source);
-
-        task.continueWith(automakerTask -> {
-            if(automakerTask.isSuccessful()) return automakerTask.getResult();
-            else return automakerTask.getResult(IOException.class);
-        });
-
-        // Increase the registration number of a new auto maker and set summary with those combined.
-        task.continueWith(automakerTask -> {
-            for(QueryDocumentSnapshot makershot : automakerTask.getResult()) {
-                if(makershot.exists()) {
-                    mAutoMaker = makershot.getString("auto_maker");
-                    autoDoc = makershot.getReference();
-
-                    // Check the current and previous value for verifying that change has happended
-                    // If so, increase the number and update it.
-                    log.i("isValueChanged: %s, %s", prevValue, value);
-                    //int num;
-                    if(!value.equals(prevValue)) {
-                        log.i("increase the current reg_number");
-                        autoDoc.update("reg_number", FieldValue.increment(1)).addOnSuccessListener(aVoid -> {
-                            log.i("reg. num updated");
-                            regNum = makershot.getLong("reg_number").intValue() + 1;
-                            autoMaker.setSummary(String.format("%s (%s)", value, regNum));
-                        });
-
-                    } else regNum = makershot.getLong("reg_number").intValue();
-                    autoMaker.setSummary(String.format("%s (%s)", value, regNum));
-                    setAutoModelEntries(mAutoMaker, typeId);
-
-                    break;
-                }
-            }
-
-            return automakerTask;
-
-        });
-
-
-
-        return task;
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private void setAutoModelPreference(String value) {
-        // Decrease the regsistration number with the previous model as far as the previous
-        // model is different from the current one.
-        boolean isModelChanged =
-                (autoModel.getValue() == null && !TextUtils.isEmpty(value)) ||
-                (autoModel.getValue() != null && autoModel.getValue().equals(value));
-
-        if(isModelChanged) {
-            autoDoc.collection("auto_model").whereEqualTo("model_name", autoModel.getValue())
-                    .get(source).addOnSuccessListener(prevModels -> {
-                        for (QueryDocumentSnapshot model : prevModels) {
-                            if(model.exists()) {
-                                model.getReference().update("reg_number", FieldValue.increment(-1));
-                                break;
-                            }
-                        }
-                    });
-        }
-
-        // Increase the registration number w/ a new auto model
-        autoDoc.collection("auto_model").whereEqualTo("model_name", value).get(source)
-                .addOnSuccessListener(curModels -> {
-                    for(QueryDocumentSnapshot model : curModels) {
-                        if(model.exists()) {
-                            int num;
-                            if(autoModel.getValue().equals(model.getString("model_name"))) {
-                                model.getReference().update("reg_number", FieldValue.increment(1))
-                                        .addOnSuccessListener(aVoid -> {
-                                            log.i("update completed");
-                                        }).addOnFailureListener(e -> log.e("update failed"));
-
-                                num = model.getLong("reg_number").intValue() + 1;
-                            } else num = model.getLong("reg_number").intValue();
-                            autoModel.setSummary(String.format("%s (%s)", value, num));
-                            break;
-                        }
-                    }
-                });
-    }
     // This method queries all auto models with auto maker and auto type. The auto maker is required
     // but the auto type condition may be null. Special care should be taken when async queries
     // are made. This method takes Continuation which queries auto maker first. On completion, the
     // next query is made with the integer value of auto type, which can be null.
     @SuppressWarnings("ConstantConditions")
-    private void setAutoModelEntries(String maker, int type) {
-        if(TextUtils.isEmpty(maker)) return;
+    private void setAutoModelEntries(String id, int type) {
+        if(TextUtils.isEmpty(id)) return;
 
-        autoRef.whereEqualTo("auto_maker", maker).get().continueWith(makerTask -> {
-            if(makerTask.isSuccessful()) return makerTask.getResult();
-            else return makerTask.getResult(IOException.class);
+        final CollectionReference modelRef = autoRef.document(id).collection("auto_model");
+        Query modelQuery = (type > 0) ? modelRef.whereEqualTo("auto_type", type) : modelRef;
 
-        }).continueWith(makerTask -> {
-            List<String> modelList = new ArrayList<>();
-            for(QueryDocumentSnapshot model : makerTask.getResult()) {
-                // Create query alternatives according to whether the auto type is empty or not.
-                // The index 0 indicates no type that has to be excluded from query condition.
-                final CollectionReference modelRef = model.getReference().collection("auto_model");
-                Query modelQuery = (type > 0)? modelRef.whereEqualTo("auto_type", type) : modelRef;
-
-                modelQuery.get().continueWith(modelTask -> {
-                    if(modelTask.isSuccessful()) {
-                        for (DocumentSnapshot document : modelTask.getResult()) {
-                            //log.i("Auto Model: %s", document.getString("model_name"));
-                            modelList.add(document.getString("model_name"));
-                        }
-
-                        return modelTask.getResult();
-
-                    } else return modelTask.getResult(IOException.class);
-
-                }).addOnSuccessListener(querySnapshot -> {
-                    final int size = modelList.size();
-                    autoModel.setEntries(modelList.toArray(new CharSequence[size]));
-                    autoModel.setEntryValues(modelList.toArray(new CharSequence[size]));
-                });
+        modelQuery.get().addOnSuccessListener(query -> {
+            List<String> modelEntries = new ArrayList<>();
+            for(QueryDocumentSnapshot modelshot : query) {
+                if(modelshot.exists()) modelEntries.add(modelshot.getString("model_name"));
             }
 
-            return makerTask.getResult();
+            final int size = modelEntries.size();
+            autoModel.setEntries(modelEntries.toArray(new CharSequence[size]));
+            autoModel.setEntryValues(modelEntries.toArray(new CharSequence[size]));
+
+            autoModel.setValue(null);
+            autoModel.setEnabled(true);
 
         });
     }
 
     private List<String> getAutoDataList() {
         List<String> dataList = new ArrayList<>();
-        log.i("preference value: %s, %s", autoMaker.getValue(), autoModel.getValue());
+        log.i("preference value: %s", mSettings.getString(Constants.AUTO_MAKER, null));
+
         dataList.add(autoMaker.getValue());
-        dataList.add(autoType.getValue());
         dataList.add(autoModel.getValue());
+        dataList.add(autoType.getValue());
         dataList.add(autoYear.getValue());
 
         return dataList;

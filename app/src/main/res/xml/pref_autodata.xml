@@ -5,6 +5,7 @@
     <ListPreference
         app:key="carman_pref_auto_maker"
         app:title="@string/pref_auto_maker"
+        app:summary="@string/pref_entry_void"
         app:useSimpleSummaryProvider="false"/>
 
     <ListPreference
@@ -17,7 +18,6 @@
         app:key="carman_pref_auto_model"
         app:title="@string/pref_auto_model"
         app:summary="@string/pref_entry_void"
-        app:dependency="carman_pref_auto_maker"
         app:useSimpleSummaryProvider="false"/>
 
     <ListPreference

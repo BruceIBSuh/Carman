@@ -1,42 +1,22 @@
 package com.silverback.carman2.fragments;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
-import android.util.SparseArray;
 
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FirestoreViewModel;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.FutureTask;
-import java.util.prefs.PreferenceChangeListener;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,7 +38,9 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
     private String makerNum, modelNum;
 
     public interface OnFirestoreCompleteListener {
-        void setRegistrationNumber(String makerNum, String modelNum);
+        //void setRegistrationNumber(String makerNum, String modelNum);
+        void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
+        void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
     }
 
     // Attach the listener
@@ -76,32 +58,13 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
 
     }
 
-    // Query the auto maker first. Upon completion, sequentially query the auto model with the queried
-    // auto maker document reference.
-    @SuppressWarnings("ConstantConditions")
-    //void queryAutoRegistrationNums(String makerName, String modelName) {
-    void queryAutoRegistrationNums(String name) {
-        autoRef.whereEqualTo("auto_maker", makerName).get().addOnSuccessListener(makers -> {
+    // Query the auto maker first. Upon completion, notify the listener of the automaker snapshot
+    // to continue another query to retrieve auto models.
+    void queryAutoMaker(String name) {
+        autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(QueryDocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
-                    queryAutoModelNum(makershot, modelName);
-                    /*
-                    // Upon completion of querying the auto maker, query
-                    makershot.getReference().collection("auto_model")
-                            .whereEqualTo("model_name", modelName).get()
-                            .addOnSuccessListener(models -> {
-                                for(QueryDocumentSnapshot modelshot : models) {
-                                    if(modelshot.exists()) {
-                                        log.i("modelshot: %s", modelshot.getLong("reg_number"));
-                                        mListener.setRegistrationNumber(
-                                                makershot.getLong("reg_number").toString(),
-                                                modelshot.getLong("reg_number").toString());
-
-                                        break;
-                                    }
-                                }
-                            });
-                    */
+                    mListener.queryAutoMakerSnapshot(makershot);
                     break;
                 }
             }
@@ -110,22 +73,28 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
         });
     }
 
-    void queryAutoModelNum(QueryDocumentSnapshot snapshot, String model) {
-        autoRef.document(snapshot.getId()).collection("auto_model").whereEqualTo("model_name", model)
+    // On completion of the auto maker query, make a sequential query of auto models with the
+    // automaker snapshot id, then notify the listener of queried snapshot
+    void queryAutoModel(String id,  String model) {
+        log.i("Model name: %s", model);
+        if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
+        autoRef.document(id).collection("auto_model").whereEqualTo("model_name", model)
                 .get().addOnSuccessListener(query -> {
                     for(QueryDocumentSnapshot modelshot : query) {
                         if(modelshot.exists()) {
                             log.i("Query modelshot: %s", modelshot.getLong("reg_number"));
+                            mListener.queryAutoModelSnapshot(modelshot);
                             break;
                         }
                     }
+                }).addOnFailureListener(e -> {
+                    log.i("query failed");
+                    mListener.queryAutoModelSnapshot(null);
                 });
     }
 
 
-    public void setSpannableAutoDataSummary(Preference pref, String summary) {
-
-
+    void setSpannableAutoDataSummary(Preference pref, String summary) {
         SpannableString sb = new SpannableString(summary);
         String reg = "\\(\\d+\\)";
         Matcher m = Pattern.compile(reg).matcher(summary);

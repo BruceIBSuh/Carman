@@ -74,7 +74,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         NameDialogPreference namePref = findPreference(Constants.USER_NAME);
         String userName = mSettings.getString(Constants.USER_NAME, null);
         namePref.setSummary(userName);
-        if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.setting_null));
+        if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.pref_entry_void));
         if(userName != null) nickname = namePref.getSummary().toString();
 
         // Call SettingAutoFragment which contains the preferences to have the auto data which will
@@ -82,35 +82,61 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
         String aVoid = getString(R.string.pref_entry_void);
-        makerName = mSettings.getString(Constants.AUTO_MAKER, aVoid);
-        modelName = mSettings.getString(Constants.AUTO_MODEL, aVoid);
-        typeName = mSettings.getString(Constants.AUTO_TYPE, aVoid);
-        year = mSettings.getString(Constants.AUTO_YEAR, aVoid);
+        makerName = mSettings.getString(Constants.AUTO_MAKER, null);
+        modelName = mSettings.getString(Constants.AUTO_MODEL, null);
+        typeName = mSettings.getString(Constants.AUTO_TYPE, null);
+        year = mSettings.getString(Constants.AUTO_YEAR, null);
+        log.i("Auto maker and model: %s, %s", makerName, modelName);
 
-        //queryAutoRegistrationNums(makerName, modelName);
-        log.i("auto maker: %s", makerName);
-        queryAutoRegistrationNums(makerName);
-        setFirestoreCompleteListener((makerNum, modelNum) -> {
-            log.i("Numbers: %s, %s", makerNum, modelNum);
-            //String autoData = mSettings.getString(Constants.AUTO_DATA, aVoid);
-            String summary = String.format("%s(%s), %s(%s), %s, %s",
-                    makerName, makerNum, modelName, modelNum, typeName, year);
+        // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
+        // query the registration number of the auto maker and model with the make name, notifying
+        // the listener
+        if(TextUtils.isEmpty(makerName)) autoPref.setSummary(aVoid);
+        else queryAutoMaker(makerName);
 
-            setSpannableAutoDataSummary(autoPref, summary);
+        setFirestoreCompleteListener(new OnFirestoreCompleteListener() {
+            String makerNum, modelNum, summary;
+            @Override
+            public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
+                log.i("automaker queried: %s", makershot.getLong("reg_number"));
+                // Upon completion of querying the auto maker, sequentially re-query the auto model
+                // with the auto make id from the snapshot.
+                makerNum = makershot.getLong("reg_number").toString();
+                queryAutoModel(makershot.getId(), modelName);
+            }
+
+            @Override
+            public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
+                log.i("automodel queried:%s", modelshot);
+                String type = (TextUtils.isEmpty(typeName))? aVoid : typeName;
+
+                // The auto preference summary depends on whether the model name is set because
+                // queryAutoModel() would notify null to the listener w/o the model name.
+                if(modelshot != null && modelshot.exists()) {
+                    modelNum = modelshot.getLong("reg_number").toString();
+                    summary = String.format("%s(%s)  %s(%s)", makerName, makerNum, modelName, modelNum);
+                } else {
+                    summary = String.format("%s(%s)  %s", makerName, makerNum, aVoid);
+                }
+
+                setSpannableAutoDataSummary(autoPref, summary);
+            }
         });
 
-        // Share the auto data which have ben seleted in SettingAutoFragment and put them to the
-        // summary simultaneously.
+        // Invalidate the summary of the autodata preference as far as any preference value of
+        // SettingAutoFragment have been changed.
         sharedModel.getJsonAutoData().observe(getActivity(), data -> {
             try {
                 log.i("new auto data");
                 JSONArray json = new JSONArray(data);
                 makerName = json.optString(0);
-                modelName = json.optString(2);
-                typeName = json.optString(1);
-                year = json.optString(3);
-                log.i("new autodata: %s, %s", json.optString(0), json.optString(2));
-                queryAutoRegistrationNums(makerName);
+                modelName = json.optString(1);
+                //typeName = json.optString(1);
+                //year = json.optString(3);
+
+                // Is it required to make requery to get the numbers? Refactor considered!!!!!!
+                queryAutoMaker(makerName);
+
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
             }
