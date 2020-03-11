@@ -84,7 +84,7 @@
                         app:layout_constraintTop_toTopOf="@+id/tv_label_category" />
 
                     <CheckBox
-                        android:id="@+id/chkbox_filter_type"
+                        android:id="@+id/chkbox_filter_model"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -92,14 +92,16 @@
                         app:layout_constraintStart_toEndOf="@+id/chkbox_filter_maker"
                         app:layout_constraintTop_toTopOf="@+id/tv_label_category" />
 
+
                     <CheckBox
-                        android:id="@+id/chkbox_filter_model"
+                        android:id="@+id/chkbox_filter_type"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         app:layout_constraintBottom_toBottomOf="@+id/tv_label_category"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_type"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_model"
                         app:layout_constraintTop_toTopOf="@+id/tv_label_category" />
+
 
                     <CheckBox
                         android:id="@+id/chkbox_filter_year"
@@ -107,7 +109,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         app:layout_constraintBottom_toBottomOf="@+id/tv_label_category"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_model"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_type"
                         app:layout_constraintTop_toTopOf="@+id/tv_label_category" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -48,6 +48,8 @@ public class Constants {
     public static final int BOARD_AUTOCLUB = 2;
     public static final int BOARD_NOTIFICATION = 3;
 
+    public static final int SETTING_YEARS = 20;
+
     // File names for FileProvider
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";
     public static final String FILE_CACHED_SIDO_PRICE = "com.silverback.carman2.SIDO_PRICE";

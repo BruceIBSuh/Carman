@@ -64,7 +64,7 @@ public class BoardPagerFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private Source source;
     private ListenerRegistration postListener;
-    private FragmentSharedModel sharedModel;
+    private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
     private PaginationHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
@@ -109,7 +109,7 @@ public class BoardPagerFragment extends Fragment implements
 
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
@@ -192,7 +192,7 @@ public class BoardPagerFragment extends Fragment implements
         fabWrite.setOnClickListener(view -> {
             // MUST initialize the model to prevent getImageObserver() of BoardWriteDlgFragment from
             // automatically invoking startActivityForResult() when the fragment pops up.
-            sharedModel.getImageChooser().setValue(-1);
+            fragmentModel.getImageChooser().setValue(-1);
 
             // The dialog covers the full screen by adding it in android.R.id.content.
             BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
@@ -228,7 +228,7 @@ public class BoardPagerFragment extends Fragment implements
         log.i("onActivityCreated");
         // Notified that uploading the post has completed by UploadPostTask.
         // It seems not working. What if Srouce.CACHE options are applied?
-        sharedModel.getNewPosting().observe(getActivity(), documentId -> {
+        fragmentModel.getNewPosting().observe(getActivity(), documentId -> {
             log.i("New posting: %s", page);
             if(!TextUtils.isEmpty(documentId)) {
                 snapshotList.clear();
@@ -241,7 +241,7 @@ public class BoardPagerFragment extends Fragment implements
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the postion of the deleted posting item
         // and update the adapter.
-        sharedModel.getRemovedPosting().observe(getActivity(), docId -> {
+        fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
                 snapshotList.clear();

@@ -79,22 +79,22 @@
                         app:layout_constraintVertical_bias="0.0" />
 
                     <CheckBox
-                        android:id="@+id/chkbox_filter_type"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_maker"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_maker"
-                        app:layout_constraintTop_toTopOf="@+id/chkbox_filter_maker" />
-
-                    <CheckBox
                         android:id="@+id/chkbox_filter_model"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_type"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_type"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_maker"
                         app:layout_constraintTop_toTopOf="@+id/chkbox_filter_type" />
+
+                    <CheckBox
+                        android:id="@+id/chkbox_filter_type"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_maker"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_model"
+                        app:layout_constraintTop_toTopOf="@+id/chkbox_filter_maker" />
 
                     <CheckBox
                         android:id="@+id/chkbox_filter_year"
@@ -102,7 +102,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         app:layout_constraintBottom_toBottomOf="@+id/chkbox_filter_model"
-                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_model"
+                        app:layout_constraintStart_toEndOf="@+id/chkbox_filter_type"
                         app:layout_constraintTop_toTopOf="@+id/chkbox_filter_model" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>

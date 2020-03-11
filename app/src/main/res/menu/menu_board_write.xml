@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/action_board_filter"
+        android:id="@+id/board_write_filter"
         android:icon="@drawable/ic_filter"
         android:title="autoclub"
         app:showAsAction="ifRoom|withText" />
 
     <item
-        android:id="@+id/action_board_upload"
+        android:id="@+id/board_write_upload"
         android:icon="@drawable/ic_upload"
         android:title="save"
         app:showAsAction="ifRoom|withText" />

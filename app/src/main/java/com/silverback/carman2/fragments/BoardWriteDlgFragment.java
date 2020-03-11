@@ -1,6 +1,8 @@
 package com.silverback.carman2.fragments;
 
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
@@ -96,12 +98,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     // UIs
     private View localView;
-    //private NestedScrollView nestedScrollView;
+    private HorizontalScrollView hScrollView;
     private ConstraintLayout nestedLayout;
     private EditText etPostTitle, etPostBody;
 
     // Fields
     private boolean isGeneral, isAutoMaker, isAutoType, isAutoModel, isAutoYear;
+    private boolean isFilterVisible;
 
     // Constructor
     public BoardWriteDlgFragment() {
@@ -137,7 +140,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         localView = inflater.inflate(R.layout.dialog_board_write, container, false);
         Toolbar toolbar = localView.findViewById(R.id.toolbar_board_write);
         //nestedScrollView = localView.findViewById(R.id.nestedScrollView);
-        HorizontalScrollView hScrollView = localView.findViewById(R.id.post_scroll_horizontal);
+        hScrollView = localView.findViewById(R.id.post_scroll_horizontal);
         nestedLayout = localView.findViewById(R.id.vg_constraint_body);
 
         CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_filter_maker);
@@ -173,6 +176,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         */
 
         // Animate the status bar up to the actionbar height which may be calculated by TypeValue
+        /*
         TypedValue typedValue = new TypedValue();
         if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
             float actionBarHeight = TypedValue.complexToDimensionPixelSize(
@@ -183,6 +187,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             animStatusView.start();
         }
 
+         */
+
         // Create RecyclerView for holding attched pictures which are handled in onActivityResult()
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -192,15 +198,18 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         imageAdapter = new BoardAttachImageAdapter(attachedImages, this);
         recyclerImageView.setAdapter(imageAdapter);
 
-
+        // TOOLBAR MENU CREATION AND ACTION
         // DialogFragment requires Toolbar to create the menu as like the following methods, which
         // appears different from other general fragments in which the menu is created by overriding
         // onCreateOptions menu and onOptionSelectedItem().
         toolbar.inflateMenu(R.menu.menu_board_write);
         toolbar.setNavigationOnClickListener(view -> dismiss());
         toolbar.setOnMenuItemClickListener(item -> {
-            // Upload button event
-            if(item.getItemId() == R.id.action_board_upload) {
+            if(item.getItemId() == R.id.board_write_filter) {
+                // Animate the status bar up to the actionbar height which may be calculated by TypeValue
+                animFilterbar();
+
+            } else if(item.getItemId() == R.id.board_write_upload) {
                 ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                         .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
@@ -514,4 +523,40 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         } else return true;
 
     }
+
+    private void animFilterbar(){
+        TypedValue typedValue = new TypedValue();
+        if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
+            float actionBarHeight = TypedValue.complexToDimensionPixelSize(
+                    typedValue.data, getResources().getDisplayMetrics());
+
+            ObjectAnimator slideDown = ObjectAnimator.ofFloat(hScrollView, "y", actionBarHeight);
+            ObjectAnimator slideUp = ObjectAnimator.ofFloat(hScrollView, "y", 0);
+            slideDown.setDuration(500);
+            slideUp.setDuration(500);
+
+            if(!isFilterVisible) slideDown.start();
+            else slideUp.start();
+
+
+        }
+
+
+        isFilterVisible = !isFilterVisible;
+        /*
+        slideTab.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                boardPager.setVisibility(View.VISIBLE);
+                pbBoard.setVisibility(View.GONE);
+            }
+        });
+         */
+
+
+
+    }
+
+
 }

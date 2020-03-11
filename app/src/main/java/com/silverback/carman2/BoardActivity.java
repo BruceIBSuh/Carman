@@ -6,6 +6,7 @@ import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -58,7 +59,7 @@ public class BoardActivity extends BaseActivity implements
     private HorizontalScrollView filterLayout;
     private ViewPager boardPager;
     private ProgressBar pbBoard;
-    private CheckBox cbAutoMaker, cbAutoType, cbAutoModel, cbAutoYear;
+    private CheckBox cbMaker, cbModel, cbType, cbYear;
 
     // Fields
     private boolean isAutoClub;
@@ -89,28 +90,30 @@ public class BoardActivity extends BaseActivity implements
         boardTabLayout = findViewById(R.id.tab_board);
         filterLayout = findViewById(R.id.post_scroll_horizontal);
         pbBoard = findViewById(R.id.progbar_board);
-        cbAutoMaker = findViewById(R.id.chkbox_filter_maker);
-        cbAutoType = findViewById(R.id.chkbox_filter_type);
-        cbAutoModel = findViewById(R.id.chkbox_filter_model);
-        cbAutoYear = findViewById(R.id.chkbox_filter_year);
+        cbMaker = findViewById(R.id.chkbox_filter_maker);
+        cbType = findViewById(R.id.chkbox_filter_type);
+        cbModel = findViewById(R.id.chkbox_filter_model);
+        cbYear = findViewById(R.id.chkbox_filter_year);
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        cbAutoMaker.setText(mSettings.getString(Constants.AUTO_MAKER, "AutoMaker"));
-        cbAutoType.setText(mSettings.getString(Constants.AUTO_TYPE, "AutoType"));
-        cbAutoModel.setText(mSettings.getString(Constants.AUTO_MODEL, "AutoModel"));
-        cbAutoYear.setText(mSettings.getString(Constants.AUTO_YEAR, "AutoYear"));
-
+        /*
+        cbMaker.setText(mSettings.getString(Constants.AUTO_MAKER, "AutoMaker"));
+        cbType.setText(mSettings.getString(Constants.AUTO_TYPE, "AutoType"));
+        cbModel.setText(mSettings.getString(Constants.AUTO_MODEL, "AutoModel"));
+        cbYear.setText(mSettings.getString(Constants.AUTO_YEAR, "AutoYear"));
+        */
+        handleFilterBar();
         // CheckBox values as to auto data which shows in the filter layout for purposes of querying
         // the posting items. The values should be transferred to the adapter which, in turn, passsed
         // to the Auto Club page.
-        cbAutoMaker.setOnCheckedChangeListener(this);
-        cbAutoType.setOnCheckedChangeListener(this);
-        cbAutoModel.setOnCheckedChangeListener(this);
-        cbAutoYear.setOnCheckedChangeListener(this);
+        cbMaker.setOnCheckedChangeListener(this);
+        cbType.setOnCheckedChangeListener(this);
+        cbModel.setOnCheckedChangeListener(this);
+        cbYear.setOnCheckedChangeListener(this);
 
         // Create FragmentStatePagerAdapter with the checkbox values attached as arugments
         autoclubValues = new boolean[]{true, false, false, false};
@@ -143,23 +146,23 @@ public class BoardActivity extends BaseActivity implements
 
         switch(buttonView.getId()) {
             case R.id.chkbox_filter_maker:
-                log.i("autoMaker: %s", cbAutoMaker.isChecked());
-                autoclubValues[0] = cbAutoMaker.isChecked();
+                log.i("autoMaker: %s", cbMaker.isChecked());
+                autoclubValues[0] = cbMaker.isChecked();
                 break;
 
             case R.id.chkbox_filter_type:
-                log.i("autoType: %s", cbAutoType.isChecked());
-                autoclubValues[1] = cbAutoType.isChecked();
+                log.i("autoType: %s", cbType.isChecked());
+                autoclubValues[1] = cbType.isChecked();
                 break;
 
             case R.id.chkbox_filter_model:
-                log.i("autoModel: %s", cbAutoModel.isChecked());
-                autoclubValues[2] = cbAutoModel.isChecked();
+                log.i("autoModel: %s", cbModel.isChecked());
+                autoclubValues[2] = cbModel.isChecked();
                 break;
 
             case R.id.chkbox_filter_year:
-                log.i("autoYear: %s", cbAutoYear.isChecked());
-                autoclubValues[3] = cbAutoYear.isChecked();
+                log.i("autoYear: %s", cbYear.isChecked());
+                autoclubValues[3] = cbYear.isChecked();
                 break;
         }
 
@@ -263,11 +266,41 @@ public class BoardActivity extends BaseActivity implements
 
         ObjectAnimator slideDown = ObjectAnimator.ofFloat(filterLayout, "y", getActionbarHeight());
         ObjectAnimator slideUp = ObjectAnimator.ofFloat(filterLayout, "y", 0);
-        slideUp.setDuration(500);
-        slideDown.setDuration(500);
+        slideUp.setDuration(1000);
+        slideDown.setDuration(1000);
 
         if(isAutoClub) slideDown.start();
         else slideUp.start();
+
+    }
+
+    private void handleFilterBar() {
+        String brand = mSettings.getString(Constants.AUTO_MAKER, null);
+        String model = mSettings.getString(Constants.AUTO_MODEL, null);
+        String type = mSettings.getString(Constants.AUTO_TYPE, null);
+        String year = mSettings.getString(Constants.AUTO_YEAR, null);
+        log.i("auto data: %s, %s, %s, %s", brand, model, type, year);
+
+        if(TextUtils.isEmpty(brand)) {
+            cbMaker.setText(getString(R.string.board_filter_brand));
+            cbMaker.setEnabled(false);
+        } else cbMaker.setText(brand);
+
+        if(TextUtils.isEmpty(model)) {
+            cbModel.setText(getString(R.string.board_filter_model));
+            cbModel.setEnabled(false);
+        } else cbModel.setText(model);
+
+        if(TextUtils.isEmpty(type)) {
+            cbType.setText(getString(R.string.board_filter_type));
+            cbType.setEnabled(false);
+        } else cbType.setText(type);
+
+        if(TextUtils.isEmpty(year)) {
+            cbYear.setText(R.string.board_filter_year);
+            cbYear.setEnabled(false);
+        } else cbYear.setText(year);
+
 
     }
 

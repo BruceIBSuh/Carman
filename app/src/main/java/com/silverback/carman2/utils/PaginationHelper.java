@@ -57,7 +57,9 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     // Create queries for each page.
     public void setPostingQuery(Source source, int page, boolean[] filter) {
         colRef = firestore.collection("board_general");
+
         switch(page) {
+
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
                 colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
