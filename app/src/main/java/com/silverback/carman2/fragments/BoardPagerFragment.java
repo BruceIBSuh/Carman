@@ -74,12 +74,11 @@ public class BoardPagerFragment extends Fragment implements
 
     // UIs
     //private ProgressBar pagingProgbar;
-    private FloatingActionButton fabWrite;
+    //private FloatingActionButton fabWrite;
 
     // Fields
     private boolean[] autoFilter;
     private int page;
-
 
     // Constructor
     private BoardPagerFragment() {
@@ -163,12 +162,13 @@ public class BoardPagerFragment extends Fragment implements
         weakProgbar = new WeakReference<>(pagingProgbar);
 
 
-        fabWrite = localView.findViewById(R.id.fab_board_write);
+        //fabWrite = localView.findViewById(R.id.fab_board_write);
         RecyclerView recyclerPostView = localView.findViewById(R.id.recycler_board);
 
         recyclerPostView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerPostView.setAdapter(postingAdapter);
         // Show/hide Floating Action Button as the recyclerview scrolls.
+        FloatingActionButton fabWrite = ((BoardActivity)getActivity()).getFAB();
         recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -181,6 +181,7 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
 
+
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PaginationHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
@@ -188,19 +189,24 @@ public class BoardPagerFragment extends Fragment implements
         // Floating Action Button to show BoardReadDlgFragment which reads a post when clicking it.
         // Also, as the reyclcerview scrolls, the button hides itself and the button appears again
         // when the scroll stops.
+        /*
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(view -> {
-            // MUST initialize the model to prevent getImageObserver() of BoardWriteDlgFragment from
+            // MUST initialize the model to prevent getImageObserver() of BoardWriteFragment from
             // automatically invoking startActivityForResult() when the fragment pops up.
             fragmentModel.getImageChooser().setValue(-1);
 
+            Bundle bundle = new Bundle();
+            bundle.putInt("fragment", page);
+
             // The dialog covers the full screen by adding it in android.R.id.content.
-            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
+            BoardWriteFragment writePostFragment = new BoardWriteFragment();
+            writePostFragment.setArguments(bundle);
             getActivity().getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, writePostFragment)
                     .commit();
         });
-
+        */
         // Get the field name of each fragment in the viewpager and query the posting items using
         // PaginationHelper which sends the dataset back to the callbacks of setFirstQuery(),
         // setNextQueryStart(), and setNextQueryComplete().

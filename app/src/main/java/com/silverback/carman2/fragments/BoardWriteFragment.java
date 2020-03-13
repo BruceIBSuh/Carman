@@ -1,9 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,7 +10,6 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,10 +20,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.HorizontalScrollView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
@@ -66,11 +60,11 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * A simple {@link Fragment} subclass.
  * This fragment is to upload any writing to post in the board with images attached.
  */
-public class BoardWriteDlgFragment extends DialogFragment implements
+public class BoardWriteFragment extends DialogFragment implements
         CheckBox.OnCheckedChangeListener,
         BoardAttachImageAdapter.OnBoardWriteListener {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteDlgFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
     // Constants
     private static final int MENU_ITEM_ID = 1001;
@@ -97,17 +91,18 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
 
     // UIs
+    //private NestedScrollView nested;
     private View localView;
-    private HorizontalScrollView hScrollView;
+    //private HorizontalScrollView hScrollView;
     private ConstraintLayout nestedLayout;
     private EditText etPostTitle, etPostBody;
 
     // Fields
-    private boolean isGeneral, isAutoMaker, isAutoType, isAutoModel, isAutoYear;
+    private boolean isAutoMaker, isAutoType, isAutoModel, isAutoYear;
     private boolean isFilterVisible;
 
     // Constructor
-    public BoardWriteDlgFragment() {
+    public BoardWriteFragment() {
         // Required empty public constructor
     }
 
@@ -137,11 +132,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        localView = inflater.inflate(R.layout.dialog_board_write, container, false);
-        Toolbar toolbar = localView.findViewById(R.id.toolbar_board_write);
-        //nestedScrollView = localView.findViewById(R.id.nestedScrollView);
-        hScrollView = localView.findViewById(R.id.post_scroll_horizontal);
-        nestedLayout = localView.findViewById(R.id.vg_constraint_body);
+        localView = inflater.inflate(R.layout.fragment_board_write, container, false);
 
         CheckBox chkboxMaker = localView.findViewById(R.id.chkbox_filter_maker);
         CheckBox chkboxType = localView.findViewById(R.id.chkbox_filter_type);
@@ -151,14 +142,16 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         etPostTitle = localView.findViewById(R.id.et_board_title);
         etPostBody = localView.findViewById(R.id.et_board_body);
 
+        //nested = localView.findViewById(R.id.nestedScrollView);
+
         RecyclerView recyclerImageView = localView.findViewById(R.id.vg_recycler_images);
         Button btnAttach = localView.findViewById(R.id.btn_attach_image);
         //ImageButton btnDismiss = localView.findViewById(R.id.btn_dismiss);
         //ImageButton btnUpload = localView.findViewById(R.id.btn_upload);
-
+        /*
         chkboxMaker.setText(mSettings.getString(Constants.AUTO_MAKER, null));
-        chkboxType.setText(mSettings.getString(Constants.AUTO_TYPE, null));
         chkboxModel.setText(mSettings.getString(Constants.AUTO_MODEL, null));
+        chkboxType.setText(mSettings.getString(Constants.AUTO_TYPE, null));
         chkboxYear.setText(mSettings.getString(Constants.AUTO_YEAR, null));
 
 
@@ -167,7 +160,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         chkboxType.setOnCheckedChangeListener(this);
         chkboxModel.setOnCheckedChangeListener(this);
         chkboxYear.setOnCheckedChangeListener(this);
-
+        */
         /*
         statusLayout.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             float statusHeight = statusLayout.getHeight();
@@ -198,16 +191,18 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         imageAdapter = new BoardAttachImageAdapter(attachedImages, this);
         recyclerImageView.setAdapter(imageAdapter);
 
-        // TOOLBAR MENU CREATION AND ACTION
-        // DialogFragment requires Toolbar to create the menu as like the following methods, which
-        // appears different from other general fragments in which the menu is created by overriding
-        // onCreateOptions menu and onOptionSelectedItem().
-        toolbar.inflateMenu(R.menu.menu_board_write);
-        toolbar.setNavigationOnClickListener(view -> dismiss());
+        /*
+         * TOOLBAR MENU CREATION AND ACTION
+         * DialogFragment requires Toolbar to create the menu as like the following methods, which
+         * appears different from other general fragments in which the menu is created by overriding
+         * onCreateOptions menu and onOptionSelectedItem().
+         */
+        //toolbar.inflateMenu(R.menu.menu_board_write);
+        //toolbar.setNavigationOnClickListener(view -> dismiss());
+        /*
         toolbar.setOnMenuItemClickListener(item -> {
             if(item.getItemId() == R.id.board_write_filter) {
-                // Animate the status bar up to the actionbar height which may be calculated by TypeValue
-                animFilterbar();
+                animSlideFilterbar();
 
             } else if(item.getItemId() == R.id.board_write_upload) {
                 ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
@@ -245,7 +240,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
             return false;
         });
-
+        */
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
@@ -264,7 +259,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 // create an intent by the selection.
                 DialogFragment dialog = new BoardChooserDlgFragment();
                 // BUGS FREQUENTLY OCCURRED!!!!
-                //java.lang.IllegalStateException: Fragment BoardWriteDlgFragment{984f0c5}
+                //java.lang.IllegalStateException: Fragment BoardWriteFragment{984f0c5}
                 // (4b73b12d-9e70-4e32-95bb-52f209a6b8a1)} not attached to Activity
                 //dialog.show(getChildFragmentManager(), "@null");
                 dialog.show(getParentFragmentManager(), "chooserDialog");
@@ -524,39 +519,45 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     }
 
-    private void animFilterbar(){
+    // getActionbarHeight() does not work here in DialogFragment. That's why TypedValue comes in
+    // to measure the actionbar height.
+    /*
+    private void animSlideFilterbar(){
+
         TypedValue typedValue = new TypedValue();
         if(getActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
             float actionBarHeight = TypedValue.complexToDimensionPixelSize(
                     typedValue.data, getResources().getDisplayMetrics());
 
-            ObjectAnimator slideDown = ObjectAnimator.ofFloat(hScrollView, "y", actionBarHeight);
-            ObjectAnimator slideUp = ObjectAnimator.ofFloat(hScrollView, "y", 0);
-            slideDown.setDuration(500);
-            slideUp.setDuration(500);
+            log.i("Actionbar size: %s", actionBarHeight);
+            float filterHeight = hScrollView.getHeight();
 
-            if(!isFilterVisible) slideDown.start();
-            else slideUp.start();
+            hScrollView.setElevation(10f);
+            // Something wrong here!!!!
+            //ObjectAnimator slideDown = ObjectAnimator.ofFloat(hScrollView, "translationY", actionBarHeight);
+            ObjectAnimator hScrollDown = ObjectAnimator.ofFloat(hScrollView, "translationY", actionBarHeight);
+            ObjectAnimator nestedDown = ObjectAnimator.ofFloat(nested, "translationY", filterHeight);
 
+            ObjectAnimator hScrollUp = ObjectAnimator.ofFloat(hScrollView, "y", 0);
+            ObjectAnimator nestedUp = ObjectAnimator.ofFloat(nested, "translationY", actionBarHeight);
+
+            hScrollDown.setDuration(500);
+            nestedDown.setDuration(500);
+            hScrollUp.setDuration(500);
+            nestedUp.setDuration(500);
+
+            if(!isFilterVisible) {
+                hScrollUp.start();
+            } else hScrollDown.start();
+
+
+            isFilterVisible = !isFilterVisible;
 
         }
 
-
-        isFilterVisible = !isFilterVisible;
-        /*
-        slideTab.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                boardPager.setVisibility(View.VISIBLE);
-                pbBoard.setVisibility(View.GONE);
-            }
-        });
-         */
-
-
-
     }
+
+     */
 
 
 }

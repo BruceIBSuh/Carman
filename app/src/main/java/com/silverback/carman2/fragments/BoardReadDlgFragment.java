@@ -301,7 +301,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         });
 
         // Toolbar menu: if the post is written by the user, show the menu for editting the post.
-        // Consider that a new dialogfragment should be created or reuse BoardWriteDlgFragment with
+        // Consider that a new dialogfragment should be created or reuse BoardWriteFragment with
         // putting the data in the fragment.
         inflateEditMenuInToolbar();
 
@@ -707,7 +707,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                             sharedModel.getImageChooser().setValue(-1);
                             // Create the dialog fragment with arguments which have been passed from
                             // BoardPagerFragment when an item was picked.
-                            BoardWriteDlgFragment writePostFragment = new BoardWriteDlgFragment();
+                            BoardWriteFragment writePostFragment = new BoardWriteFragment();
                             writePostFragment.setArguments(getArguments());
 
                             getActivity().getSupportFragmentManager().beginTransaction()

@@ -68,9 +68,7 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
                     break;
                 }
             }
-        }).addOnFailureListener(e -> {
-            log.i("automaker queried failed");
-        });
+        }).addOnFailureListener(Throwable::printStackTrace);
     }
 
     // On completion of the auto maker query, make a sequential query of auto models with the

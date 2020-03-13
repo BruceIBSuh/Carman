@@ -31,6 +31,9 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
  * hierarchy of Preference objects, automatically persisting values in SharedPreferences.
@@ -86,14 +89,15 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         year = mSettings.getString(Constants.AUTO_YEAR, null);
-        log.i("Auto maker and model: %s, %s", makerName, modelName);
+        log.i("Auto Data: %s, %s, %s, %s", makerName, modelName, typeName, year);
 
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
         if(TextUtils.isEmpty(makerName)) autoPref.setSummary(aVoid);
         else queryAutoMaker(makerName);
-
+        // Attach the listener to be notified that the automaker query or the automodel query has
+        // completed.
         setFirestoreCompleteListener(new OnFirestoreCompleteListener() {
             String makerNum, modelNum, summary;
             @Override
@@ -125,23 +129,15 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
-        sharedModel.getJsonAutoData().observe(getActivity(), data -> {
-            try {
-                log.i("new auto data");
-                JSONArray json = new JSONArray(data);
-                makerName = json.optString(0);
-                modelName = json.optString(1);
-                //typeName = json.optString(1);
-                //year = json.optString(3);
+        sharedModel.getAutoDataList().observe(getActivity(), dataList -> {
+            makerName = dataList.get(0);
+            modelName = dataList.get(1);
+            typeName = dataList.get(2);
+            year = dataList.get(3);
 
-                // Is it required to make requery to get the numbers? Refactor considered!!!!!!
-                queryAutoMaker(makerName);
+            if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
 
-            } catch(JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
-            }
         });
-
 
         // Preference for selecting a fuel out of gas, diesel, lpg and premium, which should be
         // improved with more energy source such as eletricity and hydrogene provided.
@@ -275,8 +271,6 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         }
 
     }
-
-
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

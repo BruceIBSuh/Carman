@@ -24,6 +24,7 @@
         app:elevation="2dp"
         app:layout_insetEdge="bottom" />
 
+    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_board_write"
         android:layout_width="wrap_content"
@@ -35,5 +36,5 @@
         app:elevation="6dp"
         app:backgroundTint="@color/colorAccent"
         app:rippleColor="@color/colorPrimary" />
-
+    -->
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

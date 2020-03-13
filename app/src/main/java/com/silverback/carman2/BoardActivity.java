@@ -2,6 +2,7 @@ package com.silverback.carman2;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,16 +13,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.widget.NestedScrollView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
+import com.silverback.carman2.fragments.BoardWriteFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -48,6 +53,7 @@ public class BoardActivity extends BaseActivity implements
     public static final int REQUEST_CODE_CAMERA = 1000;
     public static final int REQUEST_CODE_GALLERY = 1001;
     public static final int MENU_ITEM_FILTER = 1002;
+    public static final int MENU_ITEM_UPLOAD = 1003;
 
     // Objects
     private OnFilterCheckBoxListener mListener;
@@ -56,13 +62,18 @@ public class BoardActivity extends BaseActivity implements
 
     // UIs
     private TabLayout boardTabLayout;
+    private NestedScrollView nestedScrollView;
     private HorizontalScrollView filterLayout;
+    private FrameLayout frameLayout;
     private ViewPager boardPager;
+    private BoardWriteFragment writePostFragment;
     private ProgressBar pbBoard;
     private CheckBox cbMaker, cbModel, cbType, cbYear;
+    private FloatingActionButton fabWrite;
 
     // Fields
-    private boolean isAutoClub;
+    private int tabPage;
+    private boolean isClubPage;
     private boolean[] autoclubValues;
     //private boolean isTabVisible;
 
@@ -85,7 +96,8 @@ public class BoardActivity extends BaseActivity implements
         imageViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         Toolbar toolbar = findViewById(R.id.board_toolbar);
-        boardPager = findViewById(R.id.viewpager_board);
+        nestedScrollView = findViewById(R.id.nestedScrollView);
+        frameLayout = findViewById(R.id.frame_contents);
         AppBarLayout appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
         filterLayout = findViewById(R.id.post_scroll_horizontal);
@@ -94,6 +106,7 @@ public class BoardActivity extends BaseActivity implements
         cbType = findViewById(R.id.chkbox_filter_type);
         cbModel = findViewById(R.id.chkbox_filter_model);
         cbYear = findViewById(R.id.chkbox_filter_year);
+        fabWrite = findViewById(R.id.fab_board_write);
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
@@ -119,19 +132,58 @@ public class BoardActivity extends BaseActivity implements
         autoclubValues = new boolean[]{true, false, false, false};
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setCheckBoxValues(autoclubValues);
+
+        // Create ViewPager programmatically setting the listener to be notified of the page change
+        // and add it to FrameLayout
+        boardPager = new ViewPager(this);
+        boardPager.setId(View.generateViewId());
+
         boardPager.setAdapter(pagerAdapter);
         boardTabLayout.setupWithViewPager(boardPager);
+        boardPager.addOnPageChangeListener(this);
+        frameLayout.addView(boardPager);
+
+        log.i("Frame childview: %s", frameLayout.getChildAt(0));
 
         addTabIconAndTitle(this, boardTabLayout);
         animSlideTabLayout();
 
         // Add the listeners to the viewpager and AppbarLayout
-        boardPager.addOnPageChangeListener(this);
         appBar.addOnOffsetChangedListener(this);
+
+        // Set the click listener to the FAB
+        fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
+        fabWrite.setOnClickListener(view -> {
+            // Handle the toolbar menu as the write board comes in.
+            fabWrite.setVisibility(View.INVISIBLE);
+            getSupportActionBar().setTitle("Write Your Car");
+            // When tapping the fab on the auto club page in the viewpager, slide up the tablayout
+            // and sequentially slide down the filterlayout. Whereas, unless the current page is
+            // the club one, slide up the tablayout and slide up the nestedscrollview at the same
+            // time.
+            if(isClubPage) animSlideFilterLayout(true);
+            else animWritingBoardLayout(true);
+
+            //if(tabPage != 2) animWritingBoardLayout(true);
+            //else animSlideFilterLayout(true);
+
+            // The dialog covers the full screen by adding it in android.R.id.content.
+            writePostFragment = new BoardWriteFragment();
+            if(frameLayout.getChildCount() > 0) frameLayout.removeAllViews();
+            getSupportFragmentManager().beginTransaction().addToBackStack(null)
+                    .replace(frameLayout.getId(), writePostFragment)
+                    .commit();
+
+            invalidateOptionsMenu();
+            log.i("Frame childview: %s", frameLayout.getChildCount());
+
+
+
+        });
     }
 
-    // Receive the image uri as a result of startActivityForResult() revoked in BoardWriteDlgFragment,
-    // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteDlgFragment
+    // Receive the image uri as a result of startActivityForResult() revoked in BoardWriteFragment,
+    // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteFragment
     // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
     // content area and adding it to the image list so as to update the recyclerview adapter.
     @Override
@@ -173,7 +225,7 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        //getMenuInflater().inflate(R.menu.menu_board_write, menu);
+        //getMenuInflater().inflate(R.menu.menu_board, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -182,28 +234,67 @@ public class BoardActivity extends BaseActivity implements
      * are presented in the app bar. When an event occurs and you want to perform a menu update,
      * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
      */
+
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         menu.clear();
-        if(isAutoClub) {
-            menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
-                    //.setIcon(R.drawable.logo_gs)
-                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+        if(frameLayout.getChildAt(0) instanceof ViewPager) {
+
+            if(isClubPage)
+                menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
+                        .setIcon(R.drawable.ic_filter)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+
+        } else {
+            if(isClubPage) {
+                menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
+                        .setIcon(R.drawable.ic_filter)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+                menu.add(0, MENU_ITEM_UPLOAD, Menu.NONE, "UPLOAD")
+                        .setIcon(R.drawable.ic_upload)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            } else {
+                menu.add(0, MENU_ITEM_UPLOAD, Menu.NONE, "UPLOAD")
+                        .setIcon(R.drawable.ic_upload)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            }
         }
+
         return super.onPrepareOptionsMenu(menu);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch(item.getItemId()) {
             case android.R.id.home:
-                finish();
+                // Check which child view the framelayout contains; if it holds the viewpager, just
+                // finish the activity and otherwise, add the viewpager to the framelayout.
+                if(frameLayout.getChildAt(0) instanceof ViewPager) {
+                    frameLayout.removeAllViews();
+                    finish();
+
+                } else {
+                    frameLayout.removeView(writePostFragment.getView());
+                    frameLayout.addView(boardPager);
+
+                    fabWrite.setVisibility(View.VISIBLE);
+                    invalidateOptionsMenu();
+
+                    getSupportActionBar().setTitle(getString(R.string.billboard_title));
+                    animWritingBoardLayout(false);
+
+                }
+
                 return true;
 
             case MENU_ITEM_FILTER:
-                animSlideFilterLayout();
-                isAutoClub = !isAutoClub;
+                isClubPage = !isClubPage;
+                animSlideFilterLayout(isClubPage);
                 return true;
 
             default:
@@ -220,15 +311,12 @@ public class BoardActivity extends BaseActivity implements
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
     @Override
     public void onPageSelected(int position) {
-        log.i("ViewPager onPageSelected: %s", position);
-        // If the value of isAutoClub becomes true, the filter button shows up in the toolbar and
+        tabPage = position;
+        // If the value of isClubPage becomes true, the filter button shows up in the toolbar and
         // pressing the button calls animSlideFilterLayout() to make the filter layout slide down,
         // which is defined in onOptionsItemSelected()
-        if(position == Constants.BOARD_AUTOCLUB) isAutoClub = true;
-        else {
-            isAutoClub = false;
-            animSlideFilterLayout();
-        }
+        isClubPage = (position == Constants.BOARD_AUTOCLUB);
+        animSlideFilterLayout(isClubPage);
 
         // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
         // higher.
@@ -240,10 +328,20 @@ public class BoardActivity extends BaseActivity implements
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animSlideTabLayout() {
-        float toolbarHeight = getActionbarHeight();
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", toolbarHeight);
-        slideTab.setDuration(500);
-        slideTab.addListener(new AnimatorListenerAdapter() {
+
+        ObjectAnimator slideTabDown = ObjectAnimator.ofFloat(boardTabLayout, "y", getActionbarHeight());
+        ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", 0);
+
+        slideTabDown.setDuration(500);
+        slideTabUp.setDuration(500);
+        slideTabDown.start();
+        /*
+        if(isVisible) slideTabDown.start();
+        else slideTabUp.start();
+        */
+        // Upon completion of sliding down the tab, set the visibility of the viewpager and the
+        // progressbar.
+        slideTabDown.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
@@ -251,7 +349,6 @@ public class BoardActivity extends BaseActivity implements
                 pbBoard.setVisibility(View.GONE);
             }
         });
-        slideTab.start();
 
     }
 
@@ -259,20 +356,41 @@ public class BoardActivity extends BaseActivity implements
     // of the checkboxes to make the querying the board conditioned slides down to cover the tab
     // menu by clicking the filter button. Clicking the button again or switching the page, it
     // slides up.
-    private void animSlideFilterLayout() {
+    private void animSlideFilterLayout(boolean isVisible) {
         // Visibillity control
-        //int visibility = (isAutoClub)? View.VISIBLE : View.INVISIBLE;
+        //int visibility = (isClubPage)? View.VISIBLE : View.INVISIBLE;
         //filterLayout.setVisibility(visibility);
 
         ObjectAnimator slideDown = ObjectAnimator.ofFloat(filterLayout, "y", getActionbarHeight());
         ObjectAnimator slideUp = ObjectAnimator.ofFloat(filterLayout, "y", 0);
-        slideUp.setDuration(1000);
-        slideDown.setDuration(1000);
+        slideUp.setDuration(500);
+        slideDown.setDuration(500);
 
-        if(isAutoClub) slideDown.start();
+        if(isVisible) slideDown.start();
         else slideUp.start();
 
     }
+
+    private void animWritingBoardLayout(boolean isUpDown) {
+
+        float tabEnd = (isUpDown)? 0 : getActionbarHeight();
+        float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
+
+        AnimatorSet animSet = new AnimatorSet();
+        ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);
+        ObjectAnimator slideNestedUp = ObjectAnimator.ofFloat(nestedScrollView, "y", nestedEnd);
+
+        slideTabUp.setDuration(500);
+        slideNestedUp.setDuration(500);
+
+        if(isUpDown) animSet.play(slideTabUp).before(slideNestedUp);
+        else animSet.play(slideNestedUp).before(slideTabUp);
+
+        animSet.start();
+        //slideTabUp.start();
+        //slideNestedUp.start();
+    }
+
 
     private void handleFilterBar() {
         String brand = mSettings.getString(Constants.AUTO_MAKER, null);
@@ -307,6 +425,10 @@ public class BoardActivity extends BaseActivity implements
     // Referenced by the child fragments
     public SharedPreferences getSettings() {
         return mSettings;
+    }
+
+    public FloatingActionButton getFAB() {
+        return fabWrite;
     }
 
 

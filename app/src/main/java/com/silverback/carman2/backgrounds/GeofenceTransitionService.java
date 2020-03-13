@@ -118,16 +118,18 @@ public class GeofenceTransitionService extends IntentService {
         String title = null;
         String extendedText = null;
         String visitingTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
-        String contentText = String.format("%s\n%s", visitingTime, addrs);
+        String contentText = String.format("%s%3s%s\n%s", name, "", visitingTime, addrs);
 
         switch(category) {
             case Constants.GAS: // gas station
-                title = String.format("%-6s%s", getString(R.string.noti_geofence_title_gas), name);
+                //title = String.format("%-6s%s", getString(R.string.noti_geofence_title_gas), name);
+                title = getString(R.string.noti_geofence_title_gas);
                 extendedText = getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                title = String.format("%-6s%s", getString(R.string.noti_geofence_title_svc), name);
+                //title = String.format("%-6s%s", getString(R.string.noti_geofence_title_svc), name);
+                title = getString(R.string.noti_geofence_title_svc);
                 extendedText = getResources().getString(R.string.noti_geofence_content_svc);
                 break;
 

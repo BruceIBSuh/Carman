@@ -50,7 +50,8 @@ public class FragmentSharedModel extends ViewModel {
 
     // AutoData used in SettingPreferenceActivity which is shared b/w SettingPrefereneFragment and
     // SettingAutoFragment
-    private MutableLiveData<String> jsonAutoData;
+    private MutableLiveData<List<String>> autoDataList;
+    private MutableLiveData<Boolean> jsonAutoData;
 
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
     // to show the names in the summary of the preference.
@@ -155,14 +156,14 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    // Communicate b/w BoardWriteDlgFragment and BoardChooserDlgFragme to notify which image chooser
+    // Communicate b/w BoardWriteFragment and BoardChooserDlgFragme to notify which image chooser
     // out of camera or gallery is selected.
     public MutableLiveData<Integer> getImageChooser() {
         if(imageChooser == null) imageChooser = new MutableLiveData<>();
         return imageChooser;
     }
 
-    // Communicate b/w BoardWriteDlgFragment and BoardPagerFragment both of which BoardActivity
+    // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
     public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
@@ -190,9 +191,14 @@ public class FragmentSharedModel extends ViewModel {
         return totalExpense;
     }
 
-    public MutableLiveData<String> getJsonAutoData() {
+    public MutableLiveData<Boolean> getJsonAutoData() {
         if(jsonAutoData == null) jsonAutoData = new MutableLiveData<>();
         return jsonAutoData;
+    }
+
+    public MutableLiveData<List<String>> getAutoDataList() {
+        if(autoDataList == null) autoDataList = new MutableLiveData<>();
+        return autoDataList;
     }
 
 }

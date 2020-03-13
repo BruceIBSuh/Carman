@@ -63,14 +63,14 @@ public class BoardChooserDlgFragment extends DialogFragment {
         tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
             //mListener.selectMedia(BoardWritingActivity.GALLERY);
-            fragmentModel.getImageChooser().setValue(BoardWriteDlgFragment.GALLERY);
+            fragmentModel.getImageChooser().setValue(BoardWriteFragment.GALLERY);
             dismiss();
         });
 
         tvCamera.setOnClickListener(view -> {
             log.i("Camera selected");
             //mListener.selectMedia(BoardWritingActivity.CAMERA);
-            fragmentModel.getImageChooser().setValue(BoardWriteDlgFragment.CAMERA);
+            fragmentModel.getImageChooser().setValue(BoardWriteFragment.CAMERA);
             dismiss();
         });
 

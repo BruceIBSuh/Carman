@@ -133,7 +133,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
         autoType.setEntries(arrAutoType);
         autoType.setEntryValues(arrAutoType);
 
-        // Set the entries(values) to the auto year preference dynamically.
+        // Set the entries(values) to the auto year preference.
         List<String> yearList = new ArrayList<>();
         int year = Calendar.getInstance().get(Calendar.YEAR);
         for (int i = year; i >= (year - LONGEVITY); i--) yearList.add(String.valueOf(i));
@@ -142,15 +142,18 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
         autoYear.setEntryValues(mYearEntries);
 
 
-        String makerName = mSettings.getString(Constants.AUTO_MAKER, null);
-        String modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-        String typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-
-        if(!TextUtils.isEmpty(typeName)) autoType.setSummary(typeName);
         // Query the auto maker to retrieve the registration number, the query result of which is
         // notified to the OnFirestoreCompleteListener. Sequentially, upon completion of the auto
         // maker query, make an auto model query to have the registration number notified to the
-        // same listener.
+        // same listener, then set the initial values and summaries. In particular, the summaries
+        // of the autoMaker and autoModel preferences include the queried registration numbers.
+        String makerName = mSettings.getString(Constants.AUTO_MAKER, null);
+        String modelName = mSettings.getString(Constants.AUTO_MODEL, null);
+        String typeName = mSettings.getString(Constants.AUTO_TYPE, null);
+        if(!TextUtils.isEmpty(typeName)) autoType.setSummary(typeName);
+        log.i("Auto Preferences: %s, %s, %s", makerName, modelName, typeName);
+
+        // Just in case of initail setting first time.
         if(TextUtils.isEmpty(makerName)) autoModel.setEnabled(false);
         else queryAutoMaker(makerName);
 
@@ -250,7 +253,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
                 autoType.setValue(null);
                 autoType.setSummary(getString(R.string.pref_entry_void));
 
-
+                // Make a new query for the auto maker, the result of which sets a new entries of
+                // the auto models.
                 queryAutoMaker(valueName);
 
                 return true;
@@ -296,11 +300,15 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
             dataList.add(mSettings.getString(Constants.AUTO_YEAR, null));
             // Invalidate the summary of the parent preference transferring the changed data to
             // as JSON string type.
+            /*
             JSONArray autoData = new JSONArray(dataList);
             mSettings.edit().putString(Constants.AUTO_DATA, autoData.toString()).apply();
             // To pass the json string for setting the summary in SettingPreferenceActivity, then
             // upload the auto data.
-            fragmentModel.getJsonAutoData().setValue(autoData.toString());
+            fragmentModel.getJsonAutoData().setValue(true);
+             */
+            fragmentModel.getAutoDataList().setValue(dataList);
+
             // Revert the toolbar title when leaving this fragment b/c SettingPreferenceFragment and
             // SettingAutoFragment share the toolbar under the same parent activity.
             mToolbarListener.notifyResetTitle();
@@ -312,10 +320,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
     }
 
 
-    // This method queries all auto models with auto maker and auto type. The auto maker is required
-    // but the auto type condition may be null. Special care should be taken when async queries
-    // are made. This method takes Continuation which queries auto maker first. On completion, the
-    // next query is made with the integer value of auto type, which can be null.
+    // This method queries all auto models with auto maker and auto type as conditions. The auto maker
+    // is required but the auto type condition may be null. Special care should be taken when async
+    // queries are made. This method takes Continuation which queries auto maker first. On completion,
+    // the next query is made with the integer value of auto type, which may be null.
     @SuppressWarnings("ConstantConditions")
     private void setAutoModelEntries(String id, int type) {
         if(TextUtils.isEmpty(id)) return;

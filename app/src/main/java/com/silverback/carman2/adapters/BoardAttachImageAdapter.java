@@ -28,7 +28,7 @@ public class BoardAttachImageAdapter extends RecyclerView.Adapter<BoardAttachIma
     private List<Uri> uriImageList;
     private OnBoardWriteListener mListener;
 
-    // Interface to communicate w/ BoardWriteDlgFragment
+    // Interface to communicate w/ BoardWriteFragment
     public interface OnBoardWriteListener {
         void removeGridImage(int position);
     }
