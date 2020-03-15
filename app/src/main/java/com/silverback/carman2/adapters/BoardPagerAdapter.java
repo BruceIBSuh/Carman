@@ -7,6 +7,8 @@ import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.silverback.carman2.fragments.BoardPagerFragment;
 
+import java.util.List;
+
 /*
  * This viewpager adapter subclasses FragmentStatePagerAdapter instead of FragmentPagerAdapter.
  * In general, FragmentPagerAdapter is preferred when displaying the tab-synced fragments that do not
@@ -18,7 +20,8 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     private static final int NUM_PAGES = 4;
 
     // Fields
-    private boolean[] chkboxValues;
+    //private boolean[] cbValues;
+    private boolean[] cbValues;
 
     // Constructor
     public BoardPagerAdapter(FragmentManager fm) {
@@ -28,7 +31,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int position) {
-        return BoardPagerFragment.newInstance(position, chkboxValues);
+        return BoardPagerFragment.newInstance(position, cbValues);
     }
 
     @Override
@@ -37,7 +40,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     }
 
     public void setCheckBoxValues(boolean[] values) {
-        chkboxValues = values;
+        cbValues = values;
     }
 
 }

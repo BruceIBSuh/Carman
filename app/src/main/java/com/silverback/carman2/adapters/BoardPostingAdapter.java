@@ -18,6 +18,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -40,7 +42,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     // Objects
     private Context context;
-    private List<DocumentSnapshot> snapshotList;
+    //private List<DocumentSnapshot> snapshotList;
+    private QuerySnapshot querySnapshot;
     private OnRecyclerItemClickListener mListener;
     private SimpleDateFormat sdf;
 
@@ -50,10 +53,22 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     }
 
     // Constructor
-    public BoardPostingAdapter(List<DocumentSnapshot> snapshotList, OnRecyclerItemClickListener listener) {
+    /*
+    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
         super();
-        this.snapshotList = snapshotList;
+
+        log.i("BoarePostingAdapter");
+        this.snapshotList = snapshots;
         mListener = listener;
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+    }
+
+     */
+
+    public BoardPostingAdapter(QuerySnapshot snapshots, OnRecyclerItemClickListener listener) {
+        super();
+        mListener = listener;
+        querySnapshot = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
@@ -75,29 +90,30 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
         // Retreive an board item queried in and passed from BoardPagerFragment
         //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
-        DocumentSnapshot document = snapshotList.get(position);
-        log.i("User Profile Pic: %s", document.getString("user_pic"));
+        //DocumentSnapshot document = snapshotList.get(position);
+        DocumentSnapshot snapshot = querySnapshot.getDocuments().get(position);
+        log.i("User Profile Pic: %s", snapshot.getString("user_pic"));
 
-        holder.tvPostTitle.setText(document.getString("post_title"));
+        holder.tvPostTitle.setText(snapshot.getString("post_title"));
         holder.tvNumber.setText(String.valueOf(position + 1));
-        holder.tvPostingDate.setText(sdf.format(document.getDate("timestamp")));
-        holder.tvUserName.setText(document.getString("user_name"));
-        holder.tvViewCount.setText(String.valueOf(document.getLong("cnt_view")));
-        holder.tvCommentCount.setText(String.valueOf(document.getLong("cnt_comment")));
+        holder.tvPostingDate.setText(sdf.format(snapshot.getDate("timestamp")));
+        holder.tvUserName.setText(snapshot.getString("user_name"));
+        holder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
+        holder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
         //
-        if(!TextUtils.isEmpty(document.getString("user_pic"))) {
-            holder.bindProfileImage(Uri.parse(document.getString("user_pic")));
+        if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
+            holder.bindProfileImage(Uri.parse(snapshot.getString("user_pic")));
         } else holder.bindProfileImage(null);
 
-        List<String> imgList = (ArrayList<String>)document.get("post_images");
+        List<String> imgList = (ArrayList<String>)snapshot.get("post_images");
         if(imgList != null && imgList.size() > 0) {
             holder.bindAttachedImage(Uri.parse(imgList.get(0)));
         }
 
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {
-            if(mListener != null) mListener.onPostItemClicked(document, position);
+            if(mListener != null) mListener.onPostItemClicked(snapshot, position);
         });
 
     }
@@ -117,12 +133,18 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @Override
     public int getItemCount() {
-        return snapshotList.size();
+        return querySnapshot.size();
     }
 
     @Override
     public int getItemViewType(int position) {
         return -1;
+    }
+
+
+    // Set new snapshot list to the apdater for updating
+    public void updatePostingAdapdter(QuerySnapshot snapshots) {
+        this.querySnapshot = snapshots;
     }
 
 

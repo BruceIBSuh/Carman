@@ -66,7 +66,7 @@
                         android:id="@+id/tv_label_category"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/board_post_filter_title"
+                        android:text="@string/board_filter_title"
                         android:textStyle="bold"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -87,6 +87,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
+                        android:checked="true"
                         app:layout_constraintBottom_toBottomOf="@+id/tv_label_category"
                         app:layout_constraintStart_toEndOf="@+id/chkbox_filter_maker"
                         app:layout_constraintTop_toTopOf="@+id/tv_label_category" />

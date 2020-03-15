@@ -187,7 +187,6 @@ public class UploadBitmapRunnable implements Runnable {
 
     @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadBitmapToStorage(byte[] bitmapByteArray, int position) {
-
         // Create the storage reference of an image uploading to Firebase Storage
         final StorageReference imgReference = firestorage.getReference().child("images");
         final String filename = System.currentTimeMillis() + ".jpg";

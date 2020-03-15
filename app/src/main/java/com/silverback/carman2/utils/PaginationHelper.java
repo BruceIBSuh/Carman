@@ -17,6 +17,11 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import org.json.JSONArray;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
  * OnPaginationListener to have document snaoshots from FireStore.
@@ -55,11 +60,9 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
     // Create queries for each page.
-    public void setPostingQuery(Source source, int page, boolean[] filter) {
+    public void setPostingQuery(Source source, int page, boolean[] arrAutoValues) {
         colRef = firestore.collection("board_general");
-
         switch(page) {
-
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
                 colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
@@ -73,6 +76,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
+
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(querySnapshot -> {
@@ -83,9 +87,21 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                 break;
 
             case Constants.BOARD_AUTOCLUB:
-                this.field = "post_filter";
-                if(filter != null) for(boolean b : filter) log.i("filter values: %s", b);
+                this.field = "auto_club";
 
+                List<Boolean> autovalueList = new ArrayList<>();
+                for(boolean b : arrAutoValues) autovalueList.add(b);
+                colRef.whereEqualTo("auto_club", autovalueList)
+                //colRef.whereArrayContains("auto_club", true)
+                        // orderBy field must be the same as the field used in where_. Otherwise,
+                        // it does not work.
+                        //.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                        .get()
+                        .addOnSuccessListener(autoclubShot -> {
+                            log.i("auto_club query: %s", autoclubShot.size());
+                            this.querySnapshot = autoclubShot;
+                            mListener.setFirstQuery(autoclubShot);
+                        }).addOnFailureListener(Throwable::printStackTrace);
                 break;
 
             case Constants.BOARD_NOTIFICATION: // notification

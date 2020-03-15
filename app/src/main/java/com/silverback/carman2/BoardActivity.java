@@ -24,6 +24,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardWriteFragment;
@@ -33,9 +34,8 @@ import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
 
 /**
- * This activity contains a tab-linked viewpager which currently consists of a single fragment shared
- * by 4 pages.
- *
+ * This activity contains the framelayout which has
+ * Take a special attention to the fields of tabPage and isFilterVislbe.
  */
 public class BoardActivity extends BaseActivity implements
         CheckBox.OnCheckedChangeListener,
@@ -46,10 +46,6 @@ public class BoardActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Constants
-    public static final int PAGE_RECENT = 0;
-    public static final int PAGE_POPULAR = 1;
-    public static final int PAGE_AUTOCLUB = 2;
-    public static final int PAGE_NOTIFICATION = 3;
     public static final int REQUEST_CODE_CAMERA = 1000;
     public static final int REQUEST_CODE_GALLERY = 1001;
     public static final int MENU_ITEM_FILTER = 1002;
@@ -73,17 +69,20 @@ public class BoardActivity extends BaseActivity implements
 
     // Fields
     private int tabPage;
-    private boolean isClubPage;
-    private boolean[] autoclubValues;
-    //private boolean isTabVisible;
+    private boolean isFilterVisible;
+    private boolean[] autoFilterValues;
+    //private List<Boolean> autoFilterValues;
+
 
     // Interface for passing the checkbox values to BoardPagerAdapter to update the AutoClub board.
-    // Intial values are passed via the adapter.set
+    // Intial values are passed via BoardPagerAdapter.onCheckBoxValueChange()
     public interface OnFilterCheckBoxListener {
-        void setCheckBoxValues(boolean[] values);
+        void onCheckBoxValueChange(boolean[] values);
     }
 
-    public void addAutoClubListener(OnFilterCheckBoxListener listener) {
+    // Set OnFilterCheckBoxListener to be notified of which checkbox is checked or not, on which
+    // query by the tab is based.
+    public void addAutoFilterListener(OnFilterCheckBoxListener listener) {
         mListener = listener;
     }
 
@@ -113,13 +112,6 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        /*
-        cbMaker.setText(mSettings.getString(Constants.AUTO_MAKER, "AutoMaker"));
-        cbType.setText(mSettings.getString(Constants.AUTO_TYPE, "AutoType"));
-        cbModel.setText(mSettings.getString(Constants.AUTO_MODEL, "AutoModel"));
-        cbYear.setText(mSettings.getString(Constants.AUTO_YEAR, "AutoYear"));
-        */
-        handleFilterBar();
         // CheckBox values as to auto data which shows in the filter layout for purposes of querying
         // the posting items. The values should be transferred to the adapter which, in turn, passsed
         // to the Auto Club page.
@@ -129,56 +121,65 @@ public class BoardActivity extends BaseActivity implements
         cbYear.setOnCheckedChangeListener(this);
 
         // Create FragmentStatePagerAdapter with the checkbox values attached as arugments
-        autoclubValues = new boolean[]{true, false, false, false};
+        autoFilterValues = new boolean[4];
+        // Set the names and initial values of the checkboxes
+        setDefaultValues();
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
-        pagerAdapter.setCheckBoxValues(autoclubValues);
+        pagerAdapter.setCheckBoxValues(autoFilterValues);
 
-        // Create ViewPager programmatically setting the listener to be notified of the page change
-        // and add it to FrameLayout
+        // Create ViewPager with visibility as invisible which turns visible immediately after the
+        // animation completes to lesson an amount of workload to query posting items and set
+        // the viewpager adapter.
         boardPager = new ViewPager(this);
         boardPager.setId(View.generateViewId());
+        //boardPager.setVisibility(View.INVISIBLE);
+        boardPager.setVisibility(View.GONE);
 
         boardPager.setAdapter(pagerAdapter);
         boardTabLayout.setupWithViewPager(boardPager);
         boardPager.addOnPageChangeListener(this);
         frameLayout.addView(boardPager);
 
-        log.i("Frame childview: %s", frameLayout.getChildAt(0));
-
         addTabIconAndTitle(this, boardTabLayout);
-        animSlideTabLayout();
+        animTabLayout(true);
 
         // Add the listeners to the viewpager and AppbarLayout
         appBar.addOnOffsetChangedListener(this);
 
-        // Set the click listener to the FAB
+        // FAB tapping creates BoardWriteFragment in the framelayout
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(view -> {
+            // Check if users have made a user name(id). Otherwise, show tne message for setting the
+            // user name first.
+            String userId = getUserIdFromStorage(this);
+            if(TextUtils.isEmpty(userId)) {
+                Snackbar.make(nestedScrollView, getString(R.string.board_msg_no_username), Snackbar.LENGTH_SHORT).show();
+                return;
+            }
             // Handle the toolbar menu as the write board comes in.
-            fabWrite.setVisibility(View.INVISIBLE);
             getSupportActionBar().setTitle("Write Your Car");
-            // When tapping the fab on the auto club page in the viewpager, slide up the tablayout
-            // and sequentially slide down the filterlayout. Whereas, unless the current page is
-            // the club one, slide up the tablayout and slide up the nestedscrollview at the same
-            // time.
-            if(isClubPage) animSlideFilterLayout(true);
-            else animWritingBoardLayout(true);
+            fabWrite.setVisibility(View.INVISIBLE);
+            // Tapping the fab right when the viewpager holds the auto club page, animate to slide
+            // the tablayout up to hide and slide the auto filter down to show sequentially. On the
+            // other pages, animation is made to slide up not only the tablayout but also tne
+            // nestedscrollview
+            if(tabPage == Constants.BOARD_AUTOCLUB) animAutoFilter(true);
+            else animAppbarLayout(true);
 
-            //if(tabPage != 2) animWritingBoardLayout(true);
-            //else animSlideFilterLayout(true);
-
-            // The dialog covers the full screen by adding it in android.R.id.content.
+            // Create the fragment with the user id attached. Remove any view in the framelayout
+            // first and put the fragment into it.
             writePostFragment = new BoardWriteFragment();
-            if(frameLayout.getChildCount() > 0) frameLayout.removeAllViews();
+            Bundle args = new Bundle();
+            args.putString("userId", userId);
+            args.putInt("tabPage", tabPage);
+            writePostFragment.setArguments(args);
+            if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
             getSupportFragmentManager().beginTransaction().addToBackStack(null)
                     .replace(frameLayout.getId(), writePostFragment)
                     .commit();
 
+            // Invoke onPrepareOptionsMenu() to create menus for the fragment.
             invalidateOptionsMenu();
-            log.i("Frame childview: %s", frameLayout.getChildCount());
-
-
-
         });
     }
 
@@ -193,66 +194,51 @@ public class BoardActivity extends BaseActivity implements
         imageViewModel.getUriFromImageChooser().setValue(data.getData());
     }
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-        switch(buttonView.getId()) {
-            case R.id.chkbox_filter_maker:
-                log.i("autoMaker: %s", cbMaker.isChecked());
-                autoclubValues[0] = cbMaker.isChecked();
-                break;
-
-            case R.id.chkbox_filter_type:
-                log.i("autoType: %s", cbType.isChecked());
-                autoclubValues[1] = cbType.isChecked();
-                break;
-
-            case R.id.chkbox_filter_model:
-                log.i("autoModel: %s", cbModel.isChecked());
-                autoclubValues[2] = cbModel.isChecked();
-                break;
-
-            case R.id.chkbox_filter_year:
-                log.i("autoYear: %s", cbYear.isChecked());
-                autoclubValues[3] = cbYear.isChecked();
-                break;
-        }
-
-        pagerAdapter.setCheckBoxValues(autoclubValues);
-        mListener.setCheckBoxValues(autoclubValues);
-    }
-
-
+    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         //getMenuInflater().inflate(R.menu.menu_board, menu);
         return super.onCreateOptionsMenu(menu);
     }
-
-    /**
-     * On Android 3.0 and higher, the options menu is considered to always be open when menu items
-     * are presented in the app bar. When an event occurs and you want to perform a menu update,
-     * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
      */
 
+    /*
+     * On Android 3.0 and higher, the options menu is considered to always be open when menu items
+     * are presented in the app bar. When an event occurs and you want to make a menu update,
+     * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
+     */
+    //
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        menu.clear();
-
         if(frameLayout.getChildAt(0) instanceof ViewPager) {
-
-            if(isClubPage)
+            if(tabPage == Constants.BOARD_AUTOCLUB) {
                 menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
                         .setIcon(R.drawable.ic_filter)
                         .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
-
+            } else menu.clear();
         } else {
-            if(isClubPage) {
+            menu.add(0, MENU_ITEM_UPLOAD, Menu.NONE, "UPLOAD")
+                    .setIcon(R.drawable.ic_upload)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        }
+        /*
+        // Initially, the framelayout contains the viewpager, which has no menu except that the page
+        // indicates the auto club.
+        if(frameLayout.getChildAt(0) instanceof ViewPager) {
+            if(tabPage == Constants.BOARD_AUTOCLUB) {
                 menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
                         .setIcon(R.drawable.ic_filter)
                         .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-
+            }
+        // When tapping the fab, the framelayout contains the fragment to write a post, in which menu
+        // varies according to which page the viewpager resides in when creating the fragment. If it
+        // is the auto club, menu cosists of the
+        // filter and
+        } else {
+            if(tabPage == Constants.BOARD_AUTOCLUB) {
+                menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
+                        .setIcon(R.drawable.ic_filter)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
                 menu.add(0, MENU_ITEM_UPLOAD, Menu.NONE, "UPLOAD")
                         .setIcon(R.drawable.ic_upload)
                         .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -263,14 +249,16 @@ public class BoardActivity extends BaseActivity implements
             }
         }
 
+         */
+
         return super.onPrepareOptionsMenu(menu);
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         switch(item.getItemId()) {
+
             case android.R.id.home:
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
@@ -278,29 +266,66 @@ public class BoardActivity extends BaseActivity implements
                     frameLayout.removeAllViews();
                     finish();
 
-                } else {
-                    frameLayout.removeView(writePostFragment.getView());
-                    frameLayout.addView(boardPager);
-
-                    fabWrite.setVisibility(View.VISIBLE);
-                    invalidateOptionsMenu();
-
-                    getSupportActionBar().setTitle(getString(R.string.billboard_title));
-                    animWritingBoardLayout(false);
-
+                } else if(frameLayout.getChildAt(0) == writePostFragment.getView()){
+                    addViewPager();
                 }
 
                 return true;
 
             case MENU_ITEM_FILTER:
-                isClubPage = !isClubPage;
-                animSlideFilterLayout(isClubPage);
+                isFilterVisible = !isFilterVisible;
+                animAutoFilter(isFilterVisible);
+                return true;
+
+            case MENU_ITEM_UPLOAD:
+                writePostFragment.initUploadPost();
+                //pbFragment = new ProgbarDialogFragment();
+                //pbFragment.setProgressMsg("uploading");
+                //getSupportFragmentManager().beginTransaction().replace(android.R.id.content, pbFragment).commit();
                 return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        log.i("onCheckedChanged");
+        switch(buttonView.getId()) {
+            case R.id.chkbox_filter_maker:
+                log.i("autoMaker: %s", cbMaker.isChecked());
+                autoFilterValues[0] = cbMaker.isChecked();
+
+                break;
+
+            case R.id.chkbox_filter_model:
+                log.i("autoModel: %s", cbModel.isChecked());
+                //autoFilterValues.set(1, cbModel.isChecked());
+                autoFilterValues[1] = cbModel.isChecked();
+
+                break;
+
+            case R.id.chkbox_filter_type:
+                log.i("autoType: %s", cbType.isChecked());
+                autoFilterValues[2] = cbType.isChecked();
+                //autoFilterValues.set(2, cbType.isChecked());
+                break;
+
+            case R.id.chkbox_filter_year:
+                log.i("autoYear: %s", cbYear.isChecked());
+                autoFilterValues[3] = cbYear.isChecked();
+                //autoFilterValues.set(3, cbYear.isChecked());
+                break;
+
+
+        }
+
+
+        mListener.onCheckBoxValueChange(autoFilterValues);
+    }
+
+
 
     // AppBarLayout.OnOffsetChangedListener invokes this.
     @Override
@@ -312,33 +337,32 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onPageSelected(int position) {
         tabPage = position;
-        // If the value of isClubPage becomes true, the filter button shows up in the toolbar and
-        // pressing the button calls animSlideFilterLayout() to make the filter layout slide down,
+        // If the value of isFilterVisible becomes true, the filter button shows up in the toolbar and
+        // pressing the button calls animAutoFilter() to make the filter layout slide down,
         // which is defined in onOptionsItemSelected()
-        isClubPage = (position == Constants.BOARD_AUTOCLUB);
-        animSlideFilterLayout(isClubPage);
+        isFilterVisible = (position == Constants.BOARD_AUTOCLUB);
+        animAutoFilter(isFilterVisible);
 
         // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
         // higher.
-        invalidateOptionsMenu();
+        if(position == Constants.BOARD_AUTOCLUB) invalidateOptionsMenu();
     }
     @Override
     public void onPageScrollStateChanged(int state) {}
 
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
-    private void animSlideTabLayout() {
+    private void animTabLayout(boolean isVisible) {
 
         ObjectAnimator slideTabDown = ObjectAnimator.ofFloat(boardTabLayout, "y", getActionbarHeight());
         ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", 0);
 
-        slideTabDown.setDuration(500);
-        slideTabUp.setDuration(500);
-        slideTabDown.start();
-        /*
+        slideTabDown.setDuration(1000);
+        slideTabUp.setDuration(1000);
+        //slideTabDown.start();
         if(isVisible) slideTabDown.start();
         else slideTabUp.start();
-        */
+
         // Upon completion of sliding down the tab, set the visibility of the viewpager and the
         // progressbar.
         slideTabDown.addListener(new AnimatorListenerAdapter() {
@@ -356,9 +380,9 @@ public class BoardActivity extends BaseActivity implements
     // of the checkboxes to make the querying the board conditioned slides down to cover the tab
     // menu by clicking the filter button. Clicking the button again or switching the page, it
     // slides up.
-    private void animSlideFilterLayout(boolean isVisible) {
+    private void animAutoFilter(boolean isVisible) {
         // Visibillity control
-        //int visibility = (isClubPage)? View.VISIBLE : View.INVISIBLE;
+        //int visibility = (isFilterVisible)? View.VISIBLE : View.INVISIBLE;
         //filterLayout.setVisibility(visibility);
 
         ObjectAnimator slideDown = ObjectAnimator.ofFloat(filterLayout, "y", getActionbarHeight());
@@ -371,7 +395,7 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-    private void animWritingBoardLayout(boolean isUpDown) {
+    private void animAppbarLayout(boolean isUpDown) {
 
         float tabEnd = (isUpDown)? 0 : getActionbarHeight();
         float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
@@ -391,35 +415,65 @@ public class BoardActivity extends BaseActivity implements
         //slideNestedUp.start();
     }
 
-
-    private void handleFilterBar() {
+    // Set the checkbox titles and values to each checkbox and put them in List<Boolean>.
+    private void setDefaultValues() {
         String brand = mSettings.getString(Constants.AUTO_MAKER, null);
         String model = mSettings.getString(Constants.AUTO_MODEL, null);
         String type = mSettings.getString(Constants.AUTO_TYPE, null);
         String year = mSettings.getString(Constants.AUTO_YEAR, null);
-        log.i("auto data: %s, %s, %s, %s", brand, model, type, year);
 
         if(TextUtils.isEmpty(brand)) {
             cbMaker.setText(getString(R.string.board_filter_brand));
             cbMaker.setEnabled(false);
-        } else cbMaker.setText(brand);
+        } else {
+            cbMaker.setText(brand);
+            autoFilterValues[0] = cbMaker.isChecked();
+        }
 
         if(TextUtils.isEmpty(model)) {
             cbModel.setText(getString(R.string.board_filter_model));
             cbModel.setEnabled(false);
-        } else cbModel.setText(model);
+        } else {
+            cbModel.setText(model);
+            autoFilterValues[1] = cbModel.isChecked();
+        }
 
         if(TextUtils.isEmpty(type)) {
             cbType.setText(getString(R.string.board_filter_type));
             cbType.setEnabled(false);
-        } else cbType.setText(type);
+        } else {
+            cbType.setText(type);
+            autoFilterValues[2] = cbType.isChecked();
+        }
 
         if(TextUtils.isEmpty(year)) {
             cbYear.setText(R.string.board_filter_year);
             cbYear.setEnabled(false);
-        } else cbYear.setText(year);
+        } else {
+            cbYear.setText(year);
+            autoFilterValues[3] = cbType.isChecked();
+        }
+    }
 
+    // Upon completion of uploading a post, remove BoardWriteFragment out of the framelayout, then
+    // add the viewpager again with the toolbar menu and title re
+    @SuppressWarnings("ConstantConditions")
+    public void addViewPager() {
+        // If any view exists in the framelayout, remove all views out of the layout and add the
+        // viewpager.
+        if(frameLayout.getChildCount() > 0) frameLayout.removeAllViews();
+        frameLayout.addView(boardPager);
 
+        fabWrite.setVisibility(View.VISIBLE);
+        getSupportActionBar().setTitle(getString(R.string.billboard_title));
+        invalidateOptionsMenu();
+
+        // Animations differes according to whether the current page is on the auto club or not.
+        if(tabPage == Constants.BOARD_AUTOCLUB) {
+            animAutoFilter(false);
+            isFilterVisible = !isFilterVisible;
+
+        } else animAppbarLayout(false);
     }
 
     // Referenced by the child fragments
@@ -427,8 +481,14 @@ public class BoardActivity extends BaseActivity implements
         return mSettings;
     }
 
+    // Referenced in BoardPagerFragment to show or hide the button as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
         return fabWrite;
+    }
+
+    // Get the filter checkbox values
+    public boolean[] getCheckBoxValues() {
+        return autoFilterValues;
     }
 
 

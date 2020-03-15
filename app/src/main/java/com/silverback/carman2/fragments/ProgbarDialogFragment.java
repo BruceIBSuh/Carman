@@ -20,9 +20,7 @@ public class ProgbarDialogFragment extends DialogFragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ProgbarDialogFragment.class);
 
-    // Objects
-    private View childView;
-    private TextView tvMessage;
+    // Fields
     private String progressMsg;
 
     public ProgbarDialogFragment() {}
@@ -36,19 +34,11 @@ public class ProgbarDialogFragment extends DialogFragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        childView = inflater.inflate(R.layout.dialog_progbar_general, container, false);
-        tvMessage = childView.findViewById(R.id.tv_progbar_msg);
+        View childView = inflater.inflate(R.layout.dialog_progbar_general, container, false);
+        TextView tvMessage = childView.findViewById(R.id.tv_progbar_msg);
         tvMessage.setText(progressMsg);
 
         return childView;
-    }
-
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        return dialog;
     }
 
 

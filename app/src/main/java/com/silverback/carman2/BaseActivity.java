@@ -427,7 +427,7 @@ public class BaseActivity extends AppCompatActivity {
     // Auth id is not used for a security reason. Open and close file is so expensive that BaseActivity
     // opens the file and assign it to "userId" variable which is inherited to other activities.
     // Keep it in mind that the API 7 and above supports file-based encryption(FBE) and Android 10
-    // and higher, FBE is required such that the code should be refactored at some time.
+    // and higher, FBE is required so that the code should be refactored at some time.
     public String getUserIdFromStorage(Context context) {
         StringBuilder sb = new StringBuilder();
         try (FileInputStream fis = context.openFileInput("userId");

@@ -5,6 +5,7 @@ import android.text.TextUtils;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.viewmodels.FirestoreViewModel;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
 import java.util.Map;

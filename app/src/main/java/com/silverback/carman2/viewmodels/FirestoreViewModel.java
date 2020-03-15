@@ -11,50 +11,11 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class FirestoreViewModel extends ViewModel {
 
-    private MutableLiveData<SparseArray> favoriteSnapshot;
-    private MutableLiveData<DocumentSnapshot> postSnapshot;
-    private MutableLiveData<DocumentSnapshot> userSnapshot;
-    private MutableLiveData<Boolean> hasUploadPosted;
     private MutableLiveData<Boolean> autoResourceTaskDone;
-
-    private MutableLiveData<QueryDocumentSnapshot> autoMakerSnapshot;
-
-
-    private MutableLiveData<SparseArray<ImageSpan>> attachedImageSpan;
-
-    public MutableLiveData<SparseArray> getFavoriteSnapshot() {
-        if(favoriteSnapshot == null) favoriteSnapshot = new MutableLiveData<>();
-        return favoriteSnapshot;
-    }
-
-    public MutableLiveData<DocumentSnapshot> getPostSnapshot() {
-        if(postSnapshot == null) postSnapshot = new MutableLiveData<>();
-        return postSnapshot;
-    }
-
-    public MutableLiveData<DocumentSnapshot> getUserSnapshot() {
-        if(userSnapshot == null) userSnapshot = new MutableLiveData();
-        return userSnapshot;
-    }
-
-
-    public MutableLiveData<Boolean> getUploadPOst() {
-        if(hasUploadPosted == null) hasUploadPosted = new MutableLiveData<>();
-        return hasUploadPosted;
-    }
-
-    public MutableLiveData<SparseArray<ImageSpan>> getAttachedImageSpanList() {
-        if(attachedImageSpan == null) attachedImageSpan = new MutableLiveData<>();
-        return attachedImageSpan;
-    }
 
     public MutableLiveData<Boolean> getAutoResourceTaskDone() {
         if(autoResourceTaskDone == null) autoResourceTaskDone = new MutableLiveData<>();
         return autoResourceTaskDone;
     }
 
-    public MutableLiveData<QueryDocumentSnapshot> getAutoMakerSnapshot() {
-        if(autoMakerSnapshot == null) autoMakerSnapshot = new MutableLiveData<>();
-        return autoMakerSnapshot;
-    }
 }
