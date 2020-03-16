@@ -118,7 +118,7 @@ public class GeofenceTransitionService extends IntentService {
         String title = null;
         String extendedText = null;
         String visitingTime = BaseActivity.formatMilliseconds(getString(R.string.date_format_6), geoTime);
-        String contentText = String.format("%s%3s%s\n%s", name, "", visitingTime, addrs);
+        String contentText = String.format("%s\n%s\n%s", name, visitingTime, addrs);
 
         switch(category) {
             case Constants.GAS: // gas station

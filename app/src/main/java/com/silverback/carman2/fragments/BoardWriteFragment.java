@@ -40,6 +40,9 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +82,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private EditText etPostTitle, etPostBody;
 
     // Fields
+    private String[] arrAutoData;
     private String userId;
     private int tabPage;
     private boolean isAutoMaker, isAutoType, isAutoModel, isAutoYear;
@@ -337,9 +341,22 @@ public class BoardWriteFragment extends DialogFragment implements
         // Nested fields to filter the post by category
         if(tabPage == Constants.BOARD_AUTOCLUB) {
             //boolean[] filterValues = ((BoardActivity)getActivity()).getCheckBoxValues();
-            boolean[] filterValues = ((BoardActivity)getActivity()).getCheckBoxValues();
-            List<Boolean> valueList = new ArrayList<>();
-            for(int i = 0; i < filterValues.length; i++) valueList.set(i, filterValues[i]);
+            boolean[] chkbox = ((BoardActivity)getActivity()).getCheckBoxValues();
+            String jsonAutoData = getArguments().getString("autoData");
+            List<String> valueList = new ArrayList<>();
+
+            try {
+                JSONArray jsonArray = new JSONArray(jsonAutoData);
+                int idx = 0;
+                for(boolean isChecked : chkbox) {
+                    log.i("Filter Name: %s", jsonArray.optString(idx));
+                    if(isChecked) valueList.add(jsonArray.optString(idx));
+                    idx++;
+                }
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
+
             post.put("auto_club", valueList);
             /*
             Map<String, Object> filter = new HashMap<>();

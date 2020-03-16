@@ -33,6 +33,12 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This activity contains the framelayout which has
  * Take a special attention to the fields of tabPage and isFilterVislbe.
@@ -70,8 +76,9 @@ public class BoardActivity extends BaseActivity implements
     // Fields
     private int tabPage;
     private boolean isFilterVisible;
-    private boolean[] autoFilterValues;
-    //private List<Boolean> autoFilterValues;
+    private boolean[] cbFilters;
+    private String jsonAutoFilters;
+    //private List<Boolean> cbFilters;
 
 
     // Interface for passing the checkbox values to BoardPagerAdapter to update the AutoClub board.
@@ -121,11 +128,11 @@ public class BoardActivity extends BaseActivity implements
         cbYear.setOnCheckedChangeListener(this);
 
         // Create FragmentStatePagerAdapter with the checkbox values attached as arugments
-        autoFilterValues = new boolean[4];
         // Set the names and initial values of the checkboxes
-        setDefaultValues();
+        cbFilters = new boolean[4];
+        String filterName = setCheckBoxDefaultValues();
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
-        pagerAdapter.setCheckBoxValues(autoFilterValues);
+        pagerAdapter.setCheckBoxValues(filterName, cbFilters);
 
         // Create ViewPager with visibility as invisible which turns visible immediately after the
         // animation completes to lesson an amount of workload to query posting items and set
@@ -172,7 +179,9 @@ public class BoardActivity extends BaseActivity implements
             Bundle args = new Bundle();
             args.putString("userId", userId);
             args.putInt("tabPage", tabPage);
+            args.putString("autoData", mSettings.getString(Constants.AUTO_DATA, null));
             writePostFragment.setArguments(args);
+
             if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
             getSupportFragmentManager().beginTransaction().addToBackStack(null)
                     .replace(frameLayout.getId(), writePostFragment)
@@ -295,34 +304,27 @@ public class BoardActivity extends BaseActivity implements
         switch(buttonView.getId()) {
             case R.id.chkbox_filter_maker:
                 log.i("autoMaker: %s", cbMaker.isChecked());
-                autoFilterValues[0] = cbMaker.isChecked();
-
+                cbFilters[0] = cbMaker.isChecked();
                 break;
 
             case R.id.chkbox_filter_model:
                 log.i("autoModel: %s", cbModel.isChecked());
-                //autoFilterValues.set(1, cbModel.isChecked());
-                autoFilterValues[1] = cbModel.isChecked();
+                cbFilters[1] = cbModel.isChecked();
 
                 break;
 
             case R.id.chkbox_filter_type:
                 log.i("autoType: %s", cbType.isChecked());
-                autoFilterValues[2] = cbType.isChecked();
-                //autoFilterValues.set(2, cbType.isChecked());
+                cbFilters[2] = cbType.isChecked();
                 break;
 
             case R.id.chkbox_filter_year:
                 log.i("autoYear: %s", cbYear.isChecked());
-                autoFilterValues[3] = cbYear.isChecked();
-                //autoFilterValues.set(3, cbYear.isChecked());
+                cbFilters[3] = cbYear.isChecked();
                 break;
-
-
         }
 
-
-        mListener.onCheckBoxValueChange(autoFilterValues);
+        mListener.onCheckBoxValueChange(cbFilters);
     }
 
 
@@ -416,18 +418,22 @@ public class BoardActivity extends BaseActivity implements
     }
 
     // Set the checkbox titles and values to each checkbox and put them in List<Boolean>.
-    private void setDefaultValues() {
+    private String setCheckBoxDefaultValues() {
+
         String brand = mSettings.getString(Constants.AUTO_MAKER, null);
         String model = mSettings.getString(Constants.AUTO_MODEL, null);
         String type = mSettings.getString(Constants.AUTO_TYPE, null);
         String year = mSettings.getString(Constants.AUTO_YEAR, null);
+
+        List<String> autoList = new ArrayList<>();
 
         if(TextUtils.isEmpty(brand)) {
             cbMaker.setText(getString(R.string.board_filter_brand));
             cbMaker.setEnabled(false);
         } else {
             cbMaker.setText(brand);
-            autoFilterValues[0] = cbMaker.isChecked();
+            cbFilters[0] = cbMaker.isChecked();
+            autoList.add(brand);
         }
 
         if(TextUtils.isEmpty(model)) {
@@ -435,7 +441,8 @@ public class BoardActivity extends BaseActivity implements
             cbModel.setEnabled(false);
         } else {
             cbModel.setText(model);
-            autoFilterValues[1] = cbModel.isChecked();
+            cbFilters[1] = cbModel.isChecked();
+            autoList.add(model);
         }
 
         if(TextUtils.isEmpty(type)) {
@@ -443,7 +450,8 @@ public class BoardActivity extends BaseActivity implements
             cbType.setEnabled(false);
         } else {
             cbType.setText(type);
-            autoFilterValues[2] = cbType.isChecked();
+            cbFilters[2] = cbType.isChecked();
+            autoList.add(type);
         }
 
         if(TextUtils.isEmpty(year)) {
@@ -451,8 +459,11 @@ public class BoardActivity extends BaseActivity implements
             cbYear.setEnabled(false);
         } else {
             cbYear.setText(year);
-            autoFilterValues[3] = cbType.isChecked();
+            cbFilters[3] = cbType.isChecked();
+            autoList.add(year);
         }
+
+        return new JSONArray(autoList).toString();
     }
 
     // Upon completion of uploading a post, remove BoardWriteFragment out of the framelayout, then
@@ -488,9 +499,7 @@ public class BoardActivity extends BaseActivity implements
 
     // Get the filter checkbox values
     public boolean[] getCheckBoxValues() {
-        return autoFilterValues;
+        return cbFilters;
     }
-
-
 
 }

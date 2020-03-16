@@ -6,7 +6,12 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 
 import com.silverback.carman2.fragments.BoardPagerFragment;
+import com.silverback.carman2.utils.Constants;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -20,7 +25,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     private static final int NUM_PAGES = 4;
 
     // Fields
-    //private boolean[] cbValues;
+    private String autoFilter;
     private boolean[] cbValues;
 
     // Constructor
@@ -31,7 +36,9 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int position) {
-        return BoardPagerFragment.newInstance(position, cbValues);
+        return (position == Constants.BOARD_AUTOCLUB)?
+                BoardPagerFragment.newInstance(position, autoFilter, cbValues) :
+                BoardPagerFragment.newInstance(position);
     }
 
     @Override
@@ -39,7 +46,8 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         return NUM_PAGES;
     }
 
-    public void setCheckBoxValues(boolean[] values) {
+    public void setCheckBoxValues(String jsonFilterName, boolean[] values) {
+        autoFilter = jsonFilterName;
         cbValues = values;
     }
 

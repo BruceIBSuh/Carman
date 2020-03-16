@@ -60,7 +60,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
     // Create queries for each page.
-    public void setPostingQuery(Source source, int page, boolean[] arrAutoValues) {
+    public void setPostingQuery(Source source, int page, List<String> filters) {
         colRef = firestore.collection("board_general");
         switch(page) {
             case Constants.BOARD_RECENT:
@@ -89,9 +89,15 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
 
-                List<Boolean> autovalueList = new ArrayList<>();
-                for(boolean b : arrAutoValues) autovalueList.add(b);
-                colRef.whereEqualTo("auto_club", autovalueList)
+                /*
+                List<String> autovalueList = new ArrayList<>();
+                //for(boolean b : arrAutoValues) autovalueList.add(b);
+                autovalueList.add("현대차");
+                autovalueList.add("Palisade");
+                */
+                for(String filter : filters) log.i("Filter: %s", filter);
+
+                colRef.whereEqualTo("auto_club", filters)
                 //colRef.whereArrayContains("auto_club", true)
                         // orderBy field must be the same as the field used in where_. Otherwise,
                         // it does not work.

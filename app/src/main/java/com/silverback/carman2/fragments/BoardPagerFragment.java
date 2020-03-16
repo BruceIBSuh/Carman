@@ -6,8 +6,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
@@ -24,7 +22,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
@@ -35,6 +32,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -56,7 +56,7 @@ import java.util.TimeZone;
  *
  */
 public class BoardPagerFragment extends Fragment implements
-        PaginationHelper.OnPaginationListener, CheckBox.OnCheckedChangeListener,
+        PaginationHelper.OnPaginationListener, //CheckBox.OnCheckedChangeListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
@@ -83,7 +83,9 @@ public class BoardPagerFragment extends Fragment implements
     //private FloatingActionButton fabWrite;
 
     // Fields
-    private boolean[] autoFilter;
+    private List<String> autoData;
+    private boolean[] chkboxValues;
+    private String jsonAutoFilter;
     //private List<Boolean> autoFilterValues;
     private int page;
 
@@ -92,13 +94,25 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    public static BoardPagerFragment newInstance(int page, boolean[] cbValues) {
+    // Singleton for not AutoClub pages.
+    public static BoardPagerFragment newInstance(int page) {
+        BoardPagerFragment fragment = new BoardPagerFragment();
+        Bundle arg = new Bundle();
+        arg.putInt("fragmentPage", page);
+        fragment.setArguments(arg);
+
+        return fragment;
+
+    }
+
+    // Singleton for AutoClub page which has the checkbox values and title names.
+    public static BoardPagerFragment newInstance(int page, String cbName, boolean[] cbValue) {
         BoardPagerFragment fragment = new BoardPagerFragment();
 
         Bundle args = new Bundle();
-        // Type conversion from List<Boolean> to boolean array to put in Bundle.
-        args.putBooleanArray("chkboxValues", cbValues);
         args.putInt("fragmetPage", page);
+        args.putBooleanArray("chkboxValues", cbValue);
+        args.putString("chkboxNames", cbName);
         fragment.setArguments(args);
 
         return fragment;
@@ -111,7 +125,10 @@ public class BoardPagerFragment extends Fragment implements
 
         if(getArguments() != null) {
             page = getArguments().getInt("fragmetPage");
-            autoFilter = getArguments().getBooleanArray("chkboxValues");
+            if(page == Constants.BOARD_AUTOCLUB) {
+                chkboxValues = getArguments().getBooleanArray("chkboxValues");
+                jsonAutoFilter = getArguments().getString("chkboxNames");
+            }
         }
 
         firestore = FirebaseFirestore.getInstance();
@@ -127,8 +144,10 @@ public class BoardPagerFragment extends Fragment implements
         // checking event occurs.
         ((BoardActivity)getActivity()).addAutoFilterListener(values -> {
             log.i("chkbox values changed");
-            autoFilter = values;
-            pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autoFilter);
+            chkboxValues = values;
+            try {autoData = createAutoFilters(jsonAutoFilter);}
+            catch(JSONException e) {e.printStackTrace();}
+            pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autoData);
         });
 
 
@@ -199,9 +218,12 @@ public class BoardPagerFragment extends Fragment implements
         // PaginationHelper which sends the dataset back to the callbacks of setFirstQuery(),
         // setNextQueryStart(), and setNextQueryComplete().
         //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
-        log.i("fragment page: %s", page);
-        //String field = getQueryFieldToViewPager(page);
-        pageHelper.setPostingQuery(source, page, autoFilter);
+        if(page == Constants.BOARD_AUTOCLUB) {
+            try{autoData = createAutoFilters(jsonAutoFilter);}
+            catch(JSONException e) {e.printStackTrace();}
+        } else autoData = null;
+
+        pageHelper.setPostingQuery(source, page, autoData);
 
         return localView;
     }
@@ -225,9 +247,9 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getNewPosting().observe(getActivity(), documentId -> {
             log.i("New posting: %s", page);
             if(!TextUtils.isEmpty(documentId)) {
-                snapshotList.clear();
+                //snapshotList.clear();
                 //String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, page, autoFilter);
+                pageHelper.setPostingQuery(Source.CACHE, page, autoData);
             }
         });
 
@@ -240,7 +262,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) {
                 snapshotList.clear();
                 //String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, page, autoFilter);
+                pageHelper.setPostingQuery(Source.CACHE, page, autoData);
             }
         });
 
@@ -283,7 +305,7 @@ public class BoardPagerFragment extends Fragment implements
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
-        BoardReadDlgFragment postDialogFragment = new BoardReadDlgFragment();
+        BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", page);
         bundle.putInt("position", position);
@@ -307,11 +329,11 @@ public class BoardPagerFragment extends Fragment implements
                         String auto = document.getString("auto_data");
                         if(!TextUtils.isEmpty(auto)) bundle.putString("autoData", auto);
 
-                        postDialogFragment.setArguments(bundle);
+                        readPostFragment.setArguments(bundle);
                         // What if Fragment calls another fragment? What is getChildFragmentManager() for?
                         // android.R.id.content makes DialogFragment fit to the full screen.
                         getActivity().getSupportFragmentManager().beginTransaction()
-                                .add(android.R.id.content, postDialogFragment)
+                                .add(android.R.id.content, readPostFragment)
                                 .addToBackStack(null)
                                 .commit();
                     }
@@ -333,23 +355,6 @@ public class BoardPagerFragment extends Fragment implements
         //docref.update("cnt_view", FieldValue.increment(1));
 
     }
-
-    // Indicate a field to query according to which page to reside in.
-    /*
-    private String getQueryFieldToViewPager(int page) {
-        switch(page) {
-            case 0: // Recent
-                return "timestamp";
-            case 1: // Popular
-                return "cnt_view";
-            case 2: // Auto Club
-                return "autoclub";
-            case 3: // Notification
-                return "notificaiton";
-            default: return null;
-        }
-    }
-     */
 
     // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
     // documents, which means whether the user has read the post before. If so, do not increase
@@ -410,11 +415,21 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
+    private List<String> createAutoFilters(String autoFilter) throws JSONException {
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        log.i("CheckBox callback");
+        log.i("JSON auto filter: %s", autoFilter);
+
+        List<String> filters = new ArrayList<>();
+        JSONArray json = new JSONArray(autoFilter);
+
+
+        for(int i = 0; i < chkboxValues.length; i++) {
+            if(chkboxValues[i]) filters.add(json.optString(i));
+        }
+
+        return filters;
     }
+
 }
 
 

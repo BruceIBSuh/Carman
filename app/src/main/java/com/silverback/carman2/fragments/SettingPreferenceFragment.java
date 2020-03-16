@@ -97,7 +97,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         if(TextUtils.isEmpty(makerName)) autoPref.setSummary(aVoid);
         else queryAutoMaker(makerName);
         // Attach the listener to be notified that the automaker query or the automodel query has
-        // completed.
+        // completed in order to get the registration number.
         setFirestoreCompleteListener(new OnFirestoreCompleteListener() {
             String makerNum, modelNum, summary;
             @Override
