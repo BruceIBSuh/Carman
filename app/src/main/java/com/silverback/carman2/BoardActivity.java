@@ -77,6 +77,7 @@ public class BoardActivity extends BaseActivity implements
     private int tabPage;
     private boolean isFilterVisible;
     private boolean[] cbFilters;
+    private String filterName;
     private String jsonAutoFilters;
     //private List<Boolean> cbFilters;
 
@@ -84,7 +85,7 @@ public class BoardActivity extends BaseActivity implements
     // Interface for passing the checkbox values to BoardPagerAdapter to update the AutoClub board.
     // Intial values are passed via BoardPagerAdapter.onCheckBoxValueChange()
     public interface OnFilterCheckBoxListener {
-        void onCheckBoxValueChange(boolean[] values);
+        void onCheckBoxValueChange(String names, boolean[] values);
     }
 
     // Set OnFilterCheckBoxListener to be notified of which checkbox is checked or not, on which
@@ -130,7 +131,7 @@ public class BoardActivity extends BaseActivity implements
         // Create FragmentStatePagerAdapter with the checkbox values attached as arugments
         // Set the names and initial values of the checkboxes
         cbFilters = new boolean[4];
-        String filterName = setCheckBoxDefaultValues();
+        filterName = setCheckBoxDefaultValues();
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setCheckBoxValues(filterName, cbFilters);
 
@@ -324,7 +325,8 @@ public class BoardActivity extends BaseActivity implements
                 break;
         }
 
-        mListener.onCheckBoxValueChange(cbFilters);
+        log.i("Filter Name: %s", filterName);
+        mListener.onCheckBoxValueChange(filterName, cbFilters);
     }
 
 

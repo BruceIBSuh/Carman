@@ -60,9 +60,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
     private int typeId;
     private boolean isMakerChanged, isModelChanged;
 
-
-
-
     // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
     // be reset to the current tile.
     public interface OnToolbarTitleListener {
@@ -172,7 +169,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements Preferen
                 // the current registration number to be increased.
                 int makerNum = makershot.getLong("reg_number").intValue();
                 if(isMakerChanged) {
-                    makerNum ++;
+                    makerNum++;
                     makershot.getReference().update("reg_number", FieldValue.increment(1));
                 }
 

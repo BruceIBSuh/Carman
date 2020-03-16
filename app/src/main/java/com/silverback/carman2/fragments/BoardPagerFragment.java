@@ -140,12 +140,12 @@ public class BoardPagerFragment extends Fragment implements
         pageHelper = new PaginationHelper();
         pageHelper.setOnPaginationListener(this);
 
-        // Implement OnFilterCheckBoxListener to receive values of the chkbox each time the
-        // checking event occurs.
-        ((BoardActivity)getActivity()).addAutoFilterListener(values -> {
-            log.i("chkbox values changed");
+        // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
+        // values changes.
+        ((BoardActivity)getActivity()).addAutoFilterListener((names, values) -> {
+            log.i("chkbox values changed: %s", names);
             chkboxValues = values;
-            try {autoData = createAutoFilters(jsonAutoFilter);}
+            try {autoData = createAutoFilters(names);}
             catch(JSONException e) {e.printStackTrace();}
             pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autoData);
         });
@@ -277,10 +277,9 @@ public class BoardPagerFragment extends Fragment implements
         //for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
         log.i("First QuerySnapshot: %s", querySnapshot.size());
         //postingAdapter.updatePostingAdapdter(snapshotList);
-        postingAdapter = new BoardPostingAdapter(querySnapshot, this);
+        //postingAdapter = new BoardPostingAdapter(querySnapshot, this);
         //postingAdapter.notifyDataSetChanged();
-        recyclerPostView.setAdapter(postingAdapter);
-
+        //recyclerPostView.setAdapter(postingAdapter);
     }
 
     @Override
