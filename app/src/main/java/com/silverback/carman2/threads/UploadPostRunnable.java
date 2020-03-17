@@ -2,6 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.os.Process;
+import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,8 +27,6 @@ public class UploadPostRunnable implements Runnable {
     //private Context mContext;
     private UploadPostMethods mTask;
     private FirebaseFirestore firestore;
-    private String postId;
-
 
     public interface UploadPostMethods {
         Map<String, Object> getFirestorePost();
@@ -55,11 +54,12 @@ public class UploadPostRunnable implements Runnable {
 
         // Retrieve the user name and pic based on the Id and contain them in the Map
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
-            String userName = document.getString("user_name");
-            String userPic = document.getString("user_pic");
-            if (!userName.isEmpty()) post.put("user_name", userName);
-            if (!userPic.isEmpty()) post.put("user_pic", userPic);
-
+            if(document.exists()) {
+                String userName = document.getString("user_name");
+                String userPic = document.getString("user_pic");
+                if (!TextUtils.isEmpty(userName)) post.put("user_name", userName);
+                if (!TextUtils.isEmpty(userPic)) post.put("user_pic", userPic);
+            }
             // Upload the post along with the queried user data, which may prevent latency to load
             // the user data if the post retrieves the user data from different collection.
             firestore.collection("board_general").add(post)
@@ -68,23 +68,6 @@ public class UploadPostRunnable implements Runnable {
                         mTask.notifyUploadDone(docref.getId());
                     })
                     .addOnFailureListener(e -> log.e("Upload failed: %s"));
-
-                    /*
-                    .continueWith(task -> {
-                        if(!task.isSuccessful()) task.getException();
-                        return postId;
-                    })
-                    .addOnCompleteListener(task -> {
-                        log.i("Post Id: %s", postId);
-                        firestore.collection("board_general").document(postId).collection("post_content").add(postContent)
-                                .addOnSuccessListener(content -> {
-                                    log.i("Post content successfully uploaded to post_content collection");
-                                })
-                                .addOnFailureListener(e -> log.e("Post content failed to upload"));
-                    })
-                    .addOnFailureListener(e -> log.e("Uploading post failed: %s", e.getMessage()));
-                    */
-
         });
 
     }

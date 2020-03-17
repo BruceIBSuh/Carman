@@ -22,6 +22,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
@@ -134,8 +135,8 @@ public class BoardPagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        //snapshotList = new ArrayList<>();
-        //postingAdapter = new BoardPostingAdapter(snapshotList, this);
+        snapshotList = new ArrayList<>();
+        postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
         pageHelper = new PaginationHelper();
         pageHelper.setOnPaginationListener(this);
@@ -165,7 +166,6 @@ public class BoardPagerFragment extends Fragment implements
                    Source.CACHE  : Source.SERVER ;
             log.i("Source: %s", source);
         });
-
 
         CollectionReference userRef = firestore.collection("users");
         ListenerRegistration userListener = userRef.addSnapshotListener((querySnapshot, e) -> {
@@ -247,9 +247,8 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getNewPosting().observe(getActivity(), documentId -> {
             log.i("New posting: %s", page);
             if(!TextUtils.isEmpty(documentId)) {
-                //snapshotList.clear();
-                //String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, page, autoData);
+                snapshotList.clear();
+                pageHelper.setPostingQuery(source, page, autoData);
             }
         });
 
@@ -261,8 +260,7 @@ public class BoardPagerFragment extends Fragment implements
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
                 snapshotList.clear();
-                //String field = getQueryFieldToViewPager(page);
-                pageHelper.setPostingQuery(Source.CACHE, page, autoData);
+                pageHelper.setPostingQuery(source, page, autoData);
             }
         });
 
@@ -270,15 +268,13 @@ public class BoardPagerFragment extends Fragment implements
 
 
     // Implement PaginationHelper.OnPaginationListener which notifies the adapter of the first and
-    // the next query result.
+    // the next query results.
     @Override
-    public void setFirstQuery(QuerySnapshot querySnapshot) {
+    public void setFirstQuery(QuerySnapshot snapshots) {
         //snapshotList.clear();
-        //for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
-        log.i("First QuerySnapshot: %s", querySnapshot.size());
-        //postingAdapter.updatePostingAdapdter(snapshotList);
-        //postingAdapter = new BoardPostingAdapter(querySnapshot, this);
-        //postingAdapter.notifyDataSetChanged();
+        for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
+        //postingAdapter = new BoardPostingAdapter(snapshotList, this);
+        postingAdapter.notifyDataSetChanged();
         //recyclerPostView.setAdapter(postingAdapter);
     }
 
@@ -290,9 +286,9 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void setNextQueryComplete(QuerySnapshot querySnapshot) {
-        //for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
+        for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
         //pagingProgbar.setVisibility(View.INVISIBLE);
-        postingAdapter = new BoardPostingAdapter(querySnapshot, this);
+        postingAdapter = new BoardPostingAdapter(snapshotList, this);
         weakProgbar.get().setVisibility(View.INVISIBLE);
         postingAdapter.notifyDataSetChanged();
     }

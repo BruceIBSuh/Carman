@@ -165,8 +165,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 JSONArray jsonArray = new JSONArray(autoData);
                 StringBuilder sb = new StringBuilder();
                 for(int i = 0; i < jsonArray.length(); i++)
-                    sb.append(jsonArray.optString(i)).append(String.format("%3s", " "));
-
+                    sb.append(jsonArray.optString(i)).append(" ");
                 autoData = sb.toString();
 
             } catch(JSONException e) {
@@ -285,6 +284,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // BoardPagerFragment has already updatedd the posting items when created, the comment list
         // shouldn't be updated from the server.
         pagingUtil.setCommentQuery(source, "timestamp", documentId);
+
         // Realtime update of the comment count and compathy count using SnapshotListener.
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
         // whether the document has local changes that haven't been written to the backend yet.

@@ -13,50 +13,76 @@ import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SettingBaseFragment extends PreferenceFragmentCompat {
+public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingBaseFragment.class);
 
     // Objects
-    private FirebaseFirestore firestore;
-    private CollectionReference autoRef;
+    protected FirebaseFirestore firestore;
+    private ListenerRegistration autoListener;
     private SharedPreferences mSettings;
     private QueryDocumentSnapshot makershot, modelshot;
-    private OnFirestoreCompleteListener mListener;
+    //private OnCompleteRegNumberListener mListener;
+    Source source;
+    CollectionReference autoRef;
 
     // fields
     private Preference autoPreference;
     private String makerName, modelName, typeName, year;
     private String makerNum, modelNum;
 
-    public interface OnFirestoreCompleteListener {
-        //void setRegistrationNumber(String makerNum, String modelNum);
+    /*
+    public interface OnCompleteRegNumberListener {
         void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
         void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
     }
 
     // Attach the listener
-    void setFirestoreCompleteListener(OnFirestoreCompleteListener listener) {
+    void addCompleteRegNumberListener(OnCompleteRegNumberListener listener) {
         mListener = listener;
     }
 
-    @Override
-    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
+     */
 
+    // Constructor
     public SettingBaseFragment() {
         super();
         firestore = FirebaseFirestore.getInstance();
         autoRef = firestore.collection("autodata");
 
+        // Attach the sanpshot listener to the basic collection, which initially downloades all
+        // the auto data from Firestore, then manage the data with Firestore cache framework
+        // once the listener is removed.
+        autoListener = autoRef.addSnapshotListener((querySnapshot, e) -> {
+            if(e != null) return;
+            source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())?
+                    Source.CACHE  : Source.SERVER ;
+            log.i("Source: %s", source);
+
+        });
+
     }
+
+    @Override
+    public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        autoListener.remove();
+    }
+
+
 
     // Query the auto maker first. Upon completion, notify the listener of the automaker snapshot
     // to continue another query to retrieve auto models.
@@ -64,7 +90,8 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(QueryDocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
-                    mListener.queryAutoMakerSnapshot(makershot);
+                    //mListener.queryAutoMakerSnapshot(makershot);
+                    queryAutoMakerSnapshot(makershot);
                     break;
                 }
             }
@@ -75,19 +102,21 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
     // automaker snapshot id, then notify the listener of queried snapshot
     void queryAutoModel(String id,  String model) {
         log.i("Model name: %s", model);
-        if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
+        //if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
         autoRef.document(id).collection("auto_model").whereEqualTo("model_name", model)
                 .get().addOnSuccessListener(query -> {
                     for(QueryDocumentSnapshot modelshot : query) {
                         if(modelshot.exists()) {
                             log.i("Query modelshot: %s", modelshot.getLong("reg_number"));
-                            mListener.queryAutoModelSnapshot(modelshot);
+                            //mListener.queryAutoModelSnapshot(modelshot);
+                            queryAutoModelSnapshot(modelshot);
                             break;
                         }
                     }
                 }).addOnFailureListener(e -> {
                     log.i("query failed");
-                    mListener.queryAutoModelSnapshot(null);
+                    //mListener.queryAutoModelSnapshot(null);
+                    queryAutoModelSnapshot(null);
                 });
     }
 
@@ -103,4 +132,7 @@ public class SettingBaseFragment extends PreferenceFragmentCompat {
 
         pref.setSummary(sb);
     }
+
+    protected abstract void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
+    protected abstract void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
 }

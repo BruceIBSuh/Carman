@@ -51,6 +51,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     // private constructor
     public PaginationHelper() {
         firestore = FirebaseFirestore.getInstance();
+        querySnapshot = null;
     }
 
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of
@@ -89,19 +90,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
 
-                /*
-                List<String> autovalueList = new ArrayList<>();
-                //for(boolean b : arrAutoValues) autovalueList.add(b);
-                autovalueList.add("현대차");
-                autovalueList.add("Palisade");
-                */
-                for(String filter : filters) log.i("Filter: %s", filter);
-
                 colRef.whereEqualTo("auto_club", filters)
-                //colRef.whereArrayContains("auto_club", true)
-                        // orderBy field must be the same as the field used in where_. Otherwise,
-                        // it does not work.
-                        //.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get()
                         .addOnSuccessListener(autoclubShot -> {
                             log.i("auto_club query: %s", autoclubShot.size());

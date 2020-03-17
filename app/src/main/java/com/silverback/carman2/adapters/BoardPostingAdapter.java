@@ -42,33 +42,20 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     // Objects
     private Context context;
-    //private List<DocumentSnapshot> snapshotList;
-    private QuerySnapshot querySnapshot;
+    private List<DocumentSnapshot> snapshotList;
     private OnRecyclerItemClickListener mListener;
     private SimpleDateFormat sdf;
 
-    // Interface for RecyclerView item click event
+    // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
     }
 
     // Constructor
-    /*
     public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
         super();
-
-        log.i("BoarePostingAdapter");
-        this.snapshotList = snapshots;
         mListener = listener;
-        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-    }
-
-     */
-
-    public BoardPostingAdapter(QuerySnapshot snapshots, OnRecyclerItemClickListener listener) {
-        super();
-        mListener = listener;
-        querySnapshot = snapshots;
+        snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
@@ -91,7 +78,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         // Retreive an board item queried in and passed from BoardPagerFragment
         //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
         //DocumentSnapshot document = snapshotList.get(position);
-        DocumentSnapshot snapshot = querySnapshot.getDocuments().get(position);
+        DocumentSnapshot snapshot = snapshotList.get(position);
         log.i("User Profile Pic: %s", snapshot.getString("user_pic"));
 
         holder.tvPostTitle.setText(snapshot.getString("post_title"));
@@ -133,7 +120,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @Override
     public int getItemCount() {
-        return querySnapshot.size();
+        return snapshotList.size();
     }
 
     @Override
@@ -141,13 +128,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         return -1;
     }
 
-
-    // Set new snapshot list to the apdater for updating
-    public void updatePostingAdapdter(QuerySnapshot snapshots) {
-        this.querySnapshot = snapshots;
-    }
-
-
+    // ViewHolders
     class BoardItemHolder extends RecyclerView.ViewHolder {
 
         TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;

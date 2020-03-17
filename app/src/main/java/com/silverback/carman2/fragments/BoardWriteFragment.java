@@ -319,7 +319,10 @@ public class BoardWriteFragment extends DialogFragment implements
         if(!doEmptyCheck()) return;
         // UserId should be passed from the parent activity. If not, the process should end here.
         if(TextUtils.isEmpty(userId)) return;
+
         // Cast SparseArray containing download urls from Storage to String array
+        // Something wrong around here because a posting item contains an image despite no image
+        // attached.
         List<String> downloadUriList = null;
         if(downloadImages.size() > 0) {
             downloadUriList = new ArrayList<>(downloadImages.size());
@@ -337,10 +340,9 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("cnt_view", 0);
         post.put("post_content", etPostBody.getText().toString());
         if(downloadImages.size() > 0) post.put("post_images",  downloadUriList);
+        log.i("tab page: %s", tabPage);
 
-        // Nested fields to filter the post by category
         if(tabPage == Constants.BOARD_AUTOCLUB) {
-            //boolean[] filterValues = ((BoardActivity)getActivity()).getCheckBoxValues();
             boolean[] chkbox = ((BoardActivity)getActivity()).getCheckBoxValues();
             String jsonAutoData = getArguments().getString("autoData");
             List<String> valueList = new ArrayList<>();
@@ -392,6 +394,7 @@ public class BoardWriteFragment extends DialogFragment implements
         ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
+        // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgbarDialogFragment();
         pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
         getActivity().getSupportFragmentManager().beginTransaction()

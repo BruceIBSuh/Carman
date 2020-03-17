@@ -29,10 +29,6 @@ import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
@@ -57,7 +53,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
     // Fields
     private String sigunCode;
-    private String makerName, modelName, typeName, year;
+    private String makerName, modelName, typeName, yearName;
+    private String regMakerNum, regModelNum;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -85,47 +82,57 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
         String aVoid = getString(R.string.pref_entry_void);
+        //String autoData = mSettings.getString(Constants.AUTO_DATA, null);
+        //log.i("AutoData: %s", autoData);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-        year = mSettings.getString(Constants.AUTO_YEAR, null);
-        log.i("Auto Data: %s, %s, %s, %s", makerName, modelName, typeName, year);
-
+        yearName = mSettings.getString(Constants.AUTO_YEAR, null);
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
         if(TextUtils.isEmpty(makerName)) autoPref.setSummary(aVoid);
         else queryAutoMaker(makerName);
-        // Attach the listener to be notified that the automaker query or the automodel query has
-        // completed in order to get the registration number.
-        setFirestoreCompleteListener(new OnFirestoreCompleteListener() {
+
+
+        // Attach the listener defined in the parent fragment so as to be notified that the automaker
+        // query or the automodel query, retrieveing the registration number.
+        /*
+        addCompleteRegNumberListener(new OnCompleteRegNumberListener() {
             String makerNum, modelNum, summary;
+
             @Override
             public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
                 log.i("automaker queried: %s", makershot.getLong("reg_number"));
                 // Upon completion of querying the auto maker, sequentially re-query the auto model
                 // with the auto make id from the snapshot.
                 makerNum = makershot.getLong("reg_number").toString();
-                queryAutoModel(makershot.getId(), modelName);
+                if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
+                else {
+                    summary = String.format("%s(%s) %s %s %s",
+                            makerName, makerNum, modelName, typeName, yearName);
+                    setSpannableAutoDataSummary(autoPref, summary);
+                }
             }
 
             @Override
             public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
-                log.i("automodel queried:%s", modelshot);
-                String type = (TextUtils.isEmpty(typeName))? aVoid : typeName;
-
                 // The auto preference summary depends on whether the model name is set because
                 // queryAutoModel() would notify null to the listener w/o the model name.
                 if(modelshot != null && modelshot.exists()) {
                     modelNum = modelshot.getLong("reg_number").toString();
-                    summary = String.format("%s(%s)  %s(%s)", makerName, makerNum, modelName, modelNum);
+                    summary = String.format("%s(%s)  %s(%s) %s %s",
+                            makerName, makerNum, modelName, modelNum, typeName, yearName);
                 } else {
-                    summary = String.format("%s(%s)  %s", makerName, makerNum, aVoid);
+                    summary = String.format("%s(%s) %s %s %s",
+                            makerName, makerNum, modelName, typeName, yearName);
                 }
 
                 setSpannableAutoDataSummary(autoPref, summary);
             }
         });
+
+         */
 
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
@@ -133,7 +140,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             makerName = dataList.get(0);
             modelName = dataList.get(1);
             typeName = dataList.get(2);
-            year = dataList.get(3);
+            yearName = dataList.get(3);
 
             if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
 
@@ -249,6 +256,34 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         }
          */
     }
+
+
+    @Override
+    public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
+        log.i("automaker queried: %s", makershot.getLong("reg_number"));
+        // Upon completion of querying the auto maker, sequentially re-query the auto model
+        // with the auto make id from the snapshot.
+        regMakerNum = makershot.getLong("reg_number").toString();
+        if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
+        else {
+            String summary = String.format("%s(%s) %s %s %s",
+                    makerName, regMakerNum, modelName, typeName, yearName);
+            setSpannableAutoDataSummary(autoPref, summary);
+        }
+    }
+
+    @Override
+    public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
+        // The auto preference summary depends on whether the model name is set because
+        // queryAutoModel() would notify null to the listener w/o the model name.
+        if(modelshot != null && modelshot.exists()) {
+            regModelNum = modelshot.getLong("reg_number").toString();
+            String summary = String.format("%s(%s)  %s(%s) %s %s",
+                    makerName, regMakerNum, modelName, regModelNum, typeName, yearName);
+            setSpannableAutoDataSummary(autoPref, summary);
+        }
+    }
+
 
     // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
     // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.

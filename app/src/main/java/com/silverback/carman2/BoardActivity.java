@@ -119,6 +119,7 @@ public class BoardActivity extends BaseActivity implements
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(getString(R.string.billboard_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        tabPage = Constants.BOARD_RECENT;
 
         // CheckBox values as to auto data which shows in the filter layout for purposes of querying
         // the posting items. The values should be transferred to the adapter which, in turn, passsed
