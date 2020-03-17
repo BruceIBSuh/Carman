@@ -16,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
+import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -30,9 +31,10 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // Objects
     protected FirebaseFirestore firestore;
     private ListenerRegistration autoListener;
-    private SharedPreferences mSettings;
     private QueryDocumentSnapshot makershot, modelshot;
     //private OnCompleteRegNumberListener mListener;
+    //private package objects
+    SharedPreferences mSettings;
     Source source;
     CollectionReference autoRef;
 
@@ -81,8 +83,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         super.onPause();
         autoListener.remove();
     }
-
-
 
     // Query the auto maker first. Upon completion, notify the listener of the automaker snapshot
     // to continue another query to retrieve auto models.
@@ -133,6 +133,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         pref.setSummary(sb);
     }
 
+    // Abstract methods which should be implemented both in SettingPreferenceFragment and
+    // SettingBaseFragment.
     protected abstract void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
     protected abstract void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
 }

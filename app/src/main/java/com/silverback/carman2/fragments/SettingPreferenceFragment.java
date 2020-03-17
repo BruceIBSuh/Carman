@@ -64,8 +64,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
         firestore = FirebaseFirestore.getInstance();
-        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         //ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
 
@@ -82,16 +82,15 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
         String aVoid = getString(R.string.pref_entry_void);
-        //String autoData = mSettings.getString(Constants.AUTO_DATA, null);
-        //log.i("AutoData: %s", autoData);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         yearName = mSettings.getString(Constants.AUTO_YEAR, null);
+
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
-        if(TextUtils.isEmpty(makerName)) autoPref.setSummary(aVoid);
+        if(TextUtils.isEmpty(makerName)) autoPref.setSummary(getString(R.string.pref_entry_void));
         else queryAutoMaker(makerName);
 
 
@@ -257,29 +256,34 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
          */
     }
 
-
+    // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
+    // the result of which have this method implemented to get the registration number of the auto
+    // maker and continues to call queryAutoModel() if an auto model exists. Otherwise, ends with
+    // setting the summary.
     @Override
     public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
         log.i("automaker queried: %s", makershot.getLong("reg_number"));
+        log.i("Auto Data: %s, %s, %s, %s", makerName, modelName, typeName, yearName);
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = makershot.getLong("reg_number").toString();
+
         if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
         else {
-            String summary = String.format("%s(%s) %s %s %s",
-                    makerName, regMakerNum, modelName, typeName, yearName);
+            String summary = String.format("%s (%s)", makerName, regMakerNum);
             setSpannableAutoDataSummary(autoPref, summary);
         }
     }
-
+    // queryAutoModel() defined in the parent fragment(SettingBaseFragment) queries the auto model,
+    // the result of which implement the method to have the registration number of the auto model,
+    // then set the summary.
     @Override
     public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
         // The auto preference summary depends on whether the model name is set because
         // queryAutoModel() would notify null to the listener w/o the model name.
         if(modelshot != null && modelshot.exists()) {
             regModelNum = modelshot.getLong("reg_number").toString();
-            String summary = String.format("%s(%s)  %s(%s) %s %s",
-                    makerName, regMakerNum, modelName, regModelNum, typeName, yearName);
+            String summary = String.format("%s (%s)   %s (%s)", makerName, regMakerNum, modelName, regModelNum);
             setSpannableAutoDataSummary(autoPref, summary);
         }
     }

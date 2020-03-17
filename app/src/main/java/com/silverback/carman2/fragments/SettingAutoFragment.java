@@ -47,11 +47,11 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // Objects
     private String[] arrAutoType;
     private FragmentSharedModel fragmentModel;
-    private SharedPreferences mSettings;
     private OnToolbarTitleListener mToolbarListener;
     private ListPreference autoMaker, autoType, autoModel, autoYear;
 
     // fields
+    private String prevMaker, prevModel;
     private String makerName, modelName, typeName, yearName;
     private String makerId, modelId;
     private int typeId;
@@ -79,8 +79,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);
 
-        arrAutoType = new String[]{
-                getString(R.string.pref_entry_void), "Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
+        arrAutoType = new String[]{ getString(R.string.pref_entry_void),
+                "Sedan", "SUV", "MPV", "Mini Bus", "Truck", "Bus"};
+        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
@@ -92,9 +94,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         autoModel.setOnPreferenceChangeListener(this);
         //addCompleteRegNumberListener(this);
 
-        //FirebaseFirestore firestore = FirebaseFirestore.getInstance();
-        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         // Initially, query all auto makers to set entry(values) to the auto maker preference.
         // useSimpleSummaryProvider does not work b/c every time the fragment is instantiated, the
@@ -107,10 +106,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
             autoMaker.setEntries(autoMakerList.toArray(new CharSequence[queries.size()]));
             autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[queries.size()]));
-
-            // Inital setting of the preference summaries, querying an auto maker with a name
-            // fetched from SharedPreferences.
-            //initPreferences();
         });
 
         // Set the entries(values) to the auto type preference.
@@ -137,21 +132,25 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         yearName = mSettings.getString(Constants.AUTO_YEAR, null);
         log.i("Auto Preferences: %s, %s, %s", makerName, modelName, typeName);
 
-        // Just in case of initail setting first time.
+        // Other than the initial value of the automaker which should be null or empty, query the
+        // automaker with a maker name selected.
         if(TextUtils.isEmpty(makerName)) autoModel.setEnabled(false);
         else queryAutoMaker(makerName);
+
+        prevMaker = makerName;
+        prevModel = modelName;
     }
 
 
     // Implements SettingBaseFragment.OnCompleteRegNumberListener which notifies that query to
     // retrieve the registration number of an auto maker or auto model has completed.
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
-        // Field to share a automaker document id until the current maker changes.
+        // With the automaker id queried and the autotype id, query auto models and set them to
+        // the model entry.
         if(makershot.exists()) makerId = makershot.getId();
-        // On completion of the automaker query, set entries of the auto model preference
         typeId = Arrays.asList(arrAutoType).indexOf(typeName);
-        log.i("query automaker: %s, %s", makershot.getId(), typeId);
         setAutoModelEntries(makerId, typeId);
 
         // When the auto maker changes, which means the previous automaker is not null, update
@@ -159,7 +158,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         int makerNum = makershot.getLong("reg_number").intValue();
         if(isMakerChanged) {
             makerNum++;
-            //makershot.getReference().update("reg_number", FieldValue.increment(1));
+            makershot.getReference().update("reg_number", FieldValue.increment(1));
         }
 
         String name = makershot.getString("auto_maker");
@@ -178,12 +177,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         if(isModelChanged) {
             log.i("Increase the current model reg number");
             modelNum ++;
-            /*
             autoRef.document(makerId).collection("auto_model").document(modelId)
                     .update("reg_number", FieldValue.increment(1))
                     .addOnSuccessListener(aVoid -> log.i("update regnum successfully"));
-
-             */
         }
 
         autoModel.setSummary(String.format("%s %s %s",
@@ -199,7 +195,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // If successful, set the auto model preference to be enabled and set entries to it
         // queried with the maker and type id.
         final String valueName = (String)value;
-        log.i("valueName: %s", valueName);
 
         switch(preference.getKey()) {
             // If the auto maker preference changes the value, query the registration number, setting
@@ -213,7 +208,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // its value is null, which occurs at the initial setting.
                 if(!TextUtils.isEmpty(autoMaker.getValue())){
                     log.i("Decrease the previous automaker reg number: %s", autoMaker.getValue());
-                    //autoRef.document(makerId).update("reg_number", FieldValue.increment(-1));
+                    autoRef.document(makerId).update("reg_number", FieldValue.increment(-1));
                 }
 
 
@@ -221,12 +216,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // the auto maker makes the auto model set to null.
                 if(!TextUtils.isEmpty(autoModel.getValue())) {
                     log.i("auto model: %s", autoModel.getValue());
-                    /*
                     autoRef.document(makerId).collection("auto_model").document(modelId)
                             .update("reg_number", FieldValue.increment(-1))
                             .addOnSuccessListener(aVoid -> log.i("decrease the reg number successfully"));
-
-                     */
                 }
 
                 // Set the auto model preference summary to void and make it disabled until the
@@ -290,7 +282,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             dataList.add(mSettings.getString(Constants.AUTO_YEAR, null));
 
             fragmentModel.getAutoDataList().setValue(dataList);
-
             // Revert the toolbar title when leaving this fragment b/c SettingPreferenceFragment and
             // SettingAutoFragment share the toolbar under the same parent activity.
             mToolbarListener.notifyResetTitle();
