@@ -14,7 +14,6 @@ import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
@@ -61,7 +60,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     private List<String> autoDataList;
     private String sigunCode;
     private String regMakerNum;
-    private String makerName, modelName, typeName, yearName;
+    //private String makerName, modelName, typeName, yearName;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -87,16 +86,15 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
-        autoDataList = parseJsonAutoData(mSettings.getString(Constants.AUTO_DATA, null));
-        makerName = autoDataList.get(0);
-        modelName = autoDataList.get(1);
         /*
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-        yearName = mSettings.getString(Constants.AUTO_YEAR, null);
-
-         */
+        String yearName = mSettings.getString(Constants.AUTO_YEAR, null);
+        */
+        String jsonData = mSettings.getString(Constants.AUTO_DATA, null);
+        if(!TextUtils.isEmpty(jsonData)) parseAutoData(jsonData);
+        log.i("auto data in shared: %s, %s, %s, %s", makerName, modelName, typeName, yearName);
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
@@ -105,9 +103,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
         sharedModel.getAutoData().observe(getActivity(), json -> {
-            List<String> autodata = parseJsonAutoData(json);
-            makerName = autodata.get(0);
-            modelName = autodata.get(1);
+            List<String> autodata = parseAutoData(json);
+            //makerName = autodata.get(0);
+            //modelName = autodata.get(1);
             //typeName = autodata.get(2);
             //yearName = autodata.get(3);
             if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
@@ -228,7 +226,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     }
 
     // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
-    // the result of which have this method implemented to get the registration number of the auto
+    // the result of which implements this to get the registration number of the auto
     // maker and continues to call queryAutoModel() if an auto model exists. Otherwise, ends with
     // setting the summary.
     @Override
@@ -280,15 +278,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
     }
 
-    private List<String> parseJsonAutoData(String jsonString) {
-        List<String> autoDataList = new ArrayList<>();
-        try {
-            JSONArray json = new JSONArray(jsonString);
-            for(int i = 0; i < json.length(); i++) autoDataList.add(json.optString(i));
-        } catch(JSONException e) {e.printStackTrace();}
 
-        return autoDataList;
-    }
+
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

@@ -21,6 +21,11 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +43,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     SharedPreferences mSettings;
     Source source;
     CollectionReference autoRef;
+    String makerName, modelName, typeName, yearName;
 
     /*
     public interface OnCompleteAutoQueryListener {
@@ -123,6 +129,23 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         }
 
         pref.setSummary(sb);
+    }
+
+
+    List<String> parseAutoData(String jsonString) {
+        List<String> autoDataList = new ArrayList<>();
+        try {
+            JSONArray json = new JSONArray(jsonString);
+            for(int i = 0; i < json.length(); i++) autoDataList.add(json.optString(i));
+            makerName = json.optString(0);
+            modelName = json.optString(1);
+            typeName = json.optString(2);
+            yearName = json.optString(3);
+        } catch(JSONException e) {
+            e.printStackTrace();
+        }
+
+        return autoDataList;
     }
 
     // Abstract methods which should be implemented both in SettingPreferenceFragment and
