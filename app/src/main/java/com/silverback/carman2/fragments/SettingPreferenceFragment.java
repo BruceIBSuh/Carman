@@ -29,6 +29,10 @@ import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
@@ -43,18 +47,21 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
     // Objects
-    private FirebaseFirestore firestore;
     private SharedPreferences mSettings;
+    private FragmentSharedModel sharedModel;
     private Preference userImagePref;
     private String nickname;
 
     // UIs
     private Preference autoPref;
+    private SpinnerDialogPreference spinnerPref;
+    private Preference favorite;
 
     // Fields
+    private List<String> autoDataList;
     private String sigunCode;
+    private String regMakerNum;
     private String makerName, modelName, typeName, yearName;
-    private String regMakerNum, regModelNum;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -63,10 +70,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
-        firestore = FirebaseFirestore.getInstance();
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        FragmentSharedModel sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         //ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
@@ -81,69 +87,32 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
-        String aVoid = getString(R.string.pref_entry_void);
+        autoDataList = parseJsonAutoData(mSettings.getString(Constants.AUTO_DATA, null));
+        makerName = autoDataList.get(0);
+        modelName = autoDataList.get(1);
+        /*
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         yearName = mSettings.getString(Constants.AUTO_YEAR, null);
 
+         */
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
         if(TextUtils.isEmpty(makerName)) autoPref.setSummary(getString(R.string.pref_entry_void));
         else queryAutoMaker(makerName);
-
-
-        // Attach the listener defined in the parent fragment so as to be notified that the automaker
-        // query or the automodel query, retrieveing the registration number.
-        /*
-        addCompleteRegNumberListener(new OnCompleteRegNumberListener() {
-            String makerNum, modelNum, summary;
-
-            @Override
-            public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
-                log.i("automaker queried: %s", makershot.getLong("reg_number"));
-                // Upon completion of querying the auto maker, sequentially re-query the auto model
-                // with the auto make id from the snapshot.
-                makerNum = makershot.getLong("reg_number").toString();
-                if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
-                else {
-                    summary = String.format("%s(%s) %s %s %s",
-                            makerName, makerNum, modelName, typeName, yearName);
-                    setSpannableAutoDataSummary(autoPref, summary);
-                }
-            }
-
-            @Override
-            public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
-                // The auto preference summary depends on whether the model name is set because
-                // queryAutoModel() would notify null to the listener w/o the model name.
-                if(modelshot != null && modelshot.exists()) {
-                    modelNum = modelshot.getLong("reg_number").toString();
-                    summary = String.format("%s(%s)  %s(%s) %s %s",
-                            makerName, makerNum, modelName, modelNum, typeName, yearName);
-                } else {
-                    summary = String.format("%s(%s) %s %s %s",
-                            makerName, makerNum, modelName, typeName, yearName);
-                }
-
-                setSpannableAutoDataSummary(autoPref, summary);
-            }
-        });
-
-         */
-
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
-        sharedModel.getAutoDataList().observe(getActivity(), dataList -> {
-            makerName = dataList.get(0);
-            modelName = dataList.get(1);
-            typeName = dataList.get(2);
-            yearName = dataList.get(3);
-
+        sharedModel.getAutoData().observe(getActivity(), json -> {
+            List<String> autodata = parseJsonAutoData(json);
+            makerName = autodata.get(0);
+            modelName = autodata.get(1);
+            //typeName = autodata.get(2);
+            //yearName = autodata.get(3);
             if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
-
         });
+
 
         // Preference for selecting a fuel out of gas, diesel, lpg and premium, which should be
         // improved with more energy source such as eletricity and hydrogene provided.
@@ -175,7 +144,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
-        Preference favorite = findPreference("pref_favorite_provider");
+        favorite = findPreference("pref_favorite_provider");
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String favoriteStn = getString(R.string.pref_no_favorite);
             String favoriteSvc = getString(R.string.pref_no_favorite);
@@ -188,6 +157,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
                     getString(R.string.pref_label_station), favoriteStn,
                     getString(R.string.pref_label_service), favoriteSvc));
         });
+
 
         Preference gasStation = findPreference("pref_favorite_gas");
         gasStation.setSummary(R.string.pref_summary_gas);
@@ -203,7 +173,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Custom preference to display the custom PreferenceDialogFragmentCompat which has dual
         // spinners to pick the district of Sido and Sigun based upon the given Sido. The default
         // district name and code is saved as JSONString.
-        SpinnerDialogPreference spinnerPref = findPreference(Constants.DISTRICT);
+        spinnerPref = findPreference(Constants.DISTRICT);
         JSONArray json = BaseActivity.getDistrictJSONArray();
         if(json != null) {
             spinnerPref.setSummary(String.format("%s %s", json.optString(0), json.optString(1)));
@@ -218,6 +188,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             JSONArray jsonArray = new JSONArray(distList);
             mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
         });
+
 
         // Preference for whether any notification is permiited to receive or not.
         SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
@@ -262,16 +233,14 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     // setting the summary.
     @Override
     public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
-        log.i("automaker queried: %s", makershot.getLong("reg_number"));
-        log.i("Auto Data: %s, %s, %s, %s", makerName, modelName, typeName, yearName);
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = makershot.getLong("reg_number").toString();
-
+        log.i("modelName: %s", modelName);
         if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
         else {
             String summary = String.format("%s (%s)", makerName, regMakerNum);
-            setSpannableAutoDataSummary(autoPref, summary);
+            setSpannedAutoSummary(autoPref, summary);
         }
     }
     // queryAutoModel() defined in the parent fragment(SettingBaseFragment) queries the auto model,
@@ -282,9 +251,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // The auto preference summary depends on whether the model name is set because
         // queryAutoModel() would notify null to the listener w/o the model name.
         if(modelshot != null && modelshot.exists()) {
-            regModelNum = modelshot.getLong("reg_number").toString();
-            String summary = String.format("%s (%s)   %s (%s)", makerName, regMakerNum, modelName, regModelNum);
-            setSpannableAutoDataSummary(autoPref, summary);
+            String num = modelshot.getLong("reg_number").toString();
+            String summary = String.format("%s (%s)   %s (%s)", makerName, regMakerNum, modelName, num);
+            setSpannedAutoSummary(autoPref, summary);
         }
     }
 
@@ -309,6 +278,16 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             super.onDisplayPreferenceDialog(pref);
         }
 
+    }
+
+    private List<String> parseJsonAutoData(String jsonString) {
+        List<String> autoDataList = new ArrayList<>();
+        try {
+            JSONArray json = new JSONArray(jsonString);
+            for(int i = 0; i < json.length(); i++) autoDataList.add(json.optString(i));
+        } catch(JSONException e) {e.printStackTrace();}
+
+        return autoDataList;
     }
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove

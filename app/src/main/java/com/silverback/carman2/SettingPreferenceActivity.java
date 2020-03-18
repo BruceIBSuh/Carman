@@ -29,6 +29,7 @@ import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.fragments.SettingAutoFragment;
+import com.silverback.carman2.fragments.SettingBaseFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -127,6 +128,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
         if(jsonDistArray == null) distCode = "0101";
         else distCode = jsonDistArray.optString(2);
+
 
         settingFragment = new SettingPreferenceFragment();
         //settingFragment.setArguments(args);

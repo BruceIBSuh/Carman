@@ -42,15 +42,13 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<String> strData;
 
-
-
     private MutableLiveData<String> firstPlaceholderId;
 
     private MutableLiveData<Integer> totalExpense;
 
     // AutoData used in SettingPreferenceActivity which is shared b/w SettingPrefereneFragment and
     // SettingAutoFragment
-    private MutableLiveData<List<String>> autoDataList;
+    private MutableLiveData<String> autoData;
     private MutableLiveData<Boolean> jsonAutoData;
 
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
@@ -196,9 +194,9 @@ public class FragmentSharedModel extends ViewModel {
         return jsonAutoData;
     }
 
-    public MutableLiveData<List<String>> getAutoDataList() {
-        if(autoDataList == null) autoDataList = new MutableLiveData<>();
-        return autoDataList;
+    public MutableLiveData<String> getAutoData() {
+        if(autoData == null) autoData = new MutableLiveData<>();
+        return autoData;
     }
 
 }

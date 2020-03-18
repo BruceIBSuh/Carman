@@ -8,6 +8,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -16,7 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
-import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -30,41 +31,37 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // Objects
     protected FirebaseFirestore firestore;
-    private ListenerRegistration autoListener;
     private QueryDocumentSnapshot makershot, modelshot;
-    //private OnCompleteRegNumberListener mListener;
-    //private package objects
+    //private OnCompleteAutoQueryListener mListener;
+
+    ListenerRegistration autoListener;
     SharedPreferences mSettings;
     Source source;
     CollectionReference autoRef;
 
-    // fields
-    private Preference autoPreference;
-    private String makerName, modelName, typeName, year;
-    private String makerNum, modelNum;
-
     /*
-    public interface OnCompleteRegNumberListener {
+    public interface OnCompleteAutoQueryListener {
         void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
         void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
     }
 
     // Attach the listener
-    void addCompleteRegNumberListener(OnCompleteRegNumberListener listener) {
+    void addCompleteAutoQueryListener(OnCompleteAutoQueryListener listener) {
         mListener = listener;
     }
 
      */
+
 
     // Constructor
     public SettingBaseFragment() {
         super();
         firestore = FirebaseFirestore.getInstance();
         autoRef = firestore.collection("autodata");
-
         // Attach the sanpshot listener to the basic collection, which initially downloades all
         // the auto data from Firestore, then manage the data with Firestore cache framework
         // once the listener is removed.
+        /*
         autoListener = autoRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())?
@@ -72,17 +69,12 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
             log.i("Source: %s", source);
 
         });
-
+        */
     }
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        autoListener.remove();
-    }
 
     // Query the auto maker first. Upon completion, notify the listener of the automaker snapshot
     // to continue another query to retrieve auto models.
@@ -121,7 +113,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     }
 
 
-    void setSpannableAutoDataSummary(Preference pref, String summary) {
+    void setSpannedAutoSummary(Preference pref, String summary) {
         SpannableString sb = new SpannableString(summary);
         String reg = "\\(\\d+\\)";
         Matcher m = Pattern.compile(reg).matcher(summary);
