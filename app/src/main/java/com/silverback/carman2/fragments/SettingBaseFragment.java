@@ -39,9 +39,10 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     private QueryDocumentSnapshot makershot, modelshot;
     //private OnCompleteAutoQueryListener mListener;
 
-    ListenerRegistration autoListener;
+    // Package-private objects
+    //ListenerRegistration autoListener;
+    //Source source;
     SharedPreferences mSettings;
-    Source source;
     CollectionReference autoRef;
     String makerName, modelName, typeName, yearName;
 
@@ -101,8 +102,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     void queryAutoModel(String id,  String model) {
         log.i("Model name: %s", model);
         //if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
-        autoRef.document(id).collection("auto_model").whereEqualTo("model_name", model)
-                .get().addOnSuccessListener(query -> {
+        autoRef.document(id).collection("auto_model").whereEqualTo("model_name", model).get()
+                .addOnSuccessListener(query -> {
                     for(QueryDocumentSnapshot modelshot : query) {
                         if(modelshot.exists()) {
                             log.i("Query modelshot: %s", modelshot.getLong("reg_number"));
@@ -111,10 +112,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
                             break;
                         }
                     }
-                }).addOnFailureListener(e -> {
-                    log.i("query failed");
-                    //mListener.queryAutoModelSnapshot(null);
-                    queryAutoModelSnapshot(null);
                 });
     }
 
@@ -131,7 +128,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         pref.setSummary(sb);
     }
 
-
+    // AutoData is saved in SharedPreferences as JSON String which should be parsed into List<String>
+    // Each names are inherited to the child views of SettingPreferenceFragment and SettiingAutoFragment.
     List<String> parseAutoData(String jsonString) {
         List<String> autoDataList = new ArrayList<>();
         try {

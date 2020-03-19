@@ -46,6 +46,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         return NUM_PAGES;
     }
 
+
     public void setCheckBoxValues(String jsonFilterName, boolean[] values) {
         autoFilter = jsonFilterName;
         cbValues = values;

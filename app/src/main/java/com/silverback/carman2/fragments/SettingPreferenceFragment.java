@@ -225,10 +225,17 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
          */
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        //autoListener.remove();
+    }
+
     // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
     // the result of which implements this to get the registration number of the auto
     // maker and continues to call queryAutoModel() if an auto model exists. Otherwise, ends with
     // setting the summary.
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
         // Upon completion of querying the auto maker, sequentially re-query the auto model

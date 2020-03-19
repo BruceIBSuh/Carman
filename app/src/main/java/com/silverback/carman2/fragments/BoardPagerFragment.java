@@ -99,7 +99,7 @@ public class BoardPagerFragment extends Fragment implements
     public static BoardPagerFragment newInstance(int page) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle arg = new Bundle();
-        arg.putInt("fragmentPage", page);
+        arg.putInt("page", page);
         fragment.setArguments(arg);
 
         return fragment;
@@ -109,9 +109,8 @@ public class BoardPagerFragment extends Fragment implements
     // Singleton for AutoClub page which has the checkbox values and title names.
     public static BoardPagerFragment newInstance(int page, String cbName, boolean[] cbValue) {
         BoardPagerFragment fragment = new BoardPagerFragment();
-
         Bundle args = new Bundle();
-        args.putInt("fragmetPage", page);
+        args.putInt("page", page);
         args.putBooleanArray("chkboxValues", cbValue);
         args.putString("chkboxNames", cbName);
         fragment.setArguments(args);
@@ -125,7 +124,7 @@ public class BoardPagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         if(getArguments() != null) {
-            page = getArguments().getInt("fragmetPage");
+            page = getArguments().getInt("page");
             if(page == Constants.BOARD_AUTOCLUB) {
                 chkboxValues = getArguments().getBooleanArray("chkboxValues");
                 jsonAutoFilter = getArguments().getString("chkboxNames");
@@ -247,8 +246,15 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getNewPosting().observe(getActivity(), documentId -> {
             log.i("New posting: %s", page);
             if(!TextUtils.isEmpty(documentId)) {
-                snapshotList.clear();
-                pageHelper.setPostingQuery(source, page, autoData);
+                //snapshotList.clear();
+                if(page == Constants.BOARD_RECENT || page == Constants.BOARD_AUTOCLUB) {
+                    postingAdapter.notifyItemInserted(0);
+
+                } else if( page == Constants.BOARD_POPULAR) {
+                    postingAdapter.notifyItemInserted(snapshotList.size());
+                }
+
+                //pageHelper.setPostingQuery(source, page, autoData);
             }
         });
 
@@ -271,11 +277,9 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
-        //snapshotList.clear();
+        snapshotList.clear();
         for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
-        //postingAdapter = new BoardPostingAdapter(snapshotList, this);
         postingAdapter.notifyDataSetChanged();
-        //recyclerPostView.setAdapter(postingAdapter);
     }
 
     @Override
@@ -289,7 +293,7 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
         //pagingProgbar.setVisibility(View.INVISIBLE);
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
-        weakProgbar.get().setVisibility(View.INVISIBLE);
+        weakProgbar.get().setVisibility(View.GONE);
         postingAdapter.notifyDataSetChanged();
     }
 
@@ -411,7 +415,6 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     private List<String> createAutoFilters(String autoFilter) throws JSONException {
-
         log.i("JSON auto filter: %s", autoFilter);
 
         List<String> filters = new ArrayList<>();

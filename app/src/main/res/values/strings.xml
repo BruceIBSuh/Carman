@@ -188,10 +188,9 @@
     <string name="setting_msg_remove_image">이미지 삭제</string>
     <string name="setting_msg_upload_image">이미지 업로드</string>
     <!--SettingPreferenceActivity$SettingPreferenceFragment$preferences.xml-->
-    <string name="pref_category_basic_info">차량 정보</string>
-    <string name="setting_nickname">사용자(차량) 이름</string>
-    <string name="pref_title_auto_data">차량 정보(브랜드, 모델명, 타입, 연식)</string>
-    <string name="pref_fragment_auto_title">차량 정보</string>
+    <string name="pref_category_auto_info">차량정보</string>
+    <string name="pref_title_username">사용자(차량) 이름</string>
+    <string name="pref_title_autodata">차량 정보(브랜드, 모델명, 타입, 연식)</string>
     <string name="pref_entry_void">설정안함</string>
     <string name="pref_category_location">위치 관련</string>
     <string name="pref_location_radius">주유소 탐색 반경</string>
@@ -261,11 +260,12 @@
     <string name="pref_username_msg_invalid">이미 사용중입니다</string>
     <string name="pref_username_msg_available">사용 가능합니다</string>
     <!--SettingPreferenceActivity$SettingAutoFragment-->
+    <string name="pref_auto_title">나의 오토클럽(차량정보)</string>
     <string name="pref_auto_maker">제조사/브랜드</string>
     <string name="pref_auto_type">차량 타입</string>
     <string name="pref_auto_model">모델 이름</string>
     <string name="pref_auto_year">생산년도(연식)</string>
-    <string name="pref_auto_reg">등록: </string>
+    <string name="pref_auto_reg">가입회원 </string>
 
     <!-- Threads -->
     <string name="location_notify_gps">gps 활성화에 실패하였습니다. 잠시뒤에 다시 시도해 주세요</string>

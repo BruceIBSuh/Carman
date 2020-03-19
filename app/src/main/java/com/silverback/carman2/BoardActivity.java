@@ -221,12 +221,16 @@ public class BoardActivity extends BaseActivity implements
     //
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        // The toolbar has no menus when the framelayout contains the viewpager except the AutoClub
+        // page that has a button for query conditions.
         if(frameLayout.getChildAt(0) instanceof ViewPager) {
             if(tabPage == Constants.BOARD_AUTOCLUB) {
                 menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
                         .setIcon(R.drawable.ic_filter)
                         .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
             } else menu.clear();
+
+        // When the framelayout contains BoardWriteFragment, the toolbar has the upload button
         } else {
             menu.add(0, MENU_ITEM_UPLOAD, Menu.NONE, "UPLOAD")
                     .setIcon(R.drawable.ic_upload)
@@ -267,20 +271,14 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch(item.getItemId()) {
-
             case android.R.id.home:
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
                 if(frameLayout.getChildAt(0) instanceof ViewPager) {
                     frameLayout.removeAllViews();
                     finish();
-
-                } else if(frameLayout.getChildAt(0) == writePostFragment.getView()){
-                    addViewPager();
-                }
-
+                } else if(frameLayout.getChildAt(0) == writePostFragment.getView()) addViewPager();
                 return true;
 
             case MENU_ITEM_FILTER:
@@ -358,7 +356,6 @@ public class BoardActivity extends BaseActivity implements
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
     private void animTabLayout(boolean isVisible) {
-
         ObjectAnimator slideTabDown = ObjectAnimator.ofFloat(boardTabLayout, "y", getActionbarHeight());
         ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", 0);
 
@@ -389,7 +386,6 @@ public class BoardActivity extends BaseActivity implements
         // Visibillity control
         //int visibility = (isFilterVisible)? View.VISIBLE : View.INVISIBLE;
         //filterLayout.setVisibility(visibility);
-
         ObjectAnimator slideDown = ObjectAnimator.ofFloat(filterLayout, "y", getActionbarHeight());
         ObjectAnimator slideUp = ObjectAnimator.ofFloat(filterLayout, "y", 0);
         slideUp.setDuration(500);
@@ -422,7 +418,6 @@ public class BoardActivity extends BaseActivity implements
 
     // Set the checkbox titles and values to each checkbox and put them in List<Boolean>.
     private String setCheckBoxDefaultValues() {
-
         String brand = mSettings.getString(Constants.AUTO_MAKER, null);
         String model = mSettings.getString(Constants.AUTO_MODEL, null);
         String type = mSettings.getString(Constants.AUTO_TYPE, null);

@@ -240,7 +240,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // In case a preference calls PreferenceFragmentCompat and newly set the title again, it makes
         // the activity toolbar title changed as well.
         if(fragment instanceof SettingAutoFragment) {
-            getSupportActionBar().setTitle(getString(R.string.pref_fragment_auto_title));
+            getSupportActionBar().setTitle(getString(R.string.pref_auto_title));
             ((SettingAutoFragment) fragment).setTitleListener(this);
         }
 

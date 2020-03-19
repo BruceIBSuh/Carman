@@ -89,7 +89,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(localView)
-                .setTitle(R.string.setting_nickname)
+                .setTitle(R.string.pref_title_username)
                 .setPositiveButton("Confirm", this)
                 .setNegativeButton("Cancel", this);
 
