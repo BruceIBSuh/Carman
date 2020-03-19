@@ -10,6 +10,7 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -115,6 +116,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                     mListener.setFirstQuery(querySnapshot);
                 });
     }
+
 
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {

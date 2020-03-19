@@ -34,7 +34,6 @@ import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -160,9 +159,10 @@ public class BoardActivity extends BaseActivity implements
         fabWrite.setOnClickListener(view -> {
             // Check if users have made a user name(id). Otherwise, show tne message for setting the
             // user name first.
-            String userId = getUserIdFromStorage(this);
-            if(TextUtils.isEmpty(userId)) {
-                Snackbar.make(nestedScrollView, getString(R.string.board_msg_no_username), Snackbar.LENGTH_SHORT).show();
+            //String userId = getUserIdFromStorage(this);
+            String userName = mSettings.getString(Constants.USER_NAME, null);
+            if(TextUtils.isEmpty(userName)) {
+                Snackbar.make(nestedScrollView, getString(R.string.board_msg_username), Snackbar.LENGTH_SHORT).show();
                 return;
             }
             // Handle the toolbar menu as the write board comes in.

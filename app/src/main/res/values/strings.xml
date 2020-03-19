@@ -162,7 +162,8 @@
     <string name="board_filter_model">모델명</string>
     <string name="board_filter_type">타입</string>
     <string name="board_filter_year">연식</string>
-    <string name="board_msg_no_username">설정에서 사용자(차량)이름을 만들어주세요</string>
+    <string name="board_msg_username">사용자(차량)이름을 만들어주세요</string>
+    <string name="board_msg_action_setting">설정</string>
     <!--BoardActivity$BoardWriteFragment -->
     <string name="boardwrite_label_title">제 목:</string>
     <string name="board_msg_image">이미지 첨부는 6개까지 가능합니다</string>

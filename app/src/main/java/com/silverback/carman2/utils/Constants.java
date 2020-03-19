@@ -26,8 +26,7 @@ public class Constants {
     public static final int NUM_RECENT_PAGES = 5;
 
     // Board Pagination
-    public static final int NUM_BOARD_PAGES = 4;
-    static final int PAGINATION = 20;
+
     //public static final int ICON_SIZE = 50;
 
     // Notification Snooze
@@ -43,6 +42,8 @@ public class Constants {
     public static final int MAX_ATTACHED_IMAGE_NUMS = 6;//limit of the images attached with the post.
 
     // Board
+    public static final int NUM_BOARD_PAGES = 4;
+    public static final int PAGINATION = 20;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;

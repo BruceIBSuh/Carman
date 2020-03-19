@@ -232,29 +232,38 @@ public class BoardPagerFragment extends Fragment implements
         postListener.remove();
     }
 
-
-    // This callback should be invoked at the time not only the viewpager sets the adapter first time,
-    // but also each time the viewpager chages the page. Thus, the viewmodels must prevent
-    // observe from running automatically by setting an appripriate param.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
         log.i("onActivityCreated");
-        // Notified that uploading the post has completed by UploadPostTask.
-        // It seems not working. What if Srouce.CACHE options are applied?
-        fragmentModel.getNewPosting().observe(getActivity(), documentId -> {
-            log.i("New posting: %s", page);
-            if(!TextUtils.isEmpty(documentId)) {
-                //snapshotList.clear();
-                if(page == Constants.BOARD_RECENT || page == Constants.BOARD_AUTOCLUB) {
-                    postingAdapter.notifyItemInserted(0);
+        // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
+        // upon which page the viewpager contains.
+        fragmentModel.getNewPosting().observe(getActivity(), docId -> {
+            if(!TextUtils.isEmpty(docId)) {
+                // useless b/c the sequential number must be invalidated!!!!!
+                /*
+                firestore.collection("board_general").document(docId).get().addOnSuccessListener(snapshot -> {
+                    // The recent and autoclub page enlist posts in timestamp descending order. Thus,
+                    // just put it in the first place.
+                    if(page == Constants.BOARD_RECENT || page == Constants.BOARD_AUTOCLUB) {
+                        snapshotList.add(0, snapshot);
+                        postingAdapter.notifyItemInserted(0);
 
-                } else if( page == Constants.BOARD_POPULAR) {
-                    postingAdapter.notifyItemInserted(snapshotList.size());
-                }
+                    // The popular page puts a new post in the last place. As far as a new post is out
+                    // of the first query, which means posts are more than the pagiantion value, upadte
+                    // should be made by scrolling.
+                    } else if(page == Constants.BOARD_POPULAR) {
+                        if(snapshotList.size() < Constants.PAGINATION) {
+                            snapshotList.add(snapshotList.size(), snapshot);
+                            postingAdapter.notifyItemInserted(snapshotList.size());
+                        }
 
-                //pageHelper.setPostingQuery(source, page, autoData);
+                    }
+                });
+                */
+
+                pageHelper.setPostingQuery(source, page, autoData);
             }
         });
 
@@ -265,7 +274,7 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
-                snapshotList.clear();
+                //snapshotList.clear();
                 pageHelper.setPostingQuery(source, page, autoData);
             }
         });
