@@ -14,6 +14,8 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.silverback.carman2.backgrounds.GeofenceResetService.log;
+
 /*
  * This viewpager adapter subclasses FragmentStatePagerAdapter instead of FragmentPagerAdapter.
  * In general, FragmentPagerAdapter is preferred when displaying the tab-synced fragments that do not
@@ -26,7 +28,8 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     // Fields
     private String autoFilter;
-    private boolean[] cbValues;
+    //private boolean[] cbValues;
+    private ArrayList<CharSequence> cbValues;
 
     // Constructor
     public BoardPagerAdapter(FragmentManager fm) {
@@ -37,7 +40,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         return (position == Constants.BOARD_AUTOCLUB)?
-                BoardPagerFragment.newInstance(position, autoFilter, cbValues) :
+                BoardPagerFragment.newInstance(position, cbValues) :
                 BoardPagerFragment.newInstance(position);
     }
 
@@ -47,9 +50,18 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     }
 
 
+    /*
     public void setCheckBoxValues(String jsonFilterName, boolean[] values) {
         autoFilter = jsonFilterName;
         cbValues = values;
+    }
+
+     */
+
+    public void setAutoFilterValues(ArrayList<CharSequence> values) {
+        for(CharSequence value : values) log.i("filter value: %s", value);
+        cbValues = values;
+
     }
 
 }

@@ -46,6 +46,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     private OnRecyclerItemClickListener mListener;
     private SimpleDateFormat sdf;
 
+    // Fields
+    private int viewType;
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
@@ -64,10 +66,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     @Override
     public BoardItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
+
+        CardView cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.cardview_board_post, parent, false);
-
-
         return new BoardItemHolder(cardView);
     }
 
@@ -125,7 +126,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @Override
     public int getItemViewType(int position) {
-        return -1;
+        viewType =  (snapshotList.size() == 0)? 0 : 1;
+        return viewType;
     }
 
     // ViewHolders
@@ -181,5 +183,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         }
 
     }
+
 
 }

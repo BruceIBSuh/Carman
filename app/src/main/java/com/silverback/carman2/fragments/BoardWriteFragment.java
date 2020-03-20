@@ -343,10 +343,13 @@ public class BoardWriteFragment extends DialogFragment implements
         log.i("tab page: %s", tabPage);
 
         if(tabPage == Constants.BOARD_AUTOCLUB) {
-            boolean[] chkbox = ((BoardActivity)getActivity()).getCheckBoxValues();
-            String jsonAutoData = getArguments().getString("autoData");
-            List<String> valueList = new ArrayList<>();
+            ArrayList<CharSequence> autofilter = ((BoardActivity)getActivity()).getCheckBoxValues();
 
+            /*
+            String jsonAutoData = getArguments().getString("autoData");
+
+
+            List<String> valueList = new ArrayList<>();
             try {
                 JSONArray jsonArray = new JSONArray(jsonAutoData);
                 int idx = 0;
@@ -359,7 +362,9 @@ public class BoardWriteFragment extends DialogFragment implements
                 e.printStackTrace();
             }
 
-            post.put("auto_club", valueList);
+             */
+
+            post.put("auto_club", autofilter);
             /*
             Map<String, Object> filter = new HashMap<>();
             filter.put("auto_maker", isAutoMaker);

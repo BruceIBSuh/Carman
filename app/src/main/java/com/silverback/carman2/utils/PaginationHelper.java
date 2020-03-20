@@ -62,7 +62,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
     // Create queries for each page.
-    public void setPostingQuery(Source source, int page, List<String> filters) {
+    public void setPostingQuery(Source source, int page, ArrayList<CharSequence> autoFilter) {
         colRef = firestore.collection("board_general");
         switch(page) {
             case Constants.BOARD_RECENT:
@@ -72,8 +72,8 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                         .addOnSuccessListener(querySnapshot -> {
                             this.querySnapshot = querySnapshot;
                             mListener.setFirstQuery(querySnapshot);
-                        })
-                        .addOnFailureListener(Throwable::printStackTrace);
+
+                        }).addOnFailureListener(Throwable::printStackTrace);
                 break;
 
             case Constants.BOARD_POPULAR:
@@ -84,19 +84,20 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                         .addOnSuccessListener(querySnapshot -> {
                             this.querySnapshot = querySnapshot;
                             mListener.setFirstQuery(querySnapshot);
-                        })
-                        .addOnFailureListener(Throwable::printStackTrace);
+
+                        }).addOnFailureListener(Throwable::printStackTrace);
                 break;
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
 
-                colRef.whereEqualTo("auto_club", filters)
-                        .get()
+                colRef.whereEqualTo("auto_club", autoFilter)
+                        .get(source)
                         .addOnSuccessListener(autoclubShot -> {
                             log.i("auto_club query: %s", autoclubShot.size());
                             this.querySnapshot = autoclubShot;
                             mListener.setFirstQuery(autoclubShot);
+
                         }).addOnFailureListener(Throwable::printStackTrace);
                 break;
 

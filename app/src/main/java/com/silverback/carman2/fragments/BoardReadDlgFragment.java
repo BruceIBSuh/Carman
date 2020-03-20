@@ -495,7 +495,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         int prevImageId = 0;
 
         // Create LayoutParams using LinearLayout(RelativeLayout).LayoutParams, not using Constraint
-        // Layout.LayoutParams.
+        // Layout.LayoutParams. WHY?
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 

@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -80,14 +81,9 @@ public class BoardPagerFragment extends Fragment implements
 
     // UIs
     private RecyclerView recyclerPostView;
-    //private ProgressBar pagingProgbar;
-    //private FloatingActionButton fabWrite;
 
     // Fields
-    private List<String> autoData;
-    private boolean[] chkboxValues;
-    private String jsonAutoFilter;
-    //private List<Boolean> autoFilterValues;
+    private ArrayList<CharSequence> autoFilter;
     private int page;
 
     // Constructor
@@ -107,12 +103,12 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for AutoClub page which has the checkbox values and title names.
-    public static BoardPagerFragment newInstance(int page, String cbName, boolean[] cbValue) {
+    //public static BoardPagerFragment newInstance(int page, String cbName, boolean[] cbValue) {
+    public static BoardPagerFragment newInstance(int page, ArrayList<CharSequence> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", page);
-        args.putBooleanArray("chkboxValues", cbValue);
-        args.putString("chkboxNames", cbName);
+        args.putCharSequenceArrayList("autoFilter", values);
         fragment.setArguments(args);
 
         return fragment;
@@ -126,8 +122,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getArguments() != null) {
             page = getArguments().getInt("page");
             if(page == Constants.BOARD_AUTOCLUB) {
-                chkboxValues = getArguments().getBooleanArray("chkboxValues");
-                jsonAutoFilter = getArguments().getString("chkboxNames");
+                autoFilter = getArguments().getCharSequenceArrayList("autoFilter");
             }
         }
 
@@ -142,12 +137,9 @@ public class BoardPagerFragment extends Fragment implements
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
-        ((BoardActivity)getActivity()).addAutoFilterListener((names, values) -> {
-            log.i("chkbox values changed: %s", names);
-            chkboxValues = values;
-            try {autoData = createAutoFilters(names);}
-            catch(JSONException e) {e.printStackTrace();}
-            pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autoData);
+        ((BoardActivity)getActivity()).addAutoFilterListener(values -> {
+            for(CharSequence filter : values) log.i("chkbox values changed: %s", filter);
+            pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, values);
         });
 
 
@@ -184,9 +176,6 @@ public class BoardPagerFragment extends Fragment implements
         View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
         ProgressBar pagingProgbar = localView.findViewById(R.id.progbar_paging);
         weakProgbar = new WeakReference<>(pagingProgbar);
-
-
-        //fabWrite = localView.findViewById(R.id.fab_board_write);
         recyclerPostView = localView.findViewById(R.id.recycler_board);
         recyclerPostView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(
@@ -213,17 +202,7 @@ public class BoardPagerFragment extends Fragment implements
         // PaginationHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
 
-        // Get the field name of each fragment in the viewpager and query the posting items using
-        // PaginationHelper which sends the dataset back to the callbacks of setFirstQuery(),
-        // setNextQueryStart(), and setNextQueryComplete().
-        //if(snapshotList != null && snapshotList.size() > 0) snapshotList.clear();
-        if(page == Constants.BOARD_AUTOCLUB) {
-            try{autoData = createAutoFilters(jsonAutoFilter);}
-            catch(JSONException e) {e.printStackTrace();}
-        } else autoData = null;
-
-        pageHelper.setPostingQuery(source, page, autoData);
-
+        pageHelper.setPostingQuery(source, page, autoFilter);
         return localView;
     }
 
@@ -241,29 +220,9 @@ public class BoardPagerFragment extends Fragment implements
         // upon which page the viewpager contains.
         fragmentModel.getNewPosting().observe(getActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                // useless b/c the sequential number must be invalidated!!!!!
-                /*
-                firestore.collection("board_general").document(docId).get().addOnSuccessListener(snapshot -> {
-                    // The recent and autoclub page enlist posts in timestamp descending order. Thus,
-                    // just put it in the first place.
-                    if(page == Constants.BOARD_RECENT || page == Constants.BOARD_AUTOCLUB) {
-                        snapshotList.add(0, snapshot);
-                        postingAdapter.notifyItemInserted(0);
-
-                    // The popular page puts a new post in the last place. As far as a new post is out
-                    // of the first query, which means posts are more than the pagiantion value, upadte
-                    // should be made by scrolling.
-                    } else if(page == Constants.BOARD_POPULAR) {
-                        if(snapshotList.size() < Constants.PAGINATION) {
-                            snapshotList.add(snapshotList.size(), snapshot);
-                            postingAdapter.notifyItemInserted(snapshotList.size());
-                        }
-
-                    }
-                });
-                */
-
-                pageHelper.setPostingQuery(source, page, autoData);
+                // Instead of using notifyItemInserted(), query should be done due to the post
+                // sequential number to be updated..
+                pageHelper.setPostingQuery(source, page, autoFilter);
             }
         });
 
@@ -275,7 +234,7 @@ public class BoardPagerFragment extends Fragment implements
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
                 //snapshotList.clear();
-                pageHelper.setPostingQuery(source, page, autoData);
+                pageHelper.setPostingQuery(source, page, autoFilter);
             }
         });
 
@@ -286,7 +245,10 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
+        // Must initialize List<DocumentSnapshot> to performa a new query.
+        log.i("First Query: %s", snapshots.size());
         snapshotList.clear();
+
         for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
         postingAdapter.notifyDataSetChanged();
     }
@@ -423,12 +385,11 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
+    /*
     private List<String> createAutoFilters(String autoFilter) throws JSONException {
         log.i("JSON auto filter: %s", autoFilter);
-
         List<String> filters = new ArrayList<>();
         JSONArray json = new JSONArray(autoFilter);
-
 
         for(int i = 0; i < chkboxValues.length; i++) {
             if(chkboxValues[i]) filters.add(json.optString(i));
@@ -436,7 +397,7 @@ public class BoardPagerFragment extends Fragment implements
 
         return filters;
     }
-
+    */
 }
 
 
