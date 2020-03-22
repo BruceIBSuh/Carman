@@ -14,8 +14,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 
 import androidx.fragment.app.DialogFragment;
@@ -40,9 +38,6 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +50,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * This fragment is to upload any writing to post in the board with images attached.
  */
 public class BoardWriteFragment extends DialogFragment implements
+        BoardActivity.OnFilterCheckBoxListener,
         BoardAttachImageAdapter.OnBoardWriteListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
@@ -106,14 +102,17 @@ public class BoardWriteFragment extends DialogFragment implements
             log.i("arguments: %s, %s", userId, tabPage);
         }
 
-        applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
+        // Set the listener
+        if(tabPage == Constants.BOARD_AUTOCLUB)
+            ((BoardActivity)getActivity()).setAutoFilterListener(this);
 
+        applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         attachedImages = new ArrayList<>();
         //strImgList = new ArrayList<>();
         downloadImages = new SparseArray<>();
 
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -343,36 +342,15 @@ public class BoardWriteFragment extends DialogFragment implements
         log.i("tab page: %s", tabPage);
 
         if(tabPage == Constants.BOARD_AUTOCLUB) {
-            ArrayList<CharSequence> autofilter = ((BoardActivity)getActivity()).getCheckBoxValues();
+            boolean isGeneral = ((BoardActivity)getActivity()).checkPostGenenral();
+            log.i("isGneral: %s", isGeneral);
 
-            /*
-            String jsonAutoData = getArguments().getString("autoData");
-
-
-            List<String> valueList = new ArrayList<>();
-            try {
-                JSONArray jsonArray = new JSONArray(jsonAutoData);
-                int idx = 0;
-                for(boolean isChecked : chkbox) {
-                    log.i("Filter Name: %s", jsonArray.optString(idx));
-                    if(isChecked) valueList.add(jsonArray.optString(idx));
-                    idx++;
-                }
-            } catch(JSONException e) {
-                e.printStackTrace();
+            ArrayList<CharSequence> autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
+            for(CharSequence auto : autofilter) {
+                log.i("writing filter setting: %s", auto);
             }
-
-             */
-
             post.put("auto_club", autofilter);
-            /*
-            Map<String, Object> filter = new HashMap<>();
-            filter.put("auto_maker", isAutoMaker);
-            filter.put("auto_type", isAutoType);
-            filter.put("auto_model", isAutoModel);
-            filter.put("auto_year", isAutoYear);
-            post.put("post_filter", filter);
-             */
+
         }
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
@@ -423,5 +401,15 @@ public class BoardWriteFragment extends DialogFragment implements
                         attachedImages.get(i), i, imgViewModel);
             }
         }
+    }
+
+    @Override
+    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
+        for(CharSequence filter : autofilter) log.i("filter: %s", filter);
+    }
+
+    @Override
+    public void onGeneralPost(boolean b) {
+        log.i("isGeneralPost: %s", b);
     }
 }

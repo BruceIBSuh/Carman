@@ -26,9 +26,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     private static final int NUM_PAGES = 4;
 
-    // Fields
-    private String autoFilter;
-    //private boolean[] cbValues;
+    // Objects
     private ArrayList<CharSequence> cbValues;
 
     // Constructor
@@ -39,6 +37,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int position) {
+        log.i("fragment position: %s", position);
         return (position == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
                 BoardPagerFragment.newInstance(position);
@@ -49,19 +48,16 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         return NUM_PAGES;
     }
 
+    @Override
+    public int getItemPosition(@NonNull Object object) {
 
-    /*
-    public void setCheckBoxValues(String jsonFilterName, boolean[] values) {
-        autoFilter = jsonFilterName;
-        cbValues = values;
+        return POSITION_NONE;
     }
 
-     */
 
     public void setAutoFilterValues(ArrayList<CharSequence> values) {
         for(CharSequence value : values) log.i("filter value: %s", value);
         cbValues = values;
 
     }
-
 }

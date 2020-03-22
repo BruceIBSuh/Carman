@@ -47,7 +47,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     private SimpleDateFormat sdf;
 
     // Fields
-    private int viewType;
+    private int type;
+
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
@@ -61,7 +62,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
-
     @NonNull
     @Override
     public BoardItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -69,6 +69,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
         CardView cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.cardview_board_post, parent, false);
+
         return new BoardItemHolder(cardView);
     }
 
@@ -89,7 +90,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         holder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
         holder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
-        //
         if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
             holder.bindProfileImage(Uri.parse(snapshot.getString("user_pic")));
         } else holder.bindProfileImage(null);
@@ -121,14 +121,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @Override
     public int getItemCount() {
-        return snapshotList.size();
+        return snapshotList == null ? 0 : snapshotList.size();
     }
 
     @Override
     public int getItemViewType(int position) {
-        viewType =  (snapshotList.size() == 0)? 0 : 1;
-        return viewType;
+        return -1;
     }
+
 
     // ViewHolders
     class BoardItemHolder extends RecyclerView.ViewHolder {

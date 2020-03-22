@@ -89,7 +89,7 @@
     </androidx.core.widget.NestedScrollView>
 
     <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
-        android:id="@+id/progbar_board"
+        android:id="@+id/progbar_board_loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"

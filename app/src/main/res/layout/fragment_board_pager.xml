@@ -8,15 +8,24 @@
     android:layout_height="match_parent"
     tools:context=".fragments.BoardPagerFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_board"
+    <!--<androidx.recyclerview.widget.RecyclerView-->
+    <com.silverback.carman2.views.PostingRecyclerView
+        android:id="@+id/recycler_board_postings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_insetEdge="top" />
 
+    <TextView
+        android:id="@+id/tv_empty_view"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/board_emptyview" />
+
     <ProgressBar style="?android:attr/progressBarStyleSmall"
         android:visibility="invisible"
-        android:id="@+id/progbar_paging"
+        android:id="@+id/progbar_board_paging"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_gravity="center|bottom"
@@ -24,17 +33,4 @@
         app:elevation="2dp"
         app:layout_insetEdge="bottom" />
 
-    <!--
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_board_write"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:src="@android:drawable/ic_menu_mylocation"
-        android:layout_gravity="end|bottom"
-        app:borderWidth="0dp"
-        app:elevation="6dp"
-        app:backgroundTint="@color/colorAccent"
-        app:rippleColor="@color/colorPrimary" />
-    -->
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -15,6 +15,14 @@
         <item>@string/board_tab_title_notification</item>
     </string-array>
 
+    <string-array name="board_autofilter_label">
+        <item>@string/board_filter_brand</item>
+        <item>@string/board_filter_model</item>
+        <item>@string/board_filter_type</item>
+        <item>@string/board_filter_year</item>
+
+    </string-array>
+
     <!--
     <string-array name="tap_board_title">
         <item>@string/tab_board_recent</item>

@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -12,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,21 +30,20 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.viewmodels.BoardViewModel;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PaginationHelper;
-
-import org.json.JSONArray;
-import org.json.JSONException;
+import com.silverback.carman2.views.PostingRecyclerView;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -58,33 +59,36 @@ import java.util.TimeZone;
  *
  */
 public class BoardPagerFragment extends Fragment implements
+        BoardActivity.OnFilterCheckBoxListener,
         PaginationHelper.OnPaginationListener, //CheckBox.OnCheckedChangeListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
-    // Constants
-    private final int AUTOCLUB = 2;
-
     // Objects
     private FirebaseFirestore firestore;
     private Source source;
     private ListenerRegistration postListener;
     private FragmentSharedModel fragmentModel;
+    private BoardViewModel boardModel;
+    private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
     private PaginationHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
     private SimpleDateFormat sdf;
     // prevent the progressbar from leaking in the static fragment, use the weak reference.
-    private WeakReference<ProgressBar> weakProgbar;
+    //private WeakReference<ProgressBar> weakProgbar;
 
     // UIs
-    private RecyclerView recyclerPostView;
+    private ProgressBar pbPaging, pbLoading;
+    private PostingRecyclerView recyclerPostView;
+    private TextView tvEmptyView;
 
     // Fields
     private ArrayList<CharSequence> autoFilter;
-    private int page;
+    private int currentPage;
+    private boolean isGeneralPost;
 
     // Constructor
     private BoardPagerFragment() {
@@ -95,24 +99,25 @@ public class BoardPagerFragment extends Fragment implements
     public static BoardPagerFragment newInstance(int page) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle arg = new Bundle();
-        arg.putInt("page", page);
+        arg.putInt("currentPage", page);
         fragment.setArguments(arg);
 
         return fragment;
 
     }
 
-    // Singleton for AutoClub page which has the checkbox values and title names.
-    //public static BoardPagerFragment newInstance(int page, String cbName, boolean[] cbValue) {
+    // Singleton for AutoClub currentPage which has the checkbox values and title names.
+    //public static BoardPagerFragment newInstance(int currentPage, String cbName, boolean[] cbValue) {
     public static BoardPagerFragment newInstance(int page, ArrayList<CharSequence> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
-        args.putInt("page", page);
+        args.putInt("currentPage", page);
         args.putCharSequenceArrayList("autoFilter", values);
         fragment.setArguments(args);
 
         return fragment;
     }
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -120,8 +125,8 @@ public class BoardPagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         if(getArguments() != null) {
-            page = getArguments().getInt("page");
-            if(page == Constants.BOARD_AUTOCLUB) {
+            currentPage = getArguments().getInt("currentPage");
+            if(currentPage == Constants.BOARD_AUTOCLUB) {
                 autoFilter = getArguments().getCharSequenceArrayList("autoFilter");
             }
         }
@@ -129,19 +134,34 @@ public class BoardPagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        boardModel = new ViewModelProvider(requireActivity()).get(BoardViewModel.class);
+
+        pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
+        pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
+
 
         pageHelper = new PaginationHelper();
         pageHelper.setOnPaginationListener(this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
-        ((BoardActivity)getActivity()).addAutoFilterListener(values -> {
+        if(currentPage == Constants.BOARD_AUTOCLUB)
+            ((BoardActivity)getActivity()).setAutoFilterListener(this);
+
+        /*
+        ((BoardActivity)getActivity()).setAutoFilterListener(values -> {
             for(CharSequence filter : values) log.i("chkbox values changed: %s", filter);
             pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, values);
+            // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
+            // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
+            // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
+            // when no dataset exists.
+            pagerAdapter.notifyDataSetChanged();
         });
 
+         */
 
         /*
          * Realtime update SnapshotListener: server vs cache policy.
@@ -153,7 +173,8 @@ public class BoardPagerFragment extends Fragment implements
         CollectionReference postRef = firestore.collection("board_general");
         postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-            source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
+            //source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
+            source = querySnapshot != null ?
                    Source.CACHE  : Source.SERVER ;
             log.i("Source: %s", source);
         });
@@ -174,13 +195,15 @@ public class BoardPagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
-        ProgressBar pagingProgbar = localView.findViewById(R.id.progbar_paging);
-        weakProgbar = new WeakReference<>(pagingProgbar);
-        recyclerPostView = localView.findViewById(R.id.recycler_board);
+        pbPaging = localView.findViewById(R.id.progbar_board_paging);
+        tvEmptyView = localView.findViewById(R.id.tv_empty_view);
+        recyclerPostView = localView.findViewById(R.id.recycler_board_postings);
+
         recyclerPostView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(
                 getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerPostView.setLayoutManager(layoutManager);
+        recyclerPostView.setItemAnimator(new DefaultItemAnimator());
         recyclerPostView.setAdapter(postingAdapter);
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
@@ -196,13 +219,11 @@ public class BoardPagerFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
-
-
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PaginationHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
 
-        pageHelper.setPostingQuery(source, page, autoFilter);
+        pageHelper.setPostingQuery(source, currentPage, autoFilter);
         return localView;
     }
 
@@ -217,12 +238,12 @@ public class BoardPagerFragment extends Fragment implements
         super.onActivityCreated(bundle);
         log.i("onActivityCreated");
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
-        // upon which page the viewpager contains.
+        // upon which currentPage the viewpager contains.
         fragmentModel.getNewPosting().observe(getActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 // Instead of using notifyItemInserted(), query should be done due to the post
                 // sequential number to be updated..
-                pageHelper.setPostingQuery(source, page, autoFilter);
+                pageHelper.setPostingQuery(source, currentPage, autoFilter);
             }
         });
 
@@ -234,7 +255,7 @@ public class BoardPagerFragment extends Fragment implements
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
                 //snapshotList.clear();
-                pageHelper.setPostingQuery(source, page, autoFilter);
+                pageHelper.setPostingQuery(source, currentPage, autoFilter);
             }
         });
 
@@ -245,18 +266,21 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
-        // Must initialize List<DocumentSnapshot> to performa a new query.
-        log.i("First Query: %s", snapshots.size());
         snapshotList.clear();
-
         for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
         postingAdapter.notifyDataSetChanged();
+
+        // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
+        // view in the custom recyclerview.
+        if(snapshotList.size() > 0) pbLoading.setVisibility(View.GONE);
+        else recyclerPostView.setEmptyView(tvEmptyView);
     }
 
     @Override
     public void setNextQueryStart(boolean b) {
         //pagingProgbar.setVisibility(View.VISIBLE);
-        weakProgbar.get().setVisibility(View.VISIBLE);
+        //weakProgbar.get().setVisibility(View.VISIBLE);
+        pbPaging.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -264,7 +288,8 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
         //pagingProgbar.setVisibility(View.INVISIBLE);
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
-        weakProgbar.get().setVisibility(View.GONE);
+        //weakProgbar.get().setVisibility(View.GONE);
+        pbPaging.setVisibility(View.GONE);
         postingAdapter.notifyDataSetChanged();
     }
 
@@ -277,7 +302,7 @@ public class BoardPagerFragment extends Fragment implements
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
-        bundle.putInt("tabPage", page);
+        bundle.putInt("tabPage", currentPage);
         bundle.putInt("position", position);
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
@@ -385,19 +410,22 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
-    /*
-    private List<String> createAutoFilters(String autoFilter) throws JSONException {
-        log.i("JSON auto filter: %s", autoFilter);
-        List<String> filters = new ArrayList<>();
-        JSONArray json = new JSONArray(autoFilter);
-
-        for(int i = 0; i < chkboxValues.length; i++) {
-            if(chkboxValues[i]) filters.add(json.optString(i));
-        }
-
-        return filters;
+    @Override
+    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
+        for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
+        pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
+        // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
+        // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
+        // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
+        // when no dataset exists.
+        pagerAdapter.notifyDataSetChanged();
     }
-    */
+
+    @Override
+    public void onGeneralPost(boolean b) {
+        log.i("isGenera;Post: %s", b);
+        isGeneralPost = b;
+    }
 }
 
 

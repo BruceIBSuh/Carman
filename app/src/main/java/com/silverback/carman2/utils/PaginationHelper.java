@@ -92,6 +92,8 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                 this.field = "auto_club";
 
                 colRef.whereEqualTo("auto_club", autoFilter)
+                //colRef.whereArrayContains("auto_club", autoFilter)
+                //colRef.whereArrayContainsAny("auto_club", autoFilter)
                         .get(source)
                         .addOnSuccessListener(autoclubShot -> {
                             log.i("auto_club query: %s", autoclubShot.size());
