@@ -62,8 +62,9 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
     // Create queries for each page.
-    public void setPostingQuery(Source source, int page, ArrayList<CharSequence> autoFilter) {
+    public void setPostingQuery(Source source, int page, ArrayList<CharSequence> autofilter) {
         colRef = firestore.collection("board_general");
+
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -78,7 +79,6 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
-
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(querySnapshot -> {
@@ -90,8 +90,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
-
-                colRef.whereEqualTo("auto_club", autoFilter)
+                colRef.whereEqualTo("auto_club", autofilter)
                 //colRef.whereArrayContains("auto_club", autoFilter)
                 //colRef.whereArrayContainsAny("auto_club", autoFilter)
                         .get(source)

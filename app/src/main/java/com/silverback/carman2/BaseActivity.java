@@ -55,6 +55,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -393,6 +394,16 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         return null;
+    }
+
+    public String getDefaultAutoFilter() {
+        List<String> filterList = new ArrayList<>();
+        filterList.add(getString(R.string.board_filter_brand));
+        filterList.add(getString(R.string.board_filter_model));
+        filterList.add(getString(R.string.board_filter_type));
+        filterList.add(getString(R.string.board_filter_year));
+
+        return new JSONArray(filterList).toString();
     }
 
     public NotificationChannel createNotificationChannel() {

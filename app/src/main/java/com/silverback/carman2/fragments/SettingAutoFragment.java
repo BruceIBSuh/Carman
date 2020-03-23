@@ -188,7 +188,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // the default values.
                 autoModel.setValue(null);
                 autoModel.setEnabled(false);
-                autoType.setValueIndex(0);
+                //autoType.setValueIndex(0);
 
                 autoModel.setSummary(getString(R.string.pref_entry_void));
                 autoType.setSummary(getString(R.string.pref_entry_void));
@@ -294,10 +294,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         if(item.getItemId() == android.R.id.home) {
             List<String> dataList = new ArrayList<>();
-            dataList.add(mSettings.getString(Constants.AUTO_MAKER, null));
-            dataList.add(mSettings.getString(Constants.AUTO_MODEL, null));
-            dataList.add(mSettings.getString(Constants.AUTO_TYPE, null));
-            dataList.add(mSettings.getString(Constants.AUTO_YEAR, null));
+            dataList.add(mSettings.getString(Constants.AUTO_MAKER, ""));
+            dataList.add(mSettings.getString(Constants.AUTO_MODEL, ""));
+            dataList.add(mSettings.getString(Constants.AUTO_TYPE, ""));
+            dataList.add(mSettings.getString(Constants.AUTO_YEAR, ""));
 
             JSONArray json = new JSONArray(dataList);
             mSettings.edit().putString(Constants.AUTO_DATA, json.toString()).apply();

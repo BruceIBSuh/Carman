@@ -28,6 +28,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     // Objects
     private ArrayList<CharSequence> cbValues;
+    private int currentPage;
 
     // Constructor
     public BoardPagerAdapter(FragmentManager fm) {
@@ -38,6 +39,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         log.i("fragment position: %s", position);
+        currentPage = position;
         return (position == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
                 BoardPagerFragment.newInstance(position);
@@ -50,8 +52,10 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getItemPosition(@NonNull Object object) {
-
-        return POSITION_NONE;
+        // As long as the current page is AUTO_CLUB, update the viewpager adapter which should
+        // set the return type with POSITION_NONE.
+        if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
+        else return POSITION_UNCHANGED;
     }
 
 

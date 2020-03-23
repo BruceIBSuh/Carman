@@ -11,9 +11,13 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.SpannedString;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.text.style.RelativeSizeSpan;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +30,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.widget.NestedScrollView;
 import androidx.lifecycle.ViewModelProvider;
@@ -49,6 +54,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
  * This activity consists of the appbar component, the framelayout to alternatively contain the
@@ -140,9 +147,10 @@ public class BoardActivity extends BaseActivity implements
         // Get the auto data saved as JSON string in SharedPreferences and create the autofilter
         // checkboxes.
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
+        //if(TextUtils.isEmpty(jsonAutoFilter)) jsonAutoFilter = getDefaultAutoFilter();
         cbAutoFilter = new ArrayList<>();
         try {createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
-        catch(JSONException e) {e.printStackTrace();}
+        catch (JSONException e) {e.printStackTrace();}
 
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
@@ -160,7 +168,7 @@ public class BoardActivity extends BaseActivity implements
         boardPager.addOnPageChangeListener(this);
         frameLayout.addView(boardPager);
 
-        addTabIconAndTitle(this, boardTabLayout);
+        //addTabIconAndTitle(this, boardTabLayout);
         animTabLayout(true);
 
         // Add the listeners to the viewpager and AppbarLayout
@@ -169,6 +177,12 @@ public class BoardActivity extends BaseActivity implements
         // FAB tapping creates BoardWriteFragment in the framelayout
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        addTabIconAndTitle(this, boardTabLayout);
     }
 
     // Receive the image uri as a result of startActivityForResult() revoked in BoardWriteFragment,
@@ -325,13 +339,15 @@ public class BoardActivity extends BaseActivity implements
         // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
         // higher and handle the visibility of the fab.
         if(position == Constants.BOARD_AUTOCLUB) {
+            // Check if the auto data which should be saved in SharedPreferences exists
+            if(TextUtils.isEmpty(jsonAutoFilter)) return;
+
             invalidateOptionsMenu();
-
             String maker = cbAutoFilter.get(0).toString();
-            String model = cbAutoFilter.get(1).toString();
-
+            //String model = cbAutoFilter.get(1).toString();
             SpannableStringBuilder ssb = new SpannableStringBuilder();
-            if(!TextUtils.isEmpty(model)) {
+            if(!TextUtils.isEmpty(cbAutoFilter.get(1).toString())) {
+                String model = cbAutoFilter.get(1).toString();
                 ssb.append(model).append(" ").append(maker).append(" ").append("club");
                 int start = model.length() + 1;
                 ssb.setSpan(new RelativeSizeSpan(0.5f),
@@ -416,22 +432,40 @@ public class BoardActivity extends BaseActivity implements
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Switch the filter b/w ViewPager containing BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
-        String[] voidTitle = getResources().getStringArray(R.array.board_autofilter_label);
 
-        // Get the auto data from SharedPreferences as JSON string.
-        JSONArray jsonAuto = new JSONArray(json);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginStart(15);
 
+        if(TextUtils.isEmpty(json)) {
+            TextView tvMessage = new TextView(context);
+            String msg = getString(R.string.board_filter_join);
+            SpannableString ss = new SpannableString(msg);
+            ClickableSpan clickableSpan = new ClickableSpan(){
+                @Override
+                public void onClick(@NonNull View textView) {
+                    log.i("ClickableSpan clicked");
+                    startActivity(new Intent(BoardActivity.this, SettingPreferenceActivity.class));
+                }
+            };
+            ss.setSpan(clickableSpan, 7, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            tvMessage.setText(ss);
+            tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
+            v.addView(tvMessage, params);
+            return;
+        }
+
+        // Get the auto data from SharedPreferences unless the data is null.
+        JSONArray jsonAuto = new JSONArray(json);
         // The autofilter differs in items according to whether the framelayout contains BoardPagerFragment
         // or WriteBoardFragment.
         if(frameLayout.getChildAt(0) == boardPager) {
             TextView tvLabel = new TextView(context);
             tvLabel.setText(getString(R.string.board_filter_title));
+            tvLabel.setTextColor(Color.WHITE);
             tvLabel.setTypeface(tvLabel.getTypeface(), Typeface.BOLD);
             v.addView(tvLabel, params);
-
         // If the frame contains WritePostFragment, which means the post writing mode, add the
         // checkbox that indicates that the post appears in any board.
         } else {
@@ -452,16 +486,20 @@ public class BoardActivity extends BaseActivity implements
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTextColor(Color.WHITE);
+            String jsonString = jsonAuto.optString(i);
 
+            log.i("json check: %s, %s", jsonString, TextUtils.isEmpty(jsonString));
             if(TextUtils.isEmpty(jsonAuto.optString(i))) {
                 cb.setEnabled(false);
                 cb.setChecked(false);
-                //cb.setText(getString(R.string.pref_entry_void));
-                cb.setText(voidTitle[i]);
+                cb.setText(getString(R.string.pref_entry_void));
+                //cb.setText(voidTitle[i]);
             } else {
+                //log.i("empty label: %s", jsonAuto.optString(i));
                 cb.setText(jsonAuto.optString(i));
                 if(i == 0 || i == 1) cb.setChecked(true);
                 if(i == 0) cb.setEnabled(false);
+
 
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText());
                 // Set the color and value according to a checkbox is checked or not.
@@ -503,11 +541,12 @@ public class BoardActivity extends BaseActivity implements
         } else animAppbarLayout(false);
     }
 
-    // Autofilter values referencedd from BoardWriteFragment.
+    // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
+    // of whehter a post should be uploaded in the general board is referenced in the same fragments
+    // to query or upload posts.
     public ArrayList<CharSequence> getAutoFilterValues() {
         return cbAutoFilter;
     }
-
     public boolean checkPostGenenral() {
         return isGeneral;
     }

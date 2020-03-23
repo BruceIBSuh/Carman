@@ -88,7 +88,7 @@ public class BoardPagerFragment extends Fragment implements
     // Fields
     private ArrayList<CharSequence> autoFilter;
     private int currentPage;
-    private boolean isGeneralPost;
+    //private boolean isGeneralPost = true;
 
     // Constructor
     private BoardPagerFragment() {
@@ -147,8 +147,13 @@ public class BoardPagerFragment extends Fragment implements
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
-        if(currentPage == Constants.BOARD_AUTOCLUB)
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
             ((BoardActivity)getActivity()).setAutoFilterListener(this);
+            autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
+            //isGeneralPost = ((BoardActivity)getActivity()).checkPostGenenral();
+        }
+
+
 
         /*
         ((BoardActivity)getActivity()).setAutoFilterListener(values -> {
@@ -267,7 +272,16 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
         snapshotList.clear();
-        for(QueryDocumentSnapshot snapshot : snapshots) snapshotList.add(snapshot);
+        // Put the queried resutl in List
+        for(QueryDocumentSnapshot snapshot : snapshots) {
+            if(currentPage == Constants.BOARD_AUTOCLUB) {
+                snapshotList.add(snapshot);
+
+            }else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+                snapshotList.add(snapshot);
+            }
+        }
+
         postingAdapter.notifyDataSetChanged();
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
@@ -284,10 +298,19 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     @Override
-    public void setNextQueryComplete(QuerySnapshot querySnapshot) {
-        for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
+    public void setNextQueryComplete(QuerySnapshot snapshots) {
+        for(QueryDocumentSnapshot snapshot : snapshots) {
+            if(currentPage == Constants.BOARD_AUTOCLUB || currentPage == Constants.BOARD_NOTIFICATION) {
+                snapshotList.add(snapshot);
+                // Refactor required: when renewing the board, null condition should be removed.
+            }else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+                snapshotList.add(snapshot);
+            }
+        }
+
         //pagingProgbar.setVisibility(View.INVISIBLE);
-        postingAdapter = new BoardPostingAdapter(snapshotList, this);
+        //postingAdapter = new BoardPostingAdapter(snapshotList, this);
+        postingAdapter.notifyDataSetChanged();
         //weakProgbar.get().setVisibility(View.GONE);
         pbPaging.setVisibility(View.GONE);
         postingAdapter.notifyDataSetChanged();
@@ -422,9 +445,9 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     @Override
-    public void onGeneralPost(boolean b) {
-        log.i("isGenera;Post: %s", b);
-        isGeneralPost = b;
+    public void onGeneralPost(boolean isChecked) {
+        log.i("isGenera;Post: %s", isChecked);
+        //isGeneralPost = isChecked;
     }
 }
 

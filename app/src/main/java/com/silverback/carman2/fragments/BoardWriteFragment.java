@@ -78,6 +78,8 @@ public class BoardWriteFragment extends DialogFragment implements
     private EditText etPostTitle, etPostBody;
 
     // Fields
+    private ArrayList<CharSequence> autofilter;
+    private boolean isGeneralPost;
     private String[] arrAutoData;
     private String userId;
     private int tabPage;
@@ -105,6 +107,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // Set the listener
         if(tabPage == Constants.BOARD_AUTOCLUB)
             ((BoardActivity)getActivity()).setAutoFilterListener(this);
+        isGeneralPost = true;
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         attachedImages = new ArrayList<>();
@@ -341,17 +344,18 @@ public class BoardWriteFragment extends DialogFragment implements
         if(downloadImages.size() > 0) post.put("post_images",  downloadUriList);
         log.i("tab page: %s", tabPage);
 
+        // To show or hide a post of the autoclub depends on the value of isGeneralPost. The default
+        // value is set to true such that any post, no matter what is autoclub or general post,
+        // it would be shown in every board. However, as long as an autoclub post set isGeneral value
+        // to false, it would not be shown in the general board; only in the autoclub.
         if(tabPage == Constants.BOARD_AUTOCLUB) {
-            boolean isGeneral = ((BoardActivity)getActivity()).checkPostGenenral();
-            log.i("isGneral: %s", isGeneral);
-
-            ArrayList<CharSequence> autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
-            for(CharSequence auto : autofilter) {
-                log.i("writing filter setting: %s", auto);
-            }
+            //isGeneralPost = ((BoardActivity)getActivity()).checkPostGenenral();// initially true.
+            autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             post.put("auto_club", autofilter);
-
         }
+
+        log.i("isGeneralPost: %s", isGeneralPost);
+        post.put("post_general", isGeneralPost);
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
@@ -406,10 +410,12 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
         for(CharSequence filter : autofilter) log.i("filter: %s", filter);
+        this.autofilter = autofilter;
     }
 
     @Override
     public void onGeneralPost(boolean b) {
         log.i("isGeneralPost: %s", b);
+        isGeneralPost = b;
     }
 }
