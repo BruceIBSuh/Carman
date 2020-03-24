@@ -220,6 +220,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     setResult(Activity.RESULT_OK, autoIntent);
                     break;
 
+                case Constants.REQUEST_BOARD_SETTING_USERNAME:
+                    break;
+
                 default: break;
             }
 
@@ -570,26 +573,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
             } //else log.w("No uri fetched");
         });
     }
-
-
-    // Get the user id
-    /*
-    private String getUserIdFromStorage() {
-
-        try(FileInputStream fis = openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-            log.i("user id: %s", br.readLine());
-            userId = br.readLine();
-            return br.readLine();
-
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-     */
 
     // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
     public SharedPreferences getSettings() {

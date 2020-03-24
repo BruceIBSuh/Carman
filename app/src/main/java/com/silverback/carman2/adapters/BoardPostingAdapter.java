@@ -73,14 +73,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         return new BoardItemHolder(cardView);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onBindViewHolder(@NonNull BoardItemHolder holder, int position) {
 
         // Retreive an board item queried in and passed from BoardPagerFragment
         //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
         //DocumentSnapshot document = snapshotList.get(position);
-        DocumentSnapshot snapshot = snapshotList.get(position);
+        final DocumentSnapshot snapshot = snapshotList.get(position);
         log.i("User Profile Pic: %s", snapshot.getString("user_pic"));
 
         holder.tvPostTitle.setText(snapshot.getString("post_title"));
@@ -94,10 +94,13 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
             holder.bindProfileImage(Uri.parse(snapshot.getString("user_pic")));
         } else holder.bindProfileImage(null);
 
-        List<String> imgList = (ArrayList<String>)snapshot.get("post_images");
-        if(imgList != null && imgList.size() > 0) {
+
+        List<String> imgList = (List<String>)snapshot.get("post_images");
+        if(imgList != null && imgList.size() >= 1) {
+            log.i("first image attached: %s, %s", position, imgList.get(0));
             holder.bindAttachedImage(Uri.parse(imgList.get(0)));
         }
+
 
         // Set the listener for clicking the item with position
         holder.itemView.setOnClickListener(view -> {

@@ -5,8 +5,9 @@ public class Constants {
     // Request Codes
     public static final int REQUEST_MAIN_SETTING_OPTIONSITEM = 1000;
     public static final int REQUEST_BOARD_SETTING_AUTOCLUB = 2000;
-    public static final int REQUEST_BOARD_CAMERA = 2001;
-    public static final int REQUEST_BOARD_GALLERY = 2002;
+    public static final int REQUEST_BOARD_SETTING_USERNAME = 2001;
+    public static final int REQUEST_BOARD_CAMERA = 2002;
+    public static final int REQUEST_BOARD_GALLERY = 2003;
 
 
 

@@ -107,7 +107,6 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for AutoClub currentPage which has the checkbox values and title names.
-    //public static BoardPagerFragment newInstance(int currentPage, String cbName, boolean[] cbValue) {
     public static BoardPagerFragment newInstance(int page, ArrayList<CharSequence> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
@@ -152,8 +151,6 @@ public class BoardPagerFragment extends Fragment implements
             autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             //isGeneralPost = ((BoardActivity)getActivity()).checkPostGenenral();
         }
-
-
 
         /*
         ((BoardActivity)getActivity()).setAutoFilterListener(values -> {
@@ -272,12 +269,14 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
         snapshotList.clear();
-        // Put the queried resutl in List
+
+        // First image shuffling bug probably caused by around here.
         for(QueryDocumentSnapshot snapshot : snapshots) {
-            if(currentPage == Constants.BOARD_AUTOCLUB) {
+            if(currentPage == Constants.BOARD_AUTOCLUB){
                 snapshotList.add(snapshot);
 
-            }else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+            } else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+                log.i("QueryDocumentSnapshot: %s", snapshot.get("post_images"));
                 snapshotList.add(snapshot);
             }
         }
@@ -285,7 +284,7 @@ public class BoardPagerFragment extends Fragment implements
         postingAdapter.notifyDataSetChanged();
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
-        // view in the custom recyclerview.
+        // view of the custom recyclerview.
         if(snapshotList.size() > 0) pbLoading.setVisibility(View.GONE);
         else recyclerPostView.setEmptyView(tvEmptyView);
     }
@@ -374,6 +373,8 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
+    // performa a new query with new autofilter values
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
         for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
@@ -385,11 +386,9 @@ public class BoardPagerFragment extends Fragment implements
         pagerAdapter.notifyDataSetChanged();
     }
 
+    // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
     @Override
-    public void onGeneralPost(boolean isChecked) {
-        log.i("isGenera;Post: %s", isChecked);
-        //isGeneralPost = isChecked;
-    }
+    public void onGeneralPost(boolean isChecked) {}
 
     // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
     // documents, which means whether the user has read the post before. If so, do not increase
