@@ -151,7 +151,7 @@
     <string name="stat_spinner_service">서비스</string>
 
     <!--BoardActivity-->
-    <string name="billboard_title">카르맨 광장</string>
+    <string name="board_title">카르맨 광장</string>
     <string name="board_report">신고</string>
     <string name="board_tab_title_recent">최근글</string>
     <string name="board_tab_title_popular">인기글</string>
@@ -164,6 +164,7 @@
     <string name="board_filter_type">타입</string>
     <string name="board_filter_year">연식</string>
     <string name="board_filter_join">나의 클럽: 설정에서 클럽정보를 입력해주세요</string>
+    <string name="board_filter_club">클럽</string>
     <string name="board_filter_link">입력</string>
     <string name="board_msg_username">사용자(차량)이름을 만들어주세요</string>
     <string name="board_emptyview">오토클럽에 올라온 글이 없습니다</string>

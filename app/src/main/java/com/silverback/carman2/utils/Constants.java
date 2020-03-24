@@ -2,6 +2,14 @@ package com.silverback.carman2.utils;
 
 public class Constants {
 
+    // Request Codes
+    public static final int REQUEST_MAIN_SETTING_OPTIONSITEM = 1000;
+    public static final int REQUEST_BOARD_SETTING_AUTOCLUB = 2000;
+    public static final int REQUEST_BOARD_CAMERA = 2001;
+    public static final int REQUEST_BOARD_GALLERY = 2002;
+
+
+
     // Category
     public static final int GAS = 0;
     public static final int SVC = 1;
@@ -33,7 +41,8 @@ public class Constants {
     public static final int SNOOZE_DURATION = 1000 * 60 * 60;
 
     // Image and Icon Size
-    public static final int ICON_SIZE_TOOLBAR = 50;
+    public static final int ICON_SIZE_TOOLBAR_EMBLEM = 70;
+    public static final int ICON_SIZE_TOOLBAR_USERPIC = 50;
     public static final int ICON_SIZE_PREFERENCE = 40;
     public static final int ICON_SIZE_POSTING_LIST = 35;
     public static final int IMAGESPAN_THUMBNAIL_SIZE = 36;

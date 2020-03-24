@@ -635,7 +635,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-                applyImageResourceUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
+                applyImageResourceUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
 
                 break;
 

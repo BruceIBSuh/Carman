@@ -374,6 +374,23 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    @Override
+    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
+        for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
+        pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
+        // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
+        // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
+        // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
+        // when no dataset exists.
+        pagerAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onGeneralPost(boolean isChecked) {
+        log.i("isGenera;Post: %s", isChecked);
+        //isGeneralPost = isChecked;
+    }
+
     // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
     // documents, which means whether the user has read the post before. If so, do not increase
     // the view count. Otherwise, add the user id to the "viewers" collection and increase the
@@ -433,22 +450,6 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
-    @Override
-    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
-        for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
-        pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
-        // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
-        // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
-        // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
-        // when no dataset exists.
-        pagerAdapter.notifyDataSetChanged();
-    }
-
-    @Override
-    public void onGeneralPost(boolean isChecked) {
-        log.i("isGenera;Post: %s", isChecked);
-        //isGeneralPost = isChecked;
-    }
 }
 
 

@@ -7,19 +7,19 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.RelativeSizeSpan;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,16 +46,15 @@ import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardWriteFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.BoardViewModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
-import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /*
  * This activity consists of the appbar component, the framelayout to alternatively contain the
@@ -72,22 +71,20 @@ public class BoardActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
-    // Constants
-    public static final int REQUEST_CODE_CAMERA = 1000;
-    public static final int REQUEST_CODE_GALLERY = 1001;
-    public static final int MENU_ITEM_FILTER = 1002;
-    public static final int MENU_ITEM_UPLOAD = 1003;
-
     // Objects
     private FirebaseFirestore firestore;
     private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
     private ImageViewModel imageViewModel;
     private BoardViewModel boardModel;
+    private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
+    private MenuItem menuEmblem;
+    private Drawable emblemIcon;
 
     // UIs
     private TabLayout boardTabLayout;
+    private Toolbar toolbar;
     private NestedScrollView nestedScrollView;
     private HorizontalScrollView filterLayout;
     private LinearLayout cbLayout;
@@ -127,8 +124,9 @@ public class BoardActivity extends BaseActivity implements
         imageViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
         boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
         firestore = FirebaseFirestore.getInstance();
+        imgResUtil = new ApplyImageResourceUtil(this);
 
-        Toolbar toolbar = findViewById(R.id.board_toolbar);
+        toolbar = findViewById(R.id.board_toolbar);
         nestedScrollView = findViewById(R.id.nestedScrollView);
         frameLayout = findViewById(R.id.frame_contents);
         AppBarLayout appBar = findViewById(R.id.appBar);
@@ -140,15 +138,16 @@ public class BoardActivity extends BaseActivity implements
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(getString(R.string.billboard_title));
+        getSupportActionBar().setTitle(getString(R.string.board_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         tabPage = Constants.BOARD_RECENT;
 
-        // Get the auto data saved as JSON string in SharedPreferences and create the autofilter
-        // checkboxes.
-        jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        //if(TextUtils.isEmpty(jsonAutoFilter)) jsonAutoFilter = getDefaultAutoFilter();
+        // The reason to use cbAutoFilter as ArrrayList<CharSequence> is that the list goes to the
+        // singleton of BoardPagerFragment, which should be passed to onCreate() of the same fragment
+        // as Bundle.putCharSequenceArrayList().
         cbAutoFilter = new ArrayList<>();
+
+        jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
         try {createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
         catch (JSONException e) {e.printStackTrace();}
 
@@ -192,18 +191,44 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if(resultCode != RESULT_OK || data == null) return;
-        imageViewModel.getUriFromImageChooser().setValue(data.getData());
+        switch(requestCode) {
+            case Constants.REQUEST_BOARD_GALLERY:
+                imageViewModel.getUriFromImageChooser().setValue(data.getData());
+                break;
+
+            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                String json = data.getStringExtra("jsonAutoData");
+                log.i("JSON Auto Data: %s", json);
+                jsonAutoFilter = json;
+
+                // Create the autofilter checkboxes and set inital values to the checkboxes
+                try{ createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
+                catch(JSONException e){e.printStackTrace();}
+
+                // Update the pagerAdapter
+                pagerAdapter.setAutoFilterValues(cbAutoFilter);
+                pagerAdapter.notifyDataSetChanged();
+                boardPager.setAdapter(pagerAdapter);
+                boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
+
+                // Update the autoclub board and show menu.
+                invalidateOptionsMenu();
+
+                break;
+
+            default: break;
+        }
     }
 
-    /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        //getMenuInflater().inflate(R.menu.menu_board, menu);
-        return super.onCreateOptionsMenu(menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_options_board, menu);
+        return true;
+        //return super.onCreateOptionsMenu(menu);
     }
-     */
-
     /*
      * On Android 3.0 and higher, the options menu is considered to always be open when menu items
      * are presented in the app bar. When an event occurs and you want to make a menu update,
@@ -212,33 +237,81 @@ public class BoardActivity extends BaseActivity implements
     //
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        // The toolbar has no menus when the framelayout contains the viewpager except the AutoClub
-        // page that has a button for query conditions.
+
         this.menu = menu;
-        if(frameLayout.getChildAt(0) instanceof ViewPager) {
-            if(tabPage == Constants.BOARD_AUTOCLUB) {
-                // Retrieve the ci of the auto maker which has feteched in createAutoFilterCheckBox()
-                // and set it to the toolbar menu.
-                firestore.collection("autodata").whereEqualTo("auto_maker", cbAutoFilter.get(0)).get()
-                        .addOnSuccessListener(query -> {
-                            for(QueryDocumentSnapshot autoshot : query) {
-                                if(autoshot.exists()) {
-                                    menu.add(0, MENU_ITEM_FILTER, Menu.NONE, "Filter")
-                                            .setIcon(R.drawable.emblem_hyundai)
-                                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-                                    break;
-                                }
-                            }
-                        });
-            } else menu.clear();
+        if (frameLayout.getChildAt(0) instanceof ViewPager) {
+            if (emblemIcon == null) setAutoMakerEmblem();
+            else menu.getItem(0).setIcon(emblemIcon);
+
+            // Notified that setAutoMakerEmblem() becomes ready to set the icon.
+            imageViewModel.getGlideDrawableTarget().observe(this, drawable -> {
+                emblemIcon = drawable;
+                menu.getItem(0).setIcon(drawable);
+            });
+
         // When the framelayout contains BoardWriteFragment, the toolbar has the upload button
-        } else {
-            menu.add(0, MENU_ITEM_UPLOAD, Menu.NONE, "UPLOAD")
+        }else {
+            menu.getItem(1).setVisible(true);
+            /*
+            menu.add(0, MENU_ITEM_UPLOAD_POST, Menu.NONE, "upload")
                     .setIcon(R.drawable.ic_upload)
                     .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+             */
         }
 
         return super.onPrepareOptionsMenu(menu);
+
+        /*
+        //this.menu = menu;
+        if(frameLayout.getChildAt(0) instanceof ViewPager) {
+            if(menuIcon == null) setAutoMakerEmblem();
+            imageViewModel.getGlideDrawableTarget().observe(this, drawable ->{
+                menu.add(0, MENU_ITEM_AUTOMAKER_EMBLEM, Menu.NONE, "emblem")
+                        .setIcon(drawable)
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+                menuIcon = drawable;
+                toolbar.getMenu().findItem(MENU_ITEM_AUTOMAKER_EMBLEM).setVisible(false);
+            });
+            /*
+            if(tabPage == Constants.BOARD_AUTOCLUB) {
+                // Exception has frequently occurred!!4
+                // java.lang.ClassCastException: androidx.appcompat.view.menu.ActionMenuItemView
+                // cannot be cast to android.view.ViewGroup
+                menuEmblem.setVisible(true);
+
+
+
+            } else {
+                if(menuIcon == null) setAutoMakerEmblem();
+                imageViewModel.getGlideDrawableTarget().observe(this, drawable ->{
+                    menu.add(0, MENU_ITEM_AUTOMAKER_EMBLEM, Menu.NONE, "emblem")
+                            .setIcon(drawable)
+                            .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+                    menuIcon = drawable;
+                    menuEmblem = menu.findItem(MENU_ITEM_AUTOMAKER_EMBLEM);
+                    log.i("MenuItem: %s", menuEmblem);
+                    menuEmblem.setVisible(false);
+
+                });
+
+
+            }
+
+
+
+        // When the framelayout contains BoardWriteFragment, the toolbar has the upload button
+        } else {
+            menu.add(0, MENU_ITEM_UPLOAD_POST, Menu.NONE, "upload")
+                    .setIcon(R.drawable.ic_upload)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        }
+        */
+
+
+
     }
 
     @Override
@@ -255,12 +328,12 @@ public class BoardActivity extends BaseActivity implements
                 }
                 return true;
 
-            case MENU_ITEM_FILTER:
+            case R.id.action_automaker_emblem:
                 isFilterVisible = !isFilterVisible;
                 animAutoFilter(isFilterVisible);
                 return true;
 
-            case MENU_ITEM_UPLOAD:
+            case R.id.action_upload_post:
                 writePostFragment.initUploadPost();
                 return true;
 
@@ -284,7 +357,7 @@ public class BoardActivity extends BaseActivity implements
             return;
         }
         // Handle the toolbar menu as the write board comes in.
-        getSupportActionBar().setTitle("Write Your Car");
+        if(tabPage != Constants.BOARD_AUTOCLUB) getSupportActionBar().setTitle("Write Your Car");
         fabWrite.setVisibility(View.INVISIBLE);
 
         // Create the fragment with the user id attached. Remove any view in the framelayout
@@ -335,33 +408,34 @@ public class BoardActivity extends BaseActivity implements
         // which is defined in onOptionsItemSelected()
         isFilterVisible = (position == Constants.BOARD_AUTOCLUB);
         animAutoFilter(isFilterVisible);
+        if(position == Constants.BOARD_NOTIFICATION) fabWrite.setVisibility(View.INVISIBLE);
+        else fabWrite.setVisibility(View.VISIBLE);
 
-        // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
-        // higher and handle the visibility of the fab.
+        // Create the club title which varies according to the autoclub scope. If it extends to the
+        // auto model, it occupies the fisrt place, then the auto make the next with the font size
+        // smaller. At a later time, an animation should be applied here.
         if(position == Constants.BOARD_AUTOCLUB) {
             // Check if the auto data which should be saved in SharedPreferences exists
-            if(TextUtils.isEmpty(jsonAutoFilter)) return;
+            //if(TextUtils.isEmpty(jsonAutoFilter)) return;
+            if(cbAutoFilter.size() == 0) return;
 
-            invalidateOptionsMenu();
-            String maker = cbAutoFilter.get(0).toString();
-            //String model = cbAutoFilter.get(1).toString();
-            SpannableStringBuilder ssb = new SpannableStringBuilder();
-            if(!TextUtils.isEmpty(cbAutoFilter.get(1).toString())) {
-                String model = cbAutoFilter.get(1).toString();
-                ssb.append(model).append(" ").append(maker).append(" ").append("club");
-                int start = model.length() + 1;
-                ssb.setSpan(new RelativeSizeSpan(0.5f),
-                        start, start + maker.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
+            // higher and handle the visibility of the fab.
+            //invalidateOptionsMenu();
+            menu.getItem(0).setVisible(true);
 
-            } else ssb.append(maker).append(" ").append("club");
+            // Create the toolbar title
+            SpannableStringBuilder title = createAutoClubTitle();
+            getSupportActionBar().setTitle(title);
 
-            getSupportActionBar().setTitle(ssb);
 
         } else {
-            menu.clear();
-            if(position == Constants.BOARD_NOTIFICATION) fabWrite.setVisibility(View.INVISIBLE);
+            getSupportActionBar().setTitle(R.string.board_title);
+            menu.getItem(0).setVisible(false);
+
         }
     }
+
     @Override
     public void onPageScrollStateChanged(int state) {}
 
@@ -428,6 +502,23 @@ public class BoardActivity extends BaseActivity implements
         //slideNestedUp.start();
     }
 
+    private SpannableStringBuilder createAutoClubTitle() {
+
+        SpannableStringBuilder ssb = new SpannableStringBuilder();
+        if(cbAutoFilter.size() >= 2) {
+            ssb.append(cbAutoFilter.get(1)).append(" ").append(cbAutoFilter.get(0));
+            int start = cbAutoFilter.get(1).length() + 1;
+            int end = start + cbAutoFilter.get(0).length();
+            ssb.setSpan(new RelativeSizeSpan(0.5f), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else {
+            ssb.append(cbAutoFilter.get(0));
+        }
+
+        ssb.append(String.format("%4s", getString(R.string.board_filter_club)));
+        return ssb;
+    }
+
+
     // Crete checkboxes in the autofilter dynamically and set initial values and properties.
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Switch the filter b/w ViewPager containing BoardPagerFragment and BoardWriteFragment.
@@ -445,7 +536,10 @@ public class BoardActivity extends BaseActivity implements
                 @Override
                 public void onClick(@NonNull View textView) {
                     log.i("ClickableSpan clicked");
-                    startActivity(new Intent(BoardActivity.this, SettingPreferenceActivity.class));
+                    int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
+                    Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
+                    intent.putExtra("requestCode", requestCode);
+                    startActivityForResult(intent, requestCode);
                 }
             };
             ss.setSpan(clickableSpan, 7, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -486,9 +580,6 @@ public class BoardActivity extends BaseActivity implements
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTextColor(Color.WHITE);
-            String jsonString = jsonAuto.optString(i);
-
-            log.i("json check: %s, %s", jsonString, TextUtils.isEmpty(jsonString));
             if(TextUtils.isEmpty(jsonAuto.optString(i))) {
                 cb.setEnabled(false);
                 cb.setChecked(false);
@@ -510,11 +601,26 @@ public class BoardActivity extends BaseActivity implements
                     // conditions.
                     mListener.onCheckBoxValueChange(cbAutoFilter);
                     //boardModel.getAutoFilterValues().setValue(cbAutoFilter);
+                    SpannableStringBuilder title = createAutoClubTitle();
+                    if(getSupportActionBar() != null) getSupportActionBar().setTitle(title);
                 });
             }
 
             v.addView(cb, params);
         }
+    }
+
+    private void setAutoMakerEmblem() {
+        firestore.collection("autodata").whereEqualTo("auto_maker", cbAutoFilter.get(0)).get()
+                .addOnSuccessListener(query -> {
+                    for(QueryDocumentSnapshot autoshot : query) {
+                        if(autoshot.exists()) {
+                            imgResUtil.applyGlideToEmblem(autoshot.getString("emblem"),
+                                    Constants.ICON_SIZE_TOOLBAR_EMBLEM, imageViewModel);
+                            break;
+                        }
+                    }
+                });
     }
 
     // Upon completion of uploading a post, remove BoardWriteFragment out of the framelayout, then
@@ -527,7 +633,7 @@ public class BoardActivity extends BaseActivity implements
         frameLayout.addView(boardPager);
 
         fabWrite.setVisibility(View.VISIBLE);
-        getSupportActionBar().setTitle(getString(R.string.billboard_title));
+        getSupportActionBar().setTitle(getString(R.string.board_title));
         invalidateOptionsMenu();
 
         // Revert the autofilter items.
@@ -541,14 +647,13 @@ public class BoardActivity extends BaseActivity implements
         } else animAppbarLayout(false);
     }
 
+
+
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
     // of whehter a post should be uploaded in the general board is referenced in the same fragments
     // to query or upload posts.
     public ArrayList<CharSequence> getAutoFilterValues() {
         return cbAutoFilter;
-    }
-    public boolean checkPostGenenral() {
-        return isGeneral;
     }
 
     // Called in BoardPagerAdapter to invoke notifyDataSetChanged() when the checkbox value

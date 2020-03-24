@@ -38,7 +38,7 @@ import java.io.File;
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
-    private final int REQ_SETTING = 1000;
+    //private final int REQ_SETTING = 1000;
 
     // Objects
     private CarmanDatabase mDB;
@@ -122,7 +122,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // MUST be located here b/c it has to be redrawn when startActivityForResult() is called.
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
-        applyImageResourceUtil.applyGlideToDrawable(userImage, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
+        applyImageResourceUtil.applyGlideToDrawable(userImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
         // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
         // is sent in onActivityResult() as a result of startActivityForResult() which called
         // SettingPreferenceActivity. The img uri is processed to Drawable by Glide, the custom target
@@ -141,7 +141,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
 
-        if(requestCode != REQ_SETTING || resultCode != RESULT_OK)  return;
+        if(requestCode != Constants.REQUEST_MAIN_SETTING_OPTIONSITEM || resultCode != RESULT_OK)  return;
 
         boolean isDistrictReset = intent.getBooleanExtra("isDistrictReset", false);
         String userName = intent.getStringExtra("userName");
@@ -153,7 +153,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(userName != null) getSupportActionBar().setTitle(userName);
 
         if(uriImage != null)
-            applyImageResourceUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR, imgViewModel);
+            applyImageResourceUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
         else imgViewModel.getGlideDrawableTarget().setValue(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
@@ -204,7 +204,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 // Apply startActivityForresult() to take the price data and the username back from
                 // SettingPreferenceActivity to onActivityResult() if the values have changed.
                 Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
-                startActivityForResult(settingIntent, REQ_SETTING);
+                int requestCode = Constants.REQUEST_MAIN_SETTING_OPTIONSITEM;
+                settingIntent.putExtra("requestCode", requestCode);
+                startActivityForResult(settingIntent, requestCode);
                 return true;
 
             default:

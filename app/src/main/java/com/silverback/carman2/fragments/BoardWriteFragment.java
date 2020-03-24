@@ -220,7 +220,7 @@ public class BoardWriteFragment extends DialogFragment implements
                     //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
                     // The result should go to the parent activity
-                    getActivity().startActivityForResult(galleryIntent, BoardActivity.REQUEST_CODE_GALLERY);
+                    getActivity().startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
                     break;
 
                 case CAMERA: // Camera
@@ -229,7 +229,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
                     if(cameraIntent.resolveActivity(getActivity().getPackageManager()) != null) {
                         log.i("Camera Intent");
-                        getActivity().startActivityForResult(cameraChooser, BoardActivity.REQUEST_CODE_CAMERA);
+                        getActivity().startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
                     }
                     break;
             }

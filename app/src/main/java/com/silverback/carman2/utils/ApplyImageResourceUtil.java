@@ -206,12 +206,32 @@ public class ApplyImageResourceUtil {
                     @Override
                     public void onResourceReady(
                             @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+
                         model.getGlideDrawableTarget().setValue(resource);
                     }
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });
 
+    }
+
+    public void applyGlideToEmblem(String uri, int size, ImageViewModel model) {
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int px_x = (int)(size * scale + 0.5f);
+        int px_y = (int)(size * scale + 0.5f);
+        Glide.with(mContext).load(Uri.parse(uri)).override(px_x, px_y)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fitCenter()
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+
+                        model.getGlideDrawableTarget().setValue(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.

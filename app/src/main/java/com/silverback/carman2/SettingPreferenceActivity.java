@@ -89,6 +89,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private String fuelCode;
     private String radius;
     private String userImage;
+    private String jsonAutoData;
     private Uri downloadUserImageUri;
 
 
@@ -199,13 +200,29 @@ public class SettingPreferenceActivity extends BaseActivity implements
             uploadUserDataToFirebase(uploadData);
             // Create Intent back to MainActivity which contains extras to notify the activity of
             // which have been changed.
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("isDistrictReset", isDistrictReset);
-            resultIntent.putExtra("userName", userName);
-            resultIntent.putExtra("fuelCode", fuelCode);
-            resultIntent.putExtra("radius", radius);
-            resultIntent.putExtra("userImage", userImage);
-            setResult(Activity.RESULT_OK, resultIntent);
+            log.i("request code: %s", getIntent().getIntExtra("requestCode", -1));
+            int requestCode = getIntent().getIntExtra("requestCode", -1);
+            switch(requestCode){
+                case Constants.REQUEST_MAIN_SETTING_OPTIONSITEM:
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("isDistrictReset", isDistrictReset);
+                    resultIntent.putExtra("userName", userName);
+                    resultIntent.putExtra("fuelCode", fuelCode);
+                    resultIntent.putExtra("radius", radius);
+                    resultIntent.putExtra("userImage", userImage);
+                    setResult(Activity.RESULT_OK, resultIntent);
+                    break;
+
+                case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                    Intent autoIntent = new Intent();
+                    autoIntent.putExtra("jsonAutoData", jsonAutoData);
+                    log.i("JSON Auto Data in Setting: %s", jsonAutoData);
+                    setResult(Activity.RESULT_OK, autoIntent);
+                    break;
+
+                default: break;
+            }
+
 
             finish();
             return true;
@@ -265,6 +282,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
         switch(key) {
+
             case Constants.USER_NAME:
                 userName = mSettings.getString(Constants.USER_NAME, null);
                 // Check first if the user id file exists. If so, set the user data or update the
@@ -286,6 +304,11 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     //autoData.put("auto_data", jsonAutoData);
                     //uploadUserDataToFirebase(autoData);
                     uploadData.put("auto_data", jsonAutoData);
+
+                    // send the result bact to BoardActivity for startActivityForResult()
+                    log.i("JSON AutoData: %s", jsonAutoData);
+                    this.jsonAutoData = jsonAutoData;
+
                 }
 
                 break;

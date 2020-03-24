@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_automaker_emblem"
+        android:title="@string/toolbar_mycar"
+        android:visible="false"
+        app:showAsAction="ifRoom|withText" />
+
+    <item
+        android:id="@+id/action_upload_post"
+        android:icon="@drawable/ic_board_white"
+        android:title="@string/toolbar_board"
+        android:visible="false"
+        app:showAsAction="ifRoom|withText" />
+
+</menu>

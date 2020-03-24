@@ -50,10 +50,11 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         return NUM_PAGES;
     }
 
+    // As long as the current page is AUTO_CLUB, update the viewpager adapter which should
+    // set the return type with POSITION_NONE.
     @Override
     public int getItemPosition(@NonNull Object object) {
-        // As long as the current page is AUTO_CLUB, update the viewpager adapter which should
-        // set the return type with POSITION_NONE.
+
         if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
         else return POSITION_UNCHANGED;
     }
