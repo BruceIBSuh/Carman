@@ -11,7 +11,9 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +21,7 @@ import androidx.core.content.FileProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -189,7 +192,6 @@ public class ApplyImageResourceUtil {
 
     // Glide applies images to Drawable which should be mostly set to icons.
     public void applyGlideToDrawable(String uriString, int size, ImageViewModel model) {
-
         if(TextUtils.isEmpty(uriString)) return;
         // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
         // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
@@ -235,12 +237,12 @@ public class ApplyImageResourceUtil {
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.
-    public void applyGlideToBitmap(Uri imgUri, int size, ImageViewModel model) {
+    public void applyGlideToBitmap(Uri imgUri, int x, int y, ImageViewModel model) {
 
         if(imgUri == null) return;
         final float scale = mContext.getResources().getDisplayMetrics().density;
-        int px_x = (int)(size * scale + 0.5f);
-        int px_y = (int)(size * scale + 0.5f);
+        int px_x = (int)(x * scale + 0.5f);
+        int px_y = (int)(y * scale + 0.5f);
 
         Glide.with(mContext)
                 .asBitmap()
@@ -258,14 +260,48 @@ public class ApplyImageResourceUtil {
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {
                         log.i("onLoadCleard");
-                        // this is called when imageView is cleared on lifecycle call or for
-                        // some other reason.
+                        // this is called when imageView is cleared on lifecycle call or for some other reason.
                         // if you are referencing the bitmap somewhere else too other than this imageView
                         // clear it here as you can no longer have the bitmap
 
                     }
                 });
 
+    }
+
+    public void applyGlideToThumbnail(Uri uri, int x, int y, ImageView imageView, boolean isCircle) {
+
+        if(uri == null) {
+            Glide.with(mContext).clear(imageView);
+            imageView.setImageDrawable(null);
+            return;
+        }
+
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int px_x = (int)(x * scale + 0.5f);
+        int px_y = (int)(y * scale + 0.5f);
+
+        RequestOptions options = new RequestOptions().override(px_x, px_y);
+        if(isCircle) options.circleCrop();
+
+        Glide.with(mContext).load(uri).override(px_x, px_y)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .centerCrop()
+                //.circleCrop()
+                //.apply(options)
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+
+                        imageView.setImageDrawable(resource);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        imageView.setImageDrawable(null);
+                    }
+                });
     }
 
 

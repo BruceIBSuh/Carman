@@ -244,7 +244,9 @@ public class BoardWriteFragment extends DialogFragment implements
             // Glide creates a processed bitmap with the uri which the result intent from MediaStore
             // contains and as the process completes, the bitmap is sent to ImageViewModel for putting
             // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
-            applyImageResourceUtil.applyGlideToBitmap(imgUri, Constants.IMAGESPAN_THUMBNAIL_SIZE, imgViewModel);
+            int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+            int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+            applyImageResourceUtil.applyGlideToBitmap(imgUri, x, y, imgViewModel);
 
             // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
             // additional pics.

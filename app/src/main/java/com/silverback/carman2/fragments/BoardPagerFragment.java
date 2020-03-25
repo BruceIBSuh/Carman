@@ -268,17 +268,21 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
-        snapshotList.clear();
+        log.i("First Query");
 
         // First image shuffling bug probably caused by around here.
         for(QueryDocumentSnapshot snapshot : snapshots) {
+            snapshotList.add(snapshot);
+            /*
             if(currentPage == Constants.BOARD_AUTOCLUB){
                 snapshotList.add(snapshot);
 
-            } else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+            } else {//if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
                 log.i("QueryDocumentSnapshot: %s", snapshot.get("post_images"));
                 snapshotList.add(snapshot);
             }
+
+             */
         }
 
         postingAdapter.notifyDataSetChanged();
@@ -298,21 +302,25 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void setNextQueryComplete(QuerySnapshot snapshots) {
+        log.i("next Query: %s", snapshotList.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
+            snapshotList.add(snapshot);
+            /*
             if(currentPage == Constants.BOARD_AUTOCLUB || currentPage == Constants.BOARD_NOTIFICATION) {
                 snapshotList.add(snapshot);
                 // Refactor required: when renewing the board, null condition should be removed.
             }else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
                 snapshotList.add(snapshot);
             }
+
+             */
         }
 
         //pagingProgbar.setVisibility(View.INVISIBLE);
         //postingAdapter = new BoardPostingAdapter(snapshotList, this);
-        postingAdapter.notifyDataSetChanged();
+        //postingAdapter.notifyDataSetChanged();
         //weakProgbar.get().setVisibility(View.GONE);
         pbPaging.setVisibility(View.GONE);
-        postingAdapter.notifyDataSetChanged();
     }
 
 
@@ -385,7 +393,6 @@ public class BoardPagerFragment extends Fragment implements
         // when no dataset exists.
         pagerAdapter.notifyDataSetChanged();
     }
-
     // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
     @Override
     public void onGeneralPost(boolean isChecked) {}
@@ -400,8 +407,8 @@ public class BoardPagerFragment extends Fragment implements
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             final String viewerId = br.readLine();
 
-            CollectionReference viewerCollection = docref.collection("viewers");
-            viewerCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
+            CollectionReference subCollection = docref.collection("viewers");
+            subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
                 // In case the user does not exists in the "viewers" collection
                 if(snapshot == null || !snapshot.exists()) {
                   log.i("vierer not exists");
@@ -416,12 +423,12 @@ public class BoardPagerFragment extends Fragment implements
                   viewerData.put("timestamp", new Timestamp(date));
                   viewerData.put("viewer_ip", "");
 
-                  viewerCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {
+                  subCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {
                       log.i("Successfully set the data");
 
                       // Listener to events for local changes, which is notified with the new data
                       // before the data is sent to the backend.
-                      docref.get(Source.CACHE).addOnSuccessListener(data -> {
+                      docref.get(source).addOnSuccessListener(data -> {
                           if(data != null && data.exists()) {
                               //log.i("source: %s", source + "data: %s" + data.getData());
                               postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
