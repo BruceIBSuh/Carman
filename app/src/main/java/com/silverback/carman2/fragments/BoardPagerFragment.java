@@ -162,8 +162,7 @@ public class BoardPagerFragment extends Fragment implements
             // when no dataset exists.
             pagerAdapter.notifyDataSetChanged();
         });
-
-         */
+        */
 
         /*
          * Realtime update SnapshotListener: server vs cache policy.
@@ -175,8 +174,7 @@ public class BoardPagerFragment extends Fragment implements
         CollectionReference postRef = firestore.collection("board_general");
         postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-            //source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
-            source = querySnapshot != null ?
+            source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
                    Source.CACHE  : Source.SERVER ;
             log.i("Source: %s", source);
         });
@@ -268,21 +266,22 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
-        log.i("First Query");
 
-        // First image shuffling bug probably caused by around here.
         for(QueryDocumentSnapshot snapshot : snapshots) {
-            snapshotList.add(snapshot);
-            /*
+            // In the autoclub page, the query result is added to the list regardless of whether
+            // the field value of 'post_general" is true or not. In terms of the general board such
+            // as the recent or popular board, the query result is added only if the field value
+            // is true;
             if(currentPage == Constants.BOARD_AUTOCLUB){
+                log.i("autoclub list: %s", snapshots.size());
                 snapshotList.add(snapshot);
 
-            } else {//if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
-                log.i("QueryDocumentSnapshot: %s", snapshot.get("post_images"));
-                snapshotList.add(snapshot);
+            } else {
+                // Posts written in the general board do not have this field.
+                if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+                    snapshotList.add(snapshot);
+                }
             }
-
-             */
         }
 
         postingAdapter.notifyDataSetChanged();
@@ -304,16 +303,15 @@ public class BoardPagerFragment extends Fragment implements
     public void setNextQueryComplete(QuerySnapshot snapshots) {
         log.i("next Query: %s", snapshotList.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
-            snapshotList.add(snapshot);
-            /*
-            if(currentPage == Constants.BOARD_AUTOCLUB || currentPage == Constants.BOARD_NOTIFICATION) {
+            if(currentPage == Constants.BOARD_AUTOCLUB){
                 snapshotList.add(snapshot);
-                // Refactor required: when renewing the board, null condition should be removed.
-            }else if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
-                snapshotList.add(snapshot);
-            }
 
-             */
+            } else {
+                // Posts written in the general board do not have this field.
+                if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+                    snapshotList.add(snapshot);
+                }
+            }
         }
 
         //pagingProgbar.setVisibility(View.INVISIBLE);
@@ -386,12 +384,13 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
         for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
+        snapshotList.clear();
         pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
         // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
         // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
         // when no dataset exists.
-        pagerAdapter.notifyDataSetChanged();
+        //pagerAdapter.notifyDataSetChanged();
     }
     // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
     @Override

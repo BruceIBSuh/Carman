@@ -246,7 +246,7 @@ public class BoardWriteFragment extends DialogFragment implements
             // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
             int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
             int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-            applyImageResourceUtil.applyGlideToBitmap(imgUri, x, y, imgViewModel);
+            applyImageResourceUtil.applyGlideToImageSpan(imgUri, x, y, imgViewModel);
 
             // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
             // additional pics.
@@ -257,7 +257,7 @@ public class BoardWriteFragment extends DialogFragment implements
         });
 
 
-        // The imgUri received as a result of startActivityForResult() is applied to applyGlideToBitmap().
+        // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
         // This util method translates an image to an appropriate extent for fitting the imagespan and
         // the result is provided
         imgViewModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {

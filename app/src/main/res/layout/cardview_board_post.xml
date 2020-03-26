@@ -100,7 +100,7 @@
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:layout_marginEnd="8dp"
-            android:background="@android:drawable/stat_notify_chat"
+            android:src="@drawable/ic_board_cnt_comment"
             android:contentDescription="@null"
             android:padding="3dp"
             app:layout_constraintBottom_toBottomOf="@+id/img_icon_viewcount"
@@ -123,6 +123,7 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:contentDescription="@null"
+            android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

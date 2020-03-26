@@ -1,31 +1,19 @@
 package com.silverback.carman2.adapters;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -44,14 +32,14 @@ import java.util.Locale;
  */
 public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapter.BoardItemHolder> {
 
+    // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
-
     // Constants
+    private static final String path = "android.resource://com.silverback.carman2/drawable/ic_user_blank_white";
 
     // Objects
     private Context context;
     private List<DocumentSnapshot> snapshotList;
-    private SparseArray<String> sparseThumbArray;
     private OnRecyclerItemClickListener mListener;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
@@ -73,7 +61,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         mListener = listener;
         snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        sparseThumbArray = new SparseArray<>();
 
     }
 
@@ -107,15 +94,18 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         holder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
         holder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
-
+        // Set the user image
         if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
-            holder.bindProfileImage(Uri.parse(snapshot.getString("user_pic")));
-        } else holder.bindProfileImage(null);
+            holder.bindUserImage(Uri.parse(snapshot.getString("user_pic")));
+        } else {
+            holder.bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
+        }
 
+        // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
+        // invoked and the imageview is made null to prevent images from having wrong positions.
         if(snapshot.get("post_images") != null) {
             String thumb = ((ArrayList<String>)snapshot.get("post_images")).get(0);
             holder.bindAttachedImage(Uri.parse(thumb));
-
         } else {
             Glide.with(context).clear(holder.imgAttached);
             holder.imgAttached.setImageDrawable(null);
@@ -130,6 +120,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     }
 
 
+    // Partial binding when the count is increased in terms of the view count and comment count.
     @Override
     public void onBindViewHolder(
             @NonNull BoardItemHolder holder, int position, @NonNull List<Object> payloads) {
@@ -137,7 +128,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            for(Object obj : payloads) log.i("payloads: %s", obj);
             holder.tvViewCount.setText(String.valueOf(payloads.get(0)));
             holder.tvCommentCount.setText(String.valueOf(payloads.get(1)));
         }
@@ -158,9 +148,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     // ViewHolders
     class BoardItemHolder extends RecyclerView.ViewHolder {
-
         TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
-        ImageView imgProfile;
+        ImageView imgUser;
         ImageView imgAttached;
 
         BoardItemHolder(CardView cardview){
@@ -171,37 +160,21 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
             tvUserName = cardview.findViewById(R.id.tv_post_owner);
             tvViewCount = cardview.findViewById(R.id.tv_count_views);
             tvCommentCount = cardview.findViewById(R.id.tv_count_comment);
-            imgProfile = cardview.findViewById(R.id.img_user);
+            imgUser = cardview.findViewById(R.id.img_user);
             imgAttached = cardview.findViewById(R.id.img_attached);
 
         }
 
-        // Null check of the uri shouldn't be needed b/c Glide handles it on its own.
-        void bindProfileImage(Uri uri) {
-            RequestOptions myOptions = new RequestOptions()
-                    .fitCenter()
-                    .override(Constants.ICON_SIZE_POSTING_LIST, Constants.ICON_SIZE_POSTING_LIST)
-                    .circleCrop();
-
-            if(uri == null) {
-                Glide.with(context).load(R.drawable.ic_user_blank_white)
-                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                        .apply(myOptions)
-                        .into(imgProfile);
-            } else {
-                Glide.with(context).asBitmap()
-                        //.placeholder(new ColorDrawable(Color.BLUE))
-                        .load(uri)
-                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                        .apply(myOptions)
-                        .into(imgProfile);
-            }
+        void bindUserImage(Uri uri) {
+            int size = Constants.ICON_SIZE_POSTING_LIST;
+            imgUtil.applyGlideToImageView(uri, imgUser, size, size, true);
         }
+
 
         void bindAttachedImage(Uri uri) {
             int x = imgAttached.getWidth();
             int y = imgAttached.getHeight();
-            imgUtil.applyGlideToThumbnail(uri, x, y, imgAttached, false);
+            imgUtil.applyGlideToImageView(uri, imgAttached, x, y, false);
         }
 
     }

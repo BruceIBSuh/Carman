@@ -93,7 +93,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private FirebaseFirestore firestore;
     private DocumentReference postRef;
     private Source source;
-    private ApplyImageResourceUtil applyImageResourceUtil;
+    private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
     private FragmentSharedModel sharedModel;
     private Context context;
@@ -137,7 +137,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
-        applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
+        imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -206,7 +206,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-
     @SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -234,7 +233,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
-        // need to manually populate the toolbar with content and actions as folowing. Also, the
+        // need to manually populate the toolbar with content and actions as follows. Also, the
         // navigation icon(back arrow) should be handled in setToolbarTitleIcon().
         toolbar.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
@@ -308,19 +307,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Rearrange the text by paragraphs
         createContentView(postContent);
 
-        // Set the user image in the header.
-        if(TextUtils.isEmpty(userPic)) {
-            Glide.with(context).load(R.drawable.ic_user_blank_gray)
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .fitCenter().circleCrop()
-                    .into(imgUserPic);
-        } else {
-            Uri uriUserImage = Uri.parse(userPic);
-            Glide.with(context).asBitmap().load(uriUserImage)
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                    .fitCenter().circleCrop()
-                    .into(imgUserPic);
-        }
+        // Set the user image in header
+        String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray":userPic;
+        int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
+        imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
+
         return localView;
     }
 
@@ -397,8 +388,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 }
 
                 break;
-
-
         }
 
     }
@@ -481,12 +470,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // ConstraintSets which are applied to the parent ConstraintLayout.
     // The recyclerview which displays comments at the bottom should be coordinated according to
     // whether the content has images or not.
-    private void createContentView(String text) {
+    private void createContentView(String content) {
         // When an image is attached as the post writes, the line separator is supposed to put in at
         // before and after the image. That's why the regex contains the line separator in order to
         // get the right end position.
         final String REGEX_MARKUP = "\\[image_\\d]\\n";
-        final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(text);
+        final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(content);
 
         int index = 0; //
         int start = 0;
@@ -503,7 +492,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // If the content contains images, which means the markup(s) exists in the content, the content
         // is split into parts of texts and images and respectively connected to ConstraintSet.
         while(m.find()) {
-            String paragraph = text.substring(start, m.start());
+            // Check if the content starts w/ text or image, which depends on the value of start and
+            // add the
+            String paragraph = content.substring(start, m.start());
             TextView tv = new TextView(context);
             tv.setId(View.generateViewId());
             tv.setText(paragraph);
@@ -517,11 +508,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(tv.getId(), ConstraintSet.TOP, topConstraint, ConstraintSet.BOTTOM, 32);
             tvSet.applyTo(constPostingLayout);
 
+            // Even if no content exists, ConstrainSet.TOP should be tv.getId() b/c a line is inserted
+            // when attaching an image.
             ImageView imgView = new ImageView(context);
             imgView.setId(View.generateViewId());
             prevImageId = imgView.getId();
             constPostingLayout.addView(imgView, params);
-            //constPostingLayout.addView(imgView, imgParams);
 
             ConstraintSet imgSet = new ConstraintSet();
             imgSet.clone(constPostingLayout);
@@ -536,17 +528,17 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
             start = m.end();
             index++;
-
         }
 
 
         // Coordinate the position b/w the last part, no matter what is image or text in the content,
         // and the following recycler view by the patterns.
-        // No imaage attached.
+
+        // No image attached
         if(start == 0) {
             TextView noImageText = new TextView(context);
             noImageText.setId(View.generateViewId());
-            noImageText.setText(text);
+            noImageText.setText(content);
             constPostingLayout.addView(noImageText, params);
 
             ConstraintSet tvSet = new ConstraintSet();
@@ -554,15 +546,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 0);
-            //tvSet.connect(noImageText.getId(), ConstraintSet.TOP, constraintId, ConstraintSet.BOTTOM, 0);
-            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 32);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.TOP, 64);
 
             tvSet.applyTo(constPostingLayout);
 
-        // Text exists after the last image. The last TextView is constrained to the previous ImageView
-        // and the RecyclerView constrained to the TextView.
-        } else if(start < text.length()) {
-            String lastParagraph = text.substring(start);
+        // Text exists after the last image. The last textview is constrained to the previous imageview
+        // and the recyclerview constrained to the textview.
+        } else if(start < content.length()) {
+            String lastParagraph = content.substring(start);
             log.i("Last Paragraph: %s", lastParagraph);
             TextView lastView = new TextView(context);
             lastView.setId(View.generateViewId());
@@ -574,15 +565,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 32);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
             tvSet.applyTo(constPostingLayout);
 
-        // In case no text exists after the last image, the RecyclerView is constrained to the last
+        // In case no text exists after the last image, the recyclerView is constrained to the last
         // ImageView.
-        } else if(start == text.length()) {
+        } else if(start == content.length()) {
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(constPostingLayout);
-            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 32);
+            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
             recyclerSet.applyTo(constPostingLayout);
         }
 
@@ -632,10 +623,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         switch(state) {
             case STATE_COLLAPSED:
+                userPic = (TextUtils.isEmpty(userPic))?Constants.imgPath + "ic_user_blank_gray":userPic;
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
-                applyImageResourceUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
+                imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
 
                 break;
 

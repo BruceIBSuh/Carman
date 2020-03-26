@@ -229,6 +229,7 @@ public class BoardActivity extends BaseActivity implements
         inflater.inflate(R.menu.menu_options_board, menu);
         this.menu = menu;
 
+        if(emblemIcon != null) menu.getItem(0).setIcon(emblemIcon);
         // Notified that a drawale is prepared for setting it to the options menu icon by
         // setAutoMakerEmblem()
         imageViewModel.getGlideDrawableTarget().observe(this, drawable -> {
@@ -333,7 +334,8 @@ public class BoardActivity extends BaseActivity implements
         } else animAppbarLayout(true);
 
         // Invoke onPrepareOptionsMenu() to create menus for the fragment.
-        invalidateOptionsMenu();
+        //invalidateOptionsMenu();
+        menu.getItem(1).setVisible(true);
     }
 
     // Implement AppBarLayout.OnOffsetChangedListener

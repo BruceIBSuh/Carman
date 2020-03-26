@@ -23,7 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
-import com.silverback.carman2.adapters.CommentRecyclerAdapter;
+import com.silverback.carman2.adapters.StationCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ConnectNaviHelper;
@@ -41,7 +41,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private double xCoord, yCoord;
     private double longitude, latitude;
     private RecyclerView recyclerComments;
-    private CommentRecyclerAdapter commentAdapter;
+    private StationCommentAdapter commentAdapter;
 
     // UIs
     private TextView tvName, tvAddrs, tvCarwash, tvService,tvCVS;
@@ -150,7 +150,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                             snapshotList.add(document);
                         }
 
-                        commentAdapter = new CommentRecyclerAdapter(snapshotList);
+                        commentAdapter = new StationCommentAdapter(snapshotList);
                         recyclerComments.setAdapter(commentAdapter);
                     }
                 }).addOnFailureListener(e -> {});

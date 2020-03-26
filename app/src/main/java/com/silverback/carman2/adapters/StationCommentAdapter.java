@@ -24,10 +24,10 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
 
-public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecyclerAdapter.CommentListHolder> {
+public class StationCommentAdapter extends RecyclerView.Adapter<StationCommentAdapter.CommentListHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(CommentRecyclerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationCommentAdapter.class);
 
     // Objects
     private Context context;
@@ -35,7 +35,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
     private List<DocumentSnapshot> snapshotList;
 
     // Constructor
-    public CommentRecyclerAdapter(List<DocumentSnapshot> snapshotList) {
+    public StationCommentAdapter(List<DocumentSnapshot> snapshotList) {
         this.snapshotList = snapshotList;
         firestore = FirebaseFirestore.getInstance();
     }
@@ -78,7 +78,7 @@ public class CommentRecyclerAdapter extends RecyclerView.Adapter<CommentRecycler
             for(Object obj : payloads) {
                 log.i("Partial Binding");
                 drawable = (RoundedBitmapDrawable)obj;
-                holder.imgProfile.setImageDrawable((RoundedBitmapDrawable)obj);
+                holder.imgUser.setImageDrawable((RoundedBitmapDrawable)obj);
             }
         }
 

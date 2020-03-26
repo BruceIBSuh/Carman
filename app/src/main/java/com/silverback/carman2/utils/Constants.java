@@ -130,5 +130,8 @@ public class Constants {
     public static final int GEOCODER_ADDRS_LOCATION_SUCCESS = 1;
     public static final int GEOCODER_ADDRS_NAME_SUCCESS = 2;
 
+    // Drawable path
+    public static final String imgPath = "android.resource://com.silverback.carman2/drawable/";
+
 
 }

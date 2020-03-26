@@ -24,6 +24,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -237,9 +238,10 @@ public class ApplyImageResourceUtil {
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.
-    public void applyGlideToBitmap(Uri imgUri, int x, int y, ImageViewModel model) {
+    public void applyGlideToImageSpan(Uri imgUri, int x, int y, ImageViewModel model) {
 
         if(imgUri == null) return;
+
         final float scale = mContext.getResources().getDisplayMetrics().density;
         int px_x = (int)(x * scale + 0.5f);
         int px_y = (int)(y * scale + 0.5f);
@@ -269,26 +271,31 @@ public class ApplyImageResourceUtil {
 
     }
 
-    public void applyGlideToThumbnail(Uri uri, int x, int y, ImageView imageView, boolean isCircle) {
-
-        if(uri == null) {
-            Glide.with(mContext).clear(imageView);
-            imageView.setImageDrawable(null);
-            return;
-        }
+    /*
+     * Apply Glide to ImageView which is mainly used in BoardPostingAdapter to display the user
+     * image and attached thumbnail pic.
+     *
+     * @param uri uri of user image from Firestore
+     * @param x ImageViw width
+     * @param y ImageViw height
+     * @param imageView target View
+     * @param isCircle whehter the image is circular or not.
+     */
+    public void applyGlideToImageView(Uri uri, ImageView imageView, int x, int y, boolean isCircle){
 
         final float scale = mContext.getResources().getDisplayMetrics().density;
         int px_x = (int)(x * scale + 0.5f);
         int px_y = (int)(y * scale + 0.5f);
 
-        RequestOptions options = new RequestOptions().override(px_x, px_y);
+
+        // Set options for size, scale, and crop. The crop option depends on whehter isCircle param
+        // is true or not.
+        RequestOptions options = new RequestOptions().override(px_x, px_y).centerCrop();
         if(isCircle) options.circleCrop();
 
-        Glide.with(mContext).load(uri).override(px_x, px_y)
+        Glide.with(mContext).load(uri)
+                .apply(options)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .centerCrop()
-                //.circleCrop()
-                //.apply(options)
                 .into(new CustomTarget<Drawable>() {
                     @Override
                     public void onResourceReady(

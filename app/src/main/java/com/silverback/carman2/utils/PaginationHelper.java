@@ -90,9 +90,9 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
+                // Require an index to be creeated to make a composite query with multiple fields.
                 colRef.whereEqualTo("auto_club", autofilter)
-                //colRef.whereArrayContains("auto_club", autoFilter)
-                //colRef.whereArrayContainsAny("auto_club", autoFilter)
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(autoclubShot -> {
                             log.i("auto_club query: %s", autoclubShot.size());
