@@ -343,14 +343,14 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putStringArrayList("uriImgList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
 
-        // With the user id given as an argument, query the user(posting writer) to fetch the auto data
-        // which contains auto_maker, auto_type, auto_model and auto_year in JSON string. On completion,
-        // set it to the dialog fragment and pop it up.
+        // Query the user(posting writer) with userId given to fetch the autoclub which contains
+        // auto_maker, auto_model, eco_type and auto_year as JSON string. On completion, set it to
+        // the fragment arguments and pass them to BoardReadDlgFragment
         firestore.collection("users").document(snapshot.getString("user_id")).get()
                 .addOnSuccessListener(document -> {
                     if(document.exists()) {
-                        String auto = document.getString("auto_data");
-                        if(!TextUtils.isEmpty(auto)) bundle.putString("autoData", auto);
+                        String auto = document.getString("user_club");
+                        if(!TextUtils.isEmpty(auto)) bundle.putString("autoClub", auto);
 
                         readPostFragment.setArguments(bundle);
                         // What if Fragment calls another fragment? What is getChildFragmentManager() for?

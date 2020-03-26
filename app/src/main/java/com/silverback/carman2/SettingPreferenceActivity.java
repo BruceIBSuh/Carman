@@ -306,7 +306,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                     //Map<String, Object> autoData = new HashMap<>();
                     //autoData.put("auto_data", jsonAutoData);
                     //uploadUserDataToFirebase(autoData);
-                    uploadData.put("auto_data", jsonAutoData);
+                    uploadData.put("user_club", jsonAutoData);
 
                     // send the result bact to BoardActivity for startActivityForResult()
                     log.i("JSON AutoData: %s", jsonAutoData);

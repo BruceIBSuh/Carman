@@ -101,7 +101,6 @@ public class BoardWriteFragment extends DialogFragment implements
         if(getArguments() != null) {
             userId = getArguments().getString("userId");
             tabPage = getArguments().getInt("tabPage");
-            log.i("arguments: %s, %s", userId, tabPage);
         }
 
         // Set the listener
@@ -111,7 +110,6 @@ public class BoardWriteFragment extends DialogFragment implements
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         attachedImages = new ArrayList<>();
-        //strImgList = new ArrayList<>();
         downloadImages = new SparseArray<>();
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);

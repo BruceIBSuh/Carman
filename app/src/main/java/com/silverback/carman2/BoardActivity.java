@@ -34,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.widget.NestedScrollView;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
@@ -44,6 +45,8 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
+import com.silverback.carman2.fragments.BoardEditFragment;
+import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -67,7 +70,7 @@ import java.util.ArrayList;
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         ViewPager.OnPageChangeListener,
-        AppBarLayout.OnOffsetChangedListener {
+        AppBarLayout.OnOffsetChangedListener, BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
@@ -76,12 +79,13 @@ public class BoardActivity extends BaseActivity implements
     private FirebaseFirestore firestore;
     private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
-    private ImageViewModel imageViewModel;
+    private ImageViewModel imgModel;
     private BoardViewModel boardModel;
     private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
     private MenuItem menuEmblem;
     private Drawable emblemIcon;
+    private BoardReadDlgFragment readFragment;
 
     // UIs
     private CoordinatorLayout coordinatorLayout;
@@ -123,7 +127,7 @@ public class BoardActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
 
-        imageViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
         firestore = FirebaseFirestore.getInstance();
         imgResUtil = new ApplyImageResourceUtil(this);
@@ -187,6 +191,17 @@ public class BoardActivity extends BaseActivity implements
         addTabIconAndTitle(this, boardTabLayout);
     }
 
+    // Attach listeners to the parent activity when a fragment is attached to the parent activity.
+    @Override
+    public void onAttachFragment(Fragment fragment) {
+        if(fragment instanceof BoardReadDlgFragment) {
+            readFragment = (BoardReadDlgFragment)fragment;
+            readFragment.setEditModeListener(this);
+        }
+    }
+
+
+
     // Receive the image uri as a result of startActivityForResult() revoked in BoardWriteFragment,
     // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteFragment
     // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
@@ -198,7 +213,7 @@ public class BoardActivity extends BaseActivity implements
         if(resultCode != RESULT_OK || data == null) return;
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
-                imageViewModel.getUriFromImageChooser().setValue(data.getData());
+                imgModel.getUriFromImageChooser().setValue(data.getData());
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
@@ -232,13 +247,13 @@ public class BoardActivity extends BaseActivity implements
         if(emblemIcon != null) menu.getItem(0).setIcon(emblemIcon);
         // Notified that a drawale is prepared for setting it to the options menu icon by
         // setAutoMakerEmblem()
-        imageViewModel.getGlideDrawableTarget().observe(this, drawable -> {
+        imgModel.getGlideDrawableTarget().observe(this, drawable -> {
             emblemIcon = drawable;
             menu.getItem(0).setIcon(drawable);
         });
 
-        return true;
-        //return super.onCreateOptionsMenu(menu);
+        //return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     /*
@@ -260,9 +275,9 @@ public class BoardActivity extends BaseActivity implements
                 if(frameLayout.getChildAt(0) instanceof ViewPager) {
                     frameLayout.removeAllViews();
                     finish();
-                } else if(frameLayout.getChildAt(0) == writePostFragment.getView()) {
-                    addViewPager();
-                }
+
+                } else addViewPager();
+
                 return true;
 
             case R.id.action_automaker_emblem:
@@ -279,11 +294,10 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
-    // Hanlde FAB click event.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {
-        // Only apply to FAB.
+        // Only apply to the floating action button
         if(v.getId() != R.id.fab_board_write) return;
 
         // Check if users have made a user name. Otherwise, show tne message for setting the name
@@ -336,6 +350,25 @@ public class BoardActivity extends BaseActivity implements
         // Invoke onPrepareOptionsMenu() to create menus for the fragment.
         //invalidateOptionsMenu();
         menu.getItem(1).setVisible(true);
+    }
+
+    // Implement BoardReadDlgFragment.OnEditModeListener when the edit button clicks.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onEditClicked(Bundle bundle) {
+        log.i("Edit Mode");
+        BoardEditFragment editFragment = new BoardEditFragment();
+        editFragment.setArguments(bundle);
+
+        if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
+        getSupportFragmentManager().beginTransaction().addToBackStack(null)
+                .replace(frameLayout.getId(), editFragment)
+                .commit();
+
+        // Manager title, menu, and the fab visibility.
+        getSupportActionBar().setTitle("Edit your post");
+        menu.getItem(1).setVisible(true);
+        fabWrite.setVisibility(View.GONE);
     }
 
     // Implement AppBarLayout.OnOffsetChangedListener
@@ -577,8 +610,8 @@ public class BoardActivity extends BaseActivity implements
                             String emblem = autoshot.getString("emblem");
                             // Empty Check. Refactor should be taken to show an empty icon, instead.
                             if(TextUtils.isEmpty(emblem)) return;
-                            imgResUtil.applyGlideToEmblem(autoshot.getString("emblem"),
-                                    Constants.ICON_SIZE_TOOLBAR_EMBLEM, imageViewModel);
+                            else imgResUtil.applyGlideToEmblem(autoshot.getString("emblem"),
+                                    Constants.ICON_SIZE_TOOLBAR_EMBLEM, imgModel);
                             break;
                         }
                     }
@@ -638,6 +671,12 @@ public class BoardActivity extends BaseActivity implements
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
         return fabWrite;
+    }
+
+    // Get the framelayout to contain an post to edit when the edit button of the toolbar on
+    // BoardReadDlgFragment clicks.
+    public FrameLayout getBoardFrameLayout() {
+        return frameLayout;
     }
 
 }

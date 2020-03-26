@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,6 +46,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -90,13 +92,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private static final int STATE_IDLE = 2;
 
     // Objects
+    private Context context;
+    private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
     private DocumentReference postRef;
     private Source source;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
     private FragmentSharedModel sharedModel;
-    private Context context;
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
@@ -116,7 +119,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Fields
     private String tabTitle;
-    private String autoData;
+    private String autoClub;
     private String userId, documentId;
     private int tabPage;
     private int position;
@@ -124,6 +127,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
     private boolean hasCompathy;
+
+
+    public interface OnEditModeListener {
+        void onEditClicked(Bundle bundle);
+    }
+    public void setEditModeListener(OnEditModeListener listener) {
+        mListener = listener;
+    }
+
 
     public BoardReadDlgFragment() {
         // Required empty public constructor
@@ -149,7 +161,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
-            autoData = getArguments().getString("autoData");
+            autoClub = getArguments().getString("autoClub");
             imgUriList = getArguments().getStringArrayList("uriImgList");
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
@@ -160,18 +172,19 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Get the auto data arguemnt from BoardPagerFragment, which is of JSON string tyepe and
         // it requires to create JSONArray that may be converted to StringBuilder.
-        if(!TextUtils.isEmpty(autoData)) {
+        if(!TextUtils.isEmpty(autoClub)) {
             try {
-                JSONArray jsonArray = new JSONArray(autoData);
+                JSONArray jsonArray = new JSONArray(autoClub);
                 StringBuilder sb = new StringBuilder();
                 for(int i = 0; i < jsonArray.length(); i++)
                     sb.append(jsonArray.optString(i)).append(" ");
-                autoData = sb.toString();
+                autoClub = sb.toString();
 
             } catch(JSONException e) {
                 e.printStackTrace();
             }
-        } else autoData = null;
+
+        } else autoClub = null;
 
         // Get the current document reference which should be shared in the fragment.
         // Initially attach SnapshotListener to have the comment collection updated, then remove
@@ -251,7 +264,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
-        tvAutoInfo.setText(autoData);
+        tvAutoInfo.setText(autoClub);
         tvDate.setText(getArguments().getString("timestamp"));
         tvCommentCnt.setText(String.valueOf(cntComment));
         tvCompathyCnt.setText(String.valueOf(cntCompathy));
@@ -307,7 +320,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Rearrange the text by paragraphs
         createContentView(postContent);
 
-        // Set the user image in header
+        // Set the user image to the view on the header, the uri of which is provided as an arguemnt
+        // from BoardPasoingAdapter. Otherwise, the default image is provided.
         String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray":userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
@@ -343,7 +357,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // notifies BoardPagerFragment that the user has deleted the post w/ the item position.
         // To prevent the model from autmatically invoking the method, set the value to false;
         sharedModel.getAlertPostResult().setValue(false);
-        sharedModel.getAlertPostResult().observe(getActivity(), result -> {
+        sharedModel.getAlertPostResult().observe(requireActivity(), result -> {
             // The post will be deleted from Firestore.
             log.i("Alert confirms to delete the post");
             if(result) {
@@ -696,15 +710,26 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setOnMenuItemClickListener(item -> {
                     switch(item.getItemId()) {
                         case R.id.action_board_edit:
-                            sharedModel.getImageChooser().setValue(-1);
+                            //sharedModel.getImageChooser().setValue(-1);
                             // Create the dialog fragment with arguments which have been passed from
                             // BoardPagerFragment when an item was picked.
+                            /*
+                            FrameLayout frame = ((BoardActivity)getActivity()).getBoardFrameLayout();
                             BoardWriteFragment writePostFragment = new BoardWriteFragment();
-                            writePostFragment.setArguments(getArguments());
+                            Bundle bundle = new Bundle();
+                            bundle.putBoolean("isEditMode", true);
+                            //bundle.putAll(getArguments());
+                            writePostFragment.setArguments(bundle);
+                            if(frame.getChildCount() > 0) frame.removeAllViews();
 
                             getActivity().getSupportFragmentManager().beginTransaction()
-                                    .add(android.R.id.content, writePostFragment)
+                                    .addToBackStack(null)
+                                    .replace(frame.getId(), writePostFragment)
                                     .commit();
+
+                             */
+                            mListener.onEditClicked(getArguments());
+                            dismiss();
 
                             return true;
 
@@ -728,90 +753,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
 
-    // Divide the text by line separator("\n"), excluding image lines("[image]"), then set the span
-    // for making the leading margin to every single line. Alternative solution but not applied here.
-    /*
-    private SpannableStringBuilder translateParagraphSpan(String text) {
-
-        SpannableStringBuilder spannable = new SpannableStringBuilder(text);
-        final String REGEX_SEPARATOR = "\n";
-        final String REGEX_MARKUP = "\\[image_\\d]";
-        final Matcher m = Pattern.compile(REGEX_SEPARATOR).matcher(spannable);
-
-        int start = 0;
-        while(m.find()) {
-            CharSequence paragraph = spannable.subSequence(start, m.start());
-            // Include the lines that does not contains the image markup for displaying attached images.
-            if(!Pattern.compile(REGEX_MARKUP).matcher(paragraph).matches()) {
-                log.i("Paragraph: %s, %s, %s", paragraph, start, m.start());
-                spannable.setSpan(new LeadingMarginSpan.Standard(LEADING), start, m.start(), SPANNED_FLAG);
-            }
-
-            start = m.end();
-        }
-
-        log.i("start: %s, %s", start, spannable.length());
-        if(start == 0) {
-            spannable.setSpan(new LeadingMarginSpan.Standard(LEADING), start, spannable.length(),
-                    Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        }
-        // Handle the last charSequence after the last line separator in the text because the while
-        // looping makes paragraph the second last charSequence which ends at the last line separator.
-        else if(start < spannable.length()) {
-            spannable.setSpan(new LeadingMarginSpan.Standard(LEADING), start, spannable.length(), SPANNED_FLAG);
-        }
-
-        return spannable;
-    }
-
-    // On fetching images by AttachedBitmapTask and being notified by ImageViewModel, set ImageSpans
-    // to the margin-formatted text.
-    @SuppressWarnings("ConstantConditiosn")
-    private SpannableStringBuilder createImageSpanString(SparseArray<ImageSpan> spanArray) {
-
-        //SpannableStringBuilder ssb = new SpannableStringBuilder(spannable);
-        String regexMarkup = "\\[image_\\d]";
-        final Matcher markup = Pattern.compile(regexMarkup).matcher(spannable);
-
-        int key = 0;
-        while(markup.find()) {
-            if(spanArray.get(key) != null) {
-                spannable.setSpan(spanArray.get(key), markup.start(), markup.end(), SPANNED_FLAG);
-
-            } else {
-                log.i("Failed to set Span");
-            }
-
-            key++;
-        }
-
-        // Feed the line separator rigth before and after the image span
-        ImageSpan[] arrSpans = spannable.getSpans(0, spannable.length(), ImageSpan.class);
-        for(ImageSpan span : arrSpans) {
-            spannable.insertAutoMaker(spannable.getSpanStart(span) - 1, "\n");
-            spannable.insertAutoMaker(spannable.getSpanEnd(span) + 1, "\n");
-        }
-
-        return spannable;
-    }
-
-    class CustomLeadingMarginSpan extends LeadingMarginSpan.Standard {
-
-        public CustomLeadingMarginSpan(int every) {
-            super(every);
-        }
-
-        @Override
-        public void drawLeadingMargin (Canvas c, Paint p,
-                                       int x, int dir, int top, int baseline, int bottom,
-                                       CharSequence text, int start, int end,
-                                       boolean first,
-                                       Layout layout) {
-            log.i("Layout: %s", layout);
-        }
-    }
-    */
-
     private void setAutoDataString(TextView autoInfo) {
         // Get the auto data, which is saved as the type of json string in SharedPreferences, for
         // displaying it in the post header.
@@ -828,7 +769,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                             sb.append(jsonArray.optString(i)).append(" ");
                         }
 
-                        autoData = sb.toString();
+                        autoClub = sb.toString();
                         autoInfo.setText(sb.toString());
 
                     } catch(JSONException e) {
