@@ -202,7 +202,7 @@ public class BoardActivity extends BaseActivity implements
 
 
 
-    // Receive the image uri as a result of startActivityForResult() revoked in BoardWriteFragment,
+    // Receive the image uri as a result of startActivityForResult() invoked in BoardWriteFragment,
     // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteFragment
     // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
     // content area and adding it to the image list so as to update the recyclerview adapter.
@@ -214,6 +214,7 @@ public class BoardActivity extends BaseActivity implements
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
                 imgModel.getUriFromImageChooser().setValue(data.getData());
+                writePostFragment.setUriFromImageChooser(data.getData());
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
@@ -369,6 +370,7 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setTitle("Edit your post");
         menu.getItem(1).setVisible(true);
         fabWrite.setVisibility(View.GONE);
+        animAppbarLayout(true);
     }
 
     // Implement AppBarLayout.OnOffsetChangedListener
@@ -461,6 +463,7 @@ public class BoardActivity extends BaseActivity implements
         else slideUp.start();
 
     }
+
 
     private void animAppbarLayout(boolean isUpDown) {
 

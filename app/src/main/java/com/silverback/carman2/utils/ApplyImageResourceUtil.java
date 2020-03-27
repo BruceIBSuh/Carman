@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.text.style.ImageSpan;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -270,6 +271,7 @@ public class ApplyImageResourceUtil {
                 });
 
     }
+
 
     /*
      * Apply Glide to ImageView which is mainly used in BoardPostingAdapter to display the user

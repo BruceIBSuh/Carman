@@ -26,7 +26,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.BoardAttachImageAdapter;
+import com.silverback.carman2.adapters.BoardAttachImgAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.ThreadManager;
@@ -51,7 +51,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  */
 public class BoardWriteFragment extends DialogFragment implements
         BoardActivity.OnFilterCheckBoxListener,
-        BoardAttachImageAdapter.OnBoardWriteListener {
+        BoardAttachImgAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
@@ -67,7 +67,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private ApplyImageResourceUtil applyImageResourceUtil;
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
-    private BoardAttachImageAdapter imageAdapter;
+    private BoardAttachImgAdapter imageAdapter;
     private List<Uri> attachedImages;
     private SparseArray<String> downloadImages;
     private UploadBitmapTask bitmapTask;
@@ -134,13 +134,12 @@ public class BoardWriteFragment extends DialogFragment implements
         recyclerImageView.setLayoutManager(linearLayout);
         //recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
-        imageAdapter = new BoardAttachImageAdapter(attachedImages, this);
+        imageAdapter = new BoardAttachImgAdapter(attachedImages, this);
         recyclerImageView.setAdapter(imageAdapter);
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
         btnAttach.setOnClickListener(btn -> {
-
             ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
@@ -235,6 +234,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         });
 
+        /*
         // The result of startActivityForResult() invoked in the parent activity should be notified
         // to the activity and it is, in turn, sent back here via a viewmodel livedata with the image
         // uri, with which the image span and the recyclerview are displayed with a new image.
@@ -253,7 +253,7 @@ public class BoardWriteFragment extends DialogFragment implements
             //imageAdapter.notifyItemInserted(position);
             imageAdapter.notifyItemChanged(position);
         });
-
+        */
 
         // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
         // This util method translates an image to an appropriate extent for fitting the imagespan and
@@ -307,13 +307,40 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
-    // Implement BoardAttachImageAdapter.OnBoardWriteListener when an image is removed from the list
+    // Implement BoardActivity.OnFilterCheckedListener.
+    @Override
+    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
+        for(CharSequence filter : autofilter) log.i("filter: %s", filter);
+        this.autofilter = autofilter;
+    }
+    @Override
+    public void onGeneralPost(boolean b) {
+        log.i("isGeneralPost: %s", b);
+        isGeneralPost = b;
+    }
+
+
+    // Implement BoardAttachImgAdapter.OnBoardAttachImageListener when an image is removed from the list
     @Override
     public void removeGridImage(int position) {
         spanHandler.removeImageSpan(position);
         //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
-        imageAdapter.notifyItemRemoved(position);
         attachedImages.remove(position);
+        imageAdapter.notifyItemRemoved(position);
+    }
+
+
+    public void setUriFromImageChooser(Uri uri) {
+        int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        applyImageResourceUtil.applyGlideToImageSpan(uri, x, y, imgViewModel);
+
+        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
+        // additional pics.
+        attachedImages.add(uri);
+        final int position = attachedImages.size() - 1;
+        //imageAdapter.notifyItemInserted(position);
+        imageAdapter.notifyItemChanged(position);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -375,6 +402,7 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
+
     @SuppressWarnings("ConstantConditions")
     public void initUploadPost() {
 
@@ -407,15 +435,5 @@ public class BoardWriteFragment extends DialogFragment implements
         }
     }
 
-    @Override
-    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
-        for(CharSequence filter : autofilter) log.i("filter: %s", filter);
-        this.autofilter = autofilter;
-    }
 
-    @Override
-    public void onGeneralPost(boolean b) {
-        log.i("isGeneralPost: %s", b);
-        isGeneralPost = b;
-    }
 }

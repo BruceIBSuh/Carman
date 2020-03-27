@@ -79,13 +79,7 @@
             android:id="@+id/frame_contents"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-        <!--
-        <androidx.viewpager.widget.ViewPager
-            android:visibility="gone"
-            android:id="@+id/viewpager_board"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        -->
+
     </androidx.core.widget.NestedScrollView>
 
     <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"

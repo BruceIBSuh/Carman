@@ -19,22 +19,22 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.List;
 
-public class BoardAttachImageAdapter extends RecyclerView.Adapter<BoardAttachImageAdapter.ImageViewHolder> {
+public class BoardAttachImgAdapter extends RecyclerView.Adapter<BoardAttachImgAdapter.ImageViewHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardAttachImageAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardAttachImgAdapter.class);
 
     // Objects
     private Context context;
     private List<Uri> uriImageList;
-    private OnBoardWriteListener mListener;
+    private OnBoardAttachImageListener mListener;
 
     // Interface to communicate w/ BoardWriteFragment
-    public interface OnBoardWriteListener {
+    public interface OnBoardAttachImageListener {
         void removeGridImage(int position);
     }
 
     // Constructor
-    public BoardAttachImageAdapter(List<Uri> uriList, OnBoardWriteListener listener) {
+    public BoardAttachImgAdapter(List<Uri> uriList, OnBoardAttachImageListener listener) {
         uriImageList = uriList;
         mListener = listener;
     }

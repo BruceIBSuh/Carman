@@ -27,7 +27,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     private SpannableStringBuilder ssb;
     private Editable editable;
     private ImageSpan[] arrImgSpan;
-    private SpanWatcher[] arrSpanWatcher;
+    //private SpanWatcher[] arrSpanWatcher;
     private int cursorPos;
     private boolean cursorDir;
 
@@ -45,20 +45,20 @@ public class BoardImageSpanHandler implements SpanWatcher {
         editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
     }
 
-    // Callbacks invoked by SpanWatcher
+    // When SpanWatcher is attached to a Spannable, its methods will be called to notify it that
+    // other markup objects have been added, changed, or removed.
     @Override
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
-        //log.i("onSpanAdded");
+        log.i("onSpanAdded: %s, %s, %s, %s", text, what, start, end);
     }
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
-        //log.i("onSpanRemoved");
+        log.i("onSpanRemoved");
     }
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
-
+        log.i("onSpanChanged");
         if(arrImgSpan == null || arrImgSpan.length == 0) return;
-
         // As long as the touch down and touch up at the same position, all position values are
         // the same no matter what value is SELECTION_START OR SELECTION_END.
         // When it makes a range, however, the SELECTION_START and the SELECTION_END values become different.

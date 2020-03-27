@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -46,7 +45,6 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
-import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -318,7 +316,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         inflateEditMenuInToolbar();
 
         // Rearrange the text by paragraphs
-        createContentView(postContent);
+        readContentView(postContent);
 
         // Set the user image to the view on the header, the uri of which is provided as an arguemnt
         // from BoardPasoingAdapter. Otherwise, the default image is provided.
@@ -484,7 +482,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // ConstraintSets which are applied to the parent ConstraintLayout.
     // The recyclerview which displays comments at the bottom should be coordinated according to
     // whether the content has images or not.
-    private void createContentView(String content) {
+    private void readContentView(String content) {
         // When an image is attached as the post writes, the line separator is supposed to put in at
         // before and after the image. That's why the regex contains the line separator in order to
         // get the right end position.
