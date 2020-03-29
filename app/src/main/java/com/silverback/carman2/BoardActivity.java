@@ -132,16 +132,18 @@ public class BoardActivity extends BaseActivity implements
         firestore = FirebaseFirestore.getInstance();
         imgResUtil = new ApplyImageResourceUtil(this);
 
+        AppBarLayout appBar = findViewById(R.id.appBar);
         coordinatorLayout = findViewById(R.id.coordinatorLayout);
         toolbar = findViewById(R.id.board_toolbar);
         nestedScrollView = findViewById(R.id.nestedScrollView);
         frameLayout = findViewById(R.id.frame_contents);
-        AppBarLayout appBar = findViewById(R.id.appBar);
         boardTabLayout = findViewById(R.id.tab_board);
         filterLayout = findViewById(R.id.post_scroll_horizontal);
         cbLayout = findViewById(R.id.linearLayout_autofilter);
         pbLoading = findViewById(R.id.progbar_board_loading);
         fabWrite = findViewById(R.id.fab_board_write);
+
+        log.i("toolbar elevation: %s", toolbar.getElevation());
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
@@ -153,7 +155,6 @@ public class BoardActivity extends BaseActivity implements
         // singleton of BoardPagerFragment, which should be passed to onCreate() of the same fragment
         // as Bundle.putCharSequenceArrayList().
         cbAutoFilter = new ArrayList<>();
-
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
         try {createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
         catch (JSONException e) {e.printStackTrace();}
@@ -213,7 +214,7 @@ public class BoardActivity extends BaseActivity implements
         if(resultCode != RESULT_OK || data == null) return;
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
-                imgModel.getUriFromImageChooser().setValue(data.getData());
+                //imgModel.getUriFromImageChooser().setValue(data.getData());
                 writePostFragment.setUriFromImageChooser(data.getData());
                 break;
 
@@ -314,12 +315,8 @@ public class BoardActivity extends BaseActivity implements
             });
 
             snackbar.show();
-
             return;
         }
-        // Handle the toolbar menu as the write board comes in.
-        if(tabPage != Constants.BOARD_AUTOCLUB) getSupportActionBar().setTitle("Write Your Car");
-        fabWrite.setVisibility(View.INVISIBLE);
 
         // Create the fragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
@@ -335,21 +332,26 @@ public class BoardActivity extends BaseActivity implements
                 .replace(frameLayout.getId(), writePostFragment)
                 .commit();
 
+        // Handle the toolbar menu as the write board comes in.
+        if(tabPage != Constants.BOARD_AUTOCLUB) {
+            getSupportActionBar().setTitle("Write Your Car");
+            animAppbarLayout(true);
+
         // Tapping the fab right when the viewpager holds the auto club page, animate to slide
         // the tablayout up to hide and slide the auto filter down to show sequentially. On the
         // other pages, animation is made to slide up not only the tablayout but also tne
         // nestedscrollview
-        if(tabPage == Constants.BOARD_AUTOCLUB) {
+        } else {
             // AutoFilter that holds values of the autoclub viewpager has to be eliminated and be
             // ready to have new values in BoardWriteFragment.
             cbAutoFilter.clear();
             try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
             catch(JSONException e) {e.printStackTrace();}
             animAutoFilter(true);
-        } else animAppbarLayout(true);
+        }
 
-        // Invoke onPrepareOptionsMenu() to create menus for the fragment.
-        //invalidateOptionsMenu();
+        // Visibility control on menu and fab.
+        fabWrite.setVisibility(View.INVISIBLE);
         menu.getItem(1).setVisible(true);
     }
 
@@ -481,8 +483,6 @@ public class BoardActivity extends BaseActivity implements
         else animSet.play(slideNestedUp).before(slideTabUp);
 
         animSet.start();
-        //slideTabUp.start();
-        //slideNestedUp.start();
     }
 
     // Create the toolbar title which depends on which checkbox is checked and is applied only when

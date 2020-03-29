@@ -14,15 +14,17 @@
         android:id="@+id/appBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:background="#FFFFFF"
             app:contentScrim="?attr/colorPrimary"
-            app:titleEnabled="false"
-            app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed" >
+            app:titleEnabled="false" >
+        <!--app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed" -->
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/board_toolbar"
@@ -73,6 +75,7 @@
         android:layout_height="match_parent"
         android:fillViewport="true"
         android:scrollbars="vertical"
+        android:elevation="4dp"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <FrameLayout

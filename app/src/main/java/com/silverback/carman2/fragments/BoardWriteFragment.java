@@ -2,6 +2,7 @@ package com.silverback.carman2.fragments;
 
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -9,6 +10,7 @@ import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -26,7 +28,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.BoardAttachImgAdapter;
+import com.silverback.carman2.adapters.BoardImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.ThreadManager;
@@ -51,7 +53,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  */
 public class BoardWriteFragment extends DialogFragment implements
         BoardActivity.OnFilterCheckBoxListener,
-        BoardAttachImgAdapter.OnBoardAttachImageListener {
+        BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
@@ -67,7 +69,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private ApplyImageResourceUtil applyImageResourceUtil;
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
-    private BoardAttachImgAdapter imageAdapter;
+    private BoardImageAdapter imageAdapter;
     private List<Uri> attachedImages;
     private SparseArray<String> downloadImages;
     private UploadBitmapTask bitmapTask;
@@ -103,7 +105,7 @@ public class BoardWriteFragment extends DialogFragment implements
             tabPage = getArguments().getInt("tabPage");
         }
 
-        // Set the listener
+        // Set the listener only if the current page is set to the auto club.
         if(tabPage == Constants.BOARD_AUTOCLUB)
             ((BoardActivity)getActivity()).setAutoFilterListener(this);
         isGeneralPost = true;
@@ -116,15 +118,14 @@ public class BoardWriteFragment extends DialogFragment implements
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
     }
 
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         localView = inflater.inflate(R.layout.fragment_board_write, container, false);
 
-        etPostTitle = localView.findViewById(R.id.et_board_title);
-        etPostBody = localView.findViewById(R.id.et_board_body);
-
+        etPostTitle = localView.findViewById(R.id.et_board_write_title);
+        etPostBody = localView.findViewById(R.id.et_board_content);
         RecyclerView recyclerImageView = localView.findViewById(R.id.vg_recycler_images);
         Button btnAttach = localView.findViewById(R.id.btn_attach_image);
 
@@ -134,8 +135,22 @@ public class BoardWriteFragment extends DialogFragment implements
         recyclerImageView.setLayoutManager(linearLayout);
         //recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
-        imageAdapter = new BoardAttachImgAdapter(attachedImages, this);
+        imageAdapter = new BoardImageAdapter(attachedImages, this);
         recyclerImageView.setAdapter(imageAdapter);
+
+        // To scroll edittext inside (nested)scrollview. More research should be done.
+        etPostBody.setOnTouchListener((view, event) ->{
+            if(etPostBody.hasFocus()) {
+                view.getParent().requestDisallowInterceptTouchEvent(true);
+                switch(event.getAction() & MotionEvent.ACTION_MASK) {
+                    case MotionEvent.ACTION_SCROLL:
+                        view.getParent().requestDisallowInterceptTouchEvent(false);
+                        return true;
+                }
+            }
+
+            return false;
+        });
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
@@ -156,26 +171,29 @@ public class BoardWriteFragment extends DialogFragment implements
                 //java.lang.IllegalStateException: Fragment BoardWriteFragment{984f0c5}
                 // (4b73b12d-9e70-4e32-95bb-52f209a6b8a1)} not attached to Activity
                 //dialog.show(getChildFragmentManager(), "@null");
-                dialog.show(getParentFragmentManager(), "chooserDialog");
+                //dialog.show(getParentFragmentManager(), "chooserDialog");
+                dialog.show(getActivity().getSupportFragmentManager(), "chooser");
+
                 /*
                  * This works for both, inserting a text at the current position and replacing
-                 * whatever text is selected by the user. The Math.max() is necessary in the first
-                 * and second line because, if there is no selection or cursor in the EditText,
-                 * getSelectionStart() and getSelectionEnd() will both return -1. The Math.min()
-                 * and Math.max() in the third line is necessary because the user could have selected
-                 * the text backwards and thus start would have a higher value than end which is not
-                 * allowed for Editable.replace().
+                 * any text which is selected by the user. The Math.max() is necessary in the first
+                 * and second line because, if there is no selection or focus in the edittext,
+                 * getSelectionStart() and getSelectionEnd() will both return -1. On the other hand,
+                 * The Math.min() and Math.max() in the third line is necessary because the user
+                 * could have selected the text backwards and thus start would have a higher value
+                 * than the end value which is not allowed for Editable.replace().
                  */
-                // Put a line feed into the EditTex when the image interleaves b/w the lines
+                // Put linefeeder into the edittext when the image interleaves b/w the lines
                 int start = Math.max(etPostBody.getSelectionStart(), 0);
-                int end = Math.max(etPostBody.getSelectionStart(), 0);
+                int end = Math.max(etPostBody.getSelectionEnd(), 0);
+                log.i("insert image: %s, %s", start, end);
                 etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
             }
         });
 
 
-        // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to handle
-        // SpannableStringBuilder in order to protect image spans from while editing.
+        // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to manage
+        // SpannableStringBuilder in order to protect imagespans from deletion while editing.
         spanHandler = new BoardImageSpanHandler(etPostBody.getText());
 
         return localView;
@@ -186,7 +204,9 @@ public class BoardWriteFragment extends DialogFragment implements
     public void onActivityCreated(Bundle bundle) {
 
         super.onActivityCreated(bundle);
-        // ViewModel to be Notified of which media(camera or gallery) to select in BoardChooserDlgFragment
+        // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
+        // to which startActivityForResult() is invoked by the parent activity and the result will be
+        // notified to the activity and it is, in turn, sent back here by calling
         fragmentModel.getImageChooser().observe(getActivity(), chooser -> {
             switch(chooser) {
                 case GALLERY:
@@ -210,7 +230,6 @@ public class BoardWriteFragment extends DialogFragment implements
                         startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
                     }
                     */
-
                     Intent galleryIntent = new Intent();
                     galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
                     galleryIntent.setType("image/*");
@@ -253,7 +272,7 @@ public class BoardWriteFragment extends DialogFragment implements
             //imageAdapter.notifyItemInserted(position);
             imageAdapter.notifyItemChanged(position);
         });
-        */
+         */
 
         // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
         // This util method translates an image to an appropriate extent for fitting the imagespan and
@@ -262,7 +281,7 @@ public class BoardWriteFragment extends DialogFragment implements
             log.i("Bitmap received");
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
             // Manage the image spans using BoardImageSpanHandler helper class.
-            spanHandler.setImageSpanToPosting(imgSpan);
+            spanHandler.setImageSpanToPost(imgSpan);
             //spanHandler.setImageSpanInputFilter();
         });
 
@@ -273,7 +292,6 @@ public class BoardWriteFragment extends DialogFragment implements
          * Second, check whether the attached images safely completes uploading.
          * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
          */
-
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
@@ -307,7 +325,8 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
-    // Implement BoardActivity.OnFilterCheckedListener.
+    // Implement BoardActivity.OnFilterCheckedListener which notifies any change of the checkbox
+    // values
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
         for(CharSequence filter : autofilter) log.i("filter: %s", filter);
@@ -320,16 +339,23 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
-    // Implement BoardAttachImgAdapter.OnBoardAttachImageListener when an image is removed from the list
+    // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the list
     @Override
-    public void removeGridImage(int position) {
+    public void removeImage(int position) {
+        log.i("Position: %s", position);
         spanHandler.removeImageSpan(position);
         //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
         attachedImages.remove(position);
-        imageAdapter.notifyItemRemoved(position);
+        imageAdapter.notifyDataSetChanged();
+        //imageAdapter.notifyItemRemoved(position);
     }
 
+    @Override
+    public void attachImage(Bitmap bmp, int pos) {}
 
+
+    // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
+    // an image picked in the media which has been selected by BoardChooserDlgFragment
     public void setUriFromImageChooser(Uri uri) {
         int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
@@ -342,6 +368,7 @@ public class BoardWriteFragment extends DialogFragment implements
         //imageAdapter.notifyItemInserted(position);
         imageAdapter.notifyItemChanged(position);
     }
+
 
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
@@ -391,6 +418,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
 
     private boolean doEmptyCheck() {
+        log.i("Title: %s", etPostTitle.getText());
         if(TextUtils.isEmpty(etPostTitle.getText())) {
             Snackbar.make(localView, getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
             return false;

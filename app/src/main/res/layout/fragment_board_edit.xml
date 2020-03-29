@@ -5,12 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root_board_edit"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <View
         android:id="@+id/view_edit_header"
-        android:layout_width="411dp"
-        android:layout_height="41dp"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -21,21 +22,19 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/boardwrite_label_title"
-        android:labelFor="@id/et_board_title"
+        android:labelFor="@id/et_board_write_title"
         app:layout_constraintBottom_toBottomOf="@+id/view_edit_header"
         app:layout_constraintStart_toStartOf="@+id/view_edit_header"
         app:layout_constraintTop_toTopOf="@+id/view_edit_header" />
 
     <EditText
-        android:id="@+id/et_board_title"
+        android:id="@+id/et_board_write_title"
         android:layout_width="0dp"
-        android:layout_height="25dp"
+        android:layout_height="40dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"
         android:background="@null"
         android:ems="10"
         android:inputType="textMultiLine"
-        android:padding="3dp"
         android:textSize="@dimen/mediumText"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
         app:layout_constraintEnd_toStartOf="@+id/btn_attach_image"
@@ -51,21 +50,20 @@
         android:background="@drawable/btn_attach_image"
         android:textSize="@dimen/smallText"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/et_board_title"
+        app:layout_constraintBottom_toBottomOf="@+id/et_board_write_title"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/et_board_title" />
+        app:layout_constraintTop_toTopOf="@+id/et_board_write_title" />
 
 
     <EditText
         android:id="@+id/et_edit_content"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:padding="8dp"
         android:gravity="start|top"
         android:background="@null"
         android:hint="@null"
         android:inputType="textMultiLine"
-        android:padding="0dp"
         android:textSize="@dimen/smallText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -82,7 +80,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
