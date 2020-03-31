@@ -25,7 +25,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardImageSpanHandler.class);
 
     // Constants
-
     private static String markup;
 
     // Objects
@@ -68,20 +67,22 @@ public class BoardImageSpanHandler implements SpanWatcher {
         }
     }
 
-    //This method is called to notify you that the specified object has been detached from the
+    // This method is called to notify you that the specified object has been detached from the
     // specified range of the text.
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
             log.i("Span removed: %s, %s, %s", text, start, end);
             String tag = text.toString().substring(start, end);
-            Matcher m = Pattern.compile("\\d+").matcher(tag);
+            Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
                 int position = Integer.valueOf(m.group(0));
                 mListener.notifyRemovedImageSpan(position);
+                log.i("removed position: %s, %s", what, position);
             }
+
             // Retagging imagespans
-            resetImageSpanTag();
+            //resetImageSpanTag();
 
         }
     }
@@ -92,7 +93,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // (ostart == oend) < (nstart == nend) : moving forward
     // (ostart == oned) > (nstart == nend) : moving backward
     // (ostart == oend) == (nstart == nend) : adding or removing character
-
     // Either ading or removing a character makes all postions equal.
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {

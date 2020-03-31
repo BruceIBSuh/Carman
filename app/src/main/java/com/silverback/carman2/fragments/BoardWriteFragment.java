@@ -371,9 +371,8 @@ public class BoardWriteFragment extends DialogFragment implements
         imageAdapter.notifyDataSetChanged();
     }
 
-
-
-    // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the list
+    // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the
+    // recyclerview.
     @Override
     public void removeImage(int position) {
         int start = etPostBody.getText().getSpanStart(spanList.get(position));
@@ -505,7 +504,4 @@ public class BoardWriteFragment extends DialogFragment implements
             }
         }
     }
-
-
-
 }
