@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class BoardEditFragment extends BoardBaseFragment implements
-        BoardImageSpanHandler.OnImageSpanRemovedListener,
+        BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardEditFragment.class);
@@ -190,7 +190,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     @Override
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
-        spanHandler.removeImageSpan(position);
+        //spanHandler.removeImageSpan(position);
         uriImages.remove(position);
         // notifyItemRemoved(), weirdly does not work here.
         imgAdapter.notifyDataSetChanged();
@@ -199,11 +199,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
     }
 
     @Override
-    public void notifyAddImageSpan(int position) {
+    public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
 
     }
 
-    // Implement BoardImageSpanHandler.OnImageSpanRemovedListener
+    // Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("Removed Span: %s", position);

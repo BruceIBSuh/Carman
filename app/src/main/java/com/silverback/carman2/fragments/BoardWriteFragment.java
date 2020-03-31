@@ -6,6 +6,9 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.Selection;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
@@ -50,10 +53,11 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * A simple {@link Fragment} subclass.
  * This fragment is to upload any writing to post in the board with images attached.
+ * Special care should be taken when thumbnail image and images in the recyclerview
  */
 public class BoardWriteFragment extends DialogFragment implements
         BoardActivity.OnFilterCheckBoxListener,
-        BoardImageSpanHandler.OnImageSpanRemovedListener,
+        BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
@@ -71,7 +75,9 @@ public class BoardWriteFragment extends DialogFragment implements
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
     private BoardImageAdapter imageAdapter;
-    private List<Uri> attachedImages;
+    private List<Uri> uriImgList;
+    private List<ImageSpan> spanList;
+    private ImageSpan imageSpan;
     private SparseArray<String> downloadImages;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
@@ -113,7 +119,8 @@ public class BoardWriteFragment extends DialogFragment implements
         isGeneralPost = true;
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
-        attachedImages = new ArrayList<>();
+        uriImgList = new ArrayList<>();
+        spanList = new ArrayList<>();
         downloadImages = new SparseArray<>();
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -137,8 +144,11 @@ public class BoardWriteFragment extends DialogFragment implements
         recyclerImageView.setLayoutManager(linearLayout);
         //recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
         //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
-        imageAdapter = new BoardImageAdapter(attachedImages, this);
+        imageAdapter = new BoardImageAdapter(uriImgList, this);
         recyclerImageView.setAdapter(imageAdapter);
+
+
+
 
         // To scroll edittext inside (nested)scrollview. More research should be done.
         etPostBody.setOnTouchListener((view, event) ->{
@@ -154,6 +164,8 @@ public class BoardWriteFragment extends DialogFragment implements
             return false;
         });
 
+
+
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
         btnAttach.setOnClickListener(btn -> {
@@ -161,8 +173,8 @@ public class BoardWriteFragment extends DialogFragment implements
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
-            if(attachedImages.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
-                log.i("Image count: %s", attachedImages.size());
+            if(uriImgList.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
+                log.i("Image count: %s", uriImgList.size());
                 Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
 
             } else {
@@ -186,9 +198,12 @@ public class BoardWriteFragment extends DialogFragment implements
                  * than the end value which is not allowed for Editable.replace().
                  */
                 // Put linefeeder into the edittext when the image interleaves b/w the lines
-                int start = Math.max(etPostBody.getSelectionStart(), 0);
-                int end = Math.max(etPostBody.getSelectionEnd(), 0);
+                //int start = Math.max(etPostBody.getSelectionStart(), 0);
+                //int end = Math.max(etPostBody.getSelectionEnd(), 0);
+                int start = etPostBody.getSelectionStart();
+                int end = etPostBody.getSelectionEnd();
                 log.i("insert image: %s, %s", start, end);
+
                 etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
             }
         });
@@ -269,8 +284,8 @@ public class BoardWriteFragment extends DialogFragment implements
 
             // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
             // additional pics.
-            attachedImages.add(imgUri);
-            final int position = attachedImages.size() - 1;
+            uriImgList.add(imgUri);
+            final int position = uriImgList.size() - 1;
             //imageAdapter.notifyItemInserted(position);
             imageAdapter.notifyItemChanged(position);
         });
@@ -283,8 +298,8 @@ public class BoardWriteFragment extends DialogFragment implements
             log.i("Bitmap received");
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
             // Manage the image spans using BoardImageSpanHandler helper class.
-            spanHandler.setImageSpanToPost(imgSpan);
-            //spanHandler.setImageSpanInputFilter();
+            //spanHandler.setImageSpanToPost(imgSpan);
+            setImageSpan(etPostBody.getText(), imgSpan);
         });
 
         /*
@@ -300,7 +315,7 @@ public class BoardWriteFragment extends DialogFragment implements
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
             downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
-            if(attachedImages.size() == downloadImages.size()) {
+            if(uriImgList.size() == downloadImages.size()) {
                 // On completing optimization of attached images, start uploading a post.
                 uploadPostToFirestore();
             }
@@ -340,18 +355,37 @@ public class BoardWriteFragment extends DialogFragment implements
         isGeneralPost = b;
     }
 
+    // Implement BoardImageSpanHandler.OnImageSpanListener which notifies that an new ImageSpan
+    // has been added or removed. The position param is fetched from the markup using the regular
+    // expression.
+    @Override
+    public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
+        spanList.add(position, imgSpan);
+        uriImgList.add(position, imgUri);
+        imageAdapter.notifyDataSetChanged();
+    }
+    @Override
+    public void notifyRemovedImageSpan(int position) {
+        spanList.remove(position);
+        uriImgList.remove(position);
+        imageAdapter.notifyDataSetChanged();
+    }
+
+
 
     // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the list
     @Override
     public void removeImage(int position) {
-        log.i("Position: %s", position);
-        spanHandler.removeImageSpan(position);
-        attachedImages.remove(position);
-        imageAdapter.notifyDataSetChanged();
+        int start = etPostBody.getText().getSpanStart(spanList.get(position));
+        int end = etPostBody.getText().getSpanEnd(spanList.get(position));
+        etPostBody.getText().removeSpan(spanList.get(position));//remove the image span
+        etPostBody.getText().replace(start, end, "");//delete the markkup
     }
 
     @Override
-    public void attachImage(Bitmap bmp, int pos) {}
+    public void attachImage(Bitmap bmp, int pos) {
+        log.i("Bitmap received");
+    }
 
 
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
@@ -360,20 +394,24 @@ public class BoardWriteFragment extends DialogFragment implements
         int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         applyImageResourceUtil.applyGlideToImageSpan(uri, x, y, imgViewModel);
-
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
         imgUri = uri;
-
-        /*
-        attachedImages.add(uri);
-        final int position = attachedImages.size() - 1;
-        //imageAdapter.notifyItemInserted(position);
-        imageAdapter.notifyItemChanged(position);
-
-         */
     }
 
+    private void setImageSpan(Editable editable, ImageSpan span) {
+        int start = Selection.getSelectionStart(editable);
+        int end = Selection.getSelectionEnd(editable);
+
+        this.imageSpan = span;
+        int imgTag = 0;
+        String markup = "[image_" + imgTag + "]\n";
+        editable.replace(Math.min(start, end), Math.max(start, end), markup);
+        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        //Selection.setSelection(editable, editable.length());
+    }
 
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
@@ -452,7 +490,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // should take the uploading process that images starts uploading first and image
         // URIs would be sent back if uploading images is successful,then uploading gets
         // started with image URIs, adding it to a document of Firestore.
-        if(attachedImages.size() == 0) uploadPostToFirestore();
+        if(uriImgList.size() == 0) uploadPostToFirestore();
         else {
             // Image Attachment button that starts UploadBitmapTask as many as the number of
             // images. In case the task starts with UploadBitmapTask multi-threading which
@@ -461,25 +499,13 @@ public class BoardWriteFragment extends DialogFragment implements
             // A download url from Storage each time when an attached image is successfully
             // downsized and scaled down, then uploaded to Storage is transferred via
             // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
-            for(int i = 0; i < attachedImages.size(); i++) {
+            for(int i = 0; i < uriImgList.size(); i++) {
                 bitmapTask = ThreadManager.startBitmapUploadTask(getContext(),
-                        attachedImages.get(i), i, imgViewModel);
+                        uriImgList.get(i), i, imgViewModel);
             }
         }
     }
 
 
-    @Override
-    public void notifyAddImageSpan(int position) {
-        log.i("Added span: %s", position);
-        attachedImages.add(position, imgUri);
-        imageAdapter.notifyDataSetChanged();
-    }
 
-    @Override
-    public void notifyRemovedImageSpan(int position) {
-        log.i("Removed span: %s", position);
-        attachedImages.remove(position);
-        imageAdapter.notifyDataSetChanged();
-    }
 }

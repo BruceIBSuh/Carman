@@ -328,7 +328,8 @@ public class BoardActivity extends BaseActivity implements
         writePostFragment.setArguments(args);
 
         if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
-        getSupportFragmentManager().beginTransaction().addToBackStack(null)
+        getSupportFragmentManager().beginTransaction()
+                //.addToBackStack(null)
                 .replace(frameLayout.getId(), writePostFragment)
                 .commit();
 
