@@ -53,6 +53,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  */
 public class BoardWriteFragment extends DialogFragment implements
         BoardActivity.OnFilterCheckBoxListener,
+        BoardImageSpanHandler.OnImageSpanRemovedListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
@@ -80,6 +81,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private EditText etPostTitle, etPostBody;
 
     // Fields
+    private Uri imgUri;
     private ArrayList<CharSequence> autofilter;
     private boolean isGeneralPost;
     private String[] arrAutoData;
@@ -194,7 +196,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to manage
         // SpannableStringBuilder in order to protect imagespans from deletion while editing.
-        spanHandler = new BoardImageSpanHandler(etPostBody.getText());
+        spanHandler = new BoardImageSpanHandler(etPostBody.getText(), this);
 
         return localView;
     }
@@ -344,10 +346,8 @@ public class BoardWriteFragment extends DialogFragment implements
     public void removeImage(int position) {
         log.i("Position: %s", position);
         spanHandler.removeImageSpan(position);
-        //ImageSpan[] arrImageSpan = spanHandler.getImageSpan();
         attachedImages.remove(position);
         imageAdapter.notifyDataSetChanged();
-        //imageAdapter.notifyItemRemoved(position);
     }
 
     @Override
@@ -363,10 +363,15 @@ public class BoardWriteFragment extends DialogFragment implements
 
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
+        imgUri = uri;
+
+        /*
         attachedImages.add(uri);
         final int position = attachedImages.size() - 1;
         //imageAdapter.notifyItemInserted(position);
         imageAdapter.notifyItemChanged(position);
+
+         */
     }
 
 
@@ -464,4 +469,17 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
+    @Override
+    public void notifyAddImageSpan(int position) {
+        log.i("Added span: %s", position);
+        attachedImages.add(position, imgUri);
+        imageAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void notifyRemovedImageSpan(int position) {
+        log.i("Removed span: %s", position);
+        attachedImages.remove(position);
+        imageAdapter.notifyDataSetChanged();
+    }
 }

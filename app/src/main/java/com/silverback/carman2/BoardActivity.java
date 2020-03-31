@@ -194,7 +194,7 @@ public class BoardActivity extends BaseActivity implements
 
     // Attach listeners to the parent activity when a fragment is attached to the parent activity.
     @Override
-    public void onAttachFragment(Fragment fragment) {
+    public void onAttachFragment(@NonNull Fragment fragment) {
         if(fragment instanceof BoardReadDlgFragment) {
             readFragment = (BoardReadDlgFragment)fragment;
             readFragment.setEditModeListener(this);

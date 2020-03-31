@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 public class BoardEditFragment extends BoardBaseFragment implements
+        BoardImageSpanHandler.OnImageSpanRemovedListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardEditFragment.class);
@@ -181,7 +182,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
             }
 
             etPostContent.setText(ssb);
-            spanHandler = new BoardImageSpanHandler(ssb);
+            spanHandler = new BoardImageSpanHandler(ssb, this);
             spanHandler.setImageSpan(spanList);
         }
     }
@@ -197,5 +198,17 @@ public class BoardEditFragment extends BoardBaseFragment implements
         etPostContent.setText(ssb);
     }
 
+    @Override
+    public void notifyAddImageSpan(int position) {
+
+    }
+
+    // Implement BoardImageSpanHandler.OnImageSpanRemovedListener
+    @Override
+    public void notifyRemovedImageSpan(int position) {
+        log.i("Removed Span: %s", position);
+        //uriImages.remove(position);
+        //imgAdapter.notifyDataSetChanged();
+    }
 }
 
