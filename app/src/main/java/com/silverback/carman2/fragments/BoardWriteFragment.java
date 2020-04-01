@@ -147,8 +147,6 @@ public class BoardWriteFragment extends DialogFragment implements
         recyclerImageView.setAdapter(imageAdapter);
 
 
-
-
         // To scroll edittext inside (nested)scrollview. More research should be done.
         etPostBody.setOnTouchListener((view, event) ->{
             if(etPostBody.hasFocus()) {
@@ -202,7 +200,6 @@ public class BoardWriteFragment extends DialogFragment implements
                 //int start = etPostBody.getSelectionStart();
                 //int end = etPostBody.getSelectionEnd();
                 log.i("insert image: %s, %s, %s", etPostBody.getText(), start, end);
-
                 etPostBody.getText().replace(start, end, "\n");
             }
         });

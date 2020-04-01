@@ -1,5 +1,6 @@
 package com.silverback.carman2.utils;
 
+import android.text.DynamicLayout;
 import android.text.Editable;
 import android.text.Selection;
 import android.text.SpanWatcher;
@@ -98,14 +99,13 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
         if (what == Selection.SELECTION_START) {
-
             // Move cursor forward or backward when adding or removing a charactor. Only removing
             // a character with cursor moving backward
             if((ostart == nstart)) {
                 log.i("adding or removing: %s, %s, %s, %s", ostart, oend, nstart, nend);
                 for(ImageSpan span : spanList) {
                     if(nstart == text.getSpanEnd(span)) {
-                        log.i("Spanned at the end!!!!");
+                        log.i("Spanned at the end");
                         Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
                     }
                 }
@@ -115,10 +115,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
             } else {
                 log.i("Range set: %s, %s, %s, %s, %s", text, ostart, nstart, oend, nend);
                 for(ImageSpan span : spanList) {
-                    log.i("nstart and span: %s, %s", nstart, text.getSpanEnd(span));
-                    if(nstart == text.getSpanEnd(span)) {
-                        Selection.setSelection(text, text.getSpanStart(span) -1, text.getSpanStart(span) - 1);
-                    }
+                    log.i("span value: %s, %s", text.getSpanStart(span), text.getSpanEnd(span));
+                    int min = Math.min(ostart, nstart);
+                    int max = Math.max(ostart, nstart);
+
                 }
             }
 
@@ -138,10 +138,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // Reset the image tag each time a new imagespan is added particularly in case of inserting.
     private void resetImageSpanTag(Spannable text) {
         // Reset the markup tag
-        Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(text);
+        Matcher m = Pattern.compile("\\[image_\\d]").matcher(text);
         int tag = 0;
         while(m.find()) {
-            markup = "[image_" + tag + "]\n";
+            markup = "[image_" + tag + "]";
             editable.replace(m.start(), m.end(), markup);
             tag++;
         }
