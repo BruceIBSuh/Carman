@@ -54,6 +54,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * A simple {@link Fragment} subclass.
  * This fragment is to upload any writing to post in the board with images attached.
  * Special care should be taken when thumbnail image and images in the recyclerview
+ * Different processes are applied to add and remove the imagespan. Adding
  */
 public class BoardWriteFragment extends DialogFragment implements
         BoardActivity.OnFilterCheckBoxListener,
@@ -93,8 +94,6 @@ public class BoardWriteFragment extends DialogFragment implements
     private String[] arrAutoData;
     private String userId;
     private int tabPage;
-    private boolean isAutoMaker, isAutoType, isAutoModel, isAutoYear;
-
 
 
     // Constructor
@@ -198,13 +197,13 @@ public class BoardWriteFragment extends DialogFragment implements
                  * than the end value which is not allowed for Editable.replace().
                  */
                 // Put linefeeder into the edittext when the image interleaves b/w the lines
-                //int start = Math.max(etPostBody.getSelectionStart(), 0);
-                //int end = Math.max(etPostBody.getSelectionEnd(), 0);
-                int start = etPostBody.getSelectionStart();
-                int end = etPostBody.getSelectionEnd();
-                log.i("insert image: %s, %s", start, end);
+                int start = Math.max(etPostBody.getSelectionStart(), 0);
+                int end = Math.max(etPostBody.getSelectionEnd(), 0);
+                //int start = etPostBody.getSelectionStart();
+                //int end = etPostBody.getSelectionEnd();
+                log.i("insert image: %s, %s, %s", etPostBody.getText(), start, end);
 
-                etPostBody.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
+                etPostBody.getText().replace(start, end, "\n");
             }
         });
 

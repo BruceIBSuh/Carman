@@ -64,7 +64,7 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Im
 
         // Invoke the callback method when clicking the image button in order to remove the clicked
         // image out of the list and notify the adapter of the position for invalidating.
-        log.i("image position: %s", position);
+        //log.i("image position: %s", position);
         holder.btnDel.setOnClickListener(view -> mListener.removeImage(position));
     }
 
@@ -73,11 +73,11 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Im
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
-            log.i("zero payload: %s", payloads);
+            //log.i("zero payload: %s", payloads);
             super.onBindViewHolder(holder, position, payloads);
         } else {
             String caption = "image_" + (position + 1);
-            log.i("notifyItemRemoved: %s, %s", payloads.get(0), caption);
+            //log.i("notifyItemRemoved: %s, %s", payloads.get(0), caption);
         }
     }
 

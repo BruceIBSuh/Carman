@@ -29,7 +29,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // Objects
     private OnImageSpanListener mListener;
-    private SpannableStringBuilder ssb;
     private Editable editable;
     private List<ImageSpan> spanList;
 
@@ -45,18 +44,16 @@ public class BoardImageSpanHandler implements SpanWatcher {
         this.editable = editable;
         mListener = listener;
         spanList = new ArrayList<>();
-        //ssb = new SpannableStringBuilder(editable);
         editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
     }
 
-    // This method is called to notify you that the specified object has been attached to the
+    // This method is called to notify that the specified object has been attached to the
     // specified range of the text.
     @Override
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
-            log.i("onSpanAdded: %s, %s, %s, %s", text, what, start, end);
-            // Image tag that indicates the placeholder of an attached image should be reset
             resetImageSpanTag(text);
+            log.i("onSpanAdded: %s, %s, %s, %s", text, what, start, end);
 
             String tag = text.toString().substring(start, end);
             Matcher num = Pattern.compile("\\d+").matcher(tag);
@@ -73,17 +70,18 @@ public class BoardImageSpanHandler implements SpanWatcher {
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
-            log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
             resetImageSpanTag(text);
             log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
+
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
-                int position = Integer.valueOf(m.group(0));
+                int position = Integer.valueOf(m.group()); // group(0) means all. group(1) first.
                 spanList.remove(what);
                 mListener.notifyRemovedImageSpan(position);
-                log.i("removed position: %s, %s", what, position);
             }
+
+
         }
     }
 
@@ -100,7 +98,9 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
         if (what == Selection.SELECTION_START) {
-            // cursor position when adding or removing a charactor
+
+            // Move cursor forward or backward when adding or removing a charactor. Only removing
+            // a character with cursor moving backward
             if((ostart == nstart)) {
                 log.i("adding or removing: %s, %s, %s, %s", ostart, oend, nstart, nend);
                 for(ImageSpan span : spanList) {
@@ -113,10 +113,11 @@ public class BoardImageSpanHandler implements SpanWatcher {
             // the cursor from moving left.
             // cursor position when moving or ranging
             } else {
+                log.i("Range set: %s, %s, %s, %s, %s", text, ostart, nstart, oend, nend);
                 for(ImageSpan span : spanList) {
-                    if(nstart == text.getSpanStart(span)) {
-                        Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
-                        break;
+                    log.i("nstart and span: %s, %s", nstart, text.getSpanEnd(span));
+                    if(nstart == text.getSpanEnd(span)) {
+                        Selection.setSelection(text, text.getSpanStart(span) -1, text.getSpanStart(span) - 1);
                     }
                 }
             }
@@ -127,7 +128,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     }
 
-
+    // Edit mode.
     public void setImageSpan(List<ImageSpan> spans) {
         spanList = spans;
         log.i("spanlist size: %s", spanList.size());
