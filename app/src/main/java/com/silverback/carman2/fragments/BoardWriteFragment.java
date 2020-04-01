@@ -360,12 +360,14 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
+        log.i("addding position: %s", position);
         spanList.add(position, imgSpan);
         uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
     }
     @Override
     public void notifyRemovedImageSpan(int position) {
+        log.i("removing position: %s", position);
         spanList.remove(position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();

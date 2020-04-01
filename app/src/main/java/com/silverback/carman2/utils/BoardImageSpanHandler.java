@@ -54,8 +54,9 @@ public class BoardImageSpanHandler implements SpanWatcher {
     @Override
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
+            log.i("onSpanAdded: %s, %s, %s, %s", text, what, start, end);
             // Image tag that indicates the placeholder of an attached image should be reset
-            resetImageSpanTag();
+            resetImageSpanTag(text);
 
             String tag = text.toString().substring(start, end);
             Matcher num = Pattern.compile("\\d+").matcher(tag);
@@ -72,18 +73,17 @@ public class BoardImageSpanHandler implements SpanWatcher {
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
-            log.i("Span removed: %s, %s, %s", text, start, end);
+            log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
+            resetImageSpanTag(text);
+            log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
                 int position = Integer.valueOf(m.group(0));
+                spanList.remove(what);
                 mListener.notifyRemovedImageSpan(position);
                 log.i("removed position: %s, %s", what, position);
             }
-
-            // Retagging imagespans
-            //resetImageSpanTag();
-
         }
     }
 
@@ -96,9 +96,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // Either ading or removing a character makes all postions equal.
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
-        if(what instanceof ImageSpan) {
-            log.i("ImageSpan changed");
-        }
         // As long as the touch down and touch up at the same position, all position values are the
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
@@ -138,9 +135,9 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
 
     // Reset the image tag each time a new imagespan is added particularly in case of inserting.
-    private void resetImageSpanTag() {
+    private void resetImageSpanTag(Spannable text) {
         // Reset the markup tag
-        Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(editable);
+        Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(text);
         int tag = 0;
         while(m.find()) {
             markup = "[image_" + tag + "]\n";
