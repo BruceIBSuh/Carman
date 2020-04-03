@@ -406,8 +406,6 @@ public class BoardWriteFragment extends DialogFragment implements
         editable.replace(Math.min(start, end), Math.max(start, end), markup);
         editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        //Selection.setSelection(editable, editable.length());
     }
 
     @SuppressWarnings("ConstantConditions")

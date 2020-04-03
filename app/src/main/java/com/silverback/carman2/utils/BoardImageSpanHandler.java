@@ -54,8 +54,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
             resetImageSpanTag(text);
-            log.i("onSpanAdded: %s, %s, %s, %s", text, what, start, end);
-
             String tag = text.toString().substring(start, end);
             Matcher num = Pattern.compile("\\d+").matcher(tag);
             while(num.find()) {
@@ -71,17 +69,20 @@ public class BoardImageSpanHandler implements SpanWatcher {
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
         if(what instanceof ImageSpan) {
-            resetImageSpanTag(text);
+            editable.setSpan(this, 0, 0, Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+            if(text.getSpans(0, text.length(), ImageSpan.class).length > 0) resetImageSpanTag(text);
             log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
 
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
                 int position = Integer.valueOf(m.group()); // group(0) means all. group(1) first.
+                log.i("Position: %s", position);
                 spanList.remove(what);
                 mListener.notifyRemovedImageSpan(position);
             }
 
+            Selection.setSelection(editable, editable.length());
 
         }
     }
@@ -99,31 +100,43 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
         if (what == Selection.SELECTION_START) {
+            log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
             // Move cursor forward or backward when adding or removing a charactor. Only removing
             // a character with cursor moving backward
             if((ostart == nstart)) {
                 log.i("adding or removing: %s, %s, %s, %s", ostart, oend, nstart, nend);
                 for(ImageSpan span : spanList) {
                     if(nstart == text.getSpanEnd(span)) {
+                        // When the cursor is moving backward and comes at the end of the imagespan,
+                        // it moves up to the end of the line
                         log.i("Spanned at the end");
-                        Selection.setSelection(text, Math.max(0, text.getSpanStart(span) - 1));
+                        Selection.setSelection(text, Math.max(0, text.getSpanStart(span)) - 1);
                     }
                 }
             // Preven ImageSpan from deleting when it sets range and cut or del the range by blocking
-            // the cursor from moving left.
+            // the cursor from moving backward.
             // cursor position when moving or ranging
             } else {
-                log.i("Range set: %s, %s, %s, %s, %s", text, ostart, nstart, oend, nend);
+                log.i("cursor moving or ranging: %s, %s", ostart, nstart);
                 for(ImageSpan span : spanList) {
-                    log.i("span value: %s, %s", text.getSpanStart(span), text.getSpanEnd(span));
-                    int min = Math.min(ostart, nstart);
-                    int max = Math.max(ostart, nstart);
-
+                    if(nstart < text.getSpanEnd(span)) {
+                        log.i("Get into the span end");
+                        //Selection.setSelection(text, text.getSpanEnd(span));
+                    }
                 }
             }
 
         } else if (what == Selection.SELECTION_END) {
-            //log.i("SELECTION_END %s, %s, %s, %s", ostart, oend, nstart, nend);
+
+            log.i("SELECTION_END %s, %s, %s, %s", ostart, oend, nstart, nend);
+            if(ostart != nstart) {
+                for(ImageSpan span : spanList) {
+                    if(nend > text.getSpanStart(span)) {
+                        log.i("Get into the span start");
+                        //Selection.setSelection(text, text.getSpanStart(span));
+                    }
+                }
+            }
         }
 
     }
@@ -138,10 +151,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // Reset the image tag each time a new imagespan is added particularly in case of inserting.
     private void resetImageSpanTag(Spannable text) {
         // Reset the markup tag
-        Matcher m = Pattern.compile("\\[image_\\d]").matcher(text);
+        Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(text);
         int tag = 0;
         while(m.find()) {
-            markup = "[image_" + tag + "]";
+            markup = "[image_" + tag + "]\n";
             editable.replace(m.start(), m.end(), markup);
             tag++;
         }
