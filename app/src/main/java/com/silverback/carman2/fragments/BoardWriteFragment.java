@@ -6,9 +6,6 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.Selection;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
@@ -157,11 +154,8 @@ public class BoardWriteFragment extends DialogFragment implements
                         return true;
                 }
             }
-
             return false;
         });
-
-
 
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
@@ -294,8 +288,9 @@ public class BoardWriteFragment extends DialogFragment implements
             log.i("Bitmap received");
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
             // Manage the image spans using BoardImageSpanHandler helper class.
+            this.imageSpan = imgSpan;
             //spanHandler.setImageSpanToPost(imgSpan);
-            setImageSpan(etPostBody.getText(), imgSpan);
+            spanHandler.setImageSpan(imgSpan);
         });
 
         /*
@@ -361,12 +356,14 @@ public class BoardWriteFragment extends DialogFragment implements
         uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
     }
+
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("removing position: %s", position);
         spanList.remove(position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
+        etPostBody.invalidate();
     }
 
     // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the
@@ -396,7 +393,8 @@ public class BoardWriteFragment extends DialogFragment implements
         imgUri = uri;
     }
 
-    private void setImageSpan(Editable editable, ImageSpan span) {
+    /*
+    private void setImageSpanList(Editable editable, ImageSpan span) {
         int start = Selection.getSelectionStart(editable);
         int end = Selection.getSelectionEnd(editable);
 
@@ -407,7 +405,7 @@ public class BoardWriteFragment extends DialogFragment implements
         editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
-
+     */
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
         if(!doEmptyCheck()) return;
@@ -500,4 +498,5 @@ public class BoardWriteFragment extends DialogFragment implements
             }
         }
     }
+
 }
