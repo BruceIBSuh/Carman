@@ -74,7 +74,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private ImageViewModel imgViewModel;
     private BoardImageAdapter imageAdapter;
     private List<Uri> uriImgList;
-    private List<ImageSpan> spanList;
+    //private List<ImageSpan> spanList;
     private ImageSpan imageSpan;
     private SparseArray<String> downloadImages;
     private UploadBitmapTask bitmapTask;
@@ -116,7 +116,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         uriImgList = new ArrayList<>();
-        spanList = new ArrayList<>();
+        //spanList = new ArrayList<>();
         downloadImages = new SparseArray<>();
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -189,10 +189,10 @@ public class BoardWriteFragment extends DialogFragment implements
                  * than the end value which is not allowed for Editable.replace().
                  */
                 // Put linefeeder into the edittext when the image interleaves b/w the lines
-                int start = Math.max(etPostBody.getSelectionStart(), 0);
-                int end = Math.max(etPostBody.getSelectionEnd(), 0);
-                //int start = etPostBody.getSelectionStart();
-                //int end = etPostBody.getSelectionEnd();
+                //int start = Math.max(etPostBody.getSelectionStart(), 0);
+                //int end = Math.max(etPostBody.getSelectionEnd(), 0);
+                int start = etPostBody.getSelectionStart();
+                int end = etPostBody.getSelectionEnd();
                 log.i("insert image: %s, %s, %s", etPostBody.getText(), start, end);
                 etPostBody.getText().replace(start, end, "\n");
             }
@@ -352,7 +352,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
         log.i("addding position: %s", position);
-        spanList.add(position, imgSpan);
+        //spanList.add(position, imgSpan);
         uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
     }
@@ -360,20 +360,23 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("removing position: %s", position);
-        spanList.remove(position);
+        //spanList.remove(position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
-        etPostBody.invalidate();
+        //etPostBody.invalidate();
     }
 
     // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the
     // recyclerview.
     @Override
     public void removeImage(int position) {
+        spanHandler.removeImageSpan(position);
+        /*
         int start = etPostBody.getText().getSpanStart(spanList.get(position));
         int end = etPostBody.getText().getSpanEnd(spanList.get(position));
         etPostBody.getText().removeSpan(spanList.get(position));//remove the image span
         etPostBody.getText().replace(start, end, "");//delete the markkup
+         */
     }
 
     @Override
