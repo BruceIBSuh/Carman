@@ -81,6 +81,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
         if(what instanceof ImageSpan) {
             log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
+            resetImageSpanTag(text);
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
@@ -90,7 +91,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
                 mListener.notifyRemovedImageSpan(position);
             }
 
-            if(spanList.size() > 0) resetImageSpanTag(text);
+
         }
     }
 
@@ -141,14 +142,12 @@ public class BoardImageSpanHandler implements SpanWatcher {
         editable.replace(Math.min(start, end), Math.max(start, end), markup);
         // Attention to put the following spans in order. Otherwise, it fails to notify that a new
         // ImageSpan is added.
-        /*
         editable.setSpan(this, Math.min(start, end), Math.min(start, end) + markup.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        */
-        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        //dseditable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
+                Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
         setImageSpanFilters(editable);
     }
 
@@ -176,7 +175,14 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     private void setImageSpanFilters(Editable editable) {
 
-        editable.setFilters(new InputFilter[] {
+        editable.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
+            log.i("Filter: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
+            if(source instanceof Spanned) log.i("spanned");
+            return null;
+        }});
+    }
+
+        /*
                 new InputFilter() {
                     @Override
                     public CharSequence filter(final CharSequence source, final int start,
@@ -184,10 +190,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
                         log.i("Filter: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
                         if(source instanceof ImageSpan) log.i("imagespan");
-                        /*
-                        final int newStart = Math.max(markup.length(), dstart);
-                        final int newEnd = Math.max(markup.length(), dend);
-                        log.i("start and end: %s, %s, %s, %s", newStart, dstart, newEnd, dend);
+                        //final int newStart = Math.max(markup.length(), dstart);
+                        //final int newEnd = Math.max(markup.length(), dend);
+                        //log.i("start and end: %s, %s, %s, %s", newStart, dstart, newEnd, dend);
+
                         if (newStart != dstart || newEnd != dend) {
                             final SpannableStringBuilder builder = new SpannableStringBuilder(dest);
                             builder.replace(newStart, newEnd, source);
@@ -202,12 +208,16 @@ public class BoardImageSpanHandler implements SpanWatcher {
                             return null;
                         }
 
-                         */
-                        return null;
+
+
                     }
                 }
         });
 
+
+
     }
+
+         */
 
 }
