@@ -19,7 +19,9 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -120,18 +122,18 @@ public class BoardImageSpanHandler implements SpanWatcher {
                         log.i("Spanned: %s", text.getSpanStart(span));
                         Selection.setSelection(text, text.getSpanStart(span) - 1);
                         text.setSpan(this, text.getSpanStart(span) - 1, text.getSpanStart(span),
-                                Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                                Spanned.SPAN_INCLUSIVE_INCLUSIVE);
                         break;
                     }
                 }
-            // Cursor inserts.
+            // Cursor inserts in the middle of the text
             } else {
                 log.i("cursor pos: %s, %s", Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
                 int cursorPos = Math.min(Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
                 for(ImageSpan span : spanList) {
                     log.i("first place: %s, %s",Selection.getSelectionStart(text), text.getSpanStart(span));
-                    if(Selection.getSelectionStart(text) == text.getSpanStart(span)) {
-                        Selection.setSelection(text, text.getSpanEnd(span));
+                    if(cursorPos == text.getSpanStart(span)) {
+                        Selection.setSelection(text, text.getSpanStart(span) - 1);
                         break;
                     }
                 }
@@ -140,12 +142,33 @@ public class BoardImageSpanHandler implements SpanWatcher {
             }
 
         } else if(what == SELECTION_END) {
-            log.i("SELECTION_EMD: %s, %s, %s, %s", ostart, oend, nstart, nend);
-            for(ImageSpan span : spanList) {
-                if(text.getSpanStart(span) == -1 || text.getSpanEnd(span) == -1) {
-                    text.removeSpan(span);
+            log.i("SELECTION_END: %s, %s, %s, %s", ostart, oend, nstart, nend);
+            // ConcurrentModificationException occurs as long as an item is removed while looping.
+            // For preventing the exception, size and index values should be decreased each time
+            // any item is removed.
+
+            int size = spanList.size();
+            for(int i = 0; i < size; i++) {
+                if(text.getSpanStart(spanList.get(i)) == -1 || text.getSpanEnd(spanList.get(i)) == -1) {
+                    text.removeSpan(spanList.get(i));
+                    spanList.remove(spanList.get(i));
+                    mListener.notifyRemovedImageSpan(i);
+                    size--;
+                    i--;
                 }
             }
+
+            /*
+            ListIterator iter = spanList.listIterator();
+            while(iter.hasNext()) {
+                int index = iter.nextIndex();
+                if(text.getSpanStart(iter.next()) == -1 || text.getSpanEnd(iter.next()) == -1) {
+                    iter.remove();
+                    mListener.notifyRemovedImageSpan(index);
+                }
+            }
+
+             */
         }
 
     }
@@ -179,10 +202,12 @@ public class BoardImageSpanHandler implements SpanWatcher {
         //setImageSpanFilters(editable);
     }
 
+    // Invoked by removeImage(), callback invoked by BoardImageAdapter.OnBoardAttachImageListener
+    // when removing an image in the recyclerview.
     public void removeImageSpan(int position) {
-        log.i("span position: %s", position);
         int start = editable.getSpanStart(spanList.get(position));
         int end = editable.getSpanEnd(spanList.get(position));
+        log.i("span position: %s, %s, %s", position, start, end);
         // Required to setSpan() to notify that the ImageSpan is removed.
         try {
             editable.setSpan(this, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

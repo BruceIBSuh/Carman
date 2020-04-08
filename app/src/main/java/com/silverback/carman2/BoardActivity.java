@@ -472,6 +472,8 @@ public class BoardActivity extends BaseActivity implements
 
         float tabEnd = (isUpDown)? 0 : getActionbarHeight();
         float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
+        int nestedHeight = nestedScrollView.getHeight();
+        log.i("nestedHeight: %s", nestedHeight);
 
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);

@@ -372,7 +372,6 @@ public class BoardWriteFragment extends DialogFragment implements
         //spanList.remove(position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
-        //etPostBody.invalidate();
     }
 
     // Implement BoardImageAdapter.OnBoardAttachImageListener when an image is removed from the
