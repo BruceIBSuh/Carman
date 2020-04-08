@@ -143,7 +143,6 @@ public class BoardWriteFragment extends DialogFragment implements
         imageAdapter = new BoardImageAdapter(uriImgList, this);
         recyclerImageView.setAdapter(imageAdapter);
 
-
         // To scroll edittext inside (nested)scrollview. More research should be done.
         etPostBody.setOnTouchListener((view, event) ->{
             if(etPostBody.hasFocus()) {
@@ -351,10 +350,20 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        log.i("addding position: %s", position);
-        //spanList.add(position, imgSpan);
         uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
+        // Append the line break right after an image is attached.
+        /*
+        int cursorPos = etPostBody.getText().getSpanEnd(imgSpan);
+        if (etPostBody.length() == etPostBody.getSelectionEnd()) {
+            etPostBody.append("\n");
+
+        } else {
+            etPostBody.append("\n", cursorPos, cursorPos + 1);
+        }
+
+         */
+
     }
 
     @Override

@@ -9,6 +9,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static android.text.Selection.SELECTION_END;
 import static android.text.Selection.SELECTION_START;
 
 /**
@@ -52,8 +54,9 @@ public class BoardImageSpanHandler implements SpanWatcher {
         this.editable = editable;
         mListener = listener;
         spanList = new ArrayList<>();
-        //editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        setImageSpanFilters(editable);
+        editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        //setImageSpanFilters(editable);
+
     }
 
     // This method is called to notify that the specified object has been attached to the
@@ -65,7 +68,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
             // reset.
             if(spanList.size() > 0) resetImageSpanTag(text);
             String tag = text.toString().substring(start, end);
-            Matcher num = Pattern.compile("\\d+").matcher(tag);
+            Matcher num = Pattern.compile("\\d").matcher(tag);
             while(num.find()) {
                 int position = Integer.valueOf(num.group());
                 spanList.add(position, (ImageSpan)what);
@@ -91,7 +94,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
                 mListener.notifyRemovedImageSpan(position);
             }
 
-
+            text.setSpan(this, start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
     }
 
@@ -108,17 +111,40 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // As long as the touch down and touch up at the same position, all position values are the
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
-        if(TextUtils.isEmpty(markup)) return;
-        if (what == Selection.SELECTION_START) {
-            if (nstart < markup.length()) {
-                final int end = Math.max(markup.length(), Selection.getSelectionEnd(text));
-                Selection.setSelection(text, markup.length(), end);
+        if(what == SELECTION_START) {
+            log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
+            // Cursor adds or removes a character
+            if (ostart == nstart) {
+                for (ImageSpan span : spanList) {
+                    if (nstart == text.getSpanEnd(span)) {
+                        log.i("Spanned: %s", text.getSpanStart(span));
+                        Selection.setSelection(text, text.getSpanStart(span) - 1);
+                        text.setSpan(this, text.getSpanStart(span) - 1, text.getSpanStart(span),
+                                Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                        break;
+                    }
+                }
+            // Cursor inserts.
+            } else {
+                log.i("cursor pos: %s, %s", Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
+                int cursorPos = Math.min(Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
+                for(ImageSpan span : spanList) {
+                    log.i("first place: %s, %s",Selection.getSelectionStart(text), text.getSpanStart(span));
+                    if(Selection.getSelectionStart(text) == text.getSpanStart(span)) {
+                        Selection.setSelection(text, text.getSpanEnd(span));
+                        break;
+                    }
+                }
+
+                text.setSpan(this, cursorPos, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
             }
-        } else if (what == Selection.SELECTION_END) {
-            final int start = Math.max(markup.length(), Selection.getSelectionEnd(text));
-            final int end = Math.max(start, nstart);
-            if (end != nstart) {
-                Selection.setSelection(text, start, end);
+
+        } else if(what == SELECTION_END) {
+            log.i("SELECTION_EMD: %s, %s, %s, %s", ostart, oend, nstart, nend);
+            for(ImageSpan span : spanList) {
+                if(text.getSpanStart(span) == -1 || text.getSpanEnd(span) == -1) {
+                    text.removeSpan(span);
+                }
             }
         }
 
@@ -146,9 +172,11 @@ public class BoardImageSpanHandler implements SpanWatcher {
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
-                Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        setImageSpanFilters(editable);
+
+
+        //setImageSpanFilters(editable);
     }
 
     public void removeImageSpan(int position) {
@@ -156,9 +184,14 @@ public class BoardImageSpanHandler implements SpanWatcher {
         int start = editable.getSpanStart(spanList.get(position));
         int end = editable.getSpanEnd(spanList.get(position));
         // Required to setSpan() to notify that the ImageSpan is removed.
-        editable.setSpan(this, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        editable.removeSpan(spanList.remove(position));
-        editable.replace(start, end, "");
+        try {
+            editable.setSpan(this, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            editable.removeSpan(spanList.remove(position));
+            editable.replace(start, end, "");
+        } catch(IndexOutOfBoundsException e) {
+            log.e("IndexOutOfBoundException: %s", e.getMessage());
+
+        }
     }
 
     // Reset the image tag each time a new imagespan is added particif(text.getSpans(0, text.length(), ImageSpan.class).length > 0)
@@ -177,47 +210,17 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
         editable.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
             log.i("Filter: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-            if(source instanceof Spanned) log.i("spanned");
+            for(ImageSpan span : spanList) {
+                if(dstart == editable.getSpanEnd(span)) {
+                    Selection.setSelection(editable, dstart);
+                    break;
+                }
+            }
+
+
             return null;
         }});
     }
 
-        /*
-                new InputFilter() {
-                    @Override
-                    public CharSequence filter(final CharSequence source, final int start,
-                                               final int end, final Spanned dest, final int dstart, final int dend) {
-
-                        log.i("Filter: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-                        if(source instanceof ImageSpan) log.i("imagespan");
-                        //final int newStart = Math.max(markup.length(), dstart);
-                        //final int newEnd = Math.max(markup.length(), dend);
-                        //log.i("start and end: %s, %s, %s, %s", newStart, dstart, newEnd, dend);
-
-                        if (newStart != dstart || newEnd != dend) {
-                            final SpannableStringBuilder builder = new SpannableStringBuilder(dest);
-                            builder.replace(newStart, newEnd, source);
-                            if (source instanceof Spannable) {
-                                log.i("source");
-                                TextUtils.copySpansFrom(
-                                        (Spanned) source, 0, source.length(), null, builder, newStart);
-                            }
-                            Selection.setSelection(builder, newStart + source.length());
-                            return builder;
-                        } else {
-                            return null;
-                        }
-
-
-
-                    }
-                }
-        });
-
-
-
-    }
-
-         */
 
 }
