@@ -20,7 +20,11 @@ import android.widget.EditText;
 
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStore;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -61,8 +65,6 @@ public class BoardWriteFragment extends DialogFragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
     // Constants
-    //private static final int REQUEST_CODE_SAMSUNG = 1004;
-
     static final int GALLERY = 1;
     static final int CAMERA = 2;
 
@@ -71,11 +73,12 @@ public class BoardWriteFragment extends DialogFragment implements
     private ProgbarDialogFragment pbFragment;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private FragmentSharedModel fragmentModel;
+    private Observer<Integer> chooserObserver;
     private ImageViewModel imgViewModel;
     private BoardImageAdapter imageAdapter;
     private List<Uri> uriImgList;
     //private List<ImageSpan> spanList;
-    private ImageSpan imageSpan;
+    //private ImageSpan imageSpan;
     private SparseArray<String> downloadImages;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
@@ -91,6 +94,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private String[] arrAutoData;
     private String userId;
     private int tabPage;
+    private int chooser;
 
 
     // Constructor
@@ -110,17 +114,22 @@ public class BoardWriteFragment extends DialogFragment implements
         }
 
         // Set the listener only if the current page is set to the auto club.
-        if(tabPage == Constants.BOARD_AUTOCLUB)
-            ((BoardActivity)getActivity()).setAutoFilterListener(this);
+        if(tabPage == Constants.BOARD_AUTOCLUB) ((BoardActivity)getActivity()).setAutoFilterListener(this);
         isGeneralPost = true;
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         uriImgList = new ArrayList<>();
-        //spanList = new ArrayList<>();
         downloadImages = new SparseArray<>();
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
+
+        fragmentModel.getImageChooser().observe(requireActivity(), new Observer<Integer>(){
+            @Override
+            public void onChanged(Integer integer) {
+                chooser = integer;
+            }
+        });
     }
 
     @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
@@ -168,6 +177,7 @@ public class BoardWriteFragment extends DialogFragment implements
                 Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
 
             } else {
+                log.i("BoardChooserDlgFragment initiated");
                 // Pop up the dialog to select which media to use bewteen the camera and gallery, then
                 // create an intent by the selection.
                 DialogFragment dialog = new BoardChooserDlgFragment();
@@ -205,6 +215,10 @@ public class BoardWriteFragment extends DialogFragment implements
         return localView;
     }
 
+    // Handling  ViewModels
+    // When fragments finish their lifecycle, the instance of a viewmodel exists in ViewModelStore,
+    // until destruction of the parent activity. ViewModelStore has clear() method but it clears
+    // all viewmodels in it.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
@@ -213,7 +227,8 @@ public class BoardWriteFragment extends DialogFragment implements
         // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
-        fragmentModel.getImageChooser().observe(getActivity(), chooser -> {
+        fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+            log.i("FragmentViwModel: %s", fragmentModel);
             switch(chooser) {
                 case GALLERY:
                     // MULTI-SELECTION: special handling of Samsung phone.
@@ -254,6 +269,10 @@ public class BoardWriteFragment extends DialogFragment implements
                         getActivity().startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
                     }
                     break;
+
+                default:
+                    log.i("no select");
+                    break;
             }
 
 
@@ -283,14 +302,15 @@ public class BoardWriteFragment extends DialogFragment implements
         // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
         // This util method translates an image to an appropriate extent for fitting the imagespan and
         // the result is provided
-        imgViewModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
-            log.i("Bitmap received");
+        imgViewModel.getGlideBitmapTarget().observe(requireActivity(), bitmap -> {
+            log.i("Bitmap received: %s, %s", uriImgList.size(), bitmap);
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
             // Manage the image spans using BoardImageSpanHandler helper class.
-            this.imageSpan = imgSpan;
+            //this.imageSpan = imgSpan;
             //spanHandler.setImageSpanToPost(imgSpan);
             spanHandler.setImageSpan(imgSpan);
         });
+
 
         /*
          * UPLOAD PROCESS
@@ -301,7 +321,7 @@ public class BoardWriteFragment extends DialogFragment implements
          */
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
-        imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
+        imgViewModel.getDownloadBitmapUri().observe(requireActivity(), sparseArray -> {
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
             downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
@@ -315,7 +335,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
         // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
-        fragmentModel.getNewPosting().observe(getActivity(), docId -> {
+        fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
             log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
             if(docId == null || docId.isEmpty()) return;
             pbFragment.dismiss();
@@ -327,8 +347,18 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onPause() {
         super.onPause();
+        //if(spanHandler != null) spanHandler = null;
         if(bitmapTask != null) bitmapTask = null;
         if(postTask != null) postTask = null;
+    }
+
+    // Special care should be paid to handling ViewModel and Fragment life cycle.
+    @Override
+    public void onDestroyView() {
+        log.i("onDestroy");
+        fragmentModel.getImageChooser().setValue(-1);
+        fragmentModel.getImageChooser().removeObserver(chooserObserver);
+        super.onDestroyView();
     }
 
 
@@ -352,24 +382,11 @@ public class BoardWriteFragment extends DialogFragment implements
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
         uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
-        // Append the line break right after an image is attached.
-        /*
-        int cursorPos = etPostBody.getText().getSpanEnd(imgSpan);
-        if (etPostBody.length() == etPostBody.getSelectionEnd()) {
-            etPostBody.append("\n");
-
-        } else {
-            etPostBody.append("\n", cursorPos, cursorPos + 1);
-        }
-
-         */
-
     }
 
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("removing position: %s", position);
-        //spanList.remove(position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
     }
@@ -379,23 +396,18 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void removeImage(int position) {
         spanHandler.removeImageSpan(position);
-        /*
-        int start = etPostBody.getText().getSpanStart(spanList.get(position));
-        int end = etPostBody.getText().getSpanEnd(spanList.get(position));
-        etPostBody.getText().removeSpan(spanList.get(position));//remove the image span
-        etPostBody.getText().replace(start, end, "");//delete the markkup
-         */
     }
 
     @Override
     public void attachImage(Bitmap bmp, int pos) {
-        log.i("Bitmap received");
+        log.i("Bitmap received: %s, %s", bmp, pos);
     }
 
 
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment
     public void setUriFromImageChooser(Uri uri) {
+        log.d("setUriFromImageChooser");
         int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         applyImageResourceUtil.applyGlideToImageSpan(uri, x, y, imgViewModel);
@@ -477,7 +489,7 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
-
+    // Invoked when the upload menu in the toolbar is pressed.
     @SuppressWarnings("ConstantConditions")
     public void initUploadPost() {
 

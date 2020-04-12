@@ -23,6 +23,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -36,6 +37,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -80,7 +82,7 @@ public class BoardActivity extends BaseActivity implements
     private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
     private ImageViewModel imgModel;
-    private BoardViewModel boardModel;
+    //private BoardViewModel boardModel;
     private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
     private MenuItem menuEmblem;
@@ -128,7 +130,7 @@ public class BoardActivity extends BaseActivity implements
         setContentView(R.layout.activity_board);
 
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
+        //boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
         firestore = FirebaseFirestore.getInstance();
         imgResUtil = new ApplyImageResourceUtil(this);
 
@@ -210,11 +212,11 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if(resultCode != RESULT_OK || data == null) return;
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
                 //imgModel.getUriFromImageChooser().setValue(data.getData());
+                log.i("TEST");
                 writePostFragment.setUriFromImageChooser(data.getData());
                 break;
 
@@ -272,13 +274,24 @@ public class BoardActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
+                log.d("back button clicked");
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
                 if(frameLayout.getChildAt(0) instanceof ViewPager) {
                     frameLayout.removeAllViews();
                     finish();
 
-                } else addViewPager();
+                // Fragment container holds BoardWriteFragment and pressing the up button, the fragment
+                // is removed from the container and it shoud be null for garbage collecting it.
+                } else {
+                    Snackbar snackBar = Snackbar.make(coordinatorLayout, "Stop writing?", Snackbar.LENGTH_LONG);
+                    snackBar.setAction("OK", view -> {
+                        getSupportFragmentManager().beginTransaction().remove(writePostFragment).commit();
+                        addViewPager();
+                    });
+                    snackBar.show();
+
+                }
 
                 return true;
 
@@ -472,20 +485,18 @@ public class BoardActivity extends BaseActivity implements
 
         float tabEnd = (isUpDown)? 0 : getActionbarHeight();
         float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
-        int nestedHeight = nestedScrollView.getHeight();
-        log.i("nestedHeight: %s", nestedHeight);
 
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);
+        slideTabUp.start();
+        /*
         ObjectAnimator slideNestedUp = ObjectAnimator.ofFloat(nestedScrollView, "y", nestedEnd);
-
         slideTabUp.setDuration(500);
         slideNestedUp.setDuration(500);
-
         if(isUpDown) animSet.play(slideTabUp).before(slideNestedUp);
         else animSet.play(slideNestedUp).before(slideTabUp);
-
         animSet.start();
+         */
     }
 
     // Create the toolbar title which depends on which checkbox is checked and is applied only when

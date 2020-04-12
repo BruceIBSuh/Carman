@@ -56,6 +56,10 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_label_title" />
 
 
+    <!--
+    textNoSuggestions required to prevent the spell check from popping up, which blocks
+    the value of Selection.getSelectionStart() to tell where is the imagespan
+    -->
     <EditText
         android:id="@+id/et_board_content"
         android:layout_width="0dp"
@@ -65,7 +69,7 @@
         android:gravity="start|top"
         android:background="@null"
         android:hint="@null"
-        android:inputType="textMultiLine"
+        android:inputType="textMultiLine|textNoSuggestions"
         android:scrollbars="vertical"
         android:textSize="@dimen/smallText"
         app:layout_constraintBottom_toTopOf="@+id/vg_recycler_images"

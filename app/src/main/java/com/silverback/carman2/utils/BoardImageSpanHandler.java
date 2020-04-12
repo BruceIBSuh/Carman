@@ -29,8 +29,20 @@ import static android.text.Selection.SELECTION_END;
 import static android.text.Selection.SELECTION_START;
 
 /**
- * When SpanWatcher is attached to a Spannable, its methods will be called to notify it that
- * other markup objects have been added, changed, or removed.
+ *
+ * When SpanWatcher is attached to a Spannable, its methods will be called to notify that other
+ * markup objects have been added, changed, or removed.
+ *
+ * Special care should be paid to the span flags which indicates the ImageSpan postions.
+ * From the start, the text is spanned with SpanWatcher to tell where Selection.getSelectionStart()
+ * is. SpanWatcher stops the span at the position where an imagespan is set such that another span
+ * has to be set at the end of the imagespan with Spanned.SPAN_EXCLUSIVE_INCLUSIVE in order to
+ * recognize the current cursor position.
+ *
+ * When removing an imagespan, the text span is to be set as well with Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+ * On the other hand, inserting the cursor in the millde of text, the text span has to be reset from
+ * that point with Spanned.SPAN_INCLUSIVE_INCLUSIVE. The reason that the span end should be INCLUSIVE
+ * is that the cursor not only moves backward deleting a character but also moves forward adding one.
  */
 public class BoardImageSpanHandler implements SpanWatcher {
 
@@ -57,8 +69,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
         mListener = listener;
         spanList = new ArrayList<>();
         editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        //setImageSpanFilters(editable);
-
     }
 
     // This method is called to notify that the specified object has been attached to the
@@ -129,16 +139,20 @@ public class BoardImageSpanHandler implements SpanWatcher {
             // Cursor inserts in the middle of the text
             } else {
                 log.i("cursor pos: %s, %s", Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
-                int cursorPos = Math.min(Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
+                //int cursorPos = Math.min(Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
+                int cursorPos = Selection.getSelectionStart(text);
+                text.setSpan(this, cursorPos, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                /*
                 for(ImageSpan span : spanList) {
                     log.i("first place: %s, %s",Selection.getSelectionStart(text), text.getSpanStart(span));
-                    if(cursorPos == text.getSpanStart(span)) {
-                        Selection.setSelection(text, text.getSpanStart(span) - 1);
+                    if(Selection.getSelectionStart(text) == text.getSpanStart(span)) {
+                        //Selection.setSelection(text, text.getSpanStart(span) - 1);
+
                         break;
                     }
                 }
 
-                text.setSpan(this, cursorPos, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                 */
             }
 
         } else if(what == SELECTION_END) {
@@ -146,7 +160,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
             // ConcurrentModificationException occurs as long as an item is removed while looping.
             // For preventing the exception, size and index values should be decreased each time
             // any item is removed.
-
             int size = spanList.size();
             for(int i = 0; i < size; i++) {
                 if(text.getSpanStart(spanList.get(i)) == -1 || text.getSpanEnd(spanList.get(i)) == -1) {
@@ -157,18 +170,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
                     i--;
                 }
             }
-
-            /*
-            ListIterator iter = spanList.listIterator();
-            while(iter.hasNext()) {
-                int index = iter.nextIndex();
-                if(text.getSpanStart(iter.next()) == -1 || text.getSpanEnd(iter.next()) == -1) {
-                    iter.remove();
-                    mListener.notifyRemovedImageSpan(index);
-                }
-            }
-
-             */
         }
 
     }
@@ -192,14 +193,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // Attention to put the following spans in order. Otherwise, it fails to notify that a new
         // ImageSpan is added.
         editable.setSpan(this, Math.min(start, end), Math.min(start, end) + markup.length(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
 
         editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-
-
-        //setImageSpanFilters(editable);
     }
 
     // Invoked by removeImage(), callback invoked by BoardImageAdapter.OnBoardAttachImageListener
@@ -210,7 +207,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
         log.i("span position: %s, %s, %s", position, start, end);
         // Required to setSpan() to notify that the ImageSpan is removed.
         try {
-            editable.setSpan(this, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            editable.setSpan(this, start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
             editable.removeSpan(spanList.remove(position));
             editable.replace(start, end, "");
         } catch(IndexOutOfBoundsException e) {
@@ -230,22 +227,4 @@ public class BoardImageSpanHandler implements SpanWatcher {
             tag++;
         }
     }
-
-    private void setImageSpanFilters(Editable editable) {
-
-        editable.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
-            log.i("Filter: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-            for(ImageSpan span : spanList) {
-                if(dstart == editable.getSpanEnd(span)) {
-                    Selection.setSelection(editable, dstart);
-                    break;
-                }
-            }
-
-
-            return null;
-        }});
-    }
-
-
 }
