@@ -370,7 +370,7 @@ public class BoardWriteFragment extends DialogFragment implements
     public void notifyRemovedImageSpan(int position) {
         log.i("removing position: %s", position);
         //spanList.remove(position);
-        uriImgList.remove(position);
+        if(uriImgList.size() > 0) uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
     }
 

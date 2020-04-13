@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -472,20 +473,39 @@ public class BoardActivity extends BaseActivity implements
 
         float tabEnd = (isUpDown)? 0 : getActionbarHeight();
         float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
-        int nestedHeight = nestedScrollView.getHeight();
+        int nestedHeight = nestedScrollView.getMeasuredHeight();
         log.i("nestedHeight: %s", nestedHeight);
 
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);
         ObjectAnimator slideNestedUp = ObjectAnimator.ofFloat(nestedScrollView, "y", nestedEnd);
+        //ObjectAnimator enlarge = ObjectAnimator.ofFloat(frameLayout, "translationY", 1000f);
 
         slideTabUp.setDuration(500);
         slideNestedUp.setDuration(500);
+        //enlarge.setDuration(500);
 
-        if(isUpDown) animSet.play(slideTabUp).before(slideNestedUp);
+        if(isUpDown) animSet.play(slideTabUp).before(slideNestedUp);//.before(enlarge);
         else animSet.play(slideNestedUp).before(slideTabUp);
 
         animSet.start();
+
+        /*
+        ValueAnimator anim = ValueAnimator.ofInt(nestedScrollView.getMeasuredHeight(), (int)(nestedHeight + getActionbarHeight()));
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                int val = (Integer) valueAnimator.getAnimatedValue();
+                ViewGroup.LayoutParams layoutParams = nestedScrollView.getLayoutParams();
+                layoutParams.height = val;
+                nestedScrollView.setLayoutParams(layoutParams);
+            }
+        });
+        anim.setDuration(1000);
+        anim.start();
+        */
+
+
     }
 
     // Create the toolbar title which depends on which checkbox is checked and is applied only when
