@@ -75,6 +75,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // specified range of the text.
     @Override
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
+        log.i("onSpanAdded: %s, %s, %s", what, start, end);
         if(what instanceof ImageSpan) {
             // In case a new span is inserted in the middle of existing spans, tags have to be
             // reset.
@@ -93,9 +94,8 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // specified range of the text.
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
-
+        log.i("onSpanRemoved: %s, %s, %s", what, start, end);
         if(what instanceof ImageSpan) {
-            log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
             resetImageSpanTag(text);
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
@@ -106,7 +106,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
                 mListener.notifyRemovedImageSpan(position);
             }
 
-            text.setSpan(this, start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            //text.setSpan(this, start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         }
     }
 
@@ -124,7 +124,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
         if(what == SELECTION_START) {
-            log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
+            //log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
             // Cursor adds or removes a character
             if (ostart == nstart) {
                 for (ImageSpan span : spanList) {
@@ -132,31 +132,22 @@ public class BoardImageSpanHandler implements SpanWatcher {
                         log.i("Spanned: %s", text.getSpanStart(span));
                         Selection.setSelection(text, text.getSpanStart(span) - 1);
                         text.setSpan(this, text.getSpanStart(span) - 1, text.getSpanStart(span),
-                                Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                                Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+
                         break;
                     }
                 }
             // Cursor inserts in the middle of the text
             } else {
-                log.i("cursor pos: %s, %s", Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
+                //log.i("cursor pos: %s, %s", Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
                 //int cursorPos = Math.min(Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
                 int cursorPos = Selection.getSelectionStart(text);
-                text.setSpan(this, cursorPos, text.length(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-                /*
-                for(ImageSpan span : spanList) {
-                    log.i("first place: %s, %s",Selection.getSelectionStart(text), text.getSpanStart(span));
-                    if(Selection.getSelectionStart(text) == text.getSpanStart(span)) {
-                        //Selection.setSelection(text, text.getSpanStart(span) - 1);
-
-                        break;
-                    }
-                }
-
-                 */
+                text.setSpan(this, cursorPos, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             }
 
         } else if(what == SELECTION_END) {
-            log.i("SELECTION_END: %s, %s, %s, %s", ostart, oend, nstart, nend);
+            //log.i("SELECTION_END: %s, %s, %s, %s", ostart, oend, nstart, nend);
             // ConcurrentModificationException occurs as long as an item is removed while looping.
             // For preventing the exception, size and index values should be decreased each time
             // any item is removed.

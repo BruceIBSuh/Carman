@@ -4,6 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,7 +25,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.Animation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -109,7 +113,7 @@ public class BoardActivity extends BaseActivity implements
     private String jsonAutoFilter; //auto data saved in SharedPreferences as JSON String.
     private int tabPage;
     private boolean isFilterVisible;
-
+    private int nestedScrollViewHeight;
 
     // Interface for passing the checkbox values to BoardPagerAdapter to update the AutoClub board.
     // Intial values are passed via BoardPagerAdapter.onCheckBoxValueChange()
@@ -144,8 +148,6 @@ public class BoardActivity extends BaseActivity implements
         cbLayout = findViewById(R.id.linearLayout_autofilter);
         pbLoading = findViewById(R.id.progbar_board_loading);
         fabWrite = findViewById(R.id.fab_board_write);
-
-        log.i("toolbar elevation: %s", toolbar.getElevation());
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
@@ -286,6 +288,14 @@ public class BoardActivity extends BaseActivity implements
                 } else {
                     Snackbar snackBar = Snackbar.make(coordinatorLayout, "Stop writing?", Snackbar.LENGTH_LONG);
                     snackBar.setAction("OK", view -> {
+                        // Check if the soft input is visible by comparing the nestedscrollviewheights
+                        if(nestedScrollView.getMeasuredHeight() < nestedScrollViewHeight) {
+                            log.i("close the soft input");
+                            InputMethodManager imm =
+                                    (InputMethodManager)this.getSystemService(Activity.INPUT_METHOD_SERVICE);
+                            imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
+                        }
+
                         getSupportFragmentManager().beginTransaction().remove(writePostFragment).commit();
                         addViewPager();
                     });
@@ -367,6 +377,11 @@ public class BoardActivity extends BaseActivity implements
         // Visibility control on menu and fab.
         fabWrite.setVisibility(View.INVISIBLE);
         menu.getItem(1).setVisible(true);
+
+        // Measure the nestedscrollview height only when BoardWriteFragment is added.
+        nestedScrollViewHeight = nestedScrollView.getMeasuredHeight();
+        log.i("NestedScrollViewHeight: %s", nestedScrollViewHeight);
+
     }
 
     // Implement BoardReadDlgFragment.OnEditModeListener when the edit button clicks.
@@ -481,14 +496,29 @@ public class BoardActivity extends BaseActivity implements
     }
 
 
-    private void animAppbarLayout(boolean isUpDown) {
+    private void animAppbarLayout(boolean isUp) {
 
-        float tabEnd = (isUpDown)? 0 : getActionbarHeight();
-        float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
+        float tabEnd = (isUp)? 0 : getActionbarHeight();
+        float nestedEnd = (isUp)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
+        float strechedHeight = nestedScrollViewHeight + getActionbarHeight();
 
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);
+        slideTabUp.setDuration(500);
         slideTabUp.start();
+
+        log.i("view height: %s, %s", nestedScrollViewHeight, strechedHeight);
+        ValueAnimator strechScrollView = ValueAnimator.ofInt(nestedScrollViewHeight, (int)strechedHeight);
+
+        strechScrollView.addUpdateListener(animation -> {
+            int value = (Integer)animation.getAnimatedValue();
+            ViewGroup.LayoutParams params = nestedScrollView.getLayoutParams();
+            params.height = value;
+            nestedScrollView.setLayoutParams(params);
+        });
+        strechScrollView.setDuration(500);
+        strechScrollView.start();
+
         /*
         ObjectAnimator slideNestedUp = ObjectAnimator.ofFloat(nestedScrollView, "y", nestedEnd);
         slideTabUp.setDuration(500);
