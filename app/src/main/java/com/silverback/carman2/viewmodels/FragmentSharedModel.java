@@ -56,6 +56,8 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<List<String>> defaultDistCode;
 
 
+
+
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }

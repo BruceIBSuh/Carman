@@ -5,10 +5,12 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -24,6 +26,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.animation.Animation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -37,6 +42,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -81,7 +87,7 @@ public class BoardActivity extends BaseActivity implements
     private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
     private ImageViewModel imgModel;
-    private BoardViewModel boardModel;
+    //private BoardViewModel boardModel;
     private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
     private MenuItem menuEmblem;
@@ -129,7 +135,7 @@ public class BoardActivity extends BaseActivity implements
         setContentView(R.layout.activity_board);
 
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
+        //boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
         firestore = FirebaseFirestore.getInstance();
         imgResUtil = new ApplyImageResourceUtil(this);
 
@@ -211,11 +217,11 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if(resultCode != RESULT_OK || data == null) return;
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
                 //imgModel.getUriFromImageChooser().setValue(data.getData());
+                log.i("TEST");
                 writePostFragment.setUriFromImageChooser(data.getData());
                 break;
 
@@ -273,13 +279,29 @@ public class BoardActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
+                log.d("back button clicked");
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
                 if(frameLayout.getChildAt(0) instanceof ViewPager) {
                     frameLayout.removeAllViews();
                     finish();
 
-                } else addViewPager();
+                // Fragment container holds BoardWriteFragment and pressing the up button, the fragment
+                // is removed from the container and it shoud be null for garbage collecting it.
+                } else {
+                    Snackbar snackBar = Snackbar.make(coordinatorLayout, "Stop writing?", Snackbar.LENGTH_LONG);
+                    snackBar.setAction("OK", view -> {
+                        // Remove BoardWriteFragment when the up button presses.
+                        getSupportFragmentManager().beginTransaction().remove(writePostFragment).commit();
+                        // Hide the soft input when BoardWriteFragment disappears
+                        InputMethodManager imm = (InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
+                        // Add BoardPagerFragment in the framelayout.
+                        addViewPager();
+
+                    });
+                    snackBar.show();
+                }
 
                 return true;
 
@@ -469,42 +491,40 @@ public class BoardActivity extends BaseActivity implements
     }
 
 
-    private void animAppbarLayout(boolean isUpDown) {
-
-        float tabEnd = (isUpDown)? 0 : getActionbarHeight();
-        float nestedEnd = (isUpDown)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
+    // When calling BoardWriteFragment, the tab layout scrolls up to disappear behind the toolbar.
+    private void animAppbarLayout(boolean isUp) {
+        float tabEnd = (isUp)? 0 : getActionbarHeight();
+        float nestedEnd = (isUp)? getActionbarHeight() : getActionbarHeight() + boardTabLayout.getHeight();
         int nestedHeight = nestedScrollView.getMeasuredHeight();
-        log.i("nestedHeight: %s", nestedHeight);
 
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);
-        ObjectAnimator slideNestedUp = ObjectAnimator.ofFloat(nestedScrollView, "y", nestedEnd);
-        //ObjectAnimator enlarge = ObjectAnimator.ofFloat(frameLayout, "translationY", 1000f);
 
+        ObjectAnimator slideTabUp = ObjectAnimator.ofFloat(boardTabLayout, "y", tabEnd);
+        slideTabUp.setDuration(500);
+
+        ObjectAnimator slideNestedUp = ObjectAnimator.ofFloat(nestedScrollView, "y", nestedEnd);
         slideTabUp.setDuration(500);
         slideNestedUp.setDuration(500);
-        //enlarge.setDuration(500);
 
-        if(isUpDown) animSet.play(slideTabUp).before(slideNestedUp);//.before(enlarge);
+        if(isUp) animSet.play(slideTabUp).before(slideNestedUp);
         else animSet.play(slideNestedUp).before(slideTabUp);
-
         animSet.start();
 
-        /*
-        ValueAnimator anim = ValueAnimator.ofInt(nestedScrollView.getMeasuredHeight(), (int)(nestedHeight + getActionbarHeight()));
-        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                int val = (Integer) valueAnimator.getAnimatedValue();
-                ViewGroup.LayoutParams layoutParams = nestedScrollView.getLayoutParams();
-                layoutParams.height = val;
-                nestedScrollView.setLayoutParams(layoutParams);
-            }
-        });
-        anim.setDuration(1000);
-        anim.start();
-        */
 
+        // Increase the nestedscrollview height to cover up the offset from the bottom of the screen
+        // that comes out of sliding up the view. For this reason, when the soft input pops up, the
+        // soft input mode of SOFT_INPUT_ADJUST_RESIZE does not work. Thus, the view manually resize.
+        /*
+        ValueAnimator stretchBoard = ValueAnimator.ofInt(nestedHeight, nestedHeight + (int) getActionbarHeight());
+        stretchBoard.addUpdateListener(animator -> {
+            int animValue = (Integer) animator.getAnimatedValue();
+            ViewGroup.LayoutParams params = nestedScrollView.getLayoutParams();
+            params.height = animValue;
+            nestedScrollView.setLayoutParams(params);
+        });
+        stretchBoard.setDuration(500);
+        stretchBoard.start();
+        */
 
     }
 

@@ -15,6 +15,8 @@ import androidx.lifecycle.ViewModel;
  */
 public class ImageViewModel extends ViewModel {
 
+
+
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
 
     private MutableLiveData<SparseArray> downloadBitmapUri;
@@ -56,4 +58,6 @@ public class ImageViewModel extends ViewModel {
         if(uriFromImageChooser == null) uriFromImageChooser = new MutableLiveData<>();
         return uriFromImageChooser;
     }
+
+
 }

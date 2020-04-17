@@ -182,7 +182,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
             }
 
             etPostContent.setText(ssb);
-            spanHandler = new BoardImageSpanHandler(ssb, this);
+            spanHandler = new BoardImageSpanHandler(etPostContent, this);
             spanHandler.setImageSpanList(spanList);
         }
     }

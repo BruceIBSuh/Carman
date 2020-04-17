@@ -1,8 +1,10 @@
 package com.silverback.carman2.utils;
 
+import android.os.Handler;
 import android.text.DynamicLayout;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.Layout;
 import android.text.Selection;
 import android.text.SpanWatcher;
 import android.text.Spannable;
@@ -13,7 +15,10 @@ import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -29,22 +34,34 @@ import static android.text.Selection.SELECTION_END;
 import static android.text.Selection.SELECTION_START;
 
 /**
- * When SpanWatcher is attached to a Spannable, its methods will be called to notify it that
- * other markup objects have been added, changed, or removed.
- * Editable.setSpan() is interrupted when an ImageSpan is set up. Therefore, from this point, the
- * span has to be reset with the flag of SPAN_INCLUSIVE(EXCLUSIVE)_INCLUSIVE to be feasible.
+ *
+ * When SpanWatcher is attached to a Spannable, its methods will be called to notify that other
+ * markup objects have been added, changed, or removed.
+ *
+ * Special care should be paid to the span flags which indicates the ImageSpan postions.
+ * From the start, the text is spanned with SpanWatcher to tell where Selection.getSelectionStart()
+ * is. SpanWatcher stops the span at the position where an imagespan is set such that another span
+ * has to be set at the end of the imagespan with Spanned.SPAN_EXCLUSIVE_INCLUSIVE in order to
+ * recognize the current cursor position.
+ *
+ * When removing an imagespan, the text span is to be set as well with Spanned.SPAN_INCLUSIVE_EXCLUSIVE
+ * On the other hand, inserting the cursor in the millde of text, the text span has to be reset from
+ * that point with Spanned.SPAN_INCLUSIVE_INCLUSIVE. The reason that the span end should be INCLUSIVE
+ * is that the cursor not only moves backward deleting a character but also moves forward adding one.
  */
 public class BoardImageSpanHandler implements SpanWatcher {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardImageSpanHandler.class);
 
     // Objects
+    private EditText editText;
     private OnImageSpanListener mListener;
     private Editable editable;
     private List<ImageSpan> spanList;
 
     // Fields
     private String markup;
+    private boolean isSpanned;
 
     // Interface to notify BoardWriteFragment that an image span is removed so that the fragment
     // should remove the span out the list and the adapter as well.
@@ -54,19 +71,45 @@ public class BoardImageSpanHandler implements SpanWatcher {
     }
 
     // Constructor
-    public BoardImageSpanHandler(Editable editable, OnImageSpanListener listener) {
-        this.editable = editable;
+    public BoardImageSpanHandler(EditText editText, OnImageSpanListener listener) {
+
+        this.editable = editText.getText();
+        this.editText = editText;
         mListener = listener;
         spanList = new ArrayList<>();
-        editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
-        //setImageSpanFilters(editable);
+        //editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
 
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(count == 0 && before == 1) {
+
+                    for(ImageSpan span : spanList) {
+                        if(start == editable.getSpanEnd(span)) {
+                            // Have to use View.post() because the system waits for letting some layouts
+                            // done until an appropriate time. Thus, if Selection.setSelection() is made
+                            // before layouts are finished, the system may undo setSelection().
+                            editText.post(() -> Selection.setSelection(editable, editable.getSpanStart(span) - 1));
+                            break;
+                        }
+                    }
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 
     // This method is called to notify that the specified object has been attached to the
     // specified range of the text.
     @Override
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
+        log.d("onSpanAdded: %s", what);
         if(what instanceof ImageSpan) {
             // In case a new span is inserted in the middle of existing spans, tags have to be
             // reset.
@@ -85,20 +128,19 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // specified range of the text.
     @Override
     public void onSpanRemoved(Spannable text, Object what, int start, int end) {
-
+        log.d("onSpanRemoved: %s", what);
         if(what instanceof ImageSpan) {
-            log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
+            //log.i("onSpanRemoved: %s, %s, %s, %s", text, what, start, end);
             resetImageSpanTag(text);
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
                 int position = Integer.valueOf(m.group()); // group(0) means all. group(1) first.
-                log.i("Position: %s", position);
                 spanList.remove(what);
                 mListener.notifyRemovedImageSpan(position);
             }
 
-            text.setSpan(this, start, end, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            //text.setSpan(this, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
     }
 
@@ -112,38 +154,24 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // works in the same way.
     @Override
     public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart, int nend) {
+        //log.i("onSpanChanged: %s, %s, %s, %s", ostart, oend, nstart, nend);
         // As long as the touch down and touch up at the same position, all position values are the
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
         if(what == SELECTION_START) {
-            // Cursor adds or removes a character
-            log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
-            if (ostart == nstart) {
+            if(ostart != nstart) {
+                int cursorPos = Selection.getSelectionStart(text);
                 for (ImageSpan span : spanList) {
-                    if (nstart == text.getSpanEnd(span)) {
-                        Selection.setSelection(text, text.getSpanStart(span), text.getSpanEnd(span) - 1);
-                        text.setSpan(this, text.getSpanStart(span) - 1, text.getSpanStart(span),
-                                Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                    log.i("cursor position: %s, %s", cursorPos, text.getSpanStart(span));
+                    if (cursorPos == text.getSpanStart(span)) {
+                        editText.post(() -> Selection.setSelection(editable, editable.getSpanStart(span) -1));
                         break;
                     }
                 }
-            // Cursor inserts either in the middle of the text or at the end of the line.
-            } else {
-                log.i("cursor pos : %s, %s", Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
-                int cursorPos = Math.min(Selection.getSelectionStart(text), Selection.getSelectionEnd(text));
-                for(ImageSpan span : spanList) {
-                    if(cursorPos == text.getSpanStart(span)) {
-                        Selection.setSelection(text, text.getSpanStart(span) - 1);
-                        break;
-                    }
-                }
-
-                text.setSpan(this, cursorPos, text.length(), Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
             }
 
         } else if(what == SELECTION_END) {
             //log.i("SELECTION_END: %s, %s, %s, %s", ostart, oend, nstart, nend);
-
             // ConcurrentModificationException occurs as long as an item is removed while looping.
             // For preventing the exception, size and index values should be decreased each time
             // any item is removed.
@@ -179,16 +207,11 @@ public class BoardImageSpanHandler implements SpanWatcher {
         editable.replace(Math.min(start, end), Math.max(start, end), markup);
         // Attention to put the following spans in order. Otherwise, it fails to notify that a new
         // ImageSpan is added.
-
         editable.setSpan(this, Math.min(start, end), Math.min(start, end) + markup.length(),
                 Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
 
         editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-
-
-        //setImageSpanFilters(editable);
     }
 
     // Invoked by removeImage(), callback invoked by BoardImageAdapter.OnBoardAttachImageListener
@@ -204,8 +227,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
             editable.replace(start, end, "");
         } catch(IndexOutOfBoundsException e) {
             log.e("IndexOutOfBoundException: %s", e.getMessage());
-            log.i("spanlist left: %s", spanList.size());
-            mListener.notifyRemovedImageSpan(position);
+
         }
     }
 
@@ -220,23 +242,4 @@ public class BoardImageSpanHandler implements SpanWatcher {
             tag++;
         }
     }
-
-    private void setImageSpanFilters(Editable editable) {
-
-        editable.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
-            log.i("Filter: %s, %s, %s, %s, %s, %s", source, start, end, dest, dstart, dend);
-            for(ImageSpan span : spanList) {
-                if(dstart == editable.getSpanEnd(span) && TextUtils.isEmpty(source)) {
-                    log.i("Spanned in filter");
-                    Selection.setSelection(editable, dstart - markup.length() - 1);
-                    break;
-                }
-            }
-
-
-            return null;
-        }});
-    }
-
-
 }
