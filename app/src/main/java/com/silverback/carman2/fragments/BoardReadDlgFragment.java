@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -11,6 +12,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -120,7 +122,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private String autoClub;
     private String userId, documentId;
     private int tabPage;
-    private int position;
+    //private int position;
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
@@ -133,7 +135,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public void setEditModeListener(OnEditModeListener listener) {
         mListener = listener;
     }
-
 
     public BoardReadDlgFragment() {
         // Required empty public constructor
@@ -154,7 +155,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
-            position = getArguments().getInt("position");
+            //position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
@@ -335,6 +336,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
     }
+
 
     @SuppressWarnings("ConstantConditions")
     @Override

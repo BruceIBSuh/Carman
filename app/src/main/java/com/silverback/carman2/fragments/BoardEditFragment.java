@@ -1,5 +1,6 @@
 package com.silverback.carman2.fragments;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -7,6 +8,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,8 +87,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-
-
     }
 
     @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
@@ -106,7 +106,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         recyclerView.setLayoutManager(linearLayout);
 
-
         // If the post includes attached image(s), make a type cast of String to Uri, then pass it
         // to the adapter. Otherwise, display the post as it is.
         if(imgUriList != null && imgUriList.size() > 0) {
@@ -118,7 +117,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         } else etPostContent.setText(content);
 
 
-        // To scroll edittext inside (nested)scrollview. More research should be done.
+        // Scroll the edittext inside (nested)scrollview. More research should be done.
         // warning message is caused by onPermClick not implemented. Unless the method is requried
         // to implement, the warning can be suppressed by "clickableVieweaccessibility".
         etPostContent.setOnTouchListener((view, event) ->{
@@ -130,7 +129,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
                         return true;
                 }
             }
-
             return false;
         });
 
@@ -151,20 +149,18 @@ public class BoardEditFragment extends BoardBaseFragment implements
                 DialogFragment dialog = new BoardChooserDlgFragment();
                 dialog.show(getActivity().getSupportFragmentManager(), "chooser");
 
-                // Put linefeeder into the edittext when the image interleaves b/w the lines
-                int start = Math.max(etPostContent.getSelectionStart(), 0);
-                int end = Math.max(etPostContent.getSelectionStart(), 0);
-                etPostContent.getText().replace(Math.min(start, end), Math.max(start, end), "\n");
+                // Put the line breaker into the edittext when the image interleaves b/w the lines
+                int start = etPostContent.getSelectionStart();
+                int end = etPostContent.getSelectionEnd();
+                log.i("insert image: %s, %s, %s", etPostContent.getText(), start, end);
+                etPostContent.getText().replace(start, end, "\n");
             }
         });
-
-
 
         return localView;
     }
 
-
-    // Implement BoardImageADapter.OnAttachImageListener which has the following overriding methods
+    // Implement BoardImageAdapter.OnAttachImageListener which has the following overriding methods
     @SuppressWarnings("ConstantConditions")
     @Override
     public void attachImage(Bitmap bmp, int pos) {
@@ -176,13 +172,12 @@ public class BoardEditFragment extends BoardBaseFragment implements
         if(spanList.size() == imgAdapter.getItemCount()) {
             int index = 0;
             while(m.find()) {
-                ssb.setSpan(spanList.get(index), m.start(), m.end(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                ssb.setSpan(spanList.get(index), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 index++;
             }
 
             etPostContent.setText(ssb);
-            spanHandler = new BoardImageSpanHandler(ssb, this);
+            spanHandler = new BoardImageSpanHandler(etPostContent, this);
             spanHandler.setImageSpanList(spanList);
         }
     }
@@ -190,14 +185,18 @@ public class BoardEditFragment extends BoardBaseFragment implements
     @Override
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
-        //spanHandler.removeImageSpan(position);
+        spanHandler.removeImageSpan(position);
+        /*
         uriImages.remove(position);
         // notifyItemRemoved(), weirdly does not work here.
         imgAdapter.notifyDataSetChanged();
-
         etPostContent.setText(ssb);
+         */
     }
 
+    // Implement BoardImageSpanHandler.OnImageSpanListener which notifies that an new ImageSpan
+    // has been added or removed. The position param is fetched from the markup using the regular
+    // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
 
@@ -207,8 +206,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("Removed Span: %s", position);
-        //uriImages.remove(position);
-        //imgAdapter.notifyDataSetChanged();
+        uriImages.remove(position);
+        imgAdapter.notifyDataSetChanged();
     }
 }
 

@@ -124,12 +124,11 @@ public class BoardWriteFragment extends DialogFragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
-        fragmentModel.getImageChooser().observe(requireActivity(), new Observer<Integer>(){
-            @Override
-            public void onChanged(Integer integer) {
-                chooser = integer;
-            }
-        });
+        // Special attention should be paid when using ViewModel with requireActivity() as its
+        // viewlifecyclerowner because ViewModel.observe() retains the existing value even after
+        // the frament is removed from the parent activity.
+        chooserObserver = integer -> {};
+        fragmentModel.getImageChooser().observe(requireActivity(), chooserObserver);
     }
 
     @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
@@ -210,7 +209,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         // Create BoardImageSpanHandler implementing SpanWatcher, which is a helper class to manage
         // SpannableStringBuilder in order to protect imagespans from deletion while editing.
-        spanHandler = new BoardImageSpanHandler(etPostBody.getText(), this);
+        spanHandler = new BoardImageSpanHandler(etPostBody, this);
 
         return localView;
     }
@@ -337,10 +336,11 @@ public class BoardWriteFragment extends DialogFragment implements
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
         fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
             log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
-            if(docId == null || docId.isEmpty()) return;
-            pbFragment.dismiss();
-
-            ((BoardActivity)getActivity()).addViewPager();
+            //if(docId != null && !docId.isEmpty()){
+            if(!TextUtils.isEmpty(docId)) {
+                pbFragment.dismiss();
+                ((BoardActivity)getActivity()).addViewPager();
+            }
         });
     }
 
@@ -358,6 +358,7 @@ public class BoardWriteFragment extends DialogFragment implements
         log.i("onDestroy");
         fragmentModel.getImageChooser().setValue(-1);
         fragmentModel.getImageChooser().removeObserver(chooserObserver);
+        imageAdapter = null;
         super.onDestroyView();
     }
 
@@ -386,7 +387,6 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @Override
     public void notifyRemovedImageSpan(int position) {
-        log.i("removing position: %s", position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
     }
@@ -416,19 +416,40 @@ public class BoardWriteFragment extends DialogFragment implements
         imgUri = uri;
     }
 
-    /*
-    private void setImageSpanList(Editable editable, ImageSpan span) {
-        int start = Selection.getSelectionStart(editable);
-        int end = Selection.getSelectionEnd(editable);
+    // Invoked when the upload menu in the toolbar is pressed.
+    @SuppressWarnings("ConstantConditions")
+    public void initUploadPost() {
 
-        this.imageSpan = span;
-        int imgTag = 0;
-        String markup = "[image_" + imgTag + "]\n";
-        editable.replace(Math.min(start, end), Math.max(start, end), markup);
-        editable.setSpan(span, Math.min(start, end), Math.min(start, end) + markup.length(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+        // Instantiate the fragment to display the progressbar.
+        pbFragment = new ProgbarDialogFragment();
+        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .add(android.R.id.content, pbFragment).commit();
+
+        // No image posting makes an immediate uploading but postings with images attached
+        // should take the uploading process that images starts uploading first and image
+        // URIs would be sent back if uploading images is successful,then uploading gets
+        // started with image URIs, adding it to a document of Firestore.
+        if(uriImgList.size() == 0) uploadPostToFirestore();
+        else {
+            // Image Attachment button that starts UploadBitmapTask as many as the number of
+            // images. In case the task starts with UploadBitmapTask multi-threading which
+            // runs in ThreadManager, thread contentions may occur, replacing one with the
+            // other which makes last image cover the other ones.
+            // A download url from Storage each time when an attached image is successfully
+            // downsized and scaled down, then uploaded to Storage is transferred via
+            // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
+            for(int i = 0; i < uriImgList.size(); i++) {
+                bitmapTask = ThreadManager.startBitmapUploadTask(getContext(),
+                        uriImgList.get(i), i, imgViewModel);
+            }
+        }
     }
-     */
+
+
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
         if(!doEmptyCheck()) return;
@@ -489,37 +510,6 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
-    // Invoked when the upload menu in the toolbar is pressed.
-    @SuppressWarnings("ConstantConditions")
-    public void initUploadPost() {
 
-        ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-        // Instantiate the fragment to display the progressbar.
-        pbFragment = new ProgbarDialogFragment();
-        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
-        getActivity().getSupportFragmentManager().beginTransaction()
-                .add(android.R.id.content, pbFragment).commit();
-
-        // No image posting makes an immediate uploading but postings with images attached
-        // should take the uploading process that images starts uploading first and image
-        // URIs would be sent back if uploading images is successful,then uploading gets
-        // started with image URIs, adding it to a document of Firestore.
-        if(uriImgList.size() == 0) uploadPostToFirestore();
-        else {
-            // Image Attachment button that starts UploadBitmapTask as many as the number of
-            // images. In case the task starts with UploadBitmapTask multi-threading which
-            // runs in ThreadManager, thread contentions may occur, replacing one with the
-            // other which makes last image cover the other ones.
-            // A download url from Storage each time when an attached image is successfully
-            // downsized and scaled down, then uploaded to Storage is transferred via
-            // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
-            for(int i = 0; i < uriImgList.size(); i++) {
-                bitmapTask = ThreadManager.startBitmapUploadTask(getContext(),
-                        uriImgList.get(i), i, imgViewModel);
-            }
-        }
-    }
 
 }

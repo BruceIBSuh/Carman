@@ -9,6 +9,7 @@
     <color name="bgBoardComment2">#B0C4DE</color>
     <color name="bgBoardBottom">#F5F5DC</color>
     <color name="bgBoardHeader">#F5F5DC</color>
+    <color name="bgBoardTab">#C0C0C0</color>
     <color name="bgDarkerGray">@android:color/darker_gray</color>
 
 
@@ -27,7 +28,8 @@
     <color name="settingThemeColor">#009900</color>
     <color name="settingItemThemeColor">#999900</color>
 
-    <color name="boardTabColor">#ADD8E6</color>
+    <!--<color name="boardTabColor">#ADD8E6</color>-->
+
 
     <color name="etBorderColor">#A0A0A0</color>
     <color name="etBorderColorFocused">#1EA4FF</color>
