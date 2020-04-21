@@ -1,9 +1,11 @@
 package com.silverback.carman2.fragments;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ImageSpan;
@@ -23,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -30,6 +33,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.BoardImageSpanHandler;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
 import java.util.ArrayList;
@@ -49,22 +53,23 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
     // Objects
     private Matcher m;
+    private BoardImageAdapter imgAdapter;
     private BoardImageSpanHandler spanHandler;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgModel;
+    private FragmentSharedModel sharedModel;
+    private Uri imgUri;
+    private List<Uri> uriImages;
+    private List<ImageSpan> spanList;
 
     // UIs
     private EditText etPostContent;
-    private RecyclerView recyclerView;
-    private BoardImageAdapter imgAdapter;
-    private ImageView imageView;
 
     // Fields
     private SpannableStringBuilder ssb;
     private String title, content;
     private List<String> imgUriList;
-    private List<Uri> uriImages;
-    private List<ImageSpan> spanList;
+
 
     // Default Constructor
     public BoardEditFragment() {
@@ -87,6 +92,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
@@ -112,6 +118,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
             for (String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
             imgAdapter = new BoardImageAdapter(uriImages, this);
             recyclerView.setAdapter(imgAdapter);
+
+            int index = 0;
+            while(m.find()) {
+
+            }
             ssb = new SpannableStringBuilder(content);
 
         } else etPostContent.setText(content);
@@ -160,14 +171,42 @@ public class BoardEditFragment extends BoardBaseFragment implements
         return localView;
     }
 
-    // Implement BoardImageAdapter.OnAttachImageListener which has the following overriding methods
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityCreated(Bundle bundle) {
+        super.onActivityCreated(bundle);
+        // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
+        // to which startActivityForResult() is invoked by the parent activity and the result will be
+        // notified to the activity and it is, in turn, sent back here by calling
+        sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+            log.i("FragmentViwModel: %s", sharedModel);
+            ((BoardActivity)getActivity()).getAttachedImageFromImageChooser(chooser);
+        });
+
+
+        // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
+        // This util method translates an image to an appropriate extent for fitting the imagespan and
+        // the result is provided
+        imgModel.getGlideBitmapTarget().observe(requireActivity(), bitmap -> {
+            //log.i("Bitmap received: %s, %s", uriImgList.size(), bitmap);
+            ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+            // Manage the image spans using BoardImageSpanHandler helper class.
+            //this.imageSpan = imgSpan;
+            //spanHandler.setImageSpanToPost(imgSpan);
+            spanHandler.setImageSpan(imgSpan);
+        });
+    }
+
+
+        // Implement BoardImageAdapter.OnAttachImageListener which has the following overriding methods
     @SuppressWarnings("ConstantConditions")
     @Override
     public void attachImage(Bitmap bmp, int pos) {
         log.i("Attache image test: %s, %s", bmp, pos);
         // Create ImageSpan list to set it to the post.
         ImageSpan imgspan = new ImageSpan(getContext(), bmp);
-        spanList.add(imgspan);
+        spanList.add(pos, imgspan);
+
         // ImageSpans are done with all images
         if(spanList.size() == imgAdapter.getItemCount()) {
             int index = 0;
@@ -199,7 +238,9 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-
+        log.i("ImageSpan notified");
+        uriImages.add(position, imgUri);
+        imgAdapter.notifyDataSetChanged();
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
@@ -208,6 +249,22 @@ public class BoardEditFragment extends BoardBaseFragment implements
         log.i("Removed Span: %s", position);
         uriImages.remove(position);
         imgAdapter.notifyDataSetChanged();
+    }
+
+    private void initEditContext() {
+
+    }
+
+    // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
+    // an image picked in the media which has been selected by BoardChooserDlgFragment
+    public void setUriFromImageChooser(Uri uri) {
+        log.d("setUriFromImageChooser");
+        int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        imgUtil.applyGlideToImageSpan(uri, x, y, imgModel);
+        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
+        // additional pics.
+        imgUri = uri;
     }
 }
 

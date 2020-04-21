@@ -171,6 +171,7 @@ public class BoardPagerFragment extends Fragment implements
          * the lisitener should be detached for purpose of preventing excessive connection to the
          * server.
          */
+
         CollectionReference postRef = firestore.collection("board_general");
         postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
@@ -179,6 +180,7 @@ public class BoardPagerFragment extends Fragment implements
             log.i("Source: %s", source);
         });
 
+        /*
         CollectionReference userRef = firestore.collection("users");
         ListenerRegistration userListener = userRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
@@ -187,6 +189,7 @@ public class BoardPagerFragment extends Fragment implements
             log.i("Source: %s", source);
         });
         userListener.remove();
+        */
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -222,8 +225,8 @@ public class BoardPagerFragment extends Fragment implements
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PaginationHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
-
         pageHelper.setPostingQuery(source, currentPage, autoFilter);
+
         return localView;
     }
 
@@ -236,14 +239,15 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
-        log.i("onActivityCreated");
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
         fragmentModel.getNewPosting().observe(getActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
+                log.i("new Posting done");
                 // Instead of using notifyItemInserted(), query should be done due to the post
                 // sequential number to be updated..
                 pageHelper.setPostingQuery(source, currentPage, autoFilter);
+
             }
         });
 
@@ -266,7 +270,7 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
-
+        snapshotList.clear();
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether
             // the field value of 'post_general" is true or not. In terms of the general board such
@@ -284,7 +288,10 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
+        log.i("setFirstQuery");
+
         postingAdapter.notifyDataSetChanged();
+        //postingAdapter.notifyItemInserted(0);
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
@@ -410,7 +417,6 @@ public class BoardPagerFragment extends Fragment implements
             subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
                 // In case the user does not exists in the "viewers" collection
                 if(snapshot == null || !snapshot.exists()) {
-                  log.i("vierer not exists");
                   // Increase the view count
                   docref.update("cnt_view", FieldValue.increment(1));
 

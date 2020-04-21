@@ -12,6 +12,7 @@
         android:id="@+id/view_edit_header"
         android:layout_width="match_parent"
         android:layout_height="40dp"
+        android:background="@color/bgBoardTab"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -36,6 +37,7 @@
         android:ems="10"
         android:inputType="textMultiLine"
         android:textSize="@dimen/mediumText"
+        android:textColor="#0080FF"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
         app:layout_constraintEnd_toStartOf="@+id/btn_attach_image"
         app:layout_constraintStart_toEndOf="@+id/tv_label_title"
@@ -65,6 +67,7 @@
         android:hint="@null"
         android:inputType="textMultiLine"
         android:textSize="@dimen/smallText"
+        android:textColor="#0080FF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_edit_header"

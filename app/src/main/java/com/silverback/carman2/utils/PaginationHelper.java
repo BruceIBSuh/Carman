@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -64,7 +65,6 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     // Create queries for each page.
     public void setPostingQuery(Source source, int page, ArrayList<CharSequence> autofilter) {
         colRef = firestore.collection("board_general");
-
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -75,6 +75,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
                             mListener.setFirstQuery(querySnapshot);
 
                         }).addOnFailureListener(Throwable::printStackTrace);
+
                 break;
 
             case Constants.BOARD_POPULAR:

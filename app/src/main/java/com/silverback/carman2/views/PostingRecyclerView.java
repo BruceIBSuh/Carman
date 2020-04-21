@@ -57,7 +57,7 @@ public class PostingRecyclerView extends RecyclerView {
 
         @Override
         public void onItemRangeRemoved(int positionStart, int itemCount) {
-            log.i("onImteRangeRemoved");
+            log.i("onItemRangeRemoved");
             super.onItemRangeRemoved(positionStart, itemCount);
             initEmptyView();
         }

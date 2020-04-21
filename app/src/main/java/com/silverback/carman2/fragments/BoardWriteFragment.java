@@ -228,53 +228,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // notified to the activity and it is, in turn, sent back here by calling
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             log.i("FragmentViwModel: %s", fragmentModel);
-            switch(chooser) {
-                case GALLERY:
-                    // MULTI-SELECTION: special handling of Samsung phone.
-                    /*
-                    if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
-                        Intent samsungIntent = new Intent("android.intent.action.MULTIPLE_PICK");
-                        samsungIntent.setType("image/*");
-                        PackageManager manager = getActivity().getApplicationContext().getPackageManager();
-                        List<ResolveInfo> infos = manager.queryIntentActivities(samsungIntent, 0);
-                        if(infos.size() > 0){
-                            //samsungIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                            startActivityForResult(samsungIntent, REQUEST_CODE_SAMSUNG);
-                        }
-                        // General phones other than SAMSUNG
-                    } else {
-                        Intent galleryIntent = new Intent();
-                        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-                        galleryIntent.setType("image/*");
-                        //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                        startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
-                    }
-                    */
-                    Intent galleryIntent = new Intent();
-                    galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-                    galleryIntent.setType("image/*");
-                    //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-
-                    // The result should go to the parent activity
-                    getActivity().startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
-                    break;
-
-                case CAMERA: // Camera
-                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    Intent cameraChooser = Intent.createChooser(cameraIntent, "Choose camera");
-
-                    if(cameraIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                        log.i("Camera Intent");
-                        getActivity().startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
-                    }
-                    break;
-
-                default:
-                    log.i("no select");
-                    break;
-            }
-
-
+            ((BoardActivity)getActivity()).getAttachedImageFromImageChooser(chooser);
         });
 
         /*
@@ -336,11 +290,8 @@ public class BoardWriteFragment extends DialogFragment implements
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
         fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
             log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
-            //if(docId != null && !docId.isEmpty()){
-            if(!TextUtils.isEmpty(docId)) {
-                pbFragment.dismiss();
-                ((BoardActivity)getActivity()).addViewPager();
-            }
+            if(pbFragment != null) pbFragment.dismiss();
+            ((BoardActivity)getActivity()).addViewPager();
         });
     }
 
@@ -423,12 +374,15 @@ public class BoardWriteFragment extends DialogFragment implements
         ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
+        if(!doEmptyCheck()) return;
+
         // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgbarDialogFragment();
         pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
-
+        //getChildFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
         // No image posting makes an immediate uploading but postings with images attached
         // should take the uploading process that images starts uploading first and image
         // URIs would be sent back if uploading images is successful,then uploading gets

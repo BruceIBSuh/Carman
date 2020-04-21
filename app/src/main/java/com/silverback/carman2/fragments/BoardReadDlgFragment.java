@@ -149,9 +149,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
         imgUtil = new ApplyImageResourceUtil(getContext());
-        imgViewModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
-        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        //sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
@@ -728,6 +727,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                                     .commit();
 
                              */
+
                             mListener.onEditClicked(getArguments());
                             dismiss();
 

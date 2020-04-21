@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -174,7 +175,7 @@ public class BoardActivity extends BaseActivity implements
         frameLayout.addView(boardPager);
 
         //addTabIconAndTitle(this, boardTabLayout);
-        animTabLayout(true);
+        animTabLayout();
 
         // Add the listeners to the viewpager and AppbarLayout
         appBar.addOnOffsetChangedListener(this);
@@ -199,44 +200,6 @@ public class BoardActivity extends BaseActivity implements
         if(fragment instanceof BoardReadDlgFragment) {
             BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
             readFragment.setEditModeListener(this);
-        }
-    }
-
-
-
-    // Receive the image uri as a result of startActivityForResult() invoked in BoardWriteFragment,
-    // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteFragment
-    // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
-    // content area and adding it to the image list so as to update the recyclerview adapter.
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode != RESULT_OK || data == null) return;
-        switch(requestCode) {
-            case Constants.REQUEST_BOARD_GALLERY:
-                //imgModel.getUriFromImageChooser().setValue(data.getData());
-                writePostFragment.setUriFromImageChooser(data.getData());
-                break;
-
-            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                String json = data.getStringExtra("jsonAutoData");
-                log.i("JSON Auto Data: %s", json);
-                jsonAutoFilter = json;
-
-                // Create the autofilter checkboxes and set inital values to the checkboxes
-                try{ createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
-                catch(JSONException e){e.printStackTrace();}
-
-                // Update the pagerAdapter
-                pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                pagerAdapter.notifyDataSetChanged();
-                boardPager.setAdapter(pagerAdapter);
-                boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
-
-                menu.getItem(0).setVisible(true);
-                break;
-
-            default: break;
         }
     }
 
@@ -281,12 +244,13 @@ public class BoardActivity extends BaseActivity implements
                     frameLayout.removeView(boardPager);
                     finish();
 
-                // Fragment container may hold either BoardWriteFragment or BoardEditFragment. When
-                // pressing the up button, either of the fragments is removed from the container and
-                // it shoud be null for garbage collecting it.
+                    // Fragment container may hold either BoardWriteFragment or BoardEditFragment. When
+                    // pressing the up button, either of the fragments is removed from the container and
+                    // it shoud be null for garbage collecting it.
                 } else {
                     boolean isWriteMode = (writePostFragment != null) &&
                             frameLayout.getChildAt(0) == writePostFragment.getView();
+                    log.i("Mode: %s", isWriteMode);
                     String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
                             getString(R.string.board_msg_cancel_edit);
                     Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
@@ -295,12 +259,13 @@ public class BoardActivity extends BaseActivity implements
                     snackBar.setAction("OK", view -> {
                         // Remove BoardWriteFragment when the up button presses.
                         getSupportFragmentManager().beginTransaction().remove(target).commit();
-                        // Hide the soft input when BoardWriteFragment disappears
-                        InputMethodManager imm = (InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
 
+                        // Hide the soft input when BoardWriteFragment disappears
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
                         // Add BoardPagerFragment in the framelayout.
-                        animWritingBoard(false);
+                        animTabHeight(false);
+                        animTabLayout();
                         addViewPager();
 
                     });
@@ -323,90 +288,8 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onClick(View v) {
-        // Only apply to the floating action button
-        if(v.getId() != R.id.fab_board_write) return;
 
-        // Check if users have made a user name. Otherwise, show tne message for setting the name
-        // first before writing a post.
-        String userName = mSettings.getString(Constants.USER_NAME, null);
-        if(TextUtils.isEmpty(userName)) {
-            Snackbar snackbar = Snackbar.make(
-                    coordinatorLayout, getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
-            snackbar.setAction(R.string.board_msg_action_setting, view -> {
-                Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
-                intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
-                startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
-            });
 
-            snackbar.show();
-            return;
-        }
-
-        // Set the boardTabLayout height for purpose of redrawing the layout with the height when
-        // returning from BoardWriteFragment.
-        tabHeight = boardTabLayout.getMeasuredHeight();
-        log.i("boardTabLahyout height: %s", tabHeight);
-
-        // Create the fragment with the user id attached. Remove any view in the framelayout
-        // first and put the fragment into it.
-        writePostFragment = new BoardWriteFragment();
-        Bundle args = new Bundle();
-        args.putString("userId", userId);
-        args.putInt("tabPage", tabPage);
-        args.putString("autoData", mSettings.getString(Constants.AUTO_DATA, null));
-        writePostFragment.setArguments(args);
-
-        if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
-        getSupportFragmentManager().beginTransaction()
-                //.addToBackStack(null)
-                .replace(frameLayout.getId(), writePostFragment)
-                .commit();
-
-        // Handle the toolbar menu as the write board comes in.
-        if(tabPage != Constants.BOARD_AUTOCLUB) {
-            getSupportActionBar().setTitle(getString(R.string.board_title_write));
-            animWritingBoard(true);
-
-        // Tapping the fab right when the viewpager holds the auto club page, animate to slide
-        // the tablayout up to hide and slide the auto filter down to show sequentially. On the
-        // other pages, animation is made to slide up not only the tablayout but also tne
-        // nestedscrollview
-        } else {
-            // AutoFilter that holds values of the autoclub viewpager has to be eliminated and be
-            // ready to have new values in BoardWriteFragment.
-            cbAutoFilter.clear();
-            try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
-            catch(JSONException e) {e.printStackTrace();}
-            animAutoFilter(true);
-        }
-
-        // Visibility control on menu and fab.
-        fabWrite.setVisibility(View.INVISIBLE);
-        menu.getItem(1).setVisible(true);
-    }
-
-    // Implement BoardReadDlgFragment.OnEditModeListener when the edit button clicks.
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onEditClicked(Bundle bundle) {
-        log.i("Edit Mode");
-        editPostFragment = new BoardEditFragment();
-        editPostFragment.setArguments(bundle);
-
-        if(frameLayout.getChildAt(0) instanceof ViewPager) frameLayout.removeView(boardPager);
-        getSupportFragmentManager().beginTransaction().addToBackStack(null)
-                .replace(frameLayout.getId(), editPostFragment)
-                .commit();
-
-        // Manager title, menu, and the fab visibility.
-        getSupportActionBar().setTitle(getString(R.string.board_title_edit));
-        animWritingBoard(true);
-        menu.getItem(1).setVisible(true);
-        fabWrite.setVisibility(View.GONE);
-    }
 
     // Implement AppBarLayout.OnOffsetChangedListener
     @Override
@@ -456,22 +339,147 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onPageScrollStateChanged(int state) {}
 
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onClick(View v) {
+        // Only apply to the floating action button
+        if(v.getId() != R.id.fab_board_write) return;
+
+        // Check if users have made a user name. Otherwise, show tne message for setting the name
+        // first before writing a post.
+        String userName = mSettings.getString(Constants.USER_NAME, null);
+        if(TextUtils.isEmpty(userName)) {
+            Snackbar snackbar = Snackbar.make(
+                    coordinatorLayout, getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
+            snackbar.setAction(R.string.board_msg_action_setting, view -> {
+                Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
+                intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
+                startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
+            });
+
+            snackbar.show();
+            return;
+        }
+
+        // Set the boardTabLayout height for purpose of redrawing the layout with the height when
+        // returning from BoardWriteFragment.
+        tabHeight = boardTabLayout.getMeasuredHeight();
+        log.i("boardTabLahyout height: %s", tabHeight);
+
+        // Create the fragment with the user id attached. Remove any view in the framelayout
+        // first and put the fragment into it.
+        writePostFragment = new BoardWriteFragment();
+        Bundle args = new Bundle();
+        args.putString("userId", userId);
+        args.putInt("tabPage", tabPage);
+        args.putString("autoData", mSettings.getString(Constants.AUTO_DATA, null));
+        writePostFragment.setArguments(args);
+
+        if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
+        getSupportFragmentManager().beginTransaction()
+                //.addToBackStack(null)
+                .replace(frameLayout.getId(), writePostFragment)
+                .commit();
+
+        // Handle the toolbar menu as the write board comes in.
+        if(tabPage != Constants.BOARD_AUTOCLUB) {
+            getSupportActionBar().setTitle(getString(R.string.board_title_write));
+            animTabHeight(true);
+
+            // Tapping the fab right when the viewpager holds the auto club page, animate to slide
+            // the tablayout up to hide and slide the auto filter down to show sequentially. On the
+            // other pages, animation is made to slide up not only the tablayout but also tne
+            // nestedscrollview
+        } else {
+            // AutoFilter that holds values of the autoclub viewpager has to be eliminated and be
+            // ready to have new values in BoardWriteFragment.
+            cbAutoFilter.clear();
+            try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
+            catch(JSONException e) {e.printStackTrace();}
+            animAutoFilter(true);
+        }
+
+        // Visibility control on menu and fab.
+        fabWrite.setVisibility(View.INVISIBLE);
+        menu.getItem(1).setVisible(true);
+    }
+
+    // Implement BoardReadDlgFragment.OnEditModeListener when the edit button presses.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onEditClicked(Bundle bundle) {
+        log.i("Edit Mode");
+        editPostFragment = new BoardEditFragment();
+        editPostFragment.setArguments(bundle);
+
+        if(frameLayout.getChildAt(0) instanceof ViewPager) frameLayout.removeView(boardPager);
+        getSupportFragmentManager().beginTransaction().addToBackStack(null)
+                .replace(frameLayout.getId(), editPostFragment)
+                .commit();
+
+        // Manager title, menu, and the fab visibility.
+        getSupportActionBar().setTitle(getString(R.string.board_title_edit));
+        animTabLayout();
+        animTabHeight(true);
+        menu.getItem(1).setVisible(true);
+        fabWrite.setVisibility(View.GONE);
+    }
+
+    // Receive the image uri as a result of startActivityForResult() invoked in BoardWriteFragment,
+    // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteFragment
+    // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
+    // content area and adding it to the image list so as to update the recyclerview adapter.
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode != RESULT_OK || data == null) return;
+        switch(requestCode) {
+            case Constants.REQUEST_BOARD_GALLERY:
+                //imgModel.getUriFromImageChooser().setValue(data.getData());
+                log.i("current fragment: %s, %s", frameLayout.getChildCount(), frameLayout.getChildAt(0));
+                if(writePostFragment != null)
+                    writePostFragment.setUriFromImageChooser(data.getData());
+                else if(editPostFragment != null)
+                    editPostFragment.setUriFromImageChooser(data.getData());
+                break;
+
+            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                String json = data.getStringExtra("jsonAutoData");
+                log.i("JSON Auto Data: %s", json);
+                jsonAutoFilter = json;
+
+                // Create the autofilter checkboxes and set inital values to the checkboxes
+                try{ createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
+                catch(JSONException e){e.printStackTrace();}
+
+                // Update the pagerAdapter
+                pagerAdapter.setAutoFilterValues(cbAutoFilter);
+                pagerAdapter.notifyDataSetChanged();
+                boardPager.setAdapter(pagerAdapter);
+                boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
+
+                menu.getItem(0).setVisible(true);
+                break;
+
+            default: break;
+        }
+    }
+
 
     // Slide up and down the TabLayout when clicking the buttons on the toolbar.
-    private void animTabLayout(boolean isVisible) {
+    private void animTabLayout() {
+        ObjectAnimator slideTabDown = ObjectAnimator.ofFloat(boardTabLayout, "y", getActionbarHeight());
+        slideTabDown.setDuration(500);
 
-        ObjectAnimator slideTabShown = ObjectAnimator.ofFloat(boardTabLayout, "y", getActionbarHeight());
-        slideTabShown.setDuration(500);
+        //ObjectAnimator slideTabHidden = ObjectAnimator.ofFloat(boardTabLayout, "y", 0);
+        //slideTabHidden.setDuration(500);
 
-        ObjectAnimator slideTabHidden = ObjectAnimator.ofFloat(boardTabLayout, "y", 0);
-        slideTabHidden.setDuration(500);
-
-        if(isVisible) slideTabShown.start();
-        else slideTabHidden.start();
+        slideTabDown.start();
+        //else slideTabHidden.start();
 
         // Upon completion of sliding down the tab, set the visibility of the viewpager and the
         // progressbar.
-        slideTabShown.addListener(new AnimatorListenerAdapter() {
+        slideTabDown.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
@@ -502,13 +510,8 @@ public class BoardActivity extends BaseActivity implements
 
     // When calling BoardWriteFragment, the tab layout is gone and the fragment comes in and vice versa.
     //private void animAppbarLayout(boolean isUp) {
-    private void animWritingBoard(boolean isBoard) {
-        int visibility = (isBoard)? View.INVISIBLE : View.VISIBLE;
-        boardTabLayout.setVisibility(visibility);
-
-        ValueAnimator anim = (isBoard)?
-                ValueAnimator.ofInt(tabHeight, 0) :
-                ValueAnimator.ofInt(0, tabHeight);
+    private void animTabHeight(boolean isShown) {
+        ValueAnimator anim = (isShown)?ValueAnimator.ofInt(tabHeight, 0) : ValueAnimator.ofInt(0, tabHeight);
 
         anim.addUpdateListener(valueAnimator -> {
             int val = (Integer) valueAnimator.getAnimatedValue();
@@ -663,12 +666,12 @@ public class BoardActivity extends BaseActivity implements
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager.
         if(frameLayout.getChildCount() > 0) frameLayout.removeAllViews();
-
         frameLayout.addView(boardPager);
-        animWritingBoard(false);
+
+        animTabHeight(false);
         fabWrite.setVisibility(View.VISIBLE);
         getSupportActionBar().setTitle(getString(R.string.board_title));
-        invalidateOptionsMenu();
+        //invalidateOptionsMenu();
 
         // Revert the autofilter items.
         try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
@@ -681,7 +684,57 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
+    // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
+    // to which startActivityForResult() is invoked by the parent activity and the result will be
+    // notified to the activity and it is, in turn, sent back here by calling
+    public void getAttachedImageFromImageChooser(int media) {
+        switch(media) {
+            case 1:
+                // MULTI-SELECTION: special handling of Samsung phone.
+                    /*
+                    if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
+                        Intent samsungIntent = new Intent("android.intent.action.MULTIPLE_PICK");
+                        samsungIntent.setType("image/*");
+                        PackageManager manager = getActivity().getApplicationContext().getPackageManager();
+                        List<ResolveInfo> infos = manager.queryIntentActivities(samsungIntent, 0);
+                        if(infos.size() > 0){
+                            //samsungIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                            startActivityForResult(samsungIntent, REQUEST_CODE_SAMSUNG);
+                        }
+                        // General phones other than SAMSUNG
+                    } else {
+                        Intent galleryIntent = new Intent();
+                        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+                        galleryIntent.setType("image/*");
+                        //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                    }
+                    */
+                Intent galleryIntent = new Intent();
+                galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+                galleryIntent.setType("image/*");
+                //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
+                // The result should go to the parent activity
+                startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
+                break;
+
+            case 2: // Camera
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Intent cameraChooser = Intent.createChooser(cameraIntent, "Choose camera");
+
+                if(cameraIntent.resolveActivity(getPackageManager()) != null) {
+                    log.i("Camera Intent");
+                    startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
+                }
+                break;
+
+            default:
+                log.i("no select");
+                break;
+        }
+
+    }
 
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
     // of whehter a post should be uploaded in the general board is referenced in the same fragments
