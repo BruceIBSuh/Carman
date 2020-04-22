@@ -36,7 +36,7 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Im
     // Interface to communicate w/ BoardWriteFragment
     public interface OnBoardAttachImageListener {
         void removeImage(int position);
-        void attachImage(Bitmap bmp, int pos);
+        //void attachImage(Bitmap bmp, int pos);
     }
 
     // Constructor
@@ -98,13 +98,11 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Im
         }
 
         void bindImageToHolder(Uri uri, int pos) {
-            //Glide.with(context).load(uri).into(thumbnail);
             Glide.with(context).asBitmap().load(uri).override(100).into(new CustomTarget<Bitmap>(){
                 @Override
                 public void onResourceReady(@NonNull Bitmap resource,
                                             @Nullable Transition<? super Bitmap> transition) {
                     thumbnail.setImageBitmap(resource);
-                    mListener.attachImage(resource, pos);
                 }
 
                 @Override

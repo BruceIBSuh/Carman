@@ -92,9 +92,11 @@ public class BoardImageSpanHandler implements SpanWatcher {
         if(what instanceof ImageSpan) {
             // In case a new span is inserted in the middle of existing spans, tags have to be
             // reset.
-            if(spanList.size() > 0) resetImageSpanTag(text);
+            log.d("onSpanAdded: %s", what);
+            if(spanList.size() >= 2) resetImageSpanTag(text);
             String tag = text.toString().substring(start, end);
             Matcher num = Pattern.compile("\\d").matcher(tag);
+
             while(num.find()) {
                 int position = Integer.valueOf(num.group());
                 spanList.add(position, (ImageSpan)what);
@@ -114,7 +116,10 @@ public class BoardImageSpanHandler implements SpanWatcher {
             String tag = text.toString().substring(start, end);
             Matcher m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
+                // Required to subtract 1 from the position in Matcher because it starts with 1
+                // in the finding order.
                 int position = Integer.valueOf(m.group()); // group(0) means all. group(1) first.
+                log.i("removed span position: %s", position);
                 spanList.remove(what);
                 mListener.notifyRemovedImageSpan(position);
             }
@@ -169,8 +174,15 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // Edit mode.
     public void setImageSpanList(List<ImageSpan> spans) {
+        log.i("spans: %s", spans.size());
         spanList = spans;
-        log.i("spanlist size: %s", spanList.size());
+        Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(editable);
+        int index = 0;
+        while(m.find()) {
+            editable.setSpan(this, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+            editable.setSpan(spanList.get(index), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            index++;
+        }
     }
 
     // Write mode
@@ -210,7 +222,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     }
 
     // Reset the image tag each time a new imagespan is added particif(text.getSpans(0, text.length(), ImageSpan.class).length > 0)
-    //                resetImageSpanTag(text);ularly in case of inserting.
+    // resetImageSpanTag(text);ularly in case of inserting.
     private void resetImageSpanTag(Spannable text) {
         // Reset the markup tag
         Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(text);

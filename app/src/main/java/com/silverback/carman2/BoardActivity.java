@@ -687,7 +687,7 @@ public class BoardActivity extends BaseActivity implements
     // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
     // to which startActivityForResult() is invoked by the parent activity and the result will be
     // notified to the activity and it is, in turn, sent back here by calling
-    public void getAttachedImageFromImageChooser(int media) {
+    public void getImageFromChooser(int media) {
         switch(media) {
             case 1:
                 // MULTI-SELECTION: special handling of Samsung phone.
