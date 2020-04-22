@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -14,11 +15,19 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
@@ -38,6 +47,9 @@ import java.util.regex.Pattern;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
+/**
+ * This fragment calls in an existing post to edit.
+ */
 public class BoardEditFragment extends BoardBaseFragment implements
         BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
@@ -61,9 +73,9 @@ public class BoardEditFragment extends BoardBaseFragment implements
     private EditText etPostContent;
 
     // Fields
-    private SpannableStringBuilder ssb;
     private String title, content;
     private List<String> imgUriList;
+    private int index;
 
 
     // Default Constructor
@@ -102,26 +114,41 @@ public class BoardEditFragment extends BoardBaseFragment implements
         etPostContent = localView.findViewById(R.id.et_edit_content);
 
         etPostTitle.setText(title);
-        // Create RecyclerView for holding attched pictures which are handled in onActivityResult()
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         recyclerView.setLayoutManager(linearLayout);
 
-        // If the post includes attached image(s), make a type cast of String to Uri, then pass it
-        // to the adapter. Otherwise, display the post as it is.
+        imgAdapter = new BoardImageAdapter(uriImages, this);
+        recyclerView.setAdapter(imgAdapter);
+
+        etPostContent.setText(content);
+        spanHandler = new BoardImageSpanHandler(etPostContent, this);
+
+        // Post contains any image that
         if(imgUriList != null && imgUriList.size() > 0) {
-            for (String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
-            imgAdapter = new BoardImageAdapter(uriImages, this);
-            recyclerView.setAdapter(imgAdapter);
 
-            int index = 0;
+            for(String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
+
+            // Set the thumbnail size
+            final float scale = getResources().getDisplayMetrics().density;
+            int size = (int)(Constants.IMAGESPAN_THUMBNAIL_SIZE * scale + 0.5f);
+            // Match the markup to set the imagespan to it.
+            index = 0;
             while(m.find()) {
-
+                Uri uri = Uri.parse(imgUriList.get(index));
+                Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
+                        ImageSpan imgSpan = new ImageSpan(getContext(), res);
+                        spanList.add(imgSpan);
+                        if(spanList.size() == imgUriList.size()) spanHandler.setImageSpanList(spanList);
+                        index++;
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
             }
-            ssb = new SpannableStringBuilder(content);
-
-        } else etPostContent.setText(content);
-
+        }
 
         // Scroll the edittext inside (nested)scrollview. More research should be done.
         // warning message is caused by onPermClick not implemented. Unless the method is requried
@@ -183,38 +210,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // This util method translates an image to an appropriate extent for fitting the imagespan and
         // the result is provided
         imgModel.getGlideBitmapTarget().observe(requireActivity(), bitmap -> {
-            //log.i("Bitmap received: %s, %s", uriImgList.size(), bitmap);
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
-            // Manage the image spans using BoardImageSpanHandler helper class.
-            //this.imageSpan = imgSpan;
-            //spanHandler.setImageSpanToPost(imgSpan);
             spanHandler.setImageSpan(imgSpan);
         });
     }
 
-
-        // Implement BoardImageAdapter.OnAttachImageListener which has the following overriding methods
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void attachImage(Bitmap bmp, int pos) {
-        log.i("Attache image test: %s, %s", bmp, pos);
-        // Create ImageSpan list to set it to the post.
-        ImageSpan imgspan = new ImageSpan(getContext(), bmp);
-        spanList.add(pos, imgspan);
-
-        // ImageSpans are done with all images
-        if(spanList.size() == imgAdapter.getItemCount()) {
-            int index = 0;
-            while(m.find()) {
-                ssb.setSpan(spanList.get(index), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                index++;
-            }
-
-            etPostContent.setText(ssb);
-            spanHandler = new BoardImageSpanHandler(etPostContent, this);
-            spanHandler.setImageSpanList(spanList);
-        }
-    }
 
     @Override
     public void removeImage(int position) {
@@ -233,8 +233,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        log.i("ImageSpan notified");
-        uriImages.add(position, imgUri);
+        if(imgUri != null) uriImages.add(position, imgUri);
         imgAdapter.notifyDataSetChanged();
     }
 
@@ -246,9 +245,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
         imgAdapter.notifyDataSetChanged();
     }
 
-    private void initEditContext() {
-
-    }
 
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment
