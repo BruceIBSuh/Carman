@@ -1,23 +1,18 @@
 package com.silverback.carman2.fragments;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ImageSpan;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -180,7 +175,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             log.i("FragmentViwModel: %s", sharedModel);
-            ((BoardActivity)getActivity()).getAttachedImageFromImageChooser(chooser);
+            ((BoardActivity)getActivity()).getImageFromChooser(chooser);
         });
 
 
