@@ -88,7 +88,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // specified range of the text.
     @Override
     public void onSpanAdded(Spannable text, Object what, int start, int end) {
-        //log.d("onSpanAdded: %s", what);
         if(what instanceof ImageSpan) {
             // In case a new span is inserted in the middle of existing spans, tags have to be
             // reset.
@@ -174,12 +173,13 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // Edit mode.
     public void setImageSpanList(List<ImageSpan> spans) {
-        log.i("spans: %s", spans.size());
         spanList = spans;
+        for(ImageSpan span : spans) log.i("Image span: %s", span);
+
         Matcher m = Pattern.compile("\\[image_\\d]\\n").matcher(editable);
         int index = 0;
         while(m.find()) {
-            editable.setSpan(this, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+            //editable.setSpan(this, m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
             editable.setSpan(spanList.get(index), m.start(), m.end(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             index++;
         }

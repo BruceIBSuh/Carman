@@ -1,12 +1,16 @@
 package com.silverback.carman2.fragments;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ImageSpan;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,11 +28,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardImageAdapter;
@@ -41,7 +49,10 @@ import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,10 +66,10 @@ public class BoardEditFragment extends BoardBaseFragment implements
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardEditFragment.class);
-
     private static final String REGEX_MARKUP = "\\[image_\\d]\\n";
 
     // Objects
+    private Bundle bundle;
     private Matcher m;
     private BoardImageAdapter imgAdapter;
     private BoardImageSpanHandler spanHandler;
@@ -68,14 +79,15 @@ public class BoardEditFragment extends BoardBaseFragment implements
     private Uri imgUri;
     private List<Uri> uriImages;
     private List<ImageSpan> spanList;
+    private SparseArray<ImageSpan> sparseSpanArray;
 
     // UIs
-    private EditText etPostContent;
+    private View localView;
+    private EditText etPostTitle, etPostContent;
 
     // Fields
     private String title, content;
     private List<String> imgUriList;
-    private int index;
 
 
     // Default Constructor
@@ -83,19 +95,20 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getArguments() != null) {
+            bundle = getArguments();
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
             imgUriList = getArguments().getStringArrayList("uriImgList");
         }
 
         m = Pattern.compile(REGEX_MARKUP).matcher(content);
-        spanList = new ArrayList<>();
+        sparseSpanArray = new SparseArray<>();
         uriImages = new ArrayList<>();
+        for(String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
 
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
@@ -106,9 +119,9 @@ public class BoardEditFragment extends BoardBaseFragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        View localView = inflater.inflate(R.layout.fragment_board_edit, container, false);
+        localView = inflater.inflate(R.layout.fragment_board_edit, container, false);
 
-        EditText etPostTitle = localView.findViewById(R.id.et_board_write_title);
+        etPostTitle = localView.findViewById(R.id.et_board_write_title);
         Button btnAttach = localView.findViewById(R.id.btn_attach_image);
         RecyclerView recyclerView = localView.findViewById(R.id.vg_recycler_images);
         etPostContent = localView.findViewById(R.id.et_edit_content);
@@ -124,29 +137,39 @@ public class BoardEditFragment extends BoardBaseFragment implements
         etPostContent.setText(content);
         spanHandler = new BoardImageSpanHandler(etPostContent, this);
 
-        // Post contains any image that
+        // If the post contains any image, find the markup in the content using Matcher.find() and
+        // at the same time, images should be downsized by Glide and create imagespans only when it
+        // has finished to do it. At this point, a sync issue occurs here because Glide works on
+        // the async basis. Thus, with the while-loop index value made final, bitmaps from Glide
+        // should be put into SparseArray. It seems that List.add(int, obj) does not work here.
+        // Once the sparsearray completes to hold all imagespans, it should be converted to spanList
+        // to pass to BoardImageSpanHander.setImageSpanList().
         if(imgUriList != null && imgUriList.size() > 0) {
-
-            for(String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
-
-            // Set the thumbnail size
+            List<ImageSpan> spanList = new ArrayList<>();
             final float scale = getResources().getDisplayMetrics().density;
             int size = (int)(Constants.IMAGESPAN_THUMBNAIL_SIZE * scale + 0.5f);
-            // Match the markup to set the imagespan to it.
-            index = 0;
+            int index = 0;
+
             while(m.find()) {
-                Uri uri = Uri.parse(imgUriList.get(index));
+                final Uri uri = Uri.parse(imgUriList.get(index));
+                final int pos = index;
                 Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
                     @Override
                     public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
-                        ImageSpan imgSpan = new ImageSpan(getContext(), res);
-                        spanList.add(imgSpan);
-                        if(spanList.size() == imgUriList.size()) spanHandler.setImageSpanList(spanList);
-                        index++;
+                       ImageSpan imgspan = new ImageSpan(getContext(), res);
+                       sparseSpanArray.put(pos, imgspan);
+                       if(sparseSpanArray.size() == imgUriList.size()) {
+                           for(int i = 0; i < sparseSpanArray.size(); i++) spanList.add(i, sparseSpanArray.get(i));
+                           spanHandler.setImageSpanList(spanList);
+                       }
                     }
                     @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                    }
                 });
+
+                index++;
             }
         }
 
@@ -197,6 +220,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
+
         // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
@@ -256,6 +280,52 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
         imgUri = uri;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    public void updatePost(){
+        if(!doEmptyCheck()) return;
+
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+
+        // Instantiate the fragment to display the progressbar.
+        ProgbarDialogFragment pbFragment = new ProgbarDialogFragment();
+        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .add(android.R.id.content, pbFragment).commit();
+
+        String userId = bundle.getString("userId");
+        String docId = bundle.getString("documentId");
+        log.i("document id: %s", docId);
+        final DocumentReference docref = firestore.collection("board_general").document(docId);
+        Map<String, Object> updatePost = new HashMap<>();
+        updatePost.put("post_title", etPostTitle.getText().toString());
+        updatePost.put("post_content", etPostContent.getText().toString());
+        updatePost.put("timestamp", FieldValue.serverTimestamp());
+        // No image attached
+        if(uriImages.size() > 0) {
+
+        }
+
+        docref.update(updatePost)
+                .addOnSuccessListener(aVoid -> {
+                    pbFragment.dismiss();
+                    ((BoardActivity)getActivity()).addViewPager();
+                })
+                .addOnFailureListener(e -> e.printStackTrace());
+
+    }
+
+    private boolean doEmptyCheck() {
+        log.i("Title: %s", etPostContent.getText());
+        if(TextUtils.isEmpty(etPostContent.getText())) {
+            Snackbar.make(localView, getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
+            return false;
+        } else if(TextUtils.isEmpty(etPostContent.getText())){
+            Snackbar.make(localView, getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
+            return false;
+        } else return true;
+
     }
 }
 

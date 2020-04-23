@@ -253,8 +253,8 @@ public class BoardActivity extends BaseActivity implements
                     log.i("Mode: %s", isWriteMode);
                     String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
                             getString(R.string.board_msg_cancel_edit);
-                    Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
 
+                    Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
                     Snackbar snackBar = Snackbar.make(coordinatorLayout, msg, Snackbar.LENGTH_LONG);
                     snackBar.setAction("OK", view -> {
                         // Remove BoardWriteFragment when the up button presses.
@@ -280,7 +280,12 @@ public class BoardActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_upload_post:
-                writePostFragment.initUploadPost();
+                boolean isWriteMode = (writePostFragment != null) &&
+                        frameLayout.getChildAt(0) == writePostFragment.getView();
+
+                if(isWriteMode) writePostFragment.initUploadPost();
+                else editPostFragment.updatePost();
+
                 return true;
 
             default:
