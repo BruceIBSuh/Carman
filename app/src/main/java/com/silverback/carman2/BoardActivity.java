@@ -284,7 +284,7 @@ public class BoardActivity extends BaseActivity implements
                         frameLayout.getChildAt(0) == writePostFragment.getView();
 
                 if(isWriteMode) writePostFragment.initUploadPost();
-                else editPostFragment.updatePost();
+                else editPostFragment.updateAttachedImages();
 
                 return true;
 
@@ -350,6 +350,7 @@ public class BoardActivity extends BaseActivity implements
         // Only apply to the floating action button
         if(v.getId() != R.id.fab_board_write) return;
 
+        if(editPostFragment != null) editPostFragment = null;
         // Check if users have made a user name. Otherwise, show tne message for setting the name
         // first before writing a post.
         String userName = mSettings.getString(Constants.USER_NAME, null);
@@ -414,6 +415,8 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onEditClicked(Bundle bundle) {
         log.i("Edit Mode");
+        if(writePostFragment != null) writePostFragment = null;
+
         editPostFragment = new BoardEditFragment();
         editPostFragment.setArguments(bundle);
 

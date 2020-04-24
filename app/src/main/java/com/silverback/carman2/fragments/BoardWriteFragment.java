@@ -369,7 +369,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @SuppressWarnings("ConstantConditions")
     public void initUploadPost() {
 
-        ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+        ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
         if(!doEmptyCheck()) return;
@@ -404,7 +404,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
-        if(!doEmptyCheck()) return;
+        //if(!doEmptyCheck()) return;
         // UserId should be passed from the parent activity. If not, the process should end here.
         if(TextUtils.isEmpty(userId)) return;
 

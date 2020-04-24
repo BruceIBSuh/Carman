@@ -1,13 +1,9 @@
 package com.silverback.carman2.fragments;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
@@ -27,21 +23,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.request.FutureTarget;
-import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardImageAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.threads.UploadBitmapTask;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.BoardImageSpanHandler;
 import com.silverback.carman2.utils.Constants;
@@ -52,7 +47,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,6 +63,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
     private static final String REGEX_MARKUP = "\\[image_\\d]\\n";
 
     // Objects
+    private FirebaseFirestore firestore;
+    private FirebaseStorage storage;
     private Bundle bundle;
     private Matcher m;
     private BoardImageAdapter imgAdapter;
@@ -77,9 +73,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
     private ImageViewModel imgModel;
     private FragmentSharedModel sharedModel;
     private Uri imgUri;
-    private List<Uri> uriImages;
-    private List<ImageSpan> spanList;
+    private List<String> strOldImages;
+    private List<Uri> uriNewImages;
     private SparseArray<ImageSpan> sparseSpanArray;
+    private SparseArray<String> sparseImageArray;
+    private UploadBitmapTask bitmapTask;
 
     // UIs
     private View localView;
@@ -87,7 +85,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
     // Fields
     private String title, content;
-    private List<String> imgUriList;
+
 
 
     // Default Constructor
@@ -102,16 +100,24 @@ public class BoardEditFragment extends BoardBaseFragment implements
             bundle = getArguments();
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
-            imgUriList = getArguments().getStringArrayList("uriImgList");
+            strOldImages = getArguments().getStringArrayList("uriImgList");
         }
 
-        m = Pattern.compile(REGEX_MARKUP).matcher(content);
+        firestore = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
+
+
         sparseSpanArray = new SparseArray<>();
-        uriImages = new ArrayList<>();
-        for(String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
+        sparseImageArray = new SparseArray<>();
+        uriNewImages = new ArrayList<>();
+        // If the post holds any image, the uri string list has to be converted to uri list.
+        if(strOldImages.size() > 0) {
+            for(String uriString : strOldImages) uriNewImages.add(Uri.parse(uriString));
+            log.i("Initial new images: %s", uriNewImages.size());
+        }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
-        imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
@@ -131,7 +137,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         recyclerView.setLayoutManager(linearLayout);
 
-        imgAdapter = new BoardImageAdapter(uriImages, this);
+        imgAdapter = new BoardImageAdapter(uriNewImages, this);
         recyclerView.setAdapter(imgAdapter);
 
         etPostContent.setText(content);
@@ -144,21 +150,22 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // should be put into SparseArray. It seems that List.add(int, obj) does not work here.
         // Once the sparsearray completes to hold all imagespans, it should be converted to spanList
         // to pass to BoardImageSpanHander.setImageSpanList().
-        if(imgUriList != null && imgUriList.size() > 0) {
+        if(strOldImages != null && strOldImages.size() > 0) {
+            m = Pattern.compile(REGEX_MARKUP).matcher(content);
             List<ImageSpan> spanList = new ArrayList<>();
             final float scale = getResources().getDisplayMetrics().density;
             int size = (int)(Constants.IMAGESPAN_THUMBNAIL_SIZE * scale + 0.5f);
             int index = 0;
 
             while(m.find()) {
-                final Uri uri = Uri.parse(imgUriList.get(index));
+                final Uri uri = Uri.parse(strOldImages.get(index));
                 final int pos = index;
                 Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
                     @Override
                     public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
                        ImageSpan imgspan = new ImageSpan(getContext(), res);
                        sparseSpanArray.put(pos, imgspan);
-                       if(sparseSpanArray.size() == imgUriList.size()) {
+                       if(sparseSpanArray.size() == strOldImages.size()) {
                            for(int i = 0; i < sparseSpanArray.size(); i++) spanList.add(i, sparseSpanArray.get(i));
                            spanHandler.setImageSpanList(spanList);
                        }
@@ -195,8 +202,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
-            if(uriImages.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
-                log.i("Image count: %s", uriImages.size());
+            if(uriNewImages.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
+                log.i("Image count: %s", uriNewImages.size());
                 Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
 
             } else {
@@ -208,7 +215,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
                 // Put the line breaker into the edittext when the image interleaves b/w the lines
                 int start = etPostContent.getSelectionStart();
                 int end = etPostContent.getSelectionEnd();
-                log.i("insert image: %s, %s, %s", etPostContent.getText(), start, end);
+                //log.i("insert image: %s, %s, %s", etPostContent.getText(), start, end);
                 etPostContent.getText().replace(start, end, "\n");
             }
         });
@@ -230,22 +237,40 @@ public class BoardEditFragment extends BoardBaseFragment implements
         });
 
 
-        // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
-        // This util method translates an image to an appropriate extent for fitting the imagespan and
-        // the result is provided
+        // On completing to apply Glide with an image selected from the chooser, set it to the span.
         imgModel.getGlideBitmapTarget().observe(requireActivity(), bitmap -> {
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
             spanHandler.setImageSpan(imgSpan);
         });
+
+        // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
+        // the result is notified as SparseArray which indicates the position and uriString of image.
+        imgModel.getDownloadBitmapUri().observe(this, sparseArray -> {
+            // Check if the number of attached images equals to the number of uris that are down
+            // loaded from Storage.
+            sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
+            uriNewImages.add(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
+            log.i("downsize images done: %s", uriNewImages.get(sparseArray.keyAt(0)));
+            /*
+            if(uriNewImages.size() == sparseImageArray.size()) {
+                // On completing optimization of attached images, start uploading a post.
+                log.i("Complete to upload downsizedImages to Storage: %s", sparseImageArray.size());
+                updatePost();
+            }
+
+             */
+
+        });
     }
 
-
+    // Implement BoardImageAdapter.OnBoardAttachImageListener when clicking the deletion button
+    // in the recyclerview thumbnail
     @Override
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
         spanHandler.removeImageSpan(position);
         /*
-        uriImages.remove(position);
+        uriNewImages.remove(position);
         // notifyItemRemoved(), weirdly does not work here.
         imgAdapter.notifyDataSetChanged();
         etPostContent.setText(ssb);
@@ -257,36 +282,80 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        if(imgUri != null) uriImages.add(position, imgUri);
+        if(imgUri != null) uriNewImages.add(position, imgUri);
         imgAdapter.notifyDataSetChanged();
+        log.i("new image position: %s, %s", position, uriNewImages.size());
+        // On adding a new image, it should be downsized to be ready for uploading. Existing images
+        // do not need this process because they have been already uploaded in Storage and the uri
+        // list holds their url data.
+        bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriNewImages.get(position), position, imgModel);
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("Removed Span: %s", position);
-        uriImages.remove(position);
+        uriNewImages.remove(position);
         imgAdapter.notifyDataSetChanged();
+
+        // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
+        // is deleted from Storage as well.
+        storage.getReferenceFromUrl(strOldImages.get(position)).delete()
+                .addOnSuccessListener(aVoid ->log.i("delete image from Storage"))
+                .addOnFailureListener(Exception::printStackTrace);
     }
 
 
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
-    // an image picked in the media which has been selected by BoardChooserDlgFragment
+    // an image picked in the media which has been selected by BoardChooserDlgFragment.
+    // Once applying Glide with the image uri, the result of which returns to ImageViewModel, it
+    // is set to ImageSpan.
     public void setUriFromImageChooser(Uri uri) {
         log.d("setUriFromImageChooser");
         int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         imgUtil.applyGlideToImageSpan(uri, x, y, imgModel);
-        // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
-        // additional pics.
         imgUri = uri;
+    }
+
+
+    @SuppressWarnings("ConstantConditions")
+    public void updateAttachedImages() {
+        // Hide the soft input if it is visible.
+        ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+        if(!doEmptyCheck()) return;
+
+        // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
+        // images should be deleted and new images be processed with downsize and rotation if necessary.
+        log.i("New Images: %s", uriNewImages.size());
+        if(uriNewImages.size() == 0) updatePost();
+        else {
+            // Coompare the new iamges with the old ones and delete old images from Storage and
+            // upload new ones if any change is made. At the same time, the post_images field has to
+            // be updated with new uris. It seems not necessary to compare two lists and partial update
+            // is made with additional image(s) and deleted image(s). Delete and add all at once seems
+            // better.
+            List<Uri> uriOldImages = new ArrayList<>();
+            for(String str : strOldImages) uriOldImages.add(Uri.parse(str));
+
+            if(!uriNewImages.equals(uriOldImages)) {
+                for(int i = 0; i < uriNewImages.size(); i++) {
+                    log.i("New image uri: %s", uriNewImages.get(i).getScheme());
+                    if(uriNewImages.get(i).getScheme().equals("content")) {
+                        bitmapTask = ThreadManager.startBitmapUploadTask(getContext(),
+                                uriNewImages.get(i), i, imgModel);
+                    }
+
+                }
+
+            }
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
     public void updatePost(){
-        if(!doEmptyCheck()) return;
-
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
         // Instantiate the fragment to display the progressbar.
         ProgbarDialogFragment pbFragment = new ProgbarDialogFragment();
@@ -294,7 +363,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
 
-        String userId = bundle.getString("userId");
         String docId = bundle.getString("documentId");
         log.i("document id: %s", docId);
         final DocumentReference docref = firestore.collection("board_general").document(docId);
@@ -302,22 +370,32 @@ public class BoardEditFragment extends BoardBaseFragment implements
         updatePost.put("post_title", etPostTitle.getText().toString());
         updatePost.put("post_content", etPostContent.getText().toString());
         updatePost.put("timestamp", FieldValue.serverTimestamp());
-        // No image attached
-        if(uriImages.size() > 0) {
 
+        if(uriNewImages.size() > 0) {
+            // Once deleting the existing image list, then upload a new image url list.
+            log.i("Delete the existing post_images");
+            updatePost.put("post_images", FieldValue.delete());
+
+            List<String> downloadUriList = null;
+            if(sparseImageArray.size() > 0) {
+                downloadUriList = new ArrayList<>(sparseImageArray.size());
+                for (int i = 0; i < sparseImageArray.size(); i++) {
+                    downloadUriList.add(sparseImageArray.keyAt(i), sparseImageArray.valueAt(i));
+                }
+            }
+
+            updatePost.put("post_images", downloadUriList);
         }
 
-        docref.update(updatePost)
-                .addOnSuccessListener(aVoid -> {
-                    pbFragment.dismiss();
-                    ((BoardActivity)getActivity()).addViewPager();
-                })
-                .addOnFailureListener(e -> e.printStackTrace());
+        docref.update(updatePost).addOnSuccessListener(aVoid -> {
+            pbFragment.dismiss();
+            ((BoardActivity)getActivity()).addViewPager();
+
+        }).addOnFailureListener(Exception::printStackTrace);
 
     }
 
     private boolean doEmptyCheck() {
-        log.i("Title: %s", etPostContent.getText());
         if(TextUtils.isEmpty(etPostContent.getText())) {
             Snackbar.make(localView, getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
             return false;
