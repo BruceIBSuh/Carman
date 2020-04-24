@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
@@ -100,6 +101,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
+        for(String uri : imgUriList) uriImages.add(Uri.parse(uri));
     }
 
     @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
@@ -125,6 +128,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         spanHandler = new BoardImageSpanHandler(etPostContent, this);
 
         // Post contains any image that
+        /*
         if(imgUriList != null && imgUriList.size() > 0) {
 
             for(String uriString : imgUriList) uriImages.add(Uri.parse(uriString));
@@ -135,20 +139,27 @@ public class BoardEditFragment extends BoardBaseFragment implements
             // Match the markup to set the imagespan to it.
             index = 0;
             while(m.find()) {
+                log.i("matched: %s, %s", m.start(), m.end());
                 Uri uri = Uri.parse(imgUriList.get(index));
                 Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
                     @Override
                     public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
+                        log.i("bitmap: %s", res);
                         ImageSpan imgSpan = new ImageSpan(getContext(), res);
-                        spanList.add(imgSpan);
-                        if(spanList.size() == imgUriList.size()) spanHandler.setImageSpanList(spanList);
-                        index++;
+                        spanHandler.setEditImageSpan(imgSpan, m.start(), m.end());
+                        //spanList.add(imgSpan);
+                        //if(spanList.size() == imgUriList.size()) spanHandler.setImageSpanList(spanList);
+
                     }
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });
+
+                index++;
             }
         }
+
+         */
 
         // Scroll the edittext inside (nested)scrollview. More research should be done.
         // warning message is caused by onPermClick not implemented. Unless the method is requried
@@ -215,6 +226,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
         });
     }
 
+    @Override
+    public void attachImage(Bitmap bitmap, int position) {
+        ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+        spanHandler.setImageSpan(imgSpan);
+    }
 
     @Override
     public void removeImage(int position) {

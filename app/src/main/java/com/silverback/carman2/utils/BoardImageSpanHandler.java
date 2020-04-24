@@ -185,6 +185,11 @@ public class BoardImageSpanHandler implements SpanWatcher {
         }
     }
 
+    public void setEditImageSpan(ImageSpan span, int start, int end) {
+        editable.setSpan(this, start, end, Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+        editable.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
     // Write mode
     public void setImageSpan(ImageSpan span) {
         log.i("setImageSpan: %s", span);

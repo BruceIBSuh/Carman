@@ -344,14 +344,10 @@ public class BoardWriteFragment extends DialogFragment implements
         spanHandler.removeImageSpan(position);
     }
 
-    /*
     @Override
     public void attachImage(Bitmap bmp, int pos) {
         log.i("Bitmap received: %s, %s", bmp, pos);
     }
-
-     */
-
 
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment
