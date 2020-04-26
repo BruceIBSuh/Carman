@@ -78,6 +78,7 @@ public class UploadBitmapRunnable implements Runnable {
         final int position = callback.getImagePosition();
         int orientation;
 
+        log.i("Image uri: %s", uri);
         // Create the storage reference of an image uploading to Firebase Storage
         /*
         final StorageReference imgReference = firestorage.getReference().child("images");
@@ -87,7 +88,6 @@ public class UploadBitmapRunnable implements Runnable {
 
         // Set BitmapFactory.Options
         try(InputStream is = context.getContentResolver().openInputStream(uri)) {
-
             /*
             Cursor cursor = context.getContentResolver().query(
                     uri, new String[]{ MediaStore.Images.ImageColumns.ORIENTATION }, null, null, null)){
@@ -129,6 +129,7 @@ public class UploadBitmapRunnable implements Runnable {
                 // Upload the compressed image(less than 1 MB) to Firebase Storage
                 uploadBitmapToStorage(bmpByteArray, position);
             }
+
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }

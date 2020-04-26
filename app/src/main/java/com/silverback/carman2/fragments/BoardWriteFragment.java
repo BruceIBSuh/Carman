@@ -344,10 +344,6 @@ public class BoardWriteFragment extends DialogFragment implements
         spanHandler.removeImageSpan(position);
     }
 
-    @Override
-    public void attachImage(Bitmap bmp, int pos) {
-        log.i("Bitmap received: %s, %s", bmp, pos);
-    }
 
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment
@@ -365,7 +361,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @SuppressWarnings("ConstantConditions")
     public void initUploadPost() {
 
-        ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+        ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
         if(!doEmptyCheck()) return;
@@ -400,7 +396,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @SuppressWarnings("ConstantConditions")
     private void uploadPostToFirestore() {
-        if(!doEmptyCheck()) return;
+        //if(!doEmptyCheck()) return;
         // UserId should be passed from the parent activity. If not, the process should end here.
         if(TextUtils.isEmpty(userId)) return;
 

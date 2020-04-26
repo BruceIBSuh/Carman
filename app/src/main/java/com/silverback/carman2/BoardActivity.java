@@ -253,8 +253,8 @@ public class BoardActivity extends BaseActivity implements
                     log.i("Mode: %s", isWriteMode);
                     String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
                             getString(R.string.board_msg_cancel_edit);
-                    Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
 
+                    Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
                     Snackbar snackBar = Snackbar.make(coordinatorLayout, msg, Snackbar.LENGTH_LONG);
                     snackBar.setAction("OK", view -> {
                         // Remove BoardWriteFragment when the up button presses.
@@ -280,7 +280,12 @@ public class BoardActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_upload_post:
-                writePostFragment.initUploadPost();
+                boolean isWriteMode = (writePostFragment != null) &&
+                        frameLayout.getChildAt(0) == writePostFragment.getView();
+
+                if(isWriteMode) writePostFragment.initUploadPost();
+                else editPostFragment.updateAttachedImages();
+
                 return true;
 
             default:
@@ -345,6 +350,7 @@ public class BoardActivity extends BaseActivity implements
         // Only apply to the floating action button
         if(v.getId() != R.id.fab_board_write) return;
 
+        if(editPostFragment != null) editPostFragment = null;
         // Check if users have made a user name. Otherwise, show tne message for setting the name
         // first before writing a post.
         String userName = mSettings.getString(Constants.USER_NAME, null);
@@ -409,6 +415,8 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onEditClicked(Bundle bundle) {
         log.i("Edit Mode");
+        if(writePostFragment != null) writePostFragment = null;
+
         editPostFragment = new BoardEditFragment();
         editPostFragment.setArguments(bundle);
 
