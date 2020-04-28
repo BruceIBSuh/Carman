@@ -74,8 +74,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
     private ImageViewModel imgModel;
     private FragmentSharedModel sharedModel;
     private Uri imgUri;
-    private List<String> strOldImages;
-    private List<Uri> uriNewImages;
+    private List<String> strImageUrlList;
+    private List<Uri> uriEditImageList;
     private SparseArray<ImageSpan> sparseSpanArray;
     private SparseArray<String> sparseImageArray;
     private UploadBitmapTask bitmapTask;
@@ -87,6 +87,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // Fields
     private String title, content;
     private int cntUploadImage;
+    private List<Integer> imgUrlToRemoveList;
 
 
 
@@ -102,7 +103,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
             bundle = getArguments();
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
-            strOldImages = getArguments().getStringArrayList("uriImgList");
+            strImageUrlList = getArguments().getStringArrayList("uriImgList");
         }
 
         firestore = FirebaseFirestore.getInstance();
@@ -111,11 +112,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
         sparseSpanArray = new SparseArray<>();
         sparseImageArray = new SparseArray<>();
-        uriNewImages = new ArrayList<>();
+        uriEditImageList = new ArrayList<>();
         // If the post holds any image, the uri string list has to be converted to uri list.
-        if(strOldImages.size() > 0) {
-            for(String uriString : strOldImages) uriNewImages.add(Uri.parse(uriString));
-            log.i("Initial new images: %s", uriNewImages.size());
+        if(strImageUrlList.size() > 0) {
+            for(String uriString : strImageUrlList) uriEditImageList.add(Uri.parse(uriString));
+            imgUrlToRemoveList = new ArrayList<>(); // Store image urls to remove in the edit mode.
         }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
@@ -139,7 +140,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         recyclerView.setLayoutManager(linearLayout);
 
-        imgAdapter = new BoardImageAdapter(uriNewImages, this);
+        imgAdapter = new BoardImageAdapter(uriEditImageList, this);
         recyclerView.setAdapter(imgAdapter);
 
         etPostContent.setText(new SpannableStringBuilder(content));
@@ -153,7 +154,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // should be put into SparseArray. It seems that List.add(int, obj) does not work here.
         // Once the sparsearray completes to hold all imagespans, it should be converted to spanList
         // to pass to BoardImageSpanHander.setImageSpanList().
-        if(strOldImages != null && strOldImages.size() > 0) {
+        if(uriEditImageList != null && uriEditImageList.size() > 0) {
             m = Pattern.compile(REGEX_MARKUP).matcher(content);
             List<ImageSpan> spanList = new ArrayList<>();
             final float scale = getResources().getDisplayMetrics().density;
@@ -161,14 +162,15 @@ public class BoardEditFragment extends BoardBaseFragment implements
             int index = 0;
 
             while(m.find()) {
-                final Uri uri = Uri.parse(strOldImages.get(index));
+                //final Uri uri = Uri.parse(strImageUrlList.get(index));
+                final Uri uri = uriEditImageList.get(index);
                 final int pos = index;
                 Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
                     @Override
                     public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
                        ImageSpan imgspan = new ImageSpan(getContext(), res);
                        sparseSpanArray.put(pos, imgspan);
-                       if(sparseSpanArray.size() == strOldImages.size()) {
+                       if(sparseSpanArray.size() == strImageUrlList.size()) {
                            for(int i = 0; i < sparseSpanArray.size(); i++) spanList.add(i, sparseSpanArray.get(i));
                            spanHandler.setImageSpanList(spanList);
                        }
@@ -203,8 +205,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
-            if(uriNewImages.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
-                log.i("Image count: %s", uriNewImages.size());
+            if(uriEditImageList.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
+                log.i("Image count: %s", uriEditImageList.size());
                 Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
 
             } else {
@@ -250,15 +252,15 @@ public class BoardEditFragment extends BoardBaseFragment implements
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
             sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
-            uriNewImages.set(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
-            log.i("downsize images done: %s, %s", sparseArray.keyAt(0), uriNewImages.get(sparseArray.keyAt(0)));
+            uriEditImageList.set(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
+            log.i("downsize images done: %s, %s", sparseArray.keyAt(0), uriEditImageList.get(sparseArray.keyAt(0)));
             log.i("cntUploadImage: %s", cntUploadImage);
             if(sparseImageArray.size() == cntUploadImage) {
                 log.i("Done");
                 updatePost();
             }
             /*
-            if(uriNewImages.size() == sparseImageArray.size()) {
+            if(uriEditImageList.size() == sparseImageArray.size()) {
                 // On completing optimization of attached images, start uploading a post.
                 log.i("Complete to upload downsizedImages to Storage: %s", sparseImageArray.size());
                 updatePost();
@@ -282,8 +284,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
         spanHandler.removeImageSpan(position);
+        //strImageUrlList.remove(position);
+        // Store the postion to remove
+
         /*
-        uriNewImages.remove(position);
+        uriEditImageList.remove(position);
         // notifyItemRemoved(), weirdly does not work here.
         imgAdapter.notifyDataSetChanged();
         etPostContent.setText(ssb);
@@ -295,22 +300,31 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        if(imgUri != null) uriNewImages.add(position, imgUri);
+        if(imgUri != null) uriEditImageList.add(position, imgUri);
         imgAdapter.notifyDataSetChanged();
-        //log.i("new image position: %s, %s", position, uriNewImages.size());
+
+        for(Uri uri : uriEditImageList) {
+            log.i("uriEditImageList: %s", uri);
+        }
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("Removed Span: %s", position);
-        uriNewImages.remove(position);
+        uriEditImageList.remove(position);
         imgAdapter.notifyDataSetChanged();
+
+
+
+        for(Uri uri : uriEditImageList) {
+            log.i("uriEditImageList: %s", uri);
+        }
 
         // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
         // is deleted from Storage as well.
         /*
-        storage.getReferenceFromUrl(strOldImages.get(position)).delete()
+        storage.getReferenceFromUrl(strImageUrlList.get(position)).delete()
                 .addOnSuccessListener(aVoid ->log.i("delete image from Storage"))
                 .addOnFailureListener(Exception::printStackTrace);
 
@@ -341,8 +355,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
-        log.i("New Images: %s", uriNewImages.size());
-        if(uriNewImages.size() == 0) updatePost();
+        log.i("New Images: %s", uriEditImageList.size());
+        if(uriEditImageList.size() == 0) updatePost();
         else {
             // Coompare the new iamges with the old ones and delete old images from Storage and
             // upload new ones if any change is made. At the same time, the post_images field has to
@@ -350,16 +364,16 @@ public class BoardEditFragment extends BoardBaseFragment implements
             // is made with additional image(s) and deleted image(s). Delete and add all at once seems
             // better.
             List<Uri> uriOldImages = new ArrayList<>();
-            for(String str : strOldImages) uriOldImages.add(Uri.parse(str));
-            if(!uriNewImages.equals(uriOldImages)) {
+            for(String str : strImageUrlList) uriOldImages.add(Uri.parse(str));
+            if(!uriEditImageList.equals(uriOldImages)) {
                 cntUploadImage = 0;
-                for(int i = 0; i < uriNewImages.size(); i++) {
-                    log.i("New image uri: %s", uriNewImages.get(i).getScheme());
-                    if(uriNewImages.get(i).getScheme().equals("content")) {
+                for(int i = 0; i < uriEditImageList.size(); i++) {
+                    log.i("New image uri: %s", uriEditImageList.get(i).getScheme());
+                    if(uriEditImageList.get(i).getScheme().equals("content")) {
                         cntUploadImage++;
                         log.i("cntUploadImage: %s", cntUploadImage);
                         bitmapTask = ThreadManager.startBitmapUploadTask(
-                                getContext(), uriNewImages.get(i), i, imgModel);
+                                getContext(), uriEditImageList.get(i), i, imgModel);
                     }
 
                 }
@@ -385,7 +399,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         updatePost.put("post_content", etPostContent.getText().toString());
         updatePost.put("timestamp", FieldValue.serverTimestamp());
 
-        if(uriNewImages.size() > 0) {
+        if(uriEditImageList.size() > 0) {
             // Once deleting the existing image list, then upload a new image url list.
             log.i("Delete the existing post_images");
             updatePost.put("post_images", FieldValue.delete());
