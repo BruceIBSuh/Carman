@@ -5,6 +5,7 @@ import android.text.Selection;
 import android.text.SpanWatcher;
 import android.text.Spannable;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.view.inputmethod.EditorInfo;
@@ -13,6 +14,7 @@ import android.widget.EditText;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.views.EditTextInputConnection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +52,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // Objects
     private Matcher m;
     private EditText editText;
+    private InputConnection ic;
     private OnImageSpanListener mListener;
     private Editable editable;
     private List<ImageSpan> spanList;
@@ -69,16 +72,17 @@ public class BoardImageSpanHandler implements SpanWatcher {
         mListener = listener;
         spanList = new ArrayList<>();
         //editable.setSpan(this, 0, 0, Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        editable.setSpan(this, 0, 0, Spanned.SPAN_COMPOSING);
 
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after){}
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(count == 0 && before == 1) {
+                if(count == 0) {
                     for(ImageSpan span : spanList) {
                         if(start == editable.getSpanEnd(span)) {
-                            log.i("textwatcher start: %s", start);
                             // When the cursor meets getSpanEnd(), hold up the position at the moment.
                             Selection.setSelection(editable, editable.getSpanEnd(span));
                             // Have to use View.post() because the system waits for letting some layouts
@@ -90,8 +94,15 @@ public class BoardImageSpanHandler implements SpanWatcher {
                     }
                 }
             }
+
+
             @Override
-            public void afterTextChanged(Editable s){}
+            public void afterTextChanged(Editable s){
+                if(s.length() == 0) {
+                    log.i("range removed");
+                }
+            }
+
         });
 
         editText.setOnLongClickListener(view -> {
@@ -158,28 +169,13 @@ public class BoardImageSpanHandler implements SpanWatcher {
         // As long as the touch down and touch up at the same position, all position values are the
         // same no matter what is SELECTION_START OR SELECTION_END. When it makes a range,
         // however, the SELECTION_START and the SELECTION_END values become different.
-
-        if(what == SELECTION_START) {
-            log.i("SELECTION_START: %s, %s, %s, %s", ostart, oend, nstart, nend);
-
-        } else if(what == SELECTION_END) {
-            log.i("SELECTION_END: %s, %s, %s, %s", ostart, oend, nstart, nend);
-
-
-            /*
-            int size = spanList.size();
-            for(int i = 0; i < size; i++) {
-                if(text.getSpanStart(spanList.get(i)) == -1 || text.getSpanEnd(spanList.get(i)) == -1) {
-                    text.removeSpan(spanList.get(i));
-                    spanList.remove(spanList.get(i));
-                    mListener.notifyRemovedImageSpan(i);
-                    size--;
-                    i--;
-                }
+        if(what == SELECTION_START || what  == SELECTION_END) {
+            // insert or set range
+            if(ostart != nstart) {
+                log.i("onSpanChanged: %s, %s, %s, %s", ostart, oend, nstart, nend);
             }
-
-             */
         }
+
 
     }
 
