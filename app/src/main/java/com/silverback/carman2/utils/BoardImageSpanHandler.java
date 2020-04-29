@@ -7,6 +7,8 @@ import android.text.Spannable;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.widget.EditText;
 
 import com.silverback.carman2.logs.LoggingHelper;
@@ -92,6 +94,11 @@ public class BoardImageSpanHandler implements SpanWatcher {
             public void afterTextChanged(Editable s){}
         });
 
+        editText.setOnLongClickListener(view -> {
+            InputConnection ic = editText.onCreateInputConnection(new EditorInfo());
+            log.i("getSelectedText: %s", ic.getSelectedText(InputConnection.CURSOR_UPDATE_MONITOR));
+            return false;
+        });
 
     }
 
