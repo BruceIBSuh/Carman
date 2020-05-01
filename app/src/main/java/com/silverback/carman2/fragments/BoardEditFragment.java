@@ -83,11 +83,12 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // UIs
     private View localView;
     private EditText etPostTitle, etPostContent;
+    private ProgbarDialogFragment pbFragment;
 
     // Fields
     private String title, content;
     private int cntUploadImage;
-    private List<Integer> imgUrlToRemoveList;
+    private List<Integer> imgRemoveList;
 
 
 
@@ -112,15 +113,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
         sparseSpanArray = new SparseArray<>();
         sparseImageArray = new SparseArray<>();
         uriEditImageList = new ArrayList<>();
-        imgUrlToRemoveList = new ArrayList<>(); // Store image urls to remove in the edit mode.
+        imgRemoveList = new ArrayList<>(); // Store image urls to remove in the edit mode.
 
-        // If the post holds any image, the uri string list has to be converted to uri list.
+        // If the post holds any image, the http url list should be typecast to uriList.
         if(strImgUrlList != null) {
-            for(String uriString : strImgUrlList) {
-                log.i("uriString: %s", uriString);
-                uriEditImageList.add(Uri.parse(uriString));
-            }
-
+            for(String uriString : strImgUrlList) uriEditImageList.add(Uri.parse(uriString));
         }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
@@ -148,7 +145,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
         recyclerView.setAdapter(imgAdapter);
 
         etPostContent.setText(new SpannableStringBuilder(content));
-        log.i("content: %s", content);
         spanHandler = new BoardImageSpanHandler(etPostContent, this);
 
         // If the post contains any image, find the markup in the content using Matcher.find() and
@@ -169,14 +165,20 @@ public class BoardEditFragment extends BoardBaseFragment implements
                 //final Uri uri = Uri.parse(strImgUrlList.get(index));
                 final Uri uri = uriEditImageList.get(index);
                 final int pos = index;
-                Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
-                       ImageSpan imgspan = new ImageSpan(getContext(), res);
-                       sparseSpanArray.put(pos, imgspan);
-                       if(sparseSpanArray.size() == strImgUrlList.size()) {
-                           for(int i = 0; i < sparseSpanArray.size(); i++) spanList.add(i, sparseSpanArray.get(i));
-                           spanHandler.setImageSpanList(spanList);
+                Glide.with(this).asBitmap().placeholder(R.drawable.ic_image_holder)
+                        .override(size).fitCenter().load(uri)
+                        .into(new CustomTarget<Bitmap>(){
+                            @Override
+                            public void onResourceReady(
+                                    @NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
+
+                                ImageSpan imgspan = new ImageSpan(getContext(), res);
+                                sparseSpanArray.put(pos, imgspan);
+                                if(sparseSpanArray.size() == strImgUrlList.size()) {
+                                    for(int i = 0; i < sparseSpanArray.size(); i++)
+                                        spanList.add(i, sparseSpanArray.get(i));
+
+                                    spanHandler.setImageSpanList(spanList);
                        }
                     }
                     @Override
@@ -260,7 +262,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
             log.i("downsize images done: %s, %s", sparseArray.keyAt(0), uriEditImageList.get(sparseArray.keyAt(0)));
             log.i("cntUploadImage: %s", cntUploadImage);
             if(sparseImageArray.size() == cntUploadImage) {
-                log.i("Done");
+                log.i("Done: %s", uriEditImageList.toString());
+                for(Uri uri : uriEditImageList) {
+                    log.i("Edited Uri done: %s", uri);
+                }
+
                 updatePost();
             }
             /*
@@ -288,7 +294,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
         spanHandler.removeImageSpan(position);
-        //strImgUrlList.remove(position);
+
+
         // Store the postion to remove
 
         /*
@@ -310,6 +317,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         for(Uri uri : uriEditImageList) {
             log.i("uriEditImageList: %s", uri);
         }
+
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
@@ -319,11 +327,14 @@ public class BoardEditFragment extends BoardBaseFragment implements
         uriEditImageList.remove(position);
         imgAdapter.notifyDataSetChanged();
 
-
-
         for(Uri uri : uriEditImageList) {
             log.i("uriEditImageList: %s", uri);
         }
+
+        for(String url : strImgUrlList) {
+            log.i("http url: %s", url);
+        }
+
 
         // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
         // is deleted from Storage as well.
@@ -362,27 +373,42 @@ public class BoardEditFragment extends BoardBaseFragment implements
         log.i("New Images: %s", uriEditImageList.size());
         if(uriEditImageList.size() == 0) updatePost();
         else {
+
+            pbFragment = new ProgbarDialogFragment();
+            pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
             // Coompare the new iamges with the old ones and delete old images from Storage and
             // upload new ones if any change is made. At the same time, the post_images field has to
             // be updated with new uris. It seems not necessary to compare two lists and partial update
             // is made with additional image(s) and deleted image(s). Delete and add all at once seems
             // better.
-            List<Uri> uriOldImages = new ArrayList<>();
-            for(String str : strImgUrlList) uriOldImages.add(Uri.parse(str));
-            if(!uriEditImageList.equals(uriOldImages)) {
-                cntUploadImage = 0;
-                for(int i = 0; i < uriEditImageList.size(); i++) {
-                    log.i("New image uri: %s", uriEditImageList.get(i).getScheme());
-                    if(uriEditImageList.get(i).getScheme().equals("content")) {
-                        cntUploadImage++;
-                        log.i("cntUploadImage: %s", cntUploadImage);
-                        bitmapTask = ThreadManager.startBitmapUploadTask(
-                                getContext(), uriEditImageList.get(i), i, imgModel);
-                    }
 
+            // Get the image urls to remove by comparing the original url list with the edited one
+            // and delete the images from Storage.
+            List<String> strEditUri = new ArrayList<>();
+            for(Uri uri : uriEditImageList) strEditUri.add(uri.toString());
+            strImgUrlList.removeAll(strEditUri);
+
+            if(strImgUrlList.size() > 0) {
+                for(String url : strImgUrlList) {
+                    storage.getReferenceFromUrl(url).delete()
+                            .addOnSuccessListener(aVoid -> log.i("delete image from Storage"))
+                            .addOnFailureListener(Exception::printStackTrace);
                 }
-
             }
+
+            cntUploadImage = 0;
+            for(int i = 0; i < uriEditImageList.size(); i++) {
+                log.i("New image uri: %s", uriEditImageList.get(i).getScheme());
+                if(uriEditImageList.get(i).getScheme().equals("content")) {
+                    cntUploadImage++;
+                    log.i("cntUploadImage: %s", cntUploadImage);
+                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriEditImageList.get(i), i, imgModel);
+                }
+            }
+
+            if(cntUploadImage == 0) updatePost();
+
+
         }
     }
 
@@ -390,14 +416,15 @@ public class BoardEditFragment extends BoardBaseFragment implements
     public void updatePost(){
 
         // Instantiate the fragment to display the progressbar.
-        ProgbarDialogFragment pbFragment = new ProgbarDialogFragment();
-        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
 
         String docId = bundle.getString("documentId");
         log.i("document id: %s", docId);
         final DocumentReference docref = firestore.collection("board_general").document(docId);
+        docref.update("post_images", FieldValue.delete());
+
         Map<String, Object> updatePost = new HashMap<>();
         updatePost.put("post_title", etPostTitle.getText().toString());
         updatePost.put("post_content", etPostContent.getText().toString());
@@ -406,8 +433,8 @@ public class BoardEditFragment extends BoardBaseFragment implements
         if(uriEditImageList.size() > 0) {
             // Once deleting the existing image list, then upload a new image url list.
             log.i("Delete the existing post_images");
-            updatePost.put("post_images", FieldValue.delete());
-
+            //updatePost.put("post_images", FieldValue.delete());
+            /*
             List<String> downloadUriList = null;
             if(sparseImageArray.size() > 0) {
                 downloadUriList = new ArrayList<>(sparseImageArray.size());
@@ -415,8 +442,11 @@ public class BoardEditFragment extends BoardBaseFragment implements
                     downloadUriList.add(sparseImageArray.keyAt(i), sparseImageArray.valueAt(i));
                 }
             }
+             */
 
-            updatePost.put("post_images", downloadUriList);
+            List<String> downloadList = new ArrayList<>();
+            for(Uri uri : uriEditImageList) downloadList.add(uri.toString());
+            updatePost.put("post_images", downloadList);
         }
 
         docref.update(updatePost).addOnSuccessListener(aVoid -> {

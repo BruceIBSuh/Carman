@@ -327,7 +327,6 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        log.i("notifyAddImageSpan: %s, %s", etPostBody.getText().getSpanStart(imgSpan), etPostBody.getText().getSpanEnd(imgSpan));
         if(uriImgList.size() == 0) uriImgList.add(imgUri);
         else uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();

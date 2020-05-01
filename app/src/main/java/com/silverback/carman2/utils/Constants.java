@@ -50,7 +50,7 @@ public class Constants {
     public static final int BOARD_EDIT_THUMBNAIL_SIZE = 50;
     public static final int MAX_ICON_SIZE = (1024 * 1024) / 2;
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
-    public static final int MAX_ATTACHED_IMAGE_NUMS = 6;//limit of the images attached with the post.
+    public static final int MAX_ATTACHED_IMAGE_NUMS = 5;//limit of the images attached with the post.
 
     // Board
     public static final int NUM_BOARD_PAGES = 4;
