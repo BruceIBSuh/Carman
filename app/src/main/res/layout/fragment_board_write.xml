@@ -71,7 +71,7 @@
     -->
 
 
-    <com.silverback.carman2.views.EditTextInputConnection
+    <EditText
         android:id="@+id/et_board_content"
         android:layout_width="0dp"
         android:layout_height="0dp"

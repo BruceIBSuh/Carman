@@ -74,7 +74,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     private ImageViewModel imgModel;
     private FragmentSharedModel sharedModel;
     private Uri imgUri;
-    private List<String> strImageUrlList;
+    private List<String> strImgUrlList;
     private List<Uri> uriEditImageList;
     private SparseArray<ImageSpan> sparseSpanArray;
     private SparseArray<String> sparseImageArray;
@@ -103,20 +103,24 @@ public class BoardEditFragment extends BoardBaseFragment implements
             bundle = getArguments();
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
-            strImageUrlList = getArguments().getStringArrayList("uriImgList");
+            strImgUrlList = getArguments().getStringArrayList("uriImgList");
         }
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
 
-
         sparseSpanArray = new SparseArray<>();
         sparseImageArray = new SparseArray<>();
         uriEditImageList = new ArrayList<>();
+        imgUrlToRemoveList = new ArrayList<>(); // Store image urls to remove in the edit mode.
+
         // If the post holds any image, the uri string list has to be converted to uri list.
-        if(strImageUrlList.size() > 0) {
-            for(String uriString : strImageUrlList) uriEditImageList.add(Uri.parse(uriString));
-            imgUrlToRemoveList = new ArrayList<>(); // Store image urls to remove in the edit mode.
+        if(strImgUrlList != null) {
+            for(String uriString : strImgUrlList) {
+                log.i("uriString: %s", uriString);
+                uriEditImageList.add(Uri.parse(uriString));
+            }
+
         }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
@@ -162,7 +166,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
             int index = 0;
 
             while(m.find()) {
-                //final Uri uri = Uri.parse(strImageUrlList.get(index));
+                //final Uri uri = Uri.parse(strImgUrlList.get(index));
                 final Uri uri = uriEditImageList.get(index);
                 final int pos = index;
                 Glide.with(this).asBitmap().override(size).fitCenter().load(uri).into(new CustomTarget<Bitmap>(){
@@ -170,7 +174,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
                     public void onResourceReady(@NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
                        ImageSpan imgspan = new ImageSpan(getContext(), res);
                        sparseSpanArray.put(pos, imgspan);
-                       if(sparseSpanArray.size() == strImageUrlList.size()) {
+                       if(sparseSpanArray.size() == strImgUrlList.size()) {
                            for(int i = 0; i < sparseSpanArray.size(); i++) spanList.add(i, sparseSpanArray.get(i));
                            spanHandler.setImageSpanList(spanList);
                        }
@@ -284,7 +288,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
         spanHandler.removeImageSpan(position);
-        //strImageUrlList.remove(position);
+        //strImgUrlList.remove(position);
         // Store the postion to remove
 
         /*
@@ -324,7 +328,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
         // is deleted from Storage as well.
         /*
-        storage.getReferenceFromUrl(strImageUrlList.get(position)).delete()
+        storage.getReferenceFromUrl(strImgUrlList.get(position)).delete()
                 .addOnSuccessListener(aVoid ->log.i("delete image from Storage"))
                 .addOnFailureListener(Exception::printStackTrace);
 
@@ -364,7 +368,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
             // is made with additional image(s) and deleted image(s). Delete and add all at once seems
             // better.
             List<Uri> uriOldImages = new ArrayList<>();
-            for(String str : strImageUrlList) uriOldImages.add(Uri.parse(str));
+            for(String str : strImgUrlList) uriOldImages.add(Uri.parse(str));
             if(!uriEditImageList.equals(uriOldImages)) {
                 cntUploadImage = 0;
                 for(int i = 0; i < uriEditImageList.size(); i++) {

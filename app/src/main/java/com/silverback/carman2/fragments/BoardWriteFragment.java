@@ -133,7 +133,7 @@ public class BoardWriteFragment extends DialogFragment implements
         localView = inflater.inflate(R.layout.fragment_board_write, container, false);
 
         etPostTitle = localView.findViewById(R.id.et_board_write_title);
-        etPostBody = localView.findViewById(R.id.et_board_content);
+                        etPostBody = localView.findViewById(R.id.et_board_content);
         RecyclerView recyclerImageView = localView.findViewById(R.id.vg_recycler_images);
         Button btnAttach = localView.findViewById(R.id.btn_attach_image);
 
@@ -327,6 +327,7 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
+        log.i("notifyAddImageSpan: %s, %s", etPostBody.getText().getSpanStart(imgSpan), etPostBody.getText().getSpanEnd(imgSpan));
         if(uriImgList.size() == 0) uriImgList.add(imgUri);
         else uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
@@ -334,6 +335,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @Override
     public void notifyRemovedImageSpan(int position) {
+        log.i("uriImageList: %s, %s", uriImgList.size(), position);
         uriImgList.remove(position);
         imageAdapter.notifyDataSetChanged();
     }
