@@ -17,7 +17,7 @@ public class Constants {
     public static final int TOTAL = 2;
     public static final int BOARD = 3;
 
-    //
+
     public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
@@ -50,17 +50,16 @@ public class Constants {
     public static final int BOARD_EDIT_THUMBNAIL_SIZE = 50;
     public static final int MAX_ICON_SIZE = (1024 * 1024) / 2;
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
-    public static final int MAX_ATTACHED_IMAGE_NUMS = 5;//limit of the images attached with the post.
+
 
     // Board
-    public static final int NUM_BOARD_PAGES = 4;
-    public static final int PAGINATION = 20;
+    public static final int PAGINATION = 15;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;
     public static final int BOARD_NOTIFICATION = 3;
+    public static final int MAX_IMAGE_NUMS = 5;
 
-    public static final int SETTING_YEARS = 20;
 
     // File names for FileProvider
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";

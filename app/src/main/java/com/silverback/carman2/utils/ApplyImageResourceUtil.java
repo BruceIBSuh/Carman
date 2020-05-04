@@ -239,17 +239,18 @@ public class ApplyImageResourceUtil {
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.
-    public void applyGlideToImageSpan(Uri imgUri, int x, int y, ImageViewModel model) {
+    public void applyGlideToImageSpan(Uri imgUri, int size, ImageViewModel model) {
 
         if(imgUri == null) return;
 
         final float scale = mContext.getResources().getDisplayMetrics().density;
-        int px_x = (int)(x * scale + 0.5f);
-        int px_y = (int)(y * scale + 0.5f);
+        int px = (int)(size * scale + 0.5f);
+        //int px_y = (int)(y * scale + 0.5f);
 
         Glide.with(mContext)
                 .asBitmap()
-                .override(px_x, px_y)
+                //.override(px_x, px_y)
+                .override(px)
                 .fitCenter()
                 .load(imgUri)
                 .into(new CustomTarget<Bitmap>() {

@@ -211,7 +211,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
-            if(uriEditImageList.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
+            if(uriEditImageList.size() > Constants.MAX_IMAGE_NUMS) {
                 log.i("Image count: %s", uriEditImageList.size());
                 Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
 
@@ -353,29 +353,30 @@ public class BoardEditFragment extends BoardBaseFragment implements
     // is set to ImageSpan.
     public void setUriFromImageChooser(Uri uri) {
         log.d("setUriFromImageChooser");
-        int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-        int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-        imgUtil.applyGlideToImageSpan(uri, x, y, imgModel);
+        int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        //int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        imgUtil.applyGlideToImageSpan(uri, size, imgModel);
         imgUri = uri;
     }
 
 
     @SuppressWarnings("ConstantConditions")
-    public void updateAttachedImages() {
+    public void prepareUpdate() {
         // Hide the soft input if it is visible.
         ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
         if(!doEmptyCheck()) return;
 
+        // Create the progressbar
+        pbFragment = new ProgbarDialogFragment();
+        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
         log.i("New Images: %s", uriEditImageList.size());
         if(uriEditImageList.size() == 0) updatePost();
         else {
 
-            pbFragment = new ProgbarDialogFragment();
-            pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
             // Coompare the new iamges with the old ones and delete old images from Storage and
             // upload new ones if any change is made. At the same time, the post_images field has to
             // be updated with new uris. It seems not necessary to compare two lists and partial update
@@ -413,15 +414,13 @@ public class BoardEditFragment extends BoardBaseFragment implements
     }
 
     @SuppressWarnings("ConstantConditions")
-    public void updatePost(){
+    private void updatePost(){
 
         // Instantiate the fragment to display the progressbar.
-
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
 
         String docId = bundle.getString("documentId");
-        log.i("document id: %s", docId);
         final DocumentReference docref = firestore.collection("board_general").document(docId);
         docref.update("post_images", FieldValue.delete());
 

@@ -116,6 +116,7 @@ public class BoardActivity extends BaseActivity implements
         void onCheckBoxValueChange(ArrayList<CharSequence> autofilter);
         void onGeneralPost(boolean b);
     }
+
     // Set OnFilterCheckBoxListener to be notified of which checkbox is checked or not, on which
     // query by the tab is based.
     public void setAutoFilterListener(OnFilterCheckBoxListener listener) {
@@ -156,8 +157,12 @@ public class BoardActivity extends BaseActivity implements
         // as Bundle.putCharSequenceArrayList().
         cbAutoFilter = new ArrayList<>();
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        try {createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
-        catch (JSONException e) {e.printStackTrace();}
+        log.i("AutoFilter: %s", jsonAutoFilter);
+        try {
+            createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
@@ -283,8 +288,8 @@ public class BoardActivity extends BaseActivity implements
                 boolean isWriteMode = (writePostFragment != null) &&
                         frameLayout.getChildAt(0) == writePostFragment.getView();
 
-                if(isWriteMode) writePostFragment.initUploadPost();
-                else editPostFragment.updateAttachedImages();
+                if(isWriteMode) writePostFragment.prepareUpload();
+                else editPostFragment.prepareUpdate();
 
                 return true;
 
@@ -306,8 +311,27 @@ public class BoardActivity extends BaseActivity implements
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onPageSelected(int position) {
+    public void onPageSelected(int position){
         tabPage = position;
+        animAutoFilter(false); //hide the autofilter
+        menu.getItem(0).setVisible(false);
+        fabWrite.setVisibility(View.VISIBLE);
+
+        switch(position) {
+            case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
+                break;
+
+            case Constants.BOARD_AUTOCLUB:
+                menu.getItem(0).setVisible(true);
+                animAutoFilter(true);
+                break;
+
+            case Constants.BOARD_NOTIFICATION:
+                fabWrite.setVisibility(View.INVISIBLE);
+                break;
+        }
+
+        /*
         // If the value of isFilterVisible becomes true, the filter button shows up in the toolbar and
         // pressing the button calls animAutoFilter() to make the filter layout slide down,
         // which is defined in onOptionsItemSelected()
@@ -339,6 +363,8 @@ public class BoardActivity extends BaseActivity implements
             menu.getItem(0).setVisible(false);
 
         }
+
+         */
     }
 
     @Override
@@ -433,10 +459,11 @@ public class BoardActivity extends BaseActivity implements
         fabWrite.setVisibility(View.GONE);
     }
 
-    // Receive the image uri as a result of startActivityForResult() invoked in BoardWriteFragment,
-    // which has an implicit intent to select an image. The uri is, in turn, sent to BoardWriteFragment
-    // as LiveData of ImageViewModel for purposes of showing the image in the image span in the
-    // content area and adding it to the image list so as to update the recyclerview adapter.
+    // Receive an image uri as a data of startActivityForResult() invoked either in BoardWriteFragment
+    // or BoardEditFragment, which holds an implicit intent to call in the image chooser.  The uri is,
+    // in turn, sent to either of the fragments as an livedata of the imageviewmodel for purposes of
+    // showing the image span in the post and adding it to the image list so as to update the recyclerview
+    // adapter.
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -572,7 +599,6 @@ public class BoardActivity extends BaseActivity implements
             ClickableSpan clickableSpan = new ClickableSpan(){
                 @Override
                 public void onClick(@NonNull View textView) {
-                    log.i("ClickableSpan clicked");
                     int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
                     Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
                     intent.putExtra("requestCode", requestCode);
@@ -590,7 +616,6 @@ public class BoardActivity extends BaseActivity implements
 
         // Creat checkboxes with the json string given. When the frame contains BoardWriteFragment,
         // an checkbox is added to ask whehter a post is enlisted in the general board.
-        JSONArray jsonAuto = new JSONArray(json);
         if(frameLayout.getChildAt(0) == boardPager) {
             TextView tvLabel = new TextView(context);
             tvLabel.setText(getString(R.string.board_filter_title));
@@ -613,6 +638,7 @@ public class BoardActivity extends BaseActivity implements
 
         // Set names and properties to each checkbox in accordance with whehter an element of the
         // json array is valid or null.
+        JSONArray jsonAuto = new JSONArray(json);
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTextColor(Color.WHITE);
@@ -737,9 +763,7 @@ public class BoardActivity extends BaseActivity implements
                 }
                 break;
 
-            default:
-                log.i("no select");
-                break;
+            default: break;
         }
 
     }

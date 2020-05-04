@@ -295,8 +295,12 @@ public class BoardPagerFragment extends Fragment implements
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
+
         if(snapshotList.size() > 0) pbLoading.setVisibility(View.GONE);
-        else recyclerPostView.setEmptyView(tvEmptyView);
+        else {
+            pbLoading.setVisibility(View.GONE);
+            recyclerPostView.setEmptyView(tvEmptyView);
+        }
     }
 
     @Override

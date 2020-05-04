@@ -1,7 +1,6 @@
 package com.silverback.carman2.fragments;
 
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -48,7 +47,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
  * A simple {@link Fragment} subclass.
- * This fragment is to upload any writing to post in the board with images attached.
+ * This fragment is to upload any writing to post in the board with images attached, if
  * Special care should be taken when thumbnail image and images in the recyclerview
  * Different processes are applied to add and remove the imagespan. Adding
  */
@@ -68,13 +67,9 @@ public class BoardWriteFragment extends DialogFragment implements
     private ProgbarDialogFragment pbFragment;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private FragmentSharedModel fragmentModel;
-    private Observer<Integer> chooserObserver;
     private ImageViewModel imgViewModel;
     private BoardImageAdapter imageAdapter;
-    private List<Uri> uriImgList;
-    //private List<ImageSpan> spanList;
-    //private ImageSpan imageSpan;
-    private SparseArray<String> downloadImages;
+    private Observer<Integer> chooserObserver;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
 
@@ -83,13 +78,13 @@ public class BoardWriteFragment extends DialogFragment implements
     private EditText etPostTitle, etPostBody;
 
     // Fields
-    private Uri imgUri;
-    private ArrayList<CharSequence> autofilter;
-    private boolean isGeneralPost;
-    private String[] arrAutoData;
-    private String userId;
     private int tabPage;
-    private int chooser;
+    private String userId;
+    private Uri imgUri;
+    private List<Uri> uriImgList;
+    private ArrayList<CharSequence> autofilter;
+    private SparseArray<String> downloadImages;
+    private boolean isGeneralPost;
 
 
     // Constructor
@@ -109,7 +104,11 @@ public class BoardWriteFragment extends DialogFragment implements
         }
 
         // Set the listener only if the current page is set to the auto club.
-        if(tabPage == Constants.BOARD_AUTOCLUB) ((BoardActivity)getActivity()).setAutoFilterListener(this);
+        if(tabPage == Constants.BOARD_AUTOCLUB)
+            ((BoardActivity)getActivity()).setAutoFilterListener(this);
+
+        // An post should be generally shown in the board other than the autoclub. If it is unchecked,
+        // the post is shown only in the autoclub.
         isGeneralPost = true;
 
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
@@ -122,7 +121,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // Special attention should be paid when using ViewModel with requireActivity() as its
         // viewlifecyclerowner because ViewModel.observe() retains the existing value even after
         // the frament is removed from the parent activity.
-        chooserObserver = integer -> {};
+        chooserObserver = integer -> {log.i("ingerger: %s", integer);};
         fragmentModel.getImageChooser().observe(requireActivity(), chooserObserver);
     }
 
@@ -146,41 +145,49 @@ public class BoardWriteFragment extends DialogFragment implements
         imageAdapter = new BoardImageAdapter(uriImgList, this);
         recyclerImageView.setAdapter(imageAdapter);
 
-        // To scroll edittext inside (nested)scrollview. More research should be done.
+        // To scroll the edittext inside (nested)scrollview.
         etPostBody.setOnTouchListener((view, event) ->{
-            if(etPostBody.hasFocus()) {
+            if(view.hasFocus()) {
                 view.getParent().requestDisallowInterceptTouchEvent(true);
+                if((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_SCROLL) {
+                    view.getParent().requestDisallowInterceptTouchEvent(false);
+                    return true;
+                }
+                /*
                 switch(event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_SCROLL:
                         view.getParent().requestDisallowInterceptTouchEvent(false);
                         return true;
                 }
+                 */
             }
             return false;
         });
 
-        // Call the gallery or camera to capture images, the URIs of which are sent to an intent
-        // of onActivityResult(int, int, Intent)
+        // Call a media(gallery or camera) to capture images, the uri of which are sent to an intent
+        // of onActivityResult()
         btnAttach.setOnClickListener(btn -> {
             ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
-            if(uriImgList.size() > Constants.MAX_ATTACHED_IMAGE_NUMS) {
+            log.i("Image numbers: %s", uriImgList.size());
+            if(uriImgList.size() >= Constants.MAX_IMAGE_NUMS) {
                 log.i("Image count: %s", uriImgList.size());
-                Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
+                String msg = String.format(getString(R.string.board_msg_image), Constants.MAX_IMAGE_NUMS);
+                Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
 
             } else {
                 log.i("BoardChooserDlgFragment initiated");
-                // Pop up the dialog to select which media to use bewteen the camera and gallery, then
-                // create an intent by the selection.
+                // Pop up the dialog to select which media to use bewteen the camera and gallery for
+                // selecting an image, then create an intent by the selection.
                 DialogFragment dialog = new BoardChooserDlgFragment();
                 // BUGS FREQUENTLY OCCURRED!!!!
                 //java.lang.IllegalStateException: Fragment BoardWriteFragment{984f0c5}
                 // (4b73b12d-9e70-4e32-95bb-52f209a6b8a1)} not attached to Activity
                 //dialog.show(getChildFragmentManager(), "@null");
                 //dialog.show(getParentFragmentManager(), "chooserDialog");
-                dialog.show(getActivity().getSupportFragmentManager(), "chooser");
+                dialog.show(getActivity().getSupportFragmentManager(), "mediaChooser");
 
                 /*
                  * This works for both, inserting a text at the current position and replacing
@@ -196,7 +203,6 @@ public class BoardWriteFragment extends DialogFragment implements
                 //int end = Math.max(etPostBody.getSelectionEnd(), 0);
                 int start = etPostBody.getSelectionStart();
                 int end = etPostBody.getSelectionEnd();
-                log.i("insert image: %s, %s, %s", etPostBody.getText(), start, end);
                 etPostBody.getText().replace(start, end, "\n");
             }
         });
@@ -248,8 +254,7 @@ public class BoardWriteFragment extends DialogFragment implements
          */
 
         // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
-        // This util method translates an image to an appropriate extent for fitting the imagespan and
-        // the result is provided
+        // This method translates an image to an appropriate extent for fitting the imagespan.
         imgViewModel.getGlideBitmapTarget().observe(requireActivity(), bitmap -> {
             log.i("Bitmap received: %s, %s", uriImgList.size(), bitmap);
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
@@ -327,8 +332,11 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
+        /*
         if(uriImgList.size() == 0) uriImgList.add(imgUri);
         else uriImgList.add(position, imgUri);
+         */
+        uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
     }
 
@@ -350,10 +358,8 @@ public class BoardWriteFragment extends DialogFragment implements
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment
     public void setUriFromImageChooser(Uri uri) {
-        //log.d("setUriFromImageChooser");
-        int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-        int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-        applyImageResourceUtil.applyGlideToImageSpan(uri, x, y, imgViewModel);
+        int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        applyImageResourceUtil.applyGlideToImageSpan(uri, size, imgViewModel);
         // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
         // additional pics.
         imgUri = uri;
@@ -361,12 +367,12 @@ public class BoardWriteFragment extends DialogFragment implements
 
     // Invoked when the upload menu in the toolbar is pressed.
     @SuppressWarnings("ConstantConditions")
-    public void initUploadPost() {
+    public void prepareUpload() {
 
         ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
-        if(!doEmptyCheck()) return;
+        if(TextUtils.isEmpty(userId) || !doEmptyCheck()) return;
 
         // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgbarDialogFragment();
@@ -400,7 +406,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private void uploadPostToFirestore() {
         //if(!doEmptyCheck()) return;
         // UserId should be passed from the parent activity. If not, the process should end here.
-        if(TextUtils.isEmpty(userId)) return;
+        //if(TextUtils.isEmpty(userId)) return;
 
         // Cast SparseArray containing download urls from Storage to String array
         // Something wrong around here because a posting item contains an image despite no image
@@ -452,10 +458,5 @@ public class BoardWriteFragment extends DialogFragment implements
             Snackbar.make(localView, getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
             return false;
         } else return true;
-
     }
-
-
-
-
 }

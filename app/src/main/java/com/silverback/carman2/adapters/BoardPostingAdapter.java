@@ -70,7 +70,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         this.context = parent.getContext();
         imgUtil = new ApplyImageResourceUtil(context);
 
-
         CardView cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.cardview_board_post, parent, false);
 
