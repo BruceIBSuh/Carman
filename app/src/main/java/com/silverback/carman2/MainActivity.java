@@ -66,7 +66,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
 
-
         Toolbar toolbar = findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
         String title = mSettings.getString(Constants.USER_NAME, null);
@@ -92,13 +91,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 .replace(R.id.frame_main, generalFragment, "general")
                 .addToBackStack(null)
                 .commit();
-
-        // Permission Check which is initiated by the parent activty(BaseActivity), so it is of no
-        // use to initiate the permission check again here.
-        //checkPermissions();
-
-
-
     }
 
     @Override

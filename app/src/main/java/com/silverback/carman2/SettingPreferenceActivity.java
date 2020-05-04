@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -99,6 +100,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_general_setting);
 
+        // Permission check for CAMERA to get the user image.
+        checkPermissions(Manifest.permission.CAMERA);
+
         settingToolbar = findViewById(R.id.toolbar_setting);
         setSupportActionBar(settingToolbar);
         // Get a support ActionBar corresponding to this toolbar
@@ -131,27 +135,21 @@ public class SettingPreferenceActivity extends BaseActivity implements
         else distCode = jsonDistArray.optString(2);
 
 
-        settingFragment = new SettingPreferenceFragment();
-        //settingFragment.setArguments(args);
-
         // Attach SettingPreferencFragment in the FrameLayout
+        settingFragment = new SettingPreferenceFragment();
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
                 .addToBackStack(null)
                 .commit();
 
-        // Set the user image to the custom preference icon using ApplyImageResourceUtil
-        // .applyGlideToDrawable() and receive a drawable as a LiveData that Glide transforms
-        // the user image for fitting to a given size.
+        // Sync issue may occur.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
-        applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
-
-        // ViewModel listener to have drawable for the user icon processed by Glide each time when
-        // the activity is created or the icon image is chaged or removed.
-        imgModel.getGlideDrawableTarget().observe(this, drawable -> {
-            //settingFragment.setUserImageIcon(drawable);
-            settingFragment.getUserImagePreference().setIcon(drawable);
-        });
+        if(!TextUtils.isEmpty(imageUri)) {
+            applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
+            imgModel.getGlideDrawableTarget().observe(this, drawable -> {
+                settingFragment.getUserImagePreference().setIcon(drawable);
+            });
+        }
     }
 
     @Override
@@ -177,6 +175,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onPause();
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
         if(gasPriceTask != null) gasPriceTask = null;
+        if(imgModel != null) imgModel = null;
     }
 
 
@@ -189,9 +188,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Check which fragment the parent activity contains at first, then if the fragment is
-        // SettingPreferenceFragment, send back an intent holding preference changes to MainActivity
+        // SettingPreferenceFragment, send back to MainActivity an intent holding preference changes
         // when clicking the Up button. Otherwise, if the parent activity contains any fragment other
-        // than SettingPreferenceFragment, just pop this fragment off the back stack, which works
+        // than SettingPreferenceFragment, just pop the fragment off the back stack, which works
         // like the Back command.
         Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
 
@@ -346,8 +345,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     }
 
-    // Implement the callback of CropImageDialogFragment.OnSelectImageMediumListener to have the
-    // image mediastore selected in the dialog.
+    // Implements OnSelectImageMediumListener defined in CropImageDialogFragment
     @Override
     public void onSelectImageMedia(int which) {
 

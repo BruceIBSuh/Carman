@@ -22,15 +22,13 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -196,7 +194,6 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         userImagePref = findPreference(Constants.USER_IMAGE);
         userImagePref.setOnPreferenceClickListener(view -> {
-            log.i("ProgressImagePreference clicked");
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;

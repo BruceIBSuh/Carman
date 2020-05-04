@@ -45,6 +45,7 @@
         <item>B034</item>
     </string-array>
 
+    <!-- Inital Sido and Sigun code -->
     <string-array name="default_district">
         <item>@string/general_def_sido</item>
         <item>@string/general_def_sigun</item>

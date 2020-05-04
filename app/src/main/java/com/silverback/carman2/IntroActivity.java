@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -74,63 +75,27 @@ public class IntroActivity extends BaseActivity  {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_intro);
 
-        defaultDistrict = getResources().getStringArray(R.array.default_district);
+        // Permission check for ACCESS_FINE_LOCATION to retrieve near stations in MainActivity.
+        checkPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
+
+        // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(this);
         opinetViewModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        firestoreViewModel = new ViewModelProvider(this).get(FirestoreViewModel.class);
+
+        // Retrieve resources.
+        defaultDistrict = getResources().getStringArray(R.array.default_district);
 
         mProgBar = findViewById(R.id.pb_intro);
         // On clicking the start button, fork the process into the first-time launching or the regular
         // process depending upon whether the Firebase anonymous authentication is registered.
-
         ImageButton btnStart = findViewById(R.id.btn_start);
         btnStart.setOnClickListener(view -> {
             mProgBar.setVisibility(View.VISIBLE);
-            log.i("FirebaseAuth: %s", mAuth.getCurrentUser());
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
-
-        /*
-         * REFACTOR REQURIRED
-         * Initial tasks should be done at a time by initiating the same task with multiple
-         * runnables.
-         */
-        // Notified of having the district codes(sigun codes) complete, which was running in the
-        // background by DistrictCodeTask only during firstInitProcess().
-        opinetViewModel.distCodeComplete().observe(this, isComplete -> {
-            try {
-                if (isComplete) {
-                    mProgBar.setVisibility(View.INVISIBLE);
-                    //autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
-                    regularInitProcess();
-                } else throw new FileNotFoundException();
-
-            } catch(FileNotFoundException e) {
-                log.e("District Code FileNotFoundException: %s", e.getMessage());
-            }
-        });
-
-        // Notified of having completed to download auto data resources and to save it in the file.
-        /*
-        firestoreViewModel.getAutoResourceTaskDone().observe(this, isDone -> {
-            mProgBar.setVisibility(View.INVISIBLE);
-            regularInitProcess();
-        });
-        */
-
-        // Notified of having each price of average, sido, sigun and the first placeholder of the
-        // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
-        // SharedPreferences to check whether the price should be updated for the next initiation.
-        opinetViewModel.distPriceComplete().observe(this, isDone -> {
-            mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-            startActivity(new Intent(this, MainActivity.class));
-            mProgBar.setVisibility(View.GONE);
-            finish();
-        });
-
     }
 
     @Override
@@ -150,8 +115,6 @@ public class IntroActivity extends BaseActivity  {
     // resources and saved in SharedPreferences should be refactored to download directly from the server.
     @SuppressWarnings("ConstantConditions")
     private void firstInitProcess() {
-        //mProgBar.setVisibility(View.VISIBLE);
-        // Anonymous Authentication with Firebase.Auth
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 Map<String, Object> userData = new HashMap<>();
@@ -162,20 +125,34 @@ public class IntroActivity extends BaseActivity  {
                 // The user id is determined with the documantation id of a user data document, not
                 // using the FirebaseAuth id for a sequrity reason.
                 firestore.collection("users").add(userData).addOnSuccessListener(docref -> {
-                    final String userDocument = docref.getId();
-                    if(!TextUtils.isEmpty(userDocument)) {
+                    final String userDoc = docref.getId();
+                    if(!TextUtils.isEmpty(userDoc)) {
                         try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
-                            fos.write(userDocument.getBytes());
+                            fos.write(userDoc.getBytes());
                         } catch (IOException e) {
-                            log.e("IOException: %s", e.getMessage());
+                            e.printStackTrace();
                         }
                     }
-                }).addOnFailureListener(e -> log.e("Add user failed: %s", e.getMessage()));
+                }).addOnFailureListener(Exception::printStackTrace);
 
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
                 distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
+                // Notified of having the district codes(sigun codes) complete, which was running in the
+                // background by DistrictCodeTask only during firstInitProcess().
+                opinetViewModel.distCodeComplete().observe(this, isComplete -> {
+                    try {
+                        if (isComplete) {
+                            mProgBar.setVisibility(View.INVISIBLE);
+                            //autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
+                            regularInitProcess();
+                        } else throw new FileNotFoundException();
+
+                    } catch(FileNotFoundException e) {
+                        log.e("District Code FileNotFoundException: %s", e.getMessage());
+                    }
+                });
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.
@@ -187,8 +164,6 @@ public class IntroActivity extends BaseActivity  {
                 JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
-            } else {
-                log.e("Anonymous Authentication failed");
             }
         });
 
@@ -199,8 +174,9 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
+
         mProgBar.setVisibility(View.VISIBLE);
-        // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has lapsed.
+        // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
         // As GasPriceTask completes, updated prices is notified as LiveData to OpinetViewModel.
         // distPriceComplete().
         if(checkPriceUpdate()) {
@@ -209,6 +185,15 @@ public class IntroActivity extends BaseActivity  {
                 String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
                 log.i("District code: %s", distCode);
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+                // Notified of having each price of average, sido, sigun and the first placeholder of the
+                // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
+                // SharedPreferences to check whether the price should be updated for the next initiation.
+                opinetViewModel.distPriceComplete().observe(this, isDone -> {
+                    mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+                    startActivity(new Intent(this, MainActivity.class));
+                    mProgBar.setVisibility(View.GONE);
+                    finish();
+                });
             });
 
         } else {

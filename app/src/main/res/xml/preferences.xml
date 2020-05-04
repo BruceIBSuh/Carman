@@ -111,7 +111,7 @@
         -->
 
         <Preference
-            app:key="carman_pref_profile_image"
+            app:key="carman_pref_user_image"
             app:title="@string/pref_app_userImage" />
 
     </PreferenceCategory>

@@ -104,7 +104,7 @@ public class BaseActivity extends AppCompatActivity {
             isNetworkConnected = false;
         }
 
-        checkPermissions();
+        //checkPermissions();
     }
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
@@ -186,30 +186,29 @@ public class BaseActivity extends AppCompatActivity {
      * Location: ACCESS_FINE_LOCATION
      * External Storage: READ_EXTERNAL_STORAGE
      */
-    public void checkPermissions() {
+    public void checkPermissions(String name) {
+        // Switch(String) is available from Android 4.4(KitKat API 19) and above.
+        switch(name) {
+            case Manifest.permission.ACCESS_FINE_LOCATION:
+                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_LOCATION);
+                } else hasLocationPermission = true;
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_PERMISSION_LOCATION);
+                break;
 
-            } else hasLocationPermission = true;
+            case Manifest.permission.CAMERA:
+                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_CAMERA);
+                } else hasCameraPermission = true;
 
+                break;
 
-
-        } else if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
-
-            } else hasCameraPermission = true;
+            default: break;
         }
 
-
     }
-
     // Abstract method which is invoked by ActivityCompat.requestPermissions()
     @Override
     public void onRequestPermissionsResult(
@@ -244,14 +243,9 @@ public class BaseActivity extends AppCompatActivity {
                         log.i("Never Ask Again");
                     }
                 }
-
-
-            default:
-                break;
-
+            default: break;
         }
     }
-
 
     // Reference method to get a debug Hashkey for Kakao
     // or by using Terminal,

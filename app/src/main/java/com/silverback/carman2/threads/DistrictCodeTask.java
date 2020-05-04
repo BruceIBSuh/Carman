@@ -12,6 +12,10 @@ public class DistrictCodeTask extends ThreadTask
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(DistrictCodeTask.class);
 
+    // Constants
+    static final int DISTRICT_CODE_COMPLETE = 1;
+    static final int DISTRICT_CODE_FAIL = -1;
+
     // Objects
     private OpinetViewModel model;
     private Runnable opinetDistCodeRunnable;
@@ -37,8 +41,11 @@ public class DistrictCodeTask extends ThreadTask
 
     @Override
     public void hasDistCodeSaved(boolean b) {
+        int outstate = -1;
         if(b) model.distCodeComplete().postValue(true);
         else model.distCodeComplete().postValue(false);
+
+        sThreadManager.handleState(this, outstate);
     }
 
     /*

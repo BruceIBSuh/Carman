@@ -46,7 +46,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     private String[] arrAutoType;
     private FragmentSharedModel fragmentModel;
     private OnToolbarTitleListener mToolbarListener;
-    private ListPreference autoMaker, autoType, autoModel, autoYear;
+    private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
 
     // fields
     private String makerId, modelId;
@@ -85,6 +85,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
         autoModel = findPreference(Constants.AUTO_MODEL);
+        engineType = findPreference(Constants.ENGINE_TYPE);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
         autoMaker.setOnPreferenceChangeListener(this);

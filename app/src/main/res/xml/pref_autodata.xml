@@ -15,6 +15,12 @@
         app:useSimpleSummaryProvider="false" />
 
     <ListPreference
+        app:key="carman_pref_engine_type"
+        app:title="@string/pref_engine_type"
+        app:summary="@string/pref_entry_void"
+        app:useSimpleSummaryProvider="false" />
+
+    <ListPreference
         app:key="carman_pref_auto_model"
         app:title="@string/pref_auto_model"
         app:summary="@string/pref_entry_void"

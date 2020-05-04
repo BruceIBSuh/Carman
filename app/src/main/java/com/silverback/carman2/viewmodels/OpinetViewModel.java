@@ -5,11 +5,14 @@ import androidx.lifecycle.ViewModel;
 
 import java.util.Map;
 
+/**
+ * This viewmodel is designed to store and maange UI-related data from Opinet in a lifecycle-concious
+ * way. The data will survive confiuguration changs such as screen rotations.
+ */
 public class OpinetViewModel extends ViewModel {
 
-    //private MutableLiveData<SparseArray<Object>> oilPriceData;
-    private MutableLiveData<Boolean> districtPrice;
     private MutableLiveData<Boolean> distCode;
+    private MutableLiveData<Boolean> districtPrice;
     private MutableLiveData<Boolean> favoritePrice;
     private MutableLiveData<Map<String, Float>> favoritePriceData;
 
