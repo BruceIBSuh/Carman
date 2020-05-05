@@ -13,6 +13,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -87,7 +88,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // to continue another query to retrieve auto models.
     void queryAutoMaker(String name) {
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
-            for(QueryDocumentSnapshot makershot : makers) {
+            for(DocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
                     //mListener.queryAutoMakerSnapshot(makershot);
                     queryAutoMakerSnapshot(makershot);
@@ -99,10 +100,10 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // On completion of the auto maker query, make a sequential query of auto models with the
     // automaker snapshot id, then notify the listener of queried snapshot
-    void queryAutoModel(String id,  String model) {
-        log.i("Model name: %s", model);
+    void queryAutoModel(String makerId,  String modelName) {
+        log.i("Model name: %s", modelName);
         //if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
-        autoRef.document(id).collection("auto_model").whereEqualTo("model_name", model).get()
+        autoRef.document(makerId).collection("auto_model").whereEqualTo("model_name", modelName).get()
                 .addOnSuccessListener(query -> {
                     for(QueryDocumentSnapshot modelshot : query) {
                         if(modelshot.exists()) {
@@ -148,6 +149,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // Abstract methods which should be implemented both in SettingPreferenceFragment and
     // SettingBaseFragment.
-    protected abstract void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
+    protected abstract void queryAutoMakerSnapshot(DocumentSnapshot makershot);
     protected abstract void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
 }

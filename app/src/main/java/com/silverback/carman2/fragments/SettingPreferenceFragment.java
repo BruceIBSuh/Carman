@@ -14,6 +14,7 @@ import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
@@ -234,7 +235,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     // setting the summary.
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot) {
+    public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = makershot.getLong("reg_number").toString();
