@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto" >
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto" >
 
     <ListPreference
         app:key="carman_pref_auto_maker"
@@ -10,24 +9,25 @@
 
     <ListPreference
         app:key="carman_pref_auto_type"
+        app:dependency="carman_pref_auto_maker"
         app:title="@string/pref_auto_type"
-        app:summary="@string/pref_entry_void"
-        app:useSimpleSummaryProvider="false" />
+        app:summary="@string/pref_entry_void" />
 
     <ListPreference
         app:key="carman_pref_engine_type"
+        app:dependency="carman_pref_auto_maker"
         app:title="@string/pref_engine_type"
-        app:summary="@string/pref_entry_void"
-        app:useSimpleSummaryProvider="false" />
+        app:summary="@string/pref_entry_void" />
 
     <ListPreference
         app:key="carman_pref_auto_model"
+        app:dependency="carman_pref_auto_maker"
         app:title="@string/pref_auto_model"
-        app:summary="@string/pref_entry_void"
-        app:useSimpleSummaryProvider="false"/>
+        app:defaultValue=" "/>
 
     <ListPreference
         app:key="carman_pref_auto_year"
+        app:dependency="carman_pref_auto_maker"
         app:title="@string/pref_auto_year"
         app:useSimpleSummaryProvider="true"/>
 

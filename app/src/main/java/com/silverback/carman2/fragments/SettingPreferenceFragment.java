@@ -98,7 +98,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
         if(TextUtils.isEmpty(makerName)) autoPref.setSummary(getString(R.string.pref_entry_void));
-        else queryAutoMaker(makerName);
+        //else queryAutoMaker(makerName);
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
         sharedModel.getAutoData().observe(getActivity(), json -> {
@@ -231,7 +231,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
     // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
     // the result of which implements this to get the registration number of the auto
-    // maker and continues to call queryAutoModel() if an auto model exists. Otherwise, ends with
+    // maker and continues to call queryAutoModelByName() if an auto model exists. Otherwise, ends with
     // setting the summary.
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -240,19 +240,19 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // with the auto make id from the snapshot.
         regMakerNum = makershot.getLong("reg_number").toString();
         log.i("modelName: %s", modelName);
-        if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
+        if(!TextUtils.isEmpty(modelName)) queryAutoModelByName(makershot.getId(), modelName);
         else {
             String summary = String.format("%s (%s)", makerName, regMakerNum);
             setSpannedAutoSummary(autoPref, summary);
         }
     }
-    // queryAutoModel() defined in the parent fragment(SettingBaseFragment) queries the auto model,
+    // queryAutoModelByName() defined in the parent fragment(SettingBaseFragment) queries the auto model,
     // the result of which implement the method to have the registration number of the auto model,
     // then set the summary.
     @Override
     public void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot) {
         // The auto preference summary depends on whether the model name is set because
-        // queryAutoModel() would notify null to the listener w/o the model name.
+        // queryAutoModelByName() would notify null to the listener w/o the model name.
         if(modelshot != null && modelshot.exists()) {
             String num = modelshot.getLong("reg_number").toString();
             String summary = String.format("%s (%s)   %s (%s)", makerName, regMakerNum, modelName, num);
