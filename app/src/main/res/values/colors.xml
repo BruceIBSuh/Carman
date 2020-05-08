@@ -9,7 +9,8 @@
     <color name="bgBoardComment2">#B0C4DE</color>
     <color name="bgBoardBottom">#F5F5DC</color>
     <color name="bgBoardHeader">#F5F5DC</color>
-    <color name="bgBoardTab">#C0C0C0</color>
+    <color name="bgBoardTab">#A9A9A9</color>
+    <color name="bgBoardWriteTitle">#F5F5F5</color>
     <color name="bgDarkerGray">@android:color/darker_gray</color>
 
 

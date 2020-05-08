@@ -93,7 +93,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(DocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
-                    //mListener.queryAutoMakerSnapshot(makershot);
                     queryAutoMakerSnapshot(makershot);
                     break;
                 }

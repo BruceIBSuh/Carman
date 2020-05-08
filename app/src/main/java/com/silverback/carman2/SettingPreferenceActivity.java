@@ -175,7 +175,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onPause();
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
         if(gasPriceTask != null) gasPriceTask = null;
-        if(imgModel != null) imgModel = null;
+        //if(imgModel != null) imgModel = null;
     }
 
 
@@ -230,7 +230,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
             return true;
 
         } else {
-            //
             if(item.getItemId() == android.R.id.home) {
                 getSupportFragmentManager().popBackStack();
                 return false;
@@ -457,7 +456,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
             // Result from CropImageActivity with a cropped image uri and set the image to
             case REQUEST_CODE_CROP:
                 final Uri croppedImageUri = data.getData();
-                log.i("croppedImageUri: %s", croppedImageUri);
                 if(croppedImageUri != null) {
                     // Upload the cropped user image to Firestore with the user id fetched
                     uploadUserImageToFirebase(croppedImageUri);
@@ -487,7 +485,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // Popup the progressbar displaying dialogfragment.
         ProgbarDialogFragment progbarFragment = new ProgbarDialogFragment();
         String msg = (uri == null)?
-                getString(R.string.setting_msg_remove_image):getString(R.string.setting_msg_upload_image);
+                getString(R.string.setting_msg_remove_image):
+                getString(R.string.setting_msg_upload_image);
 
         progbarFragment.setProgressMsg(msg);
         getSupportFragmentManager().beginTransaction().add(android.R.id.content, progbarFragment).commit();

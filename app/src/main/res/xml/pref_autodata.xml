@@ -25,7 +25,6 @@
     <ListPreference
         app:key="carman_pref_auto_year"
         app:title="@string/pref_auto_year"
-        app:summary="%s"
-        app:useSimpleSummaryProvider="true"/>
+        app:summary="%s" />
 
 </PreferenceScreen>

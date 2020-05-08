@@ -25,6 +25,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
@@ -71,7 +72,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        //ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
+        ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -85,15 +86,12 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // be used as filter for querying the board. On clicking the Up button, the preference values
         // are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
-        /*
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-        typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-        String yearName = mSettings.getString(Constants.AUTO_YEAR, null);
-        */
-        String jsonData = mSettings.getString(Constants.AUTO_DATA, null);
-        if(!TextUtils.isEmpty(jsonData)) parseAutoData(jsonData);
-        log.i("auto data in shared: %s, %s, %s, %s", makerName, modelName, typeName, yearName);
+        //typeName = mSettings.getString(Constants.AUTO_TYPE, null);
+        //String yearName = mSettings.getString(Constants.AUTO_YEAR, null);
+        //String jsonData = mSettings.getString(Constants.AUTO_DATA, null);
+        //if(!TextUtils.isEmpty(jsonData)) parseAutoData(jsonData);
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
@@ -102,12 +100,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
         sharedModel.getAutoData().observe(requireActivity(), json -> {
-            log.i("new auto maker: %s", makerName);
-            List<String> autodata = parseAutoData(json);
-            //makerName = autodata.get(0);
-            //modelName = autodata.get(1);
-            //typeName = autodata.get(2);
-            //yearName = autodata.get(3);
+            makerName = parseAutoData(json).get(0);
+            modelName = parseAutoData(json).get(1);
             if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
         });
 
@@ -116,7 +110,6 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // improved with more energy source such as eletricity and hydrogene provided.
         ListPreference fuelList = findPreference(Constants.FUEL);
         if(fuelList != null) fuelList.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
-
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
         // and ListPreference.
@@ -206,7 +199,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             return true;
         });
 
-
+        // LiveData from ApplyImageREsourceUtil.
+        imgModel.getGlideDrawableTarget().observe(getActivity(), res -> userImagePref.setIcon(res));
 
         // Set the circle image to the icon by getting the image Uri which has been saved at
         // SharedPreferences defined in SettingPreverenceActivity.
@@ -240,9 +234,10 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = makershot.getLong("reg_number").toString();
-        log.i("modelName: %s", modelName);
-        if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
-        else {
+
+        if(!TextUtils.isEmpty(modelName)) {
+            queryAutoModel(makershot.getId(), modelName);
+        } else {
             String summary = String.format("%s (%s)", makerName, regMakerNum);
             setSpannedAutoSummary(autoPref, summary);
         }
@@ -255,8 +250,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // The auto preference summary depends on whether the model name is set because
         // queryAutoModel() would notify null to the listener w/o the model name.
         if(modelshot != null && modelshot.exists()) {
-            String num = modelshot.getLong("reg_number").toString();
-            String summary = String.format("%s (%s)   %s (%s)", makerName, regMakerNum, modelName, num);
+            String num = String.valueOf(modelshot.getLong("reg_number"));
+            String summary = String.format("%s(%s)  %s(%s)", makerName, regMakerNum, modelName, num);
             setSpannedAutoSummary(autoPref, summary);
         }
     }
