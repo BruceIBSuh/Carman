@@ -97,15 +97,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         engineName = mSettings.getString(Constants.ENGINE_TYPE, null);
-        log.i("auto data in SharedPreferences: %s, %s, %s, %s, %s", makerName, modelName, typeName, engineName, TextUtils.isEmpty(modelName));
-
-        // Dependent preferences should be inactive unless the automaker preference is active
-        // Weird that dependency property does not work.
-        if(TextUtils.isEmpty(makerName)) {
-            autoType.setEnabled(false);
-            engineType.setEnabled(false);
-            autoModel.setEnabled(false);
-        }
 
         // Set the entries(values) to the auto year preference.
         List<String> yearList = new ArrayList<>();
@@ -114,14 +105,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         String[] mYearEntries = yearList.toArray(new String[LONGEVITY]);
         autoYear.setEntries(mYearEntries);
         autoYear.setEntryValues(mYearEntries);
-
-        /*
-        // Assign the names to each preference
-        String jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
-        if(!TextUtils.isEmpty(jsonAutoData)) parseAutoData(jsonAutoData);
-
-        log.i("Preference names: %s, %s, %s, %s", makerName, modelName, typeName, yearName);
-        */
 
         // Initially, query all auto makers to set entry(values) to the auto maker preference.
         // useSimpleSummaryProvider does not work b/c every time the fragment is instantiated, the
@@ -132,18 +115,35 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 autoMakerList.add(snapshot.getString("auto_maker"));
             }
 
-            autoMaker.setEntries(autoMakerList.toArray(new CharSequence[queries.size()]));
-            autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[queries.size()]));
-            autoMaker.setValue(makerName);
+            CharSequence[] arrAutoMakers = autoMakerList.toArray(new CharSequence[0]);
+            autoMaker.setEntries(arrAutoMakers);
+            autoMaker.setEntryValues(arrAutoMakers);
         });
+
+
+        /*
+        // Assign the names to each preference
+        String jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
+        if(!TextUtils.isEmpty(jsonAutoData)) parseAutoData(jsonAutoData);
+
+        log.i("Preference names: %s, %s, %s, %s", makerName, modelName, typeName, yearName);
+        */
+
 
         // Other than the initial value of the automaker which should be null or empty, query the
         // automaker with a maker name selected.
         //if(TextUtils.isEmpty(makerName)) autoModel.setEnabled(false);
-        if(!TextUtils.isEmpty(makerName)) {
+
+        // Dependent preferences should be inactive unless the automaker preference is active
+        // Weird that dependency property does not work.
+        if(TextUtils.isEmpty(makerName)) {
+            autoType.setEnabled(false);
+            engineType.setEnabled(false);
+            autoModel.setEnabled(false);
+        } else {
+            autoMaker.setValue(makerName);
             autoType.setEnabled(true);
             autoType.setSummary(typeName);
-
             engineType.setEnabled(true);
             engineType.setSummary(engineName);
 
