@@ -12,12 +12,14 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -85,13 +87,13 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
 
 
-    // Query the auto maker first. Upon completion, notify the listener of the automaker snapshot
-    // to continue another query to retrieve auto models.
+    // Query an auto maker with a name selected by the automaker preference. The query result is
+    // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
+    // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String name) {
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(DocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
-                    //mListener.queryAutoMakerSnapshot(makershot);
                     queryAutoMakerSnapshot(makershot);
                     break;
                 }
@@ -99,44 +101,24 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         }).addOnFailureListener(Throwable::printStackTrace);
     }
 
-    // On completion of the auto maker query, make a sequential query of auto models with the
-    // automaker snapshot id, then notify the listener of queried snapshot
-    void queryAutoModelByName(String makerId, String modelName) {
+    // Once the automaker queyr completes, continue to query the automodel if an model name is given.
+    // As like the automaker, the query result is passed as param to queryAutoModelSnapshot() an
+    // abstract method which should be implemented either in SettingAutoFragment or in SettingPreference
+    // Fragment.
+    void queryAutoModel(String makerId, String modelName) {
         log.i("Model name: %s", modelName);
         //if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
         autoRef.document(makerId).collection("auto_model").whereEqualTo("model_name", modelName).get()
-                .addOnSuccessListener(query -> {
-                    for(QueryDocumentSnapshot modelshot : query) {
+                .addOnSuccessListener(queries -> {
+                    for(DocumentSnapshot modelshot : queries) {
                         if(modelshot.exists()) {
-                            log.i("Query modelshot: %s", modelshot.getLong("reg_number"));
-                            //mListener.queryAutoModelSnapshot(modelshot);
                             queryAutoModelSnapshot(modelshot);
                             break;
                         }
                     }
-                });
+                }).addOnFailureListener(Exception::printStackTrace);
     }
 
-    void queryAutoModelByType(String makerId, String autoType, String engineType) {
-        if(TextUtils.isEmpty(makerId)) return;
-        Query query = autoRef.document(makerId).collection("auto_model");
-
-        if(!TextUtils.isEmpty(autoType) && autoType.equals(getString(R.string.pref_entry_void)))
-            query.whereEqualTo("auto_type", autoType);
-        if(!TextUtils.isEmpty(engineType) && engineType.equals(getString(R.string.pref_entry_void)))
-            query.whereEqualTo("engine_type", engineType);
-
-        query.get().addOnSuccessListener(modelshots -> {
-            for(QueryDocumentSnapshot document : modelshots){
-                if(document.exists()) {
-                    log.i("Mddels by Type: %s", document);
-                    queryAutoModelSnapshot(document);
-                    break;
-                }
-
-            }
-        });
-    }
 
 
     void setSpannedAutoSummary(Preference pref, String summary) {
@@ -172,5 +154,5 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // Abstract methods which should be implemented both in SettingPreferenceFragment and
     // SettingBaseFragment.
     protected abstract void queryAutoMakerSnapshot(DocumentSnapshot makershot);
-    protected abstract void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
+    protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
 }

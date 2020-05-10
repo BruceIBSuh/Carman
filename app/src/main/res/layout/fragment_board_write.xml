@@ -10,7 +10,7 @@
         android:id="@+id/view_header"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="@color/bgBoardTab"
+        android:background="@color/bgBoardWriteTitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -28,6 +28,7 @@
         app:layout_constraintStart_toStartOf="@+id/view_header"
         app:layout_constraintTop_toTopOf="@+id/view_header" />
 
+    <!-- set the background to null for removing the underline in the edittext-->
     <EditText
         android:id="@+id/et_board_write_title"
         android:layout_width="0dp"
