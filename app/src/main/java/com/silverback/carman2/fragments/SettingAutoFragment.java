@@ -49,7 +49,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     private static final int LONGEVITY = 20;
 
     // Objects
-    private String[] arrAutoType, arrEngineType;
     private FragmentSharedModel fragmentModel;
     private OnToolbarTitleListener mToolbarListener;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
@@ -178,13 +177,11 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // void item in the list.
                 typeName = getString(R.string.pref_entry_void);
                 engineName = getString(R.string.pref_entry_void);
-                //yearName = getString(R.string.pref_entry_void);
 
                 // Initialize the automodel only after the regit number decreases with the previous
                 // automodel.
                 autoModel.setValue(null);
                 autoYear.setValue(null);
-                //autoModel.setSummary(getString(R.string.pref_entry_void));
 
                 // The previous auto maker, if any, decrease its reg number before a new maker comes in
                 // unless its value is null, which occurs at the initial setting.
@@ -236,6 +233,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                             .update("reg_number", FieldValue.increment(-1));
                 }
 
+                autoModel.setValue(valueName);
                 queryAutoModel(makerId, valueName);
                 return true;
 
@@ -299,7 +297,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         // If the automodel preference has a value which may get preference.getValue(), query the
         // automodel to fetch the regit number. Otherwise, set the summary
-        log.i("Inital value of the automodel: %s, %s", autoModel.getValue(), modelName);
         if(!TextUtils.isEmpty(autoModel.getValue())) {
             isModelChanged = false;
             queryAutoModel(makerId, modelName);
@@ -344,6 +341,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         String modelSummary = String.format("%s%10s%s(%s)",
                 modelshot.getString("model_name"), "", getString(R.string.pref_auto_reg), modelRegitNum);
         setSpannedAutoSummary(autoModel, modelSummary);
+
+        isModelChanged = false;
     }
 
 
@@ -362,10 +361,18 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             // The JSONString will be used to create the autofilter in the board which works as
             // the query conditions.
             List<String> dataList = new ArrayList<>();
+            /*
             dataList.add(mSettings.getString(Constants.AUTO_MAKER, ""));
             dataList.add(mSettings.getString(Constants.AUTO_MODEL, ""));
             dataList.add(mSettings.getString(Constants.ENGINE_TYPE, ""));
             dataList.add(mSettings.getString(Constants.AUTO_YEAR, ""));
+            */
+            dataList.add(autoMaker.getValue());
+            dataList.add(autoModel.getValue());
+            dataList.add(engineType.getValue());
+            dataList.add(autoYear.getValue());
+            for(String data : dataList) log.i("data: %s", data);
+
             JSONArray json = new JSONArray(dataList);
             mSettings.edit().putString(Constants.AUTO_DATA, json.toString()).apply();
 
@@ -435,6 +442,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                         outerFragment.engineType.setValue(types[which].toString());
                         outerFragment.engineType.setSummary(types[which]);
                     });
+
             return builder.create();
         }
 

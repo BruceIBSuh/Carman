@@ -103,7 +103,8 @@ public class BoardActivity extends BaseActivity implements
 
     // Fields
     private ArrayList<CharSequence> cbAutoFilter;//having checkbox values for working as autofilter.
-    private boolean isGeneral; //check if a post should be uploaded to the general or just auto.
+    private String autoclub;
+    //private boolean isGeneral; //check if a post should be uploaded to the general or just auto.
     private String jsonAutoFilter; //auto data saved in SharedPreferences as JSON String.
     private int tabHeight;
     private int tabPage;
@@ -148,7 +149,7 @@ public class BoardActivity extends BaseActivity implements
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(getString(R.string.board_title));
+        getSupportActionBar().setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         tabPage = Constants.BOARD_RECENT;
 
@@ -319,14 +320,22 @@ public class BoardActivity extends BaseActivity implements
 
         switch(position) {
             case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
+                getSupportActionBar().setTitle(getString(R.string.board_general_title));
                 break;
 
             case Constants.BOARD_AUTOCLUB:
+                if(cbAutoFilter.size() > 0) {
+                    SpannableStringBuilder title = createAutoClubTitle();
+                    getSupportActionBar().setTitle(title);
+                } else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
+
                 menu.getItem(0).setVisible(true);
                 animAutoFilter(true);
+
                 break;
 
             case Constants.BOARD_NOTIFICATION:
+                getSupportActionBar().setTitle(getString(R.string.board_tab_title_notification));
                 fabWrite.setVisibility(View.INVISIBLE);
                 break;
         }
@@ -576,12 +585,12 @@ public class BoardActivity extends BaseActivity implements
     }
 
 
-    // Dynamically create checkboxes with a json string which is given from SharedPreferences.
-    // If the json is empty or null, show the clickable spanned message to ask users to set the
-    // auto data in SettingPreferenceActivit, instead. with the json given, checkboxes differs
-    // according to which child the frame contains. BoardWriteFragment adds addition checkbox for
-    // whether a post is open not only the autoclub  but also to the general board. Checked values
-    // are added to cbAutoFilter, which will be used as a query condition.
+    // Dynamically create checkboxes based on the auto data saved as a json string in SharedPreferences.
+    // If the auto data is empty or null, show the clickable spanned message to ask users to set the
+    // auto data in SettingPreferenceActivity. If the the auto data is given, checkboxes differs
+    // according to which child fragmet the frame contains. BoardWriteFragment adds a checkbox for
+    // whether a post is open not only to the autoclub  but also to the general board. Checked values
+    // in the checkboxes are added to cbAutoFilter in order to be used as a query condition.
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Switch the filter b/w ViewPager containing BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
@@ -590,7 +599,7 @@ public class BoardActivity extends BaseActivity implements
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginStart(15);
 
-        // With the json string empty, show the spanned message to initiate startActivityForResult()
+        // If no autodata is given, show the spanned message to initiate startActivityForResult()
         // to have users set the auto data in SettingPreferenceActivity.
         if(TextUtils.isEmpty(json)) {
             TextView tvMessage = new TextView(context);
@@ -608,14 +617,13 @@ public class BoardActivity extends BaseActivity implements
 
             ss.setSpan(clickableSpan, 7, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             tvMessage.setText(ss);
+            // Required to make ClickableSpan workable.
             tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
             v.addView(tvMessage, params);
 
             return;
         }
 
-        // Creat checkboxes with the json string given. When the frame contains BoardWriteFragment,
-        // an checkbox is added to ask whehter a post is enlisted in the general board.
         if(frameLayout.getChildAt(0) == boardPager) {
             TextView tvLabel = new TextView(context);
             tvLabel.setText(getString(R.string.board_filter_title));
@@ -626,8 +634,8 @@ public class BoardActivity extends BaseActivity implements
             CheckBox cb = new CheckBox(context);
             cb.setText(getString(R.string.board_filter_chkbox_general));
             cb.setTextColor(Color.WHITE);
-            cb.setChecked(true);
-            isGeneral = true;
+            cb.setChecked(false);
+            //isGeneral = true;
             v.addView(cb);
             cb.setOnCheckedChangeListener((chkbox, isChecked) -> {
                 log.i("general checked: %s", isChecked);
@@ -636,8 +644,8 @@ public class BoardActivity extends BaseActivity implements
             });
         }
 
-        // Set names and properties to each checkbox in accordance with whehter an element of the
-        // json array is valid or null.
+        // Dynamically create the checkboxes. The automaker checkbox should be checked and disenabled
+        // as default values.
         JSONArray jsonAuto = new JSONArray(json);
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
@@ -646,12 +654,15 @@ public class BoardActivity extends BaseActivity implements
                 cb.setEnabled(false);
                 cb.setChecked(false);
                 cb.setText(getString(R.string.pref_entry_void));
-                //cb.setText(voidTitle[i]);
+
             } else {
-                //log.i("empty label: %s", jsonAuto.optString(i));
                 cb.setText(jsonAuto.optString(i));
-                if(i == 0 || i == 1) cb.setChecked(true);
-                if(i == 0) cb.setEnabled(false);
+                //if(i == 0 || i == 1) cb.setChecked(true);
+                //if(i == 0) cb.setEnabled(false);
+                if(i == 0) {
+                    cb.setChecked(true);
+                    cb.setEnabled(false);
+                }
 
 
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText());
@@ -704,7 +715,7 @@ public class BoardActivity extends BaseActivity implements
 
         animTabHeight(false);
         fabWrite.setVisibility(View.VISIBLE);
-        getSupportActionBar().setTitle(getString(R.string.board_title));
+        getSupportActionBar().setTitle(getString(R.string.board_general_title));
         //invalidateOptionsMenu();
 
         // Revert the autofilter items.

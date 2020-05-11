@@ -151,7 +151,7 @@
     <string name="stat_spinner_service">서비스</string>
 
     <!--BoardActivity-->
-    <string name="board_title">카르맨 광장</string>
+    <string name="board_general_title">카르맨 광장</string>
     <string name="board_title_write">포스트 작성</string>
     <string name="board_title_edit">포스트 편집</string>
     <string name="board_report">신고</string>

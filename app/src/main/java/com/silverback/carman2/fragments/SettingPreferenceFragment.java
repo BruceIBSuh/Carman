@@ -100,6 +100,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
         sharedModel.getAutoData().observe(requireActivity(), json -> {
+            log.i("AutoData: %s, %s", mSettings.getString(Constants.AUTO_MAKER, null),  mSettings.getString(Constants.AUTO_MODEL, null));
             makerName = parseAutoData(json).get(0);
             modelName = parseAutoData(json).get(1);
             if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
