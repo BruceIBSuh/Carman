@@ -61,6 +61,8 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 
+import static com.google.android.gms.common.internal.safeparcel.SafeParcelable.NULL;
+
 /*
  * This activity consists of the appbar component, the framelayout to alternatively contain the
  * viewpager and the fragment to write a post, and the layout to show checkboxes which are used
@@ -145,8 +147,6 @@ public class BoardActivity extends BaseActivity implements
         pbLoading = findViewById(R.id.progbar_board_loading);
         fabWrite = findViewById(R.id.fab_board_write);
 
-        log.i("toolbar elevation: %s", toolbar.getElevation());
-
         // Set Toolbar and its title as AppBar
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(getString(R.string.board_general_title));
@@ -158,12 +158,8 @@ public class BoardActivity extends BaseActivity implements
         // as Bundle.putCharSequenceArrayList().
         cbAutoFilter = new ArrayList<>();
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        log.i("AutoFilter: %s", jsonAutoFilter);
-        try {
-            createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
+        catch (JSONException e) {e.printStackTrace();}
 
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
@@ -330,6 +326,10 @@ public class BoardActivity extends BaseActivity implements
                 } else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
 
                 menu.getItem(0).setVisible(true);
+
+                // Set an automaker icon
+                menu.getItem(0).setIcon(R.drawable.ic_automaker_hyundai);
+
                 animAutoFilter(true);
 
                 break;
@@ -339,41 +339,6 @@ public class BoardActivity extends BaseActivity implements
                 fabWrite.setVisibility(View.INVISIBLE);
                 break;
         }
-
-        /*
-        // If the value of isFilterVisible becomes true, the filter button shows up in the toolbar and
-        // pressing the button calls animAutoFilter() to make the filter layout slide down,
-        // which is defined in onOptionsItemSelected()
-        isFilterVisible = (position == Constants.BOARD_AUTOCLUB);
-        animAutoFilter(isFilterVisible);
-        if(position == Constants.BOARD_NOTIFICATION) fabWrite.setVisibility(View.INVISIBLE);
-        else fabWrite.setVisibility(View.VISIBLE);
-
-        // Create the club title which varies according to the autoclub scope. If it extends to the
-        // auto model, it occupies the fisrt place, then the auto make the next with the font size
-        // smaller. At a later time, an animation should be applied here.
-        if(position == Constants.BOARD_AUTOCLUB) {
-            // Check if the auto data which should be saved in SharedPreferences exists
-            //if(TextUtils.isEmpty(jsonAutoFilter)) return;
-            if(cbAutoFilter.size() == 0) return;
-
-            // Request the system to call onPrepareOptionsMenu(), which is required for Android 3 and
-            // higher and handle the visibility of the fab.
-            //invalidateOptionsMenu();
-            menu.getItem(0).setVisible(true);
-
-            // Create the toolbar title
-            SpannableStringBuilder title = createAutoClubTitle();
-            getSupportActionBar().setTitle(title);
-
-
-        } else {
-            getSupportActionBar().setTitle(R.string.board_title);
-            menu.getItem(0).setVisible(false);
-
-        }
-
-         */
     }
 
     @Override
@@ -405,7 +370,7 @@ public class BoardActivity extends BaseActivity implements
         // Set the boardTabLayout height for purpose of redrawing the layout with the height when
         // returning from BoardWriteFragment.
         tabHeight = boardTabLayout.getMeasuredHeight();
-        log.i("boardTabLahyout height: %s", tabHeight);
+        log.i("boardTabLayout height: %s", tabHeight);
 
         // Create the fragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
@@ -624,6 +589,7 @@ public class BoardActivity extends BaseActivity implements
             return;
         }
 
+        // Create the header or the general checkbox according to the current page
         if(frameLayout.getChildAt(0) == boardPager) {
             TextView tvLabel = new TextView(context);
             tvLabel.setText(getString(R.string.board_filter_title));
@@ -644,40 +610,51 @@ public class BoardActivity extends BaseActivity implements
             });
         }
 
-        // Dynamically create the checkboxes. The automaker checkbox should be checked and disenabled
+        // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.
         JSONArray jsonAuto = new JSONArray(json);
+        log.i("JSONAuto: %s", jsonAuto);
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTextColor(Color.WHITE);
-            if(TextUtils.isEmpty(jsonAuto.optString(i))) {
+
+            log.i("jsonAuto: %s", jsonAuto.optString(i));
+            //if(TextUtils.isEmpty(jsonAuto.optString(i))) {
+            if(jsonAuto.optString(i).equals("null")) {
                 cb.setEnabled(false);
-                cb.setChecked(false);
-                cb.setText(getString(R.string.pref_entry_void));
+                switch(i) {
+                    case 1: cb.setText(R.string.pref_auto_model);break;
+                    case 2: cb.setText(R.string.pref_engine_type);break;
+                    case 3: cb.setText(R.string.pref_auto_year);break;
+                }
 
             } else {
+                // The automaker should be checked and inactive unless it is void.
                 cb.setText(jsonAuto.optString(i));
-                //if(i == 0 || i == 1) cb.setChecked(true);
-                //if(i == 0) cb.setEnabled(false);
                 if(i == 0) {
                     cb.setChecked(true);
                     cb.setEnabled(false);
                 }
 
-
+                // Add the checkbox value to the list if it is checked.
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText());
                 // Set the color and value according to a checkbox is checked or not.
+                final int index = i;
                 cb.setOnCheckedChangeListener((chkbox, isChecked) -> {
                     if(isChecked) cbAutoFilter.add(chkbox.getText());
                     else cbAutoFilter.remove(chkbox.getText());
-                    // referenced in BoardPagerFragment for purpose of requerying posts with new
+                    // Referenced in BoardPagerFragment for purpose of requerying posts with new
                     // conditions.
                     mListener.onCheckBoxValueChange(cbAutoFilter);
-                    //boardModel.getAutoFilterValues().setValue(cbAutoFilter);
-                    SpannableStringBuilder title = createAutoClubTitle();
-                    if(getSupportActionBar() != null) getSupportActionBar().setTitle(title);
+                    // AS far as either the automaker or the automodel checkbox is changed, the
+                    // toolbar title should be changed.
+                    if(index < 2) {
+                        SpannableStringBuilder title = createAutoClubTitle();
+                        if (getSupportActionBar() != null) getSupportActionBar().setTitle(title);
+                    }
                 });
             }
+
             v.addView(cb, params);
         }
 

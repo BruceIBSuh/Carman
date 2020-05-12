@@ -88,6 +88,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         autoPref = findPreference(Constants.AUTO_DATA);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
+        log.i("automaker and automodel: %s, %s", makerName, modelName);
         //typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         //String yearName = mSettings.getString(Constants.AUTO_YEAR, null);
         //String jsonData = mSettings.getString(Constants.AUTO_DATA, null);
@@ -234,7 +235,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
-        regMakerNum = makershot.getLong("reg_number").toString();
+        regMakerNum = String.valueOf(makershot.getLong("reg_number"));
 
         if(!TextUtils.isEmpty(modelName)) {
             queryAutoModel(makershot.getId(), modelName);

@@ -159,7 +159,6 @@ public class BaseActivity extends AppCompatActivity {
 
     public static long parseDateTime(String format, String datetime) {
         SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.getDefault());
-
         try {
             Date date = sdf.parse(datetime);
             return date.getTime();
