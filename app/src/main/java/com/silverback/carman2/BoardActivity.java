@@ -84,7 +84,6 @@ public class BoardActivity extends BaseActivity implements
     private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
     private ImageViewModel imgModel;
-    //private BoardViewModel boardModel;
     private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
     private Drawable emblemIcon;
@@ -133,10 +132,9 @@ public class BoardActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
 
-        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        //boardModel = new ViewModelProvider(this).get(BoardViewModel.class);
         firestore = FirebaseFirestore.getInstance();
         imgResUtil = new ApplyImageResourceUtil(this);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         AppBarLayout appBar = findViewById(R.id.appBar);
         coordinatorLayout = findViewById(R.id.coordinatorLayout);
@@ -326,9 +324,8 @@ public class BoardActivity extends BaseActivity implements
                 break;
 
             case Constants.BOARD_AUTOCLUB:
-                //if(cbAutoFilter.size() > 0) {
-                    getSupportActionBar().setTitle(createAutoClubTitle());
-                //} else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
+                if(cbAutoFilter.size() > 0) getSupportActionBar().setTitle(createAutoClubTitle());
+                else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
 
                 // Set the visibility and the icon to the automaker menu icon.
                 menu.getItem(0).setVisible(true);

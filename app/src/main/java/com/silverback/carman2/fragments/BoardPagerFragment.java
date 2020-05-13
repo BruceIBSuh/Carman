@@ -95,7 +95,7 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    // Singleton for not AutoClub pages.
+    // Singleton for the fragments other than AutoClub
     public static BoardPagerFragment newInstance(int page) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle arg = new Bundle();
@@ -171,11 +171,10 @@ public class BoardPagerFragment extends Fragment implements
          * the lisitener should be detached for purpose of preventing excessive connection to the
          * server.
          */
-
         CollectionReference postRef = firestore.collection("board_general");
         postListener = postRef.addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-            source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
+            source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())?
                    Source.CACHE  : Source.SERVER ;
             log.i("Source: %s", source);
         });
@@ -289,7 +288,6 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         log.i("setFirstQuery");
-
         postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
 
@@ -395,7 +393,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
         for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
-        snapshotList.clear();
+        //snapshotList.clear();
+
         pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
         // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to

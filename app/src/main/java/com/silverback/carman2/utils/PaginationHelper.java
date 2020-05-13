@@ -53,6 +53,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     // private constructor
     public PaginationHelper() {
         firestore = FirebaseFirestore.getInstance();
+        colRef = firestore.collection("board_general");
         querySnapshot = null;
     }
 
@@ -64,7 +65,6 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
 
     // Create queries for each page.
     public void setPostingQuery(Source source, int page, ArrayList<CharSequence> autofilter) {
-        colRef = firestore.collection("board_general");
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -92,7 +92,8 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
                 // Require an index to be creeated to make a composite query with multiple fields.
-                colRef.whereEqualTo("auto_club", autofilter)
+                //colRef.whereEqualTo("auto_club", autofilter)
+                colRef.whereArrayContains("auto_club", autofilter)
                         .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(autoclubShot -> {
