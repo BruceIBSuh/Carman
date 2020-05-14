@@ -1,8 +1,8 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.Context;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,7 +37,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.BoardViewModel;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.PaginationHelper;
+import com.silverback.carman2.utils.QueryAndPagingHelper;
 import com.silverback.carman2.views.PostingRecyclerView;
 
 import java.io.BufferedReader;
@@ -60,7 +60,7 @@ import java.util.TimeZone;
  */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnFilterCheckBoxListener,
-        PaginationHelper.OnPaginationListener, //CheckBox.OnCheckedChangeListener,
+        QueryAndPagingHelper.OnPaginationListener, //CheckBox.OnCheckedChangeListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
@@ -74,11 +74,10 @@ public class BoardPagerFragment extends Fragment implements
     private BoardViewModel boardModel;
     private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
-    private PaginationHelper pageHelper;
+    private QueryAndPagingHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
+    private ArrayList<CharSequence> autoFilter;
     private SimpleDateFormat sdf;
-    // prevent the progressbar from leaking in the static fragment, use the weak reference.
-    //private WeakReference<ProgressBar> weakProgbar;
 
     // UIs
     private ProgressBar pbPaging, pbLoading;
@@ -86,7 +85,7 @@ public class BoardPagerFragment extends Fragment implements
     private TextView tvEmptyView;
 
     // Fields
-    private ArrayList<CharSequence> autoFilter;
+
     private int currentPage;
     //private boolean isGeneralPost = true;
 
@@ -103,7 +102,6 @@ public class BoardPagerFragment extends Fragment implements
         fragment.setArguments(arg);
 
         return fragment;
-
     }
 
     // Singleton for AutoClub currentPage which has the checkbox values and title names.
@@ -140,8 +138,7 @@ public class BoardPagerFragment extends Fragment implements
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
-
-        pageHelper = new PaginationHelper();
+        pageHelper = new QueryAndPagingHelper();
         pageHelper.setOnPaginationListener(this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
@@ -222,7 +219,7 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
-        // PaginationHelper subclasses RecyclerView.OnScrollListner.
+        // QueryAndPagingHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
         pageHelper.setPostingQuery(source, currentPage, autoFilter);
 
@@ -265,7 +262,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // Implement PaginationHelper.OnPaginationListener which notifies the adapter of the first and
+    // Implement QueryAndPagingHelper.OnPaginationListener which notifies the adapter of the first and
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
@@ -287,7 +284,7 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        log.i("setFirstQuery");
+
         postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
 
@@ -331,16 +328,18 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // Implement the callback of BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
+    // Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
+
+        SpannableStringBuilder title = ((BoardActivity)getActivity()).getAutoClubTitle();
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
-        bundle.putInt("position", position);
+        //bundle.putInt("position", position);
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userId", snapshot.getString("user_id"));
@@ -352,6 +351,13 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putStringArrayList("uriImgList", (ArrayList<String>)snapshot.get("post_images"));
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
 
+        readPostFragment.setArguments(bundle);
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .add(android.R.id.content, readPostFragment)
+                .addToBackStack(null)
+                .commit();
+
+        /*
         // Query the user(posting writer) with userId given to fetch the autoclub which contains
         // auto_maker, auto_model, eco_type and auto_year as JSON string. On completion, set it to
         // the fragment arguments and pass them to BoardReadDlgFragment
@@ -370,6 +376,7 @@ public class BoardPagerFragment extends Fragment implements
                                 .commit();
                     }
                 });
+        */
 
         /*
         postDialogFragment.setArguments(bundle);
@@ -392,9 +399,6 @@ public class BoardPagerFragment extends Fragment implements
     // performa a new query with new autofilter values
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
-        for(CharSequence filter : autofilter) log.i("chkbox values changed: %s", filter);
-        //snapshotList.clear();
-
         pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
         // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
@@ -406,6 +410,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onGeneralPost(boolean isChecked) {}
 
+    // Check if a user is the post's owner or has read the post before in order to increate the view
+    // count. In order to do so, get the user id from the internal storage and from the post as well.
     // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
     // documents, which means whether the user has read the post before. If so, do not increase
     // the view count. Otherwise, add the user id to the "viewers" collection and increase the

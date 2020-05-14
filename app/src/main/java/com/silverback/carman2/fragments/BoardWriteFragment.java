@@ -3,6 +3,8 @@ package com.silverback.carman2.fragments;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;

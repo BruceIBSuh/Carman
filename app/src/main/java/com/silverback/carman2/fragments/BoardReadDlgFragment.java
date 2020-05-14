@@ -1,18 +1,17 @@
 package com.silverback.carman2.fragments;
 
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -47,6 +46,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -55,7 +55,7 @@ import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.PaginationHelper;
+import com.silverback.carman2.utils.QueryAndPagingHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -79,10 +79,11 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
  * A simple {@link Fragment} subclass.
+ * This dialogfragment reads a post content when tapping  an item recycled in BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
         View.OnClickListener,
-        PaginationHelper.OnPaginationListener {
+        QueryAndPagingHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -105,6 +106,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private List<String> imgUriList;
     private SharedPreferences mSettings;
     private List<DocumentSnapshot> snapshotList;
+    private List<CharSequence> autoclub;
 
 
     // UIs
@@ -118,6 +120,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
 
     // Fields
+    private SpannableStringBuilder autoTitle;
     private String tabTitle;
     private String autoClub;
     private String userId, documentId;
@@ -128,14 +131,19 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private boolean isCommentVisible;
     private boolean hasCompathy;
 
-
+    // Interface to notify BoardActivity of pressing the edit menu in the toolbar which is visible
+    // only when a user reads his/her own post, comparing the ids of the user and board_general
+    // collection.
     public interface OnEditModeListener {
         void onEditClicked(Bundle bundle);
     }
+
+    // Set the interface listener to BoardActivity at the lifecycle of onAttachFragment.
     public void setEditModeListener(OnEditModeListener listener) {
         mListener = listener;
     }
 
+    // Constructor default.
     public BoardReadDlgFragment() {
         // Required empty public constructor
     }
@@ -165,11 +173,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
             documentId = getArguments().getString("documentId");
-            log.i("DocumentID: %s, %s", tabPage, documentId);
+            autoclub = getArguments().getCharSequenceArrayList("autoclub");
+            log.i("DocumentID: %s, %s, %s", tabPage, documentId, autoclub);
         }
 
         // Get the auto data arguemnt from BoardPagerFragment, which is of JSON string tyepe and
         // it requires to create JSONArray that may be converted to StringBuilder.
+        /*
         if(!TextUtils.isEmpty(autoClub)) {
             try {
                 JSONArray jsonArray = new JSONArray(autoClub);
@@ -177,12 +187,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 for(int i = 0; i < jsonArray.length(); i++)
                     sb.append(jsonArray.optString(i)).append(" ");
                 autoClub = sb.toString();
+                log.i("autoClub in readposing: %s", autoClub);
 
             } catch(JSONException e) {
                 e.printStackTrace();
             }
 
         } else autoClub = null;
+         */
+
 
         // Get the current document reference which should be shared in the fragment.
         // Initially attach SnapshotListener to have the comment collection updated, then remove
@@ -246,9 +259,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as follows. Also, the
         // navigation icon(back arrow) should be handled in setToolbarTitleIcon().
-        toolbar.setNavigationOnClickListener(view -> dismiss());
+        toolbar.setNavigationOnClickListener(view -> {
+            if(imgViewModel != null) imgViewModel = null;
+            dismiss();
+        });
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
-        toolbar.setTitle(tabTitle);
+        autoTitle = ((BoardActivity) getActivity()).getAutoClubTitle();
 
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
         // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
@@ -275,8 +291,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         commentAdapter = new BoardCommentAdapter(snapshotList);
         recyclerComment.setAdapter(commentAdapter);
 
-        // Pagination using PaginationHelper which requires refactor.
-        PaginationHelper pagingUtil = new PaginationHelper();
+        // Pagination using QueryAndPagingHelper which requires refactor.
+        QueryAndPagingHelper pagingUtil = new QueryAndPagingHelper();
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
 
@@ -336,8 +352,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         return dialog;
     }
 
-
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
@@ -405,7 +419,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // The following 3 callbacks are invoked by PaginationHelper to query a collection reference
+    // The following 3 callbacks are invoked by QueryAndPagingHelper to query a collection reference
     // up to the limit and on showing the last one, another query get started.
     @Override
     public void setFirstQuery(QuerySnapshot snapshot) {
@@ -646,7 +660,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
             case STATE_EXPANDED:
                 toolbar.setNavigationIcon(R.drawable.ic_action_navigation);
-                toolbar.setTitle(tabTitle);
+                if(tabPage == Constants.BOARD_AUTOCLUB) toolbar.setTitle(autoTitle);
+                else toolbar.setTitle(tabTitle);
+
                 toolbar.setSubtitle("");
                 toolbar.setLogo(null);
                 break;
@@ -694,7 +710,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // If a user reads his/her own post, show the menus in the toolbar which edit or delete the post.
+    // If a user is the owner of the post, show the menus in the toolbar which edit or delete the post.
     @SuppressWarnings("ConstantConditions")
     private void inflateEditMenuInToolbar() {
         // The userId here means the id of user who writes the posting item whereas the viewId means

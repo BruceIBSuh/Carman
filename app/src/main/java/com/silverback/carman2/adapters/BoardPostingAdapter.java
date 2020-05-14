@@ -34,8 +34,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
-    // Constants
-    private static final String path = "android.resource://com.silverback.carman2/drawable/ic_user_blank_white";
+
 
     // Objects
     private Context context;
@@ -56,12 +55,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     // Constructor
     public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
         super();
-
-        log.i("Posting adapter initiated");
         mListener = listener;
         snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-
     }
 
     @NonNull

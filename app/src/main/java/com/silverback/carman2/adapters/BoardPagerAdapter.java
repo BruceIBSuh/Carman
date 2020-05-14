@@ -19,7 +19,6 @@ import java.util.ArrayList;
 public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerAdapter.class);
-
     private static final int NUM_PAGES = 4;
 
     // Objects
@@ -51,8 +50,13 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // which leads to call onCreateView() of the fragment.
     @Override
     public int getItemPosition(@NonNull Object object) {
+        /*
+        log.i("getItemPosition: %s", object);
         if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
         else return POSITION_UNCHANGED;
+
+         */
+        return -1;
     }
 
     public void setAutoFilterValues(ArrayList<CharSequence> values) {

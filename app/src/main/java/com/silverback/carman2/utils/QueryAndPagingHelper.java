@@ -9,28 +9,22 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-import org.json.JSONArray;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
  * OnPaginationListener to have document snaoshots from FireStore.
  */
-public class PaginationHelper extends RecyclerView.OnScrollListener {
+public class QueryAndPagingHelper extends RecyclerView.OnScrollListener {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(PaginationHelper.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(QueryAndPagingHelper.class);
 
     // Objects
     private FirebaseFirestore firestore;
@@ -51,7 +45,7 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
     }
 
     // private constructor
-    public PaginationHelper() {
+    public QueryAndPagingHelper() {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
         querySnapshot = null;
@@ -91,19 +85,31 @@ public class PaginationHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
+                Query query = colRef;
                 // Require an index to be creeated to make a composite query with multiple fields.
                 //colRef.whereEqualTo("auto_club", autofilter)
-                colRef.whereArrayContains("auto_club", autofilter)
-                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+
+                // Query depends on whether the autofilter contains the automaker only or more filter
+                // values because the automaker works as a sufficient condition and other filters
+                // works as necessary conditions.
+                if(autofilter.size() == 1) {
+                    // whereArrayContainsAny(field, value) is a query that an array field contains
+                    // any of array-containing values with a logical OR.
+                    query = colRef.whereArrayContainsAny("auto_club", autofilter);
+                } else {
+                    query = colRef.whereEqualTo("auto_club", autofilter);
+                }
+
+                query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(autoclubShot -> {
                             log.i("auto_club query: %s", autoclubShot.size());
                             this.querySnapshot = autoclubShot;
                             mListener.setFirstQuery(autoclubShot);
-
-                        }).addOnFailureListener(Throwable::printStackTrace);
+                        }).addOnFailureListener(Exception::printStackTrace);
                 break;
 
+            // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION: // notification
                 break;
         }

@@ -16,6 +16,7 @@ import android.provider.MediaStore;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
@@ -71,9 +72,11 @@ import java.util.List;
  * of which checkbox has changed.
  */
 public class BoardActivity extends BaseActivity implements
-        View.OnClickListener, CheckBox.OnCheckedChangeListener,
+        View.OnClickListener,
+        CheckBox.OnCheckedChangeListener,
         ViewPager.OnPageChangeListener,
-        AppBarLayout.OnOffsetChangedListener, BoardReadDlgFragment.OnEditModeListener {
+        AppBarLayout.OnOffsetChangedListener,
+        BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
@@ -100,28 +103,25 @@ public class BoardActivity extends BaseActivity implements
     private ProgressBar pbLoading;
     private FloatingActionButton fabWrite;
     private List<CheckBox> chkboxList;
+    private ArrayList<CharSequence> cbAutoFilter;//having checkbox values for working as autofilter.
 
 
     // Fields
-    private ArrayList<CharSequence> cbAutoFilter;//having checkbox values for working as autofilter.
+
     private boolean isGeneral; //check if a post should be uploaded to the general or just auto.
     private String jsonAutoFilter; //auto data saved in SharedPreferences as JSON String.
+    private SpannableStringBuilder clubTitle;
     private int tabHeight;
     private int tabPage;
     private boolean isAutoFilter;
 
-
-
-
-    // Interface for passing the checkbox values to BoardPagerAdapter to update the AutoClub board.
-    // Intial values are passed via BoardPagerAdapter.onCheckBoxValueChange()
+    // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
+    // have a query with new conditions to make the recyclerview updated.
     public interface OnFilterCheckBoxListener {
         void onCheckBoxValueChange(ArrayList<CharSequence> autofilter);
         void onGeneralPost(boolean b);
     }
-
-    // Set OnFilterCheckBoxListener to be notified of which checkbox is checked or not, on which
-    // query by the tab is based.
+    // Method for attaching the listener
     public void setAutoFilterListener(OnFilterCheckBoxListener listener) {
         mListener = listener;
     }
@@ -313,10 +313,7 @@ public class BoardActivity extends BaseActivity implements
         tabPage = position;
         menu.getItem(0).setVisible(false);
         fabWrite.setVisibility(View.VISIBLE);
-        if(isAutoFilter) {
-            animAutoFilter(isAutoFilter);
-
-        }
+        if(isAutoFilter) animAutoFilter(isAutoFilter);
 
         switch(position) {
             case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
@@ -324,8 +321,10 @@ public class BoardActivity extends BaseActivity implements
                 break;
 
             case Constants.BOARD_AUTOCLUB:
-                if(cbAutoFilter.size() > 0) getSupportActionBar().setTitle(createAutoClubTitle());
-                else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
+                if(cbAutoFilter.size() > 0) {
+                    clubTitle = createAutoClubTitle();
+                    getSupportActionBar().setTitle(clubTitle);
+                } else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
 
                 // Set the visibility and the icon to the automaker menu icon.
                 menu.getItem(0).setVisible(true);
@@ -485,16 +484,16 @@ public class BoardActivity extends BaseActivity implements
         if(isChecked) cbAutoFilter.add(chkbox.getText());
         else cbAutoFilter.remove(chkbox.getText());
 
-        // Referenced in BoardPagerFragment for purpose of requerying posts with new
-        // conditions.
-        mListener.onCheckBoxValueChange(cbAutoFilter);
-
         // As far as the automodel checkbox value changes, the toolbar title will be reset using
         // creteAutoClubTitle().
         if(chkbox == chkboxList.get(1)) {
-            SpannableStringBuilder title = createAutoClubTitle();
-            if (getSupportActionBar() != null) getSupportActionBar().setTitle(title);
+            clubTitle = createAutoClubTitle();
+            if (getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
         }
+
+        // Referenced in BoardPagerFragment for purpose of requerying posts with new
+        // conditions.
+        mListener.onCheckBoxValueChange(cbAutoFilter);
     }
 
 
@@ -630,6 +629,7 @@ public class BoardActivity extends BaseActivity implements
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTextColor(Color.WHITE);
+
             if(jsonAuto.optString(i).equals("null")) {
                 cb.setEnabled(false);
                 switch(i) {
@@ -637,7 +637,6 @@ public class BoardActivity extends BaseActivity implements
                     case 2: cb.setText(R.string.pref_engine_type);break;
                     case 3: cb.setText(R.string.pref_auto_year);break;
                 }
-
             } else {
                 // The automaker should be checked and disabled unless it is void.
                 cb.setText(jsonAuto.optString(i));
@@ -766,6 +765,8 @@ public class BoardActivity extends BaseActivity implements
         return cbAutoFilter;
     }
 
+
+
     // Called in BoardPagerAdapter to invoke notifyDataSetChanged() when the checkbox value
     // has changed.
     public BoardPagerAdapter getPagerAdapter() {
@@ -786,5 +787,9 @@ public class BoardActivity extends BaseActivity implements
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
         return fabWrite;
+    }
+
+    public SpannableStringBuilder getAutoClubTitle() {
+        return clubTitle;
     }
 }
