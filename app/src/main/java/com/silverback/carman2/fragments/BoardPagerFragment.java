@@ -259,6 +259,12 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
 
+        fragmentModel.getEditPosting().observe(requireActivity(), docId -> {
+            if(!TextUtils.isEmpty(docId)) {
+                pageHelper.setPostingQuery(source, currentPage, autoFilter);
+            }
+        });
+
     }
 
 

@@ -19,6 +19,7 @@ import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -79,6 +80,8 @@ public class UploadBitmapRunnable implements Runnable {
         int orientation;
 
         log.i("Image uri: %s", uri);
+        File imgFile = new File(uri.getPath());
+        log.i("ImageFile check: %s, %s", imgFile.exists(), imgFile);
         // Create the storage reference of an image uploading to Firebase Storage
         /*
         final StorageReference imgReference = firestorage.getReference().child("images");

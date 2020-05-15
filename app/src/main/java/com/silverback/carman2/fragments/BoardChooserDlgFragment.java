@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
 
@@ -26,6 +27,9 @@ public class BoardChooserDlgFragment extends DialogFragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardChooserDlgFragment.class);
 
+    // Constants
+    private final int GALLERY = 1;
+    private final int CAMERA = 2;
 
     //private OnImageChooserListener mListener;
     private FragmentSharedModel fragmentModel;
@@ -40,7 +44,6 @@ public class BoardChooserDlgFragment extends DialogFragment {
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,14 +66,14 @@ public class BoardChooserDlgFragment extends DialogFragment {
         tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
             //mListener.selectMedia(BoardWritingActivity.GALLERY);
-            fragmentModel.getImageChooser().setValue(BoardWriteFragment.GALLERY);
+            fragmentModel.getImageChooser().setValue(Constants.GALLERY);
             dismiss();
         });
 
         tvCamera.setOnClickListener(view -> {
             log.i("Camera selected");
             //mListener.selectMedia(BoardWritingActivity.CAMERA);
-            fragmentModel.getImageChooser().setValue(BoardWriteFragment.CAMERA);
+            fragmentModel.getImageChooser().setValue(Constants.CAMERA);
             dismiss();
         });
 
@@ -83,12 +86,14 @@ public class BoardChooserDlgFragment extends DialogFragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-
+        /*
         try {
             //mListener = (OnImageChooserListener) context;
         } catch(ClassCastException e) {
             throw new ClassCastException(getActivity().toString() + "must implement OnImageChooserListener");
         }
+
+         */
     }
 
 }

@@ -446,11 +446,14 @@ public class BoardActivity extends BaseActivity implements
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
                 //imgModel.getUriFromImageChooser().setValue(data.getData());
-                log.i("current fragment: %s, %s", frameLayout.getChildCount(), frameLayout.getChildAt(0));
+                log.i("current fragment: %s, %s", writePostFragment, editPostFragment);
                 if(writePostFragment != null)
                     writePostFragment.setUriFromImageChooser(data.getData());
-                else if(editPostFragment != null)
+                else if(editPostFragment != null) {
+                    log.i("edit fragment: %s", data.getData());
                     editPostFragment.setUriFromImageChooser(data.getData());
+                }
+
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
@@ -713,7 +716,7 @@ public class BoardActivity extends BaseActivity implements
     // notified to the activity and it is, in turn, sent back here by calling
     public void getImageFromChooser(int media) {
         switch(media) {
-            case 1:
+            case Constants.GALLERY:
                 // MULTI-SELECTION: special handling of Samsung phone.
                     /*
                     if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
@@ -743,7 +746,7 @@ public class BoardActivity extends BaseActivity implements
                 startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
                 break;
 
-            case 2: // Camera
+            case Constants.CAMERA: // Camera
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 Intent cameraChooser = Intent.createChooser(cameraIntent, "Choose camera");
 

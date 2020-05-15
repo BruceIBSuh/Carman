@@ -46,12 +46,8 @@
             </intent-filter>
         </receiver>
 
-        <service
-            android:name=".backgrounds.GeofenceResetService"
-            android:exported="true" />
-        <service
-            android:name=".backgrounds.GeofenceTransitionService"
-            android:exported="true" />
+        <service android:name=".backgrounds.GeofenceResetService" />
+        <service android:name=".backgrounds.GeofenceTransitionService" />
 
         <activity android:name=".BaseActivity" />
         <activity android:name=".IntroActivity">
@@ -72,7 +68,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-        <activity android:name=".BoardActivity" android:parentActivityName=".MainActivity">
+        <activity
+            android:name=".BoardActivity"
+            android:exported="true"
+            android:parentActivityName=".MainActivity">
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

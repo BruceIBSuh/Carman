@@ -62,7 +62,6 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
 
     @Override
     public void setDownloadBitmapUri(int key, String uri) {
-
         // Create SparseArray with the uri downloaded from Storage as the value and the position
         // that the attached image is located as the key for purpose of put images in sequentially
         // right position in the content when reading the posting content

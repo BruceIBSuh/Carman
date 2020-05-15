@@ -27,6 +27,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
     private MutableLiveData<String> removedPosting;
+    private MutableLiveData<String> editPosting;
 
 
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
@@ -54,9 +55,6 @@ public class FragmentSharedModel extends ViewModel {
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
     // to show the names in the summary of the preference.
     private MutableLiveData<List<String>> defaultDistCode;
-
-
-
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -96,11 +94,7 @@ public class FragmentSharedModel extends ViewModel {
         if(alertPostResult == null) alertPostResult = new MutableLiveData<>();
         return alertPostResult;
     }
-    // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
-    public MutableLiveData<String> getRemovedPosting() {
-        if(removedPosting == null) removedPosting = new MutableLiveData<>();
-        return removedPosting;
-    }
+
 
 
     // Commmunicate b/w RegisterDialogFragment and ServiceManagerFragment
@@ -163,12 +157,33 @@ public class FragmentSharedModel extends ViewModel {
         return imageChooser;
     }
 
+
+    /**
+     * Board-related LiveData
+     * getNewPosting()
+     * getRemovedPosting()
+     * getEditPosting()
+     * @return MutableLiveData<String>
+     */
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
     public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
     }
+
+    // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
+    public MutableLiveData<String> getRemovedPosting() {
+        if(removedPosting == null) removedPosting = new MutableLiveData<>();
+        return removedPosting;
+    }
+
+    // Communicate b/w BoardEditFragment and BoardPagerFragment
+    public MutableLiveData<String> getEditPosting() {
+        if(editPosting == null) editPosting = new MutableLiveData<>();
+        return editPosting;
+    }
+
 
     // Commnumcate b/w GeneralFragment and PricePagerFragment in MainActivity to pass the station id
     // of the first placeholder.

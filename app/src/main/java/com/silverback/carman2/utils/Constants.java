@@ -9,13 +9,14 @@ public class Constants {
     public static final int REQUEST_BOARD_CAMERA = 2002;
     public static final int REQUEST_BOARD_GALLERY = 2003;
 
-
-
     // Category
     public static final int GAS = 0;
     public static final int SVC = 1;
     public static final int TOTAL = 2;
     public static final int BOARD = 3;
+
+    public static final int GALLERY = 1;
+    public static final int CAMERA = 2;
 
 
     public static final int MAX_FAVORITE = 10;

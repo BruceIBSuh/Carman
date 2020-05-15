@@ -157,7 +157,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         snapshotList = new ArrayList<>();
         imgUtil = new ApplyImageResourceUtil(getContext());
-        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
@@ -259,10 +259,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as follows. Also, the
         // navigation icon(back arrow) should be handled in setToolbarTitleIcon().
-        toolbar.setNavigationOnClickListener(view -> {
-            if(imgViewModel != null) imgViewModel = null;
-            dismiss();
-        });
+        toolbar.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
         autoTitle = ((BoardActivity) getActivity()).getAutoClubTitle();
 
@@ -360,7 +357,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
         // in which Glide creates the custom target that translates an image fitting to a given
         // size and returns a drawable.
-        imgViewModel.getGlideDrawableTarget().observe(getViewLifecycleOwner(), drawable -> {
+        imgViewModel.getGlideDrawableTarget().observe(this, drawable -> {
             toolbar.setLogo(drawable);
             toolbar.setContentInsetStartWithNavigation(0);
         });
@@ -616,17 +613,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         @Override
         public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-
+            log.i("vertical offset: %s", verticalOffset);
             if (verticalOffset == 0) {
-                if (mCurrentState != STATE_EXPANDED) {
-                    onStateChanged(appBarLayout, STATE_EXPANDED);
-                }
+                if (mCurrentState != STATE_EXPANDED) onStateChanged(appBarLayout, STATE_EXPANDED);
                 mCurrentState = STATE_EXPANDED;
+
             } else if (Math.abs(verticalOffset) >= appBarLayout.getTotalScrollRange()) {
-                if (mCurrentState != STATE_COLLAPSED) {
-                    onStateChanged(appBarLayout, STATE_COLLAPSED);
-                }
+                if (mCurrentState != STATE_COLLAPSED) onStateChanged(appBarLayout, STATE_COLLAPSED);
                 mCurrentState = STATE_COLLAPSED;
+
             } else {
                 if(appbarOffset != verticalOffset) {
                     appbarOffset = verticalOffset;
@@ -642,7 +637,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by the
     // the abstract class of AppBarStateChangeListener.
     private void setToolbarTitleIcon(int state) {
-
         SpannableString spannable = new SpannableString(postTitle);
         int size = Math.abs(appbarOffset) / 6;
         spannable.setSpan(new AbsoluteSizeSpan(size), 0, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -656,19 +650,21 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setSubtitle(userName);
                 imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
 
+                log.i("logo: %s, %s", toolbar.getChildAt(0), toolbar.getChildAt(1));
+                toolbar.setOnClickListener(view -> dismiss());
+
                 break;
 
             case STATE_EXPANDED:
                 toolbar.setNavigationIcon(R.drawable.ic_action_navigation);
                 if(tabPage == Constants.BOARD_AUTOCLUB) toolbar.setTitle(autoTitle);
                 else toolbar.setTitle(tabTitle);
-
                 toolbar.setSubtitle("");
                 toolbar.setLogo(null);
                 break;
 
             case STATE_IDLE:
-                //log.i("STATE_IDLE");
+                log.i("STATE_IDLE");
                 break;
 
         }
@@ -743,7 +739,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
                                     .commit();
 
                              */
-
+                            // Overrides this method in BoardActivity to call in BoardEditFragment
+                            // in the frame.
                             mListener.onEditClicked(getArguments());
                             dismiss();
 
