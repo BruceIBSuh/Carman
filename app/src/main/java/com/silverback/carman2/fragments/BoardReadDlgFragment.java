@@ -51,11 +51,11 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.PagingQueryHelper;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.QueryAndPagingHelper;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -83,7 +83,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  */
 public class BoardReadDlgFragment extends DialogFragment implements
         View.OnClickListener,
-        QueryAndPagingHelper.OnPaginationListener {
+        PagingQueryHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -288,8 +288,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         commentAdapter = new BoardCommentAdapter(snapshotList);
         recyclerComment.setAdapter(commentAdapter);
 
-        // Pagination using QueryAndPagingHelper which requires refactor.
-        QueryAndPagingHelper pagingUtil = new QueryAndPagingHelper();
+        // Pagination using PagingQueryHelper which requires refactor.
+        PagingQueryHelper pagingUtil = new PagingQueryHelper();
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
 
@@ -416,7 +416,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // The following 3 callbacks are invoked by QueryAndPagingHelper to query a collection reference
+    // The following 3 callbacks are invoked by PagingQueryHelper to query a collection reference
     // up to the limit and on showing the last one, another query get started.
     @Override
     public void setFirstQuery(QuerySnapshot snapshot) {

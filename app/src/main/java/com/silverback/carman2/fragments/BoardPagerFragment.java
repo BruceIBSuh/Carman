@@ -30,14 +30,12 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.BoardViewModel;
-import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.QueryAndPagingHelper;
+import com.silverback.carman2.utils.PagingQueryHelper;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
 import java.io.BufferedReader;
@@ -60,21 +58,19 @@ import java.util.TimeZone;
  */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnFilterCheckBoxListener,
-        QueryAndPagingHelper.OnPaginationListener, //CheckBox.OnCheckedChangeListener,
+        PagingQueryHelper.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
-    private FirebaseFirestore firestore;
     private Source source;
     private ListenerRegistration postListener;
     private FragmentSharedModel fragmentModel;
-    private BoardViewModel boardModel;
-    private BoardPagerAdapter pagerAdapter;
+    //private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
-    private QueryAndPagingHelper pageHelper;
+    private PagingQueryHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
     private ArrayList<CharSequence> autoFilter;
     private SimpleDateFormat sdf;
@@ -85,9 +81,8 @@ public class BoardPagerFragment extends Fragment implements
     private TextView tvEmptyView;
 
     // Fields
-
     private int currentPage;
-    //private boolean isGeneralPost = true;
+    private boolean isGeneralPost;
 
     // Constructor
     private BoardPagerFragment() {
@@ -128,17 +123,16 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        firestore = FirebaseFirestore.getInstance();
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        boardModel = new ViewModelProvider(requireActivity()).get(BoardViewModel.class);
 
-        pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
+        //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
-        pageHelper = new QueryAndPagingHelper();
+        pageHelper = new PagingQueryHelper();
         pageHelper.setOnPaginationListener(this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
@@ -219,7 +213,7 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
-        // QueryAndPagingHelper subclasses RecyclerView.OnScrollListner.
+        // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
         pageHelper.setPostingQuery(source, currentPage, autoFilter);
 
@@ -268,23 +262,24 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-    // Implement QueryAndPagingHelper.OnPaginationListener which notifies the adapter of the first and
+    // Implement PagingQueryHelper.OnPaginationListener which notifies the adapter of the first and
     // the next query results.
     @Override
     public void setFirstQuery(QuerySnapshot snapshots) {
         snapshotList.clear();
+        if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
+
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether
             // the field value of 'post_general" is true or not. In terms of the general board such
             // as the recent or popular board, the query result is added only if the field value
             // is true;
             if(currentPage == Constants.BOARD_AUTOCLUB){
-                log.i("autoclub list: %s", snapshots.size());
                 snapshotList.add(snapshot);
 
             } else {
                 // Posts written in the general board do not have this field.
-                if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
+                if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")){
                     snapshotList.add(snapshot);
                 }
             }
@@ -293,15 +288,12 @@ public class BoardPagerFragment extends Fragment implements
 
         postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
-
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
 
-        if(snapshotList.size() > 0) pbLoading.setVisibility(View.GONE);
-        else {
-            pbLoading.setVisibility(View.GONE);
-            recyclerPostView.setEmptyView(tvEmptyView);
-        }
+        //if(snapshotList.size() > 0) pbLoading.setVisibility(View.GONE);
+        //else recyclerPostView.setEmptyView(tvEmptyView);
+        pbLoading.setVisibility(View.GONE);
     }
 
     @Override
@@ -315,11 +307,8 @@ public class BoardPagerFragment extends Fragment implements
     public void setNextQueryComplete(QuerySnapshot snapshots) {
         log.i("next Query: %s", snapshotList.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
-            if(currentPage == Constants.BOARD_AUTOCLUB){
-                snapshotList.add(snapshot);
-
-            } else {
-                // Posts written in the general board do not have this field.
+            if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
+            else {
                 if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
                     snapshotList.add(snapshot);
                 }
@@ -405,6 +394,7 @@ public class BoardPagerFragment extends Fragment implements
     // performa a new query with new autofilter values
     @Override
     public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
+        log.i("CheckBox change: %s", autofilter);
         pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
         // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
@@ -414,7 +404,10 @@ public class BoardPagerFragment extends Fragment implements
     }
     // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
     @Override
-    public void onGeneralPost(boolean isChecked) {}
+    public void onGeneralPost(boolean isChecked) {
+        //log.i("General post: %s", isChecked);
+        //isGeneralPost = isChecked;
+    }
 
     // Check if a user is the post's owner or has read the post before in order to increate the view
     // count. In order to do so, get the user id from the internal storage and from the post as well.

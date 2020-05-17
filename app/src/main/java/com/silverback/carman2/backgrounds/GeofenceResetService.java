@@ -103,6 +103,7 @@ public class GeofenceResetService extends Service {
     @Override
     public void onDestroy() {}
 
+    // Error occurred: java.lang.IllegalArgumentException: No geofence has been added to this request.
     private GeofencingRequest getGeofencingRequest(List<Geofence> geoList) {
         GeofencingRequest.Builder requestBuilder = new GeofencingRequest.Builder();
         requestBuilder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);

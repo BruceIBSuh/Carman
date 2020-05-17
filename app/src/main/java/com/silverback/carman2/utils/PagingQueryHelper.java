@@ -22,9 +22,9 @@ import java.util.Arrays;
  * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
  * OnPaginationListener to have document snaoshots from FireStore.
  */
-public class QueryAndPagingHelper extends RecyclerView.OnScrollListener {
+public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(QueryAndPagingHelper.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(PagingQueryHelper.class);
 
     // Objects
     private FirebaseFirestore firestore;
@@ -45,7 +45,7 @@ public class QueryAndPagingHelper extends RecyclerView.OnScrollListener {
     }
 
     // private constructor
-    public QueryAndPagingHelper() {
+    public PagingQueryHelper() {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
         querySnapshot = null;
@@ -69,7 +69,6 @@ public class QueryAndPagingHelper extends RecyclerView.OnScrollListener {
                             mListener.setFirstQuery(querySnapshot);
 
                         }).addOnFailureListener(Throwable::printStackTrace);
-
                 break;
 
             case Constants.BOARD_POPULAR:
@@ -85,25 +84,18 @@ public class QueryAndPagingHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
-                Query query = colRef;
-                // Require an index to be creeated to make a composite query with multiple fields.
-                //colRef.whereEqualTo("auto_club", autofilter)
-
+                Query query;
                 // Query depends on whether the autofilter contains the automaker only or more filter
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
-                if(autofilter.size() == 1) {
-                    // whereArrayContainsAny(field, value) is a query that an array field contains
-                    // any of array-containing values with a logical OR.
-                    query = colRef.whereArrayContainsAny("auto_club", autofilter);
-                } else {
-                    query = colRef.whereEqualTo("auto_club", autofilter);
-                }
+                if(autofilter.size() <= 2) query = colRef.whereArrayContainsAny("auto_club", autofilter);
+                else if(autofilter.size() == 3) query = colRef.whereArrayContains("auto_club", autofilter.get(2));
+                else query = colRef.whereIn("auto_club", autofilter);
 
+                // Require an index to be creeated to make a composite query with multiple fields.
                 query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(autoclubShot -> {
-                            log.i("auto_club query: %s", autoclubShot.size());
                             this.querySnapshot = autoclubShot;
                             mListener.setFirstQuery(autoclubShot);
                         }).addOnFailureListener(Exception::printStackTrace);

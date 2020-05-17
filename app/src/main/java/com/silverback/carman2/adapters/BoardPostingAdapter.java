@@ -30,7 +30,7 @@ import java.util.Locale;
 /**
  * This RecyclerView.Adapter is to display posting items of
  */
-public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapter.BoardItemHolder> {
+public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapter.PostViewHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
@@ -54,7 +54,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     // Constructor
     public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
-        super();
+        //super();
         mListener = listener;
         snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -62,19 +62,19 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @NonNull
     @Override
-    public BoardItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
         imgUtil = new ApplyImageResourceUtil(context);
 
         CardView cardView = (CardView)LayoutInflater.from(context)
                 .inflate(R.layout.cardview_board_post, parent, false);
 
-        return new BoardItemHolder(cardView);
+        return new PostViewHolder(cardView);
     }
 
     @SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
-    public void onBindViewHolder(@NonNull BoardItemHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull PostViewHolder holder, final int position) {
 
         // Retreive an board item queried in and passed from BoardPagerFragment
         //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
@@ -118,7 +118,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     // Partial binding when the count is increased in terms of the view count and comment count.
     @Override
     public void onBindViewHolder(
-            @NonNull BoardItemHolder holder, int position, @NonNull List<Object> payloads) {
+            @NonNull PostViewHolder holder, int position, @NonNull List<Object> payloads) {
 
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
@@ -142,12 +142,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     }
 
     // ViewHolders
-    class BoardItemHolder extends RecyclerView.ViewHolder {
+    class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
         ImageView imgUser;
         ImageView imgAttached;
 
-        BoardItemHolder(CardView cardview){
+        PostViewHolder(CardView cardview){
             super(cardview);
             tvNumber = cardview.findViewById(R.id.tv_number);
             tvPostTitle = cardview.findViewById(R.id.tv_post_title);
@@ -157,7 +157,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
             tvCommentCount = cardview.findViewById(R.id.tv_count_comment);
             imgUser = cardview.findViewById(R.id.img_user);
             imgAttached = cardview.findViewById(R.id.img_attached);
-
         }
 
         void bindUserImage(Uri uri) {

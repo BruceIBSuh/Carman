@@ -15,6 +15,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 public class PostingRecyclerView extends RecyclerView {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingRecyclerView.class);
+
     // Objects
     private View mEmptyView;
 

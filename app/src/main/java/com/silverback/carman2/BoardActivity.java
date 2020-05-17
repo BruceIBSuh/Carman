@@ -483,7 +483,6 @@ public class BoardActivity extends BaseActivity implements
     // checkbox state will manage to set the toolbar title.
     @Override
     public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
-        log.i("onCheckedChagned");
         if(isChecked) cbAutoFilter.add(chkbox.getText());
         else cbAutoFilter.remove(chkbox.getText());
 
@@ -638,25 +637,32 @@ public class BoardActivity extends BaseActivity implements
                 switch(i) {
                     case 1: cb.setText(R.string.pref_auto_model);break;
                     case 2: cb.setText(R.string.pref_engine_type);break;
-                    case 3: cb.setText(R.string.pref_auto_year);break;
+                    case 3: cb.setText(R.string.board_filter_year);break;
                 }
             } else {
                 // The automaker should be checked and disabled unless it is void.
                 cb.setText(jsonAuto.optString(i));
+                /*
+                switch(i) {
+                    case 0: cb.setChecked(true); cb.setEnabled(false);break;
+                    case 1: cb.setChecked(false); cb.setEnabled(true);break;
+                    case 2 : case 3: cb.setChecked(false); cb.setEnabled(false);break;
+                }
+                 */
                 if(i == 0) {
                     cb.setChecked(true);
                     cb.setEnabled(false);
                 } else if (i == 1) {
-                    cb.setTag("automodel");
-                    cb.setChecked(true);
+                    //cb.setTag("automodel");
+                    //cb.setChecked(true);
                 }
+
 
                 // Add the checkbox value to the list if it is checked.
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText());
 
                 // Set the color and value according to a checkbox is checked or not.
                 cb.setOnCheckedChangeListener(this);
-
             }
 
             v.addView(cb, params);

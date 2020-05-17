@@ -35,7 +35,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     public Fragment getItem(int position) {
         log.i("fragment position: %s", position);
         currentPage = position;
-        return (position == Constants.BOARD_AUTOCLUB)?
+        return (currentPage == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
                 BoardPagerFragment.newInstance(position);
     }
@@ -50,13 +50,9 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // which leads to call onCreateView() of the fragment.
     @Override
     public int getItemPosition(@NonNull Object object) {
-        /*
         log.i("getItemPosition: %s", object);
         if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
         else return POSITION_UNCHANGED;
-
-         */
-        return -1;
     }
 
     public void setAutoFilterValues(ArrayList<CharSequence> values) {
