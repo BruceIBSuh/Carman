@@ -83,6 +83,7 @@ public class Constants {
     public static final String AUTO_TYPE = "carman_pref_auto_type";
     public static final String AUTO_YEAR = "carman_pref_auto_year";
     public static final String ENGINE_TYPE = "carman_pref_engine_type";
+    public static final String AUTOCLUB_LOCK = "carman_pref_autoclub_lock";
 
     public static final String NUMBER = "carman_pref_cb_number";
     public static final String MODEL = "carman_pref_et_model";

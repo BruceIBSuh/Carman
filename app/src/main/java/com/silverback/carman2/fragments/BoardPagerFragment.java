@@ -4,6 +4,7 @@ package com.silverback.carman2.fragments;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -72,7 +73,7 @@ public class BoardPagerFragment extends Fragment implements
     private BoardPostingAdapter postingAdapter;
     private PagingQueryHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
-    private ArrayList<CharSequence> autoFilter;
+    private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
 
     // UIs
@@ -100,11 +101,11 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for AutoClub currentPage which has the checkbox values and title names.
-    public static BoardPagerFragment newInstance(int page, ArrayList<CharSequence> values) {
+    public static BoardPagerFragment newInstance(int page, ArrayList<String> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("currentPage", page);
-        args.putCharSequenceArrayList("autoFilter", values);
+        //args.putStringArrayList("autoFilter", values);
         fragment.setArguments(args);
 
         return fragment;
@@ -119,7 +120,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
             if(currentPage == Constants.BOARD_AUTOCLUB) {
-                autoFilter = getArguments().getCharSequenceArrayList("autoFilter");
+                //autoFilter = getArguments().getStringArrayList("autoFilter");
             }
         }
 
@@ -322,12 +323,33 @@ public class BoardPagerFragment extends Fragment implements
         pbPaging.setVisibility(View.GONE);
     }
 
+    // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
+    // performa a new query with new autofilter values
+    @Override
+    public void onCheckBoxValueChange(ArrayList<String> autofilter) {
+        log.i("CheckBox change: %s", autofilter);
+        final int filterSize = autofilter.size();
+        if(filterSize == 4 && !autofilter.get(filterSize - 1).matches("\\d{4}")) {
+            log.i("autoyear");
+            String tmp = autofilter.get(3);
+        }
+        pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
+        // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
+        // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
+        // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
+        // when no dataset exists.
+        //pagerAdapter.notifyDataSetChanged();
+    }
+    // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
+    /*
+    @Override
+    public void onGeneralPost(boolean isChecked) {}
+    */
 
     // Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
-
         SpannableStringBuilder title = ((BoardActivity)getActivity()).getAutoClubTitle();
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
@@ -390,24 +412,7 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
-    // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
-    // performa a new query with new autofilter values
-    @Override
-    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
-        log.i("CheckBox change: %s", autofilter);
-        pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
-        // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
-        // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
-        // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
-        // when no dataset exists.
-        //pagerAdapter.notifyDataSetChanged();
-    }
-    // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
-    @Override
-    public void onGeneralPost(boolean isChecked) {
-        //log.i("General post: %s", isChecked);
-        //isGeneralPost = isChecked;
-    }
+
 
     // Check if a user is the post's owner or has read the post before in order to increate the view
     // count. In order to do so, get the user id from the internal storage and from the post as well.

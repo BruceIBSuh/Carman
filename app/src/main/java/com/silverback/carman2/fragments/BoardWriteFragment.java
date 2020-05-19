@@ -3,8 +3,6 @@ package com.silverback.carman2.fragments;
 
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
-import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
@@ -49,12 +47,12 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
  * A simple {@link Fragment} subclass.
- * This fragment is to upload any writing to post in the board with images attached, if
- * Special care should be taken when thumbnail image and images in the recyclerview
- * Different processes are applied to add and remove the imagespan. Adding
+ * This Fragment is to wrtie a post, attach images, and upload the post to FireStore. Images are
+ * uploaded to Storage first and the post receives the urls.
+ *
+ *
  */
 public class BoardWriteFragment extends DialogFragment implements
-        BoardActivity.OnFilterCheckBoxListener,
         BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
@@ -84,7 +82,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private String userId;
     private Uri imgUri;
     private List<Uri> uriImgList;
-    private ArrayList<CharSequence> autofilter;
+    private ArrayList<String> autofilter;
     private SparseArray<String> downloadImages;
     private boolean isGeneralPost;
 
@@ -105,14 +103,6 @@ public class BoardWriteFragment extends DialogFragment implements
             tabPage = getArguments().getInt("tabPage");
         }
 
-        // Set the listener only if the current page is set to the auto club.
-        if(tabPage == Constants.BOARD_AUTOCLUB)
-            ((BoardActivity)getActivity()).setAutoFilterListener(this);
-
-        // An post should be generally shown in the board other than the autoclub. If it is unchecked,
-        // the post is shown only in the autoclub.
-        isGeneralPost = true;
-
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         uriImgList = new ArrayList<>();
         downloadImages = new SparseArray<>();
@@ -123,7 +113,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // Special attention should be paid when using ViewModel with requireActivity() as its
         // viewlifecyclerowner because ViewModel.observe() retains the existing value even after
         // the frament is removed from the parent activity.
-        chooserObserver = integer -> {log.i("ingerger: %s", integer);};
+        chooserObserver = integer -> log.i("ingerger: %s", integer);
         fragmentModel.getImageChooser().observe(requireActivity(), chooserObserver);
     }
 
@@ -138,12 +128,11 @@ public class BoardWriteFragment extends DialogFragment implements
         RecyclerView recyclerImageView = localView.findViewById(R.id.vg_recycler_images);
         Button btnAttach = localView.findViewById(R.id.btn_attach_image);
 
-        // Create RecyclerView for holding attched pictures which are handled in onActivityResult()
+        // Create RecyclerView to show attched images which are handled in onActivityResult()
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         recyclerImageView.setLayoutManager(linearLayout);
-        //recyclerImageView.setLayoutManager(new GridLayoutManager(getContext(), 3));
-        //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS as far as notifyItemInserted may work.
+        //recyclerImageView.setHasFixedSize(true);//DO NOT SET THIS to enable notifyItemInserted to work.
         imageAdapter = new BoardImageAdapter(uriImgList, this);
         recyclerImageView.setAdapter(imageAdapter);
 
@@ -155,13 +144,6 @@ public class BoardWriteFragment extends DialogFragment implements
                     view.getParent().requestDisallowInterceptTouchEvent(false);
                     return true;
                 }
-                /*
-                switch(event.getAction() & MotionEvent.ACTION_MASK) {
-                    case MotionEvent.ACTION_SCROLL:
-                        view.getParent().requestDisallowInterceptTouchEvent(false);
-                        return true;
-                }
-                 */
             }
             return false;
         });
@@ -172,23 +154,15 @@ public class BoardWriteFragment extends DialogFragment implements
             ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
                     .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
-            // Pop up the dialog as far as the num of attached pics are no more than 6.
-            log.i("Image numbers: %s", uriImgList.size());
+            // Pop up the dialog as far as the num of attached pics are no more than the fixed size.
             if(uriImgList.size() >= Constants.MAX_IMAGE_NUMS) {
-                log.i("Image count: %s", uriImgList.size());
                 String msg = String.format(getString(R.string.board_msg_image), Constants.MAX_IMAGE_NUMS);
                 Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
 
             } else {
-                log.i("BoardChooserDlgFragment initiated");
                 // Pop up the dialog to select which media to use bewteen the camera and gallery for
                 // selecting an image, then create an intent by the selection.
                 DialogFragment dialog = new BoardChooserDlgFragment();
-                // BUGS FREQUENTLY OCCURRED!!!!
-                //java.lang.IllegalStateException: Fragment BoardWriteFragment{984f0c5}
-                // (4b73b12d-9e70-4e32-95bb-52f209a6b8a1)} not attached to Activity
-                //dialog.show(getChildFragmentManager(), "@null");
-                //dialog.show(getParentFragmentManager(), "chooserDialog");
                 dialog.show(getActivity().getSupportFragmentManager(), "mediaChooser");
 
                 /*
@@ -217,7 +191,6 @@ public class BoardWriteFragment extends DialogFragment implements
         return localView;
     }
 
-    // Handling  ViewModels
     // When fragments finish their lifecycle, the instance of a viewmodel exists in ViewModelStore,
     // until destruction of the parent activity. ViewModelStore has clear() method but it clears
     // all viewmodels in it.
@@ -267,13 +240,9 @@ public class BoardWriteFragment extends DialogFragment implements
         });
 
 
+
+
         /*
-         * UPLOAD PROCESS
-         * The process of uploading the post consists of three steps.
-         * First, upload attached images to Firebase Storage, if any.
-         * Second, check whether the attached images safely completes uploading.
-         * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
-         */
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
         imgViewModel.getDownloadBitmapUri().observe(requireActivity(), sparseArray -> {
@@ -286,7 +255,9 @@ public class BoardWriteFragment extends DialogFragment implements
             }
 
         });
+        */
 
+        /*
         // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
         // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
@@ -295,6 +266,8 @@ public class BoardWriteFragment extends DialogFragment implements
             if(pbFragment != null) pbFragment.dismiss();
             ((BoardActivity)getActivity()).addViewPager();
         });
+
+         */
     }
 
     @Override
@@ -313,20 +286,6 @@ public class BoardWriteFragment extends DialogFragment implements
         fragmentModel.getImageChooser().removeObserver(chooserObserver);
         imageAdapter = null;
         super.onDestroyView();
-    }
-
-
-    // Implement BoardActivity.OnFilterCheckedListener which notifies any change of the checkbox
-    // values
-    @Override
-    public void onCheckBoxValueChange(ArrayList<CharSequence> autofilter) {
-        for(CharSequence filter : autofilter) log.i("filter: %s", filter);
-        this.autofilter = autofilter;
-    }
-    @Override
-    public void onGeneralPost(boolean b) {
-        log.i("isGeneralPost: %s", b);
-        isGeneralPost = b;
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener which notifies that an new ImageSpan
@@ -357,7 +316,7 @@ public class BoardWriteFragment extends DialogFragment implements
     }
 
 
-    // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
+    // Invoked in OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment
     public void setUriFromImageChooser(Uri uri) {
         int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
@@ -367,6 +326,13 @@ public class BoardWriteFragment extends DialogFragment implements
         imgUri = uri;
     }
 
+    /*
+     * UPLOAD PROCESS
+     * The process of uploading the post consists of three steps.
+     * First, upload attached images to Firebase Storage, if any.
+     * Second, check whether the attached images safely completes uploading.
+     * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
+     */
     // Invoked when the upload menu in the toolbar is pressed.
     @SuppressWarnings("ConstantConditions")
     public void prepareUpload() {
@@ -401,6 +367,19 @@ public class BoardWriteFragment extends DialogFragment implements
                         uriImgList.get(i), i, imgViewModel);
             }
         }
+
+        // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
+        // the result is notified as SparseArray which indicates the position and uriString of image.
+        imgViewModel.getDownloadBitmapUri().observe(requireActivity(), sparseArray -> {
+            // Check if the number of attached images equals to the number of uris that are down
+            // loaded from Storage.
+            downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
+            if(uriImgList.size() == downloadImages.size()) {
+                // On completing optimization of attached images, start uploading a post.
+                uploadPostToFirestore();
+            }
+
+        });
     }
 
 
@@ -437,17 +416,25 @@ public class BoardWriteFragment extends DialogFragment implements
         // it would be shown in every board. However, as long as an autoclub post set isGeneral value
         // to false, it would not be shown in the general board; only in the autoclub.
         if(tabPage == Constants.BOARD_AUTOCLUB) {
-            //isGeneralPost = ((BoardActivity)getActivity()).checkPostGenenral();// initially true.
             autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
+            isGeneralPost = ((BoardActivity)getActivity()).checkGeneralPost();
             post.put("auto_club", autofilter);
-        }
 
-        log.i("isGeneralPost: %s", isGeneralPost);
+        } else isGeneralPost = true;
+
         post.put("post_general", isGeneralPost);
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
+        // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
+        // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
+        // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
+        fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
+            log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
+            if(pbFragment != null) pbFragment.dismiss();
+            ((BoardActivity)getActivity()).addViewPager();
+        });
     }
 
 

@@ -1,5 +1,7 @@
 package com.silverback.carman2.adapters;
 
+import android.util.SparseArray;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -22,7 +24,9 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     private static final int NUM_PAGES = 4;
 
     // Objects
-    private ArrayList<CharSequence> cbValues;
+    private ArrayList<String> cbValues;
+    private SparseArray<String> cbSparseValues;
+
     private int currentPage;
 
     // Constructor
@@ -55,7 +59,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         else return POSITION_UNCHANGED;
     }
 
-    public void setAutoFilterValues(ArrayList<CharSequence> values) {
+    public void setAutoFilterValues(ArrayList<String> values) {
         for(CharSequence value : values) log.i("filter value: %s", value);
         cbValues = values;
 

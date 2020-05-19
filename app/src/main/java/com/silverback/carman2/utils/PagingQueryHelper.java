@@ -58,7 +58,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     }
 
     // Create queries for each page.
-    public void setPostingQuery(Source source, int page, ArrayList<CharSequence> autofilter) {
+    public void setPostingQuery(Source source, int page, ArrayList<String> autofilter) {
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -84,14 +84,20 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
+                if(autofilter == null || autofilter.size() == 0) return;
                 Query query;
                 // Query depends on whether the autofilter contains the automaker only or more filter
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
-                if(autofilter.size() <= 2) query = colRef.whereArrayContainsAny("auto_club", autofilter);
-                else if(autofilter.size() == 3) query = colRef.whereArrayContains("auto_club", autofilter.get(2));
+                final int index = autofilter.size() - 1;
+                query = colRef.whereArrayContains("auto_club", autofilter.get(index));
+                /*
+                final int size = autofilter.size();
+                if(size == 1) query = colRef.whereArrayContains("auto_club", autofilter.get(0));
+                else if(size == 2) query = colRef.whereArrayContainsAny("auto_club", autofilter);
+                else if(size == 3) query = colRef.whereArrayContains("auto_club", autofilter.get(size - 1));
                 else query = colRef.whereIn("auto_club", autofilter);
-
+                */
                 // Require an index to be creeated to make a composite query with multiple fields.
                 query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
