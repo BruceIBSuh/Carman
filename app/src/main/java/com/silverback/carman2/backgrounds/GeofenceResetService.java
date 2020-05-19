@@ -1,14 +1,19 @@
 package com.silverback.carman2.backgrounds;
 
+import android.app.IntentService;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+
+import androidx.annotation.Nullable;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -25,12 +30,13 @@ import java.util.List;
 
 /*
  * Service is the base class for all services using the main thread as default. Creating worker
- * threads, it handls multi requests simultaneously, calling onStartCommand() respectively.
+ * threads, it handles multi requests simultaneously, calling onStartCommand() respectively.
  *
  * Whereas, IntentService is a subclass of Service using a worker thread to handle requests one at a time.
  * Here, the class uses Service to handle multi requests.
  */
 
+/*
 public class GeofenceResetService extends Service {
 
     public static final LoggingHelper log = LoggingHelperFactory.create(GeofenceResetService.class);
@@ -121,9 +127,8 @@ public class GeofenceResetService extends Service {
     }
 
 }
+*/
 
-
-/*
 public class GeofenceResetService extends IntentService {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceResetService.class);
@@ -199,6 +204,5 @@ public class GeofenceResetService extends IntentService {
     }
 }
 
-*/
 
 
