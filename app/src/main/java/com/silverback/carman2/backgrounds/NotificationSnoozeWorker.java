@@ -49,14 +49,16 @@ public class NotificationSnoozeWorker extends Worker {
 
         log.i("Worker input data: %s, %s, %s", providerName, category, geoTime);
 
-        Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
+        //Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
+        Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
         geoIntent.setAction(Constants.NOTI_SNOOZE);
         geoIntent.putExtra(Constants.GEO_ID, providerId);
         geoIntent.putExtra(Constants.GEO_NAME, providerName);
         geoIntent.putExtra(Constants.GEO_ADDRS, providerAddrs);
         geoIntent.putExtra(Constants.GEO_CATEGORY, category);
         geoIntent.putExtra(Constants.GEO_TIME, geoTime);
-        PendingIntent pendingIntent = PendingIntent.getService(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
+        //PendingIntent pendingIntent = PendingIntent.getService(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);

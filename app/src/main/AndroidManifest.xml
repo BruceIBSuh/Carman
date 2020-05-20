@@ -30,11 +30,6 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <receiver
-            android:name=".backgrounds.SnoozeBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false" />
-
-        <receiver
             android:name=".backgrounds.GeofenceRebootReceiver"
             android:enabled="true"
             android:exported="true">
@@ -46,8 +41,17 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".backgrounds.SnoozeBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
-        <service android:name=".backgrounds.GeofenceTransitionService" />
+        <receiver
+            android:name=".backgrounds.GeofenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!--<service android:name=".backgrounds.GeofenceTransitionService" />-->
 
         <activity android:name=".BaseActivity" />
         <activity android:name=".IntroActivity">

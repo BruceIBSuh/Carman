@@ -82,8 +82,9 @@ public class GeofenceResetWorker extends Worker {
 
         // To get the same pending intent back when calling addGeofences() and removeGeofences(),
         // use FLAG_UPDATE_CURRENT.
-        Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
-        mGeofencePendingIntent = PendingIntent.getService(context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
+        Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
+        mGeofencePendingIntent = PendingIntent.getBroadcast(context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         return mGeofencePendingIntent;
     }

@@ -18,6 +18,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
+import com.silverback.carman2.backgrounds.GeofenceBroadcastReceiver;
 import com.silverback.carman2.backgrounds.GeofenceTransitionService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
@@ -50,6 +51,7 @@ public class FavoriteGeofenceHelper {
     private GeofencingClient mGeofencingClient;
     private OnGeofenceListener mListener;
     private GeoPoint geoPoint;
+    private PendingIntent geofencePendingIntent;
 
     // Interface for parent activities
     public interface OnGeofenceListener {
@@ -91,11 +93,15 @@ public class FavoriteGeofenceHelper {
     private PendingIntent getGeofencePendingIntent() {
 
         // Reuse the PendingIntent if we have already have it
-        //if(mGeofencePendingIntent != null) return mGeofencePendingIntent;
-        Intent intent = new Intent(context, GeofenceTransitionService.class);
-        intent.setAction(Constants.NOTI_GEOFENCE);
+        if(geofencePendingIntent != null) return geofencePendingIntent;
 
-        return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //Intent intent = new Intent(context, GeofenceTransitionService.class);
+        Intent intent = new Intent(context, GeofenceBroadcastReceiver.class);
+        intent.setAction(Constants.NOTI_GEOFENCE);
+        geofencePendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return geofencePendingIntent;
     }
 
     /*
