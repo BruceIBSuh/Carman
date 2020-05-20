@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -36,9 +37,8 @@ import java.io.File;
  * button to call the near station fragment.
  */
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
-    // Logging
+
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
-    //private final int REQ_SETTING = 1000;
 
     // Objects
     private CarmanDatabase mDB;
@@ -46,7 +46,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private OpinetViewModel opinetModel;
     private GeneralFragment generalFragment;
     private ApplyImageResourceUtil applyImageResourceUtil;
-    private ImageViewModel imgViewModel;
+    private ImageViewModel imgModel;
     //private ActionBarDrawerToggle drawerToggle;
     // Fields
     private Drawable appbarIcon;
@@ -62,7 +62,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Instantiation
         mDB = CarmanDatabase.getDatabaseInstance(this);
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
-        imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
 
@@ -71,7 +71,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         String title = mSettings.getString(Constants.USER_NAME, null);
         getSupportActionBar().setHomeButtonEnabled(false);
         if(title != null) getSupportActionBar().setTitle(title);
-        userImage = mSettings.getString(Constants.USER_IMAGE, null);
 
         /*
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
@@ -114,12 +113,15 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // MUST be located here b/c it has to be redrawn when startActivityForResult() is called.
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
-        applyImageResourceUtil.applyGlideToDrawable(userImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
+        userImage = mSettings.getString(Constants.USER_IMAGE, null);
+        String imgUri = (TextUtils.isEmpty(userImage))?
+                Constants.imgPath + "ic_user_blank_gray":userImage;
+        applyImageResourceUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
         // is sent in onActivityResult() as a result of startActivityForResult() which called
         // SettingPreferenceActivity. The img uri is processed to Drawable by Glide, the custom target
         // of which is passed via ImageViewModel and reset to the Icon when the activity resumes
-        imgViewModel.getGlideDrawableTarget().observe(this, resource -> {
+        imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
     }
@@ -145,8 +147,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(userName != null) getSupportActionBar().setTitle(userName);
 
         if(uriImage != null)
-            applyImageResourceUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
-        else imgViewModel.getGlideDrawableTarget().setValue(null);
+            applyImageResourceUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
+        else imgModel.getGlideDrawableTarget().setValue(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));

@@ -46,7 +46,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".backgrounds.GeofenceResetService" />
+
         <service android:name=".backgrounds.GeofenceTransitionService" />
 
         <activity android:name=".BaseActivity" />

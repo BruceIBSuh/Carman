@@ -177,7 +177,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             log.i("DocumentID: %s, %s, %s", tabPage, documentId, autoclub);
         }
 
-        // Get the auto data arguemnt from BoardPagerFragment, which is of JSON string tyepe and
+        // Get the auto data arguemnt from BoardPagerFragment, which is of JSON string type and
         // it requires to create JSONArray that may be converted to StringBuilder.
         /*
         if(!TextUtils.isEmpty(autoClub)) {
@@ -225,8 +225,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
             bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, imageModel);
         }
         */
-
-
 
     }
 
@@ -333,7 +331,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Set the user image to the view on the header, the uri of which is provided as an arguemnt
         // from BoardPasoingAdapter. Otherwise, the default image is provided.
-        String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray":userPic;
+        String userImage = (TextUtils.isEmpty(userPic))?
+                Constants.imgPath + "ic_user_blank_gray" : userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
 
@@ -570,7 +569,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.TOP, 64);
+            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 64);
 
             tvSet.applyTo(constPostingLayout);
 
@@ -589,16 +588,19 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
+            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
             tvSet.applyTo(constPostingLayout);
 
         // In case no text exists after the last image, the recyclerView is constrained to the last
-        // ImageView.
+        // ImageView
         } else if(start == content.length()) {
+            /*
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(constPostingLayout);
             recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
             recyclerSet.applyTo(constPostingLayout);
+
+             */
         }
 
     }

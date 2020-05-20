@@ -46,15 +46,12 @@ public class CropImageDialogFragment extends DialogFragment {
 
     // How to implement Interface
     // 1. onAttach() in the caller fragment
-    // 2. onAttachFragmetn() in the callee(parent) activity
+    // 2. onAttachFragment() in the callee(parent) activity
     // 3. setter defined in the caller and invoke it in the callee.
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        try {
-            mListener = (OnSelectImageMediumListener) context;
-        } catch(ClassCastException e) {
-            log.i("ClassCastException: %s", e.getMessage());
-        }
+        try { mListener = (OnSelectImageMediumListener) context; }
+        catch(ClassCastException e) { e.printStackTrace(); }
     }
 }

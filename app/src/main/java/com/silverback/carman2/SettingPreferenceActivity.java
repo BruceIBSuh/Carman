@@ -146,9 +146,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
         if(!TextUtils.isEmpty(imageUri)) {
             applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
-            imgModel.getGlideDrawableTarget().observe(this, drawable -> {
-                settingFragment.getUserImagePreference().setIcon(drawable);
-            });
+            imgModel.getGlideDrawableTarget().observe(this, drawable ->
+                settingFragment.getUserImagePreference().setIcon(drawable));
         }
     }
 
@@ -336,8 +335,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case Constants.USER_IMAGE:
-                log.i("user image changed");
                 userImage = mSettings.getString(key, null);
+                log.i("userimage changed: %s", userImage);
                 break;
         }
 
@@ -458,6 +457,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 final Uri croppedImageUri = data.getData();
                 if(croppedImageUri != null) {
                     // Upload the cropped user image to Firestore with the user id fetched
+                    mSettings.edit().putString(Constants.USER_IMAGE, null).apply();
                     uploadUserImageToFirebase(croppedImageUri);
                 }
 
@@ -571,7 +571,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         });
     }
 
-    // Custom method that fragments herein may refer to SharedPreferences inherited from BaseActivity.
+    // Get SharedPreferences which is referenced by child fragments
     public SharedPreferences getSettings() {
         return mSettings;
     }

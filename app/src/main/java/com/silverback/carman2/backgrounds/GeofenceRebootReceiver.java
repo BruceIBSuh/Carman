@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -16,21 +19,14 @@ public class GeofenceRebootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         if(intent.getAction() == null) return;
+        log.i("intent.getAction(): %s", intent.getAction());
         if(intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED) ||
                 intent.getAction().equalsIgnoreCase(Intent.ACTION_LOCKED_BOOT_COMPLETED)) {
 
-            Intent geoIntent = new Intent(context, GeofenceResetService.class);
 
-            // startService in the background is not allowed in API 26+ unless the application is
-            // in the foreground except for some specific cases. JobScheduler or startForeground has
-            // to be used instead.
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                log.d("startForegroundService");
-                context.startForegroundService(geoIntent);
-            } else {
-                log.d("startService");
-                context.startService(geoIntent);
-            }
+            // Create WorkRequest to put it in WorkManager.enqueue().
+            OneTimeWorkRequest resetGeofence = new OneTimeWorkRequest.Builder(GeofenceResetWorker.class).build();
+            WorkManager.getInstance(context).enqueue(resetGeofence);
         }
 
     }

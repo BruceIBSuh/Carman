@@ -35,9 +35,18 @@ import java.util.List;
 import java.util.Locale;
 
 
-/**
+/*
  * This class subclasses IntentService for purposes of an issuing notification when the current
  * location is within the geofence radius preset in Constants.GEOFENCE_RADIUS.
+ *
+ *
+ * The Android framework also provides the IntentService subclass of Service that uses a worker
+ * thread to handle all of the start requests, one at a time. Using this class is not recommended
+ * for new apps as it will not work well starting with Android 8 Oreo, due to the introduction of
+ * Background execution limits. Moreover, it's deprecated starting with Android 11. You can use
+ * JobIntentService as a replacement for IntentService that is compatible with newer versions of
+ * Android.
+ *
  */
 
 public class GeofenceTransitionService extends IntentService {
