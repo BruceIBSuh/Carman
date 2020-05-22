@@ -276,6 +276,12 @@ public class BoardPagerFragment extends Fragment implements
             // as the recent or popular board, the query result is added only if the field value
             // is true;
             if(currentPage == Constants.BOARD_AUTOCLUB){
+
+                if(snapshot.exists()) {
+                    List<String> list = (List<String>)snapshot.get("auto_club");
+                    for(String str : list) log.i("auto club: %s", str);
+                }
+
                 snapshotList.add(snapshot);
 
             } else {

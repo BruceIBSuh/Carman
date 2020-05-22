@@ -21,6 +21,9 @@ import com.silverback.carman2.views.OpinetSidoPriceView;
 import com.silverback.carman2.views.OpinetSigunPriceView;
 import com.silverback.carman2.views.OpinetStationPriceView;
 
+/**
+ * This fragment is to display the gas prices of the favorite district and the favorite station.
+ */
 public class PricePagerFragment extends Fragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PricePagerFragment.class);

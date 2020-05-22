@@ -236,7 +236,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
             default: return false;
         }
-
     }
 
     // Implement the abstract method defined in SettingBaseFragment to

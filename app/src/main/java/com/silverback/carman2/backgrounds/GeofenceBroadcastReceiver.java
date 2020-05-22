@@ -41,12 +41,15 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        log.i("geofencebroadcastreceiver: %s", intent.getAction());
         this.context = context;
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(context);
         notiManager = NotificationManagerCompat.from(context);
         String action = intent.getAction();
         if(action == null) return;
 
+        // Fork the procedure according to Intent.getAction() which should be either Geofencing
+        // or Snoozing.
         switch(action) {
             case Constants.NOTI_GEOFENCE:
                 GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
@@ -56,17 +59,18 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                 final Location geofenceLocation = geofencingEvent.getTriggeringLocation();
                 Location favLocation = new Location("@null");
 
-                // Retrieve all the favorite list.
-                // What if multiple providers are closely located within the radius?
+                // Retrieve all the favorite list. What if multiple providers are closely located
+                // within the radius?
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
-                //sparseNotiArray = new SparseArray<>();
                 geoTime = System.currentTimeMillis();
                 //int notiId = 0;
 
+                // Compare the location in the db with the geofencing location, then get a provider
+                // located within the preset radius.
                 for(FavoriteProviderEntity entity : entities) {
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
-                    //
+
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
                         final int notiId = createID();
                         final String name = entity.providerName;
@@ -75,7 +79,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                         final int category = entity.category;
 
                         createNotification(notiId, id, name, addrs, category);
-                        //sparseNotiArray.put(notiId++, createNotification(notiId++, providerName, category));
                     }
                 }
 
@@ -96,29 +99,29 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
+
     private void createNotification(int notiId, String providerId, String name, String addrs, int category) {
 
         // Make the notification title and bigText(contentText and extendedText).
         String title = null;
         String extendedText = null;
         String visitingTime = BaseActivity.formatMilliseconds(context.getString(R.string.date_format_6), geoTime);
-        String contentText = String.format("%s\n%s\n%s", name, visitingTime, addrs);
+        String contentText = String.format("%s\n%s", visitingTime, addrs);
 
         switch(category) {
-            case Constants.GAS: // gas station
-                //title = String.format("%-6s%s", getString(R.string.noti_geofence_title_gas), name);
-                title = context.getString(R.string.noti_geofence_title_gas);
+            case Constants.GAS:
+                title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_gas), name);
+                //title = context.getString(R.string.noti_geofence_title_gas);
                 extendedText = context.getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                //title = String.format("%-6s%s", getString(R.string.noti_geofence_title_svc), name);
-                title = context.getString(R.string.noti_geofence_title_svc);
+                title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_svc), name);
+                //title = context.getString(R.string.noti_geofence_title_svc);
                 extendedText = context.getResources().getString(R.string.noti_geofence_content_svc);
                 break;
 
-            default:
-                break;
+            default: break;
         }
 
         // Create PendingIntents for setContentIntent and addAction(Snooze)
@@ -144,10 +147,8 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = createNotificationChannel();
             if(channel != null) channel.setVibrationPattern(new long[]{0, 500, 500, 500, 500, 500});
+        } else mBuilder.setVibrate(new long[]{0, 500, 500, 500, 500, 500});
 
-        } else {
-            mBuilder.setVibrate(new long[]{0, 500, 500, 500, 500, 500}); //Vibarate on receiving notification
-        }
 
         Notification notification = mBuilder.build();
 
@@ -157,6 +158,8 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     }
 
+    // Create PendingIntent to make ExpenseActivity started when pressing the notification by creating
+    // TaskStackBuilder.
     private PendingIntent createResultPendingIntent(int notiId, String providerId, String name, int category) {
         // Create an Intent for the activity you want to start
         Intent resultIntent = new Intent(context, ExpenseActivity.class);
@@ -183,6 +186,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     }
 
+    // Create PendingIntent which is used in SnoozeBroadcastReceiver when pressing "Snooze".
     private PendingIntent createSnoozePendingIntent(int notiId, String providerId, String name, int category) {
         Intent snoozeIntent = new Intent(context, SnoozeBroadcastReceiver.class);
         snoozeIntent.setAction(Constants.NOTI_SNOOZE);
@@ -198,8 +202,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     // Create a unique notification id.
     private int createID() {
         Calendar calendar = Calendar.getInstance();
-        //calendar.setTimeInMillis(System.currentTimeMillis());
-
         return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
 
     }
@@ -215,9 +217,11 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             NotificationChannel channel = new NotificationChannel(Constants.CHANNEL_ID, name, importance);
             channel.setDescription(description);
 
+            notiManager.createNotificationChannel(channel);
+            /*
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             if (notificationManager != null) notificationManager.createNotificationChannel(channel);
-
+            */
             return channel;
         }
 

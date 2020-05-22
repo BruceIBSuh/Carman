@@ -114,7 +114,7 @@ public class BoardActivity extends BaseActivity implements
     private SpannableStringBuilder clubTitle;
     private int tabHeight;
     private int tabPage;
-    private boolean isAutoFilter, isLocked;
+    private boolean isAutoFilter, isTabHeight, isLocked;
 
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
     // have a query with new conditions to make the recyclerview updated.
@@ -136,6 +136,7 @@ public class BoardActivity extends BaseActivity implements
         firestore = FirebaseFirestore.getInstance();
         imgResUtil = new ApplyImageResourceUtil(this);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+
 
         AppBarLayout appBar = findViewById(R.id.appBar);
         coordinatorLayout = findViewById(R.id.coordinatorLayout);
@@ -186,9 +187,6 @@ public class BoardActivity extends BaseActivity implements
         // FAB tapping creates BoardWriteFragment in the framelayout
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(this);
-
-        isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-        log.i("isLocked: %s", isLocked);
 
         /*
         boardTabLayout.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
@@ -500,24 +498,24 @@ public class BoardActivity extends BaseActivity implements
     // checkbox state will manage to set the toolbar title.
     @Override
     public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
-        log.i("onChecedChanged: %s, %s", chkbox.getText(), isChecked);
+        log.i("onChecedChanged: %s, %s", chkbox.getText(), chkbox.getTag());
+        final int index = (int)chkbox.getTag();
 
-        if(isChecked) cbAutoFilter.add(chkbox.getText().toString());
-        else cbAutoFilter.remove(chkbox.getText().toString());
+        if(isChecked) {
+            if(index == 1) cbAutoFilter.add(index, chkbox.getText().toString());
+            else cbAutoFilter.add(chkbox.getText().toString());
 
-        for(CheckBox chk : chkboxList) {
-            log.i("CheckBox list: %s", chk.getText());
-        }
+        } else cbAutoFilter.remove(chkbox.getText().toString());
 
+        for(String filter : cbAutoFilter) log.i("filter : %s", filter);
         // As far as the automodel checkbox value changes, the toolbar title will be reset using
         // creteAutoClubTitle().
-        //if(chkbox == chkboxList.get(1)) {
-            clubTitle = createAutoClubTitle();
-            if (getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
-        //}
+        clubTitle = createAutoClubTitle();
+        if (getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
 
         // Referenced in BoardPagerFragment for purpose of requerying posts with new
         // conditions.
+        //if(!isLocked)
         mListener.onCheckBoxValueChange(cbAutoFilter);
     }
 
@@ -543,6 +541,7 @@ public class BoardActivity extends BaseActivity implements
     // When calling BoardWriteFragment, the tab layout is gone and the fragment comes in and vice versa.
     // state: true - full height false - 0 height.
     private void animTabHeight(boolean isShown) {
+        isTabHeight = isShown;
         ValueAnimator anim = (isShown)?
                 ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
 
@@ -606,8 +605,6 @@ public class BoardActivity extends BaseActivity implements
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Switch the filter b/w ViewPager containing BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
-        // Check if the list accumulates items. JUST IN CASE.
-        for(CheckBox cb : chkboxList) log.i("checkbox: %s", cb.getText());
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -642,7 +639,8 @@ public class BoardActivity extends BaseActivity implements
         // on which fragment the frame contains; header turns visible in BoardPagerFragment and the
         // the checkbox indicating general post turns visible in BoardWriteFragment and vice versa.
 
-        // Create the autofilter label
+        // Create either the autofilter label in BoardPagerFragment or the general checkbox in
+        // BoardWritingFragment
         tvAutoFilterLabel = new TextView(context);
         tvAutoFilterLabel.setText(getString(R.string.board_filter_title));
         tvAutoFilterLabel.setTextColor(Color.WHITE);
@@ -659,9 +657,13 @@ public class BoardActivity extends BaseActivity implements
 
         // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.
+        isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
+        log.i("isLocked: %s", isLocked);
+
         JSONArray jsonAuto = new JSONArray(json);
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
+            cb.setTag(i);
             cb.setTextColor(Color.WHITE);
 
             if(jsonAuto.optString(i).equals("null")) {
@@ -671,15 +673,25 @@ public class BoardActivity extends BaseActivity implements
                     case 2: cb.setText(R.string.pref_engine_type);break;
                     case 3: cb.setText(R.string.board_filter_year);break;
                 }
+
             } else {
-                // The automaker should be checked and disabled unless it is void.
+                // The automaker is a necessary checkbox to be checked as far as jsonAuto has set
+                // any checkbox. Other autofilter values depends on whether it is the locked mode
+                // which retrieves each values from SharedPreferences.
                 cb.setText(jsonAuto.optString(i));
                 if(i == 0) {
                     cb.setChecked(true);
                     cb.setEnabled(false);
+                } else if(isLocked) {
+                    final String key = Constants.AUTOFILTER + i;
+                    boolean b = mSettings.getBoolean(key, false);
+                    cb.setChecked(b);
+                    cb.setEnabled(false);
                 }
+
                 // Add the checkbox value to the list if it is checked.
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText().toString());
+                for(String filter : cbAutoFilter) log.i("autofilter in order: %s", filter);
                 // Set the color and value according to a checkbox is checked or not.
                 cb.setOnCheckedChangeListener(this);
             }
@@ -688,32 +700,53 @@ public class BoardActivity extends BaseActivity implements
             chkboxList.add(cb);
         }
 
-        // Add ImageView in the autofilter to lock or unlock the autofilter values
+        // Create the autofilter lock and handle the event when clicking the imageview.
+        setAutoFilterLock(v, jsonAuto);
+
+        // Once an auto maker is fetched, download the uri string for its emblem.
+        //if(emblemIcon == null) setAutoMakerEmblem();
+    }
+
+    /*
+     * Create ImageView and make action controls when cliicking the view.
+     * isLock is saved in SharedPreferences and if isLock is true, the checkboxes in the autofilter
+     * turn disabled, retaining their values which have been respectively saved as well. When tapping
+     * the imageview, isLock will be set to false, enabling the checkboxes to be ready to check
+     * except one that has not been set.
+     *
+     * @param v parent viewgroup
+     * @param jsonAuto CheckBox name in the autofilter
+     *
+     */
+    private void setAutoFilterLock(ViewGroup v, JSONArray jsonAuto) {
+        // Dynamically create ImageView to put in at the end of the autofilter.
         ImageView imgView = new ImageView(this);
         LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         imgParams.setMargins(30, 10, 0, 0);
-        imgView.setImageResource(R.drawable.ic_autofilter_unlock);
+
+        // Set an initial image according to the value of isLocked saved in SharedPreferences.
+        int res = (isLocked)? R.drawable.ic_autofilter_lock : R.drawable.ic_autofilter_unlock;
+        imgView.setImageResource(res);
         v.addView(imgView, imgParams);
 
         imgView.setOnClickListener(view -> {
-            int res = (isLocked)? R.drawable.ic_autofilter_unlock : R.drawable.ic_autofilter_lock;
-            imgView.setImageResource(res);
-            // Fix the autoclub values when the unlocked button clicks
+            isLocked = !isLocked;
+            int resource = (isLocked)? R.drawable.ic_autofilter_lock : R.drawable.ic_autofilter_unlock;
+            imgView.setImageResource(resource);
+
             for(int i = 1; i < chkboxList.size(); i++) {
-                if(!isLocked) chkboxList.get(i).setEnabled(false);
-                else chkboxList.get(i).setEnabled(true);
+                if(isLocked) {
+                    chkboxList.get(i).setEnabled(false);
+                    String key = Constants.AUTOFILTER + i;
+                    mSettings.edit().putBoolean(key, chkboxList.get(i).isChecked()).apply();
+
+                }else if(!jsonAuto.optString(i).equals("null")) chkboxList.get(i).setEnabled(true);
             }
 
-            isLocked = !isLocked;
-
-            //mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, !isLocked).apply();
+            mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, isLocked).apply();
         });
 
-
-
-        // Once an auto maker is fetched, download the uri string for its emblem.
-        //if(emblemIcon == null) setAutoMakerEmblem();
     }
 
     // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
@@ -742,9 +775,13 @@ public class BoardActivity extends BaseActivity implements
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager.
         if(frameLayout.getChildCount() > 0) frameLayout.removeAllViews();
+        // If the tab height is 0, increate the height.
+        if(!isTabHeight) animTabHeight(true);
+
         frameLayout.addView(boardPager);
         fabWrite.setVisibility(View.VISIBLE);
         getSupportActionBar().setTitle(getString(R.string.board_general_title));
+
 
         // Animations differes according to whether the current page is on the auto club or not.
         if(tabPage == Constants.BOARD_AUTOCLUB) {
@@ -808,6 +845,8 @@ public class BoardActivity extends BaseActivity implements
         }
 
     }
+
+
 
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
     // of whehter a post should be uploaded in the general board is referenced in the same fragments

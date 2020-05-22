@@ -12,7 +12,7 @@ public class Constants {
     // Category
     public static final int GAS = 0;
     public static final int SVC = 1;
-    public static final int TOTAL = 2;
+    public static final int STAT = 2;
     public static final int BOARD = 3;
 
     public static final int GALLERY = 1;
@@ -84,6 +84,7 @@ public class Constants {
     public static final String AUTO_YEAR = "carman_pref_auto_year";
     public static final String ENGINE_TYPE = "carman_pref_engine_type";
     public static final String AUTOCLUB_LOCK = "carman_pref_autoclub_lock";
+    public static final String AUTOFILTER = "carman_autofilter_checked_";
 
     public static final String NUMBER = "carman_pref_cb_number";
     public static final String MODEL = "carman_pref_et_model";

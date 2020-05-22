@@ -89,15 +89,19 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // Query depends on whether the autofilter contains the automaker only or more filter
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
+
+                /*
                 final int index = autofilter.size() - 1;
                 query = colRef.whereArrayContains("auto_club", autofilter.get(index));
-                /*
+                log.i("autofinter in query: %s", autofilter);
+                */
                 final int size = autofilter.size();
                 if(size == 1) query = colRef.whereArrayContains("auto_club", autofilter.get(0));
-                else if(size == 2) query = colRef.whereArrayContainsAny("auto_club", autofilter);
-                else if(size == 3) query = colRef.whereArrayContains("auto_club", autofilter.get(size - 1));
+                else if(size == 2) query = colRef.whereArrayContains("auto_club", autofilter.get(1));
+                //else if(size == 3) query = colRef.whereArrayContains("auto_club", );
+                else if(size == 3) query = colRef.whereArrayContainsAny("auto_club", Arrays.asList(autofilter.get(1), autofilter.get(2)));
                 else query = colRef.whereIn("auto_club", autofilter);
-                */
+
                 // Require an index to be creeated to make a composite query with multiple fields.
                 query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)

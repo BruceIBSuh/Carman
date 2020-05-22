@@ -15,11 +15,9 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.backgrounds.GeofenceBroadcastReceiver;
-import com.silverback.carman2.backgrounds.GeofenceTransitionService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -31,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class performs to add a gas station or service center to Geofence. At the same time, adds
- * it to FavoriteProviderEntity in the Room, receiving
+ * This class performs to add or remove a gas station or service center non only to Geofence but
+ * also to the database in FavoriteProviderEntity of the Room.
  */
 public class FavoriteGeofenceHelper {
 

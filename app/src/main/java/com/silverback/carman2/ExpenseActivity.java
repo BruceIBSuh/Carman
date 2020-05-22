@@ -85,6 +85,7 @@ public class ExpenseActivity extends BaseActivity implements
     private AppBarLayout appBar;
     private TabLayout expTabLayout;
     private FrameLayout topFrame;
+    private MenuItem saveMenuItem;
 
 
     // Fields
@@ -135,9 +136,11 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Create ExpTabPagerAdapter that containts GeneralFragment and ServiceFragment in the
         // background, trasferring params to each fragment and return the adapter.
+        // Set the initial page number.
+        position = 0;
         tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
-
+        // callback when tabPagerTask finished.
         pagerModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
@@ -176,9 +179,9 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(Menu.NONE, MENU_ITEM_ID, Menu.NONE, R.string.exp_menuitem_title_save);
-        MenuItem item = menu.findItem(MENU_ITEM_ID);
-        item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        item.setIcon(R.drawable.ic_save_room);
+        saveMenuItem = menu.findItem(MENU_ITEM_ID);
+        saveMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        saveMenuItem.setIcon(R.drawable.ic_save_room);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -195,28 +198,17 @@ public class ExpenseActivity extends BaseActivity implements
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
                     startActivity(mainIntent);
-
                 } else finish();
 
                 return true;
 
+            // menu for saving the gas or service data
             case MENU_ITEM_ID:
-                log.i("Tabpager position: %s", position);
                 Fragment fragment = tabPagerAdapter.getItem(position);
                 boolean isSaved = false;
-                if(position == 0) isSaved = ((GasManagerFragment) fragment).saveGasData();
-                else if(position == 1) isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
-
-                /*
-                if(fragment instanceof GasManagerFragment) {
-                    isSaved = ((GasManagerFragment) fragment).saveGasData();
-
-                } else if(fragment instanceof ServiceManagerFragment) {
-                    isSaved = ((ServiceManagerFragment) fragment).saveServiceData();
-                }
-                 */
-
-                finish();
+                if(position == Constants.GAS) isSaved = ((GasManagerFragment)fragment).saveGasData();
+                else if(position == Constants.SVC) isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
+                if(isSaved) finish();
                 return isSaved;
 
             default: return false;
@@ -227,41 +219,29 @@ public class ExpenseActivity extends BaseActivity implements
 
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        // for revoking the callback of onPageSelected when initiating.
-        log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
-        /*
-        if(isFirst && positionOffset == 0 && positionOffsetPixels == 0) {
-            log.i("onPageScrolled at initiating");
-            onPageSelected(0);
-            isFirst = false;
-        }
-        */
-
-    }
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
 
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected: %s", position);
         topFrame.removeAllViews();
         this.position = position;
+        saveMenuItem.setVisible(true);
 
         switch(position) {
-            case 0: // GasManagerFragment
-                //position = 0;
+            case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
                 break;
 
-            case 1:
-                //position = 1;
+            case Constants.SVC:
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
                 break;
 
-            case 2:
-                //position = 2;
+            case Constants.STAT:
                 pageTitle = getString(R.string.exp_title_stat);
+                saveMenuItem.setVisible(false);
                 StatGraphFragment statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();

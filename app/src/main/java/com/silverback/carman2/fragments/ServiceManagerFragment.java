@@ -127,15 +127,13 @@ public class ServiceManagerFragment extends Fragment implements
 
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action and extras for the geofance data.
-        if(getActivity().getIntent().getAction() != null) {
+        String action = getActivity().getIntent().getAction();
+        if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
             if(getActivity().getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
                 isGeofenceIntent = true;
                 geoSvcName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
-                //geoSvcId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
                 geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
                 category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
-
-                log.i("isGeofenceIntent: %s", isGeofenceIntent);
             }
         }
 
@@ -562,9 +560,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Insert data into both ExpenseBaseEntity and ServiceManagerEntity at the same time
         // using @Transaction in ServiceManagerDao.
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
-
         if(rowId > 0) {
-            // Save the current mileage in the SharedPreferences to keep it in common.
             mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
 

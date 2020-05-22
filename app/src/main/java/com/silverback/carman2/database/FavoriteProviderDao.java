@@ -16,6 +16,7 @@ import java.util.List;
 @Dao
 public interface FavoriteProviderDao {
 
+    // Query all the favorite providers in the entity.
     @Query("SELECT * FROM FavoriteProviderEntity")
     List<FavoriteProviderEntity> loadAllFavoriteProvider();
 
@@ -23,8 +24,11 @@ public interface FavoriteProviderDao {
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
     int countFavoriteNumber(int category);
 
+    /*
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
     LiveData<Integer> getFavoriteNum(int category);
+    */
+
 
     @Query("SELECT favorite_id FROM FavoriteProviderEntity WHERE category = :category AND placeholder = 0")
     LiveData<String> getFirstFavorite(int category);
@@ -33,7 +37,7 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity WHERE category = :category ORDER BY placeholder ASC")
     LiveData<List<FavoriteProviderEntity>> queryFavoriteProviders(int category);
 
-    // Retrieve the favorite station with the first-set placeholder in SettingFavorGasFragment and
+    // Query the favorite provider set in the first placeholder of SettingFavorGasFragment and
     // SettingFavorSvcFragment respectively.
     @Query("SELECT favorite_name, favorite_id, category FROM FavoriteProviderEntity WHERE placeholder = 0")
     LiveData<List<FirstSetFavorite>> queryFirstSetFavorite();
@@ -41,8 +45,10 @@ public interface FavoriteProviderDao {
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
 
+    /*
     @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
     LiveData<String> findFavoriteSvcName(String svcName, int category);
+    */
 
     @Query("SELECT favorite_name FROM FavoriteProviderEntity " +
             "WHERE favorite_name = :stnName AND favorite_id = :stnId AND category = :category")
@@ -56,17 +62,6 @@ public interface FavoriteProviderDao {
 
     @Delete
     void deleteProvider(FavoriteProviderEntity provider);
-
-    // Subclasses to have query results.
-    /*
-    class FavoriteNameAddrs {
-        @ColumnInfo(name = "favorite_name")
-        public String favoriteName;
-
-        @ColumnInfo(name = "favorite_addrs")
-        public String favoriteAddrs;
-    }
-    */
 
     // class of the result subset which indicates what is the first set station and service in
     // SettingPreferenceFragment
