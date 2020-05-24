@@ -6,6 +6,9 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
@@ -46,6 +49,8 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -123,6 +128,9 @@ public class BoardPagerFragment extends Fragment implements
                 //autoFilter = getArguments().getStringArrayList("autoFilter");
             }
         }
+
+        // Make the optionsmenu available
+        setHasOptionsMenu(true);
 
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -263,6 +271,29 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        // Do something different from in the parent activity
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            menu.getItem(0).setVisible(true);
+            menu.getItem(0).setIcon(R.drawable.emblem_hyundai);
+        }
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        log.i("options clicked");
+        if(item.getItemId() == R.id.action_automaker_emblem) {
+            log.i("Hello emblem");
+            return true;
+        }
+
+        return false;
+    }
+
+
     // Implement PagingQueryHelper.OnPaginationListener which notifies the adapter of the first and
     // the next query results.
     @Override
@@ -276,14 +307,7 @@ public class BoardPagerFragment extends Fragment implements
             // as the recent or popular board, the query result is added only if the field value
             // is true;
             if(currentPage == Constants.BOARD_AUTOCLUB){
-
-                if(snapshot.exists()) {
-                    List<String> list = (List<String>)snapshot.get("auto_club");
-                    for(String str : list) log.i("auto club: %s", str);
-                }
-
                 snapshotList.add(snapshot);
-
             } else {
                 // Posts written in the general board do not have this field.
                 if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")){
@@ -291,7 +315,6 @@ public class BoardPagerFragment extends Fragment implements
                 }
             }
         }
-
 
         postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
@@ -479,6 +502,27 @@ public class BoardPagerFragment extends Fragment implements
             e.printStackTrace();
         }
     }
+
+
+
+    private class SortViewCountAutoClub implements Comparator<DocumentSnapshot> {
+        @Override
+        public int compare(DocumentSnapshot o1, DocumentSnapshot o2) {
+            return Integer.compare((o1.getLong("cnt_view").intValue()), o2.getLong("cnt_view").intValue());
+        }
+    }
+
+    public void sortDocumentByViews(){
+        log.i("snapshotList clicked: %s", autoFilter.size());
+        /*
+        Collections.sort(snapshotList, new SortViewCountAutoClub());
+        for(DocumentSnapshot snapshot : snapshotList) log.i("title: %s", snapshot.getString("post_title"));
+
+         */
+        //postingAdapter.notifyDataSetChanged();
+    }
+
+
 
 }
 

@@ -51,6 +51,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardEditFragment;
+import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -137,7 +138,6 @@ public class BoardActivity extends BaseActivity implements
         imgResUtil = new ApplyImageResourceUtil(this);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
-
         AppBarLayout appBar = findViewById(R.id.appBar);
         coordinatorLayout = findViewById(R.id.coordinatorLayout);
         Toolbar toolbar = findViewById(R.id.board_toolbar);
@@ -187,16 +187,6 @@ public class BoardActivity extends BaseActivity implements
         // FAB tapping creates BoardWriteFragment in the framelayout
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(this);
-
-        /*
-        boardTabLayout.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            log.i("viewtreeobserver: %s", boardTabLayout.getMeasuredHeight());
-            tabHeight = boardTabLayout.getMeasuredHeight();
-        });
-
-         */
-
-
     }
 
     @Override
@@ -217,12 +207,10 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_options_board, menu);
         this.menu = menu;
+        getMenuInflater().inflate(R.menu.menu_options_board, menu);
 
         if(tabPage == Constants.BOARD_AUTOCLUB) menu.getItem(0).setIcon(emblemIcon);
-
         // Notified that a drawale is prepared for setting it to the options menu icon by
         // setAutoMakerEmblem()
         imgModel.getGlideDrawableTarget().observe(this, drawable -> {
@@ -249,11 +237,9 @@ public class BoardActivity extends BaseActivity implements
 
         switch(item.getItemId()) {
             case android.R.id.home:
-                log.d("back button clicked");
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
                 if(frameLayout.getChildAt(0) instanceof ViewPager) {
-                    //frameLayout.removeAllViews();
                     frameLayout.removeView(boardPager);
                     finish();
 
@@ -277,22 +263,22 @@ public class BoardActivity extends BaseActivity implements
                         imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
 
                         // As BoardPagerFragment
-                        log.i("up button clicked and tabheight back: %s", boardTabLayout.getMeasuredHeight());
                         animTabHeight(true);
                         menu.getItem(1).setVisible(false);
 
                         addViewPager();
 
-                    });
-                    snackBar.show();
+                    }).show();
+
+                    //snackBar.show();
                 }
 
                 return true;
 
             case R.id.action_automaker_emblem:
-                animAutoFilter(isAutoFilter);
-
-                return true;
+                //animAutoFilter(isAutoFilter);
+                //((BoardPagerFragment)pagerAdapter.getItem(Constants.BOARD_AUTOCLUB)).sortDocumentByViews();
+                return false;
 
             case R.id.action_upload_post:
                 boolean isWriteMode = (writePostFragment != null) &&
@@ -306,6 +292,7 @@ public class BoardActivity extends BaseActivity implements
             default:
                 return super.onOptionsItemSelected(item);
         }
+
     }
 
 
@@ -361,7 +348,6 @@ public class BoardActivity extends BaseActivity implements
     public void onClick(View v) {
         // Only apply to the floating action button
         if(v.getId() != R.id.fab_board_write) return;
-
         if(editPostFragment != null) editPostFragment = null;
         // Check if the user has made a nickname. Otherwise, show tne message for setting the name
         // first and start SettingPreferenceActivity, the result of which is received in onActivity
@@ -374,9 +360,8 @@ public class BoardActivity extends BaseActivity implements
                 Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
-            });
-
-            snackbar.show();
+            }).show();
+            //snackbar.show();
             return;
         }
 
@@ -384,6 +369,7 @@ public class BoardActivity extends BaseActivity implements
         // TabHeight must be measured here b/c it will be increased to the full size or decreased
         // down to 0 each time the button clicks.
         tabHeight = boardTabLayout.getMeasuredHeight();
+
         // Create BoardWriteFragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
         if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
@@ -870,5 +856,9 @@ public class BoardActivity extends BaseActivity implements
     }
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
+    }
+
+    public Menu getToolbarMenu() {
+        return menu;
     }
 }

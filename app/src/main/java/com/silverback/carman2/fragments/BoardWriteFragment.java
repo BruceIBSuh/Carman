@@ -415,11 +415,15 @@ public class BoardWriteFragment extends DialogFragment implements
         // value is set to true such that any post, no matter what is autoclub or general post,
         // it would be shown in every board. However, as long as an autoclub post set isGeneral value
         // to false, it would not be shown in the general board; only in the autoclub.
+        // On the other hand, the autofilter values as Arrays should be turned into Map with autofilter
+        // as key and timestamp as value, which avoid creating composite index
         if(tabPage == Constants.BOARD_AUTOCLUB) {
             autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             isGeneralPost = ((BoardActivity)getActivity()).checkGeneralPost();
-            post.put("auto_club", autofilter);
-
+            // Create the auto_filter data structure by converting the autofilter list to nested Map.
+            Map<String, Boolean> filters = new HashMap<>();
+            for(String field : autofilter) filters.put(field, true);
+            post.put("auto_filter", filters);
         } else isGeneralPost = true;
 
         post.put("post_general", isGeneralPost);

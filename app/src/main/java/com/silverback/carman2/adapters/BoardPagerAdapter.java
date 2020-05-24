@@ -25,8 +25,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     // Objects
     private ArrayList<String> cbValues;
-    private SparseArray<String> cbSparseValues;
-
     private int currentPage;
 
     // Constructor
@@ -37,7 +35,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int position) {
-        log.i("fragment position: %s", position);
         currentPage = position;
         return (currentPage == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
@@ -57,11 +54,11 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         log.i("getItemPosition: %s", object);
         if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
         else return POSITION_UNCHANGED;
+        //return -1;
     }
 
     public void setAutoFilterValues(ArrayList<String> values) {
         for(CharSequence value : values) log.i("filter value: %s", value);
         cbValues = values;
-
     }
 }

@@ -85,25 +85,16 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
                 if(autofilter == null || autofilter.size() == 0) return;
-                Query query;
+                Query query = colRef;
                 // Query depends on whether the autofilter contains the automaker only or more filter
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
-
-                /*
-                final int index = autofilter.size() - 1;
-                query = colRef.whereArrayContains("auto_club", autofilter.get(index));
-                log.i("autofinter in query: %s", autofilter);
-                */
-                final int size = autofilter.size();
-                if(size == 1) query = colRef.whereArrayContains("auto_club", autofilter.get(0));
-                else if(size == 2) query = colRef.whereArrayContains("auto_club", autofilter.get(1));
-                //else if(size == 3) query = colRef.whereArrayContains("auto_club", );
-                else if(size == 3) query = colRef.whereArrayContainsAny("auto_club", Arrays.asList(autofilter.get(1), autofilter.get(2)));
-                else query = colRef.whereIn("auto_club", autofilter);
-
-                // Require an index to be creeated to make a composite query with multiple fields.
-                query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                for(int i = 0; i < autofilter.size(); i++) {
+                    String field = "auto_filter." + autofilter.get(i);
+                    query = query.whereEqualTo("auto_filter." + autofilter.get(i), true);
+                    log.i("Field: %s", field);
+                }
+                query//.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                         .get(source)
                         .addOnSuccessListener(autoclubShot -> {
                             this.querySnapshot = autoclubShot;
