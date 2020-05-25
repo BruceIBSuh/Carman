@@ -33,6 +33,11 @@
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
                 android:elevation="2dp"
+                android:gravity="start"
+                app:contentInsetStartWithNavigation="0dp"
+                app:contentInsetStart="3dp"
+                app:contentInsetEnd="0dp"
+                app:titleMarginStart="0dp"
                 app:titleTextColor="#FFFFFF"
                 app:layout_collapseMode="pin" />
 

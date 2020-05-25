@@ -4,13 +4,14 @@ package com.silverback.carman2.fragments;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -59,8 +60,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * A simple {@link Fragment} subclass.
- *
+ * The viewpager contains this fragment which consists of 4 pages to show queried posts based on
+ * time, view counts, autoclub filter, and admin notification.
  */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnFilterCheckBoxListener,
@@ -74,7 +75,6 @@ public class BoardPagerFragment extends Fragment implements
     private Source source;
     private ListenerRegistration postListener;
     private FragmentSharedModel fragmentModel;
-    //private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
     private PagingQueryHelper pageHelper;
     private List<DocumentSnapshot> snapshotList;
@@ -89,6 +89,7 @@ public class BoardPagerFragment extends Fragment implements
     // Fields
     private int currentPage;
     private boolean isGeneralPost;
+    private boolean isViewOrder;
 
     // Constructor
     private BoardPagerFragment() {
@@ -106,6 +107,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for AutoClub currentPage which has the checkbox values and title names.
+    /*
     public static BoardPagerFragment newInstance(int page, ArrayList<String> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
@@ -116,6 +118,8 @@ public class BoardPagerFragment extends Fragment implements
         return fragment;
     }
 
+     */
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -124,9 +128,12 @@ public class BoardPagerFragment extends Fragment implements
 
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
+            /*
             if(currentPage == Constants.BOARD_AUTOCLUB) {
                 //autoFilter = getArguments().getStringArrayList("autoFilter");
             }
+
+             */
         }
 
         // Make the optionsmenu available
@@ -275,8 +282,21 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Do something different from in the parent activity
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            menu.getItem(0).setVisible(true);
-            menu.getItem(0).setIcon(R.drawable.emblem_hyundai);
+            final MenuItem emblem = menu.findItem(R.id.action_automaker_emblem);
+            //menu.getItem(0).setVisible(true);
+            emblem.setVisible(true);
+            FrameLayout rootView = (FrameLayout)emblem.getActionView();
+            ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
+            // Refactor to dynamically set an emblem to the view according to an automaker retrieved.
+            imgEmblem.setImageResource(R.drawable.emblem_genesis);
+            //menu.getItem(0).setIcon(R.drawable.emblem_hyundai);
+
+            // app:actionLayout instead of app:icon is required to add ClickListener.
+            rootView.setOnClickListener(view -> {
+                onOptionsItemSelected(emblem);
+            });
+
+
         }
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -284,9 +304,8 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        log.i("options clicked");
         if(item.getItemId() == R.id.action_automaker_emblem) {
-            log.i("Hello emblem");
+            sortDocumentByTimeOrView();
             return true;
         }
 
@@ -504,22 +523,43 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
+    // Once posts being sequentially queried by the autofilter, on clicking the automaker emblem,
+    // they are sorted by the view counts and vice versa when clikcing again using Comparator<T>
+    // interface in Collection.Utils.
+    private void sortDocumentByTimeOrView(){
+        isViewOrder = !isViewOrder;
+        Collections.sort(snapshotList, new SortViewCountAutoClub());
+        postingAdapter.notifyDataSetChanged();
 
+    }
+
+    // Implement Comparator<T> which can be passed to Collections.sort(List, Comparator) or Arrays.
+    // sort(Object[], Comparaotr) to have control over the sort order, which can be used to control
+    // not only the data structure order such as SortedSet or SortedMap, but also an ordering for
+    // collections of objects that don't have a Comparable. Comparable is, on the other hand, imposes
+    // a natual ordering of class objects using the class's compareTo method which is referred to
+    // as its natural comparison method.
     private class SortViewCountAutoClub implements Comparator<DocumentSnapshot> {
         @Override
         public int compare(DocumentSnapshot o1, DocumentSnapshot o2) {
-            return Integer.compare((o1.getLong("cnt_view").intValue()), o2.getLong("cnt_view").intValue());
+            if(isViewOrder) {
+                Number view1 = (Number)o1.get("cnt_view");
+                Number view2 = (Number)o2.get("cnt_view");
+                if(view1 != null && view2 != null)
+                    // view count descending order
+                    return Integer.compare(view2.intValue(), view1.intValue());
+
+
+            } else {
+                Timestamp timestamp1 = (Timestamp)o1.get("timestamp");
+                Timestamp timestamp2 = (Timestamp)o2.get("timestamp");
+                if(timestamp1 != null && timestamp2 != null)
+                    // Timestamp descending order
+                    return Integer.compare((int)timestamp2.getSeconds(), (int)timestamp1.getSeconds());
+            }
+
+            return -1;
         }
-    }
-
-    public void sortDocumentByViews(){
-        log.i("snapshotList clicked: %s", autoFilter.size());
-        /*
-        Collections.sort(snapshotList, new SortViewCountAutoClub());
-        for(DocumentSnapshot snapshot : snapshotList) log.i("title: %s", snapshot.getString("post_title"));
-
-         */
-        //postingAdapter.notifyDataSetChanged();
     }
 
 

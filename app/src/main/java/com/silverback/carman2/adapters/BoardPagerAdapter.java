@@ -36,9 +36,14 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         currentPage = position;
+        return BoardPagerFragment.newInstance(position);
+
+        /*
         return (currentPage == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
                 BoardPagerFragment.newInstance(position);
+
+         */
     }
 
     @Override
@@ -49,13 +54,15 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // As long as the current page is AUTO_CLUB, update the viewpager adapter by setting the return
     // type as POSITION_NONE. It invokes destroyItem() and regards the current fragment destroyed
     // which leads to call onCreateView() of the fragment.
+    /*
     @Override
     public int getItemPosition(@NonNull Object object) {
         log.i("getItemPosition: %s", object);
-        if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
-        else return POSITION_UNCHANGED;
-        //return -1;
+        //if(currentPage == Constants.BOARD_AUTOCLUB) return POSITION_NONE;
+        //else return POSITION_UNCHANGED;
+        return -1;
     }
+    */
 
     public void setAutoFilterValues(ArrayList<String> values) {
         for(CharSequence value : values) log.i("filter value: %s", value);

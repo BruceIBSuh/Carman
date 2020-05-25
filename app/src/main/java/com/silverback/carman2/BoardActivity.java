@@ -183,7 +183,8 @@ public class BoardActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
 
         //addTabIconAndTitle(this, boardTabLayout);
-        animTabLayout(); // true: slide down the tab
+        animTabLayout();
+
         // FAB tapping creates BoardWriteFragment in the framelayout
         fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
         fabWrite.setOnClickListener(this);
@@ -210,14 +211,17 @@ public class BoardActivity extends BaseActivity implements
         this.menu = menu;
         getMenuInflater().inflate(R.menu.menu_options_board, menu);
 
-        if(tabPage == Constants.BOARD_AUTOCLUB) menu.getItem(0).setIcon(emblemIcon);
+        //if(tabPage == Constants.BOARD_AUTOCLUB) menu.getItem(0).setIcon(emblemIcon);
         // Notified that a drawale is prepared for setting it to the options menu icon by
         // setAutoMakerEmblem()
+        /*
         imgModel.getGlideDrawableTarget().observe(this, drawable -> {
             emblemIcon = drawable;
             menu.getItem(0).setIcon(drawable);
         });
+         */
 
+        // What's difference b/w return true and super.onCreateOptionsMenu(menu)
         //return true;
         return super.onCreateOptionsMenu(menu);
     }
@@ -227,11 +231,14 @@ public class BoardActivity extends BaseActivity implements
      * are presented in the app bar. When an event occurs and you want to make a menu update,
      * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
      */
+    /*
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         return super.onPrepareOptionsMenu(menu);
     }
+    */
 
+    //
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -275,11 +282,6 @@ public class BoardActivity extends BaseActivity implements
 
                 return true;
 
-            case R.id.action_automaker_emblem:
-                //animAutoFilter(isAutoFilter);
-                //((BoardPagerFragment)pagerAdapter.getItem(Constants.BOARD_AUTOCLUB)).sortDocumentByViews();
-                return false;
-
             case R.id.action_upload_post:
                 boolean isWriteMode = (writePostFragment != null) &&
                         frameLayout.getChildAt(0) == writePostFragment.getView();
@@ -289,8 +291,7 @@ public class BoardActivity extends BaseActivity implements
 
                 return true;
 
-            default:
-                return super.onOptionsItemSelected(item);
+            default: return super.onOptionsItemSelected(item);
         }
 
     }
@@ -343,6 +344,12 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onPageScrollStateChanged(int state) {}
 
+
+    // When clicking the fab to write a post, make BoardEditFragment null if it remains in the frame.
+    // Then, check if the user has set a nickname. Otherwise, show the spanned message to guide the
+    // user to move SettingPreferenceActivity to create it.
+    // The tab layout should be animated to decrease its height to 0 for purpose of adjusing the post
+    // content area to the base line.
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {

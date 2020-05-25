@@ -67,7 +67,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
 
         Toolbar toolbar = findViewById(R.id.toolbar_main);
-        setSupportActionBar(toolbar);//Sets the toolbar used as ActionBar
+        setSupportActionBar(toolbar);
         String title = mSettings.getString(Constants.USER_NAME, null);
         getSupportActionBar().setHomeButtonEnabled(false);
         if(title != null) getSupportActionBar().setTitle(title);
@@ -126,6 +126,12 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         });
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if(gasPriceTask != null) gasPriceTask = null;
+    }
+
     // startActivityForResult() has this callback invoked by getting an intent that contains new
     // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
     // and PriceViewPager should be updated with a new district, both of which have been reset
@@ -156,6 +162,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
 
     }
+
+    // DrawerLayout callbacks.
     /*
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -169,6 +177,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         drawerToggle.onConfigurationChanged(newConfig);
     }
     */
+
+
 
 
     //The following callback methods are invoked by Toolbar working as Appbar or ActionBar
@@ -249,8 +259,4 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     public SharedPreferences getSettings() {
         return mSettings;
     }
-
-
-
-
 }

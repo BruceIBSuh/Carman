@@ -3,10 +3,12 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- custom layout to replace android:actionLayout with android:icon for resizing the icon -->
     <item
         android:id="@+id/action_automaker_emblem"
         android:title="@string/toolbar_mycar"
         android:visible="false"
+        app:actionLayout="@layout/view_automaker_emblem"
         app:showAsAction="ifRoom|withText" />
 
     <item
