@@ -264,20 +264,16 @@ public class BoardActivity extends BaseActivity implements
                     snackBar.setAction("OK", view -> {
                         // Remove BoardWriteFragment when the up button presses.
                         getSupportFragmentManager().beginTransaction().remove(target).commit();
-
                         // Hide the soft input when BoardWriteFragment disappears
                         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                         imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
-
-                        // As BoardPagerFragment
+                        // As BoardPagerFragment comes in
                         animTabHeight(true);
                         menu.getItem(1).setVisible(false);
 
                         addViewPager();
 
                     }).show();
-
-                    //snackBar.show();
                 }
 
                 return true;
@@ -327,8 +323,8 @@ public class BoardActivity extends BaseActivity implements
                 } else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
 
                 // Set the visibility and the icon to the automaker menu icon.
-                menu.getItem(0).setVisible(true);
-                menu.getItem(0).setIcon(R.drawable.ic_automaker_hyundai); // Refactor required.
+                //menu.getItem(0).setVisible(true);
+                //menu.getItem(0).setIcon(R.drawable.ic_automaker_hyundai); // Refactor required.
 
                 animAutoFilter(isAutoFilter);
 
@@ -742,24 +738,7 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-    // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
-    // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
-    // auto data as json type.
-    private void setAutoMakerEmblem() {
-        firestore.collection("autodata").whereEqualTo("auto_maker", cbAutoFilter.get(0)).get()
-                .addOnSuccessListener(query -> {
-                    for(QueryDocumentSnapshot autoshot : query) {
-                        if(autoshot.exists()) {
-                            String emblem = autoshot.getString("emblem");
-                            // Empty Check. Refactor should be taken to show an empty icon, instead.
-                            if(TextUtils.isEmpty(emblem)) return;
-                            else imgResUtil.applyGlideToEmblem(autoshot.getString("emblem"),
-                                    Constants.ICON_SIZE_TOOLBAR_EMBLEM, imgModel);
-                            break;
-                        }
-                    }
-                });
-    }
+
 
     // Upon completion of uploading a post in BoardWriteFragment, remove it out of the framelayout,
     // then add the viewpager again with the toolbar menu and title reset.

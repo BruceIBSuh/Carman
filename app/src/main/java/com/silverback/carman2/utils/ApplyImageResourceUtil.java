@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
+import androidx.preference.Preference;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -210,8 +211,33 @@ public class ApplyImageResourceUtil {
                     @Override
                     public void onResourceReady(
                             @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-
+                        model.getGlideDrawableToEmblem().setValue(resource);
                         model.getGlideDrawableTarget().setValue(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
+
+    }
+
+    public void useGlideForImageView(Uri uri, int x, int y,  ImageView view) {
+        if(TextUtils.isEmpty(uri.toString())) return;
+        // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
+        // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
+        // adding the float, it will be round up to 2.0.
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int px_x = (int)(x * scale + 0.5f);
+        int px_y = (int)(y * scale + 0.5f);
+
+        Glide.with(mContext).load(uri).override(px_x, px_y)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fitCenter()
+                //.circleCrop()
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        view.setImageDrawable(resource);
                     }
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}

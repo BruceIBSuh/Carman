@@ -4,13 +4,14 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
 
+    <!-- BoardActivity -->
     <color name="bgToolbar">#778899</color>
     <color name="bgBoardComment">#F5F5F5</color>
     <color name="bgBoardComment2">#B0C4DE</color>
     <color name="bgBoardBottom">#F5F5DC</color>
     <color name="bgBoardHeader">#F5F5DC</color>
     <color name="bgBoardTab">#A9A9A9</color>
-    <color name="bgBoardWriteTitle">#F5F5F5</color>
+    <color name="bgBoardWriteTitle">#E0E0E0</color>
     <color name="bgDarkerGray">@android:color/darker_gray</color>
 
 

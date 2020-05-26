@@ -420,10 +420,13 @@ public class BoardWriteFragment extends DialogFragment implements
         if(tabPage == Constants.BOARD_AUTOCLUB) {
             autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             isGeneralPost = ((BoardActivity)getActivity()).checkGeneralPost();
-            // Create the auto_filter data structure by converting the autofilter list to nested Map.
+
+            // Create the auto_filter field data structure by converting the autofilter list to
+            // nested Map.
             Map<String, Boolean> filters = new HashMap<>();
             for(String field : autofilter) filters.put(field, true);
             post.put("auto_filter", filters);
+
         } else isGeneralPost = true;
 
         post.put("post_general", isGeneralPost);

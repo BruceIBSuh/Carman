@@ -21,6 +21,8 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPreferenceActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.threads.DownloadImageTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
@@ -55,6 +57,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     // fields
     private String makerId, modelId;
+    private String emblem;
     private boolean isMakerChanged, isModelChanged;
 
     // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
@@ -250,6 +253,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         autoModel.setEnabled(true);
         autoYear.setEnabled(true);
 
+        // Retrieve the emblem url
+        emblem = makershot.getString("auto_emblem");
+
         // Reset the auto type and the engine type to the initial state.
         if(makershot.get("auto_type") != null) {
             List<String> autoTypeList = (List<String>)makershot.get("auto_type");
@@ -364,10 +370,11 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             dataList.add(engineType.getValue());
             dataList.add(autoYear.getValue());
 
-            for(String data : dataList) log.i("data: %s", data);
-
             JSONArray json = new JSONArray(dataList);
             mSettings.edit().putString(Constants.AUTO_DATA, json.toString()).apply();
+
+            log.i("emblem: %s", emblem);
+            DownloadImageTask task = ThreadManager.downloadBitmapTask(getContext(), emblem, null);
 
             // Update the registration numbers of the auto makers and models. If any change occurs,
             // the previous reg numbers should be decreased and the new reg numbers increased.

@@ -411,18 +411,15 @@ public class ThreadManager {
 
     }
 
-    /*
-    public static DownloadImageTask downloadImageTask(
-            Context context, int position, String url, ImageViewModel model) {
+    public static DownloadImageTask downloadBitmapTask(Context context, String url, ImageViewModel model) {
 
         DownloadImageTask imageTask = sInstance.mDownloadImageTaskQueue.poll();
         if(imageTask == null) imageTask = new DownloadImageTask(context, model);
-        imageTask.initTask(position, url);
+        imageTask.initTask(url);
         sInstance.mDownloadThreadPool.execute(imageTask.getDownloadImageRunnable());
 
         return imageTask;
     }
-     */
 
     // Upload the downsized user image to Firebase Storage
     public static UploadBitmapTask startBitmapUploadTask(

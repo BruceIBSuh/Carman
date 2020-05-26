@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
@@ -16,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -38,12 +40,14 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PagingQueryHelper;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -72,6 +76,7 @@ public class BoardPagerFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
+    private FirebaseFirestore firestore;
     private Source source;
     private ListenerRegistration postListener;
     private FragmentSharedModel fragmentModel;
@@ -80,6 +85,7 @@ public class BoardPagerFragment extends Fragment implements
     private List<DocumentSnapshot> snapshotList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
+    private ApplyImageResourceUtil imgutil;
 
     // UIs
     private ProgressBar pbPaging, pbLoading;
@@ -88,7 +94,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Fields
     private int currentPage;
-    private boolean isGeneralPost;
+    private String automaker;
     private boolean isViewOrder;
 
     // Constructor
@@ -97,11 +103,12 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for the fragments other than AutoClub
-    public static BoardPagerFragment newInstance(int page) {
+    public static BoardPagerFragment newInstance(int page, String maker) {
         BoardPagerFragment fragment = new BoardPagerFragment();
-        Bundle arg = new Bundle();
-        arg.putInt("currentPage", page);
-        fragment.setArguments(arg);
+        Bundle args = new Bundle();
+        args.putInt("currentPage", page);
+        args.putString("automaker", maker);
+        fragment.setArguments(args);
 
         return fragment;
     }
@@ -128,19 +135,16 @@ public class BoardPagerFragment extends Fragment implements
 
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
-            /*
-            if(currentPage == Constants.BOARD_AUTOCLUB) {
-                //autoFilter = getArguments().getStringArrayList("autoFilter");
-            }
-
-             */
+            automaker = getArguments().getString("automaker");
+            log.i("automaker: %s", automaker);
         }
 
-        // Make the optionsmenu available
+        // Make the toolbar menu available in the Fragment.
         setHasOptionsMenu(true);
 
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
@@ -287,9 +291,8 @@ public class BoardPagerFragment extends Fragment implements
             emblem.setVisible(true);
             FrameLayout rootView = (FrameLayout)emblem.getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
-            // Refactor to dynamically set an emblem to the view according to an automaker retrieved.
-            imgEmblem.setImageResource(R.drawable.emblem_genesis);
-            //menu.getItem(0).setIcon(R.drawable.emblem_hyundai);
+
+            setAutoMakerEmblem(imgEmblem);
 
             // app:actionLayout instead of app:icon is required to add ClickListener.
             rootView.setOnClickListener(view -> {
@@ -321,22 +324,23 @@ public class BoardPagerFragment extends Fragment implements
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
 
         for(QueryDocumentSnapshot snapshot : snapshots) {
-            // In the autoclub page, the query result is added to the list regardless of whether
-            // the field value of 'post_general" is true or not. In terms of the general board such
-            // as the recent or popular board, the query result is added only if the field value
-            // is true;
-            if(currentPage == Constants.BOARD_AUTOCLUB){
-                snapshotList.add(snapshot);
-            } else {
-                // Posts written in the general board do not have this field.
-                if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")){
-                    snapshotList.add(snapshot);
-                }
-            }
+            // In the autoclub page, the query result is added to the list regardless of whether the
+            // field value of 'post_general" is true or not. The other boards, however, the result
+            // is added as far as the post_general is true.
+            if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
+            else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
+
         }
 
-        postingAdapter.notifyDataSetChanged();
+        // The AutoClub queries multiple where conditions based on the auto_filter and no order query
+        // is made to avoid creating compound query index. For this reason, sort the query result
+        // which is saved as List using Collection.sort(List, Compatator<T>). Queries in the general
+        // board are made sequentially or in terms of view counts.
+        if(currentPage == Constants.BOARD_AUTOCLUB) sortDocumentByTimeOrView();
+        else postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
+
+
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
 
@@ -357,11 +361,7 @@ public class BoardPagerFragment extends Fragment implements
         log.i("next Query: %s", snapshotList.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
-            else {
-                if(snapshot.getBoolean("post_general") == null || (boolean)snapshot.get("post_general")) {
-                    snapshotList.add(snapshot);
-                }
-            }
+            else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
         }
 
         //pagingProgbar.setVisibility(View.INVISIBLE);
@@ -376,23 +376,22 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         log.i("CheckBox change: %s", autofilter);
+        /*
         final int filterSize = autofilter.size();
         if(filterSize == 4 && !autofilter.get(filterSize - 1).matches("\\d{4}")) {
             log.i("autoyear");
             String tmp = autofilter.get(3);
         }
+
+         */
+
         pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
-        // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
+        // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
         // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
         // when no dataset exists.
         //pagerAdapter.notifyDataSetChanged();
     }
-    // This callback is nothing to work in the fragment. It does work in BoardWriteFragment
-    /*
-    @Override
-    public void onGeneralPost(boolean isChecked) {}
-    */
 
     // Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     @SuppressWarnings({"unchecked", "ConstantConditions"})
@@ -404,7 +403,6 @@ public class BoardPagerFragment extends Fragment implements
         BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
-        //bundle.putInt("position", position);
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userId", snapshot.getString("user_id"));
@@ -527,9 +525,9 @@ public class BoardPagerFragment extends Fragment implements
     // they are sorted by the view counts and vice versa when clikcing again using Comparator<T>
     // interface in Collection.Utils.
     private void sortDocumentByTimeOrView(){
-        isViewOrder = !isViewOrder;
         Collections.sort(snapshotList, new SortViewCountAutoClub());
         postingAdapter.notifyDataSetChanged();
+        isViewOrder = !isViewOrder;
 
     }
 
@@ -560,6 +558,28 @@ public class BoardPagerFragment extends Fragment implements
 
             return -1;
         }
+    }
+
+    // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
+    // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
+    // auto data as json type.
+    private void setAutoMakerEmblem(ImageView imgview) {
+        firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
+                .addOnSuccessListener(query -> {
+                    for(QueryDocumentSnapshot autoshot : query) {
+                        if(autoshot.exists()) {
+                            String emblem = autoshot.getString("auto_emblem");
+                            // Empty Check. Refactor should be taken to show an empty icon, instead.
+                            if(TextUtils.isEmpty(emblem)) return;
+                            else {
+                                Uri uri = Uri.parse(emblem);
+                                imgutil.useGlideForImageView(uri, 150, 30, imgview);
+                                log.i("emblem: %s", emblem);
+                            }
+                            break;
+                        }
+                    }
+                });
     }
 
 

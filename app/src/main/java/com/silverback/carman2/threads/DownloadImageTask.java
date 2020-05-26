@@ -2,6 +2,7 @@ package com.silverback.carman2.threads;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.SparseArray;
 
 import androidx.core.graphics.drawable.RoundedBitmapDrawable;
@@ -24,20 +25,19 @@ public class DownloadImageTask extends ThreadTask implements
     private String imgUrl;
     private ImageViewModel viewModel;
     private Runnable downloadImageRunnable;
-    private SparseArray<Bitmap> sparseArray;
+    //private SparseArray<Bitmap> sparseArray;
 
-    private int position;
+    //private int position;
 
     // Constructor
     DownloadImageTask(Context context, ImageViewModel model) {
         this.viewModel = model;
         downloadImageRunnable = new DownloadImageRunnable(context, this);
-        sparseArray = new SparseArray<>();
+        //sparseArray = new SparseArray<>();
         log.d("ViewModel: %s", viewModel);
     }
 
-    void initTask(int position, String url) {
-        this.position = position;
+    void initTask(String url) {
         this.imgUrl = url;
     }
 
@@ -52,7 +52,12 @@ public class DownloadImageTask extends ThreadTask implements
 
     @Override
     public void setDownloadImage(RoundedBitmapDrawable drawable) {
-        viewModel.setDownloadImage(position, drawable);
+        //viewModel.setDownloadImage(position, drawable);
+    }
+
+    @Override
+    public void setEmblemUri(Uri uri) {
+
     }
 
     @Override

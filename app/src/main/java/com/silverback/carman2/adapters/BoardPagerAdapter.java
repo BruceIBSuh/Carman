@@ -36,14 +36,13 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         currentPage = position;
-        return BoardPagerFragment.newInstance(position);
+        return BoardPagerFragment.newInstance(position, cbValues.get(0));
 
         /*
         return (currentPage == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
                 BoardPagerFragment.newInstance(position);
-
-         */
+        */
     }
 
     @Override

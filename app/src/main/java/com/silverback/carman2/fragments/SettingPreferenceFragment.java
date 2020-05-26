@@ -1,11 +1,18 @@
 package com.silverback.carman2.fragments;
 
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
@@ -13,6 +20,10 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -23,6 +34,9 @@ import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.threads.DownloadImageTask;
+import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -31,6 +45,9 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.List;
 
 /*
@@ -55,11 +72,13 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     private Preference autoPref;
     private SpinnerDialogPreference spinnerPref;
     private Preference favorite;
+    private ImageViewModel imgModel;
 
     // Fields
     private List<String> autoDataList;
     private String sigunCode;
     private String regMakerNum;
+    private Uri emblemUri;
     //private String makerName, modelName, typeName, yearName;
 
     @SuppressWarnings("ConstantConditions")
@@ -72,7 +91,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        ImageViewModel imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
+        imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -101,7 +120,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
         sharedModel.getAutoData().observe(requireActivity(), json -> {
-            log.i("AutoData: %s, %s", mSettings.getString(Constants.AUTO_MAKER, null),  mSettings.getString(Constants.AUTO_MODEL, null));
+            log.i("autodata changed");
             makerName = parseAutoData(json).get(0);
             modelName = parseAutoData(json).get(1);
             if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
@@ -236,6 +255,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = String.valueOf(makershot.getLong("reg_number"));
+        String automaker = makershot.getString("auto_maker");
+        log.i("emblem: %s", makershot.getString("auto_emblem"));
 
         if(!TextUtils.isEmpty(modelName)) {
             queryAutoModel(makershot.getId(), modelName);

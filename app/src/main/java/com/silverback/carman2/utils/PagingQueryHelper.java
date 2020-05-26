@@ -63,7 +63,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
                 colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(source)
+                        .get(Source.CACHE)
                         .addOnSuccessListener(querySnapshot -> {
                             this.querySnapshot = querySnapshot;
                             mListener.setFirstQuery(querySnapshot);
@@ -74,7 +74,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(source)
+                        .get(Source.CACHE)
                         .addOnSuccessListener(querySnapshot -> {
                             this.querySnapshot = querySnapshot;
                             mListener.setFirstQuery(querySnapshot);
@@ -90,16 +90,15 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
                 for(int i = 0; i < autofilter.size(); i++) {
-                    String field = "auto_filter." + autofilter.get(i);
-                    query = query.whereEqualTo("auto_filter." + autofilter.get(i), true);
-                    log.i("Field: %s", field);
+                    final String field = "auto_filter." + autofilter.get(i);
+                    query = query.whereEqualTo(field, true);
                 }
-                query//.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(source)
-                        .addOnSuccessListener(autoclubShot -> {
-                            this.querySnapshot = autoclubShot;
-                            mListener.setFirstQuery(autoclubShot);
-                        }).addOnFailureListener(Exception::printStackTrace);
+
+                query.get(Source.CACHE).addOnSuccessListener(autoclubShot -> {
+                    this.querySnapshot = autoclubShot;
+                    mListener.setFirstQuery(autoclubShot);
+                }).addOnFailureListener(Exception::printStackTrace);
+
                 break;
 
             // Should create a new collection managed by Admin.(e.g. board_admin)

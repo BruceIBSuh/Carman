@@ -5,11 +5,10 @@
 
     <ImageView
         android:id="@+id/img_action_emblem"
-        android:layout_width="?android:actionBarSize"
+        android:layout_width="wrap_content"
         android:layout_height="?android:actionBarSize"
         android:layout_gravity="center"
-        android:padding="2dp"
-        android:src="@drawable/emblem_hyundai"
+        android:padding="8dp"
         android:scaleType="centerCrop"
         android:contentDescription="@null" />
 
