@@ -45,7 +45,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private GasPriceTask gasPriceTask;
     private OpinetViewModel opinetModel;
     private GeneralFragment generalFragment;
-    private ApplyImageResourceUtil applyImageResourceUtil;
+    private ApplyImageResourceUtil imgResUtil;
     private ImageViewModel imgModel;
     //private ActionBarDrawerToggle drawerToggle;
     // Fields
@@ -61,7 +61,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
         // Instantiation
         mDB = CarmanDatabase.getDatabaseInstance(this);
-        applyImageResourceUtil = new ApplyImageResourceUtil(this);
+        imgResUtil = new ApplyImageResourceUtil(this);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
@@ -114,9 +114,8 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
         // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
         userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        String imgUri = (TextUtils.isEmpty(userImage))?
-                Constants.imgPath + "ic_user_blank_gray":userImage;
-        applyImageResourceUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
+        String imgUri = (TextUtils.isEmpty(userImage))? Constants.imgPath + "ic_user_blank_gray" : userImage;
+        imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
         // is sent in onActivityResult() as a result of startActivityForResult() which called
         // SettingPreferenceActivity. The img uri is processed to Drawable by Glide, the custom target
@@ -153,14 +152,12 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(userName != null) getSupportActionBar().setTitle(userName);
 
         if(uriImage != null)
-            applyImageResourceUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
+            imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         else imgModel.getGlideDrawableTarget().setValue(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
         if(generalFragment != null) generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
-
-
     }
 
     // DrawerLayout callbacks.
@@ -255,7 +252,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
-
+    // Referenced by child fragments.
     public SharedPreferences getSettings() {
         return mSettings;
     }

@@ -4,7 +4,8 @@
 
     <PreferenceCategory
         app:title="@string/pref_category_auto_info"
-        app:key="carman_pref_basic_info">
+        app:key="carman_pref_basic_info"
+        app:icon="@drawable/ic_setting_basic" >
 
         <com.silverback.carman2.views.NameDialogPreference
             app:key="carman_pref_nickname"
@@ -44,7 +45,8 @@
 
     <PreferenceCategory
         app:title="@string/pref_category_location"
-        app:key="pref_location">
+        app:key="pref_location"
+        app:icon="@drawable/ic_setting_location">
         <com.silverback.carman2.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
             app:key="pref_dialog_district"
@@ -61,12 +63,12 @@
             app:key="pref_location_update"
             app:title="@string/pref_title_autoupdate"
             app:summary="@string/pref_summary_autoupdate" />
-
     </PreferenceCategory>
 
     <PreferenceCategory
         app:title="@string/pref_category_favorites"
-        app:key="pref_favorites" >
+        app:key="pref_favorites"
+        app:icon="@drawable/ic_setting_station" >
         <Preference
             app:title="@string/pref_designated_provider"
             app:key="pref_favorite_provider" />
@@ -82,7 +84,8 @@
 
     <PreferenceCategory
         app:title="@string/pref_category_service"
-        app:key="pref_service" >
+        app:key="pref_service"
+        app:icon="@drawable/ic_setting_service">
         <ListPreference
             app:title="@string/pref_service_period"
             app:key="pref_service_period"
@@ -95,15 +98,14 @@
             app:key="pref_service_chklist" />
     </PreferenceCategory>
 
-
     <PreferenceCategory
         app:title="@string/pref_category_app_setting"
-        app:key="pref_app_setting" >
+        app:key="pref_app_setting"
+        app:icon="@drawable/ic_setting_app" >
 
         <SwitchPreferenceCompat
             app:title="@string/pref_app_notification"
             app:key="notification" />
-
         <!--
         <com.silverback.carman2.views.ProgressImagePreference
             app:enabled="true"

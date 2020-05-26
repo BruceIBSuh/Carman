@@ -1,5 +1,6 @@
 package com.silverback.carman2.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -18,6 +19,8 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.preference.Preference;
 
@@ -211,13 +214,38 @@ public class ApplyImageResourceUtil {
                     @Override
                     public void onResourceReady(
                             @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        model.getGlideDrawableToEmblem().setValue(resource);
+                        //model.getGlideDrawableToEmblem().setValue(resource);
                         model.getGlideDrawableTarget().setValue(resource);
                     }
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });
 
+    }
+
+    // Remove ImageModel
+    public void setGlideImageToIcon(String uriString, int size, ActionBar actionbar) {
+        if(TextUtils.isEmpty(uriString)) return;
+        // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
+        // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
+        // adding the float, it will be round up to 2.0.
+        final float scale = mContext.getResources().getDisplayMetrics().density;
+        int px_x = (int)(size * scale + 0.5f);
+        int px_y = (int)(size * scale + 0.5f);
+
+        Glide.with(mContext).load(Uri.parse(uriString)).override(px_x, px_y)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fitCenter()
+                .circleCrop()
+                .into(new CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(
+                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                        actionbar.setIcon(resource);
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
     }
 
     public void useGlideForImageView(Uri uri, int x, int y,  ImageView view) {
