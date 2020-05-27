@@ -235,6 +235,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
                 autoModel.setValue(valueName);
                 queryAutoModel(makerId, valueName);
+
+                // Once any automodel is selected, the autotype and enginetype should be disabled.
+                autoType.setEnabled(false);
+                engineType.setEnabled(false);
                 return true;
 
             default: return false;

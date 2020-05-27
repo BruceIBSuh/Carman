@@ -130,11 +130,9 @@ public class ApplyImageResourceUtil {
     }
 
     public int calculateInSampleSize(BitmapFactory.Options options, int orientation) {
-
         Point size = getDisplaySize();
         int reqWidth = size.x;
         int reqHeight = size.y;
-        log.i("Display Size: %s, %s", reqWidth, reqHeight);
 
         // Raw dimension of the image
         final int rawWidth = options.outWidth;
@@ -147,7 +145,6 @@ public class ApplyImageResourceUtil {
             if(rawWidth > reqWidth) {
                 //final int halfHeight = rawHeight / 2;
                 final int halfWidth = rawWidth / 2;
-
                 //while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
                 while(halfWidth / inSampleSize >= reqWidth) {
                     inSampleSize *= 2;
@@ -163,8 +160,6 @@ public class ApplyImageResourceUtil {
                 }
             }
         }
-
-        log.i("scale: %s", inSampleSize);
 
         return inSampleSize;
     }
@@ -196,7 +191,7 @@ public class ApplyImageResourceUtil {
         return bmpByteArray;
     }
 
-    // Glide applies images to Drawable which should be mostly set to icons.
+    // In terms of ScaleType, only centerCrop() or fitCenter() is available to Glide
     public void applyGlideToDrawable(String uriString, int size, ImageViewModel model) {
         if(TextUtils.isEmpty(uriString)) return;
         // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
@@ -248,48 +243,15 @@ public class ApplyImageResourceUtil {
                 });
     }
 
-    public void useGlideForImageView(Uri uri, int x, int y,  ImageView view) {
-        if(TextUtils.isEmpty(uri.toString())) return;
-        // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
-        // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
-        // adding the float, it will be round up to 2.0.
+    public void applyGlideToEmblem(Uri uri, int x, int y, ImageView view) {
         final float scale = mContext.getResources().getDisplayMetrics().density;
+        // x is additionally multiplied by 1.5 b/c the emblem is mostly a rectangle shape.
         int px_x = (int)(x * scale + 0.5f);
         int px_y = (int)(y * scale + 0.5f);
-
         Glide.with(mContext).load(uri).override(px_x, px_y)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .fitCenter()
-                //.circleCrop()
-                .into(new CustomTarget<Drawable>() {
-                    @Override
-                    public void onResourceReady(
-                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        view.setImageDrawable(resource);
-                    }
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {}
-                });
-
-    }
-
-    public void applyGlideToEmblem(String uri, int size, ImageViewModel model) {
-        final float scale = mContext.getResources().getDisplayMetrics().density;
-        int px_x = (int)(size * scale + 0.5f);
-        int px_y = (int)(size * scale + 0.5f);
-        Glide.with(mContext).load(Uri.parse(uri)).override(px_x, px_y)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .fitCenter()
-                .into(new CustomTarget<Drawable>() {
-                    @Override
-                    public void onResourceReady(
-                            @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-
-                        model.getGlideDrawableTarget().setValue(resource);
-                    }
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {}
-                });
+                .into(view);
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.

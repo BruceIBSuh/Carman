@@ -136,7 +136,6 @@ public class BoardPagerFragment extends Fragment implements
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
             automaker = getArguments().getString("automaker");
-            log.i("automaker: %s", automaker);
         }
 
         // Make the toolbar menu available in the Fragment.
@@ -292,14 +291,14 @@ public class BoardPagerFragment extends Fragment implements
             FrameLayout rootView = (FrameLayout)menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
 
+            // Set the automaker emblem in the toolbar imageview which is created as a custom view
+            // replacing the toolbar menu icon.
             setAutoMakerEmblem(imgEmblem);
 
             // app:actionLayout instead of app:icon is required to add ClickListener.
             rootView.setOnClickListener(view -> {
                 onOptionsItemSelected(menu.getItem(0));
             });
-
-
         }
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -459,7 +458,6 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
-
     // Check if a user is the post's owner or has read the post before in order to increate the view
     // count. In order to do so, get the user id from the internal storage and from the post as well.
     // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
@@ -528,7 +526,6 @@ public class BoardPagerFragment extends Fragment implements
         Collections.sort(snapshotList, new SortViewCountAutoClub());
         postingAdapter.notifyDataSetChanged();
         isViewOrder = !isViewOrder;
-
     }
 
     // Implement Comparator<T> which can be passed to Collections.sort(List, Comparator) or Arrays.
@@ -564,22 +561,21 @@ public class BoardPagerFragment extends Fragment implements
     // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
     // auto data as json type.
     private void setAutoMakerEmblem(ImageView imgview) {
-        firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
-                .addOnSuccessListener(query -> {
-                    for(QueryDocumentSnapshot autoshot : query) {
-                        if(autoshot.exists()) {
-                            String emblem = autoshot.getString("auto_emblem");
-                            // Empty Check. Refactor should be taken to show an empty icon, instead.
-                            if(TextUtils.isEmpty(emblem)) return;
-                            else {
-                                Uri uri = Uri.parse(emblem);
-                                imgutil.useGlideForImageView(uri, 100, 30, imgview);
-                                log.i("emblem: %s", emblem);
-                            }
-                            break;
-                        }
+        firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get().addOnSuccessListener(query -> {
+            for(QueryDocumentSnapshot autoshot : query) {
+                if(autoshot.exists()) {
+                    String emblem = autoshot.getString("auto_emblem");
+                    // Empty Check. Refactor should be taken to show an empty icon, instead.
+                    if(TextUtils.isEmpty(emblem)) return;
+                    else {
+                        Uri uri = Uri.parse(emblem);
+                        imgutil.applyGlideToEmblem(uri, 60, 40, imgview);
                     }
-                });
+
+                    break;
+                }
+            }
+        });
     }
 
 
