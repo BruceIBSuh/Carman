@@ -286,17 +286,17 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Do something different from in the parent activity
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            final MenuItem emblem = menu.findItem(R.id.action_automaker_emblem);
-            //menu.getItem(0).setVisible(true);
-            emblem.setVisible(true);
-            FrameLayout rootView = (FrameLayout)emblem.getActionView();
+            //final MenuItem emblem = menu.findItem(R.id.action_automaker_emblem);
+            menu.getItem(0).setVisible(true);
+            //emblem.setVisible(true);
+            FrameLayout rootView = (FrameLayout)menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
 
             setAutoMakerEmblem(imgEmblem);
 
             // app:actionLayout instead of app:icon is required to add ClickListener.
             rootView.setOnClickListener(view -> {
-                onOptionsItemSelected(emblem);
+                onOptionsItemSelected(menu.getItem(0));
             });
 
 
@@ -573,7 +573,7 @@ public class BoardPagerFragment extends Fragment implements
                             if(TextUtils.isEmpty(emblem)) return;
                             else {
                                 Uri uri = Uri.parse(emblem);
-                                imgutil.useGlideForImageView(uri, 150, 30, imgview);
+                                imgutil.useGlideForImageView(uri, 100, 30, imgview);
                                 log.i("emblem: %s", emblem);
                             }
                             break;
