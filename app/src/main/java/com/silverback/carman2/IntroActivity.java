@@ -64,7 +64,6 @@ public class IntroActivity extends BaseActivity  {
     private AutoDataResourceTask autoDataResourceTask;
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
-    private FirestoreViewModel firestoreViewModel;
     private String[] defaultDistrict;
 
     // UI's
@@ -74,9 +73,6 @@ public class IntroActivity extends BaseActivity  {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_intro);
-
-        // Permission check for ACCESS_FINE_LOCATION to retrieve near stations in MainActivity.
-        checkPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
 
         // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
@@ -96,6 +92,9 @@ public class IntroActivity extends BaseActivity  {
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
+
+        // Permission check for ACCESS_FINE_LOCATION to retrieve near stations in MainActivity.
+        checkPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
     @Override
@@ -108,9 +107,11 @@ public class IntroActivity extends BaseActivity  {
 
 
     // Invoked when and only when the application initiates to authenticate the user in Firebase.Auth.
-    // On authentication, add the user to the collection named "users" with the user data temporarily
-    // as null and have the document id saved in the internal storage. Finally, initiate DistCodeTask
-    // to retrieve the district codes from the Opinet.
+    // Once authenticated, upload the user to the "user" collection with data null at the moment, then
+    // have the document id saved in the internal storage. The user document ID is used to identify
+    // users instead of using Firebase.Auth UID for security reason.
+    // Finally, initiate DistCodeTask to retrieve the district codes from the Opinet.
+    //
     // Refactor requried: JSONARray as to the sido code and the service items currently defined as
     // resources and saved in SharedPreferences should be refactored to download directly from the server.
     @SuppressWarnings("ConstantConditions")
@@ -122,13 +123,11 @@ public class IntroActivity extends BaseActivity  {
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
 
-                // The user id is determined with the documantation id of a user data document, not
-                // using the FirebaseAuth id for a sequrity reason.
                 firestore.collection("users").add(userData).addOnSuccessListener(docref -> {
-                    final String userDoc = docref.getId();
-                    if(!TextUtils.isEmpty(userDoc)) {
+                    final String userId = docref.getId();
+                    if(!TextUtils.isEmpty(userId)) {
                         try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
-                            fos.write(userDoc.getBytes());
+                            fos.write(userId.getBytes());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -145,13 +144,9 @@ public class IntroActivity extends BaseActivity  {
                     try {
                         if (isComplete) {
                             mProgBar.setVisibility(View.INVISIBLE);
-                            //autoDataResourceTask = ThreadManager.startFirestoreResTask(this, firestoreViewModel);
                             regularInitProcess();
                         } else throw new FileNotFoundException();
-
-                    } catch(FileNotFoundException e) {
-                        log.e("District Code FileNotFoundException: %s", e.getMessage());
-                    }
+                    } catch(FileNotFoundException e) { e.printStackTrace();}
                 });
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
@@ -176,14 +171,19 @@ public class IntroActivity extends BaseActivity  {
     private void regularInitProcess() {
 
         mProgBar.setVisibility(View.VISIBLE);
-        // Check if the price updating interval, set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
-        // As GasPriceTask completes, updated prices is notified as LiveData to OpinetViewModel.
-        // distPriceComplete().
+        // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
+        // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().
         if(checkPriceUpdate()) {
+            // Get the sigun code
+            JSONArray json = getDistrictJSONArray();
+            String distCode = (json == null)?defaultDistrict[2] : json.optString(2);
+            log.i("District Code: %s", distCode);
+
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                JSONArray json = BaseActivity.getDistrictJSONArray();
-                String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
-                log.i("District code: %s", distCode);
+                //JSONArray json = BaseActivity.getDistrictJSONArray();
+                //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
+                //log.i("District code: %s", distCode);
+
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in

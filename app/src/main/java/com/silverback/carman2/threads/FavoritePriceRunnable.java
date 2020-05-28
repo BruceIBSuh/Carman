@@ -72,7 +72,7 @@ public class FavoritePriceRunnable implements Runnable {
 
             Opinet.StationPrice stnPriceData = xmlHandler.parseStationPrice(in);
             if(stnPriceData != null) {
-                log.i("new favorite: %s, %s", stnPriceData.getStnName(), stnPriceData.getDiff());
+                log.i("new favorite: %s, %s", stnPriceData.getStnName(), stnPriceData.getPriceDiff());
                 // if the favorite placeholder becomes first, the provider saves its price in the cache.
                 if(mCallback.getIsFirst()) {
                     savePriceInfo(file, stnPriceData);

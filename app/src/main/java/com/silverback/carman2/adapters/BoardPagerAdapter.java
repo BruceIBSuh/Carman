@@ -36,7 +36,8 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         currentPage = position;
-        return BoardPagerFragment.newInstance(position, cbValues.get(0));
+        String automaker = (cbValues.size() > 0)?cbValues.get(0):null;
+        return BoardPagerFragment.newInstance(currentPage, automaker);
 
         /*
         return (currentPage == Constants.BOARD_AUTOCLUB)?

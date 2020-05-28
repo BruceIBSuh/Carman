@@ -73,13 +73,13 @@ public class OpinetStationPriceView extends OpinetPriceView {
             ObjectInputStream ois = new ObjectInputStream(is)){
             Opinet.StationPrice stnPrice = (Opinet.StationPrice)ois.readObject();
 
-            log.i("First Favorite Station: %s, %s", stnPrice.getStnName(), stnPrice.getDiff());
+            log.i("First Favorite Station: %s, %s", stnPrice.getStnName(), stnPrice.getPriceDiff());
 
             String stnName = stnPrice.getStnName();
             tvStnName.setText(stnName);
 
             Map<String, Float> mapPrice = stnPrice.getStnPrice();
-            Map<String, Float> mapDiff = stnPrice.getDiff();
+            Map<String, Float> mapDiff = stnPrice.getPriceDiff();
             price = mapPrice.get(fuelCode);
             diff = mapDiff.get(fuelCode);
 

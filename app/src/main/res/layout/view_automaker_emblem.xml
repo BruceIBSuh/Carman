@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <ImageView
-        android:id="@+id/img_action_emblem"
-        android:layout_width="wrap_content"
-        android:layout_height="?android:actionBarSize"
-        android:layout_gravity="center"
-        android:padding="8dp"
-        android:contentDescription="@null" />
-
-</FrameLayout>
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/img_action_emblem"
+    android:layout_width="wrap_content"
+    android:layout_height="?android:actionBarSize"
+    android:layout_gravity="center"
+    android:padding="2dp"
+    android:contentDescription="@null" />

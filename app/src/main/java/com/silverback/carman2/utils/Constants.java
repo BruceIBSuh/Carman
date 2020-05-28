@@ -18,7 +18,7 @@ public class Constants {
     public static final int GALLERY = 1;
     public static final int CAMERA = 2;
 
-
+    // Favorite provider and Geofence
     public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
@@ -26,7 +26,7 @@ public class Constants {
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
     public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
 
-    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60;// * 60 * 6;//Interval for downloading gas prices from Opinet (6 hrs)
+    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60 * 6;//Interval for downloading gas prices from Opinet (6 hrs)
     public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
     static final int INTERVAL = 1000 * 10; //Location update interval set by the app
     static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.

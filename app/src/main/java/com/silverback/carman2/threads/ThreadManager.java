@@ -35,7 +35,9 @@ public class ThreadManager {
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager.class);
 
     // Constants
-    //static final int DOWNLOAD_PRICE_COMPLETED = 100;
+    static final int DOWNLOAD_PRICE_COMPLETED = 100;
+    static final int DOWNLOAD_PRICE_FAILED = -100;
+
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
     static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
@@ -260,9 +262,7 @@ public class ThreadManager {
     public static DistrictCodeTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
 
         DistrictCodeTask task = sInstance.mDistrictCodeTaskQueue.poll();
-        if(task == null) {
-            task = new DistrictCodeTask(context, model);
-        }
+        if(task == null) task = new DistrictCodeTask(context, model);
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
         return task;
@@ -290,9 +290,7 @@ public class ThreadManager {
 
         GasPriceTask gasPriceTask = sInstance.mGasPriceTaskQueue.poll();
 
-        if(gasPriceTask == null) {
-            gasPriceTask = new GasPriceTask(context);
-        }
+        if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
 
         gasPriceTask.initPriceTask(model, distCode, stnId);
 

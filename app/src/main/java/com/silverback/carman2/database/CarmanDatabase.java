@@ -6,8 +6,8 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 @Database(entities = {
-        AutoDataMakerEntity.class,
-        AutoDataModelEntity.class,
+        AutoDataMakerEntity.class, // no use. AutoDataResourceRunnable and task, neither.
+        AutoDataModelEntity.class, // no use
         ExpenseBaseEntity.class,
         GasManagerEntity.class,
         ServiceManagerEntity.class,

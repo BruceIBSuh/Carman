@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -107,6 +108,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                         json.optString(2) :
                         getResources().getStringArray(R.array.default_district)[2];
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
+
             });
         }
 

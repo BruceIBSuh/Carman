@@ -15,7 +15,6 @@ import java.util.List;
 
 @Dao
 public interface FavoriteProviderDao {
-
     // Query all the favorite providers in the entity.
     @Query("SELECT * FROM FavoriteProviderEntity")
     List<FavoriteProviderEntity> loadAllFavoriteProvider();
@@ -23,12 +22,6 @@ public interface FavoriteProviderDao {
     // The total number of the favorite stations and service centers
     @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
     int countFavoriteNumber(int category);
-
-    /*
-    @Query("SELECT COUNT(_id) FROM FavoriteProviderEntity WHERE category = :category")
-    LiveData<Integer> getFavoriteNum(int category);
-    */
-
 
     @Query("SELECT favorite_id FROM FavoriteProviderEntity WHERE category = :category AND placeholder = 0")
     LiveData<String> getFirstFavorite(int category);
@@ -44,11 +37,6 @@ public interface FavoriteProviderDao {
 
     @Query("SELECT * FROM FavoriteProviderEntity WHERE favorite_name = :stnName OR favorite_id = :stnId")
     FavoriteProviderEntity findFavoriteProvider(String stnName, String stnId);
-
-    /*
-    @Query("SELECT favorite_name FROM FavoriteProviderEntity WHERE favorite_name = :svcName AND category = :category")
-    LiveData<String> findFavoriteSvcName(String svcName, int category);
-    */
 
     @Query("SELECT favorite_name FROM FavoriteProviderEntity " +
             "WHERE favorite_name = :stnName AND favorite_id = :stnId AND category = :category")

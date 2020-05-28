@@ -6,6 +6,11 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.OpinetViewModel;
 
+/**
+ * Ths class is to retrieve the gas prices respectively by average, sido, sigun and the first
+ * favorite gas station.
+ */
+
 public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetPriceListMethods {
 
     // Logging
@@ -18,17 +23,15 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     private String stnId;
     private int index = 0;
 
-    // Constructor: creates an GasPriceTask object containing GasPriceRunnable object.
     GasPriceTask(Context context) {
         super();
         mAvgPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.AVG);
         mSidoPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIDO);
         mSigunPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIGUN);
         mStationPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.STATION);
-
     }
 
-    // Initialize args for GasPriceRunnable
+    // Initialize args
     void initPriceTask(OpinetViewModel viewModel, String distCode, String stnId) {
         this.viewModel = viewModel;
         this.distCode = distCode;
@@ -64,36 +67,31 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         return stnId;
     }
 
-    // Check if the 3 Runnables successfully complte.
-    @Override
-    public int getTaskCount() {
-        return index;
-    }
-
-    @Override
-    public void addPriceCount() {
-        index++;
-        if(index == 4) viewModel.distPriceComplete().postValue(true);
-    }
-
-    /*
     @Override
     public void handlePriceTaskState(int state) {
+        index ++;
         int outstate = -1;
+        state *= state;
+        log.i("price state: %s", state);
 
-        switch(state) {
-            case GasPriceRunnable.DOWNLOAD_PRICE_COMPLETE:
-                outstate = ThreadManager.DOWNLOAD_PRICE_COMPLETED;
-                break;
+        // If all price data of average, sido, sigun and favorite station are retrieved, notify
+        // the viewmodel of the task done and finalize the task in the main thread.
+        if(index == 4) {
+            viewModel.distPriceComplete().postValue(true);
+            switch (state) {
+                case GasPriceRunnable.DOWNLOAD_PRICE_COMPLETE:
+                    outstate = ThreadManager.DOWNLOAD_PRICE_COMPLETED;
+                    break;
 
-            case GasPriceRunnable.DOWNLOAD_PRICE_FAILED:
-                outstate = ThreadManager.DOWNLOAD_PRICE_FAILED;
-                break;
+                case GasPriceRunnable.DOWNLOAD_PRICE_FAILED:
+                    outstate = ThreadManager.DOWNLOAD_PRICE_FAILED;
+                    break;
+            }
+
+            sThreadManager.handleState(this, outstate);
         }
-
-        sThreadManager.handleState(this, outstate);
     }
-     */
+
 
     public void recycle(){
         stnId = null;

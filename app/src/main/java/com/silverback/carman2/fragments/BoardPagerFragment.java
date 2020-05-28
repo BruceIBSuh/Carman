@@ -1,6 +1,9 @@
 package com.silverback.carman2.fragments;
 
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -11,12 +14,16 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -103,7 +110,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for the fragments other than AutoClub
-    public static BoardPagerFragment newInstance(int page, String maker) {
+    public static BoardPagerFragment newInstance(int page, @Nullable String maker) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("currentPage", page);
@@ -288,15 +295,20 @@ public class BoardPagerFragment extends Fragment implements
             //final MenuItem emblem = menu.findItem(R.id.action_automaker_emblem);
             menu.getItem(0).setVisible(true);
             //emblem.setVisible(true);
-            FrameLayout rootView = (FrameLayout)menu.getItem(0).getActionView();
-            ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
-
+            //FrameLayout rootView = (FrameLayout)menu.getItem(0).getActionView();
+            ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
             // Set the automaker emblem in the toolbar imageview which is created as a custom view
             // replacing the toolbar menu icon.
             setAutoMakerEmblem(imgEmblem);
 
             // app:actionLayout instead of app:icon is required to add ClickListener.
-            rootView.setOnClickListener(view -> {
+            imgEmblem.setOnClickListener(view -> {
+
+                /*
+                Animation rotation = AnimationUtils.loadAnimation(getActivity(), R.anim.rotate_emblem);
+                imgEmblem.startAnimation(rotation);
+                menu.getItem(0).setActionView(imgEmblem);
+                */
                 onOptionsItemSelected(menu.getItem(0));
             });
         }
@@ -307,7 +319,22 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
+            log.i("emblem clicked");
             sortDocumentByTimeOrView();
+            // Emblem rotation anim not working.
+            ImageView imgEmblem = (ImageView)item.getActionView();
+            ObjectAnimator rotation = ObjectAnimator.ofFloat(imgEmblem, "rotationY", 0.0f, 360f);
+            rotation.setDuration(500);
+            //rotation.setRepeatCount(2);
+            rotation.setInterpolator(new AccelerateDecelerateInterpolator());
+            rotation.addListener(new AnimatorListenerAdapter(){
+                @Override
+                public void onAnimationEnd(Animator animation, boolean isReverse) {
+                    rotation.cancel();
+                }
+            });
+
+            rotation.start();
             return true;
         }
 
@@ -569,7 +596,7 @@ public class BoardPagerFragment extends Fragment implements
                     if(TextUtils.isEmpty(emblem)) return;
                     else {
                         Uri uri = Uri.parse(emblem);
-                        imgutil.applyGlideToEmblem(uri, 60, 40, imgview);
+                        imgutil.applyGlideToEmblem(uri, 70, imgview.getMeasuredHeight(), imgview);
                     }
 
                     break;

@@ -203,17 +203,17 @@ public class Opinet  {
         }
     }
 
-    public static class StationPrice implements Serializable {
 
+    public static class StationPrice implements Serializable {
         private String stnId;
         private String stnCompany;
         private String stnName;
         private String productCd;
-        private Map<String, Float> mapPrice;
+        private Map<String, Float> stnPrice;
         private Map<String, Float> priceDiff;
 
-        public StationPrice() {
-            mapPrice = new HashMap<>();
+        StationPrice() {
+            stnPrice = new HashMap<>();
         }
 
         public String getStnId() {
@@ -223,10 +223,10 @@ public class Opinet  {
             this.stnId = stnId;
         }
 
-        public String getStnCompany() {
+        String getStnCompany() {
             return stnCompany;
         }
-        public void setStnCompany(String stnCompany) {
+        void setStnCompany(String stnCompany) {
             this.stnCompany = stnCompany;
         }
 
@@ -237,21 +237,21 @@ public class Opinet  {
             this.stnName = stnName;
         }
 
-        public String getProductCd() {
+        String getProductCd() {
             return productCd;
         }
-        public void setProductCd(String productCd) {
+        void setProductCd(String productCd) {
             this.productCd = productCd;
         }
 
         public Map<String, Float> getStnPrice() {
-            return mapPrice;
+            return stnPrice;
         }
-        public void setStnPrice(String prodCd, float price) {
-            mapPrice.put(prodCd, price);
+        void setStnPrice(String prodCd, float price) {
+            stnPrice.put(prodCd, price);
         }
 
-        public Map<String, Float> getDiff() {
+        public Map<String, Float> getPriceDiff() {
             return priceDiff;
         }
         public void setPriceDiff(Map<String, Float> diff) {
@@ -266,7 +266,7 @@ public class Opinet  {
                     + "\nstnName: " + getStnName()
                     + "\nproductCd: " + getProductCd()
                     + "\nprice: " + getStnPrice()
-                    + "\ndiff: " + getDiff();
+                    + "\ndiff: " + getPriceDiff();
         }
     }
 

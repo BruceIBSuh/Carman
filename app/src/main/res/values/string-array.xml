@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Inital Sido and Sigun code -->
+    <string-array name="default_district">
+        <item>@string/general_def_sido</item>
+        <item>@string/general_def_sigun</item>
+        <item>@string/general_def_code</item>
+    </string-array>
 
     <string-array name="tab_carman_title">
         <item>@string/tab_gas</item>
@@ -45,12 +51,7 @@
         <item>B034</item>
     </string-array>
 
-    <!-- Inital Sido and Sigun code -->
-    <string-array name="default_district">
-        <item>@string/general_def_sido</item>
-        <item>@string/general_def_sigun</item>
-        <item>@string/general_def_code</item>
-    </string-array>
+
 
     <string-array name="svc_company">
         <item>No Title</item>
