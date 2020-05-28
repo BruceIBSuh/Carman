@@ -30,6 +30,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceBroadcastReceiver.class);
@@ -101,22 +102,19 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
 
     private void createNotification(int notiId, String providerId, String name, String addrs, int category) {
-
         // Make the notification title and bigText(contentText and extendedText).
-        String title = null;
         String extendedText = null;
         String visitingTime = BaseActivity.formatMilliseconds(context.getString(R.string.date_format_6), geoTime);
         String contentText = String.format("%s\n%s", visitingTime, addrs);
 
         switch(category) {
             case Constants.GAS:
-                title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_gas), name);
-                //title = context.getString(R.string.noti_geofence_title_gas);
+                //title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_gas), name);
                 extendedText = context.getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_svc), name);
+                //title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_svc), name);
                 //title = context.getString(R.string.noti_geofence_title_svc);
                 extendedText = context.getResources().getString(R.string.noti_geofence_content_svc);
                 break;
@@ -132,7 +130,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, Constants.CHANNEL_ID);
         mBuilder.setSmallIcon(icon)
                 .setShowWhen(true)
-                .setContentTitle(title)
+                .setContentTitle(name)
                 .setContentText(contentText)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText + "\n\n" + extendedText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Android 7 and below instead of the channel
