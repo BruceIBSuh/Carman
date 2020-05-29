@@ -15,16 +15,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -54,7 +50,6 @@ import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -71,8 +66,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * The viewpager contains this fragment which consists of 4 pages to show queried posts based on
- * time, view counts, autoclub filter, and admin notification.
+ * The viewpager contains this fragment which consists of 4 pages to show posts which have been
+ * queried based on time, view counts, autoclub filter, and admin notification.
  */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnFilterCheckBoxListener,
@@ -164,22 +159,9 @@ public class BoardPagerFragment extends Fragment implements
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            ((BoardActivity)getActivity()).setAutoFilterListener(this);
             autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
-            //isGeneralPost = ((BoardActivity)getActivity()).checkPostGenenral();
+            ((BoardActivity)getActivity()).setAutoFilterListener(this);
         }
-
-        /*
-        ((BoardActivity)getActivity()).setAutoFilterListener(values -> {
-            for(CharSequence filter : values) log.i("chkbox values changed: %s", filter);
-            pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, values);
-            // BoardPostingAdapter mab be updated by postingAdapter.notifyDataSetChanged() in
-            // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
-            // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
-            // when no dataset exists.
-            pagerAdapter.notifyDataSetChanged();
-        });
-        */
 
         /*
          * Realtime update SnapshotListener: server vs cache policy.
@@ -257,7 +239,7 @@ public class BoardPagerFragment extends Fragment implements
         super.onActivityCreated(bundle);
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
-        fragmentModel.getNewPosting().observe(getActivity(), docId -> {
+        fragmentModel.getPostUpdated().observe(getActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 log.i("new Posting done");
                 // Instead of using notifyItemInserted(), query should be done due to the post

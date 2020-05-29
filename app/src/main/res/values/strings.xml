@@ -159,7 +159,7 @@
     <string name="board_tab_title_popular">인기글</string>
     <string name="board_tab_title_autoclub">오토클럽</string>
     <string name="board_tab_title_notification">공지사항</string>
-    <string name="board_filter_title">나의클럽</string>
+    <string name="board_filter_title">나의클럽;</string>
     <string name="board_filter_chkbox_general">일반글</string>
     <string name="board_filter_brand">브랜드</string>
     <string name="board_filter_model">모델명</string>
@@ -180,7 +180,8 @@
     <string name="board_msg_no_title">글의 제목을 넣어주세요</string>
     <string name="board_msg_no_content">글의 본문이 없습니다</string>
     <string name="board_msg_optimize_image">첨부이미지 최적화</string>
-    <string name="board_msg_uploading">업로드 진행중</string>
+    <string name="board_msg_uploading">업로드 진행중입니다</string>
+    <string name="board_msg_downsize_image">이미지 최적화중입니다</string>
     <!--BoardActivity$BoardReadDlgFragment-->
     <string name="board_title_comment">댓글 작성</string>
     <string name="board_btn_compathy">공감</string>

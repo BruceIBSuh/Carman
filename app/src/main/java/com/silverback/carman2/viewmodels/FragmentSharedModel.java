@@ -167,7 +167,7 @@ public class FragmentSharedModel extends ViewModel {
      */
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
-    public MutableLiveData<String> getNewPosting() {
+    public MutableLiveData<String> getPostUpdated() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
     }

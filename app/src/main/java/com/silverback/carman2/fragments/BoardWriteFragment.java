@@ -293,10 +293,6 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        /*
-        if(uriImgList.size() == 0) uriImgList.add(imgUri);
-        else uriImgList.add(position, imgUri);
-         */
         uriImgList.add(position, imgUri);
         imageAdapter.notifyDataSetChanged();
     }
@@ -344,7 +340,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgbarDialogFragment();
-        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+
 
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
@@ -362,6 +358,8 @@ public class BoardWriteFragment extends DialogFragment implements
             // A download url from Storage each time when an attached image is successfully
             // downsized and scaled down, then uploaded to Storage is transferred via
             // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
+
+            pbFragment.setProgressMsg(getString(R.string.board_msg_downsize_image));
             for(int i = 0; i < uriImgList.size(); i++) {
                 bitmapTask = ThreadManager.startBitmapUploadTask(getContext(),
                         uriImgList.get(i), i, imgViewModel);
@@ -392,6 +390,8 @@ public class BoardWriteFragment extends DialogFragment implements
         // Cast SparseArray containing download urls from Storage to String array
         // Something wrong around here because a posting item contains an image despite no image
         // attached.
+        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+
         List<String> downloadUriList = null;
         if(downloadImages.size() > 0) {
             downloadUriList = new ArrayList<>(downloadImages.size());
@@ -434,12 +434,15 @@ public class BoardWriteFragment extends DialogFragment implements
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
+
         // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
         // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
-        fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
-            log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
+        fragmentModel.getPostUpdated().observe(requireActivity(), docId -> {
             if(pbFragment != null) pbFragment.dismiss();
+            // Java.lang.NullPointerException:
+            // Attempt to invoke virtual method 'void com.silverback.carman2.BoardActivity.addViewPager()'
+            // on a null object reference
             ((BoardActivity)getActivity()).addViewPager();
         });
     }

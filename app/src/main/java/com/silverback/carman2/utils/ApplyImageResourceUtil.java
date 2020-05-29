@@ -258,13 +258,11 @@ public class ApplyImageResourceUtil {
     public void applyGlideToImageSpan(Uri imgUri, int size, ImageViewModel model) {
 
         if(imgUri == null) return;
-
         final float scale = mContext.getResources().getDisplayMetrics().density;
         int px = (int)(size * scale + 0.5f);
         //int px_y = (int)(y * scale + 0.5f);
 
-        Glide.with(mContext)
-                .asBitmap()
+        Glide.with(mContext).asBitmap()
                 //.override(px_x, px_y)
                 .override(px)
                 .fitCenter()
@@ -283,7 +281,6 @@ public class ApplyImageResourceUtil {
                         // this is called when imageView is cleared on lifecycle call or for some other reason.
                         // if you are referencing the bitmap somewhere else too other than this imageView
                         // clear it here as you can no longer have the bitmap
-
                     }
                 });
 

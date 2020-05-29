@@ -210,7 +210,6 @@ public class BoardActivity extends BaseActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
         getMenuInflater().inflate(R.menu.menu_options_board, menu);
-
         //if(tabPage == Constants.BOARD_AUTOCLUB) menu.getItem(0).setIcon(emblemIcon);
         // Notified that a drawale is prepared for setting it to the options menu icon by
         // setAutoMakerEmblem()
@@ -418,18 +417,18 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onEditClicked(Bundle bundle) {
         if(writePostFragment != null) writePostFragment = null;
-
+        if(frameLayout.getChildAt(0) instanceof ViewPager) frameLayout.removeView(boardPager);
         editPostFragment = new BoardEditFragment();
         editPostFragment.setArguments(bundle);
 
-        if(frameLayout.getChildAt(0) instanceof ViewPager) frameLayout.removeView(boardPager);
         getSupportFragmentManager().beginTransaction().addToBackStack(null)
                 .replace(frameLayout.getId(), editPostFragment)
                 .commit();
 
-        // Manager title, menu, and the fab visibility.
-        getSupportActionBar().setTitle(getString(R.string.board_title_edit));
-        //animTabLayout(false); // slide up the tab to disappear
+        // Hide the emblem and set the club title if the current page is autoclub.
+        if(tabPage == Constants.BOARD_AUTOCLUB) getSupportActionBar().setTitle(clubTitle);
+        else getSupportActionBar().setTitle(getString(R.string.board_title_edit));
+        if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
         // workable as BoardPagerFragment comes in.(may replace getViewTreeObeserver() in onCreate().
@@ -558,9 +557,6 @@ public class BoardActivity extends BaseActivity implements
         isAutoFilter = !isAutoFilter;
     }
 
-
-
-
     // Create the toolbar title which depends on which checkbox is checked and is applied only when
     // the viewpager has the auto club page.
     private SpannableStringBuilder createAutoClubTitle() {
@@ -628,13 +624,22 @@ public class BoardActivity extends BaseActivity implements
         // on which fragment the frame contains; header turns visible in BoardPagerFragment and the
         // the checkbox indicating general post turns visible in BoardWriteFragment and vice versa.
 
+
+        ImageView imgView = new ImageView(this);
+        imgView.setImageDrawable(getDrawable(R.drawable.ic_board_order));
+        imgView.setBackgroundColor(Color.RED);
+        imgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        params.topMargin = 30;
+        v.addView(imgView, params);
         // Create either the autofilter label in BoardPagerFragment or the general checkbox in
         // BoardWritingFragment
+        params.topMargin = 0;
         tvAutoFilterLabel = new TextView(context);
         tvAutoFilterLabel.setText(getString(R.string.board_filter_title));
         tvAutoFilterLabel.setTextColor(Color.WHITE);
         tvAutoFilterLabel.setTypeface(tvAutoFilterLabel.getTypeface(), Typeface.BOLD);
         v.addView(tvAutoFilterLabel, params);
+
         // Create the general checkbox
         cbGeneral = new CheckBox(context);
         cbGeneral.setVisibility(View.GONE);

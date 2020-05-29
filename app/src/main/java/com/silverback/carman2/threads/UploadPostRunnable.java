@@ -39,6 +39,7 @@ public class UploadPostRunnable implements Runnable {
         //mContext = context;
         mTask = task;
         firestore = FirebaseFirestore.getInstance();
+
     }
 
     @SuppressWarnings("ConstantConditions")

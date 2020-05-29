@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
- * This fragment calls in an existing post to edit.
+ * This fragment is to edit an existing post if and only if a user is the owner of the post.
  */
 public class BoardEditFragment extends BoardBaseFragment implements
         BoardImageSpanHandler.OnImageSpanListener,
@@ -239,7 +239,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
                 // Put the line breaker into the edittext when the image interleaves b/w the lines
                 int start = etPostContent.getSelectionStart();
                 int end = etPostContent.getSelectionEnd();
-                //log.i("insert image: %s, %s, %s", etPostContent.getText(), start, end);
                 etPostContent.getText().replace(start, end, "\n");
             }
         });
@@ -255,48 +254,27 @@ public class BoardEditFragment extends BoardBaseFragment implements
         // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
-        sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+        sharedModel.getImageChooser().observe(requireActivity(), chooser -> {
             log.i("FragmentViwModel: %s", chooser);
             ((BoardActivity)getActivity()).getImageFromChooser(chooser);
         });
 
 
         // On completing to apply Glide with an image selected from the chooser, set it to the span.
-        imgModel.getGlideBitmapTarget().observe(requireActivity(), bitmap -> {
+        imgModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
             ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
             spanHandler.setImageSpan(imgSpan);
         });
 
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
-        imgModel.getDownloadBitmapUri().observe(this, sparseArray -> {
+        imgModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
             sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
             uriEditImageList.set(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
-            log.i("downsize images done: %s, %s", sparseArray.keyAt(0), uriEditImageList.get(sparseArray.keyAt(0)));
-            log.i("cntUploadImage: %s", cntUploadImage);
-
-
-            if(sparseImageArray.size() == cntUploadImage) {
-                /*
-                log.i("Done: %s", uriEditImageList.toString());
-                for(Uri uri : uriEditImageList) {
-                    log.i("Edited Uri done: %s", uri);
-                }
-                 */
-
-                updatePost();
-            }
-            /*
-            if(uriEditImageList.size() == sparseImageArray.size()) {
-                // On completing optimization of attached images, start uploading a post.
-                log.i("Complete to upload downsizedImages to Storage: %s", sparseImageArray.size());
-                updatePost();
-            }
-
-             */
-
+            // No changes are made to attached images.
+            if(sparseImageArray.size() == cntUploadImage) updatePost();
         });
     }
 
@@ -365,7 +343,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
          */
     }
 
-
     // Invokde by OnActivityResult() in the parent activity that passes an intent data(URI) as to
     // an image picked in the media which has been selected by BoardChooserDlgFragment.
     // Once applying Glide with the image uri, the result of which returns to ImageViewModel, it
@@ -377,6 +354,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
     }
 
 
+    // If any images is removed, delete them from Firebase Storage.
     @SuppressWarnings("ConstantConditions")
     public void prepareUpdate() {
         // Hide the soft input if it is visible.
@@ -385,14 +363,16 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
         if(!doEmptyCheck()) return;
 
-        // Create the progressbar
+        // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgbarDialogFragment();
-        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+        getActivity().getSupportFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
+
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
         log.i("New Images: %s", uriEditImageList.size());
-        if(uriEditImageList.size() == 0) updatePost();
+        if(uriEditImageList.size() == 0) updatePost(); // The post originally contains no images.
         else {
+            pbFragment.setProgressMsg(getString(R.string.board_msg_downsize_image));
             // Coompare the new iamges with the old ones and delete old images from Storage and
             // upload new ones if any change is made. At the same time, the post_images field has to
             // be updated with new uris. It seems not necessary to compare two lists and partial update
@@ -421,13 +401,12 @@ public class BoardEditFragment extends BoardBaseFragment implements
             for(int i = 0; i < uriEditImageList.size(); i++) {
                 if(uriEditImageList.get(i).getScheme().equals("content")) {
                     cntUploadImage++;
-                    log.i("cntUploadImage: %s", cntUploadImage);
-                    bitmapTask = ThreadManager.startBitmapUploadTask(
-                            getContext(), uriEditImageList.get(i), i, imgModel);
+                    bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriEditImageList.get(i), i, imgModel);
                 }
             }
 
-            // If no images newly added to the post, update the post directly.
+            // If no images newly added to the post, update the post directly. Otherwise, make attached
+            // images uploaded to Storage first, then updatePost().
             if(cntUploadImage == 0) updatePost();
 
 
@@ -436,10 +415,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
     @SuppressWarnings("ConstantConditions")
     private void updatePost(){
-
-        // Instantiate the fragment to display the progressbar.
-        getActivity().getSupportFragmentManager().beginTransaction()
-                .add(android.R.id.content, pbFragment).commit();
+        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
 
         String docId = bundle.getString("documentId");
         final DocumentReference docref = firestore.collection("board_general").document(docId);
@@ -472,7 +448,6 @@ public class BoardEditFragment extends BoardBaseFragment implements
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
             // Upon completing upload, notify BaordPagerFragment of the document id to update.
             sharedModel.getEditPosting().setValue(docId);
-
             pbFragment.dismiss();
             ((BoardActivity)getActivity()).addViewPager();
 

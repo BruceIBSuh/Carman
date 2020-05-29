@@ -5,7 +5,6 @@ import android.text.TextUtils;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FirestoreViewModel;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
 import java.util.Map;
@@ -48,6 +47,6 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     @Override
     public void notifyUploadDone(String documentId) {
         log.i("notifyUploadDone: %s", documentId);
-        if(!TextUtils.isEmpty(documentId)) viewModel.getNewPosting().postValue(documentId);
+        if(!TextUtils.isEmpty(documentId)) viewModel.getPostUpdated().postValue(documentId);
     }
 }
