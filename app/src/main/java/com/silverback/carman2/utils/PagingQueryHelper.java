@@ -22,6 +22,8 @@ import java.util.List;
 /**
  * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
  * OnPaginationListener to have document snaoshots from FireStore.
+ *
+ * Pagination is also enabled to use Paged Library or FirestoreRecylerAdapter.
  */
 public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
@@ -35,6 +37,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     private List<String> autofilter;
 
     // Fields
+    private boolean isLoading;
     private boolean isScrolling;
     private boolean isLastItem;
     private String field;
@@ -128,9 +131,11 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
+        /*
         if(newState == RecyclerView.SCROLL_STATE_DRAGGING) {
             isScrolling = true;
         }
+         */
     }
 
     // Callback method to be invoked when the RecyclerView has been scrolled. This will be called
@@ -148,28 +153,26 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int totalItemCount = layoutManager.getItemCount();
         log.i("Item: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
 
-        if(isScrolling && (firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
+        if(!isLoading && !isLastItem && firstItemPos + visibleItemCount >= totalItemCount) {
+            //isScrolling = false;
+            mListener.setNextQueryStart(true);
+
             // Get the last visible document in the first query, then make the next query following
             // the document using startAfter(). QuerySnapshot must be invalidated with the value by
             // nextQuery.
+            isLoading = true;
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-
-
-            // Error!!!!!
-            // Invalid query. You are trying to start or end a query using a document for which the
-            // field 'auto_club' (used as the orderBy) does not exist.
+            // Make a next query which has to be handled in a diffent way for the auto club and other
+            // queries.
             Query nextQuery = colRef;
-            if(field.equals("auto_club")) {
-                for(int i = 0; i < autofilter.size(); i++) {
+            if (field.equals("auto_club")) {
+                for (int i = 0; i < autofilter.size(); i++) {
                     final String field = "auto_filter." + autofilter.get(i);
                     nextQuery = nextQuery.whereEqualTo(field, true);
                 }
-
-                mListener.setNextQueryStart(true);
                 nextQuery = nextQuery.startAfter(lastDoc).limit(Constants.PAGINATION);
 
             } else {
-                mListener.setNextQueryStart(true);
                 nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
                         .startAfter(lastDoc).limit(Constants.PAGINATION);
             }
@@ -177,13 +180,14 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             nextQuery.get().addOnSuccessListener(nextSnapshot -> {
                 // Check if the next query reaches the last document.
                 isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
-                mListener.setNextQueryComplete(nextSnapshot);
+                isLoading = false; //ready to make a next query
+
+                mListener.setNextQueryStart(false); //hide the loading progressbar
+                mListener.setNextQueryComplete(nextSnapshot); // add the query result to the list.
+
                 querySnapshot = nextSnapshot;
             });
 
-
-            isScrolling = false;
         }
-
     }
 }

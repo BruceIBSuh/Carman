@@ -355,22 +355,17 @@ public class BoardPagerFragment extends Fragment implements
     public void setNextQueryStart(boolean b) {
         //pagingProgbar.setVisibility(View.VISIBLE);
         //weakProgbar.get().setVisibility(View.VISIBLE);
-        pbPaging.setVisibility(View.VISIBLE);
+        if(b) pbPaging.setVisibility(View.VISIBLE);
+        else pbPaging.setVisibility(View.GONE);
     }
 
     @Override
     public void setNextQueryComplete(QuerySnapshot snapshots) {
-        log.i("next Query: %s", snapshotList.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
             else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
         }
-
-        //pagingProgbar.setVisibility(View.INVISIBLE);
-        //postingAdapter = new BoardPostingAdapter(snapshotList, this);
-        //postingAdapter.notifyDataSetChanged();
-        //weakProgbar.get().setVisibility(View.GONE);
-        pbPaging.setVisibility(View.GONE);
+        //pbPaging.setVisibility(View.GONE);
     }
 
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
@@ -552,7 +547,6 @@ public class BoardPagerFragment extends Fragment implements
     private class SortViewCountAutoClub implements Comparator<DocumentSnapshot> {
         @Override
         public int compare(DocumentSnapshot o1, DocumentSnapshot o2) {
-            log.i("isViewOrder: %s", isViewOrder);
             if(isViewOrder) {
                 Number view1 = (Number)o1.get("cnt_view");
                 Number view2 = (Number)o2.get("cnt_view");
