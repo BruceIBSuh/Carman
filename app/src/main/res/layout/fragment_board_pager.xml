@@ -23,7 +23,7 @@
         android:layout_gravity="center"
         android:text="@string/board_emptyview" />
 
-    <ProgressBar style="?android:attr/progressBarStyleSmall"
+    <ProgressBar style="?android:attr/progressBarStyleLarge"
         android:visibility="invisible"
         android:id="@+id/progbar_board_paging"
         android:layout_width="wrap_content"

@@ -18,6 +18,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -90,7 +92,7 @@ public class BoardPagerFragment extends Fragment implements
     private ApplyImageResourceUtil imgutil;
 
     // UIs
-    private ProgressBar pbPaging, pbLoading;
+    private ProgressBar pbLoading, pbPaging;
     private PostingRecyclerView recyclerPostView;
     private TextView tvEmptyView;
 
@@ -239,12 +241,12 @@ public class BoardPagerFragment extends Fragment implements
         super.onActivityCreated(bundle);
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
-        fragmentModel.getPostUpdated().observe(getActivity(), docId -> {
+        fragmentModel.getFirestorePostingDone().observe(getActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                log.i("new Posting done");
                 // Instead of using notifyItemInserted(), query should be done due to the post
                 // sequential number to be updated..
                 pageHelper.setPostingQuery(source, currentPage, autoFilter);
+
             }
         });
 
@@ -284,12 +286,6 @@ public class BoardPagerFragment extends Fragment implements
 
             // app:actionLayout instead of app:icon is required to add ClickListener.
             imgEmblem.setOnClickListener(view -> {
-
-                /*
-                Animation rotation = AnimationUtils.loadAnimation(getActivity(), R.anim.rotate_emblem);
-                imgEmblem.startAnimation(rotation);
-                menu.getItem(0).setActionView(imgEmblem);
-                */
                 onOptionsItemSelected(menu.getItem(0));
             });
         }
@@ -300,13 +296,11 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
-            log.i("emblem clicked");
             sortDocumentByTimeOrView();
             // Emblem rotation anim not working.
             ImageView imgEmblem = (ImageView)item.getActionView();
             ObjectAnimator rotation = ObjectAnimator.ofFloat(imgEmblem, "rotationY", 0.0f, 360f);
             rotation.setDuration(500);
-            //rotation.setRepeatCount(2);
             rotation.setInterpolator(new AccelerateDecelerateInterpolator());
             rotation.addListener(new AnimatorListenerAdapter(){
                 @Override
@@ -314,7 +308,6 @@ public class BoardPagerFragment extends Fragment implements
                     rotation.cancel();
                 }
             });
-
             rotation.start();
             return true;
         }
@@ -343,8 +336,10 @@ public class BoardPagerFragment extends Fragment implements
         // is made to avoid creating compound query index. For this reason, sort the query result
         // which is saved as List using Collection.sort(List, Compatator<T>). Queries in the general
         // board are made sequentially or in terms of view counts.
-        if(currentPage == Constants.BOARD_AUTOCLUB) sortDocumentByTimeOrView();
-        else postingAdapter.notifyDataSetChanged();
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            isViewOrder = false;
+            sortDocumentByTimeOrView();
+        } else postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
 
 
@@ -383,15 +378,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         log.i("CheckBox change: %s", autofilter);
-        /*
-        final int filterSize = autofilter.size();
-        if(filterSize == 4 && !autofilter.get(filterSize - 1).matches("\\d{4}")) {
-            log.i("autoyear");
-            String tmp = autofilter.get(3);
-        }
-
-         */
-
         pageHelper.setPostingQuery(source, Constants.BOARD_AUTOCLUB, autofilter);
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
@@ -526,45 +512,6 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
 
-
-    // Once posts being sequentially queried by the autofilter, on clicking the automaker emblem,
-    // they are sorted by the view counts and vice versa when clikcing again using Comparator<T>
-    // interface in Collection.Utils.
-    private void sortDocumentByTimeOrView(){
-        Collections.sort(snapshotList, new SortViewCountAutoClub());
-        postingAdapter.notifyDataSetChanged();
-        isViewOrder = !isViewOrder;
-    }
-
-    // Implement Comparator<T> which can be passed to Collections.sort(List, Comparator) or Arrays.
-    // sort(Object[], Comparaotr) to have control over the sort order, which can be used to control
-    // not only the data structure order such as SortedSet or SortedMap, but also an ordering for
-    // collections of objects that don't have a Comparable. Comparable is, on the other hand, imposes
-    // a natual ordering of class objects using the class's compareTo method which is referred to
-    // as its natural comparison method.
-    private class SortViewCountAutoClub implements Comparator<DocumentSnapshot> {
-        @Override
-        public int compare(DocumentSnapshot o1, DocumentSnapshot o2) {
-            if(isViewOrder) {
-                Number view1 = (Number)o1.get("cnt_view");
-                Number view2 = (Number)o2.get("cnt_view");
-                if(view1 != null && view2 != null)
-                    // view count descending order
-                    return Integer.compare(view2.intValue(), view1.intValue());
-
-
-            } else {
-                Timestamp timestamp1 = (Timestamp)o1.get("timestamp");
-                Timestamp timestamp2 = (Timestamp)o2.get("timestamp");
-                if(timestamp1 != null && timestamp2 != null)
-                    // Timestamp descending order
-                    return Integer.compare((int)timestamp2.getSeconds(), (int)timestamp1.getSeconds());
-            }
-
-            return -1;
-        }
-    }
-
     // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
     // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
     // auto data as json type.
@@ -587,7 +534,44 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
+    // Once posts being sequentially queried by the autofilter, on clicking the automaker emblem,
+    // they are sorted by the view counts and vice versa when clikcing again using Comparator<T>
+    // interface in Collection.Utils.
+    private void sortDocumentByTimeOrView(){
+        Collections.sort(snapshotList, new SortViewCountAutoClub());
+        postingAdapter.notifyDataSetChanged();
+        isViewOrder = !isViewOrder;
+    }
 
+    // Implement Comparator<T> which can be passed to Collections.sort(List, Comparator) or Arrays.
+    // sort(Object[], Comparaotr) to have control over the sort order, which can be used to control
+    // not only the data structure order such as SortedSet or SortedMap, but also an ordering for
+    // collections of objects that don't have a Comparable. Comparable is, on the other hand, imposes
+    // a natual ordering of class objects using the class's compareTo method which is referred to
+    // as its natural comparison method.
+    private class SortViewCountAutoClub implements Comparator<DocumentSnapshot> {
+        @Override
+        public int compare(DocumentSnapshot o1, DocumentSnapshot o2) {
+            log.i("isViewOrder: %s", isViewOrder);
+            if(isViewOrder) {
+                Number view1 = (Number)o1.get("cnt_view");
+                Number view2 = (Number)o2.get("cnt_view");
+                if(view1 != null && view2 != null)
+                    // view count descending order
+                    return Integer.compare(view2.intValue(), view1.intValue());
+
+
+            } else {
+                Timestamp timestamp1 = (Timestamp)o1.get("timestamp");
+                Timestamp timestamp2 = (Timestamp)o2.get("timestamp");
+                if(timestamp1 != null && timestamp2 != null)
+                    // Timestamp descending order
+                    return Integer.compare((int)timestamp2.getSeconds(), (int)timestamp1.getSeconds());
+            }
+
+            return -1;
+        }
+    }
 }
 
 

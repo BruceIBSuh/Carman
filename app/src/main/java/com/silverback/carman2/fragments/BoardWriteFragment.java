@@ -58,10 +58,6 @@ public class BoardWriteFragment extends DialogFragment implements
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
-    // Constants
-    static final int GALLERY = 1;
-    static final int CAMERA = 2;
-
     // Objects
     private BoardImageSpanHandler spanHandler;
     private ProgbarDialogFragment pbFragment;
@@ -82,9 +78,9 @@ public class BoardWriteFragment extends DialogFragment implements
     private String userId;
     private Uri imgUri;
     private List<Uri> uriImgList;
-    private ArrayList<String> autofilter;
+    //private ArrayList<String> autofilter;
     private SparseArray<String> downloadImages;
-    private boolean isGeneralPost;
+    //private boolean isGeneralPost;
 
 
     // Constructor
@@ -331,7 +327,7 @@ public class BoardWriteFragment extends DialogFragment implements
      */
     // Invoked when the upload menu in the toolbar is pressed.
     @SuppressWarnings("ConstantConditions")
-    public void prepareUpload() {
+    public void prepareAttachedImages() {
 
         ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
@@ -339,10 +335,11 @@ public class BoardWriteFragment extends DialogFragment implements
         if(TextUtils.isEmpty(userId) || !doEmptyCheck()) return;
 
         // Instantiate the fragment to display the progressbar.
-        pbFragment = new ProgbarDialogFragment();
 
+        pbFragment = new ProgbarDialogFragment();
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
+
         //getChildFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
         // No image posting makes an immediate uploading but postings with images attached
         // should take the uploading process that images starts uploading first and image
@@ -357,7 +354,6 @@ public class BoardWriteFragment extends DialogFragment implements
             // A download url from Storage each time when an attached image is successfully
             // downsized and scaled down, then uploaded to Storage is transferred via
             // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
-
             pbFragment.setProgressMsg(getString(R.string.board_msg_downsize_image));
             for(int i = 0; i < uriImgList.size(); i++) {
                 bitmapTask = ThreadManager.startBitmapUploadTask(getContext(),
@@ -373,6 +369,7 @@ public class BoardWriteFragment extends DialogFragment implements
             downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
             if(uriImgList.size() == downloadImages.size()) {
                 // On completing optimization of attached images, start uploading a post.
+                pbFragment.dismiss();
                 uploadPostToFirestore();
             }
 
@@ -389,8 +386,6 @@ public class BoardWriteFragment extends DialogFragment implements
         // Cast SparseArray containing download urls from Storage to String array
         // Something wrong around here because a posting item contains an image despite no image
         // attached.
-        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
-
         List<String> downloadUriList = null;
         if(downloadImages.size() > 0) {
             downloadUriList = new ArrayList<>(downloadImages.size());
@@ -408,7 +403,6 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("cnt_view", 0);
         post.put("post_content", etPostBody.getText().toString());
         if(downloadImages.size() > 0) post.put("post_images",  downloadUriList);
-        log.i("tab page: %s", tabPage);
 
         // To show or hide a post of the autoclub depends on the value of isGeneralPost. The default
         // value is set to true such that any post, no matter what is autoclub or general post,
@@ -416,8 +410,9 @@ public class BoardWriteFragment extends DialogFragment implements
         // to false, it would not be shown in the general board; only in the autoclub.
         // On the other hand, the autofilter values as Arrays should be turned into Map with autofilter
         // as key and timestamp as value, which avoid creating composite index
+        boolean isGeneralPost;
         if(tabPage == Constants.BOARD_AUTOCLUB) {
-            autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
+            ArrayList<String> autofilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             isGeneralPost = ((BoardActivity)getActivity()).checkGeneralPost();
 
             // Create the auto_filter field data structure by converting the autofilter list to
@@ -433,18 +428,8 @@ public class BoardWriteFragment extends DialogFragment implements
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
-
-        // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
-        // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
-        // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
-        fragmentModel.getPostUpdated().observe(requireActivity(), docId -> {
-            if(pbFragment != null) pbFragment.dismiss();
-            // Java.lang.NullPointerException:
-            // Attempt to invoke virtual method 'void com.silverback.carman2.BoardActivity.addViewPager()'
-            // on a null object reference
-            ((BoardActivity)getActivity()).addViewPager();
-            if(postTask != null) postTask = null;
-        });
+        ((BoardActivity)getActivity()).setViewPager();
+        pbFragment.dismiss();
     }
 
 

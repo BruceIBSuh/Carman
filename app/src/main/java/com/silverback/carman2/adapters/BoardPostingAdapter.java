@@ -35,7 +35,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
 
-
     // Objects
     private Context context;
     private List<DocumentSnapshot> snapshotList;
@@ -66,9 +65,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         this.context = parent.getContext();
         imgUtil = new ApplyImageResourceUtil(context);
 
-        CardView cardView = (CardView)LayoutInflater.from(context)
-                .inflate(R.layout.cardview_board_post, parent, false);
-
+        CardView cardView = (CardView) LayoutInflater.from(context)
+                    .inflate(R.layout.cardview_board_post, parent, false);
         return new PostViewHolder(cardView);
     }
 
@@ -138,11 +136,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     // Guess this will be useful to apply plug-in ads.
     @Override
     public int getItemViewType(int position) {
-        return 0;
+        return -1;
     }
 
     // ViewHolders
     class PostViewHolder extends RecyclerView.ViewHolder {
+
         TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
         ImageView imgUser;
         ImageView imgAttached;

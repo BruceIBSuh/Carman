@@ -247,6 +247,7 @@ public class ThreadManager {
         }
     }
 
+    /*
     public static AutoDataResourceTask startFirestoreResTask(Context context, FirestoreViewModel model) {
         AutoDataResourceTask task = sInstance.mFirestoreResQueue.poll();
 
@@ -256,6 +257,7 @@ public class ThreadManager {
 
         return task;
     }
+     */
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.

@@ -21,11 +21,9 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.RelativeSizeSpan;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -35,6 +33,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
@@ -48,12 +47,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardEditFragment;
-import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
+import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -68,8 +66,8 @@ import java.util.List;
 
 /*
  * This activity consists of the appbar component, the framelayout to alternatively contain the
- * viewpager and the fragment to write a post, and the layout to show checkboxes which are used
- * not only as query conditions for the viewpager but also as field values for the fragment.
+ * viewpager and the fragment to write or edit a post, and the layout to show checkboxes which are
+ * used not only as query conditions for the viewpager but also as field values for eac fragment.
  * Plus, there is a nested interface, OnFilterCheckBoxListener, which notifies BoardPagerFragment
  * of which checkbox has changed.
  */
@@ -84,15 +82,16 @@ public class BoardActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
-    private FirebaseFirestore firestore;
+    //private FirebaseFirestore firestore;
     private OnFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
-    private ImageViewModel imgModel;
-    private ApplyImageResourceUtil imgResUtil;
+    //private ImageViewModel imgModel;
+    //private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
     private Drawable emblemIcon;
     private BoardWriteFragment writePostFragment;
     private BoardEditFragment editPostFragment;
+    private ProgbarDialogFragment progbarDialogFragment;
 
     // UIs
     private CoordinatorLayout coordinatorLayout;
@@ -133,9 +132,9 @@ public class BoardActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
 
-        firestore = FirebaseFirestore.getInstance();
-        imgResUtil = new ApplyImageResourceUtil(this);
-        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        //firestore = FirebaseFirestore.getInstance();
+        //imgResUtil = new ApplyImageResourceUtil(this);
+        //imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         AppBarLayout appBar = findViewById(R.id.appBar);
         coordinatorLayout = findViewById(R.id.coordinatorLayout);
@@ -209,15 +208,6 @@ public class BoardActivity extends BaseActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
         getMenuInflater().inflate(R.menu.menu_options_board, menu);
-        //if(tabPage == Constants.BOARD_AUTOCLUB) menu.getItem(0).setIcon(emblemIcon);
-        // Notified that a drawale is prepared for setting it to the options menu icon by
-        // setAutoMakerEmblem()
-        /*
-        imgModel.getGlideDrawableTarget().observe(this, drawable -> {
-            emblemIcon = drawable;
-            menu.getItem(0).setIcon(drawable);
-        });
-         */
 
         // What's difference b/w return true and super.onCreateOptionsMenu(menu)
         //return true;
@@ -269,7 +259,7 @@ public class BoardActivity extends BaseActivity implements
                         animTabHeight(true);
                         menu.getItem(1).setVisible(false);
 
-                        addViewPager();
+                        setViewPager();
 
                     }).show();
                 }
@@ -279,10 +269,8 @@ public class BoardActivity extends BaseActivity implements
             case R.id.action_upload_post:
                 boolean isWriteMode = (writePostFragment != null) &&
                         frameLayout.getChildAt(0) == writePostFragment.getView();
-
-                if(isWriteMode) writePostFragment.prepareUpload();
+                if(isWriteMode) writePostFragment.prepareAttachedImages();
                 else editPostFragment.prepareUpdate();
-
                 return true;
 
             default: return super.onOptionsItemSelected(item);
@@ -558,7 +546,7 @@ public class BoardActivity extends BaseActivity implements
 
     // Create the toolbar title which depends on which checkbox is checked and is applied only when
     // the viewpager has the auto club page.
-    private SpannableStringBuilder createAutoClubTitle() {
+    public SpannableStringBuilder createAutoClubTitle() {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
 
         if(chkboxList.get(1).isChecked()) {
@@ -740,7 +728,7 @@ public class BoardActivity extends BaseActivity implements
     // Upon completion of uploading a post in BoardWriteFragment, remove it out of the framelayout,
     // then add the viewpager again with the toolbar menu and title reset.
     @SuppressWarnings("ConstantConditions")
-    public void addViewPager() {
+    public void setViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
         if(frameLayout.getChildCount() > 0) frameLayout.removeView(frameLayout.getChildAt(0));
@@ -762,6 +750,9 @@ public class BoardActivity extends BaseActivity implements
             if(!menu.getItem(0).isVisible()) menu.getItem(0).setVisible(true);
             if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
+
+        Toast.makeText(this, "Upload Done", Toast.LENGTH_SHORT).show();
+
     }
 
     // Invoked when cliking the image attaching button.
@@ -824,11 +815,6 @@ public class BoardActivity extends BaseActivity implements
         return cbAutoFilter;
     }
     public boolean checkGeneralPost() { return isGeneral; }
-    // Invoked in BoardPagerAdapter to hold visibility control of the progressbar when post logindg
-    // complete and set it to gone in setFirstQuery().
-    public ProgressBar getLoadingProgressBar() {
-        return pbLoading;
-    }
     // Referenced in the child fragments.
     public SharedPreferences getSettings() {
         return mSettings;
@@ -841,7 +827,10 @@ public class BoardActivity extends BaseActivity implements
         return clubTitle;
     }
 
-    public Menu getToolbarMenu() {
-        return menu;
+    // Invoked in BoardPagerAdapter to hold visibility control of the progressbar when post logindg
+    // complete and set it to gone in setFirstQuery().
+    public ProgressBar getLoadingProgressBar() {
+        return pbLoading;
     }
+
 }

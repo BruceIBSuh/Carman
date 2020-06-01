@@ -61,7 +61,7 @@ public class IntroActivity extends BaseActivity  {
     private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
     private GasPriceTask gasPriceTask;
-    private AutoDataResourceTask autoDataResourceTask;
+    //private AutoDataResourceTask autoDataResourceTask;
     private DistrictCodeTask distCodeTask;
     private OpinetViewModel opinetViewModel;
     private String[] defaultDistrict;
@@ -102,7 +102,7 @@ public class IntroActivity extends BaseActivity  {
         super.onPause();
         if(distCodeTask != null) distCodeTask = null;
         if(gasPriceTask != null) gasPriceTask = null;
-        if(autoDataResourceTask != null) autoDataResourceTask = null;
+        //if(autoDataResourceTask != null) autoDataResourceTask = null;
     }
 
 

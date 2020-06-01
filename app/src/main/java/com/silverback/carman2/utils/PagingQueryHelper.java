@@ -17,6 +17,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is to paginate the posting items which is handled in BoardPagerFragment which implements
@@ -31,6 +32,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     private CollectionReference colRef;
     private QuerySnapshot querySnapshot;
     private OnPaginationListener mListener;
+    private List<String> autofilter;
 
     // Fields
     private boolean isScrolling;
@@ -41,7 +43,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     public interface OnPaginationListener {
         void setFirstQuery(QuerySnapshot snapshot);
         void setNextQueryStart(boolean b);
-        void setNextQueryComplete(QuerySnapshot querySnapshot);
+        void setNextQueryComplete(QuerySnapshot snapshot);
     }
 
     // private constructor
@@ -85,6 +87,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
+                this.autofilter = autofilter;
                 if(autofilter == null || autofilter.size() == 0) return;
                 Query query = colRef;
                 // Query depends on whether the autofilter contains the automaker only or more filter
@@ -108,7 +111,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         }
     }
 
-
     public void setCommentQuery(Source source, final String field, final String docId) {
         this.field = field;
         colRef = firestore.collection("board_general").document(docId).collection("comments");
@@ -126,7 +128,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
-        log.i("newState: %s", newState);
         if(newState == RecyclerView.SCROLL_STATE_DRAGGING) {
             isScrolling = true;
         }
@@ -138,7 +139,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     @Override
     public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
         super.onScrolled(recyclerView, dx, dy);
-        log.i("onScrolled");
+
         LinearLayoutManager layoutManager = (LinearLayoutManager)recyclerView.getLayoutManager();
         if(layoutManager == null || dy == 0) return;
 
@@ -147,34 +148,41 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int totalItemCount = layoutManager.getItemCount();
         log.i("Item: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
 
-        if((firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
-        //if(isScrolling && (firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
-            log.i("Query next items");
-            mListener.setNextQueryStart(true);
-            isScrolling = false;
-
+        if(isScrolling && (firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
             // Get the last visible document in the first query, then make the next query following
             // the document using startAfter(). QuerySnapshot must be invalidated with the value by
             // nextQuery.
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-            log.i("last doc: %s", lastDoc.getString("post_title"));
+
 
             // Error!!!!!
             // Invalid query. You are trying to start or end a query using a document for which the
             // field 'auto_club' (used as the orderBy) does not exist.
-            Query nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
-                    .startAfter(lastDoc).limit(Constants.PAGINATION);
+            Query nextQuery = colRef;
+            if(field.equals("auto_club")) {
+                for(int i = 0; i < autofilter.size(); i++) {
+                    final String field = "auto_filter." + autofilter.get(i);
+                    nextQuery = nextQuery.whereEqualTo(field, true);
+                }
+
+                mListener.setNextQueryStart(true);
+                nextQuery = nextQuery.startAfter(lastDoc).limit(Constants.PAGINATION);
+
+            } else {
+                mListener.setNextQueryStart(true);
+                nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
+                        .startAfter(lastDoc).limit(Constants.PAGINATION);
+            }
 
             nextQuery.get().addOnSuccessListener(nextSnapshot -> {
-                log.i("isLastItem: %s, %s", nextSnapshot.size(), Constants.PAGINATION);
-
                 // Check if the next query reaches the last document.
-                if((nextSnapshot.size()) < Constants.PAGINATION) isLastItem = true;
-
+                isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
                 mListener.setNextQueryComplete(nextSnapshot);
                 querySnapshot = nextSnapshot;
             });
 
+
+            isScrolling = false;
         }
 
     }
