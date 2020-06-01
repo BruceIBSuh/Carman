@@ -83,7 +83,6 @@ public class BoardActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
-
     // Objects
     private FirebaseFirestore firestore;
     private OnFilterCheckBoxListener mListener;
@@ -624,13 +623,6 @@ public class BoardActivity extends BaseActivity implements
         // on which fragment the frame contains; header turns visible in BoardPagerFragment and the
         // the checkbox indicating general post turns visible in BoardWriteFragment and vice versa.
 
-
-        ImageView imgView = new ImageView(this);
-        imgView.setImageDrawable(getDrawable(R.drawable.ic_board_order));
-        imgView.setBackgroundColor(Color.RED);
-        imgView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        params.topMargin = 30;
-        v.addView(imgView, params);
         // Create either the autofilter label in BoardPagerFragment or the general checkbox in
         // BoardWritingFragment
         params.topMargin = 0;
@@ -750,8 +742,8 @@ public class BoardActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
-        // viewpager.
-        if(frameLayout.getChildCount() > 0) frameLayout.removeAllViews();
+        // viewpager
+        if(frameLayout.getChildCount() > 0) frameLayout.removeView(frameLayout.getChildAt(0));
         // If the tab height is 0, increate the height.
         if(!isTabHeight) animTabHeight(true);
 

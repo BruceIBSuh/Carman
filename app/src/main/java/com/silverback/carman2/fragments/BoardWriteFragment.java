@@ -341,7 +341,6 @@ public class BoardWriteFragment extends DialogFragment implements
         // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgbarDialogFragment();
 
-
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
         //getChildFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
@@ -444,6 +443,7 @@ public class BoardWriteFragment extends DialogFragment implements
             // Attempt to invoke virtual method 'void com.silverback.carman2.BoardActivity.addViewPager()'
             // on a null object reference
             ((BoardActivity)getActivity()).addViewPager();
+            if(postTask != null) postTask = null;
         });
     }
 

@@ -4,5 +4,8 @@
     android:layout_width="wrap_content"
     android:layout_height="?android:actionBarSize"
     android:layout_gravity="center"
-    android:padding="2dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingEnd="2dp"
+    android:paddingStart="2dp"
     android:contentDescription="@null" />

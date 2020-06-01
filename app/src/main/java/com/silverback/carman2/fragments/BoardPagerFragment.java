@@ -245,7 +245,6 @@ public class BoardPagerFragment extends Fragment implements
                 // Instead of using notifyItemInserted(), query should be done due to the post
                 // sequential number to be updated..
                 pageHelper.setPostingQuery(source, currentPage, autoFilter);
-
             }
         });
 

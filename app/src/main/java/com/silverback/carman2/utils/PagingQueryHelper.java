@@ -59,11 +59,12 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
     // Create queries for each page.
     public void setPostingQuery(Source source, int page, ArrayList<String> autofilter) {
+        log.i("source in setPostingQuery param: %s", source);
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
                 colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(Source.CACHE)
+                        .get(source)
                         .addOnSuccessListener(querySnapshot -> {
                             this.querySnapshot = querySnapshot;
                             mListener.setFirstQuery(querySnapshot);
@@ -74,7 +75,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
                 colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(Source.CACHE)
+                        .get(source)
                         .addOnSuccessListener(querySnapshot -> {
                             this.querySnapshot = querySnapshot;
                             mListener.setFirstQuery(querySnapshot);
@@ -94,7 +95,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     query = query.whereEqualTo(field, true);
                 }
 
-                query.get(Source.CACHE).addOnSuccessListener(autoclubShot -> {
+                query.get(source).addOnSuccessListener(autoclubShot -> {
                     this.querySnapshot = autoclubShot;
                     mListener.setFirstQuery(autoclubShot);
                 }).addOnFailureListener(Exception::printStackTrace);
@@ -120,27 +121,34 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     }
 
 
+    // Callback method to be invoked when RecyclerView's scroll state changes.
+    //
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
-        if (newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+        log.i("newState: %s", newState);
+        if(newState == RecyclerView.SCROLL_STATE_DRAGGING) {
             isScrolling = true;
         }
     }
 
-
+    // Callback method to be invoked when the RecyclerView has been scrolled. This will be called
+    // after the scroll has completed. This callback will also be called if visible item range changes
+    // after a layout calculation. In that case, dx and dy will be 0.
     @Override
     public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
         super.onScrolled(recyclerView, dx, dy);
-
+        log.i("onScrolled");
         LinearLayoutManager layoutManager = (LinearLayoutManager)recyclerView.getLayoutManager();
         if(layoutManager == null || dy == 0) return;
 
         int firstItemPos = layoutManager.findFirstVisibleItemPosition();
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
+        log.i("Item: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
 
-        if(isScrolling && (firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
+        if((firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
+        //if(isScrolling && (firstItemPos + visibleItemCount == totalItemCount) && !isLastItem) {
             log.i("Query next items");
             mListener.setNextQueryStart(true);
             isScrolling = false;
@@ -150,6 +158,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             // nextQuery.
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
             log.i("last doc: %s", lastDoc.getString("post_title"));
+
+            // Error!!!!!
+            // Invalid query. You are trying to start or end a query using a document for which the
+            // field 'auto_club' (used as the orderBy) does not exist.
             Query nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
                     .startAfter(lastDoc).limit(Constants.PAGINATION);
 

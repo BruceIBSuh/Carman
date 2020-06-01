@@ -35,8 +35,6 @@ public class Constants {
     // ExpensePagerFragment max pages of ExpRecentPagerAdapter
     public static final int NUM_RECENT_PAGES = 5;
 
-    // Board Pagination
-
     //public static final int ICON_SIZE = 50;
 
     // Notification Snooze
@@ -52,9 +50,8 @@ public class Constants {
     public static final int MAX_ICON_SIZE = (1024 * 1024) / 2;
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
 
-
     // Board
-    public static final int PAGINATION = 15;
+    public static final int PAGINATION = 10;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;
