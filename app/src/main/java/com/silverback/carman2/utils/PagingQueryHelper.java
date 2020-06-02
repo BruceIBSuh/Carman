@@ -154,7 +154,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         log.i("Item: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
 
         if(!isLoading && !isLastItem && firstItemPos + visibleItemCount >= totalItemCount) {
-            //isScrolling = false;
             mListener.setNextQueryStart(true);
 
             // Get the last visible document in the first query, then make the next query following
@@ -180,7 +179,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             nextQuery.get().addOnSuccessListener(nextSnapshot -> {
                 // Check if the next query reaches the last document.
                 isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
-                isLoading = false; //ready to make a next query
+                isLoading = false; // ready to make a next query
 
                 mListener.setNextQueryStart(false); //hide the loading progressbar
                 mListener.setNextQueryComplete(nextSnapshot); // add the query result to the list.

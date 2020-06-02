@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -30,10 +31,15 @@ import java.util.Locale;
 /**
  * This RecyclerView.Adapter is to display posting items of
  */
-public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapter.PostViewHolder> {
+public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
+
+    // Constants
+    private final int CONTENT_VIEW_TYPE = 1;
+    private final int AD_VIEW_TYPE = 2;
+    private final int AD_POSITION = 20;
 
     // Objects
     private Context context;
@@ -44,7 +50,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
     private ImageViewModel imgModel;
 
     // Fields
-    private int type;
+    private int index;
 
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
@@ -61,82 +67,110 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
 
     @NonNull
     @Override
-    public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        this.context = parent.getContext();
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        this.context = viewGroup.getContext();
         imgUtil = new ApplyImageResourceUtil(context);
 
-        CardView cardView = (CardView) LayoutInflater.from(context)
-                    .inflate(R.layout.cardview_board_post, parent, false);
-        return new PostViewHolder(cardView);
+        switch(viewType) {
+            case CONTENT_VIEW_TYPE:
+                CardView postView = (CardView) LayoutInflater.from(context)
+                        .inflate(R.layout.cardview_board_post, viewGroup, false);
+                return new PostViewHolder(postView);
+
+            case AD_VIEW_TYPE:
+
+            default:
+                CardView bannerView = (CardView)LayoutInflater.from(context)
+                        .inflate(R.layout.cardview_board_banner, viewGroup, false);
+                return new AdViewHolder(bannerView);
+
+
+        }
+
     }
 
     @SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
-    public void onBindViewHolder(@NonNull PostViewHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        int viewType = getItemViewType(position);
+        index = position + 1;
 
-        // Retreive an board item queried in and passed from BoardPagerFragment
-        //DocumentSnapshot document = querySnapshot.getDocuments().get(position);
-        //DocumentSnapshot document = snapshotList.get(position);
-        final DocumentSnapshot snapshot = snapshotList.get(position);
-        log.i("Snapshot: %s", snapshot.getString("post_title"));
+        switch(viewType) {
+            case CONTENT_VIEW_TYPE:
+                final DocumentSnapshot snapshot = snapshotList.get(position);
 
-        holder.tvPostTitle.setText(snapshot.getString("post_title"));
-        holder.tvNumber.setText(String.valueOf(position + 1));
-        holder.tvPostingDate.setText(sdf.format(snapshot.getDate("timestamp")));
-        holder.tvUserName.setText(snapshot.getString("user_name"));
-        holder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
-        holder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));
+                int offset = (int)(position / AD_POSITION) - 1;
+                int index = (AD_POSITION > position) ? position + 1 : position - offset;
 
-        // Set the user image
-        if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
-            holder.bindUserImage(Uri.parse(snapshot.getString("user_pic")));
-        } else {
-            holder.bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
+                PostViewHolder postHolder = (PostViewHolder)holder;
+                postHolder.tvPostTitle.setText(snapshot.getString("post_title"));
+                //postHolder.tvNumber.setText(String.valueOf(position + 1));
+                postHolder.tvNumber.setText(String.valueOf(index));
+                postHolder.tvPostingDate.setText(sdf.format(snapshot.getDate("timestamp")));
+                postHolder.tvUserName.setText(snapshot.getString("user_name"));
+                postHolder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
+                postHolder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));
+
+                // Set the user image
+                if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
+                    postHolder.bindUserImage(Uri.parse(snapshot.getString("user_pic")));
+                } else {
+                    postHolder.bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
+                }
+
+                // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
+                // invoked and the imageview is made null to prevent images from having wrong positions.
+                if(snapshot.get("post_images") != null) {
+                    String thumb = ((ArrayList<String>)snapshot.get("post_images")).get(0);
+                    postHolder.bindAttachedImage(Uri.parse(thumb));
+                } else {
+                    Glide.with(context).clear(postHolder.imgAttached);
+                    postHolder.imgAttached.setImageDrawable(null);
+                }
+
+                // Set the listener for clicking the item with position
+                holder.itemView.setOnClickListener(view -> {
+                    log.i("position: %s, %s", position, holder.getAdapterPosition());
+                    if(mListener != null) mListener.onPostItemClicked(snapshot, position);
+                });
+
+                break;
+
+            case AD_VIEW_TYPE:
+                break;
+
+
+            default:
+                AdViewHolder adHolder = (AdViewHolder)holder;
+
+
         }
-
-        // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
-        // invoked and the imageview is made null to prevent images from having wrong positions.
-        if(snapshot.get("post_images") != null) {
-            String thumb = ((ArrayList<String>)snapshot.get("post_images")).get(0);
-            holder.bindAttachedImage(Uri.parse(thumb));
-        } else {
-            Glide.with(context).clear(holder.imgAttached);
-            holder.imgAttached.setImageDrawable(null);
-        }
-
-        // Set the listener for clicking the item with position
-        holder.itemView.setOnClickListener(view -> {
-            log.i("position: %s, %s", position, holder.getAdapterPosition());
-            if(mListener != null) mListener.onPostItemClicked(snapshot, position);
-        });
-
     }
-
 
     // Partial binding when the count is increased in terms of the view count and comment count.
     @Override
     public void onBindViewHolder(
-            @NonNull PostViewHolder holder, int position, @NonNull List<Object> payloads) {
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
 
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            holder.tvViewCount.setText(String.valueOf(payloads.get(0)));
-            holder.tvCommentCount.setText(String.valueOf(payloads.get(1)));
+            ((PostViewHolder)holder).tvViewCount.setText(String.valueOf(payloads.get(0)));
+            ((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(payloads.get(1)));
         }
     }
 
 
     @Override
     public int getItemCount() {
-        //return snapshotList == null ? 0 : snapshotList.size();
         return snapshotList.size();
     }
 
     // Guess this will be useful to apply plug-in ads.
     @Override
     public int getItemViewType(int position) {
-        return -1;
+        return (position > 0 && position % AD_POSITION == 0) ? AD_VIEW_TYPE : CONTENT_VIEW_TYPE;
+        //return -1;
     }
 
     // ViewHolders
@@ -171,6 +205,15 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<BoardPostingAdapte
         }
 
     }
+
+    class AdViewHolder extends RecyclerView.ViewHolder {
+
+        AdViewHolder(View view) {
+            super(view);
+        }
+    }
+
+
 
 
 }

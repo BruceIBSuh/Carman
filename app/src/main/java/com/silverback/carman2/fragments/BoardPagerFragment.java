@@ -6,8 +6,11 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -95,6 +98,7 @@ public class BoardPagerFragment extends Fragment implements
     private ProgressBar pbLoading, pbPaging;
     private PostingRecyclerView recyclerPostView;
     private TextView tvEmptyView;
+    private TextView tvSorting;
 
     // Fields
     private int currentPage;
@@ -202,7 +206,8 @@ public class BoardPagerFragment extends Fragment implements
         tvEmptyView = localView.findViewById(R.id.tv_empty_view);
         recyclerPostView = localView.findViewById(R.id.recycler_board_postings);
 
-        recyclerPostView.setHasFixedSize(true);
+        // In case of inserting the banner, the item size will change.
+        //recyclerPostView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(
                 getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerPostView.setLayoutManager(layoutManager);
@@ -270,7 +275,9 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
-
+    // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
+    // should be customized to have an imageview and textview underneath instead of setting icon
+    // by setting actionLayout(app:actionLayout in xml).
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Do something different from in the parent activity
@@ -278,15 +285,22 @@ public class BoardPagerFragment extends Fragment implements
             //final MenuItem emblem = menu.findItem(R.id.action_automaker_emblem);
             menu.getItem(0).setVisible(true);
             //emblem.setVisible(true);
-            //FrameLayout rootView = (FrameLayout)menu.getItem(0).getActionView();
-            ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
+            View rootView = menu.getItem(0).getActionView();
+            //ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
+            ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
+            tvSorting = rootView.findViewById(R.id.tv_sorting_order);
+
+            SpannableString ss = new SpannableString(getString(R.string.board_autoclub_sort_time));
+            ss.setSpan(new RelativeSizeSpan(0.7f), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tvSorting.setText(ss);
+
             // Set the automaker emblem in the toolbar imageview which is created as a custom view
             // replacing the toolbar menu icon.
             setAutoMakerEmblem(imgEmblem);
 
-            // app:actionLayout instead of app:icon is required to add ClickListener.
-            imgEmblem.setOnClickListener(view -> {
+            rootView.setOnClickListener(view -> {
                 onOptionsItemSelected(menu.getItem(0));
+
             });
         }
 
@@ -296,19 +310,32 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
+
+            // Make the post sorting by time-wise or viewer-wise basis.
             sortDocumentByTimeOrView();
+
+            // Set the spannable string indicating what's the basis of sorting. The reason why the
+            // span is set.
+            String sortLabel = (isViewOrder) ? getString(R.string.board_autoclub_sort_time) :
+                    getString(R.string.board_autoclub_sort_view);
+
+            SpannableString ss = new SpannableString(sortLabel);
+            ss.setSpan(new RelativeSizeSpan(0.7f), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
             // Emblem rotation anim not working.
-            ImageView imgEmblem = (ImageView)item.getActionView();
-            ObjectAnimator rotation = ObjectAnimator.ofFloat(imgEmblem, "rotationY", 0.0f, 360f);
+            // Rotate the imageview emblem
+            ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
             rotation.setDuration(500);
             rotation.setInterpolator(new AccelerateDecelerateInterpolator());
             rotation.addListener(new AnimatorListenerAdapter(){
                 @Override
                 public void onAnimationEnd(Animator animation, boolean isReverse) {
                     rotation.cancel();
+                    tvSorting.setText(ss);
                 }
             });
             rotation.start();
+
             return true;
         }
 
@@ -519,7 +546,9 @@ public class BoardPagerFragment extends Fragment implements
                     if(TextUtils.isEmpty(emblem)) return;
                     else {
                         Uri uri = Uri.parse(emblem);
-                        imgutil.applyGlideToEmblem(uri, 70, imgview.getMeasuredHeight(), imgview);
+                        final int x = imgview.getMeasuredWidth();
+                        final int y = imgview.getMeasuredHeight();
+                        imgutil.applyGlideToEmblem(uri, x, y, imgview);
                     }
 
                     break;

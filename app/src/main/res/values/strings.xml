@@ -168,6 +168,8 @@
     <string name="board_filter_join">나의 클럽: 설정에서 클럽정보를 입력해주세요</string>
     <string name="board_filter_club">클럽</string>
     <string name="board_filter_link">입력</string>
+    <string name="board_autoclub_sort_time">RECENT</string>
+    <string name="board_autoclub_sort_view">POPULAR</string>
     <string name="board_msg_username">사용자(차량)이름을 만들어주세요</string>
     <string name="board_msg_action_setting">설정</string>
     <string name="board_emptyview">첫번째 글의 주인공이 되어 주세요</string>
