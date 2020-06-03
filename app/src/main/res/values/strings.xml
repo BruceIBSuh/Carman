@@ -4,7 +4,6 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
-
     <string name="tab_gas">gas</string>
     <string name="tab_service">service</string>
     <string name="tab_stat">stat</string>
@@ -12,11 +11,6 @@
     <string name="toolbar_mycar">my car</string>
     <string name="toolbar_board">board</string>
     <string name="toolbar_login">login</string>
-    <!--
-    <string name="tab_board_recent">최근글</string>
-    <string name="tab_board_popular">인기글</string>
-    <string name="tab_board_community">우리차고</string>
-    -->
 
     <!--MainActivity$GeneralFragment-->
     <string name="general_subtitle_stations">주변 주유소</string>
@@ -168,8 +162,8 @@
     <string name="board_filter_join">나의 클럽: 설정에서 클럽정보를 입력해주세요</string>
     <string name="board_filter_club">클럽</string>
     <string name="board_filter_link">입력</string>
-    <string name="board_autoclub_sort_time">RECENT</string>
-    <string name="board_autoclub_sort_view">POPULAR</string>
+    <string name="board_autoclub_sort_time">최근포스트</string>
+    <string name="board_autoclub_sort_view">관심포스트</string>
     <string name="board_msg_username">사용자(차량)이름을 만들어주세요</string>
     <string name="board_msg_action_setting">설정</string>
     <string name="board_emptyview">첫번째 글의 주인공이 되어 주세요</string>

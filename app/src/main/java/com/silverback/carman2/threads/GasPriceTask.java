@@ -72,7 +72,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         index ++;
         int outstate = -1;
         state *= state;
-        log.i("price state: %s", state);
+        log.i("price index and state: %s, %s", index, state);
 
         // If all price data of average, sido, sigun and favorite station are retrieved, notify
         // the viewmodel of the task done and finalize the task in the main thread.

@@ -83,7 +83,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private FrameLayout frameLayout;
 
     // Fields
-    //private String userId;
+    private String userId;
     private boolean isDistrictReset;
     private String distCode;
     private String userName;
@@ -121,22 +121,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         uploadData = new HashMap<>();
 
-        if(TextUtils.isEmpty(userId)) {
-            userId = getUserIdFromStorage(this);
-            log.i("user id: %s", userId);
-        }
-
+        // Get the user id which is saved in the internal storage
+        if(TextUtils.isEmpty(userId)) userId = getUserIdFromStorage(this);
 
         // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name respectively.
-        JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
-        if(jsonDistArray == null) distCode = "0101";
+        JSONArray jsonDistArray = getDistrictJSONArray();
+        if(jsonDistArray == null) distCode = (getResources().getStringArray(R.array.default_district))[2];
         else distCode = jsonDistArray.optString(2);
 
 
         // Attach SettingPreferencFragment in the FrameLayout
         settingFragment = new SettingPreferenceFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString("district", jsonDistArray.toString());
+        settingFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
                 .addToBackStack(null)
@@ -319,10 +319,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case Constants.DISTRICT:
-                JSONArray jsonDistArray = BaseActivity.getDistrictJSONArray();
+                JSONArray jsonDistArray = getDistrictJSONArray();
                 if(jsonDistArray != null) {
-                    distCode = BaseActivity.getDistrictJSONArray().optString(2);
-                    log.i("District Code : %s", distCode);
+                    distCode = getDistrictJSONArray().optString(2);
                     gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
                     mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                     isDistrictReset = true;

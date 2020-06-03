@@ -29,14 +29,6 @@
 
     </string-array>
 
-    <!--
-    <string-array name="tap_board_title">
-        <item>@string/tab_board_recent</item>
-        <item>@string/tab_board_popular</item>
-        <item>@string/tab_board_community</item>
-    </string-array>
-    -->
-
     <string-array name="spinner_fuel_name">
         <item>@string/general_spinner_gasoline</item>
         <item>@string/general_spinner_diesel</item>
@@ -120,23 +112,6 @@
         <item>@string/pref_edit_image_delete</item>
     </string-array>
 
-    <string-array name="pref_automaker">
-        <item>@string/pref_entry_void</item>
-        <item>Hyundai</item>
-        <item>Kia</item>
-        <item>Genesis</item>
-        <item>Toyoda</item>
-        <item>Nissan</item>
-        <item>Ford</item>
-        <item>Honda</item>
-        <item>Benz</item>
-        <item>Audi</item>
-        <item>Volkswagen</item>
-        <item>Volvo</item>
-        <item>Porche</item>
-        <item>Bentley</item>
-        <item>Jaguar</item>
-    </string-array>
 
     <!-- Default Service Item List -->
     <!-- Service item In ServiceManagerActivityvity -->

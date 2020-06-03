@@ -22,7 +22,7 @@ public class Constants {
     public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
-    public static final int GEOFENCE_LOITERING_TIME = 1000 * 60; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
+    public static final int GEOFENCE_LOITERING_TIME = 1000 * 30; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final float GEOFENCE_FAVORITE_MATCH_RADIUS = 50f; //when querying Favorite based on GeofenceEvent.getTriggeringLocation()
     public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
 

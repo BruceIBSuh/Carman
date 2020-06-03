@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.SpannableString;
@@ -39,24 +38,19 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardEditFragment;
 import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
-import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.viewmodels.ImageViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -66,10 +60,10 @@ import java.util.List;
 
 /*
  * This activity consists of the appbar component, the framelayout to alternatively contain the
- * viewpager and the fragment to write or edit a post, and the layout to show checkboxes which are
- * used not only as query conditions for the viewpager but also as field values for eac fragment.
- * Plus, there is a nested interface, OnFilterCheckBoxListener, which notifies BoardPagerFragment
- * of which checkbox has changed.
+ * viewpager and the fragment to write or edit a post, and the layout to show dynamically created
+ * checkboxes which are used not only as query conditions of each board, but also as field values
+ * for each fragment. Plus, there is a nested interface, OnFilterCheckBoxListener, which notifies
+ * BoardPagerFragmen of which checkbox has changed.
  */
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
@@ -82,16 +76,11 @@ public class BoardActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
-    //private FirebaseFirestore firestore;
-    private OnFilterCheckBoxListener mListener;
+    private OnAutoFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
-    //private ImageViewModel imgModel;
-    //private ApplyImageResourceUtil imgResUtil;
     private Menu menu;
-    private Drawable emblemIcon;
     private BoardWriteFragment writePostFragment;
     private BoardEditFragment editPostFragment;
-    private ProgbarDialogFragment progbarDialogFragment;
 
     // UIs
     private CoordinatorLayout coordinatorLayout;
@@ -117,12 +106,11 @@ public class BoardActivity extends BaseActivity implements
 
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
     // have a query with new conditions to make the recyclerview updated.
-    public interface OnFilterCheckBoxListener {
+    public interface OnAutoFilterCheckBoxListener {
         void onCheckBoxValueChange(ArrayList<String> autofilter);
-        //void onGeneralPost(boolean b);
     }
-    // Method for attaching the listener
-    public void setAutoFilterListener(OnFilterCheckBoxListener listener) {
+    // Method to attach the listener in the client.
+    public void setAutoFilterListener(OnAutoFilterCheckBoxListener listener) {
         mListener = listener;
     }
 
@@ -131,10 +119,6 @@ public class BoardActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
-
-        //firestore = FirebaseFirestore.getInstance();
-        //imgResUtil = new ApplyImageResourceUtil(this);
-        //imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
         AppBarLayout appBar = findViewById(R.id.appBar);
         coordinatorLayout = findViewById(R.id.coordinatorLayout);
@@ -219,14 +203,11 @@ public class BoardActivity extends BaseActivity implements
      * are presented in the app bar. When an event occurs and you want to make a menu update,
      * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
      */
-    /*
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         return super.onPrepareOptionsMenu(menu);
     }
-    */
 
-    //
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -255,11 +236,12 @@ public class BoardActivity extends BaseActivity implements
                         // Hide the soft input when BoardWriteFragment disappears
                         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                         imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
-                        // As BoardPagerFragment comes in
+                        // As BoardPagerFragment comes in, the tabLayout animates to display and the
+                        // menu for uploading is made invisible.
                         animTabHeight(true);
                         menu.getItem(1).setVisible(false);
 
-                        setViewPager();
+                        addViewPager();
 
                     }).show();
                 }
@@ -277,9 +259,6 @@ public class BoardActivity extends BaseActivity implements
         }
 
     }
-
-
-
 
     // Implement AppBarLayout.OnOffsetChangedListener
     @Override
@@ -434,16 +413,17 @@ public class BoardActivity extends BaseActivity implements
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode != RESULT_OK || data == null) return;
+
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
                 log.i("current fragment: %s, %s", writePostFragment, editPostFragment);
-                if(writePostFragment != null)
-                    writePostFragment.setUriFromImageChooser(data.getData());
-                else if(editPostFragment != null) {
-                    log.i("edit fragment: %s", data.getData());
-                    editPostFragment.setUriFromImageChooser(data.getData());
-                }
+                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(data.getData());
+                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(data.getData());
 
+                break;
+
+            case Constants.REQUEST_BOARD_CAMERA:
+                log.i("get uri from camera: %s", data.getData());
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
@@ -724,15 +704,17 @@ public class BoardActivity extends BaseActivity implements
     }
 
 
-
-    // Upon completion of uploading a post in BoardWriteFragment, remove it out of the framelayout,
-    // then add the viewpager again with the toolbar menu and title reset.
+    // Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
+    // the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
+    // remove the fragment out of the container, then regain the viewpager with the toolbar menu and
+    // title reset. If the current page stays in the auto club, additional measures should be taken.
+    // Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
     @SuppressWarnings("ConstantConditions")
-    public void setViewPager() {
+    public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
         if(frameLayout.getChildCount() > 0) frameLayout.removeView(frameLayout.getChildAt(0));
-        // If the tab height is 0, increate the height.
+        // If the tabLayout height is 0,  put the height back to the default size.
         if(!isTabHeight) animTabHeight(true);
 
         frameLayout.addView(boardPager);
@@ -740,7 +722,7 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.board_general_title));
 
 
-        // Animations differes according to whether the current page is on the auto club or not.
+        // Animations differs according to whether the current page is on the auto club or not.
         if(tabPage == Constants.BOARD_AUTOCLUB) {
             // UI visibillity control when boardPagerFragment comes in.
             tvAutoFilterLabel.setVisibility(View.VISIBLE);
@@ -755,10 +737,10 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-    // Invoked when cliking the image attaching button.
-    // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
-    // to which startActivityForResult() is invoked by the parent activity and the result will be
-    // notified to the activity and it is, in turn, sent back here by calling
+    // Referenced either in BoardWriteFragmnet or in BoardEditFragment and notified of which media
+    // (camera or gallery) to select in BoardChooserDlgFragment. According to the selected media,
+    // startActivityForResult() defined in the parent activity is invoked and the result is notified
+    // to the activity and it is, in turn, sent back here by calling
     public void getImageFromChooser(int media) {
         switch(media) {
             case Constants.GALLERY:
@@ -806,8 +788,6 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-
-
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
     // of whehter a post should be uploaded in the general board is referenced in the same fragments
     // to query or upload posts.
@@ -815,10 +795,6 @@ public class BoardActivity extends BaseActivity implements
         return cbAutoFilter;
     }
     public boolean checkGeneralPost() { return isGeneral; }
-    // Referenced in the child fragments.
-    public SharedPreferences getSettings() {
-        return mSettings;
-    }
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
         return fabWrite;
@@ -826,11 +802,14 @@ public class BoardActivity extends BaseActivity implements
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
     }
-
     // Invoked in BoardPagerAdapter to hold visibility control of the progressbar when post logindg
     // complete and set it to gone in setFirstQuery().
     public ProgressBar getLoadingProgressBar() {
         return pbLoading;
+    }
+    // Referenced in the child fragments.
+    public SharedPreferences getSettings() {
+        return mSettings;
     }
 
 }

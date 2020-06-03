@@ -17,6 +17,7 @@ package com.silverback.carman2;
  */
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -78,10 +79,12 @@ public class BaseActivity extends AppCompatActivity {
     protected ApplyImageResourceUtil applyImageResourceUtil;
 
     // Fields
+    private String jsonDistrict;
     protected boolean isNetworkConnected;
     protected boolean hasLocationPermission;
     protected boolean hasCameraPermission;
 
+    @SuppressLint("SourceLockedOrientationActivity")
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -89,11 +92,14 @@ public class BaseActivity extends AppCompatActivity {
 
         // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
         // android:screenOrientation is not allowed with Android O_MR1 +
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        userId = getUserIdFromStorage(this);
+        if(Build.VERSION.SDK_INT != Build.VERSION_CODES.O_MR1)
+            super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
         // SharedPreferences
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
+        jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
+        userId = getUserIdFromStorage(this);
 
         // Checkk if the network connectivitis ok.
         if(notifyNetworkConnected(this)) {
@@ -120,18 +126,16 @@ public class BaseActivity extends AppCompatActivity {
 
     // Get the district name and code from SharedPreferences which saves them as type of JSONString
     // because it cannot contain any array generics.
-    public static JSONArray getDistrictJSONArray() {
-        String jsonString = mSettings.getString(Constants.DISTRICT, null);
+    public JSONArray getDistrictJSONArray() {
         try {
-            return (TextUtils.isEmpty(jsonString))?
-                    new JSONArray(Arrays.asList("서울", "종로구", "0101")):
-                    new JSONArray(jsonString);
-
+            String[] defaults = getResources().getStringArray(R.array.default_district);
+            return (jsonDistrict == null || jsonDistrict.isEmpty())?
+                    new JSONArray(Arrays.asList(defaults)):
+                    new JSONArray(jsonDistrict);
         } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
+            e.printStackTrace();
+            return null;
         }
-
-        return null;
     }
 
 
@@ -399,31 +403,13 @@ public class BaseActivity extends AppCompatActivity {
         return new JSONArray(filterList).toString();
     }
 
-    public NotificationChannel createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            CharSequence name = getString(R.string.noti_ch_name);
-            String description = getString(R.string.noti_ch_description);
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(Constants.CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            if (notificationManager != null) notificationManager.createNotificationChannel(channel);
-
-            return channel;
-        }
-
-        return null;
-    }
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnected();
+        //return networkInfo != null && networkInfo.isConnected();
+        return connManager.isActiveNetworkMetered();
     }
 
 
@@ -448,42 +434,5 @@ public class BaseActivity extends AppCompatActivity {
 
         return sb.toString();
     }
-
-    // Set the user image to the icon of MainActivity Toolbar and SettingPreferenceActivit with the
-    // size based on DP which is converted to px.
-    /*
-    public void applyGlideToDrawable(String uriString, int size, ImageViewModel model) {
-
-        if(TextUtils.isEmpty(uriString)) return;
-        //if(applyImageResourceUtil == null) applyImageResourceUtil = new ApplyImageResourceUtil(this);
-
-        // The float of 0.5f makes the scale round as it is cast to int. For exmaple, let's assume
-        // the scale is between 1.5 and 2.0. When casting w/o the float, it will be cast to 1.0. By
-        // adding the float, it will be round up to 2.0.
-        final float scale = getResources().getDisplayMetrics().density;
-        int px_x = (int)(size * scale + 0.5f);
-        int px_y = (int)(size * scale + 0.5f);
-
-
-        Bitmap resized = applyImageResourceUtil.resizeBitmap(this, Uri.parse(uriString), px_x, px_y);
-        RoundedBitmapDrawable rounded = RoundedBitmapDrawableFactory.create(this.getResources(), resized);
-        rounded.setCircular(true);
-
-        Glide.with(this).load(Uri.parse(uriString)).override(px_x, px_y)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .fitCenter()
-                .circleCrop()
-                .into(new CustomTarget<Drawable>() {
-                    @Override
-                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                        model.getGlideTarget().setValue(resource);
-                    }
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {}
-                });
-
-    }
-    */
-
 
 }

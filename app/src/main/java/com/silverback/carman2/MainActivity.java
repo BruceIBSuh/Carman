@@ -103,12 +103,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // task for displaying the price information.
         if(getIntent() != null && getIntent().getBooleanExtra("isGeofencing", false)) {
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                JSONArray json = BaseActivity.getDistrictJSONArray();
+                JSONArray json = getDistrictJSONArray();
                 String distCode = (json != null) ?
-                        json.optString(2) :
-                        getResources().getStringArray(R.array.default_district)[2];
+                        json.optString(2) : getResources().getStringArray(R.array.default_district)[2];
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
-
             });
         }
 

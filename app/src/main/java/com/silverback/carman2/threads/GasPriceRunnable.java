@@ -157,7 +157,8 @@ public class GasPriceRunnable implements Runnable {
                                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                         }
-                    }
+
+                    } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
 
                     break;
             }
@@ -189,6 +190,7 @@ public class GasPriceRunnable implements Runnable {
 
         final String fileName = Constants.FILE_FAVORITE_PRICE;
         final File stnFile = new File(context.getFilesDir(), fileName);
+
         try(FileInputStream fis = context.openFileInput(fileName);
             ObjectInputStream ois = new ObjectInputStream(fis)) {
             Opinet.StationPrice savedStn = (Opinet.StationPrice)ois.readObject();

@@ -44,6 +44,7 @@ import com.silverback.carman2.views.NameDialogPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -76,6 +77,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
     // Fields
     private List<String> autoDataList;
+    private JSONArray jsonDistrict;
     private String sigunCode;
     private String regMakerNum;
     private Uri emblemUri;
@@ -87,6 +89,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
+        String jsonString = getArguments().getString("district");
+        try {jsonDistrict = new JSONArray(jsonString);}
+        catch(JSONException e) {e.printStackTrace();}
 
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
@@ -186,10 +191,11 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // spinners to pick the district of Sido and Sigun based upon the given Sido. The default
         // district name and code is saved as JSONString.
         spinnerPref = findPreference(Constants.DISTRICT);
-        JSONArray json = BaseActivity.getDistrictJSONArray();
-        if(json != null) {
-            spinnerPref.setSummary(String.format("%s %s", json.optString(0), json.optString(1)));
-            sigunCode = json.optString(2);
+
+        //JSONArray json = BaseActivity.getDistrictJSONArray();
+        if(jsonDistrict != null) {
+            spinnerPref.setSummary(String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
+            sigunCode = jsonDistrict.optString(2);
         }
         // When the default district changes in the spinners, a newly selected district will be
         // notified via ViewModel

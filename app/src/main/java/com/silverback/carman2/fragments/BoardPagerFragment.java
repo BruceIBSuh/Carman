@@ -6,11 +6,8 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextUtils;
-import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,7 +18,6 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -32,7 +28,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -43,6 +38,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
@@ -75,7 +71,7 @@ import java.util.TimeZone;
  * queried based on time, view counts, autoclub filter, and admin notification.
  */
 public class BoardPagerFragment extends Fragment implements
-        BoardActivity.OnFilterCheckBoxListener,
+        BoardActivity.OnAutoFilterCheckBoxListener,
         PagingQueryHelper.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
@@ -168,6 +164,9 @@ public class BoardPagerFragment extends Fragment implements
             autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             ((BoardActivity)getActivity()).setAutoFilterListener(this);
         }
+
+        boolean isConnected = BaseActivity.notifyNetworkConnected(getContext());
+        log.i("isConnected: %s", isConnected);
 
         /*
          * Realtime update SnapshotListener: server vs cache policy.
@@ -289,19 +288,10 @@ public class BoardPagerFragment extends Fragment implements
             //ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
             tvSorting = rootView.findViewById(R.id.tv_sorting_order);
-
-            SpannableString ss = new SpannableString(getString(R.string.board_autoclub_sort_time));
-            ss.setSpan(new RelativeSizeSpan(0.7f), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            tvSorting.setText(ss);
-
             // Set the automaker emblem in the toolbar imageview which is created as a custom view
             // replacing the toolbar menu icon.
             setAutoMakerEmblem(imgEmblem);
-
-            rootView.setOnClickListener(view -> {
-                onOptionsItemSelected(menu.getItem(0));
-
-            });
+            rootView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
         }
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -316,11 +306,9 @@ public class BoardPagerFragment extends Fragment implements
 
             // Set the spannable string indicating what's the basis of sorting. The reason why the
             // span is set.
-            String sortLabel = (isViewOrder) ? getString(R.string.board_autoclub_sort_time) :
-                    getString(R.string.board_autoclub_sort_view);
 
-            SpannableString ss = new SpannableString(sortLabel);
-            ss.setSpan(new RelativeSizeSpan(0.7f), 0, ss.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            String sortOrder = (isViewOrder) ? getString(R.string.board_autoclub_sort_time) :
+                    getString(R.string.board_autoclub_sort_view);
 
             // Emblem rotation anim not working.
             // Rotate the imageview emblem
@@ -331,7 +319,7 @@ public class BoardPagerFragment extends Fragment implements
                 @Override
                 public void onAnimationEnd(Animator animation, boolean isReverse) {
                     rotation.cancel();
-                    tvSorting.setText(ss);
+                    tvSorting.setText(sortOrder);
                 }
             });
             rotation.start();
@@ -412,7 +400,6 @@ public class BoardPagerFragment extends Fragment implements
     @SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
-        SpannableStringBuilder title = ((BoardActivity)getActivity()).getAutoClubTitle();
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
         BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();

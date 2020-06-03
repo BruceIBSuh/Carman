@@ -102,7 +102,6 @@ public class IntroActivity extends BaseActivity  {
         super.onPause();
         if(distCodeTask != null) distCodeTask = null;
         if(gasPriceTask != null) gasPriceTask = null;
-        //if(autoDataResourceTask != null) autoDataResourceTask = null;
     }
 
 
@@ -134,21 +133,6 @@ public class IntroActivity extends BaseActivity  {
                     }
                 }).addOnFailureListener(Exception::printStackTrace);
 
-                // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
-                // them in the internal storage. It may be replaced by downloading it from the server
-                // every time the app starts for decreasing the app size
-                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
-                // Notified of having the district codes(sigun codes) complete, which was running in the
-                // background by DistrictCodeTask only during firstInitProcess().
-                opinetViewModel.distCodeComplete().observe(this, isComplete -> {
-                    try {
-                        if (isComplete) {
-                            mProgBar.setVisibility(View.INVISIBLE);
-                            regularInitProcess();
-                        } else throw new FileNotFoundException();
-                    } catch(FileNotFoundException e) { e.printStackTrace();}
-                });
-
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.
                 JSONArray jsonDistrictArray = new JSONArray(Arrays.asList(defaultDistrict));
@@ -159,6 +143,21 @@ public class IntroActivity extends BaseActivity  {
                 JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
+                // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
+                // them in the internal storage. It may be replaced by downloading it from the server
+                // every time the app starts for decreasing the app size
+                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
+                // Notified of having the district codes(sigun codes) complete, which was running in the
+                // background by DistrictCodeTask only during firstInitProcess().
+                opinetViewModel.distCodeComplete().observe(this, isComplete -> {
+                    try {
+                        if (isComplete) {
+                            log.i("DistCode done");
+                            mProgBar.setVisibility(View.INVISIBLE);
+                            regularInitProcess();
+                        } else throw new FileNotFoundException();
+                    } catch(FileNotFoundException e) { e.printStackTrace();}
+                });
             }
         });
 
@@ -176,14 +175,11 @@ public class IntroActivity extends BaseActivity  {
         if(checkPriceUpdate()) {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();
-            String distCode = (json == null)?defaultDistrict[2] : json.optString(2);
-            log.i("District Code: %s", distCode);
+            String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
 
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
                 //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
-                //log.i("District code: %s", distCode);
-
                 gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in

@@ -449,7 +449,7 @@ public class BoardEditFragment extends BoardBaseFragment implements
             // Upon completing upload, notify BaordPagerFragment of the document id to update.
             sharedModel.getEditPosting().setValue(docId);
             pbFragment.dismiss();
-            ((BoardActivity)getActivity()).setViewPager();
+            ((BoardActivity)getActivity()).addViewPager();
 
         }).addOnFailureListener(Exception::printStackTrace);
 

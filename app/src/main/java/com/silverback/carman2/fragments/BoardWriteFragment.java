@@ -428,7 +428,7 @@ public class BoardWriteFragment extends DialogFragment implements
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager.startUploadPostTask(getContext(), post, fragmentModel);
-        ((BoardActivity)getActivity()).setViewPager();
+        ((BoardActivity)getActivity()).addViewPager();
         pbFragment.dismiss();
     }
 
