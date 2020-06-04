@@ -96,7 +96,6 @@ public class BaseActivity extends AppCompatActivity {
             super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
-        // SharedPreferences
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         userId = getUserIdFromStorage(this);

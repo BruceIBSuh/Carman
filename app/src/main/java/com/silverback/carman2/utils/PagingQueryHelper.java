@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -38,7 +39,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
     // Fields
     private boolean isLoading;
-    private boolean isScrolling;
     private boolean isLastItem;
     private String field;
 
@@ -62,37 +62,36 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         mListener = listener;
     }
 
-    // Create queries for each page.
-    public void setPostingQuery(Source source, int page, ArrayList<String> autofilter) {
-        log.i("source in setPostingQuery param: %s", source);
+    /*
+     * Create a query sentence with conditions passed as params. As queries completes, the result
+     * will be notified to BoardPagerFragment via OnPaginationListener interface.
+     * As far as the autoclub query is concerned, it makes a simple query with the autofilter values
+     * conditioned and orderBy() is not conditioned here. In order to apply orderBy(time or view),
+     * a compound query has to make an index. Thus, once retrieving a result, the autoclub sorts
+     * using Collection.sort(List, Comparator).
+     *
+     * @param source Firestore source - Source.SERVER or Source.CACHE
+     * @param page current page to query
+     * @param autofilter the autoclub page query conditions.
+     */
+    public void setPostingQuery(int page, ArrayList<String> autofilter, boolean isViewCount) {
+        Query query = colRef;
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
-                colRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(source)
-                        .addOnSuccessListener(querySnapshot -> {
-                            this.querySnapshot = querySnapshot;
-                            mListener.setFirstQuery(querySnapshot);
-
-                        }).addOnFailureListener(Throwable::printStackTrace);
+                query = query.orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
-                colRef.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                        .get(source)
-                        .addOnSuccessListener(querySnapshot -> {
-                            this.querySnapshot = querySnapshot;
-                            mListener.setFirstQuery(querySnapshot);
-
-                        }).addOnFailureListener(Throwable::printStackTrace);
+                query = query.orderBy("cnt_view", Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = "auto_club";
                 this.autofilter = autofilter;
+
                 if(autofilter == null || autofilter.size() == 0) return;
-                Query query = colRef;
                 // Query depends on whether the autofilter contains the automaker only or more filter
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
@@ -100,26 +99,33 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     final String field = "auto_filter." + autofilter.get(i);
                     query = query.whereEqualTo(field, true);
                 }
-
-                query.get(source).addOnSuccessListener(autoclubShot -> {
-                    this.querySnapshot = autoclubShot;
-                    mListener.setFirstQuery(autoclubShot);
-                }).addOnFailureListener(Exception::printStackTrace);
-
+                // Compound query that has multiple where() methods to create more specific queries
+                // (Logial AND) but it does not require a composite index which is necessary when
+                // where() methods are combined with a range or array-contains clause. Here, it
+                // is simply combined with orderBy() and limt().
+                log.i("b: %s", isViewCount);
+                String clubOrder = (isViewCount)? "cnt_view" : "timestamp";
+                query = query.orderBy(clubOrder, Query.Direction.DESCENDING);
                 break;
 
             // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION: // notification
                 break;
         }
+
+        query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+            if(e != null) return;
+            this.querySnapshot = querySnapshot;
+            mListener.setFirstQuery(querySnapshot);
+        });
     }
 
     public void setCommentQuery(Source source, final String field, final String docId) {
         this.field = field;
         colRef = firestore.collection("board_general").document(docId).collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .get(source)
-                .addOnSuccessListener(querySnapshot -> {
+                .addSnapshotListener((querySnapshot, e) -> {
+                    if(e != null) return;
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(querySnapshot);
                 });
@@ -151,7 +157,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int firstItemPos = layoutManager.findFirstVisibleItemPosition();
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
-        log.i("Item: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
 
         if(!isLoading && !isLastItem && firstItemPos + visibleItemCount >= totalItemCount) {
             mListener.setNextQueryStart(true);
@@ -161,8 +166,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             // nextQuery.
             isLoading = true;
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-            // Make a next query which has to be handled in a diffent way for the auto club and other
-            // queries.
+            // Making the next query, the autoclub page has to be handled in a diffent way than
+            // the other pages because it queries with different conditions.
             Query nextQuery = colRef;
             if (field.equals("auto_club")) {
                 for (int i = 0; i < autofilter.size(); i++) {
@@ -176,6 +181,19 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                         .startAfter(lastDoc).limit(Constants.PAGINATION);
             }
 
+            nextQuery.limit(Constants.PAGINATION).addSnapshotListener((nextSnapshot, e) -> {
+                // Check if the next query reaches the last document.
+                if(e != null || nextSnapshot == null) return;
+
+                isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
+                isLoading = false; // ready to make a next query
+
+                mListener.setNextQueryStart(false); //hide the loading progressbar
+                mListener.setNextQueryComplete(nextSnapshot); // add the query result to the list.
+
+                querySnapshot = nextSnapshot;
+            });
+            /*
             nextQuery.get().addOnSuccessListener(nextSnapshot -> {
                 // Check if the next query reaches the last document.
                 isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
@@ -186,6 +204,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
                 querySnapshot = nextSnapshot;
             });
+
+             */
 
         }
     }
