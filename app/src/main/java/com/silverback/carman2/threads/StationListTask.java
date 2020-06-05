@@ -48,7 +48,6 @@ public class StationListTask extends ThreadTask implements
         mStationListRunnable = new StationListRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
-
         sparseBooleanArray = new SparseBooleanArray();
 
     }
@@ -109,6 +108,7 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void notifyException(String msg) {
         log.i("Exception occurred: %s", msg);
+        viewModel.getExceptionMessage().postValue(msg);
     }
 
     // The following  callbacks are invoked by StationListRunnable to retrieve stations within
@@ -125,7 +125,6 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public String getStationId() {
-        log.i("Station Id: %s", stnId);
         return stnId;
     }
     // FirestoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
@@ -167,8 +166,7 @@ public class StationListTask extends ThreadTask implements
                 outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
                 break;
 
-            default:
-                break;
+            default: break;
         }
 
         sThreadManager.handleState(this, outState);

@@ -33,7 +33,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void recycle() {
-        log.i("LocationTask: %s", mLocation);
         if(mLocation != null) mLocation = null;
     }
 
@@ -54,12 +53,11 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         viewModel.getLocationException().setValue(msg);
     }
 
-    /*
+
     @Override
     public void handleLocationTask(int state) {
 
         int outstate = -1;
-
         switch(state){
             case LocationRunnable.CURRENT_LOCATION_COMPLETE:
                 outstate = ThreadManager.FETCH_LOCATION_COMPLETED;
@@ -72,5 +70,4 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         sThreadManager.handleState(this, outstate);
     }
 
-     */
 }

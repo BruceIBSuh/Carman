@@ -20,6 +20,7 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<Opinet.GasStnParcelable> currentStation;
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
     private MutableLiveData<SparseBooleanArray> hasCarWash;
+    private MutableLiveData<String> exceptionMessage;
 
     // Get a station list stationos of which are located within a given radius conditions.
     public MutableLiveData<List<Opinet.GasStnParcelable>> getNearStationList() {
@@ -44,6 +45,11 @@ public class StationListViewModel extends ViewModel {
             hasCarWash = new MutableLiveData<>();
         }
         return hasCarWash;
+    }
+
+    public MutableLiveData<String> getExceptionMessage() {
+        if(exceptionMessage == null) exceptionMessage = new MutableLiveData<>();
+        return exceptionMessage;
     }
 
 

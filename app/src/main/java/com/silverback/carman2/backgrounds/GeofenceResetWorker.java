@@ -55,7 +55,7 @@ public class GeofenceResetWorker extends Worker {
                     .setCircularRegion(entity.latitude, entity.longitude, Constants.GEOFENCE_RADIUS)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                    //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
                     .build());
         }
 
@@ -84,6 +84,7 @@ public class GeofenceResetWorker extends Worker {
         // use FLAG_UPDATE_CURRENT.
         //Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
         Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
+        geoIntent.setAction(Constants.NOTI_GEOFENCE);
         mGeofencePendingIntent = PendingIntent.getBroadcast(context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         return mGeofencePendingIntent;

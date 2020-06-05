@@ -101,6 +101,8 @@ public class BaseActivity extends AppCompatActivity {
         userId = getUserIdFromStorage(this);
 
         // Checkk if the network connectivitis ok.
+        isNetworkConnected = notifyNetworkConnected(this);
+        /*
         if(notifyNetworkConnected(this)) {
             log.i("network connection is ok");
             isNetworkConnected = true;
@@ -109,7 +111,17 @@ public class BaseActivity extends AppCompatActivity {
             isNetworkConnected = false;
         }
 
+         */
+
         //checkPermissions();
+    }
+
+    // Check a state of the network
+    public static boolean notifyNetworkConnected(Context context) {
+        ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
+        return networkInfo != null && networkInfo.isConnected();
+        //return connManager.isActiveNetworkMetered();
     }
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
@@ -403,13 +415,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-    // Check a state of the network
-    public static boolean notifyNetworkConnected(Context context) {
-        ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
-        //return networkInfo != null && networkInfo.isConnected();
-        return connManager.isActiveNetworkMetered();
-    }
+
 
 
     // The document id with which user data is uploaded to Firestore is used as USER ID. The Firebase

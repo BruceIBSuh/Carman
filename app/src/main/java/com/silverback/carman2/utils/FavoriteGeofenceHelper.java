@@ -44,7 +44,7 @@ public class FavoriteGeofenceHelper {
     private CarmanDatabase mDB;
     private FavoriteProviderEntity favoriteModel;
 
-    private DocumentReference evalReference;//Set or update the "favorite_num" by category.
+    private DocumentReference evalReference;//set or update the "favorite_num" by category.
     private List<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
     private OnGeofenceListener mListener;
@@ -74,45 +74,46 @@ public class FavoriteGeofenceHelper {
         mListener = listener;
     }
 
-    // Specify the geofences to monitor and to set how related geofence events are triggered.
-    private GeofencingRequest getGeofencingRequest() {
 
+    // Tell Location services that GEOFENCE_TRANSITION_ENTER should be triggerd if the device
+    // is already inside the geofence despite the triggers are made by entrance and exit.
+    private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        // Tell Location services that GEOFENCE_TRANSITION_ENTER should be triggerd if the device
-        // is already inside the geofence despite the triggers are made by entrance and exit.
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
 
     }
 
-    // PendingIntent is to be handed to GeofencingClient of LocationServices and thus,
-    // Geofencingclient calls the explicit service at a later time.
+    // PendingIntent is to be handed to GeofencingClient of LocationServices and Geofencingclient,
+    // thus, calls the service or broadcast receiver e at a later time.
+    //
+    // On Android 8.0 (API level 26) and higher, if an app is running in the background while monitoring
+    // a geofence, then the device responds to geofencing events every couple of minutes.
     private PendingIntent getGeofencePendingIntent() {
-
         // Reuse the PendingIntent if we have already have it
         if(geofencePendingIntent != null) return geofencePendingIntent;
+        // Use FLAG_UPDATE_CURRENT so that the same pending intent back when calling addGeofences()
+        // and removeGeofences().
+        Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
+        geoIntent.setAction(Constants.NOTI_GEOFENCE);
+        geofencePendingIntent = PendingIntent.getBroadcast(context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        // What if the pending intent calls Service based on IntentService?
         //Intent intent = new Intent(context, GeofenceTransitionService.class);
-        Intent intent = new Intent(context, GeofenceBroadcastReceiver.class);
-        intent.setAction(Constants.NOTI_GEOFENCE);
-        geofencePendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
         //return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         return geofencePendingIntent;
     }
 
     /*
-     * Add a gas station or service center not only to Geofence but also to the FavoriteProviderEntitby
+     * Add a gas station or service center not only to Geofence but also to the FavoriteProviderEntity
      * accroding to the category given as a param.
      * @param snapshot DocumentSnapshot queried from Firestore
      * @param placeHolder the last placeholder retrieved from FavoriteProviderEntity.
      * @param category Service provier b/w Constants.GAS and Constants.SVC.
      */
     @SuppressWarnings("ConstantConditions")
-    public void addFavoriteGeofence(
-            final DocumentSnapshot snapshot, final int placeHolder, final int category) {
-
+    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final int placeHolder, final int category) {
         final String providerId = snapshot.getId();
         String providerName;
         String providerCode;
@@ -135,11 +136,13 @@ public class FavoriteGeofenceHelper {
                 break;
 
             case Constants.SVC:
+                // Service location data should be accumulated on users' own activity and save the
+                // data in Firestore, the type of loation data is the geo point, different from the
+                // Katec.
                 if(snapshot.getGeoPoint("geopoint") != null) {
                     double latitude = snapshot.getGeoPoint("geopoint").getLatitude();
                     double longitude = snapshot.getGeoPoint("geopoint").getLongitude();
                     geoPoint = new GeoPoint(longitude, latitude);
-
                 }
 
                 providerName = snapshot.getString("svc_name");
@@ -160,7 +163,7 @@ public class FavoriteGeofenceHelper {
                 .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)//bitwise OR only
-                .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
                 //.setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
                 .build()
         );
@@ -186,7 +189,6 @@ public class FavoriteGeofenceHelper {
                         // Insert the provider into FavoriteProviderEntity, which is notified to
                         // GeneralFragment by increasing the favorite provider number.
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
-
                         // Update the favorite_num field of the evaluation collection
                         evalReference.get().addOnCompleteListener(task -> {
                             if(task.isSuccessful()) {
@@ -205,14 +207,9 @@ public class FavoriteGeofenceHelper {
                         // geofencing.
                         mListener.notifyAddGeofenceCompleted(placeHolder);
 
-                    }).addOnFailureListener(e -> {
-                        log.e("Fail to add favorite: %s", e.getMessage());
-                        mListener.notifyAddGeofenceFailed();
-                    });
+                    }).addOnFailureListener(e -> mListener.notifyAddGeofenceFailed());
 
-        } catch(SecurityException e) {
-            log.w("SecurityException: %s", e.getMessage());
-        }
+        } catch(SecurityException e) { e.printStackTrace(); }
 
 
     }
@@ -241,7 +238,6 @@ public class FavoriteGeofenceHelper {
                 // Delete the provider from FavoriteProviderEntity, which is notified to
                 // GeneralFragment by decreasing the favorite provider number.
                 int placeholder = provider.placeHolder;
-                log.i("placeholder to be deleted: %s", placeholder);
                 mDB.favoriteModel().deleteProvider(provider);
                 evalReference.get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
@@ -253,10 +249,7 @@ public class FavoriteGeofenceHelper {
 
                 mListener.notifyRemoveGeofenceCompleted(placeholder);
             }
-        }).addOnFailureListener(e -> {
-            log.i("failed to remove");
-            mListener.notifyAddGeofenceFailed();
-        });
+        }).addOnFailureListener(e -> mListener.notifyAddGeofenceFailed());
 
     }
 

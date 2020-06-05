@@ -10,11 +10,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Build;
+import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.TaskStackBuilder;
 
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofenceStatusCodes;
 import com.google.android.gms.location.GeofencingEvent;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
@@ -54,10 +57,19 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         switch(action) {
             case Constants.NOTI_GEOFENCE:
                 GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
-                if(geofencingEvent.hasError()) return;
+                if(geofencingEvent.hasError()) {
+                    String errMsg = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.getErrorCode());
+                    Toast.makeText(context, errMsg, Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                //final int geofencingTransition = geofencingEvent.getGeofenceTransition();
-                final Location geofenceLocation = geofencingEvent.getTriggeringLocation();
+                // Get the transition type
+                /*
+                int geofenceTransition = geofencingEvent.getGeofenceTransition();
+                if(geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) log.i("Entered!!");
+                */
+
+                Location geofenceLocation = geofencingEvent.getTriggeringLocation();
                 Location favLocation = new Location("@null");
 
                 // Retrieve all the favorite list. What if multiple providers are closely located

@@ -4,6 +4,8 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
 
+    <color name="primaryColor">#778899</color>
+
     <!-- BoardActivity -->
     <color name="bgToolbar">#778899</color>
     <color name="bgBoardComment">#F5F5F5</color>

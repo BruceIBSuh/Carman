@@ -202,7 +202,7 @@ public class BoardPagerFragment extends Fragment implements
         recyclerPostView = localView.findViewById(R.id.recycler_board_postings);
 
         // In case of inserting the banner, the item size will change.
-        //recyclerPostView.setHasFixedSize(true);
+        recyclerPostView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(
                 getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerPostView.setLayoutManager(layoutManager);
@@ -340,8 +340,12 @@ public class BoardPagerFragment extends Fragment implements
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
             // is added as far as the post_general is true.
-            if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
-            else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
+            if(currentPage == Constants.BOARD_AUTOCLUB || currentPage == Constants.BOARD_NOTIFICATION){
+                snapshotList.add(snapshot);
+            } else {
+                if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
+            }
+
 
         }
 
@@ -349,13 +353,15 @@ public class BoardPagerFragment extends Fragment implements
         // is made to avoid creating compound query index. For this reason, sort the query result
         // which is saved as List using Collection.sort(List, Compatator<T>). Queries in the general
         // board are made sequentially or in terms of view counts.
+        /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             //isViewOrder = false;
             //sortDocumentByTimeOrView();
             postingAdapter.notifyDataSetChanged();
         } else postingAdapter.notifyDataSetChanged();
         //postingAdapter.notifyItemInserted(0);
-
+        */
+        postingAdapter.notifyDataSetChanged();
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
@@ -404,9 +410,16 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putInt("tabPage", currentPage);
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
-        bundle.putString("userId", snapshot.getString("user_id"));
-        bundle.putString("userName", snapshot.getString("user_name"));
-        bundle.putString("userPic", snapshot.getString("user_pic"));
+
+        if(currentPage == Constants.BOARD_NOTIFICATION) {
+            bundle.putString("userId", "0000");
+            bundle.putString("userName", "Admin");
+            bundle.putString("userPic", null);
+        } else {
+            bundle.putString("userId", snapshot.getString("user_id"));
+            bundle.putString("userName", snapshot.getString("user_name"));
+            bundle.putString("userPic", snapshot.getString("user_pic"));
+        }
         bundle.putInt("cntComment", snapshot.getLong("cnt_comment").intValue());
         bundle.putInt("cntCompathy", snapshot.getLong("cnt_compathy").intValue());
         bundle.putString("postContent", snapshot.getString("post_content"));

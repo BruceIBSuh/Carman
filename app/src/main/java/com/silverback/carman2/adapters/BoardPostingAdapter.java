@@ -99,7 +99,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             case CONTENT_VIEW_TYPE:
                 final DocumentSnapshot snapshot = snapshotList.get(position);
 
-                int offset = (int)(position / AD_POSITION) - 1;
+                // Calculate the index number by taking the plugin at the end of the pagination
+                // into account.
+                int offset = (position / AD_POSITION) - 1;
                 int index = (AD_POSITION > position) ? position + 1 : position - offset;
 
                 PostViewHolder postHolder = (PostViewHolder)holder;
@@ -138,12 +140,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             case AD_VIEW_TYPE:
                 break;
-
-
-            default:
-                AdViewHolder adHolder = (AdViewHolder)holder;
-
-
         }
     }
 

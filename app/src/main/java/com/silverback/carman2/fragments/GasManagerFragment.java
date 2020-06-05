@@ -435,15 +435,17 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // Query FavoriteProviderEntity with the fetched station name or station id to tell whether the
     // fetched current station has registered with the entity.
     private void checkGasFavorite(String name, String id) {
-        mDB.favoriteModel().findFavoriteGasName(name, id, Constants.GAS).observe(this, stnName -> {
-            if (TextUtils.isEmpty(stnName)) {
-                isFavoriteGas = false;
-                btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-            } else {
-                isFavoriteGas = true;
-                btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            }
-        });
+        mDB.favoriteModel().findFavoriteGasName(name, id, Constants.GAS)
+                .observe(getViewLifecycleOwner(), stnName -> {
+
+                    if (TextUtils.isEmpty(stnName)) {
+                    isFavoriteGas = false;
+                    btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                    } else {
+                        isFavoriteGas = true;
+                    btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                    }
+                });
     }
 
 

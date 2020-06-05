@@ -116,28 +116,13 @@ public class StationListRunnable implements Runnable{
             }
 
 
-        } catch (MalformedURLException e) {
-            log.e("MalformedURLException: %s", e.getMessage());
-            mTask.notifyException(e.getMessage());
-            mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
-
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-            mTask.notifyException(e.getMessage());
-            mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
-
-        } catch (InterruptedException e) {
-            log.e("InterruptedException: %s", e.getMessage());
+        } catch (IOException | InterruptedException e) {
             mTask.notifyException(e.getMessage());
             mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } finally {
-            try {
-                if(is != null) is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
+            try { if(is != null) is.close(); }
+            catch (IOException e) { e.printStackTrace(); }
             if(conn != null) conn.disconnect();
         }
     }

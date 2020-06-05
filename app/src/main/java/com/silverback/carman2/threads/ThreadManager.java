@@ -12,7 +12,6 @@ import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FirestoreViewModel;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.viewmodels.LocationViewModel;
@@ -40,15 +39,16 @@ public class ThreadManager {
 
     static final int DOWNLOAD_NEAR_STATIONS_COMPLETED = 101;
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
-    static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
+    //static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
 
     static final int DOWNLOAD_IMAGE_FINISH = 201;
 
     static final int UPLOAD_BITMAP_COMPLETED = 1000;
-    static final int UPLOAD_BITMA_COMPLETED = 1001;
+    //static final int UPLOAD_BITMA_COMPLETED = 1001;
 
     //static final int SERVICE_ITEM_LIST_COMPLETED = 109;
-    //static final int FETCH_LOCATION_COMPLETED = 110;
+    static final int FETCH_LOCATION_COMPLETED = 110;
+    static final int FETCH_LOCATION_FAILED = -110;
     //static final int FETCH_ADDRESS_COMPLETED = 111;
     //static final int DOWNLOAD_DISTCODE_COMPLTETED = 112;
     //static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 113;
@@ -67,10 +67,10 @@ public class ThreadManager {
     static final int DOWNLOAD_NEAR_STATIONS_FAILED = -2;
     static final int DOWNLOAD_CURRENT_STATION_FAILED = -4;
     //static final int POPULATE_STATION_LIST_FAILED = -3;
-    static final int DOWNLOAD_STATION_INFO_FAILED = -5;
+    //static final int DOWNLOAD_STATION_INFO_FAILED = -5;
     //static final int FETCH_ADDRESS_FAILED = -6;
     //static final int DOWNLOAD_DISTCODE_FAILED = -7;
-    //static final int FETCH_LOCATION_FAILED = -8;
+
     //static final int SERVICE_ITEM_LIST_FAILED = -9;
 
     // Determine the threadpool parameters.
@@ -99,7 +99,6 @@ public class ThreadManager {
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
-    private final Queue<AutoDataResourceTask> mFirestoreResQueue;
     private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
@@ -134,7 +133,7 @@ public class ThreadManager {
 
         // Queues of tasks, which extends ThreadPool.
         mTaskWorkQueue = new LinkedBlockingQueue<>();
-        mFirestoreResQueue = new LinkedBlockingQueue<>();
+        //mFirestoreResQueue = new LinkedBlockingQueue<>();
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
         mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
@@ -183,9 +182,7 @@ public class ThreadManager {
 
     // Handles state messages for a particular task object
     void handleState(ThreadTask task, int state) {
-
         Message msg = mMainHandler.obtainMessage(state, task);
-
         switch(state) {
             // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
@@ -215,6 +212,7 @@ public class ThreadManager {
             */
 
             default:
+                log.i("handle task: %s", task);
                 msg.sendToTarget();
                 break;
         }
@@ -246,18 +244,6 @@ public class ThreadManager {
             }
         }
     }
-
-    /*
-    public static AutoDataResourceTask startFirestoreResTask(Context context, FirestoreViewModel model) {
-        AutoDataResourceTask task = sInstance.mFirestoreResQueue.poll();
-
-        if(task == null) task = new AutoDataResourceTask(context);
-        task.initResourceTask(model);
-        sInstance.mDownloadThreadPool.execute(task.getFirestoreResRunnable());
-
-        return task;
-    }
-     */
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
@@ -466,11 +452,7 @@ public class ThreadManager {
 
 
     private void recycleTask(ThreadTask task) {
-        log.i("RecycleTask: %s", task);
-        if(task instanceof AutoDataResourceTask) {
-            ((AutoDataResourceTask)task).recycle();
-            mFirestoreResQueue.offer((AutoDataResourceTask)task);
-        } else if(task instanceof LocationTask) {
+        if(task instanceof LocationTask) {
             ((LocationTask)task).recycle();
             mLocationTaskQueue.offer((LocationTask)task);
 
@@ -503,7 +485,11 @@ public class ThreadManager {
             mDistCodeSpinnerTaskQueue.offer((DistCodeSpinnerTask)task);
         }
 
-        if(task.getCurrentThread() != null) task.getCurrentThread().interrupt();
+        // Interrupt the current thread if it is of no use.
+        if(task.getCurrentThread() != null) {
+            log.i("Interrupt the current thread: %s", task.getCurrentThread());
+            task.getCurrentThread().interrupt();
+        }
 
     }
 

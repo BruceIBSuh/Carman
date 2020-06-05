@@ -30,8 +30,8 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
 
     // Constants
     private static final int REQUEST_CHECK_LOCATION_SETTINGS = 1000;
-    //static final int CURRENT_LOCATION_COMPLETE = 100;
-    //static final int CURRENT_LOCATION_FAIL = -100;
+    static final int CURRENT_LOCATION_COMPLETE = 1;
+    static final int CURRENT_LOCATION_FAIL = -1;
 
     // Objects and Fields
     private Context context;
@@ -39,7 +39,6 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     private LocationMethods task;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest locationRequest; //store the Location setting params
-    private Location currentLocation;
 
     static {
         mLocationHelper = CarmanLocationHelper.getLocationInstance();
@@ -50,7 +49,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
         void setDownloadThread(Thread thread);
         void setCurrentLocation(Location location);
         void notifyLocationException(String msg);
-        //void handleLocationTask(int state);
+        void handleLocationTask(int state);
     }
 
     // Constructor
@@ -77,15 +76,11 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     // Check if the Location setting is successful using CarmanLocationHelper
     @Override
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-        log.i("LocationCallback invoked");
-
         LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         if(!locationStates.isGpsUsable()) {
             log.i("GPS is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_gps));
-        }
-
-        if(!locationStates.isNetworkLocationUsable()) {
+        }else if(!locationStates.isNetworkLocationUsable()) {
             log.i("Network location is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_network));
         }
@@ -99,14 +94,12 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
             mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                 if(location != null) {
-                    log.e("Current Location: %s", location);
                     task.setCurrentLocation(location);
-                    //currentLocation = location;
-                    //task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
+                    task.handleLocationTask(CURRENT_LOCATION_FAIL);
+
                 } else {
-                    log.i("Failed to fetch location");
                     task.notifyLocationException(context.getString(R.string.location_null));
-                    //task.handleLocationTask(CURRENT_LOCATION_FAIL);
+                    task.handleLocationTask(CURRENT_LOCATION_FAIL);
                 }
             });
 

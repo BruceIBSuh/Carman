@@ -103,16 +103,17 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // (Logial AND) but it does not require a composite index which is necessary when
                 // where() methods are combined with a range or array-contains clause. Here, it
                 // is simply combined with orderBy() and limt().
-                log.i("b: %s", isViewCount);
                 String clubOrder = (isViewCount)? "cnt_view" : "timestamp";
                 query = query.orderBy(clubOrder, Query.Direction.DESCENDING);
                 break;
 
             // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION: // notification
+                query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
 
+        // Add SnapshotListener to the query built up to the board with its own conditions.
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;

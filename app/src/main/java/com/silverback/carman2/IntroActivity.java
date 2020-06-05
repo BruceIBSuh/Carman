@@ -16,13 +16,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FirestoreViewModel;
-import com.silverback.carman2.viewmodels.OpinetViewModel;
-import com.silverback.carman2.threads.AutoDataResourceTask;
-import com.silverback.carman2.threads.GasPriceTask;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.threads.DistrictCodeTask;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 
 import org.json.JSONArray;
 

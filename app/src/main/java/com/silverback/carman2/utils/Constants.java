@@ -8,6 +8,7 @@ public class Constants {
     public static final int REQUEST_BOARD_SETTING_USERNAME = 2001;
     public static final int REQUEST_BOARD_CAMERA = 2002;
     public static final int REQUEST_BOARD_GALLERY = 2003;
+    public static final int REQUEST_NETWORK_SETTING = 3000;
 
     // Category
     public static final int GAS = 0;

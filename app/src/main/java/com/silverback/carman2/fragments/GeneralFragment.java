@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -19,6 +20,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -51,7 +53,6 @@ import com.silverback.carman2.views.OpinetAvgPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,7 +82,7 @@ public class GeneralFragment extends Fragment implements
     private File favFile;
 
     private LocationViewModel locationModel;
-    private StationListViewModel stnListModel;
+    private StationListViewModel stnModel;
     private FragmentSharedModel fragmentModel;
     //private OpinetViewModel opinetViewModel;
 
@@ -132,14 +133,13 @@ public class GeneralFragment extends Fragment implements
 
         // Create ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
         locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -264,18 +264,14 @@ public class GeneralFragment extends Fragment implements
         // As far as the fragment is first created or the current location outbounds UPDATE_DISTANCE,
         // attempt to retreive a new station list based on the location. On the other hand,
         // if a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
-        // do not initiate the task to get new near stations to prevent frequent connection to
-        // the server.
+        // do not initiate the task to prevent frequent connection to the server.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            if(location == null) {
-                log.e("Location failed to fetch");
-                return;
-            }
+            log.i("no location retrieved: %s", location);
+            if(location == null) return;
 
-            if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE) {
-                log.i("Location succeeded");
+            if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                 mPrevLocation = location;
-                stationListTask = ThreadManager.startStationListTask(stnListModel, location, defaults);
+                stationListTask = ThreadManager.startStationListTask(stnModel, location, defaults);
             } else {
                 Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
@@ -290,13 +286,14 @@ public class GeneralFragment extends Fragment implements
         // Receive station(s) within the radius. If no stations exist, post the message that
         // indicate why it failed to fetch stations. It would be caused by any network problem or
         // no stations actually exist within the radius.
-        stnListModel.getNearStationList().observe(getViewLifecycleOwner(), stnList -> {
+        stnModel.getNearStationList().observe(getViewLifecycleOwner(), stnList -> {
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
                 mAdapter = new StationListAdapter(mStationList, this);
                 stationRecyclerView.showStationListRecyclerView();
                 stationRecyclerView.setAdapter(mAdapter);
                 hasNearStations = true;//To control the switch button
+
             } else {
                 // No near stations post an message that contains the clickable span to link to the
                 // SettingPreferenceActivity for resetting the searching radius.
@@ -308,13 +305,17 @@ public class GeneralFragment extends Fragment implements
         // Update the carwash info to StationList and notify the data change to Adapter.
         // Adapter should not assume that the payload will always be passed to onBindViewHolder()
         // e.g. when the view is not attached.
-        stnListModel.getStationCarWashInfo().observe(getViewLifecycleOwner(), sparseArray -> {
+        stnModel.getStationCarWashInfo().observe(getViewLifecycleOwner(), sparseArray -> {
             for(int i = 0; i < sparseArray.size(); i++) {
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
 
         });
+
+        // Any exception occurs in StationListTask
+        stnModel.getExceptionMessage().observe(getViewLifecycleOwner(), msg ->
+            Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show());
     }
 
     @Override
@@ -328,7 +329,19 @@ public class GeneralFragment extends Fragment implements
         super.onPause();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
+    }
 
+    // Receive any data from Settings.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode == Constants.REQUEST_NETWORK_SETTING) {
+            isNetworkConnected = BaseActivity.notifyNetworkConnected(getActivity());
+            if(isNetworkConnected)
+                stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
+            else
+                Snackbar.make(childView, "Network connection not established", Snackbar.LENGTH_SHORT).show();
+        }
     }
 
     // The following 2 callbacks are initially invoked by AdapterView.OnItemSelectedListener
@@ -391,7 +404,6 @@ public class GeneralFragment extends Fragment implements
                 String order = (bStationsOrder)?
                         getString(R.string.general_stations_price):
                         getString(R.string.general_stations_distance);
-
                 tvStationsOrder.setText(order);
                 mStationList = mAdapter.sortStationList(bStationsOrder);
 
@@ -428,27 +440,17 @@ public class GeneralFragment extends Fragment implements
     private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
 
         File file = new File(getContext().getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
-
         // Delete the file before saving a new list.
         if(file.exists()) {
             boolean delete = file.delete();
             if(delete) log.i("cache cleared");
         }
 
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(list);
-
             return Uri.fromFile(file);
-
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-
-        }
+        } catch (IOException e) { e.printStackTrace();}
 
         return null;
     }
@@ -533,12 +535,10 @@ public class GeneralFragment extends Fragment implements
     // or start SettingPreferenceActivity.
     @SuppressWarnings("ConstantConditions")
     private SpannableString handleStationListException(){
-
         SpannableString spannableString;
-
         if(isNetworkConnected) {
+
             fabLocation.setVisibility(View.VISIBLE);
-            //String radius = mSettings.getString(Constants.SEARCHING_RADIUS, null);
             String radius = defaults[1];
             String msg = getString(R.string.general_no_station_fetched);
 
@@ -552,12 +552,14 @@ public class GeneralFragment extends Fragment implements
             spannableString = new SpannableString(format);
 
             // Set the ClickableSpan range
-            int start = format.indexOf(getString(R.string.general_index_reset));
-            int end = start + 2;
+            String spanned = getString(R.string.general_index_reset);
+            int start = format.indexOf(spanned);
+            int end = start + spanned.length();
+
             spannableString.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    Snackbar.make(childView, "No stations within the radius", Snackbar.LENGTH_SHORT).show();
+                    //Snackbar.make(childView, "No stations within the radius", Snackbar.LENGTH_SHORT).show();
                     getActivity().startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
                 }
             }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -567,16 +569,16 @@ public class GeneralFragment extends Fragment implements
             spannableString = new SpannableString(message);
 
             // Set the ClickableSpan range.
-            int start = message.indexOf(getString(R.string.error_index_retry));
-            int end = start + 5;
+            String spanned = getString(R.string.error_index_retry);
+            int start = message.indexOf(spanned);
+            int end = start + spanned.length();
 
+            // Refactor required: move to network setting to check if it turns on.
             spannableString.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    if(BaseActivity.notifyNetworkConnected(getContext()))
-                        stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
-                    else
-                        Snackbar.make(childView, "Network connection not established", Snackbar.LENGTH_SHORT).show();
+                    Intent networkIntent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
+                    startActivityForResult(networkIntent, Constants.REQUEST_NETWORK_SETTING);
                 }
 
             }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -593,11 +595,8 @@ public class GeneralFragment extends Fragment implements
             ObjectInputStream ois = new ObjectInputStream(is)) {
             Opinet.StationPrice savedFavorite = (Opinet.StationPrice) ois.readObject();
             if(savedFavorite != null) return savedFavorite.getStnId();
-        } catch(IOException e) {
-            log.e("IOException: %s", e.getMessage());
-        } catch(ClassNotFoundException e) {
-            log.e("ClassNotFoundException: %s", e.getMessage());
-        }
+        } catch(IOException | ClassNotFoundException e) { e.printStackTrace();}
+
         return null;
     }
 
@@ -628,7 +627,7 @@ public class GeneralFragment extends Fragment implements
         // if the radius has changed, it is required to retrieve near stations with the radius
         if(radius != null) {
             defaults[1] = radius; //reset a new radius to the defaultParams
-            stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
+            stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
         }
     }
 

@@ -3,7 +3,6 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -51,11 +50,11 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.ApplyImageResourceUtil;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PagingQueryHelper;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
-import com.silverback.carman2.utils.ApplyImageResourceUtil;
-import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -104,9 +103,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
-    private SharedPreferences mSettings;
     private List<DocumentSnapshot> snapshotList;
-    private List<CharSequence> autoclub;
+    //private List<CharSequence> autoclub;
 
 
     // UIs
@@ -114,7 +112,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private ConstraintLayout constPostingLayout, constCommentLayout;
     private Toolbar toolbar;
     private View underline;
-    private RecyclerView recyclerComment;
+    //private RecyclerView recyclerComment;
     private EditText etComment;
     private TextView tvCompathyCnt, tvCommentCnt;
 
@@ -122,7 +120,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
-    private String autoClub;
+    //private String autoClub;
     private String userId, documentId;
     private int tabPage;
     //private int position;
@@ -148,7 +146,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -162,40 +159,16 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
-            //position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
-            autoClub = getArguments().getString("autoClub");
             imgUriList = getArguments().getStringArrayList("uriImgList");
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
             documentId = getArguments().getString("documentId");
-            autoclub = getArguments().getCharSequenceArrayList("autoclub");
-            log.i("DocumentID: %s, %s, %s", tabPage, documentId, autoclub);
         }
-
-        // Get the auto data arguemnt from BoardPagerFragment, which is of JSON string type and
-        // it requires to create JSONArray that may be converted to StringBuilder.
-        /*
-        if(!TextUtils.isEmpty(autoClub)) {
-            try {
-                JSONArray jsonArray = new JSONArray(autoClub);
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < jsonArray.length(); i++)
-                    sb.append(jsonArray.optString(i)).append(" ");
-                autoClub = sb.toString();
-                log.i("autoClub in readposing: %s", autoClub);
-
-            } catch(JSONException e) {
-                e.printStackTrace();
-            }
-
-        } else autoClub = null;
-         */
-
 
         // Get the current document reference which should be shared in the fragment.
         // Initially attach SnapshotListener to have the comment collection updated, then remove
@@ -251,7 +224,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         tvCommentCnt = localView.findViewById(R.id.tv_cnt_comment);
         tvCompathyCnt = localView.findViewById(R.id.tv_cnt_compathy);
         underline = localView.findViewById(R.id.view_underline_header);
-        recyclerComment = localView.findViewById(R.id.recycler_comments);
+        RecyclerView recyclerComment = localView.findViewById(R.id.recycler_comments);
 
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
@@ -273,13 +246,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
-        tvAutoInfo.setText(autoClub);
         tvDate.setText(getArguments().getString("timestamp"));
         tvCommentCnt.setText(String.valueOf(cntComment));
         tvCompathyCnt.setText(String.valueOf(cntCompathy));
 
         // Retreive the auto data from the server and set it to the view
-        //setAutoDataString(tvAutoInfo);
+        showUserAutoClub(tvAutoInfo);
 
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
@@ -718,7 +690,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
             String viewerId = br.readLine();
-            if(userId.equals(viewerId)) {
+            if(userId != null && userId.equals(viewerId)) {
                 toolbar.inflateMenu(R.menu.menu_board_read);
                 toolbar.setOnMenuItemClickListener(item -> {
                     switch(item.getItemId()) {
@@ -767,27 +739,25 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
     }
 
-
-    private void setAutoDataString(TextView autoInfo) {
-        // Get the auto data, which is saved as the type of json string in SharedPreferences, for
-        // displaying it in the post header.
+    // Display the auto club if the user has set the automaker, automodel, enginetype, and autoyear.
+    private void showUserAutoClub(final TextView autoInfo) {
         firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if(document != null && document.exists()) {
-                    String jsonAutoInfo = document.getString("auto_data");
-                    log.i("auto data: %s", jsonAutoInfo);
+                    String jsonAutoInfo = document.getString("user_club");
                     try {
-                        JSONArray jsonArray = new JSONArray(jsonAutoInfo);
+                        JSONArray json = new JSONArray(jsonAutoInfo);
+                        if(json.length() == 0) return;
+
                         StringBuilder sb = new StringBuilder();
-                        for(int i = 0; i < jsonArray.length(); i++) {
-                            sb.append(jsonArray.optString(i)).append(" ");
+                        for(int i = 0; i < json.length(); i++) {
+                            if(json.optString(i) != null && !json.optString(i).equalsIgnoreCase("null")) {
+                                sb.append(json.optString(i)).append(" ");
+                            }
                         }
-
-                        autoClub = sb.toString();
                         autoInfo.setText(sb.toString());
-
-                    } catch(JSONException e) {
+                    } catch(JSONException | NullPointerException e) {
                         e.printStackTrace();
                     }
                 }

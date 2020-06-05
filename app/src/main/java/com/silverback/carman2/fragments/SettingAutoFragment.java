@@ -34,7 +34,7 @@ import java.util.List;
 
 /**
  * This fragment is a split screen PreferenceFragmentCompat which may display multiple preferences
- * on a separate screen with its own preference hierarch that is concerned with the auto data.
+ * on a separate screen with its own preference hierarchy that is concerned with the auto data.
  * Firestore holds comprehensive data to download but special care is required for latency. Thus,
  * upon completion of auto colleciton all at once, transactions should be made with Source.Cache.
  *
