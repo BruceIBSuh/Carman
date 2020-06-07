@@ -73,7 +73,7 @@ public class ServiceManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
-    private FragmentSharedModel fragmentSharedModel;
+    private FragmentSharedModel fragmentModel;
     private PagerAdapterViewModel pagerAdapterModel;
     private LocationViewModel locationModel;
     private ServiceCenterViewModel svcCenterModel;
@@ -148,7 +148,7 @@ public class ServiceManagerFragment extends Fragment implements
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
 
-        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
@@ -283,7 +283,7 @@ public class ServiceManagerFragment extends Fragment implements
                 try {
                     final int pos = i;
                     final String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                    mDB.serviceManagerModel().loadServiceData(name).observe(this, data -> {
+                    mDB.serviceManagerModel().loadServiceData(name).observe(getActivity(), data -> {
                         if(data != null) {
                             mAdapter.setServiceData(pos, data);
                             mAdapter.notifyItemChanged(pos, data);
@@ -305,7 +305,7 @@ public class ServiceManagerFragment extends Fragment implements
         });
 
         // Communcate w/ NumberPadFragment
-        fragmentSharedModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
+        fragmentModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
             switch(viewId) {
@@ -322,11 +322,11 @@ public class ServiceManagerFragment extends Fragment implements
         });
 
         // Communicate b/w RecyclerView.ViewHolder and MemoPadFragment
-        fragmentSharedModel.getSelectedMenu()
+        fragmentModel.getSelectedMenu()
                 .observe(getViewLifecycleOwner(), data -> mAdapter.notifyItemChanged(itemPos, data));
 
         // Get the params for removeGeofence() which are passed from FavroiteListFragment
-        fragmentSharedModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
+        fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
             svcName = entity.providerName;
             svcId = entity.providerId;
             etServiceName.setText(svcName);
@@ -338,7 +338,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
         // update the data in Firestore.
         // Retrieving the evaluation and the comment, set or update the data with the passed id.
-        fragmentSharedModel.getServiceLocation().observe(this, sparseArray -> {
+        fragmentModel.getServiceLocation().observe(getActivity(), sparseArray -> {
             svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
             svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
             svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
@@ -360,7 +360,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Must define FragmentSharedModel.setCurrentFragment() in onCreate , not onActivityCreated()
         // because the value of ragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        fragmentSharedModel.setCurrentFragment(this);
+        fragmentModel.setCurrentFragment(this);
 
     }
 

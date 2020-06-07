@@ -62,7 +62,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                     Toast.makeText(context, errMsg, Toast.LENGTH_SHORT).show();
                     return;
                 }
-
                 // Get the transition type
                 /*
                 int geofenceTransition = geofencingEvent.getGeofenceTransition();
@@ -159,13 +158,11 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
             if(channel != null) channel.setVibrationPattern(new long[]{0, 500, 500, 500, 500, 500});
         } else mBuilder.setVibrate(new long[]{0, 500, 500, 500, 500, 500});
 
-
         Notification notification = mBuilder.build();
 
         // With the Noti tag, NotificationManager.cancel(id) does not work.
         //notiManager.notify(tag, notiId, notification);
         notiManager.notify(notiId, notification);
-
     }
 
     // Create PendingIntent to make ExpenseActivity started when pressing the notification by creating

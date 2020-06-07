@@ -1,19 +1,17 @@
 package com.silverback.carman2.backgrounds;
 
 import android.app.ActivityManager;
-import android.app.IntentService;
-
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Build;
-import android.util.SparseArray;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.JobIntentService;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.TaskStackBuilder;
@@ -29,42 +27,26 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-
-/*
- * This class subclasses IntentService for purposes of an issuing notification when the current
- * location is within the geofence radius preset in Constants.GEOFENCE_RADIUS.
- *
-
- * The Android framework also provides the IntentService subclass of Service that uses a worker
- * thread to handle all of the start requests, one at a time. Using this class is not recommended
- * for new apps as it will not work well starting with Android 8 Oreo, due to the introduction of
- * Background execution limits. Moreover, it's deprecated starting with Android 11. You can use
- * JobIntentService as a replacement for IntentService that is compatible with newer versions of
- * Android.
- *
- */
-
-public class GeofenceTransitionService extends IntentService {
-
-    private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceTransitionService.class);
+public class GeofenceJobIntentService extends JobIntentService {
+    // Logging
+    private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceJobIntentService.class);
 
     // Objects
     private NotificationManagerCompat notiManager;
     private long geoTime;
 
-    // Default constructor
-    public GeofenceTransitionService() {
-        super("GeofenceTransitionService");
+    static final int JOB_ID = 10000;
+    static void enqueueWork(Context context, Intent work) {
+        enqueueWork(context, GeofenceJobIntentService.class, JOB_ID, work);
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        log.i("GeofenceTransitionService");
+    protected void onHandleWork(@NonNull Intent intent) {
+        log.i("onHandleWork starts");
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this);
         notiManager = NotificationManagerCompat.from(this);
 
@@ -83,9 +65,7 @@ public class GeofenceTransitionService extends IntentService {
                 // Retrieve all the favorite list.
                 // What if multiple providers are closely located within the radius?
                 List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
-                //sparseNotiArray = new SparseArray<>();
                 geoTime = System.currentTimeMillis();
-                //int notiId = 0;
 
                 for(FavoriteProviderEntity entity : entities) {
                     log.i("FavoriteEntity: %s", entity.providerName);
@@ -100,7 +80,6 @@ public class GeofenceTransitionService extends IntentService {
                         final int category = entity.category;
 
                         createNotification(notiId, id, name, addrs, category);
-                        //sparseNotiArray.put(notiId++, createNotification(notiId++, providerName, category));
                     }
                 }
 
@@ -120,7 +99,6 @@ public class GeofenceTransitionService extends IntentService {
                 break;
         }
 
-        stopSelf();
     }
 
     private void createNotification(int notiId, String providerId, String name, String addrs, int category) {

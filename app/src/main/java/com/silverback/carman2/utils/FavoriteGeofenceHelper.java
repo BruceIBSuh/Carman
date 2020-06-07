@@ -3,6 +3,7 @@ package com.silverback.carman2.utils;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
@@ -17,7 +18,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
-import com.silverback.carman2.backgrounds.GeofenceBroadcastReceiver;
+import com.silverback.carman2.backgrounds.GeofenceJobIntentService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -91,17 +92,29 @@ public class FavoriteGeofenceHelper {
     // On Android 8.0 (API level 26) and higher, if an app is running in the background while monitoring
     // a geofence, then the device responds to geofencing events every couple of minutes.
     private PendingIntent getGeofencePendingIntent() {
+        log.i("pendingintent");
         // Reuse the PendingIntent if we have already have it
         if(geofencePendingIntent != null) return geofencePendingIntent;
         // Use FLAG_UPDATE_CURRENT so that the same pending intent back when calling addGeofences()
-        // and removeGeofences().
+        // and removeGeofences()
+        /*
         Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
         geoIntent.setAction(Constants.NOTI_GEOFENCE);
-        geofencePendingIntent = PendingIntent.getBroadcast(context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
+        geofencePendingIntent = PendingIntent.getBroadcast(
+                context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        */
         // What if the pending intent calls Service based on IntentService?
-        //Intent intent = new Intent(context, GeofenceTransitionService.class);
-        //return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent geoIntent = new Intent(context, GeofenceJobIntentService.class);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            log.i("startForegroundService");
+            geofencePendingIntent = PendingIntent.getForegroundService(
+                    context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        } else {
+            log.i("startService");
+            geofencePendingIntent = PendingIntent.getService(
+                    context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+
         return geofencePendingIntent;
     }
 
@@ -163,8 +176,8 @@ public class FavoriteGeofenceHelper {
                 .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)//bitwise OR only
-                //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
-                //.setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
+                .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                .setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
                 .build()
         );
 
@@ -185,7 +198,6 @@ public class FavoriteGeofenceHelper {
         try {
             mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                     .addOnSuccessListener(aVoid -> {
-
                         // Insert the provider into FavoriteProviderEntity, which is notified to
                         // GeneralFragment by increasing the favorite provider number.
                         mDB.favoriteModel().insertFavoriteProvider(favoriteModel);
