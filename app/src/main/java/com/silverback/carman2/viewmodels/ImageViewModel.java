@@ -10,15 +10,9 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-/**
- * This class subclasses ViewModel to instantiate LiveData concerning image resources.
- */
 public class ImageViewModel extends ViewModel {
 
-
-
     private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
-
     private MutableLiveData<SparseArray> downloadBitmapUri;
     private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
     private MutableLiveData<Bitmap> glideBitmapTarget;

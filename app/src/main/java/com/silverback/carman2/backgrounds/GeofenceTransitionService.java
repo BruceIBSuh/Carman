@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-/*
+/************** DEPRECATED CLASS REQUIRED TO REMOVE********************************************
  * This class subclasses IntentService for purposes of an issuing notification when the current
  * location is within the geofence radius preset in Constants.GEOFENCE_RADIUS.
  *

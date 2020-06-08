@@ -33,7 +33,9 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-
+/**
+ *
+ */
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceBroadcastReceiver.class);
@@ -45,7 +47,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        log.i("geofencebroadcastreceiver: %s", intent.getAction());
+        log.i("Geofence broadcasting: %s", intent);
         this.context = context;
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(context);
         notiManager = NotificationManagerCompat.from(context);

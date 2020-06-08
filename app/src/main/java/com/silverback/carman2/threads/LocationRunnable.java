@@ -95,7 +95,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                 if(location != null) {
                     task.setCurrentLocation(location);
-                    task.handleLocationTask(CURRENT_LOCATION_FAIL);
+                    task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
 
                 } else {
                     task.notifyLocationException(context.getString(R.string.location_null));
@@ -106,6 +106,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
         } catch (SecurityException e) {
             log.e("Location_SecurityException: %s", e.getMessage());
             task.notifyLocationException(context.getString(R.string.location_exception_security));
+            task.handleLocationTask(CURRENT_LOCATION_FAIL);
 
         } finally {
             log.e("Location finished");
@@ -123,16 +124,14 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
         if(e instanceof ResolvableApiException) {
             // Location Settings are not satisfied, but this can be fixed by showing the user a dialog
             try {
-                log.e("ResolvableApiException");
                 // Show the dialog by calling startResolutionForResult() and check the result in onActivityResult
                 ResolvableApiException resolvable = (ResolvableApiException) e;
                 resolvable.startResolutionForResult((Activity)context, REQUEST_CHECK_LOCATION_SETTINGS);
-                ThreadManager.cancelAllThreads();
-
             } catch (IntentSender.SendIntentException sendEx) {
-                // Ignore the error
-                log.e("LocationSettings exceiption: %s", e.getMessage());
+                e.printStackTrace();
             }
+
+            task.handleLocationTask(CURRENT_LOCATION_FAIL);
         }
     }
 

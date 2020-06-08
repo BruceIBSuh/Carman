@@ -18,6 +18,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
+import com.silverback.carman2.backgrounds.GeofenceBroadcastReceiver;
 import com.silverback.carman2.backgrounds.GeofenceJobIntentService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
@@ -88,23 +89,23 @@ public class FavoriteGeofenceHelper {
 
     // PendingIntent is to be handed to GeofencingClient of LocationServices and Geofencingclient,
     // thus, calls the service or broadcast receiver e at a later time.
-    //
     // On Android 8.0 (API level 26) and higher, if an app is running in the background while monitoring
     // a geofence, then the device responds to geofencing events every couple of minutes.
     private PendingIntent getGeofencePendingIntent() {
-        log.i("pendingintent");
         // Reuse the PendingIntent if we have already have it
         if(geofencePendingIntent != null) return geofencePendingIntent;
         // Use FLAG_UPDATE_CURRENT so that the same pending intent back when calling addGeofences()
         // and removeGeofences()
-        /*
+
         Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
         geoIntent.setAction(Constants.NOTI_GEOFENCE);
         geofencePendingIntent = PendingIntent.getBroadcast(
                 context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        */
+
+        /*
         // What if the pending intent calls Service based on IntentService?
         Intent geoIntent = new Intent(context, GeofenceJobIntentService.class);
+        geoIntent.setAction(Constants.NOTI_GEOFENCE);
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             log.i("startForegroundService");
             geofencePendingIntent = PendingIntent.getForegroundService(
@@ -114,6 +115,7 @@ public class FavoriteGeofenceHelper {
             geofencePendingIntent = PendingIntent.getService(
                     context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         }
+         */
 
         return geofencePendingIntent;
     }

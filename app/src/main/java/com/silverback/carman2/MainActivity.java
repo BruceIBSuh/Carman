@@ -2,12 +2,10 @@ package com.silverback.carman2;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -16,14 +14,12 @@ import androidx.lifecycle.ViewModelProvider;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.ImageViewModel;
-import com.silverback.carman2.viewmodels.OpinetViewModel;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.viewmodels.ImageViewModel;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 
 import org.json.JSONArray;
 
@@ -39,7 +35,7 @@ import java.io.File;
  */
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
 
-    private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
+    //private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
     private CarmanDatabase mDB;
@@ -49,9 +45,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private ApplyImageResourceUtil imgResUtil;
     private ImageViewModel imgModel;
     //private ActionBarDrawerToggle drawerToggle;
+
     // Fields
-    private Drawable appbarIcon;
-    private String userImage;
+    //private Drawable appbarIcon;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -111,9 +107,9 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         }
 
         // MUST be located here b/c it has to be redrawn when startActivityForResult() is called.
-        // Get the user image uri, if any, from SharedPreferences, then uses glide to a drawable
-        // fitting to the action bar, the result of which is notified as a live data using ImageViewModel.
-        userImage = mSettings.getString(Constants.USER_IMAGE, null);
+        // Get the user image uri, if any, from SharedPreferences, then uses Glide to a drawable
+        // fitting to the action bar, the result of which is notified using ImageViewModel.
+        String userImage = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImage))? Constants.imgPath + "ic_user_blank_gray" : userImage;
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
@@ -160,7 +156,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(generalFragment != null) generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
     }
 
-    // DrawerLayout callbacks.
+    // DrawerLayout callbacks which should be applied at an appropritate time for update.
     /*
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
@@ -187,7 +183,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch(item.getItemId()) {
 
             case R.id.action_garage:
@@ -225,12 +220,11 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         alertDialog.show(getSupportFragmentManager(), "FinishAppDialogFragment");
     }
 
-
-    // App closing process, in which cache-clearing code be required.
-    // FinishAppDialogFragment.NoticeDialogListener invokes
-    // to handle how the dialog buttons act according to positive and negative.
-    // The station price file named FILE_CACHED_STATION_PRICE is excluded to delete because
-    // it should retain the price to calculate the difference in the current and previous price.
+    // Implements FinsihAppDialogFragment.NoticeDialogListener, overriding onDialogPositiveClick()
+    // and onDialogNegativeClick().
+    // When clicking the confirm button, the app closes, clearing the cache files that contain
+    // the gas prices as far as the update condition is met and garbage-collecting all the threads
+    // in the threadpool. AT the same time, destroy the db instance which exists statically.
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {

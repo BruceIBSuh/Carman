@@ -1,10 +1,14 @@
 package com.silverback.carman2.backgrounds;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -20,6 +24,21 @@ import com.silverback.carman2.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
+
+/**
+ * This class subclasses Worker class to re-register the previously registered geofences. Registered
+ * geofences are kept in the com.google.process.location process owned by the com.google.android.gms.
+ * However, when the device is rebooted, reinstalled, or the app data is cleard, registered geofences
+ * must be re-registered.
+ *
+ * To do so, WorkManager is appropriate to reset the geofences, which is first required to creates
+ * a custom class subclassing Worker class, then define WorkRequest which contains the work class
+ * as param in the constructor. To submit the workrequest to the system, WorkManager should be
+ * instantiated to put the workrequest in enqueue(workrequest).
+ *
+ * The time the workmanager is going to be executed depends upon the constraints used in WorkRequest
+ * and system optimization as well.
+ */
 
 public class GeofenceResetWorker extends Worker {
 
@@ -46,17 +65,30 @@ public class GeofenceResetWorker extends Worker {
         GeofencingClient geofencingClient = LocationServices.getGeofencingClient(context);
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(context);
         List<FavoriteProviderEntity> favoriteList = mDB.favoriteModel().loadAllFavoriteProvider();
-        log.i("Favorite: %s", favoriteList.size());
 
-        for(FavoriteProviderEntity entity : favoriteList) {
+        // Registered geofences have been saved in the FavoriteProviderEntity of the Room database,
+        // thus, retrieve the geofences, put them in the list and add it in the geofencingclient.
+        for (FavoriteProviderEntity entity : favoriteList) {
             log.i("Favorite: %s, %s, %s", entity.providerName, entity.category, entity.providerId);
             geofenceList.add(new Geofence.Builder()
                     .setRequestId(entity.providerId)
                     .setCircularRegion(entity.latitude, entity.longitude, Constants.GEOFENCE_RADIUS)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                    .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
                     .build());
+        }
+
+        // Check permission. In this case that registered geofences should be reset, the permission
+        // should have already been given b/c it occurs when the device is rebooted or reinstalled.
+        if (ActivityCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            // public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
 
         geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
@@ -64,6 +96,8 @@ public class GeofenceResetWorker extends Worker {
                 .addOnFailureListener(e -> log.e("Adding geofences failed"));
 
     }
+
+
 
     // GeofencingRequest and its nested GeofencingRequestBuilder is to specify the geofences to monitor
     // and to set how related geofence events are triggered.
@@ -74,6 +108,7 @@ public class GeofenceResetWorker extends Worker {
         requestBuilder.addGeofences(geofenceList);
         return requestBuilder.build();
     }
+
 
     private PendingIntent getGeofencePendingIntent() {
         if(mGeofencePendingIntent != null) {

@@ -63,9 +63,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
- * This fragment belongs to MainActivity and it contains the price information, the latest expenditure
- * and near stations based on the current location. Multi fragments may be introduced in MainActivy
- * to show a variety of auto-related contents.
+ * This fragment is to display the gas prices and near stations.
  */
 
 public class GeneralFragment extends Fragment implements
@@ -221,8 +219,7 @@ public class GeneralFragment extends Fragment implements
         // pass the id to PricePagerFragment by FramentSharedModel and update the adapter.
         mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
             savedId = getSavedFirstFavorite(getContext());
-            log.i("Compare ids: %s, %s", stnId, savedId);
-            // A station is added to the favroite list.
+            // A new station is reset to the first favroite list.
             if(stnId != null) {
                 if(savedId == null || !stnId.matches(savedId)) {
                     pricePagerAdapter.notifyDataSetChanged();
@@ -258,7 +255,6 @@ public class GeneralFragment extends Fragment implements
                 });
             }
         });
-
 
         // On fetching the current location, start to get the near stations based on the location.
         // As far as the fragment is first created or the current location outbounds UPDATE_DISTANCE,
@@ -593,16 +589,17 @@ public class GeneralFragment extends Fragment implements
         Uri uri = Uri.fromFile(favFile);
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
+
             Opinet.StationPrice savedFavorite = (Opinet.StationPrice) ois.readObject();
             if(savedFavorite != null) return savedFavorite.getStnId();
+
         } catch(IOException | ClassNotFoundException e) { e.printStackTrace();}
 
         return null;
     }
 
-    // Invalidate the views the data of which have changed in SettingPreferenceActivity
+    // Invalidate the views, the data of which have changed in SettingPreferenceActivity
     public void resetGeneralFragment(boolean isDistrict, String fuelCode, String radius) {
-
         // If the default district has changed, which has initiated GasPriceTask to fetch price data
         // in SettingPreferenceActivity,  newly set the apdater to the pager.
         if(isDistrict) {

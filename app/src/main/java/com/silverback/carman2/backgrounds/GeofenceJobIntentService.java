@@ -31,6 +31,24 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * *****************Reference class not working for now.***************************************
+ *
+ * This service subclasses JobIntentService, replacing IntentService, which is deprecated as of
+ * API 28(Android O), to start a foreground service in a background thread when geofencing evnet
+ * triggers.
+ *
+ * The background service is very limited to run unless the app is in the foreground. Thus, to be
+ * notified of geofence triggers, a broadcast receiver is applied and this class is suspended to run.
+ *
+ * For refererence only.
+ * The Android framework also provides the IntentService subclass of Service that uses a worker
+ * thread to handle all of the start requests, one at a time. Using this class is not recommended
+ * for new apps as it will not work well starting with Android 8 Oreo, due to the introduction of
+ * Background execution limits. Moreover, it's deprecated starting with Android 11. You can use
+ * JobIntentService as a replacement for IntentService that is compatible with newer versions of
+ * Android.
+ */
 public class GeofenceJobIntentService extends JobIntentService {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceJobIntentService.class);

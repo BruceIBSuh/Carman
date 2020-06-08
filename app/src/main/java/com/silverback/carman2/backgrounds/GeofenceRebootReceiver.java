@@ -23,8 +23,8 @@ public class GeofenceRebootReceiver extends BroadcastReceiver {
         if(intent.getAction().equalsIgnoreCase(Intent.ACTION_BOOT_COMPLETED) ||
                 intent.getAction().equalsIgnoreCase(Intent.ACTION_LOCKED_BOOT_COMPLETED)) {
 
-
-            // Create WorkRequest to put it in WorkManager.enqueue().
+            // Create WorkRequest to put it in WorkManager.enqueue(). Constraints may be defined here
+            // to indicate when or how the work runs.
             OneTimeWorkRequest resetGeofence = new OneTimeWorkRequest.Builder(GeofenceResetWorker.class).build();
             WorkManager.getInstance(context).enqueue(resetGeofence);
         }
