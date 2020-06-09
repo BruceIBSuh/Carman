@@ -50,6 +50,7 @@ public class SettingServiceItemFragment extends Fragment implements
 
 
     // Objects
+    private OnToolbarTitleListener mToolbarListener;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
     private SharedPreferences mSettings;
@@ -66,6 +67,17 @@ public class SettingServiceItemFragment extends Fragment implements
     public SettingServiceItemFragment() {
         // Required empty public constructor
     }
+
+    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
+    // be reset to the current tile.
+    public interface OnToolbarTitleListener {
+        void notifyResetTitle();
+    }
+    // Set the listener to the parent activity for reverting the toolbar title.
+    public void setTitleListener(OnToolbarTitleListener titleListener) {
+        mToolbarListener = titleListener;
+    }
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -166,6 +178,7 @@ public class SettingServiceItemFragment extends Fragment implements
             case android.R.id.home:
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
                 //startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+                mToolbarListener.notifyResetTitle();
                 return true;
 
             case R.id.menu_add_item:

@@ -31,7 +31,10 @@ import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.fragments.SettingAutoFragment;
 import com.silverback.carman2.fragments.SettingBaseFragment;
+import com.silverback.carman2.fragments.SettingFavorGasFragment;
+import com.silverback.carman2.fragments.SettingFavorSvcFragment;
 import com.silverback.carman2.fragments.SettingPreferenceFragment;
+import com.silverback.carman2.fragments.SettingServiceItemFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -260,6 +263,19 @@ public class SettingPreferenceActivity extends BaseActivity implements
             getSupportActionBar().setTitle(getString(R.string.pref_auto_title));
             ((SettingAutoFragment) fragment).setTitleListener(this);
         }
+        /*
+        else if(fragment instanceof SettingFavorGasFragment) {
+            getSupportActionBar().setTitle(getString(R.string.pref_favorite_gas));
+            ((SettingFavorGasFragment) fragment).setTitleListener(this);
+        } else if(fragment instanceof SettingFavorSvcFragment) {
+            getSupportActionBar().setTitle(getString(R.string.pref_favorite_svc));
+            ((SettingFavorSvcFragment) fragment).setTitleListener(this);
+        } else if(fragment instanceof SettingServiceItemFragment) {
+            getSupportActionBar().setTitle(getString(R.string.pref_favorite_svc));
+            ((SettingServiceItemFragment) fragment).setTitleListener(this);
+        }
+
+         */
 
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportFragmentManager().beginTransaction()

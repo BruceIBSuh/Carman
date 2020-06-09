@@ -69,6 +69,8 @@ public class UploadPostRunnable implements Runnable {
                         mTask.notifyUploadDone(docref.getId());
                     })
                     .addOnFailureListener(e -> log.e("Upload failed: %s"));
+        }).addOnFailureListener(aVoid -> {
+            log.e("upload failed");
         });
 
     }

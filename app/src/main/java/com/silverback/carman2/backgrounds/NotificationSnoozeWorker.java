@@ -1,10 +1,7 @@
 package com.silverback.carman2.backgrounds;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -29,17 +26,16 @@ public class NotificationSnoozeWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-
         /*
          * Refactor considered. WorkManager and AlarmManager put in togetehr should be OK?
          * More research is required.
          */
-        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-
+        //AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         // MAKE THE SNOOZE DURATION SET IN SETTINGPREFERENCEACTIVITY WITH ANDROID N OR BELOW.(NOT CODED YET)
         // ANDROID O AND HIGHER, THE DURATION IS SET BY EMBEDDED FUNCTION.
-        final long delay = Constants.SNOOZE_DURATION;
+        //final long delay = Constants.SNOOZE_DURATION;
 
+        // Get the data which have been set in OneTimeWorkRequest defined in SnoozeBoradcastReceiver.
         String providerName = getInputData().getString(Constants.GEO_NAME);
         String providerId = getInputData().getString(Constants.GEO_ID);
         String providerAddrs = getInputData().getString(Constants.GEO_ADDRS);
@@ -47,9 +43,8 @@ public class NotificationSnoozeWorker extends Worker {
         long geoTime = getInputData().getLong(Constants.GEO_TIME, 0L);
         int notiId = getInputData().getInt(Constants.NOTI_ID, -1);
 
-        log.i("Worker input data: %s, %s, %s, %s", providerName, category, geoTime, providerAddrs);
-
-        //Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
+        // Put the data to the intent and send out to GeofenceBroadcastReceiver for displaying the
+        // notification.
         Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
         geoIntent.setAction(Constants.NOTI_SNOOZE);
         geoIntent.putExtra(Constants.GEO_ID, providerId);
@@ -57,14 +52,18 @@ public class NotificationSnoozeWorker extends Worker {
         geoIntent.putExtra(Constants.GEO_ADDRS, providerAddrs);
         geoIntent.putExtra(Constants.GEO_CATEGORY, category);
         geoIntent.putExtra(Constants.GEO_TIME, geoTime);
-        //PendingIntent pendingIntent = PendingIntent.getService(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
+        geoIntent.putExtra(Constants.NOTI_ID, notiId);
+        //PendingIntent.getBroadcast(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
 
+        context.sendBroadcast(geoIntent);
+
+        /*
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);
         } else {
             alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);
         }
+         */
 
         return Result.success();
     }

@@ -40,7 +40,7 @@ public class StationListRunnable implements Runnable{
         void setStationTaskThread(Thread thread);
         void setStationList(List<Opinet.GasStnParcelable> list);
         void setCurrentStation(Opinet.GasStnParcelable station);
-        void notifyException(String msg);
+        //void notifyException(String msg);
         void handleStationTaskState(int state);
     }
 
@@ -117,7 +117,7 @@ public class StationListRunnable implements Runnable{
 
 
         } catch (IOException | InterruptedException e) {
-            mTask.notifyException(e.getMessage());
+            //mTask.notifyException(e.getMessage());
             mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
 
         } finally {

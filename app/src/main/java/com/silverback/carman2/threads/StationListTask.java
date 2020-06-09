@@ -72,7 +72,6 @@ public class StationListTask extends ThreadTask implements
     @Override
     public synchronized void setStationTaskThread(Thread thread) {
         setCurrentThread(thread);
-        log.i("Download Thread: %s", thread);
     }
 
     @Override
@@ -93,7 +92,7 @@ public class StationListTask extends ThreadTask implements
         // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
         // incur a unexpectable result.
         if(sparseBooleanArray.size() == mStationList.size()) {
-            log.i("Invoke CarWash viewmodel");
+            //log.i("Invoke CarWash viewmodel");
             viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
         }
     }
@@ -105,11 +104,13 @@ public class StationListTask extends ThreadTask implements
         viewModel.getCurrentStation().postValue(station);
     }
 
+    /*
     @Override
     public void notifyException(String msg) {
-        log.i("Exception occurred: %s", msg);
-        viewModel.getExceptionMessage().postValue(msg);
+        //log.i("Exception occurred: %s", msg);
+        //viewModel.getExceptionMessage().postValue(msg);
     }
+    */
 
     // The following  callbacks are invoked by StationListRunnable to retrieve stations within
     // a radius and location, then give them back by setStationList().

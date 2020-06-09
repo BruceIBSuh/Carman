@@ -64,8 +64,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * The viewpager contains this fragment which consists of 4 pages to show posts which have been
- * queried based on time, view counts, autoclub filter, and admin notification.
+ * The viewpager contains this fragment consisting of 4 pages, the fragmentstateadapter of which shows
+ * posts queried based on time, view counts, autoclub filter, and admin notification.
  */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
@@ -225,6 +225,7 @@ public class BoardPagerFragment extends Fragment implements
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
+
         pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
 
         return localView;
@@ -257,7 +258,6 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
-                //snapshotList.clear();
                 pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
             }
         });

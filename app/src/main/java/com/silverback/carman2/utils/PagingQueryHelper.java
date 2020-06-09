@@ -102,7 +102,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // Compound query that has multiple where() methods to create more specific queries
                 // (Logial AND) but it does not require a composite index which is necessary when
                 // where() methods are combined with a range or array-contains clause. Here, it
-                // is simply combined with orderBy() and limt().
+                // is simply combined with orderBy() and limt(), thus, no compount query is required.
                 String clubOrder = (isViewCount)? "cnt_view" : "timestamp";
                 query = query.orderBy(clubOrder, Query.Direction.DESCENDING);
                 break;
@@ -114,6 +114,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         }
 
         // Add SnapshotListener to the query built up to the board with its own conditions.
+        // Refactor should be considered to apply Source.CACHE or Source.SERVER depending on whehter
+        // querysnapshot has existed or hasPendingWrite is true.
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;

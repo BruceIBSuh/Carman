@@ -37,6 +37,7 @@ public class SettingFavorSvcFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorSvcFragment.class);
 
     // Objects
+    private OnToolbarTitleListener mToolbarListener;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private List<FavoriteProviderEntity> favoriteEntityList;
@@ -47,6 +48,18 @@ public class SettingFavorSvcFragment extends Fragment implements
     public SettingFavorSvcFragment() {
         // Required empty public constructor
     }
+
+    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
+    // be reset to the current tile.
+    public interface OnToolbarTitleListener {
+        void notifyResetTitle();
+    }
+    // Set the listener to the parent activity for reverting the toolbar title.
+    public void setTitleListener(OnToolbarTitleListener titleListener) {
+        mToolbarListener = titleListener;
+    }
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -67,7 +80,7 @@ public class SettingFavorSvcFragment extends Fragment implements
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        mDB.favoriteModel().queryFavoriteProviders(Constants.SVC).observe(this, favoriteList -> {
+        mDB.favoriteModel().queryFavoriteProviders(Constants.SVC).observe(getViewLifecycleOwner(), favoriteList -> {
             for(int i = 0; i < favoriteList.size(); i++) {
                 log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
             }
@@ -118,6 +131,7 @@ public class SettingFavorSvcFragment extends Fragment implements
             }
 
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
+            mToolbarListener.notifyResetTitle();
 
             //getActivity().onBackPressed();
             //startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));

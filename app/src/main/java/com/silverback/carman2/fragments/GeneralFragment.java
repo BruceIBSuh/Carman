@@ -122,7 +122,8 @@ public class GeneralFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
+        //isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
+        isNetworkConnected = BaseActivity.notifyNetworkConnected(getContext());
 
         //favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
@@ -272,6 +273,7 @@ public class GeneralFragment extends Fragment implements
                 Snackbar.make(childView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
         });
+
         // Location has failed to fetch.
         locationModel.getLocationException().observe(getViewLifecycleOwner(), exception -> {
             SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
@@ -310,8 +312,11 @@ public class GeneralFragment extends Fragment implements
         });
 
         // Any exception occurs in StationListTask
+        /*
         stnModel.getExceptionMessage().observe(getViewLifecycleOwner(), msg ->
             Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show());
+
+         */
     }
 
     @Override
@@ -327,7 +332,8 @@ public class GeneralFragment extends Fragment implements
         if(stationListTask != null) stationListTask = null;
     }
 
-    // Receive any data from Settings.
+    // If no network connection is found, show a message that contains the clickable span to
+    // perform startActivityForResult() which is defined in handleStationListException().
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -335,8 +341,7 @@ public class GeneralFragment extends Fragment implements
             isNetworkConnected = BaseActivity.notifyNetworkConnected(getActivity());
             if(isNetworkConnected)
                 stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
-            else
-                Snackbar.make(childView, "Network connection not established", Snackbar.LENGTH_SHORT).show();
+            //else Snackbar.make(childView, getString(R.string.errror_no_network), Snackbar.LENGTH_SHORT).show();
         }
     }
 
@@ -531,6 +536,7 @@ public class GeneralFragment extends Fragment implements
     // or start SettingPreferenceActivity.
     @SuppressWarnings("ConstantConditions")
     private SpannableString handleStationListException(){
+
         SpannableString spannableString;
         if(isNetworkConnected) {
 
@@ -555,7 +561,6 @@ public class GeneralFragment extends Fragment implements
             spannableString.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    //Snackbar.make(childView, "No stations within the radius", Snackbar.LENGTH_SHORT).show();
                     getActivity().startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
                 }
             }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

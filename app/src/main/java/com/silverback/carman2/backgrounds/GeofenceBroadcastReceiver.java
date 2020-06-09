@@ -34,6 +34,13 @@ import java.util.List;
 import java.util.Locale;
 
 /**
+ * This BroadcastReceiver notices that the user has entered or exited a geofence, on which Location
+ * Services has invoked the intent contained in the PendingIntent that the user included in the request
+ * to add geofences. The receiver obtains the geofencing event from the intent that determine the type
+ * of Geofence transitions and which of the defined geofences was triggered.
+ *
+ * Accroding to an action set in the intent, it handles either the general notification or the snooze
+ * notification.
  *
  */
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
@@ -53,6 +60,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         notiManager = NotificationManagerCompat.from(context);
         String action = intent.getAction();
         if(action == null) return;
+        log.i("action: %s", intent.getAction());
 
         // Fork the procedure according to Intent.getAction() which should be either Geofencing
         // or Snoozing.
@@ -64,41 +72,44 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                     Toast.makeText(context, errMsg, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // Get the transition type
-                /*
+                // Get the transition type and send notificatoin as far as Geofence.Geofence_TRANSITION_
+                // ENTER is concerned.
                 int geofenceTransition = geofencingEvent.getGeofenceTransition();
-                if(geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) log.i("Entered!!");
-                */
+                if(geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                    Location geofenceLocation = geofencingEvent.getTriggeringLocation();
+                    List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+                    Location favLocation = new Location("@null");
+                    log.i("GeofenceTransitionDetails: %s", triggeringGeofences);
 
-                Location geofenceLocation = geofencingEvent.getTriggeringLocation();
-                Location favLocation = new Location("@null");
+                    // Retrieve all the favorite list. What if multiple providers are closely located
+                    // within the radius?
+                    List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
+                    geoTime = System.currentTimeMillis();
 
-                // Retrieve all the favorite list. What if multiple providers are closely located
-                // within the radius?
-                List<FavoriteProviderEntity> entities = mDB.favoriteModel().loadAllFavoriteProvider();
-                geoTime = System.currentTimeMillis();
-                //int notiId = 0;
+                    // Compare the location in the db with the geofencing location, then get a provider
+                    // located within the preset radius.
+                    for (FavoriteProviderEntity entity : entities) {
+                        favLocation.setLongitude(entity.longitude);
+                        favLocation.setLatitude(entity.latitude);
 
-                // Compare the location in the db with the geofencing location, then get a provider
-                // located within the preset radius.
-                for(FavoriteProviderEntity entity : entities) {
-                    favLocation.setLongitude(entity.longitude);
-                    favLocation.setLatitude(entity.latitude);
+                        if (geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
+                            final int notiId = createID();
+                            final String name = entity.providerName;
+                            final String id = entity.providerId;
+                            final String addrs = entity.address;
+                            final int category = entity.category;
+                            log.i("FavoriteProviderEntity: %s, %s, %s, %s, %s", notiId, name, id, addrs, category);
 
-                    if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
-                        final int notiId = createID();
-                        final String name = entity.providerName;
-                        final String id = entity.providerId;
-                        final String addrs = entity.address;
-                        final int category = entity.category;
-
-                        createNotification(notiId, id, name, addrs, category);
+                            createNotification(notiId, id, name, addrs, category);
+                            break;
+                        }
                     }
                 }
 
                 break;
 
             case Constants.NOTI_SNOOZE:
+                log.i("Snooze noti");
                 String providerId = intent.getStringExtra(Constants.GEO_ID);
                 String providerName = intent.getStringExtra(Constants.GEO_NAME);
                 String providerAddrs = intent.getStringExtra(Constants.GEO_ADDRS);
@@ -122,13 +133,10 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
         switch(category) {
             case Constants.GAS:
-                //title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_gas), name);
                 extendedText = context.getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                //title = String.format("%-6s%s", context.getString(R.string.noti_geofence_title_svc), name);
-                //title = context.getString(R.string.noti_geofence_title_svc);
                 extendedText = context.getResources().getString(R.string.noti_geofence_content_svc);
                 break;
 
@@ -137,8 +145,8 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
         // Create PendingIntents for setContentIntent and addAction(Snooze)
         PendingIntent resultPendingIntent = createResultPendingIntent(notiId, providerId, name, category);
-        PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, providerId, name, category);
-        int icon = (category == Constants.GAS)? R.drawable.ic_gas_station:R.drawable.ic_service_center;
+        PendingIntent snoozePendingIntent = createSnoozePendingIntent(notiId, providerId, name, addrs, category);
+        int icon = (category == Constants.GAS)? R.drawable.ic_gas_station : R.drawable.ic_service_center;
 
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(context, Constants.CHANNEL_ID);
         mBuilder.setSmallIcon(icon)
@@ -196,13 +204,16 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     }
 
     // Create PendingIntent which is used in SnoozeBroadcastReceiver when pressing "Snooze".
-    private PendingIntent createSnoozePendingIntent(int notiId, String providerId, String name, int category) {
+    private PendingIntent createSnoozePendingIntent(
+            int notiId, String providerId, String name, String addrs, int category) {
+
         Intent snoozeIntent = new Intent(context, SnoozeBroadcastReceiver.class);
         snoozeIntent.setAction(Constants.NOTI_SNOOZE);
         snoozeIntent.putExtra(Constants.GEO_ID, providerId);
         snoozeIntent.putExtra(Constants.GEO_NAME, name);
         snoozeIntent.putExtra(Constants.GEO_CATEGORY, category);
         snoozeIntent.putExtra(Constants.GEO_TIME, geoTime);
+        snoozeIntent.putExtra(Constants.GEO_ADDRS, addrs);
         snoozeIntent.putExtra(Constants.NOTI_ID,  notiId);
 
         return PendingIntent.getBroadcast(context, notiId, snoozeIntent, 0);

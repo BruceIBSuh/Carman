@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FieldValue;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardImageAdapter;
@@ -81,6 +82,7 @@ public class BoardWriteFragment extends DialogFragment implements
     //private ArrayList<String> autofilter;
     private SparseArray<String> downloadImages;
     //private boolean isGeneralPost;
+    private boolean isNetworkConnected;
 
 
     // Constructor
@@ -99,6 +101,7 @@ public class BoardWriteFragment extends DialogFragment implements
             tabPage = getArguments().getInt("tabPage");
         }
 
+        isNetworkConnected = BaseActivity.notifyNetworkConnected(getContext());
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         uriImgList = new ArrayList<>();
         downloadImages = new SparseArray<>();

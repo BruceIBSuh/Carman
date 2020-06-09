@@ -249,13 +249,27 @@ public class BoardActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_upload_post:
+                // Network check. If no network exists, no matter what is wifi or mobile data,
+                // show the error message and nothing is done.
+                // Refactor: WorkManager should be applied to upload a post as any network is
+                // re-established.
+                if(!isNetworkConnected) {
+                    log.e("no network error");
+                    String errNoNetwork = getString(R.string.error_no_network_upload_fail);
+                    Snackbar.make(coordinatorLayout, errNoNetwork, Snackbar.LENGTH_SHORT).show();
+                    return false;
+                }
+
+                // Make it differencitated that what the current page contains b/w BoardWriteFragment
+                // and BoardEditFragment.
                 boolean isWriteMode = (writePostFragment != null) &&
                         frameLayout.getChildAt(0) == writePostFragment.getView();
                 if(isWriteMode) writePostFragment.prepareAttachedImages();
                 else editPostFragment.prepareUpdate();
                 return true;
 
-            default: return super.onOptionsItemSelected(item);
+            default:
+                return super.onOptionsItemSelected(item);
         }
 
     }
@@ -733,7 +747,7 @@ public class BoardActivity extends BaseActivity implements
             if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
 
-        Toast.makeText(this, "Upload Done", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Upload Done", Toast.LENGTH_SHORT).show();
 
     }
 

@@ -48,6 +48,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
 
     // Objects
+    private OnToolbarTitleListener mToolbarListener;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
@@ -59,6 +60,17 @@ public class SettingFavorGasFragment extends Fragment implements
     // Constructor
     public SettingFavorGasFragment() {
         // Required empty public constructor
+    }
+
+    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
+    // be reset to the current tile.
+    public interface OnToolbarTitleListener {
+        void notifyResetTitle();
+    }
+
+    // Set the listener to the parent activity for reverting the toolbar title.
+    public void setTitleListener(OnToolbarTitleListener titleListener) {
+        mToolbarListener = titleListener;
     }
 
     @Override
@@ -81,7 +93,7 @@ public class SettingFavorGasFragment extends Fragment implements
         recyclerView.setLayoutManager(layoutManager);
 
         // Query the favorite gas stations from FavoriteProviderEntity
-        mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(this, favoriteList -> {
+        mDB.favoriteModel().queryFavoriteProviders(Constants.GAS).observe(getViewLifecycleOwner(), favoriteList -> {
 
             this.favList = favoriteList;
             mAdapter = new SettingFavoriteAdapter(favoriteList, sparseSnapshotArray, this);
@@ -156,6 +168,7 @@ public class SettingFavorGasFragment extends Fragment implements
             }
 
             mDB.favoriteModel().updatePlaceHolder(favList);
+            mToolbarListener.notifyResetTitle();
 
             return true;
 
