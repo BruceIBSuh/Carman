@@ -136,7 +136,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
 
-        if(requestCode != Constants.REQUEST_MAIN_SETTING_OPTIONSITEM || resultCode != RESULT_OK)  return;
+        if(requestCode != Constants.REQUEST_MAIN_SETTING_OPTIONSITEM || resultCode != RESULT_OK) return;
 
         boolean isDistrictReset = intent.getBooleanExtra("isDistrictReset", false);
         String userName = intent.getStringExtra("userName");

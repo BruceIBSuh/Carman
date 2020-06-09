@@ -50,9 +50,8 @@ public class SettingServiceItemFragment extends Fragment implements
 
 
     // Objects
-    private OnToolbarTitleListener mToolbarListener;
     private CarmanDatabase mDB;
-    private FragmentSharedModel fragmentSharedModel;
+    private FragmentSharedModel fragmentModel;
     private SharedPreferences mSettings;
     private SettingServiceItemAdapter mAdapter;
     private SettingSvcItemDlgFragment dlgFragment;
@@ -67,17 +66,6 @@ public class SettingServiceItemFragment extends Fragment implements
     public SettingServiceItemFragment() {
         // Required empty public constructor
     }
-
-    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
-    // be reset to the current tile.
-    public interface OnToolbarTitleListener {
-        void notifyResetTitle();
-    }
-    // Set the listener to the parent activity for reverting the toolbar title.
-    public void setTitleListener(OnToolbarTitleListener titleListener) {
-        mToolbarListener = titleListener;
-    }
-
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -103,16 +91,14 @@ public class SettingServiceItemFragment extends Fragment implements
         // ViewModel to share data b/w SettingServiceItemFragment and SettingSvcItemDlgFragment.
         // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
         // which are passed here using FragmentSharedModel as the type of List<String>
-        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-
-        fragmentSharedModel.getJsonServiceItemObject().observe(this, jsonObject -> {
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        fragmentModel.getJsonServiceItemObj().observe(this, jsonObject -> {
             // This is kind of an expedient code to invoke getItemCount() in which a new item is added
             // to ArrayList(svcItemList). A right coding should be notifyItemChanged(position, payloads)
             // which calls the partial binding to update the dataset but it seems not work here.
             // It looks like the new item has not been added to the list before notifyItemChanged
             // is called such that payloads shouldn't be passed.
             boolean isExist = false;
-
             for(int i = 0; i < jsonSvcItemArray.length(); i++) {
                 // Compare Strings which is required to refactor with RegExp.
                 try {
@@ -161,7 +147,7 @@ public class SettingServiceItemFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
-        if(fragmentSharedModel != null) fragmentSharedModel = null;
+        if(fragmentModel != null) fragmentModel = null;
     }
 
     // Create the Toolbar option menu when the fragment is instantiated.
@@ -177,8 +163,6 @@ public class SettingServiceItemFragment extends Fragment implements
         switch(item.getItemId()) {
             case android.R.id.home:
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                //startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
-                mToolbarListener.notifyResetTitle();
                 return true;
 
             case R.id.menu_add_item:

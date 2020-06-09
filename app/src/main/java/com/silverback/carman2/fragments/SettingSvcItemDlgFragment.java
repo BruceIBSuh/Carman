@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
@@ -30,11 +31,9 @@ import org.json.JSONObject;
  */
 public class SettingSvcItemDlgFragment extends DialogFragment {
 
-    // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemDlgFragment.class);
-
     // Objects
-    private FragmentSharedModel sharedModel;
+    private FragmentSharedModel fragmentModel;
     private SharedPreferences mSettings;
 
     public SettingSvcItemDlgFragment() {
@@ -44,7 +43,10 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null) mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        if(getActivity() != null)
+            mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
 
@@ -63,33 +65,28 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
 
         etMileage.setOnFocusChangeListener((v, hasFocus) -> {
             if(!TextUtils.isEmpty(etMileage.getText()) && !hasFocus) {
-                int avgMileage = Integer.valueOf(mSettings.getString(Constants.AVERAGE, "5000"));
-                int calcMileage = (Integer.valueOf(etMileage.getText().toString()) / avgMileage) * 12;
+                int avgMileage = Integer.parseInt(mSettings.getString(Constants.AVERAGE, "5000"));
+                int calcMileage = (Integer.parseInt(etMileage.getText().toString()) / avgMileage) * 12;
                 etMonth.setText(String.valueOf(calcMileage));
             }
-
         });
 
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(localView)
-                .setPositiveButton("confirm", (dialog, which) -> {
+        String confirm = getString(R.string.dialog_btn_confirm);
+        String cancel = getString(R.string.dialog_btn_cancel);
+        builder.setView(localView).setPositiveButton(confirm, (dialog, which) -> {
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("name", etItemName.getText().toString());
+                jsonObject.put("mileage", etMileage.getText().toString());
+                jsonObject.put("month", etMonth.getText().toString());
+                fragmentModel.getJsonServiceItemObj().setValue(jsonObject);
 
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject.put("name", etItemName.getText().toString());
-                        jsonObject.put("mileage", etMileage.getText().toString());
-                        jsonObject.put("month", etMonth.getText().toString());
-
-                        ViewModelProviders.of(getActivity()).get(FragmentSharedModel.class)
-                                .setServiceItem(jsonObject);
-
-                    } catch(JSONException e) {
-                        log.e("JSONException: %s", e.getMessage());
-                    }
-
-
-                }).setNegativeButton("cancel", (dialog, which) -> {});
+            } catch(JSONException e) {
+                log.e("JSONException: %s", e.getMessage());
+            }
+        }).setNegativeButton(cancel, (dialog, which) -> {});
 
         return builder.create();
 

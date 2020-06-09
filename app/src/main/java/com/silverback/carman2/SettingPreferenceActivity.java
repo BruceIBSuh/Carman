@@ -59,7 +59,7 @@ import java.util.Map;
  */
 public class SettingPreferenceActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
-        SettingAutoFragment.OnToolbarTitleListener, //when leaving SettingAutoFragment, reset the toolbar title
+        //SettingAutoFragment.OnToolbarTitleListener, //when leaving SettingAutoFragment, reset the toolbar title
         CropImageDialogFragment.OnSelectImageMediumListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -177,7 +177,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
         super.onPause();
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
         if(gasPriceTask != null) gasPriceTask = null;
-        //if(imgModel != null) imgModel = null;
     }
 
 
@@ -186,7 +185,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         log.i("onBackPressed");
     }
 
-
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Check which fragment the parent activity contains at first, then if the fragment is
@@ -234,7 +233,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
         } else {
             if(item.getItemId() == android.R.id.home) {
                 getSupportFragmentManager().popBackStack();
-                return false;
+                getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
+                return true;
             }
         }
 
@@ -259,24 +259,13 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         // In case a preference calls PreferenceFragmentCompat and newly set the title again, it makes
         // the activity toolbar title changed as well.
-        if(fragment instanceof SettingAutoFragment) {
-            getSupportActionBar().setTitle(getString(R.string.pref_auto_title));
-            ((SettingAutoFragment) fragment).setTitleListener(this);
-        }
-        /*
-        else if(fragment instanceof SettingFavorGasFragment) {
-            getSupportActionBar().setTitle(getString(R.string.pref_favorite_gas));
-            ((SettingFavorGasFragment) fragment).setTitleListener(this);
-        } else if(fragment instanceof SettingFavorSvcFragment) {
-            getSupportActionBar().setTitle(getString(R.string.pref_favorite_svc));
-            ((SettingFavorSvcFragment) fragment).setTitleListener(this);
-        } else if(fragment instanceof SettingServiceItemFragment) {
-            getSupportActionBar().setTitle(getString(R.string.pref_favorite_svc));
-            ((SettingServiceItemFragment) fragment).setTitleListener(this);
-        }
+        String title = null;
+        if(fragment instanceof SettingAutoFragment) title = getString(R.string.pref_auto_title);
+        else if(fragment instanceof SettingFavorGasFragment) title = getString(R.string.pref_favorite_gas);
+        else if(fragment instanceof SettingFavorSvcFragment) title = getString(R.string.pref_favorite_svc);
+        else if(fragment instanceof SettingServiceItemFragment) title = getString(R.string.pref_service_chklist);
 
-         */
-
+        getSupportActionBar().setTitle(title);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)
@@ -287,10 +276,14 @@ public class SettingPreferenceActivity extends BaseActivity implements
     }
 
     @SuppressWarnings("ConstantConditions")
+    /*
     @Override
     public void notifyResetTitle() {
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
     }
+    */
+
+
 
     // SharedPreferences.OnSharedPreferenceChangeListener invokes this callback method if and only if
     // any preference has changed.
@@ -589,6 +582,10 @@ public class SettingPreferenceActivity extends BaseActivity implements
     // Get SharedPreferences which is referenced by child fragments
     public SharedPreferences getSettings() {
         return mSettings;
+    }
+
+    public void resetToolbarTitle() {
+        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
     }
 
 

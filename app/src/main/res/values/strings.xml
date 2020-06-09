@@ -226,7 +226,7 @@
     <string name="pref_snackbar_delete_no_history">정비/점검 리스트에서 삭제하시겠습니까?</string>
     <string name="pref_category_app_setting">앱 설정</string>
     <string name="pref_app_notification">알림 수신</string>
-    <string name="pref_app_userImage">이미지 편집</string>
+    <string name="pref_app_userImage">사용자 이미지 편집</string>
     <string name="pref_dialog_district">관심 지역</string>
     <string name="pref_dialog_district_title">관심지역 설정 </string>
     <string name="pref_favorite_label_eval">누적 평가: </string>

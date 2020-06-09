@@ -48,29 +48,16 @@ public class SettingFavorGasFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorGasFragment.class);
 
     // Objects
-    private OnToolbarTitleListener mToolbarListener;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private SettingFavoriteAdapter mAdapter;
     private SparseArray<DocumentSnapshot> sparseSnapshotArray;
     private FavoritePriceTask favoritePriceTask;
-    private OpinetViewModel opinetViewModel;
     private List<FavoriteProviderEntity> favList;
 
     // Constructor
     public SettingFavorGasFragment() {
         // Required empty public constructor
-    }
-
-    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
-    // be reset to the current tile.
-    public interface OnToolbarTitleListener {
-        void notifyResetTitle();
-    }
-
-    // Set the listener to the parent activity for reverting the toolbar title.
-    public void setTitleListener(OnToolbarTitleListener titleListener) {
-        mToolbarListener = titleListener;
     }
 
     @Override
@@ -130,16 +117,7 @@ public class SettingFavorGasFragment extends Fragment implements
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        /*
-        opinetViewModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
-            log.i("SettingFavorGasFragment newly sets the top-priority station");
-        });
-
-         */
     }
-
-
 
     @Override
     public void onPause() {
@@ -156,11 +134,9 @@ public class SettingFavorGasFragment extends Fragment implements
     public boolean onOptionsItemSelected(@NonNull MenuItem menuItem) {
 
         if(menuItem.getItemId() == android.R.id.home) {
-            log.i("settingFavorGas");
             // Update the placeholder in FavoriteProviderEntity accroding to the position of
             // the edited fasvorte list.
             int position = 0;
-
             for(FavoriteProviderEntity entity : favList) {
                 log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
                 entity.placeHolder = position;
@@ -168,14 +144,11 @@ public class SettingFavorGasFragment extends Fragment implements
             }
 
             mDB.favoriteModel().updatePlaceHolder(favList);
-            mToolbarListener.notifyResetTitle();
-
             return true;
 
         } else return false;
 
     }
-
 
     // If an item moves up to the first placeholder, initiate the task to fetch the price data from
     // the Opinet server and save it in the cache storage.

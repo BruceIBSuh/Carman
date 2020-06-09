@@ -19,10 +19,13 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
     private final MutableLiveData<SparseIntArray> selectedValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray> selectedMemo = new MutableLiveData<>();
-    private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
+    //private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
 
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
+
+    // SettingSvcItemDlgFragment and SettingServiceItemFragment
+    private MutableLiveData<JSONObject> jsonServiceItemObj;
 
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
@@ -83,10 +86,8 @@ public class FragmentSharedModel extends ViewModel {
 
     // Communicate b/w SettingServiceItemFragment and SettingSvcItemDlgFragment to modify the
     // service item list.
-    public void setServiceItem(JSONObject jsonObject) {
-        jsonServiceItemObj.setValue(jsonObject);
-    }
-    public LiveData<JSONObject> getJsonServiceItemObject() {
+    public MutableLiveData<JSONObject> getJsonServiceItemObj() {
+        if(jsonServiceItemObj == null) jsonServiceItemObj = new MutableLiveData<>();
         return jsonServiceItemObj;
     }
 

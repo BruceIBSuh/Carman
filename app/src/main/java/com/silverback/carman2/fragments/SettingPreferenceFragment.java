@@ -146,6 +146,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             etMileage.setSummaryProvider(preference -> String.format("%s%3s", etMileage.getText(), "km"));
         }
 
+        // Average miles per year
         EditTextPreference etAvg = findPreference(Constants.AVERAGE);
         //etAvg.setSummaryProvider(EditTextPreference.SimpleSummaryProvider.getInstance());
         if(etAvg != null) {

@@ -49,7 +49,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     // Objects
     private FragmentSharedModel fragmentModel;
-    private OnToolbarTitleListener mToolbarListener;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
 
     // UIs
@@ -59,17 +58,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     private String makerId, modelId;
     private String emblem;
     private boolean isMakerChanged, isModelChanged;
-
-    // Interface for reverting the actionbar title. Otherwise, the title in the parent activity should
-    // be reset to the current tile.
-    public interface OnToolbarTitleListener {
-        void notifyResetTitle();
-    }
-
-    // Set the listener to the parent activity for reverting the toolbar title.
-    public void setTitleListener(OnToolbarTitleListener titleListener) {
-        mToolbarListener = titleListener;
-    }
 
     // Constructor
     public SettingAutoFragment() {
@@ -81,7 +69,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(true);// necessary for the options menu feasible in fragment
 
         mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -144,12 +132,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoModel.setEnabled(false);
             autoYear.setEnabled(false);
         }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        //autoListener.remove();
     }
 
     // The autoType and autoModel preference depend on the autoMaker one in terms of setting entries
@@ -361,7 +343,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         if(item.getItemId() == android.R.id.home) {
-
             // Crete JSONString which holds the preference values except the autotype. The autotype
             // is fully dependent on the auto model, thus no need for the json to contain the type.
             // The JSONString will be used to create the autofilter in the board which works as
@@ -384,11 +365,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             // the previous reg numbers should be decreased and the new reg numbers increased.
             // In case no auto data is set first time, throws NullPointerException.
             fragmentModel.getAutoData().setValue(json.toString());
-            mToolbarListener.notifyResetTitle();
-
             return true;
         }
-
 
         return false;
     }
@@ -399,8 +377,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // queries are made. This method takes Continuation which queries auto maker first. On completion,
     // the next query is made with the integer value of auto type, which may be null.
     private void setAutoModelEntries(String id, String type, String engine) {
-        if(TextUtils.isEmpty(id)) return;
 
+        if(TextUtils.isEmpty(id)) return;
         CollectionReference colRef = autoRef.document(id).collection("auto_model");
         Query query = colRef;
 
