@@ -203,7 +203,7 @@
     <string name="pref_location_radius">주유소 탐색 반경</string>
     <string name="pref_title_autoupdate">위치 자동 업데이트</string>
     <string name="pref_summary_autoupdate">배터리 소모량이 다소 증가할 수 있습니다</string>
-    <string name="pref_category_favorites">주유소/카센터 설정</string>
+    <string name="pref_category_favorites">주유소/카센터 즐겨찾기 설정</string>
     <string name="pref_designated_provider">단골 주유소/카센터</string>
     <string name="pref_label_station">주유소:</string>
     <string name="pref_label_service">카센터:</string>
@@ -225,7 +225,7 @@
     <string name="pref_snackbar_delete_history">정비이력이 있습니다. 삭제하면 데이터는 복구할 수 없습니다. 삭제하시겠습니까?</string>
     <string name="pref_snackbar_delete_no_history">정비/점검 리스트에서 삭제하시겠습니까?</string>
     <string name="pref_category_app_setting">앱 설정</string>
-    <string name="pref_app_notification">알림 수신</string>
+    <string name="pref_app_notification">주유소/서비스센터 방문 알림</string>
     <string name="pref_app_userImage">사용자 이미지 편집</string>
     <string name="pref_dialog_district">관심 지역</string>
     <string name="pref_dialog_district_title">관심지역 설정 </string>

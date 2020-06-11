@@ -80,7 +80,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         // as 14.
         String districtCode = getArguments().getString("distCode");
         // Integer.valueOf("01") fortunately translates into 1^^.
-        int sidoCode = Integer.valueOf(districtCode.substring(0, 2));
+        int sidoCode = Integer.parseInt(districtCode.substring(0, 2));
         mSidoItemPos = (sidoCode < 14) ? sidoCode - 1 : sidoCode - 3;
 
         distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);

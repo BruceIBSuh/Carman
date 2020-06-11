@@ -32,12 +32,12 @@
             app:useSimpleSummaryProvider="true"/>
 
         <EditTextPreference
-            app:key="pref_odometer"
+            app:key="carman_pref_odometer"
             app:title="누적 주행거리(Odometer)"
             app:defaultValue="0" />
 
         <EditTextPreference
-            app:key="pref_et_avg"
+            app:key="carman_pref_avg_mileage"
             app:title="연간 평균 주행거리(Mileage)"
             app:defaultValue="0" />
 
@@ -49,18 +49,18 @@
         app:icon="@drawable/ic_setting_location">
         <com.silverback.carman2.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
-            app:key="pref_dialog_district"
+            app:key="carman_pref_district"
             app:dialogTitle="@string/pref_dialog_district_title"
             app:positiveButtonText="Confirm"
             app:negativeButtonText="Cancel" />
         <ListPreference
             app:title="@string/pref_location_radius"
-            app:key="pref_searching_radius"
+            app:key="carman_pref_searching_radius"
             app:entries="@array/list_station_radius_name"
             app:entryValues="@array/list_station_radius_value"
             app:defaultValue="2500"/>
         <SwitchPreferenceCompat
-            app:key="pref_location_update"
+            app:key="carman_pref_location_update"
             app:title="@string/pref_title_autoupdate"
             app:summary="@string/pref_summary_autoupdate" />
     </PreferenceCategory>
@@ -71,15 +71,15 @@
         app:icon="@drawable/ic_setting_station" >
         <Preference
             app:title="@string/pref_designated_provider"
-            app:key="pref_favorite_provider" />
+            app:key="carman_pref_favorite_provider" />
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingFavorGasFragment"
             app:title="@string/pref_favorite_gas"
-            app:key="pref_favorite_gas" />
+            app:key="carman_pref_favorite_gas" />
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingFavorSvcFragment"
             app:title="@string/pref_favorite_svc"
-            app:key="pref_favorite_svc" />
+            app:key="carman_pref_favorite_svc" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -88,14 +88,15 @@
         app:icon="@drawable/ic_setting_service">
         <ListPreference
             app:title="@string/pref_service_period"
-            app:key="pref_service_period"
+            app:key="carman_pref_svc_period"
             app:entries="@array/pref_svc_period"
             app:entryValues="@array/pref_svc_period"
-            app:defaultValue="@string/pref_svc_period_mileage"/>
+            app:defaultValue="@string/pref_svc_period_mileage"
+            app:useSimpleSummaryProvider="true"/>
         <Preference
             app:fragment="com.silverback.carman2.fragments.SettingServiceItemFragment"
             app:title="@string/pref_service_chklist"
-            app:key="pref_service_chklist" />
+            app:key="carman_pref_svc_chklist" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -105,7 +106,7 @@
 
         <SwitchPreferenceCompat
             app:title="@string/pref_app_notification"
-            app:key="notification" />
+            app:key="carman_pref_geofence_notification" />
         <!--
         <com.silverback.carman2.views.ProgressImagePreference
             app:enabled="true"

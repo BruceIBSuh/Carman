@@ -118,8 +118,10 @@ public class SettingFavorSvcFragment extends Fragment implements
             }
 
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
-            return true;
-        } else return false;
+
+        }
+
+        return true;
     }
 
     /*

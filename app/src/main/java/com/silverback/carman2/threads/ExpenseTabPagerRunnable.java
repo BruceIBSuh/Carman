@@ -43,7 +43,6 @@ public class ExpenseTabPagerRunnable implements Runnable {
 
     @Override
     public void run() {
-
         task.setTabPagerTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 

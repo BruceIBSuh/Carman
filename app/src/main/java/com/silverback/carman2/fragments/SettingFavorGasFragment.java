@@ -142,12 +142,10 @@ public class SettingFavorGasFragment extends Fragment implements
                 entity.placeHolder = position;
                 position++;
             }
-
             mDB.favoriteModel().updatePlaceHolder(favList);
-            return true;
+        }
 
-        } else return false;
-
+        return true;
     }
 
     // If an item moves up to the first placeholder, initiate the task to fetch the price data from

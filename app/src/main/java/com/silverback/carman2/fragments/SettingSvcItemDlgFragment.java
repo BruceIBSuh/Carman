@@ -10,14 +10,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelProviders;
 
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
@@ -44,7 +43,7 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getActivity() != null)
-            mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+            mSettings = ((SettingPrefActivity)getActivity()).getSettings();
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }

@@ -18,11 +18,9 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.threads.DownloadImageTask;
-import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
@@ -56,7 +54,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     // fields
     private String makerId, modelId;
-    private String emblem;
+    //private String emblem;
     private boolean isMakerChanged, isModelChanged;
 
     // Constructor
@@ -71,7 +69,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);// necessary for the options menu feasible in fragment
 
-        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
+        mSettings = ((SettingPrefActivity)getActivity()).getSettings();
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         engineTypeDialogFragment = new EngineTypeDialogFragment(this);
 
@@ -133,6 +131,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoYear.setEnabled(false);
         }
     }
+
 
     // The autoType and autoModel preference depend on the autoMaker one in terms of setting entries
     // and values, which means that the autoMaker has a new value, the autoType gets no set and
@@ -240,7 +239,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         autoYear.setEnabled(true);
 
         // Retrieve the emblem url
-        emblem = makershot.getString("auto_emblem");
+        //emblem = makershot.getString("auto_emblem");
 
         // Reset the auto type and the engine type to the initial state.
         if(makershot.get("auto_type") != null) {
@@ -276,6 +275,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             makershot.getReference().update("reg_number", FieldValue.increment(1));
             isMakerChanged = false;
         }
+
 
         // Set the summary with a spnned string.
         String makerSummary = String.format("%s%10s%s(%s)",
@@ -343,6 +343,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         if(item.getItemId() == android.R.id.home) {
+            log.i("onOptionsitemSelected in SettingAutoFragment");
             // Crete JSONString which holds the preference values except the autotype. The autotype
             // is fully dependent on the auto model, thus no need for the json to contain the type.
             // The JSONString will be used to create the autofilter in the board which works as
@@ -355,20 +356,15 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             dataList.add(engineType.getValue());
             dataList.add(autoYear.getValue());
 
+            for(String str : dataList) log.i("autodata: %s", str);
+
             JSONArray json = new JSONArray(dataList);
-            mSettings.edit().putString(Constants.AUTO_DATA, json.toString()).apply();
-
-            log.i("emblem: %s", emblem);
-            DownloadImageTask task = ThreadManager.downloadBitmapTask(getContext(), emblem, null);
-
-            // Update the registration numbers of the auto makers and models. If any change occurs,
-            // the previous reg numbers should be decreased and the new reg numbers increased.
-            // In case no auto data is set first time, throws NullPointerException.
             fragmentModel.getAutoData().setValue(json.toString());
-            return true;
+
+            //DownloadImageTask task = ThreadManager.downloadBitmapTask(getContext(), emblem, null);
         }
 
-        return false;
+        return true;
     }
 
 

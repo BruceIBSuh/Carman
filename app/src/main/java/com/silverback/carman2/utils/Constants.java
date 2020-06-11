@@ -3,7 +3,7 @@ package com.silverback.carman2.utils;
 public class Constants {
 
     // Request Codes
-    public static final int REQUEST_MAIN_SETTING_OPTIONSITEM = 1000;
+    public static final int REQUEST_MAIN_SETTING_GENERAL = 1000;
     public static final int REQUEST_BOARD_SETTING_AUTOCLUB = 2000;
     public static final int REQUEST_BOARD_SETTING_USERNAME = 2001;
     public static final int REQUEST_BOARD_CAMERA = 2002;
@@ -87,14 +87,18 @@ public class Constants {
     public static final String ODOMETER = "carman_pref_odometer";
     public static final String AVERAGE = "carman_pref_avg_mileage";
     public static final String PAYMENT = "carman_pref_payment";
+    public static final String FAVORITE = "carman_pref_favorite_provider";
+    public static final String FAVORITE_GAS = "carman_pref_favorite_gas";
+    public static final String FAVORITE_SVC = "carman_pref_favorite_svc";
     public static final String FUEL = "carman_pref_ls_fuel";
-    public static final String DISTRICT = "pref_dialog_district";
-    public static final String DISTRICT_NAME = "carman_pref_dialog_district_name";
-    public static final String SEARCHING_RADIUS = "pref_searching_radius";
+    public static final String DISTRICT = "carman_pref_district";
+    public static final String SEARCHING_RADIUS = "carman_pref_searching_radius";
     public static final String ORDER = "carman_pref_ls_station_order";
-    public static final String LOCATION_UPDATE = "pref_location_update";
-    public static final String FAVORITE = "pref_favorite_list";
-    public static final String SERVICE_PERIOD = "carman_pref_ls_service_period";
+    public static final String SERVICE_PERIOD = "carman_pref_svc_period";
+    public static final String SERVICE_CHKLIST = "carman_pref_svc_chklist";
+
+    public static final String LOCATION_UPDATE = "carman_pref_location_update";
+    public static final String NOTIFICATION_GEOFENCE = "carman_pref_geofence_notification";
 
     public static final String THEME = "carman_pref_ls_theme";
     public static final String GUIDE = "carman_pref_intro_guide";
