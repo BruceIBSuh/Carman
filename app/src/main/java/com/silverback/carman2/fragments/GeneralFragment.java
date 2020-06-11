@@ -10,6 +10,7 @@ import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.BulletSpan;
 import android.text.style.ClickableSpan;
 import android.view.LayoutInflater;
@@ -20,7 +21,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -31,8 +31,9 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.BaseActivity;
+import com.silverback.carman2.MainActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.StationMapActivity;
 import com.silverback.carman2.adapters.PricePagerAdapter;
 import com.silverback.carman2.adapters.StationListAdapter;
@@ -41,9 +42,11 @@ import com.silverback.carman2.database.GasManagerDao;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.LocationViewModel;
 import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 import com.silverback.carman2.viewmodels.StationListViewModel;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationListTask;
@@ -82,13 +85,14 @@ public class GeneralFragment extends Fragment implements
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private FragmentSharedModel fragmentModel;
-    //private OpinetViewModel opinetViewModel;
+    private OpinetViewModel opinetModel;
 
     private GasManagerDao.RecentGasData queryGasResult;
     private ServiceManagerDao.RecentServiceData querySvcResult;
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
+    private GasPriceTask gasTask;
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
@@ -134,6 +138,7 @@ public class GeneralFragment extends Fragment implements
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        opinetModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
 
 
         // Fetch the current location using the worker thread and return the value via ViewModel
@@ -561,7 +566,7 @@ public class GeneralFragment extends Fragment implements
             spannableString.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    getActivity().startActivity(new Intent(getActivity(), SettingPreferenceActivity.class));
+                    getActivity().startActivity(new Intent(getActivity(), SettingPrefActivity.class));
                 }
             }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -604,18 +609,26 @@ public class GeneralFragment extends Fragment implements
     }
 
     // Invalidate the views, the data of which have changed in SettingPreferenceActivity
-    public void resetGeneralFragment(boolean isDistrict, String fuelCode, String radius) {
+    @SuppressWarnings("ConstantConditions")
+    public void resetGeneralFragment(String distCode, String fuelCode, String radius) {
         // If the default district has changed, which has initiated GasPriceTask to fetch price data
         // in SettingPreferenceActivity,  newly set the apdater to the pager.
-        if(isDistrict) {
-            String code = (fuelCode == null)?defaultFuel:fuelCode;
-            pricePagerAdapter.setFuelCode(code);
-            priceViewPager.setAdapter(pricePagerAdapter);
+        if(!TextUtils.isEmpty(distCode)) {
+            String gasCode = (fuelCode == null) ? defaultFuel : fuelCode;
+            log.i("Code: %s, %s", distCode, gasCode);
+            gasTask = ThreadManager.startGasPriceTask(getContext(), opinetModel, distCode, gasCode);
+            opinetModel.distPriceComplete().observe(getViewLifecycleOwner(), isComplete -> {
+                pricePagerAdapter.setFuelCode(gasCode);
+                pricePagerAdapter.notifyDataSetChanged();
+                priceViewPager.setAdapter(pricePagerAdapter);
+                ((MainActivity)getActivity()).getSettings().edit().putLong(
+                        Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+            });
         }
 
         // When the fuel code has changed, reset the spinner selection to a new position, which
         // implements onItemSelected() to invalidate a new price data with the fuel code.
-        if(fuelCode != null) {
+        if(TextUtils.isEmpty(distCode) && fuelCode != null) {
             String[] fuel = getResources().getStringArray(R.array.spinner_fuel_code);
             for (int i = 0; i < fuel.length; i++) {
                 if (fuel[i].matches(fuelCode)) {

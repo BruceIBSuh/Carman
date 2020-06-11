@@ -121,6 +121,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
 
 
+    // WARNING: Setting a summary with a String formatting marker is no longer supported.
+    // You should use a SummaryProvider instead.
     void setSpannedAutoSummary(Preference pref, String summary) {
         SpannableString sb = new SpannableString(summary);
         String reg = "\\(\\d+\\)";
@@ -130,7 +132,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        pref.setSummary(sb);
+        //pref.setSummary(sb);
+        pref.setSummaryProvider(preference -> sb);
     }
 
     // AutoData is saved in SharedPreferences as JSON String which should be parsed into List<String>

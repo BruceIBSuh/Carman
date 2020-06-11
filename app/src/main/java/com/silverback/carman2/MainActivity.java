@@ -14,6 +14,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -35,7 +37,7 @@ import java.io.File;
  */
 public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
 
-    //private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
     private CarmanDatabase mDB;
@@ -127,34 +129,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         if(gasPriceTask != null) gasPriceTask = null;
     }
 
-    // startActivityForResult() has this callback invoked by getting an intent that contains new
-    // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
-    // and PriceViewPager should be updated with a new district, both of which have been reset
-    // in SettingPreferenceActivity.
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
 
-        if(requestCode != Constants.REQUEST_MAIN_SETTING_OPTIONSITEM || resultCode != RESULT_OK) return;
-
-        boolean isDistrictReset = intent.getBooleanExtra("isDistrictReset", false);
-        String userName = intent.getStringExtra("userName");
-        String fuelCode = intent.getStringExtra("fuelCode");
-        String radius = intent.getStringExtra("radius");
-        String uriImage = intent.getStringExtra("userImage");
-
-        // Must make the null check, not String.isEmpty() because the blank name should be included.
-        if(userName != null) getSupportActionBar().setTitle(userName);
-
-        if(uriImage != null)
-            imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
-        else imgModel.getGlideDrawableTarget().setValue(null);
-
-        // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
-        generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
-        if(generalFragment != null) generalFragment.resetGeneralFragment(isDistrictReset, fuelCode, radius);
-    }
 
     // DrawerLayout callbacks which should be applied at an appropritate time for update.
     /*
@@ -184,7 +159,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
-
             case R.id.action_garage:
                 startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
                 return true;
@@ -199,18 +173,45 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
             case R.id.action_setting:
                 // Apply startActivityForresult() to take the price data and the username back from
                 // SettingPreferenceActivity to onActivityResult() if the values have changed.
-                Intent settingIntent = new Intent(this, SettingPreferenceActivity.class);
-                int requestCode = Constants.REQUEST_MAIN_SETTING_OPTIONSITEM;
+                Intent settingIntent = new Intent(this, SettingPrefActivity.class);
+                int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
                 settingIntent.putExtra("requestCode", requestCode);
                 startActivityForResult(settingIntent, requestCode);
                 return true;
 
             default:
                 finish();
-                break;
+                return false;
         }
+    }
 
-        return false;
+    // startActivityForResult() has this callback invoked by getting an intent that contains new
+    // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
+    // and PriceViewPager should be updated with a new district, both of which have been reset
+    // in SettingPreferenceActivity.
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+        if(requestCode != Constants.REQUEST_MAIN_SETTING_GENERAL || resultCode != RESULT_OK) return;
+
+        String distCode = intent.getStringExtra("district");
+        String userName = intent.getStringExtra("userName");
+        String fuelCode = intent.getStringExtra("fuelCode");
+        String radius = intent.getStringExtra("radius");
+        String uriImage = intent.getStringExtra("userImage");
+        log.i("onActivityResult in Main: %s, %s", distCode, fuelCode);
+
+        // Must make the null check, not String.isEmpty() because the blank name should be included.
+        if(userName != null) getSupportActionBar().setTitle(userName);
+        if(uriImage != null)
+            imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
+        else imgModel.getGlideDrawableTarget().setValue(null);
+
+        // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
+        //generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
+        if(generalFragment != null) generalFragment.resetGeneralFragment(distCode, fuelCode, radius);
     }
 
     @Override

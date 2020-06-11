@@ -32,7 +32,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
@@ -339,7 +338,7 @@ public class BoardActivity extends BaseActivity implements
             Snackbar snackbar = Snackbar.make(
                     coordinatorLayout, getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
             snackbar.setAction(R.string.board_msg_action_setting, view -> {
-                Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
+                Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
             }).show();
@@ -586,7 +585,7 @@ public class BoardActivity extends BaseActivity implements
                 @Override
                 public void onClick(@NonNull View textView) {
                     int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
-                    Intent intent = new Intent(BoardActivity.this, SettingPreferenceActivity.class);
+                    Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
                     intent.putExtra("requestCode", requestCode);
                     startActivityForResult(intent, requestCode);
                 }
@@ -646,6 +645,7 @@ public class BoardActivity extends BaseActivity implements
                 // The automaker is a necessary checkbox to be checked as far as jsonAuto has set
                 // any checkbox. Other autofilter values depends on whether it is the locked mode
                 // which retrieves each values from SharedPreferences.
+
                 cb.setText(jsonAuto.optString(i));
                 if(i == 0) {
                     cb.setChecked(true);

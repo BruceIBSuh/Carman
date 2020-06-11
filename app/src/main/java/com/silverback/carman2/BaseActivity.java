@@ -102,18 +102,6 @@ public class BaseActivity extends AppCompatActivity {
 
         // Checkk if the network connectivitis ok.
         isNetworkConnected = notifyNetworkConnected(this);
-        /*
-        if(notifyNetworkConnected(this)) {
-            log.i("network connection is ok");
-            isNetworkConnected = true;
-        } else {
-            log.i("please check the network condition");
-            isNetworkConnected = false;
-        }
-
-         */
-
-        //checkPermissions();
     }
 
     // Check a state of the network

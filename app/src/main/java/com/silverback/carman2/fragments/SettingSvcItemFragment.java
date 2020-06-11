@@ -22,7 +22,7 @@ import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -38,11 +38,11 @@ import org.json.JSONObject;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SettingServiceItemFragment extends Fragment implements
+public class SettingSvcItemFragment extends Fragment implements
         SettingServiceItemAdapter.OnServiceItemAdapterCallback {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingServiceItemFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemFragment.class);
 
     // Constants for the mode param in modifyJSONArray()
     private static final int MOVEUP = 3;
@@ -63,7 +63,7 @@ public class SettingServiceItemFragment extends Fragment implements
     private int removedPos;
     private boolean isHistory;
 
-    public SettingServiceItemFragment() {
+    public SettingSvcItemFragment() {
         // Required empty public constructor
     }
 
@@ -77,7 +77,7 @@ public class SettingServiceItemFragment extends Fragment implements
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings =((SettingPreferenceActivity)getActivity()).getSettings();
+        mSettings =((SettingPrefActivity)getActivity()).getSettings();
         dlgFragment = new SettingSvcItemDlgFragment();
 
         String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
@@ -159,32 +159,33 @@ public class SettingServiceItemFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-
         switch(item.getItemId()) {
             case android.R.id.home:
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                return true;
+                break;
+                //return true;
 
             case R.id.menu_add_item:
                 if(getActivity() != null) dlgFragment.show(getActivity().getSupportFragmentManager(), null);
-                return false;
+                break;
+                //return false;
         }
 
-        return false;
+        return true;
     }
 
     @Override
     public void dragServiceItem(int from, int to) {
-
         JSONObject fromObject = jsonSvcItemArray.optJSONObject(from);
         JSONObject toObject = jsonSvcItemArray.optJSONObject(to);
         try {
             jsonSvcItemArray.put(from, toObject);
             jsonSvcItemArray.put(to, fromObject);
             mAdapter.notifyItemMoved(from, to);
-            // Partial Binding for changing the number ahead of each item when dragging the item.
-            if(from < to) mAdapter.notifyItemRangeChanged(from, Math.abs(from - to) + 1, true);
-            else mAdapter.notifyItemRangeChanged(to, Math.abs(from - to) + 1, true);
+
+            // Partial binding to change the index number ahead of each item when dragging the item.
+            // notifyItemRangeChanged(int start, int count, Object payload)
+            mAdapter.notifyItemRangeChanged(Math.min(from, to), Math.abs(from - to) + 1, true);
 
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());

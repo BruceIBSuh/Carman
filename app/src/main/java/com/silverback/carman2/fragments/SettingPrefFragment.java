@@ -1,18 +1,13 @@
 package com.silverback.carman2.fragments;
 
 
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
@@ -20,23 +15,15 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.SwitchPreferenceCompat;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPreferenceActivity;
+import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.threads.DownloadImageTask;
-import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -46,10 +33,7 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.List;
+import java.text.DecimalFormat;
 
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
@@ -58,30 +42,26 @@ import java.util.List;
  * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing
  * params to the singleton constructor.
  */
-public class SettingPreferenceFragment extends SettingBaseFragment {
+public class SettingPrefFragment extends SettingBaseFragment  {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefFragment.class);
 
     // Objects
     private SharedPreferences mSettings;
-    private FragmentSharedModel sharedModel;
     private Preference userImagePref;
     private String nickname;
+    private DecimalFormat df;
 
     // UIs
     private Preference autoPref;
     private SpinnerDialogPreference spinnerPref;
     private Preference favorite;
-    private ImageViewModel imgModel;
 
     // Fields
-    private List<String> autoDataList;
     private JSONArray jsonDistrict;
     private String sigunCode;
     private String regMakerNum;
-    private Uri emblemUri;
-    //private String makerName, modelName, typeName, yearName;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -93,10 +73,10 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         try {jsonDistrict = new JSONArray(jsonString);}
         catch(JSONException e) {e.printStackTrace();}
 
-        mSettings = ((SettingPreferenceActivity)getActivity()).getSettings();
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        imgModel = new ViewModelProvider(getActivity()).get(ImageViewModel.class);
+        mSettings = ((SettingPrefActivity)getActivity()).getSettings();
+
+        df = BaseActivity.getDecimalFormatInstance();
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -120,17 +100,10 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the auto maker and model with the make name, notifying
         // the listener
-        if(TextUtils.isEmpty(makerName)) autoPref.setSummary(getString(R.string.pref_entry_void));
-        else queryAutoMaker(makerName);
         // Invalidate the summary of the autodata preference as far as any preference value of
         // SettingAutoFragment have been changed.
-        sharedModel.getAutoData().observe(requireActivity(), json -> {
-            log.i("autodata changed");
-            makerName = parseAutoData(json).get(0);
-            modelName = parseAutoData(json).get(1);
-            if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
-        });
-
+        if(TextUtils.isEmpty(makerName)) autoPref.setSummary(getString(R.string.pref_entry_void));
+        else queryAutoMaker(makerName);
 
         // Preference for selecting a fuel out of gas, diesel, lpg and premium, which should be
         // improved with more energy source such as eletricity and hydrogene provided.
@@ -140,29 +113,43 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
         // and ListPreference.
         EditTextPreference etMileage = findPreference(Constants.ODOMETER);
-        // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         if(etMileage != null) {
             etMileage.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
-            etMileage.setSummaryProvider(preference -> String.format("%s%3s", etMileage.getText(), "km"));
+            etMileage.setSummaryProvider(preference -> {
+                String summary = df.format(Integer.parseInt(((EditTextPreference) preference).getText()));
+                return String.format("%s%3s", summary, "km");
+            });
         }
 
         // Average miles per year
         EditTextPreference etAvg = findPreference(Constants.AVERAGE);
-        //etAvg.setSummaryProvider(EditTextPreference.SimpleSummaryProvider.getInstance());
         if(etAvg != null) {
             etAvg.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
-            etAvg.setSummaryProvider(preference -> String.format("%s%3s", etAvg.getText(), "km"));
+            etAvg.setSummaryProvider(preference -> {
+                String summary = df.format(Integer.parseInt(((EditTextPreference)preference).getText()));
+                return String.format("%s%3s", summary, "km");
+            });
         }
 
+        // Custom preference to display the custom PreferenceDialogFragmentCompat which has dual
+        // spinners to pick the district of Sido and Sigun based upon the given Sido. The default
+        // district name and code is saved as JSONString.
+        spinnerPref = findPreference(Constants.DISTRICT);
+        if(jsonDistrict != null) {
+            spinnerPref.setSummaryProvider(preference ->
+                    String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
+            sigunCode = jsonDistrict.optString(2);
+        }
+
+        // Set the searching radius within which near stations should be located.
         ListPreference searchingRadius = findPreference(Constants.SEARCHING_RADIUS);
         if(searchingRadius != null) {
             searchingRadius.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
 
-
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
-        favorite = findPreference("pref_favorite_provider");
+        favorite = findPreference(Constants.FAVORITE);
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String favoriteStn = getString(R.string.pref_no_favorite);
             String favoriteSvc = getString(R.string.pref_no_favorite);
@@ -171,16 +158,16 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
                 else if(provider.category == Constants.SVC) favoriteSvc = provider.favoriteName;
             }
 
-            favorite.setSummary(String.format("%-8s%s\n%-8s%s",
+            String summary = String.format("%-8s%s\n%-8s%s",
                     getString(R.string.pref_label_station), favoriteStn,
-                    getString(R.string.pref_label_service), favoriteSvc));
+                    getString(R.string.pref_label_service), favoriteSvc);
+            favorite.setSummaryProvider(preference -> summary);
         });
 
-
-        Preference gasStation = findPreference("pref_favorite_gas");
-        gasStation.setSummary(R.string.pref_summary_gas);
-        Preference svcCenter = findPreference("pref_favorite_svc");
-        svcCenter.setSummary(R.string.pref_summary_svc);
+        Preference gasStation = findPreference(Constants.FAVORITE_GAS);
+        gasStation.setSummaryProvider(preference -> getString(R.string.pref_summary_gas));
+        Preference svcCenter = findPreference(Constants.FAVORITE_SVC);
+        svcCenter.setSummaryProvider(preference -> getString(R.string.pref_summary_svc));
 
         // Set the standard of period between month and mileage.
         ListPreference svcPeriod = findPreference("pref_service_period");
@@ -188,29 +175,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             svcPeriod.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
         }
 
-        // Custom preference to display the custom PreferenceDialogFragmentCompat which has dual
-        // spinners to pick the district of Sido and Sigun based upon the given Sido. The default
-        // district name and code is saved as JSONString.
-        spinnerPref = findPreference(Constants.DISTRICT);
-
-        //JSONArray json = BaseActivity.getDistrictJSONArray();
-        if(jsonDistrict != null) {
-            spinnerPref.setSummary(String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
-            sigunCode = jsonDistrict.optString(2);
-        }
-        // When the default district changes in the spinners, a newly selected district will be
-        // notified via ViewModel
-        // and after coverting the values to JSONString, save it in SharedPreferences.
-        sharedModel.getDefaultDistrict().observe(this, distList -> {
-            sigunCode = distList.get(2);
-            spinnerPref.setSummary(String.format("%s %s", distList.get(0), distList.get(1)));
-            JSONArray jsonArray = new JSONArray(distList);
-            mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
-        });
-
-
-        // Preference for whether any notification is permiited to receive or not.
-        SwitchPreferenceCompat switchPref = findPreference(Constants.LOCATION_UPDATE);
+        // Preference for whether the geofence notification is permiited to receive or not.
+        SwitchPreferenceCompat switchGeofencePref = findPreference(Constants.NOTIFICATION_GEOFENCE);
+        switchGeofencePref.setChecked(true);
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
         // Consider to replace this with the custom preference defined as ProgressImagePreference.
@@ -227,43 +194,51 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             return true;
         });
 
-        // LiveData from ApplyImageREsourceUtil.
+        // LiveData from ApplyImageREsourceUtil to set a drawable to the icon. The viewmodel is
+        // defined in onViewCreated().
+        ImageViewModel imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
         imgModel.getGlideDrawableTarget().observe(getActivity(), res -> userImagePref.setIcon(res));
-
-        // Set the circle image to the icon by getting the image Uri which has been saved at
-        // SharedPreferences defined in SettingPreverenceActivity.
-        /*
-        String imageUri = mSettings.getString(Constants.FILE_IMAGES, null);
-        if(!TextUtils.isEmpty(imageUri)) {
-            try {
-                ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(getContext());
-                RoundedBitmapDrawable drawable = cropHelper.drawRoundedBitmap(Uri.parse(imageUri));
-                userImagePreference.setIcon(drawable);
-            } catch (IOException e) {
-                log.e("IOException: %s", e.getMessage());
-            }
-        }
-         */
     }
 
+    /*
+     * Called immediately after onCreateView() has returned, but before any saved state has been
+     * restored in to the view. This should be appropriate to have ViewModel be created and observed
+     * for sharing data b/w fragments by getting getViewLifecycleOwner().
+     */
     @Override
-    public void onPause() {
-        super.onPause();
-        //autoListener.remove();
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
+        // Observe whether the auto data in SettingAutoFragment has changed.
+        fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonString -> {
+            makerName = parseAutoData(jsonString).get(0);
+            modelName = parseAutoData(jsonString).get(1);
+            mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
+            if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
+        });
+
+        // Observe whether the district has changed in the custom spinner list view. If any change
+        // has been made, set summary and save it as JSONArray string in SharedPreferences.
+        fragmentModel.getDefaultDistrict().observe(getViewLifecycleOwner(), distList -> {
+            sigunCode = distList.get(2);
+            spinnerPref.setSummaryProvider(preference -> String.format("%s %s", distList.get(0), distList.get(1)));
+            JSONArray jsonArray = new JSONArray(distList);
+            mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+        });
     }
 
     // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
     // the result of which implements this to get the registration number of the auto
     // maker and continues to call queryAutoModel() if an auto model exists. Otherwise, ends with
     // setting the summary.
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = String.valueOf(makershot.getLong("reg_number"));
-        String automaker = makershot.getString("auto_maker");
-        log.i("emblem: %s", makershot.getString("auto_emblem"));
+        //String automaker = makershot.getString("auto_maker");
+        //log.i("emblem: %s", makershot.getString("auto_emblem"));
 
         if(!TextUtils.isEmpty(modelName)) {
             queryAutoModel(makershot.getId(), modelName);
@@ -317,5 +292,4 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     public Preference getUserImagePreference() {
         return userImagePref;
     }
-
 }

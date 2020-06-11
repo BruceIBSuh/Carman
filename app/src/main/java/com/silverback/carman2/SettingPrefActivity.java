@@ -30,11 +30,10 @@ import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
 import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.fragments.SettingAutoFragment;
-import com.silverback.carman2.fragments.SettingBaseFragment;
 import com.silverback.carman2.fragments.SettingFavorGasFragment;
 import com.silverback.carman2.fragments.SettingFavorSvcFragment;
-import com.silverback.carman2.fragments.SettingPreferenceFragment;
-import com.silverback.carman2.fragments.SettingServiceItemFragment;
+import com.silverback.carman2.fragments.SettingPrefFragment;
+import com.silverback.carman2.fragments.SettingSvcItemFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -45,6 +44,7 @@ import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,14 +57,13 @@ import java.util.Map;
  * CropImageDialogFragment is to select which media to use out of Gallery or Camera, the result of
  * which returns by the attached listener.
  */
-public class SettingPreferenceActivity extends BaseActivity implements
+public class SettingPrefActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
-        //SettingAutoFragment.OnToolbarTitleListener, //when leaving SettingAutoFragment, reset the toolbar title
         CropImageDialogFragment.OnSelectImageMediumListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefActivity.class);
 
     // Constants
     private static final int REQUEST_CODE_GALLERY = 10;
@@ -75,9 +74,8 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
     private ApplyImageResourceUtil applyImageResourceUtil;
-    private OpinetViewModel priceModel;
     private ImageViewModel imgModel;
-    private SettingPreferenceFragment settingFragment;
+    private SettingPrefFragment settingFragment;
     private GasPriceTask gasPriceTask;
     private Map<String, Object> uploadData;
 
@@ -87,7 +85,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
     // Fields
     private String userId;
-    private boolean isDistrictReset;
     private String distCode;
     private String userName;
     private String fuelCode;
@@ -95,6 +92,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
     private String userImage;
     private String jsonAutoData;
     private Uri downloadUserImageUri;
+    private int requestCode;
 
 
     @SuppressWarnings("ConstantConditions")
@@ -102,6 +100,9 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_general_setting);
+
+        if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
+        log.i("RequestCode: %s", requestCode);
 
         // Permission check for CAMERA to get the user image.
         checkPermissions(Manifest.permission.CAMERA);
@@ -120,7 +121,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
-        priceModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         uploadData = new HashMap<>();
 
@@ -136,7 +136,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
         // Attach SettingPreferencFragment in the FrameLayout
-        settingFragment = new SettingPreferenceFragment();
+        settingFragment = new SettingPrefFragment();
         Bundle bundle = new Bundle();
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
@@ -181,10 +181,16 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
 
     @Override
-    public void onBackPressed() {
-        log.i("onBackPressed");
-    }
+    public void onBackPressed() {}
 
+    /*
+     * The return value should benefit when there are multiple fragments and they overrides the
+     * OnOptionsItemSelected.
+     * If the return value is true, the event will be consumed and won't fall through to functions
+     * defined in onOptionsItemSelected overrided in other fragments. On the other hand, if the return
+     * value is false, it may check that the menu id is identical and trace down to the callback
+     * overrided in other fragments until it should be consumed.
+     */
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -194,51 +200,55 @@ public class SettingPreferenceActivity extends BaseActivity implements
         // than SettingPreferenceFragment, just pop the fragment off the back stack, which works
         // like the Back command.
         Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        log.i("targetFragment: %s", targetFragment);
+        if(item.getItemId() == android.R.id.home) {
+            if (targetFragment instanceof SettingPrefFragment) {
+                // Upload user data to Firebase
+                uploadUserDataToFirebase(uploadData);
 
-        if(targetFragment instanceof SettingPreferenceFragment) {
-            // Upload user data to Firebase
-            uploadUserDataToFirebase(uploadData);
-            // Create Intent back to MainActivity which contains extras to notify the activity of
-            // which have been changed.
-            log.i("request code: %s", getIntent().getIntExtra("requestCode", -1));
-            int requestCode = getIntent().getIntExtra("requestCode", -1);
-            switch(requestCode){
-                case Constants.REQUEST_MAIN_SETTING_OPTIONSITEM:
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("isDistrictReset", isDistrictReset);
-                    resultIntent.putExtra("userName", userName);
-                    resultIntent.putExtra("fuelCode", fuelCode);
-                    resultIntent.putExtra("radius", radius);
-                    resultIntent.putExtra("userImage", userImage);
-                    setResult(Activity.RESULT_OK, resultIntent);
-                    break;
+                // Create Intent back to MainActivity which contains extras to notify the activity of
+                // which have been changed.
+                switch (requestCode) {
+                    case Constants.REQUEST_MAIN_SETTING_GENERAL:
+                        log.i("Back to MainActivity: %s", distCode);
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("district", distCode);
+                        resultIntent.putExtra("userName", userName);
+                        resultIntent.putExtra("fuelCode", fuelCode);
+                        resultIntent.putExtra("radius", radius);
+                        resultIntent.putExtra("userImage", userImage);
+                        setResult(Activity.RESULT_OK, resultIntent);
+                        break;
 
-                case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                    Intent autoIntent = new Intent();
-                    autoIntent.putExtra("jsonAutoData", jsonAutoData);
-                    log.i("JSON Auto Data in Setting: %s", jsonAutoData);
-                    setResult(Activity.RESULT_OK, autoIntent);
-                    break;
+                    case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                        Intent autoIntent = new Intent();
+                        autoIntent.putExtra("jsonAutoData", jsonAutoData);
+                        log.i("JSON Auto Data in Setting: %s", jsonAutoData);
+                        setResult(Activity.RESULT_OK, autoIntent);
+                        break;
 
-                case Constants.REQUEST_BOARD_SETTING_USERNAME:
-                    break;
+                    case Constants.REQUEST_BOARD_SETTING_USERNAME:
+                        Intent userIntent = new Intent();
+                        userIntent.putExtra("userName", userName);
+                        setResult(Activity.RESULT_OK, userIntent);
+                        break;
 
-                default: break;
-            }
+                    default: break;
+                }
 
+                finish();
+                return true;
 
-            finish();
-            return true;
-
-        } else {
-            if(item.getItemId() == android.R.id.home) {
+            } else {
+                // The return value must be false to make optionsItemSelected() in SettingAutoFragment
+                // feasible.
                 getSupportFragmentManager().popBackStack();
                 getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
-                return true;
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     /*
@@ -263,7 +273,7 @@ public class SettingPreferenceActivity extends BaseActivity implements
         if(fragment instanceof SettingAutoFragment) title = getString(R.string.pref_auto_title);
         else if(fragment instanceof SettingFavorGasFragment) title = getString(R.string.pref_favorite_gas);
         else if(fragment instanceof SettingFavorSvcFragment) title = getString(R.string.pref_favorite_svc);
-        else if(fragment instanceof SettingServiceItemFragment) title = getString(R.string.pref_service_chklist);
+        else if(fragment instanceof SettingSvcItemFragment) title = getString(R.string.pref_service_chklist);
 
         getSupportActionBar().setTitle(title);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -274,16 +284,6 @@ public class SettingPreferenceActivity extends BaseActivity implements
 
         return true;
     }
-
-    @SuppressWarnings("ConstantConditions")
-    /*
-    @Override
-    public void notifyResetTitle() {
-        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
-    }
-    */
-
-
 
     // SharedPreferences.OnSharedPreferenceChangeListener invokes this callback method if and only if
     // any preference has changed.
@@ -328,13 +328,22 @@ public class SettingPreferenceActivity extends BaseActivity implements
                 break;
 
             case Constants.DISTRICT:
-                JSONArray jsonDistArray = getDistrictJSONArray();
-                if(jsonDistArray != null) {
+
+                try {
+                    JSONArray jsonDistArray = new JSONArray(mSettings.getString(key, null));
+                    distCode = jsonDistArray.optString(2);
+                } catch(JSONException e) {e.printStackTrace();}
+
+                log.i("jsonDistArray: %s", distCode);
+                /*
+                if(jsonDistString != null) {
                     distCode = getDistrictJSONArray().optString(2);
                     gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
                     mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-                    isDistrictReset = true;
+                    isDistReset = true;
                 }
+
+                 */
                 break;
 
             case Constants.SEARCHING_RADIUS:
@@ -583,10 +592,4 @@ public class SettingPreferenceActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
-
-    public void resetToolbarTitle() {
-        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
-    }
-
-
 }
