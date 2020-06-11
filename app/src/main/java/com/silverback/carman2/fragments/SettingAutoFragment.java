@@ -377,8 +377,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // queries are made. This method takes Continuation which queries auto maker first. On completion,
     // the next query is made with the integer value of auto type, which may be null.
     private void setAutoModelEntries(String id, String type, String engine) {
-
         if(TextUtils.isEmpty(id)) return;
+
         CollectionReference colRef = autoRef.document(id).collection("auto_model");
         Query query = colRef;
 
