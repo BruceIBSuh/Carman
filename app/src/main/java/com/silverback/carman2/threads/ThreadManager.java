@@ -461,6 +461,7 @@ public class ThreadManager {
             mStationListTaskQueue.offer((StationListTask)task);
 
         } else if(task instanceof GasPriceTask) {
+            log.i("GasPriceTask done");
             ((GasPriceTask) task).recycle();
             mGasPriceTaskQueue.offer((GasPriceTask) task);
 

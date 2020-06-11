@@ -286,7 +286,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // If the automodel preference has a value which may get preference.getValue(), query the
         // automodel to fetch the regit number. Otherwise, set the summary
         if(!TextUtils.isEmpty(autoModel.getValue())) queryAutoModel(makerId, modelName);
-        else autoModel.setSummary(getString(R.string.pref_entry_void));
+        else autoModel.setSummaryProvider(preference -> getString(R.string.pref_entry_void));
 
         if(isMakerChanged) isMakerChanged = false;
 

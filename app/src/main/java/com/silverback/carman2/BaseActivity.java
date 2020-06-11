@@ -79,7 +79,7 @@ public class BaseActivity extends AppCompatActivity {
     protected ApplyImageResourceUtil applyImageResourceUtil;
 
     // Fields
-    private String jsonDistrict;
+    protected String jsonDistrict;
     protected boolean isNetworkConnected;
     protected boolean hasLocationPermission;
     protected boolean hasCameraPermission;
@@ -127,9 +127,8 @@ public class BaseActivity extends AppCompatActivity {
     // because it cannot contain any array generics.
     public JSONArray getDistrictJSONArray() {
         try {
-            String[] defaults = getResources().getStringArray(R.array.default_district);
             return (jsonDistrict == null || jsonDistrict.isEmpty())?
-                    new JSONArray(Arrays.asList(defaults)):
+                    new JSONArray(Arrays.asList(getResources().getStringArray(R.array.default_district))):
                     new JSONArray(jsonDistrict);
         } catch(JSONException e) {
             e.printStackTrace();

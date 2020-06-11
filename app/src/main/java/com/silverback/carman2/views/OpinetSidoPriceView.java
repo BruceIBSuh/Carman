@@ -28,7 +28,6 @@ public class OpinetSidoPriceView extends OpinetPriceView {
     // Objects
     private TextView tvSidoName, tvSidoPrice;
 
-
     // Constructors of 3 different types. Here, it mainly uses the second one.
     public OpinetSidoPriceView(Context context) {
         super(context);

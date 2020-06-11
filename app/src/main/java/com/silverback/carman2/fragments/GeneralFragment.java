@@ -133,13 +133,13 @@ public class GeneralFragment extends Fragment implements
         favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+        //pricePagerAdapter = new PricePagerAdapter(getParentFragmentManager());
 
         // Create ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        opinetModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
-
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Fetch the current location using the worker thread and return the value via ViewModel
         // as the type of LiveData, on the basis of which the near stations is to be retrieved.
@@ -228,7 +228,7 @@ public class GeneralFragment extends Fragment implements
             // A new station is reset to the first favroite list.
             if(stnId != null) {
                 if(savedId == null || !stnId.matches(savedId)) {
-                    pricePagerAdapter.notifyDataSetChanged();
+                    //pricePagerAdapter.notifyDataSetChanged();
                     fragmentModel.getFirstPlaceholderId().setValue(stnId);
                     pricePagerAdapter.notifyDataSetChanged();
                 }
@@ -316,12 +316,7 @@ public class GeneralFragment extends Fragment implements
 
         });
 
-        // Any exception occurs in StationListTask
-        /*
-        stnModel.getExceptionMessage().observe(getViewLifecycleOwner(), msg ->
-            Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show());
 
-         */
     }
 
     @Override
@@ -335,6 +330,7 @@ public class GeneralFragment extends Fragment implements
         super.onPause();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
+        if(gasTask != null) gasTask = null;
     }
 
     // If no network connection is found, show a message that contains the clickable span to
@@ -346,7 +342,7 @@ public class GeneralFragment extends Fragment implements
             isNetworkConnected = BaseActivity.notifyNetworkConnected(getActivity());
             if(isNetworkConnected)
                 stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
-            //else Snackbar.make(childView, getString(R.string.errror_no_network), Snackbar.LENGTH_SHORT).show();
+            else Snackbar.make(childView, getString(R.string.errror_no_network), Snackbar.LENGTH_SHORT).show();
         }
     }
 
@@ -377,7 +373,7 @@ public class GeneralFragment extends Fragment implements
             // Retrieve near stations based on a newly selected fuel code if the spinner selection
             // has changed. Temporarily make this not working for preventing excessive access to the
             // server.
-            //stationListTask = ThreadManager.startStationListTask(stnListModel, mPrevLocation, defaults);
+            stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
         }
     }
     @Override
@@ -615,12 +611,14 @@ public class GeneralFragment extends Fragment implements
         // in SettingPreferenceActivity,  newly set the apdater to the pager.
         if(!TextUtils.isEmpty(distCode)) {
             String gasCode = (fuelCode == null) ? defaultFuel : fuelCode;
-            log.i("Code: %s, %s", distCode, gasCode);
+            log.i("distCode changed: %s, %s", distCode, gasCode);
             gasTask = ThreadManager.startGasPriceTask(getContext(), opinetModel, distCode, gasCode);
             opinetModel.distPriceComplete().observe(getViewLifecycleOwner(), isComplete -> {
-                pricePagerAdapter.setFuelCode(gasCode);
+                log.i("District price done: %s", isComplete);
+                pricePagerAdapter.setFuelCode(defaultFuel);
                 pricePagerAdapter.notifyDataSetChanged();
                 priceViewPager.setAdapter(pricePagerAdapter);
+
                 ((MainActivity)getActivity()).getSettings().edit().putLong(
                         Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             });
@@ -628,7 +626,8 @@ public class GeneralFragment extends Fragment implements
 
         // When the fuel code has changed, reset the spinner selection to a new position, which
         // implements onItemSelected() to invalidate a new price data with the fuel code.
-        if(TextUtils.isEmpty(distCode) && fuelCode != null) {
+        if(!TextUtils.isEmpty(fuelCode)) {
+            log.i("fuel code changed: %s", fuelCode);
             String[] fuel = getResources().getStringArray(R.array.spinner_fuel_code);
             for (int i = 0; i < fuel.length; i++) {
                 if (fuel[i].matches(fuelCode)) {

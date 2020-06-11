@@ -131,9 +131,8 @@ public class SettingPrefActivity extends BaseActivity implements
         // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
         // of the vehicle name respectively.
         JSONArray jsonDistArray = getDistrictJSONArray();
-        if(jsonDistArray == null) distCode = (getResources().getStringArray(R.array.default_district))[2];
-        else distCode = jsonDistArray.optString(2);
-
+        //if(jsonDistArray == null) distCode = (getResources().getStringArray(R.array.default_district))[2];
+        //else distCode = jsonDistArray.optString(2);
 
         // Attach SettingPreferencFragment in the FrameLayout
         settingFragment = new SettingPrefFragment();
@@ -157,13 +156,13 @@ public class SettingPrefActivity extends BaseActivity implements
     @Override
     public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-        savedInstanceState.putString("userId", userId);//doubtful!!!
+        //savedInstanceState.putString("userId", userId);//doubtful!!!
     }
 
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        userId = savedInstanceState.getString("userId");//doubtful!!!
+        //userId = savedInstanceState.getString("userId");//doubtful!!!
     }
 
     @Override
@@ -200,12 +199,11 @@ public class SettingPrefActivity extends BaseActivity implements
         // than SettingPreferenceFragment, just pop the fragment off the back stack, which works
         // like the Back command.
         Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
-        log.i("targetFragment: %s", targetFragment);
+
         if(item.getItemId() == android.R.id.home) {
             if (targetFragment instanceof SettingPrefFragment) {
                 // Upload user data to Firebase
                 uploadUserDataToFirebase(uploadData);
-
                 // Create Intent back to MainActivity which contains extras to notify the activity of
                 // which have been changed.
                 switch (requestCode) {
@@ -217,28 +215,26 @@ public class SettingPrefActivity extends BaseActivity implements
                         resultIntent.putExtra("fuelCode", fuelCode);
                         resultIntent.putExtra("radius", radius);
                         resultIntent.putExtra("userImage", userImage);
-                        setResult(Activity.RESULT_OK, resultIntent);
+                        setResult(RESULT_OK, resultIntent);
                         break;
 
                     case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                         Intent autoIntent = new Intent();
                         autoIntent.putExtra("jsonAutoData", jsonAutoData);
                         log.i("JSON Auto Data in Setting: %s", jsonAutoData);
-                        setResult(Activity.RESULT_OK, autoIntent);
+                        setResult(RESULT_OK, autoIntent);
                         break;
 
                     case Constants.REQUEST_BOARD_SETTING_USERNAME:
                         Intent userIntent = new Intent();
                         userIntent.putExtra("userName", userName);
-                        setResult(Activity.RESULT_OK, userIntent);
+                        setResult(RESULT_OK, userIntent);
                         break;
 
                     default: break;
                 }
-
                 finish();
                 return true;
-
             } else {
                 // The return value must be false to make optionsItemSelected() in SettingAutoFragment
                 // feasible.
@@ -293,15 +289,12 @@ public class SettingPrefActivity extends BaseActivity implements
         switch(key) {
 
             case Constants.USER_NAME:
-                userName = mSettings.getString(Constants.USER_NAME, null);
+                userName = mSettings.getString(key, null);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
-                if(userName != null) {
-                    //Map<String, Object> data = new HashMap<>();
-                    //data.put("user_name", userName);
-                    //uploadUserDataToFirebase(data);
-                    uploadData.put("user_name", userName);
-                }
+                //if(userName != null) {
+                // TextUtils.isEmpty(str) indicates str == null || str.length = 0;
+                if(!TextUtils.isEmpty(userName)) uploadData.put("user_name", userName);
                 break;
 
             case Constants.AUTO_DATA:
@@ -324,30 +317,17 @@ public class SettingPrefActivity extends BaseActivity implements
 
             case Constants.FUEL:
                 fuelCode = mSettings.getString(key, null);
-                log.i("SharedPreferences: %s", sharedPreferences.getString(key, null));
                 break;
 
             case Constants.DISTRICT:
-
                 try {
-                    JSONArray jsonDistArray = new JSONArray(mSettings.getString(key, null));
+                    String jsonDist = mSettings.getString(key, null);
+                    JSONArray jsonDistArray = new JSONArray(jsonDist);
                     distCode = jsonDistArray.optString(2);
                 } catch(JSONException e) {e.printStackTrace();}
-
-                log.i("jsonDistArray: %s", distCode);
-                /*
-                if(jsonDistString != null) {
-                    distCode = getDistrictJSONArray().optString(2);
-                    gasPriceTask = ThreadManager.startGasPriceTask(this, priceModel, distCode, null);
-                    mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-                    isDistReset = true;
-                }
-
-                 */
                 break;
 
             case Constants.SEARCHING_RADIUS:
-                log.i("Radius changed");
                 radius = mSettings.getString(key, null);
                 break;
 
@@ -363,7 +343,6 @@ public class SettingPrefActivity extends BaseActivity implements
     // Implements OnSelectImageMediumListener defined in CropImageDialogFragment
     @Override
     public void onSelectImageMedia(int which) {
-
         switch(which) {
             case 0: // Gallery
                 Intent galleryIntent = new Intent();

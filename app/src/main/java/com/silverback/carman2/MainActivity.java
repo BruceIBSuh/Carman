@@ -179,11 +179,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 startActivityForResult(settingIntent, requestCode);
                 return true;
 
-            default:
-                finish();
-                return false;
+            default: return false;
         }
     }
+
 
     // startActivityForResult() has this callback invoked by getting an intent that contains new
     // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
@@ -205,8 +204,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
         // Must make the null check, not String.isEmpty() because the blank name should be included.
         if(userName != null) getSupportActionBar().setTitle(userName);
-        if(uriImage != null)
-            imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
+        if(uriImage != null) imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         else imgModel.getGlideDrawableTarget().setValue(null);
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.

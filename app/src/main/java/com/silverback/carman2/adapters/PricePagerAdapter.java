@@ -21,7 +21,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
  * first-set favorite gas station in PreferenceActivity, which is notified by favoritePriceComplete()
  * of OpinetViewModel in GeneralFragment.
  */
-public class PricePagerAdapter extends FragmentStatePagerAdapter {
+public class    PricePagerAdapter extends FragmentStatePagerAdapter {
 
     private static final int NUM_PAGES = 2;
 
