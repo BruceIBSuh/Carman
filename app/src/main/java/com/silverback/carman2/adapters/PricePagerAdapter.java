@@ -21,7 +21,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
  * first-set favorite gas station in PreferenceActivity, which is notified by favoritePriceComplete()
  * of OpinetViewModel in GeneralFragment.
  */
-public class    PricePagerAdapter extends FragmentStatePagerAdapter {
+public class PricePagerAdapter extends FragmentStatePagerAdapter {
 
     private static final int NUM_PAGES = 2;
 
@@ -30,7 +30,6 @@ public class    PricePagerAdapter extends FragmentStatePagerAdapter {
 
     // Objects
     private String fuelCode;
-    private String stnId;
 
     // Constructor
     public PricePagerAdapter(FragmentManager fm) {
@@ -46,6 +45,12 @@ public class    PricePagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public int getCount() {
         return NUM_PAGES;
+    }
+
+    @Override
+    public int getItemPosition(@NonNull Object object) {
+        log.i("Viewpager update");
+        return POSITION_NONE;
     }
 
     // Invoked when the spinner changes the value or users reset the top priority gas station.

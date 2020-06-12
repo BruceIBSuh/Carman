@@ -79,7 +79,7 @@ public class BaseActivity extends AppCompatActivity {
     protected ApplyImageResourceUtil applyImageResourceUtil;
 
     // Fields
-    protected String jsonDistrict;
+    //protected String jsonDistrict;
     protected boolean isNetworkConnected;
     protected boolean hasLocationPermission;
     protected boolean hasCameraPermission;
@@ -97,7 +97,7 @@ public class BaseActivity extends AppCompatActivity {
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
-        jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
+        //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         userId = getUserIdFromStorage(this);
 
         // Checkk if the network connectivitis ok.
@@ -127,9 +127,8 @@ public class BaseActivity extends AppCompatActivity {
     // because it cannot contain any array generics.
     public JSONArray getDistrictJSONArray() {
         try {
-            return (jsonDistrict == null || jsonDistrict.isEmpty())?
-                    new JSONArray(Arrays.asList(getResources().getStringArray(R.array.default_district))):
-                    new JSONArray(jsonDistrict);
+            return new JSONArray(mSettings.getString(Constants.DISTRICT,
+                    Arrays.asList(getResources().getStringArray(R.array.default_district)).toString()));
         } catch(JSONException e) {
             e.printStackTrace();
             return null;

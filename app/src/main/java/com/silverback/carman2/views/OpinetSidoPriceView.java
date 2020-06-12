@@ -14,6 +14,7 @@ import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.Opinet;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,6 +66,9 @@ public class OpinetSidoPriceView extends OpinetPriceView {
     @SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
 
+
+
+
         File sidoFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIDO_PRICE);
         Uri uriSido = Uri.fromFile(sidoFile);
 
@@ -84,13 +88,7 @@ public class OpinetSidoPriceView extends OpinetPriceView {
                 }
             }
 
-        } catch(FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e);
-        } catch(IOException e) {
-            log.e("IOException: %s", e);
-        } catch(ClassNotFoundException e) {
-            log.e("ClassNotFoundException: %s", e);
-        }
+        } catch(IOException | ClassNotFoundException e) { e.printStackTrace();}
 
     }
 }

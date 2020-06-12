@@ -78,6 +78,7 @@ public class OpinetSigunPriceView extends OpinetPriceView {
                     float price = opinet.getPrice();
                     float diff = opinet.getDiff();
                     tvSigunName.setText(sigunName);
+                    log.i("SigunPriceView: %s, %s, %s", sigunName, price, diff);
                     setColoredTextView(tvSigunPrice, price, diff);
                     break;
                 }

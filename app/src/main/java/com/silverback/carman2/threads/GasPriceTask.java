@@ -94,8 +94,8 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
 
 
     public void recycle(){
-        stnId = null;
-        distCode = null;
+        //stnId = null;
+        //distCode = null;
         index = 0;
     }
 

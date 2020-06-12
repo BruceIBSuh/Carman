@@ -66,14 +66,12 @@ public class OpinetStationPriceView extends OpinetPriceView {
         //File stnFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         File stnFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
-
         Float price = null;
         Float diff = null;
+
         try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)){
             Opinet.StationPrice stnPrice = (Opinet.StationPrice)ois.readObject();
-
-            log.i("First Favorite Station: %s, %s", stnPrice.getStnName(), stnPrice.getPriceDiff());
 
             String stnName = stnPrice.getStnName();
             tvStnName.setText(stnName);
@@ -86,17 +84,10 @@ public class OpinetStationPriceView extends OpinetPriceView {
             if(price == null || diff == null) throw new NullPointerException();
             else setColoredTextView(tvStnPrice, price, diff);
 
-
-        } catch(FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e);
-        } catch(IOException e) {
-            log.e("IOException: %s", e);
-        } catch(ClassNotFoundException e) {
-            log.e("ClassNotFoundException: %s", e);
-        } catch(NullPointerException e) {
-            log.e("NullPointerException: %s", e);
+        } catch(IOException | ClassNotFoundException | NullPointerException e) {
             if(price == null) setColoredTextView(tvStnPrice, 0, 0);
             else if(diff == null) setColoredTextView(tvStnPrice, price, 0);
+            e.printStackTrace();
         }
     }
 

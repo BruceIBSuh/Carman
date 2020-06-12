@@ -77,6 +77,7 @@ public class PricePagerFragment extends Fragment {
 
         switch(page) {
             case DISTRICT_PRICE:
+                log.i("DISTRICT_PRICE");
                 View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
                 OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);
                 OpinetSigunPriceView sigunView = firstPage.findViewById(R.id.sigunPriceView);

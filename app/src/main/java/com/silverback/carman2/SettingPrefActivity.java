@@ -75,6 +75,7 @@ public class SettingPrefActivity extends BaseActivity implements
     private FirebaseStorage storage;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgModel;
+    private OpinetViewModel opinetModel;
     private SettingPrefFragment settingFragment;
     private GasPriceTask gasPriceTask;
     private Map<String, Object> uploadData;
@@ -122,6 +123,7 @@ public class SettingPrefActivity extends BaseActivity implements
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         uploadData = new HashMap<>();
 
         // Get the user id which is saved in the internal storage
@@ -324,6 +326,7 @@ public class SettingPrefActivity extends BaseActivity implements
                     String jsonDist = mSettings.getString(key, null);
                     JSONArray jsonDistArray = new JSONArray(jsonDist);
                     distCode = jsonDistArray.optString(2);
+
                 } catch(JSONException e) {e.printStackTrace();}
                 break;
 

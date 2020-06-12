@@ -132,8 +132,9 @@ public class GeneralFragment extends Fragment implements
         //favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
         favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        // To nest a fragment, call getChildFragmentManager() on the container fragment. Viewpager
+        // containing fragments is a good example.
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
-        //pricePagerAdapter = new PricePagerAdapter(getParentFragmentManager());
 
         // Create ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -612,16 +613,16 @@ public class GeneralFragment extends Fragment implements
         if(!TextUtils.isEmpty(distCode)) {
             String gasCode = (fuelCode == null) ? defaultFuel : fuelCode;
             log.i("distCode changed: %s, %s", distCode, gasCode);
-            gasTask = ThreadManager.startGasPriceTask(getContext(), opinetModel, distCode, gasCode);
-            opinetModel.distPriceComplete().observe(getViewLifecycleOwner(), isComplete -> {
-                log.i("District price done: %s", isComplete);
-                pricePagerAdapter.setFuelCode(defaultFuel);
+            // Attach the viewpager adatepr with a fuel code selected by the spinner.
+            gasTask = ThreadManager.startGasPriceTask(getContext(), opinetModel, distCode, savedId);
+            opinetModel.distPriceComplete().observe(getViewLifecycleOwner(), isDone -> {
+                pricePagerAdapter.setFuelCode(defaults[0]);
                 pricePagerAdapter.notifyDataSetChanged();
                 priceViewPager.setAdapter(pricePagerAdapter);
-
                 ((MainActivity)getActivity()).getSettings().edit().putLong(
                         Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             });
+
         }
 
         // When the fuel code has changed, reset the spinner selection to a new position, which

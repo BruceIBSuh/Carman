@@ -76,11 +76,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);
         */
 
-        // Get the default value of fuel, searching radius, and listing order from BaseActivityR.drawable.logo_e1g
+        // Get the default value of fuels, searching radius, and sorting order from BaseActivity
         // and set it to be bundled to pass it to GeneralFragment
         Bundle bundle = new Bundle();
         bundle.putStringArray("defaults", getDefaultParams());
-        //bundle.putBoolean("notifyNetworkConnected", isNetworkConnected);
         generalFragment = new GeneralFragment();
         generalFragment.setArguments(bundle);
         // Attaches GeneralFragment as a default display at first or returning from the fragments
@@ -126,7 +125,11 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     @Override
     public void onPause() {
         super.onPause();
-        if(gasPriceTask != null) gasPriceTask = null;
+        if(gasPriceTask != null) {
+            log.i("gasPriceTaskk: %s", gasPriceTask.getCurrentThread());
+            gasPriceTask = null;
+        }
+
     }
 
 
@@ -200,12 +203,13 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         String fuelCode = intent.getStringExtra("fuelCode");
         String radius = intent.getStringExtra("radius");
         String uriImage = intent.getStringExtra("userImage");
-        log.i("onActivityResult in Main: %s, %s", distCode, fuelCode);
+        log.i("onActivityResult in Main: %s, %s, %s, %s", distCode, fuelCode, radius, uriImage);
 
         // Must make the null check, not String.isEmpty() because the blank name should be included.
         if(userName != null) getSupportActionBar().setTitle(userName);
         if(uriImage != null) imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         else imgModel.getGlideDrawableTarget().setValue(null);
+
 
         // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
         //generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));

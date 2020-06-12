@@ -61,7 +61,7 @@ public class IntroActivity extends BaseActivity  {
     private GasPriceTask gasPriceTask;
     //private AutoDataResourceTask autoDataResourceTask;
     private DistrictCodeTask distCodeTask;
-    private OpinetViewModel opinetViewModel;
+    private OpinetViewModel opinetModel;
     private String[] defaultDistrict;
 
     // UI's
@@ -76,7 +76,7 @@ public class IntroActivity extends BaseActivity  {
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(this);
-        opinetViewModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Retrieve resources.
         defaultDistrict = getResources().getStringArray(R.array.default_district);
@@ -133,7 +133,8 @@ public class IntroActivity extends BaseActivity  {
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.
-                JSONArray jsonDistrictArray = new JSONArray(Arrays.asList(defaultDistrict));
+                JSONArray jsonDistrictArray = new JSONArray(Arrays.asList(
+                        getResources().getStringArray(R.array.default_district)));
                 mSettings.edit().putString(Constants.DISTRICT, jsonDistrictArray.toString()).apply();
 
                 // Retrive the default service items as JSONArray defined in BaseActvitiy and save
@@ -144,13 +145,12 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
-                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetViewModel);
+                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetModel);
                 // Notified of having the district codes(sigun codes) complete, which was running in the
                 // background by DistrictCodeTask only during firstInitProcess().
-                opinetViewModel.distCodeComplete().observe(this, isComplete -> {
+                opinetModel.distCodeComplete().observe(this, isComplete -> {
                     try {
                         if (isComplete) {
-                            log.i("DistCode done");
                             mProgBar.setVisibility(View.INVISIBLE);
                             regularInitProcess();
                         } else throw new FileNotFoundException();
@@ -174,15 +174,16 @@ public class IntroActivity extends BaseActivity  {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
+            log.i("District Code: %s", distCode);
 
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
                 //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
-                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetViewModel, distCode, stnId);
+                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
                 // SharedPreferences to check whether the price should be updated for the next initiation.
-                opinetViewModel.distPriceComplete().observe(this, isDone -> {
+                opinetModel.distPriceComplete().observe(this, isDone -> {
                     mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                     startActivity(new Intent(this, MainActivity.class));
                     mProgBar.setVisibility(View.GONE);

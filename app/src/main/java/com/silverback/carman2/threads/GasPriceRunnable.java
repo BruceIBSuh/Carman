@@ -85,13 +85,13 @@ public class GasPriceRunnable implements Runnable {
         String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
         String stnId = task.getStationId();
+        log.i("District code: %s, %s, %s", sigunCode, sidoCode, stnId);
 
         try {
             switch(category) {
                 case AVG:
                     task.setPriceDownloadThread(Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
-
                     URL avgURL = new URL(URLavg);
                     HttpURLConnection avgConn = (HttpURLConnection)avgURL.openConnection();
                     try(InputStream avgIn = avgConn.getInputStream()) {
@@ -99,11 +99,10 @@ public class GasPriceRunnable implements Runnable {
                         if (!avgList.isEmpty()) {
                             avgList.remove(avgList.get(3)); // Exclude Kerotene
                             savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
-                            avgConn.disconnect();
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                    }
-
+                    } catch(IOException e) {e.printStackTrace();}
+                    avgConn.disconnect();
                     break;
 
                 case SIDO:
@@ -114,13 +113,12 @@ public class GasPriceRunnable implements Runnable {
                     HttpURLConnection sidoConn = (HttpURLConnection)sidoURL.openConnection();
                     try(InputStream sidoIn = sidoConn.getInputStream()) {
                         List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(sidoIn);
-                        if (!sidoList.isEmpty()) {
+                        if (sidoList.size() > 0) {
                             savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
-                            sidoConn.disconnect();
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                    }
-
+                    } catch(IOException e) {e.printStackTrace();}
+                    sidoConn.disconnect();
                     break;
 
                 case SIGUN:
@@ -131,13 +129,13 @@ public class GasPriceRunnable implements Runnable {
                     HttpURLConnection sigunConn = (HttpURLConnection)sigunURL.openConnection();
                     try(InputStream sigunIn = sigunConn.getInputStream()) {
                         List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(sigunIn);
-                        if (!sigunList.isEmpty()) {
+                        if (sigunList.size() > 0) {
                             savePriceInfo(sigunList, Constants.FILE_CACHED_SIGUN_PRICE);
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             sigunConn.disconnect();
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                    }
-
+                    } catch(IOException e) {e.printStackTrace();}
+                    sigunConn.disconnect();
                     break;
 
                 case STATION:
@@ -152,20 +150,16 @@ public class GasPriceRunnable implements Runnable {
                             if (stnprice != null) {
                                 // Save the object in the cache with the price difference if the favorite
                                 // gas stqation is left unchanged.
-                                stnConn.disconnect();
                                 saveStationPriceDiff(stnprice);
                                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                        }
-
+                        }catch(IOException e) {e.printStackTrace();}
+                        stnConn.disconnect();
                     } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-
                     break;
             }
 
-        } catch (IOException | InterruptedException e) {
-            log.i("Exception occurred in getting price: %s", e.getMessage());
-        }
+        } catch (IOException | InterruptedException e) { e.printStackTrace();}
     }
 
     // Save the district price data in the cache directory to avoid frequent access to the Optinet,
@@ -175,10 +169,7 @@ public class GasPriceRunnable implements Runnable {
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)){
             oos.writeObject(obj);
-        } catch (IOException e) {
-            log.e("IOException occurred in saving the price: %s", e.getMessage());
-            e.printStackTrace();
-        }
+        } catch (IOException e) { e.printStackTrace();}
     }
 
     // As with the first-placeholder favorite station, compare the current station id with the id
@@ -187,14 +178,11 @@ public class GasPriceRunnable implements Runnable {
     // and pass it to setPriceDiff() in Opinet.StationPrice, then save the object. Otherwise, jgasust
     // save the object the same as the other prices.
     private void saveStationPriceDiff(Opinet.StationPrice stnPrice) {
-
         final String fileName = Constants.FILE_FAVORITE_PRICE;
-        final File stnFile = new File(context.getFilesDir(), fileName);
-
+        //final File stnFile = new File(context.getFilesDir(), fileName);
         try(FileInputStream fis = context.openFileInput(fileName);
             ObjectInputStream ois = new ObjectInputStream(fis)) {
             Opinet.StationPrice savedStn = (Opinet.StationPrice)ois.readObject();
-            log.i("currentprice: %s, %s", savedStn.getStnName(), savedStn.getStnPrice());
             // The first favorite station has not changed.
             if(stnPrice.getStnId().equalsIgnoreCase(savedStn.getStnId())) {
                 log.i("Same favorite station");
@@ -205,11 +193,9 @@ public class GasPriceRunnable implements Runnable {
                 for (String key : current.keySet()) {
                     Float currentValue = current.get(key);
                     Float prevValue = prev.get(key);
-                    log.i("Price Diff: %s, %s", currentValue, prevValue);
                     // Throw the exception if the price is null.
                     if(currentValue == null) throw new NullPointerException();
                     if(prevValue == null) throw new NullPointerException();
-
                     // Get the price difference of both prices.
                     diffPrice.put(key, currentValue - prevValue);
                     stnPrice.setPriceDiff(diffPrice);
@@ -217,16 +203,15 @@ public class GasPriceRunnable implements Runnable {
             }
 
         // If no file initially exists, throws IOException, then create new filew.
-        } catch(IOException | ClassNotFoundException | NullPointerException e) {
-            log.i("no file exists");
-            e.printStackTrace();
-        }
+        } catch(IOException | ClassNotFoundException | NullPointerException e) {e.printStackTrace();}
 
-        // Set the price differernce to the station and save the file.
+        // Once getting the price difference b/w the current and previous price, save Opinet.StationPrice
+        // in the internal storage to display the price view in the viewpager of GeneralFragment.
         try(FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(stnPrice);
         } catch(IOException e){e.printStackTrace();}
+
     }
 
 

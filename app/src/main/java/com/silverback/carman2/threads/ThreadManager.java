@@ -279,7 +279,6 @@ public class ThreadManager {
         GasPriceTask gasPriceTask = sInstance.mGasPriceTaskQueue.poll();
 
         if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
-
         gasPriceTask.initPriceTask(model, distCode, stnId);
 
         sInstance.mDownloadThreadPool.execute(gasPriceTask.getAvgPriceRunnable());

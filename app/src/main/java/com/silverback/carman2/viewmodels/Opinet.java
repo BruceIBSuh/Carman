@@ -92,13 +92,11 @@ public class Opinet  {
     }
 
     public static class SidoPrice implements Serializable {
-
         private String sidoCode;
         private String sidoName;
         private String productCd;
         private float price;
         private float diff;
-
 
         String getSidoCode() {
             return sidoCode;
@@ -148,13 +146,11 @@ public class Opinet  {
     }
 
     public static class SigunPrice implements Serializable {
-
         private String sigunCode;
         private String sigunName;
         private String productCd;
         private float price;
         private float diff;
-
 
         String getSigunCode() {
             return sigunCode;
@@ -278,9 +274,7 @@ public class Opinet  {
      * Retrieve data of a specific station with the station id given.
      */
     public static class GasStationInfo implements Serializable {
-
         private static final long serialVersionUID = 1L;
-
         private String stationCode;
         private String stationName;
         private String oldAddrs;
@@ -345,7 +339,6 @@ public class Opinet  {
 
         void setyCoord(String yCoord) { this.yCoord = yCoord; }
         public String getYcoord() { return yCoord; }
-
 
         /*
         @NonNull
