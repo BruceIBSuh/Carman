@@ -32,7 +32,7 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
+import com.silverback.carman2.adapters.SigunSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.ThreadTask;
@@ -76,7 +76,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     private ThreadTask locationTask;
     private SpinnerDistrictModel distModel;
     private LocationViewModel locationModel;
-    private DistrictSpinnerAdapter sigunAdapter;
+    private SigunSpinnerAdapter sigunAdapter;
     private AlertDialog dialog;
     private Location mLocation;
     private String mAddress;
@@ -212,7 +212,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos);
 
-        sigunAdapter = new DistrictSpinnerAdapter(getContext());
+        sigunAdapter = new SigunSpinnerAdapter(getContext());
 
         // Create the spinner for Comany list.
         ArrayAdapter companyAdapter = ArrayAdapter.createFromResource(

@@ -17,21 +17,32 @@ public class XmlPullParserHandler {
     // Logging
     private static LoggingHelper log = LoggingHelperFactory.create(XmlPullParserHandler.class);
 
+    // Objects
+    private Opinet.DistrictCode districtCode;
+    private List<Opinet.DistrictCode> distCodeList;
     private Opinet.OilPrice oilPrice;
     private Opinet.SidoPrice sidoPrice;
     private Opinet.SigunPrice sigunPrice;
     private Opinet.StationPrice stnPrice;
-    private Opinet.DistrictCode districtCode;
     private Opinet.GasStnParcelable gasStnParcelable;
     private Opinet.GasStationInfo gasStationInfo;
     private String text;
+
 
     public XmlPullParserHandler(){
         // Default constructor left empty
     }
 
+    // Constructor for downloading the sigun codes and names which is made with creating
+    // the inputstream to the url on the sido basis and receive the sigun list of the sido.
+    public XmlPullParserHandler(List<Opinet.DistrictCode> distCodeList) {
+        this.distCodeList = distCodeList;
+    }
+
+    // Receive the sigun list on each sido basis and add it to the list, which MUST BE created in
+    // the constructor; otherwise, it would be overwritten and only the last element would remain.
     public List<Opinet.DistrictCode> parseDistrictCode(InputStream is) {
-        List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
+        //List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
         try(InputStream inputStream = is) {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             XmlPullParser parser = factory.newPullParser();
@@ -42,7 +53,8 @@ public class XmlPullParserHandler {
                 String tagName = parser.getName();
                 switch(eventType) {
                     case XmlPullParser.START_TAG:
-                        if (tagName.equalsIgnoreCase("OIL")) districtCode = new Opinet.DistrictCode();
+                        if (tagName.equalsIgnoreCase("OIL"))
+                            districtCode = new Opinet.DistrictCode();
                         break;
                     case XmlPullParser.TEXT:
                         text = parser.getText();

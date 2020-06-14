@@ -16,7 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.threads.DistrictCodeTask;
+import com.silverback.carman2.threads.DistCodeDownloadTask;
 import com.silverback.carman2.threads.GasPriceTask;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
@@ -36,7 +36,7 @@ import java.util.Map;
  * starts the app. The process is forked as the first time initiation and the regular initiation,
  * according to whether the user is anonymously registered with Firebase anonymous authentication.
  *
- * The first time initiation downloads the district code from the Opinet server in the worker thread
+ * The first initiation downloads the district code from the Opinet server in the worker thread
  * (DistCodeTask), the result of which is back here by OpinetViewModel.distCodeComplete(boolean).
  * No matter what is the return value, it continues to the regular process, retrying to download
  * the code when the relevant spinner adapter requires to the code.
@@ -60,7 +60,7 @@ public class IntroActivity extends BaseActivity  {
     private CarmanDatabase mDB;
     private GasPriceTask gasPriceTask;
     //private AutoDataResourceTask autoDataResourceTask;
-    private DistrictCodeTask distCodeTask;
+    private DistCodeDownloadTask distCodeTask;
     private OpinetViewModel opinetModel;
     private String[] defaultDistrict;
 

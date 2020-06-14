@@ -29,7 +29,6 @@ import java.util.List;
 public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PagingQueryHelper.class);
-
     // Objects
     private FirebaseFirestore firestore;
     private CollectionReference colRef;
@@ -40,6 +39,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     // Fields
     private boolean isLoading;
     private boolean isLastItem;
+    private String clubSortingOrder;
     private String field;
 
     // Interface w/ BoardPagerFragment to notify the state of querying process and pagination.
@@ -75,6 +75,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      * @param autofilter the autoclub page query conditions.
      */
     public void setPostingQuery(int page, ArrayList<String> autofilter, boolean isViewCount) {
+        isLoading = false;
+
         Query query = colRef;
         switch(page) {
             case Constants.BOARD_RECENT:
@@ -96,6 +98,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // values because the automaker works as a sufficient condition and other filters
                 // works as necessary conditions.
                 for(int i = 0; i < autofilter.size(); i++) {
+                    // Dot notation is used to reference nested fields within the document
                     final String field = "auto_filter." + autofilter.get(i);
                     query = query.whereEqualTo(field, true);
                 }
@@ -103,8 +106,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // (Logial AND) but it does not require a composite index which is necessary when
                 // where() methods are combined with a range or array-contains clause. Here, it
                 // is simply combined with orderBy() and limt(), thus, no compount query is required.
-                String clubOrder = (isViewCount)? "cnt_view" : "timestamp";
-                query = query.orderBy(clubOrder, Query.Direction.DESCENDING);
+                clubSortingOrder = (isViewCount) ? "cnt_view" : "timestamp";
+                query = query.orderBy(clubSortingOrder, Query.Direction.DESCENDING);
                 break;
 
             // Should create a new collection managed by Admin.(e.g. board_admin)
@@ -140,11 +143,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
-        /*
-        if(newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-            isScrolling = true;
-        }
-         */
     }
 
     // Callback method to be invoked when the RecyclerView has been scrolled. This will be called
@@ -161,9 +159,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
 
+        log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastItem, firstItemPos, visibleItemCount, totalItemCount);
+        // fistItemPost, visibleItemCount, totalItemCount conditions:
         if(!isLoading && !isLastItem && firstItemPos + visibleItemCount >= totalItemCount) {
             mListener.setNextQueryStart(true);
-
             // Get the last visible document in the first query, then make the next query following
             // the document using startAfter(). QuerySnapshot must be invalidated with the value by
             // nextQuery.
@@ -177,7 +176,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     final String field = "auto_filter." + autofilter.get(i);
                     nextQuery = nextQuery.whereEqualTo(field, true);
                 }
-                nextQuery = nextQuery.startAfter(lastDoc).limit(Constants.PAGINATION);
+                nextQuery = nextQuery.orderBy(clubSortingOrder, Query.Direction.DESCENDING)
+                        .startAfter(lastDoc).limit(Constants.PAGINATION);
 
             } else {
                 nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
@@ -188,6 +188,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // Check if the next query reaches the last document.
                 if(e != null || nextSnapshot == null) return;
 
+                log.i("last item: %s", nextSnapshot.size());
                 isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
                 isLoading = false; // ready to make a next query
 

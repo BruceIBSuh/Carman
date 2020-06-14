@@ -37,6 +37,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -45,6 +46,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardEditFragment;
+import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
 import com.silverback.carman2.logs.LoggingHelper;

@@ -94,7 +94,7 @@
             app:defaultValue="@string/pref_svc_period_mileage"
             app:useSimpleSummaryProvider="true"/>
         <Preference
-            app:fragment="com.silverback.carman2.fragments.SettingServiceItemFragment"
+            app:fragment="com.silverback.carman2.fragments.SettingSvcItemFragment"
             app:title="@string/pref_service_chklist"
             app:key="carman_pref_svc_chklist" />
     </PreferenceCategory>

@@ -41,6 +41,12 @@ public class ThreadManager {
     static final int DOWNLOAD_CURRENT_STATION_COMPLETED = 102;
     //static final int DOWNLOAD_STATION_INFO_COMPLETED = 103;
 
+    static final int LOAD_SPINNER_DIST_CODE_COMPLETE = 102;
+    static final int LOAD_SPINNER_DIST_CODE_FAILED = -102;
+
+    static final int DOWNLOAD_DISTCODE_COMPLETED = 103;
+    static final int DOWNLOAD_DISTCODE_FAILED = -103;
+
     static final int DOWNLOAD_IMAGE_FINISH = 201;
 
     static final int UPLOAD_BITMAP_COMPLETED = 1000;
@@ -99,7 +105,7 @@ public class ThreadManager {
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private Queue<ThreadTask> mTaskWorkQueue;
-    private final Queue<DistrictCodeTask> mDistrictCodeTaskQueue;
+    private final Queue<DistCodeDownloadTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final Queue<FavoritePriceTask> mFavoritePriceTaskQueue;
@@ -247,10 +253,10 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static DistrictCodeTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+    public static DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
 
-        DistrictCodeTask task = sInstance.mDistrictCodeTaskQueue.poll();
-        if(task == null) task = new DistrictCodeTask(context, model);
+        DistCodeDownloadTask task = sInstance.mDistrictCodeTaskQueue.poll();
+        if(task == null) task = new DistCodeDownloadTask(context, model);
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
         return task;

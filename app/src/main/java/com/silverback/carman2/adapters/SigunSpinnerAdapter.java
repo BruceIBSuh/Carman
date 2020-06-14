@@ -18,7 +18,7 @@ import java.util.List;
  * SpinnerAdapter for Spinner, used in RegisterDialogFragment and SettingSpinnerDlgFragment as well
  * in order to enlist Sido names based on a selected Sido.
  */
-public class DistrictSpinnerAdapter extends BaseAdapter {
+public class SigunSpinnerAdapter extends BaseAdapter {
     // Logging
     //private static final LoggingHelper log = LoggingHelperFactory.create(DistrictSpinnerAdapter.class);
 
@@ -30,7 +30,7 @@ public class DistrictSpinnerAdapter extends BaseAdapter {
 
 
     // Constructor
-    public DistrictSpinnerAdapter(Context context){
+    public SigunSpinnerAdapter(Context context){
         mDistrictCodeList = new ArrayList<>();
         inflater = LayoutInflater.from(context);
     }
