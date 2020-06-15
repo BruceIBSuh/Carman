@@ -107,7 +107,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 // Something wrong!!!
                 //autoclubOrder = (isViewCount) ? "cnt_view" : "timestamp";
                 //query = query.orderBy(autoclubOrder, Query.Direction.DESCENDING);
-                query.limit(Constants.AUTOCLUB_PAGINATION);
+                query = query.limit(Constants.AUTOCLUB_PAGINATION);
                 break;
 
             // Should create a new collection managed by Admin.(e.g. board_admin)
@@ -180,11 +180,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     final String field = "auto_filter." + autofilter.get(i);
                     nextQuery = nextQuery.whereEqualTo(field, true);
                 }
-                nextQuery = nextQuery.startAfter(lastDoc).limit(100);
+                nextQuery = nextQuery.startAfter(lastDoc).limit(Constants.AUTOCLUB_PAGINATION);
 
             } else {
-                nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING)
-                        .startAfter(lastDoc);
+                nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc);
             }
 
             nextQuery.addSnapshotListener((nextSnapshot, e) -> {
