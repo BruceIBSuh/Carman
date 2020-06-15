@@ -52,7 +52,6 @@ import java.util.Map;
  */
 
 public class IntroActivity extends BaseActivity  {
-    // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(IntroActivity.class);
     // Objects
     private FirebaseAuth mAuth;
@@ -197,7 +196,4 @@ public class IntroActivity extends BaseActivity  {
             finish();
         }
     }
-
-
-
 }
