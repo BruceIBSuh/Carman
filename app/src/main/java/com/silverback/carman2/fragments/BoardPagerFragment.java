@@ -225,11 +225,14 @@ public class BoardPagerFragment extends Fragment implements
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
-        pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
+        pageHelper.setPostingQuery(currentPage, autoFilter);
 
         return localView;
     }
 
+
+
+    @Override
     public void onPause() {
         super.onPause();
         //postListener.remove();
@@ -245,7 +248,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) {
                 // Instead of using notifyItemInserted(), query should be done due to the post
                 // sequential number to be updated..
-                pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
+                pageHelper.setPostingQuery(currentPage, autoFilter);
 
             }
         });
@@ -257,13 +260,13 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
             log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
-                pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
+                pageHelper.setPostingQuery(currentPage, autoFilter);
             }
         });
 
         fragmentModel.getEditPosting().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
+                pageHelper.setPostingQuery(currentPage, autoFilter);
             }
         });
 
@@ -297,15 +300,14 @@ public class BoardPagerFragment extends Fragment implements
         if(item.getItemId() == R.id.action_automaker_emblem) {
             isViewCount = !isViewCount;
             // Make the post sorting by time-wise or viewer-wise basis.
-            //sortDocumentByTimeOrView();
+            sortDocumentByTimeOrView();
 
             // Set the spannable string indicating what's the basis of sorting. The reason why the
             // span is set.
             String sortLabel = (isViewCount) ?
                     getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
             tvSorting.setText(sortLabel);
-
-            pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
+            pageHelper.setPostingQuery(currentPage, autoFilter);
 
             // Rotate the imageview holding emblem
             ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
@@ -350,15 +352,11 @@ public class BoardPagerFragment extends Fragment implements
         // is made to avoid creating compound query index. For this reason, sort the query result
         // which is saved as List using Collection.sort(List, Compatator<T>). Queries in the general
         // board are made sequentially or in terms of view counts.
-        /*
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            //isViewOrder = false;
-            //sortDocumentByTimeOrView();
-            postingAdapter.notifyDataSetChanged();
-        } else postingAdapter.notifyDataSetChanged();
-        //postingAdapter.notifyItemInserted(0);
-        */
+        if(currentPage == Constants.BOARD_AUTOCLUB) sortDocumentByTimeOrView();
         postingAdapter.notifyDataSetChanged();
+
+
+        //postingAdapter.notifyDataSetChanged();
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
@@ -380,6 +378,8 @@ public class BoardPagerFragment extends Fragment implements
             if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
             else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
         }
+
+        sortDocumentByTimeOrView();
         //postingAdapter.notifyDataSetChanged();
         //pbPaging.setVisibility(View.GONE);
     }
@@ -388,8 +388,9 @@ public class BoardPagerFragment extends Fragment implements
     // performa a new query with new autofilter values
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
-        log.i("CheckBox change: %s", autofilter);
-        pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, autofilter, isViewCount);
+        log.i("CheckBox change: %s, %s", autofilter, isViewCount);
+        pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, autofilter);
+
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
         // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
@@ -552,19 +553,13 @@ public class BoardPagerFragment extends Fragment implements
                 });
     }
 
-    public LinearLayoutManager getLayoutManager() {
-        return layoutManager;
-    }
-
 
     // Once posts being sequentially queried by the autofilter, on clicking the automaker emblem,
     // they are sorted by the view counts and vice versa when clikcing again using Comparator<T>
     // interface in Collection.Utils.
-    /*
     private void sortDocumentByTimeOrView(){
         Collections.sort(snapshotList, new SortViewCountAutoClub());
         postingAdapter.notifyDataSetChanged();
-        isViewCount = !isViewCount;
     }
 
     // Implement Comparator<T> which can be passed to Collections.sort(List, Comparator) or Arrays.
@@ -595,7 +590,6 @@ public class BoardPagerFragment extends Fragment implements
             return -1;
         }
     }
-     */
 }
 
 

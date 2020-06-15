@@ -14,6 +14,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -24,6 +25,7 @@ import com.silverback.carman2.viewmodels.ImageViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -65,6 +67,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
+    // Create 2 difference viewholders, one of which is to display the general post content and
+    // the other is to display the plug-in content which will be used for
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
@@ -78,6 +82,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 return new PostViewHolder(postView);
 
             case AD_VIEW_TYPE:
+
 
             default:
                 CardView bannerView = (CardView)LayoutInflater.from(context)
@@ -104,11 +109,17 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 int offset = (position / AD_POSITION) - 1;
                 int index = (AD_POSITION > position) ? position + 1 : position - offset;
 
+                // Timestamp consists of seconds and nanoseconds. To format it as date, get the
+                // seconds using Timestamp.getSeconds() and apply SimpleDateFormat.format() despite
+                // a loss when it should be muliplied by 1000 for making it milliseconds.
+                // Refactor considered: day based format as like today, yesterday format, 2 days ago.
+                Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
+                long postingTime = timeStamp.getSeconds() * 1000;
+
                 PostViewHolder postHolder = (PostViewHolder)holder;
                 postHolder.tvPostTitle.setText(snapshot.getString("post_title"));
-                //postHolder.tvNumber.setText(String.valueOf(position + 1));
                 postHolder.tvNumber.setText(String.valueOf(index));
-                postHolder.tvPostingDate.setText(sdf.format(snapshot.getDate("timestamp")));
+                postHolder.tvPostingDate.setText(sdf.format(postingTime));
                 postHolder.tvUserName.setText(snapshot.getString("user_name"));
                 postHolder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
                 postHolder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));

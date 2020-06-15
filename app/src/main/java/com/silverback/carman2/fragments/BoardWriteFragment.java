@@ -338,7 +338,6 @@ public class BoardWriteFragment extends DialogFragment implements
         if(TextUtils.isEmpty(userId) || !doEmptyCheck()) return;
 
         // Instantiate the fragment to display the progressbar.
-
         pbFragment = new ProgbarDialogFragment();
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
@@ -400,7 +399,8 @@ public class BoardWriteFragment extends DialogFragment implements
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
         post.put("post_title", etPostTitle.getText().toString());
-        post.put("timestamp", FieldValue.serverTimestamp());
+        //post.put("timestamp", FieldValue.serverTimestamp());
+        post.put("timestamp", System.currentTimeMillis());
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
         post.put("cnt_view", 0);
