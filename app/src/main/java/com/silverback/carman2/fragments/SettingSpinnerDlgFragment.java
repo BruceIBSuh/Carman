@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
 import com.silverback.carman2.R;
-import com.silverback.carman2.adapters.DistrictSpinnerAdapter;
+import com.silverback.carman2.adapters.SigunSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
@@ -42,8 +42,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     private DistCodeSpinnerTask spinnerTask;
     private Spinner sidoSpinner, sigunSpinner;
     private ArrayAdapter sidoAdapter;
-    private DistrictSpinnerAdapter sigunAdapter;
-    private FragmentSharedModel fragmentSharedModel;
+    private SigunSpinnerAdapter sigunAdapter;
+    private FragmentSharedModel fragmentModel;
 
     // Fields
     private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
@@ -84,16 +84,17 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         mSidoItemPos = (sidoCode < 14) ? sidoCode - 1 : sidoCode - 3;
 
         distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
-        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         sidoAdapter = ArrayAdapter.createFromResource(getContext(), R.array.sido_name, R.layout.spinner_district_entry);
         sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos, true);
-        sigunAdapter = new DistrictSpinnerAdapter(getContext());
+        sigunAdapter = new SigunSpinnerAdapter(getContext());
 
         // A Sigun list is notified as DistcodeSpinnerTask completes via SpinnerDistrictModel.
         distModel.getSpinnerDataList().observe(this, sigunList -> {
+            log.i("getSpinnerDataList() done: %s", sigunList.size());
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             // Add the Sigun dataset received from DistrictCodeTask by SpinnerDistrictMode.
             sigunAdapter.addSigunList(sigunList);
@@ -152,7 +153,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
 
             // Share the district names with SettingPreferenceFragemnt to display the names in
             // the summary of the District preference.
-            fragmentSharedModel.getDefaultDistrict().setValue(defaults);
+            fragmentModel.getDefaultDistrict().setValue(defaults);
         }
     }
 

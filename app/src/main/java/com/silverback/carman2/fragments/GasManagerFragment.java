@@ -173,7 +173,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
-                Snackbar.make(localView, R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(getView(), R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
 

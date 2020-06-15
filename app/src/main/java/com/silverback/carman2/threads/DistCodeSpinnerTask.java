@@ -44,24 +44,7 @@ public class DistCodeSpinnerTask extends ThreadTask implements
         setCurrentThread(currentThread);
     }
 
-    /*
-    @Override
-    public void handleSpinnerDistCodeTask(int state) {
-        int outState = -1;
 
-        switch(state) {
-            case DistCodeSpinnerRunnable.SPINNER_DIST_CODE_COMPLETE:
-                outState = ThreadManager.LOAD_SPINNER_DIST_CODE_COMPLETE;
-                break;
-
-            case DistCodeSpinnerRunnable.SPINNER_DIST_CODE_FAIL:
-                outState = ThreadManager.LOAD_SPINNER_DIST_CODE_FAILED;
-                break;
-        }
-
-        sThreadManager.handleState(this, outState);
-    }
-     */
 
     @Override
     public int getSidoCode() {
@@ -81,6 +64,21 @@ public class DistCodeSpinnerTask extends ThreadTask implements
     public void setSigunCode(List<Opinet.DistrictCode> distCode) {
         model.getSpinnerDataList().postValue(distCode);
     }
+
+    @Override
+    public void handleDistCodeSpinnerTask(int state) {
+        int outState = -1;
+        switch(state) {
+            case DistCodeSpinnerRunnable.SPINNER_DIST_CODE_COMPLETE:
+                outState = ThreadManager.LOAD_SPINNER_DIST_CODE_COMPLETE;
+                break;
+            case DistCodeSpinnerRunnable.SPINNER_DIST_CODE_FAIL:
+                outState = ThreadManager.LOAD_SPINNER_DIST_CODE_FAILED;
+                break;
+        }
+        sThreadManager.handleState(this, outState);
+    }
+
 
 
 }

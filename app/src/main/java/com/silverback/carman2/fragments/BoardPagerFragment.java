@@ -88,6 +88,7 @@ public class BoardPagerFragment extends Fragment implements
     private ApplyImageResourceUtil imgutil;
 
     // UIs
+    private LinearLayoutManager layoutManager;
     private ProgressBar pbLoading, pbPaging;
     private PostingRecyclerView recyclerPostView;
     private TextView tvEmptyView;
@@ -203,8 +204,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // In case of inserting the banner, the item size will change.
         recyclerPostView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(
-                getContext(), LinearLayoutManager.VERTICAL, false);
+        layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerPostView.setLayoutManager(layoutManager);
         recyclerPostView.setItemAnimator(new DefaultItemAnimator());
         recyclerPostView.setAdapter(postingAdapter);
@@ -225,7 +225,6 @@ public class BoardPagerFragment extends Fragment implements
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
-
         pageHelper.setPostingQuery(currentPage, autoFilter, isViewCount);
 
         return localView;
@@ -345,8 +344,6 @@ public class BoardPagerFragment extends Fragment implements
             } else {
                 if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
             }
-
-
         }
 
         // The AutoClub queries multiple where conditions based on the auto_filter and no order query
@@ -372,8 +369,8 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     @Override
-    public void setNextQueryStart(boolean b) {
-        if(b) pbPaging.setVisibility(View.VISIBLE);
+    public void setNextQueryStart(boolean isNextQuery) {
+        if(isNextQuery) pbPaging.setVisibility(View.VISIBLE);
         else pbPaging.setVisibility(View.GONE);
     }
 
@@ -383,6 +380,7 @@ public class BoardPagerFragment extends Fragment implements
             if(currentPage == Constants.BOARD_AUTOCLUB) snapshotList.add(snapshot);
             else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
         }
+        //postingAdapter.notifyDataSetChanged();
         //pbPaging.setVisibility(View.GONE);
     }
 
@@ -420,6 +418,7 @@ public class BoardPagerFragment extends Fragment implements
             bundle.putString("userName", snapshot.getString("user_name"));
             bundle.putString("userPic", snapshot.getString("user_pic"));
         }
+
         bundle.putInt("cntComment", snapshot.getLong("cnt_comment").intValue());
         bundle.putInt("cntCompathy", snapshot.getLong("cnt_compathy").intValue());
         bundle.putString("postContent", snapshot.getString("post_content"));
@@ -534,23 +533,27 @@ public class BoardPagerFragment extends Fragment implements
     // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
     // auto data as json type.
     private void setAutoMakerEmblem(ImageView imgview) {
-        firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get().addOnSuccessListener(query -> {
-            for(QueryDocumentSnapshot autoshot : query) {
-                if(autoshot.exists()) {
-                    String emblem = autoshot.getString("auto_emblem");
-                    // Empty Check. Refactor should be taken to show an empty icon, instead.
-                    if(TextUtils.isEmpty(emblem)) return;
-                    else {
-                        Uri uri = Uri.parse(emblem);
-                        final int x = imgview.getMeasuredWidth();
-                        final int y = imgview.getMeasuredHeight();
-                        imgutil.applyGlideToEmblem(uri, x, y, imgview);
+        firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
+                .addOnSuccessListener(query -> {
+                    for(QueryDocumentSnapshot autoshot : query) {
+                        if(autoshot.exists()) {
+                            String emblem = autoshot.getString("auto_emblem");
+                            // Empty Check. Refactor should be taken to show an empty icon, instead.
+                            if(TextUtils.isEmpty(emblem)) return;
+                            else {
+                                Uri uri = Uri.parse(emblem);
+                                final int x = imgview.getMeasuredWidth();
+                                final int y = imgview.getMeasuredHeight();
+                                imgutil.applyGlideToEmblem(uri, x, y, imgview);
+                            }
+                            break;
+                        }
                     }
+                });
+    }
 
-                    break;
-                }
-            }
-        });
+    public LinearLayoutManager getLayoutManager() {
+        return layoutManager;
     }
 
 

@@ -22,8 +22,8 @@ public class DistCodeSpinnerRunnable implements Runnable {
     private static final LoggingHelper log = LoggingHelperFactory.create(DistCodeSpinnerRunnable.class);
 
     // Constants
-    //static final int SPINNER_DIST_CODE_COMPLETE = 1;
-    //static final int SPINNER_DIST_CODE_FAIL = -1;
+    static final int SPINNER_DIST_CODE_COMPLETE = 1;
+    static final int SPINNER_DIST_CODE_FAIL = -1;
 
     // Objects
     private Context context;
@@ -35,7 +35,7 @@ public class DistCodeSpinnerRunnable implements Runnable {
         //SpinnerDistrictModel getSpinnerDistrictModel();
         void setSigunCode(List<Opinet.DistrictCode> distCode);
         void setSpinnerDistCodeThread(Thread currentThread);
-        //void handleSpinnerDistCodeTask(int state);
+        void handleDistCodeSpinnerTask(int state);
     }
 
     DistCodeSpinnerRunnable(Context context, DistCodeMethods task) {
@@ -43,8 +43,6 @@ public class DistCodeSpinnerRunnable implements Runnable {
         this.task = task;
     }
 
-
-    @SuppressWarnings("unchecked")
     @Override
     public void run() {
         task.setSpinnerDistCodeThread(Thread.currentThread());
@@ -61,24 +59,25 @@ public class DistCodeSpinnerRunnable implements Runnable {
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
-            for(Opinet.DistrictCode obj : (List<Opinet.DistrictCode>)ois.readObject()) {
+            List<Opinet.DistrictCode> districtList = (List<Opinet.DistrictCode>)ois.readObject();
+            log.i("districtLiist size: %s", districtList.size());
+
+            for(Opinet.DistrictCode obj : districtList) {
                 if(obj.getDistrictCode().substring(0, 2).equals(sidoCode)) {
                     distCodeList.add(obj);
                 }
             }
 
             task.setSigunCode(distCodeList);
+            task.handleDistCodeSpinnerTask(SPINNER_DIST_CODE_COMPLETE);
 
             // Post(Set) value in SpinnerDistriceModel, which is notified to the parent fragment,
             // SettingSpinnerDlgFragment as LiveData.
             //task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
 
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             log.w("IOException: %s", e.getMessage());
-            //task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_FAIL);
-        } catch (ClassNotFoundException e) {
-            log.w("ClassNotFoundException: %s", e.getMessage());
-            //task.handleSpinnerDistCodeTask(SPINNER_DIST_CODE_FAIL);
+            task.handleDistCodeSpinnerTask(SPINNER_DIST_CODE_FAIL);
         }
     }
 

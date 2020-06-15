@@ -6,25 +6,23 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.OpinetViewModel;
 
-public class DistrictCodeTask extends ThreadTask
-        implements DistrictCodeRunnable.OpinetDistCodeMethods {
+public class DistCodeDownloadTask extends ThreadTask
+        implements DistCodeDownloadRunnable.OpinetDistCodeMethods {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(DistrictCodeTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadTask.class);
 
-    // Constants
-    static final int DISTRICT_CODE_COMPLETE = 1;
-    static final int DISTRICT_CODE_FAIL = -1;
+
 
     // Objects
     private OpinetViewModel model;
     private Runnable opinetDistCodeRunnable;
 
     // Constructor
-    DistrictCodeTask(Context context, OpinetViewModel model) {
+    DistCodeDownloadTask(Context context, OpinetViewModel model) {
         super(); // ThreadTask
         this.model = model;
-        opinetDistCodeRunnable = new DistrictCodeRunnable(context, this);
+        opinetDistCodeRunnable = new DistCodeDownloadRunnable(context, this);
     }
 
     // Getter for the Runnable invoked by startGasPriceTask() in ThreadManager
@@ -48,17 +46,16 @@ public class DistrictCodeTask extends ThreadTask
         sThreadManager.handleState(this, outstate);
     }
 
-    /*
-    @Override
-    public void handleDistCodeTask(int state) {
-        int outstate = -1;
 
+    @Override
+    public void handleDistCodeDownload(int state) {
+        int outstate = -1;
         switch(state) {
-            case DistrictCodeRunnable.DOWNLOAD_DISTCODE_SUCCEED:
-                outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLTETED;
+            case DistCodeDownloadRunnable.DISTRICT_CODE_COMPLETE:
+                outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLETED;
                 break;
 
-            case DistrictCodeRunnable.DOWNLOAD_DISTCODE_FAIL:
+            case DistCodeDownloadRunnable.DISTRICT_CODE_FAIL:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_FAILED;
                 break;
         }
@@ -66,6 +63,6 @@ public class DistrictCodeTask extends ThreadTask
         sThreadManager.handleState(this, outstate);
     }
 
-     */
+
 
 }

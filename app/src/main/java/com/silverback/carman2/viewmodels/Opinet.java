@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 public class Opinet  {
 
     public static class DistrictCode implements Serializable {
-
         private String districtCode;
         private String districtName;
 
@@ -27,13 +26,11 @@ public class Opinet  {
             this.districtName = districtName;
         }
 
-
         @NonNull
         @Override
         public String toString(){
             return "districtCode: " + getDistrictCode() + "\ndistrictName: " + getDistrictName();
         }
-
     }
 
     public static class OilPrice implements Serializable {
