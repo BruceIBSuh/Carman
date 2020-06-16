@@ -37,6 +37,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -77,6 +78,7 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private PagingQueryHelper pageHelper;
+    private BoardPagerAdapter pagerAdapter;
     //private Source source;
     //private ListenerRegistration postListener;
     private FragmentSharedModel fragmentModel;
@@ -159,6 +161,7 @@ public class BoardPagerFragment extends Fragment implements
         //if(currentPage == Constants.BOARD_AUTOCLUB) {
             autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             ((BoardActivity)getActivity()).setAutoFilterListener(this);
+            pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         //}
 
         /*
@@ -334,14 +337,13 @@ public class BoardPagerFragment extends Fragment implements
     public void setFirstQuery(QuerySnapshot snapshots) {
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
-        log.i("Snapshots: %s, %s", snapshotList.size(), snapshots.size());
+
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
             // is added as far as the post_general is true.
             switch(currentPage) {
                 case Constants.BOARD_AUTOCLUB:
-                    log.i("autoclub: %s", currentPage);
                     snapshotList.add(snapshot);
                     createAutoClubPost(snapshot);
                     break;
@@ -355,14 +357,17 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        if(currentPage == Constants.BOARD_AUTOCLUB) log.i("filtered: %s", snapshotList.size());
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            log.i("firstQuery snapshotlist: %s", snapshotList.size());
+            pageHelper.setNextQuery();
+        } else postingAdapter.notifyDataSetChanged();
 
         // The AutoClub queries multiple where conditions based on the auto_filter and no order query
         // is made to avoid creating compound query index. For this reason, sort the query result
         // which is saved as List using Collection.sort(List, Compatator<T>). Queries in the general
         // board are made sequentially or in terms of view counts.
         //if(currentPage == Constants.BOARD_AUTOCLUB) sortDocumentByTimeOrView();
-        postingAdapter.notifyDataSetChanged();
+
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
@@ -385,7 +390,6 @@ public class BoardPagerFragment extends Fragment implements
                 case Constants.BOARD_AUTOCLUB:
                     snapshotList.add(snapshot);
                     createAutoClubPost(snapshot);
-
                     break;
                 case Constants.BOARD_NOTIFICATION:
                     snapshotList.add(snapshot);
@@ -396,19 +400,19 @@ public class BoardPagerFragment extends Fragment implements
                     break;
             }
         }
-        /*
-        for(QueryDocumentSnapshot snapshot : snapshots) {
-            if(currentPage == Constants.BOARD_AUTOCLUB) {
-                snapshotList.add(snapshot);
-            }
 
-            else if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
-        }
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            // The autoclub repeats the next query manually until it comes to the last query. The
+            // other board makes the next query automatically by scrolling. The autoclub updates
+            // the adapter only when the last query is done.
+            if(snapshots.size() >= Constants.PAGINATION) {
+                pageHelper.setNextQuery();
+            } else postingAdapter.notifyDataSetChanged();
 
-        if(currentPage == Constants.BOARD_AUTOCLUB) sortDocumentByTimeOrView();
-        */
-        postingAdapter.notifyDataSetChanged();
+        } else postingAdapter.notifyDataSetChanged();
+
         pbPaging.setVisibility(View.GONE);
+
     }
 
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
@@ -417,13 +421,13 @@ public class BoardPagerFragment extends Fragment implements
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         log.i("CheckBox change: %s, %s", autofilter, isViewOrder);
         this.autoFilter = autofilter;
+        pagerAdapter.notifyDataSetChanged();
         pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
 
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
         // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
         // when no dataset exists.
-        //pagerAdapter.notifyDataSetChanged();
     }
 
     // Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
@@ -582,18 +586,18 @@ public class BoardPagerFragment extends Fragment implements
     }
 
 
+
     private void createAutoClubPost(QueryDocumentSnapshot snapshot) {
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
-            for (int i = 0; i < autoFilter.size(); i++) {
-                if ((snapshot.get("auto_filter." + autoFilter.get(i)) == null)) {
+            for(String filter : autoFilter) {
+                if ((snapshot.get("auto_filter." + filter) == null)) {
                     snapshotList.remove(snapshot);
                     break;
                 }
             }
         }
     }
-
 
 
     // Once posts being sequentially queried by the autofilter, on clicking the automaker emblem,

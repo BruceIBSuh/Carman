@@ -810,6 +810,10 @@ public class BoardActivity extends BaseActivity implements
     public ArrayList<String> getAutoFilterValues() {
         return cbAutoFilter;
     }
+    public BoardPagerAdapter getPagerAdapter() {
+        return pagerAdapter;
+    }
+
     public boolean checkGeneralPost() { return isGeneral; }
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {

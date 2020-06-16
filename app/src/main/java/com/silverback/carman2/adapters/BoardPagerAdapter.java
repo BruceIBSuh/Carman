@@ -56,7 +56,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // As long as the current page is AUTO_CLUB, update the viewpager adapter by setting the return
     // type as POSITION_NONE. It invokes destroyItem() and regards the current fragment destroyed
     // which leads to call onCreateView() of the fragment.
-
     @Override
     public int getItemPosition(@NonNull Object object) {
         log.i("getItemPosition: %s", object);

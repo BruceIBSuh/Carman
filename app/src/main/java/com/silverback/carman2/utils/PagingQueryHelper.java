@@ -142,6 +142,20 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 });
     }
 
+    // Make the next query manually for filtering the autoclub until it comes to the last query.
+    public void setNextQuery() {
+        DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+        Query nextQuery = colRef;
+        nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
+                .limit(Constants.PAGINATION)
+                .addSnapshotListener((nextSnapshot, e) -> {
+                    if (e != null || nextSnapshot == null) return;
+                    // Hide the loading progressbar and add the query results to the list
+                    mListener.setNextQueryStart(false);
+                    mListener.setNextQueryComplete(nextSnapshot);
+                    querySnapshot = nextSnapshot;
+                });
+    }
 
     // Callback method to be invoked when RecyclerView's scroll state changes.
     //
@@ -164,8 +178,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
 
-        log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastPage, firstItemPos, visibleItemCount, totalItemCount);
-        // fistItemPost, visibleItemCount, totalItemCount conditions:
         if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= totalItemCount) {
             isLoading = true;
             mListener.setNextQueryStart(true);
@@ -176,20 +188,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             // Making the next query, the autoclub page has to be handled in a diffent way than
             // the other pages because it queries with different conditions.
             Query nextQuery = colRef;
-
-            /*
-            if (field.equals("auto_club")) {
-                for (int i = 0; i < autofilter.size(); i++) {
-                    final String field = "auto_filter." + autofilter.get(i);
-                    query = query.whereEqualTo(field, true);
-                }
-                query = query.startAfter(lastDoc);
-
-            } else {
-                query = query.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc);
-            }
-             */
-
             nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                     .limit(Constants.PAGINATION)
                     .addSnapshotListener((nextSnapshot, e) -> {
@@ -203,7 +201,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                         // Hide the loading progressbar and add the query results to the list
                         mListener.setNextQueryStart(false);
                         mListener.setNextQueryComplete(nextSnapshot);
-
                         querySnapshot = nextSnapshot;
                     });
         }
