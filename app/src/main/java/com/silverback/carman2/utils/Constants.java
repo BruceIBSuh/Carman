@@ -50,7 +50,7 @@ public class Constants {
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
 
     // Board
-    static final int PAGINATION = 20;
+    static final int PAGINATION = 50;
     public static final int AUTOCLUB_PAGINATION = 100;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;

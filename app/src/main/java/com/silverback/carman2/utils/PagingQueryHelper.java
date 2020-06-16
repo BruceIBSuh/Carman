@@ -27,7 +27,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     private static final LoggingHelper log = LoggingHelperFactory.create(PagingQueryHelper.class);
     // Objects
     private FirebaseFirestore firestore;
-    private Source source;
     private CollectionReference colRef;
     private QuerySnapshot querySnapshot;
     private OnPaginationListener mListener;
@@ -35,8 +34,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
     // Fields
     private boolean isLoading;
-    private boolean isLastItem;
-    private String autoclubOrder;
+    private boolean isLastPage;
     private String field;
 
     // Interface w/ BoardPagerFragment to notify the state of querying process and pagination.
@@ -71,49 +69,53 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      * @param page current page to query
      * @param autofilter the autoclub page query conditions.
      */
-    public void setPostingQuery(int page, ArrayList<String> autofilter) {
-        //this.source = source;
+    //public void setPostingQuery(int page, ArrayList<String> autofilter) {
+    public void setPostingQuery(int page, boolean isViewOrder) {
+        //querySnapshot = null;
+        Query query = colRef;
+        isLastPage = false;
         isLoading = false;
 
-        Query query = colRef;
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
-                query = query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                query = query.orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
-                query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                query = query.orderBy("cnt_view", Query.Direction.DESCENDING);
                 break;
 
+
             case Constants.BOARD_AUTOCLUB:
+                this.field = (isViewOrder)? "cnt_view" : "timestamp";
+                log.i("auto club field: %s", field);
+                query = query.orderBy(field, Query.Direction.DESCENDING);
+
+                /*
                 this.field = "auto_club";
                 this.autofilter = autofilter;
 
                 if(autofilter == null || autofilter.size() == 0) return;
-                // Query depends on whether the autofilter contains the automaker only or more filter
-                // values because the automaker works as a sufficient condition and other filters
-                // works as necessary conditions.
+                // Multiple where() methods to create more specific queries(logical AND) with the
+                // auto filters is applied here. However, to combine the equality operator(==) with
+                // a range or array-contains clause, a composite index should be created. To avoid
+                // this, as far as the autoclub is concerned, orderBy() should be avoided and queries
+                // should be sorted by Collection.sort util.
                 for(int i = 0; i < autofilter.size(); i++) {
                     // Dot notation is used to reference nested fields within the document
                     final String field = "auto_filter." + autofilter.get(i);
                     query = query.whereEqualTo(field, true);
                 }
-                // Compound query that has multiple where() methods to create more specific queries
-                // (Logial AND) but it does not require a composite index which is necessary when
-                // where() methods are combined with a range or array-contains clause. Here, it
-                // is simply combined with orderBy() and limit(), thus, no compount query is required.
-                // Something wrong!!!
-                //autoclubOrder = (isViewCount) ? "cnt_view" : "timestamp";
-                //query = query.orderBy(autoclubOrder, Query.Direction.DESCENDING);
                 query = query.limit(Constants.AUTOCLUB_PAGINATION);
+                */
                 break;
 
             // Should create a new collection managed by Admin.(e.g. board_admin)
-            case Constants.BOARD_NOTIFICATION: // notification
-                query = firestore.collection("board_admin")
-                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+            case Constants.BOARD_NOTIFICATION:
+                query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
+
                 break;
         }
 
@@ -121,7 +123,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         // Refactor should be considered to apply Source.CACHE or Source.SERVER depending on whehter
         // querysnapshot has existed or hasPendingWrite is true.
         //query.limit(Constants.PAGINATION).get(source).addOnSuccessListener((querySnapshot) -> {
-        query.addSnapshotListener((querySnapshot, e) -> {
+        query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             mListener.setFirstQuery(querySnapshot);
@@ -162,41 +164,48 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
 
-        log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastItem, firstItemPos, visibleItemCount, totalItemCount);
+        log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastPage, firstItemPos, visibleItemCount, totalItemCount);
         // fistItemPost, visibleItemCount, totalItemCount conditions:
-        if(!isLoading && !isLastItem && firstItemPos + visibleItemCount >= totalItemCount) {
+        if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= totalItemCount) {
             isLoading = true;
             mListener.setNextQueryStart(true);
             // Get the last visible document in the first query, then make the next query following
             // the document using startAfter(). QuerySnapshot must be invalidated with the value by
             // nextQuery.
-            //isLoading = true;
             DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
             // Making the next query, the autoclub page has to be handled in a diffent way than
             // the other pages because it queries with different conditions.
             Query nextQuery = colRef;
+
+            /*
             if (field.equals("auto_club")) {
                 for (int i = 0; i < autofilter.size(); i++) {
                     final String field = "auto_filter." + autofilter.get(i);
-                    nextQuery = nextQuery.whereEqualTo(field, true);
+                    query = query.whereEqualTo(field, true);
                 }
-                nextQuery = nextQuery.startAfter(lastDoc).limit(Constants.AUTOCLUB_PAGINATION);
+                query = query.startAfter(lastDoc);
 
             } else {
-                nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc);
+                query = query.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc);
             }
+             */
 
-            nextQuery.addSnapshotListener((nextSnapshot, e) -> {
-                // Check if the next query reaches the last document.
-                if(e != null || nextSnapshot == null) return;
-                isLastItem = (nextSnapshot.size()) < Constants.PAGINATION;
-                isLoading = false; // ready to make a next query
+            nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
+                    .limit(Constants.PAGINATION)
+                    .addSnapshotListener((nextSnapshot, e) -> {
+                        // Check if the next query reaches the last document.
+                        if(e != null || nextSnapshot == null) return;
 
-                mListener.setNextQueryStart(false); //hide the loading progressbar
-                mListener.setNextQueryComplete(nextSnapshot); // add the query result to the list.
+                        isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
+                        isLoading = false; // ready to make a next query
+                        log.i("isLastPage: %s, %s", nextSnapshot.size(), isLastPage);
 
-                querySnapshot = nextSnapshot;
-            });
+                        // Hide the loading progressbar and add the query results to the list
+                        mListener.setNextQueryStart(false);
+                        mListener.setNextQueryComplete(nextSnapshot);
+
+                        querySnapshot = nextSnapshot;
+                    });
         }
     }
 }
