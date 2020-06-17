@@ -36,12 +36,13 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     private boolean isLoading;
     private boolean isLastPage;
     private String field;
+    private int currentPage;
 
     // Interface w/ BoardPagerFragment to notify the state of querying process and pagination.
     public interface OnPaginationListener {
-        void setFirstQuery(QuerySnapshot snapshot);
+        void setFirstQuery(int page, QuerySnapshot snapshot);
         void setNextQueryStart(boolean b);
-        void setNextQueryComplete(QuerySnapshot snapshot);
+        void setNextQueryComplete(int page, QuerySnapshot snapshot);
     }
 
     // private constructor
@@ -71,8 +72,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      */
     //public void setPostingQuery(int page, ArrayList<String> autofilter) {
     public void setPostingQuery(int page, boolean isViewOrder) {
-        //querySnapshot = null;
         Query query = colRef;
+        currentPage = page;
         isLastPage = false;
         isLoading = false;
 
@@ -90,7 +91,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-                log.i("auto club field: %s", field);
                 query = query.orderBy(field, Query.Direction.DESCENDING);
 
                 /*
@@ -126,33 +126,33 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
-            mListener.setFirstQuery(querySnapshot);
+            mListener.setFirstQuery(page, querySnapshot);
         });
     }
 
     // Query comments in BoardRedDlgFragment
-    public void setCommentQuery(final String field, final String docId) {
+    public void setCommentQuery(int page, final String field, final String docId) {
         this.field = field;
         colRef = firestore.collection("board_general").document(docId).collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                 .addSnapshotListener((querySnapshot, e) -> {
                     if(e != null) return;
                     this.querySnapshot = querySnapshot;
-                    mListener.setFirstQuery(querySnapshot);
+                    mListener.setFirstQuery(page, querySnapshot);
                 });
     }
 
     // Make the next query manually for filtering the autoclub until it comes to the last query.
     public void setNextQuery() {
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        Query nextQuery = colRef;
-        nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
+        mListener.setNextQueryStart(true);
+        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION)
                 .addSnapshotListener((nextSnapshot, e) -> {
                     if (e != null || nextSnapshot == null) return;
                     // Hide the loading progressbar and add the query results to the list
                     mListener.setNextQueryStart(false);
-                    mListener.setNextQueryComplete(nextSnapshot);
+                    mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
                     querySnapshot = nextSnapshot;
                 });
     }
@@ -170,6 +170,9 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     @Override
     public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
         super.onScrolled(recyclerView, dx, dy);
+
+        // Exclude the auto club page b/c it is manually queried by calling setNextQuery() and
+        if(currentPage == Constants.BOARD_AUTOCLUB) return;
 
         LinearLayoutManager layoutManager = (LinearLayoutManager)recyclerView.getLayoutManager();
         if(layoutManager == null || dy == 0) return;
@@ -200,7 +203,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
                         // Hide the loading progressbar and add the query results to the list
                         mListener.setNextQueryStart(false);
-                        mListener.setNextQueryComplete(nextSnapshot);
+                        mListener.setNextQueryComplete(currentPage, nextSnapshot);
                         querySnapshot = nextSnapshot;
                     });
         }

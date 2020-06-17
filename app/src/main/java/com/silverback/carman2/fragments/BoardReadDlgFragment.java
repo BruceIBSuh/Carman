@@ -276,7 +276,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // BoardPagerFragment has already updatedd the posting items when created, the comment list
         // shouldn't be updated from the server.
-        pagingUtil.setCommentQuery("timestamp", documentId);
+        pagingUtil.setCommentQuery(tabPage, "timestamp", documentId);
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
@@ -390,7 +390,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // The following 3 callbacks are invoked by PagingQueryHelper to query a collection reference
     // up to the limit and on showing the last one, another query get started.
     @Override
-    public void setFirstQuery(QuerySnapshot snapshot) {
+    public void setFirstQuery(int page, QuerySnapshot snapshot) {
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);
         commentAdapter.notifyDataSetChanged();
     }
@@ -399,7 +399,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Set the visibility of Progressbar to visible.
     }
     @Override
-    public void setNextQueryComplete(QuerySnapshot querySnapshot) {
+    public void setNextQueryComplete(int page, QuerySnapshot querySnapshot) {
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
         //pagingProgressBar.setVisibility(View.INVISIBLE);
         commentAdapter.notifyDataSetChanged();

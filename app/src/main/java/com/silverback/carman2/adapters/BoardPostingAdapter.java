@@ -82,8 +82,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 return new PostViewHolder(postView);
 
             case AD_VIEW_TYPE:
-
-
             default:
                 CardView bannerView = (CardView)LayoutInflater.from(context)
                         .inflate(R.layout.cardview_board_banner, viewGroup, false);

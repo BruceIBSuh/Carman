@@ -89,14 +89,15 @@ public class BoardPagerFragment extends Fragment implements
     private ApplyImageResourceUtil imgutil;
 
     // UIs
+    private LinearLayoutManager layoutManager;
     private ProgressBar pbLoading, pbPaging;
     private PostingRecyclerView recyclerPostView;
     private TextView tvEmptyView;
     private TextView tvSorting;
 
     // Fields
-    private int currentPage;
     private String automaker;
+    private int currentPage;
     private boolean isViewOrder;
 
     // Constructor
@@ -105,29 +106,27 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Singleton for the fragments other than AutoClub
-    public static BoardPagerFragment newInstance(int page, @Nullable String maker) {
+    /*
+    public static BoardPagerFragment newInstance(int page, String automaker) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("currentPage", page);
-        args.putString("automaker", maker);
+        args.putString("automaker", automaker);
         fragment.setArguments(args);
 
         return fragment;
     }
-
+    */
     // Singleton for AutoClub currentPage which has the checkbox values and title names.
-    /*
     public static BoardPagerFragment newInstance(int page, ArrayList<String> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("currentPage", page);
-        //args.putStringArrayList("autoFilter", values);
+        args.putStringArrayList("autoFilter", values);
         fragment.setArguments(args);
 
         return fragment;
     }
-
-     */
 
 
     @SuppressWarnings("ConstantConditions")
@@ -136,8 +135,10 @@ public class BoardPagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         if(getArguments() != null) {
+            autoFilter = getArguments().getStringArrayList("autoFilter");
             currentPage = getArguments().getInt("currentPage");
-            automaker = getArguments().getString("automaker");
+            automaker = autoFilter.get(0);
+            log.i("CURRENT PAGE: %s", currentPage);
         }
 
         // Make the toolbar menu available in the Fragment.
@@ -159,7 +160,7 @@ public class BoardPagerFragment extends Fragment implements
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
         //if(currentPage == Constants.BOARD_AUTOCLUB) {
-            autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
+            //autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
             ((BoardActivity)getActivity()).setAutoFilterListener(this);
             pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         //}
@@ -205,7 +206,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // In case of inserting the banner, the item size will change.
         recyclerPostView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         recyclerPostView.setLayoutManager(layoutManager);
         recyclerPostView.setItemAnimator(new DefaultItemAnimator());
         recyclerPostView.setAdapter(postingAdapter);
@@ -306,10 +307,9 @@ public class BoardPagerFragment extends Fragment implements
 
             // Set the spannable string indicating what's the basis of sorting. The reason why the
             // span is set.
-            String sortLabel = (isViewOrder) ?
-                    getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
+            String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
             tvSorting.setText(sortLabel);
-            pageHelper.setPostingQuery(currentPage, isViewOrder);
+            pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
 
             // Rotate the imageview holding emblem
             ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
@@ -334,7 +334,7 @@ public class BoardPagerFragment extends Fragment implements
     // Implement PagingQueryHelper.OnPaginationListener which notifies the adapter of the first and
     // the next query results.
     @Override
-    public void setFirstQuery(QuerySnapshot snapshots) {
+    public void setFirstQuery(int page, QuerySnapshot snapshots) {
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
 
@@ -342,23 +342,24 @@ public class BoardPagerFragment extends Fragment implements
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
             // is added as far as the post_general is true.
-            switch(currentPage) {
+            switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     snapshotList.add(snapshot);
                     createAutoClubPost(snapshot);
                     break;
+
                 case Constants.BOARD_NOTIFICATION:
                     snapshotList.add(snapshot);
                     break;
-
                 default:
                     if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
                     break;
             }
         }
 
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            log.i("firstQuery snapshotlist: %s", snapshotList.size());
+        if(page == Constants.BOARD_AUTOCLUB) {
+            //int totalItemCount = layoutManager.getItemCount();
+            //int visibleItemCount = layoutManager.getChildCount();
             pageHelper.setNextQuery();
         } else postingAdapter.notifyDataSetChanged();
 
@@ -371,22 +372,19 @@ public class BoardPagerFragment extends Fragment implements
 
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
-
-        //if(snapshotList.size() > 0) pbLoading.setVisibility(View.GONE);
-        //else recyclerPostView.setEmptyView(tvEmptyView);
         pbLoading.setVisibility(View.GONE);
     }
 
     @Override
     public void setNextQueryStart(boolean isNextQuery) {
         if(isNextQuery) pbPaging.setVisibility(View.VISIBLE);
-        //else pbPaging.setVisibility(View.GONE);
     }
 
     @Override
-    public void setNextQueryComplete(QuerySnapshot snapshots) {
+    public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
+        if(snapshots.size() == 0) return;
         for(QueryDocumentSnapshot snapshot : snapshots) {
-            switch(currentPage) {
+            switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     snapshotList.add(snapshot);
                     createAutoClubPost(snapshot);
@@ -401,16 +399,18 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
+        if(page == Constants.BOARD_AUTOCLUB) {
+            log.i("autofiltered snapshotList: %s", snapshotList.size());
             // The autoclub repeats the next query manually until it comes to the last query. The
             // other board makes the next query automatically by scrolling. The autoclub updates
             // the adapter only when the last query is done.
             if(snapshots.size() >= Constants.PAGINATION) {
+                //postingAdapter.notifyDataSetChanged();
                 pageHelper.setNextQuery();
-            } else postingAdapter.notifyDataSetChanged();
+            }
+        }
 
-        } else postingAdapter.notifyDataSetChanged();
-
+        postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.GONE);
 
     }
@@ -419,11 +419,8 @@ public class BoardPagerFragment extends Fragment implements
     // performa a new query with new autofilter values
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
-        log.i("CheckBox change: %s, %s", autofilter, isViewOrder);
         this.autoFilter = autofilter;
-        pagerAdapter.notifyDataSetChanged();
         pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
-
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
         // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view

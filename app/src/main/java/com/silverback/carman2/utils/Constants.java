@@ -51,7 +51,6 @@ public class Constants {
 
     // Board
     public static final int PAGINATION = 30;
-    public static final int AUTOCLUB_PAGINATION = 100;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;
