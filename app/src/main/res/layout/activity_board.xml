@@ -46,6 +46,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:layout_marginTop="?attr/actionBarSize"
+                app:tabMode="fixed"
                 app:tabBackground="@color/bgBoardTab"
                 app:tabIndicatorColor="@android:color/holo_orange_dark"
                 app:tabIndicatorHeight="5dp"

@@ -137,6 +137,7 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         tabPage = Constants.BOARD_RECENT;
 
+
         // The reason to use cbAutoFilter as ArrrayList<CharSequence> is that the list goes to the
         // singleton of BoardPagerFragment, which should be passed to onCreate() of the same fragment
         // as Bundle.putCharSequenceArrayList().
@@ -156,10 +157,11 @@ public class BoardActivity extends BaseActivity implements
         boardPager = new ViewPager(this);
         boardPager.setId(View.generateViewId());
         boardPager.setVisibility(View.GONE);
-
         boardPager.setAdapter(pagerAdapter);
         boardTabLayout.setupWithViewPager(boardPager);
         boardPager.addOnPageChangeListener(this);
+
+        addTabIconAndTitle(this, boardTabLayout);
         frameLayout.addView(boardPager);
 
         // Add the listeners to the viewpager and AppbarLayout
@@ -176,8 +178,6 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        addTabIconAndTitle(this, boardTabLayout);
-
     }
 
     // Attach listeners to the parent activity when a fragment is attached to the parent activity.
@@ -291,9 +291,17 @@ public class BoardActivity extends BaseActivity implements
         fabWrite.setVisibility(View.VISIBLE);
         if(isAutoFilter) animAutoFilter(isAutoFilter);
 
+
+        if(TextUtils.isEmpty(boardTabLayout.getTabAt(0).getText())) {
+
+            //boardTabLayout.setupWithViewPager(boardPager);
+            //addTabIconAndTitle(this, boardTabLayout);
+        }
+
         switch(position) {
             case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
                 getSupportActionBar().setTitle(getString(R.string.board_general_title));
+                log.i("tab title: %s", boardTabLayout.getTabAt(0).getText());
                 break;
 
             case Constants.BOARD_AUTOCLUB:
@@ -487,6 +495,11 @@ public class BoardActivity extends BaseActivity implements
         // conditions.
         //if(!isLocked)
         mListener.onCheckBoxValueChange(cbAutoFilter);
+
+        // To enable the autoclub enabled when clicking the autofilter, the viewpager is set to
+        // POST_NONE in getItemPosition() of BoardPagerAdapter, which destroys not only the autoclub
+        // fragment but also the tab titles. Thus, recreate the title here.
+        addTabIconAndTitle(this, boardTabLayout);
     }
 
 
@@ -736,6 +749,7 @@ public class BoardActivity extends BaseActivity implements
         frameLayout.addView(boardPager);
         fabWrite.setVisibility(View.VISIBLE);
         getSupportActionBar().setTitle(getString(R.string.board_general_title));
+
 
 
         // Animations differs according to whether the current page is on the auto club or not.

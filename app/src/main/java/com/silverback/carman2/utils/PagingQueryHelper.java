@@ -125,6 +125,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         //query.limit(Constants.PAGINATION).get(source).addOnSuccessListener((querySnapshot) -> {
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
+            log.i("querySnapshot: %s", querySnapshot.size());
             this.querySnapshot = querySnapshot;
             mListener.setFirstQuery(page, querySnapshot);
         });
@@ -143,7 +144,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     }
 
     // Make the next query manually for filtering the autoclub until it comes to the last query.
-    public void setNextQuery() {
+    public void setNextQuery(QuerySnapshot querySnapshot) {
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         mListener.setNextQueryStart(true);
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
@@ -153,12 +154,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     // Hide the loading progressbar and add the query results to the list
                     mListener.setNextQueryStart(false);
                     mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
-                    querySnapshot = nextSnapshot;
                 });
     }
 
     // Callback method to be invoked when RecyclerView's scroll state changes.
-    //
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);

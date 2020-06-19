@@ -1,12 +1,16 @@
 package com.silverback.carman2.adapters;
 
 import android.util.SparseArray;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.ViewPager;
 
 import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -28,10 +32,12 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // Objects
     private ArrayList<String> cbValues;
     private int currentPage;
+    private boolean isAutoClub;
 
     // Constructor
     public BoardPagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+
     }
 
     @NonNull
@@ -40,11 +46,12 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
         log.i("Fragment page: %s", position);
         currentPage = position;
         //String automaker = (cbValues.size() > 0) ? cbValues.get(0) : null;
+        if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
         /*
         return (position == Constants.BOARD_AUTOCLUB)?
                 BoardPagerFragment.newInstance(position, cbValues) :
-                BoardPagerFragment.newInstance(position);
+                BoardPagerFragment.newInstance(position, automaker);
         */
     }
 
@@ -56,14 +63,12 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // As long as the current page is AUTO_CLUB, update the viewpager adapter by setting the return
     // type as POSITION_NONE. It invokes destroyItem() and regards the current fragment destroyed
     // which leads to call onCreateView() of the fragment.
-
-
+    // Another issue is that it will destroy the tab titles as well, which should be recreated in
+    // OnCheckedChanged() in BoardActivity.
     @Override
     public int getItemPosition(@NonNull Object object) {
-        log.i("getItemPosition: %s", object);
-        //if(object instanceof BoardPagerFragment) return POSITION_NONE;
-        //else return POSITION_UNCHANGED;
-        return POSITION_UNCHANGED;
+        if(isAutoClub) return POSITION_NONE;
+        else return POSITION_UNCHANGED;
     }
 
     public void setAutoFilterValues(ArrayList<String> values) {

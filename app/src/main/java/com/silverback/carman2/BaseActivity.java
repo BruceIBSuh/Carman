@@ -287,7 +287,6 @@ public class BaseActivity extends AppCompatActivity {
     protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
         List<String> tabTitleList = null;
         List<Drawable> tabIconList = null;
-
         if(context instanceof ExpenseActivity) {
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
 
@@ -295,18 +294,13 @@ public class BaseActivity extends AppCompatActivity {
                     getDrawable(R.drawable.ic_gas),
                     getDrawable(R.drawable.ic_service),
                     getDrawable(R.drawable.ic_stats)};
-
             tabIconList = Arrays.asList(icons);
 
         } else if(context instanceof BoardActivity) {
-
-            log.i("context: %s", context);
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
-
         }
 
         for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            log.i("Tab Title: %s", tabTitleList.get(i));
             tabLayout.getTabAt(i).setText(tabTitleList.get(i));
             if(tabIconList != null) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
         }

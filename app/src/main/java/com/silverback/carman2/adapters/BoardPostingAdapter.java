@@ -111,13 +111,20 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 // seconds using Timestamp.getSeconds() and apply SimpleDateFormat.format() despite
                 // a loss when it should be muliplied by 1000 for making it milliseconds.
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
-                Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
-                long postingTime = timeStamp.getSeconds() * 1000;
-
+                //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
+                //long postingTime = timeStamp.getSeconds() * 1000;
+                //log.i("timestamp: %s", postingTime);
                 PostViewHolder postHolder = (PostViewHolder)holder;
                 postHolder.tvPostTitle.setText(snapshot.getString("post_title"));
                 postHolder.tvNumber.setText(String.valueOf(index));
-                postHolder.tvPostingDate.setText(sdf.format(postingTime));
+
+                // Some posts may have weird data type. This condition should be removed once the
+                // board is cleared out.
+                if(snapshot.getDate("timestamp") != null) {
+                    Date date = snapshot.getDate("timestamp");
+                    postHolder.tvPostingDate.setText(sdf.format(date));
+                }
+
                 postHolder.tvUserName.setText(snapshot.getString("user_name"));
                 postHolder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
                 postHolder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));

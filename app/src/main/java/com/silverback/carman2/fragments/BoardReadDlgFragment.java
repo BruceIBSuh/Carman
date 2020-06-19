@@ -387,8 +387,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // The following 3 callbacks are invoked by PagingQueryHelper to query a collection reference
-    // up to the limit and on showing the last one, another query get started.
+    // The following 3 callbacks are invoked by PagingQueryHelper to query comments up to the limit
+    // and on showing the last one, another query get started.
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshot) {
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);

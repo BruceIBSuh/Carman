@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.silverback.carman2">
 
-    <uses-feature android:name="android.hardware,camera" android:required="false" />
-
+    <uses-feature
+        android:name="android.hardware,camera"
+        android:required="false" />
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
@@ -19,11 +20,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
+        android:fullBackupContent="@xml/carman_backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -42,35 +43,28 @@
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".backgrounds.SnoozeBroadcastReceiver"
             android:enabled="true"
             android:exported="false" />
-
         <receiver
             android:name=".backgrounds.GeofenceBroadcastReceiver"
             android:enabled="true"
-            android:exported="false" />
-
-        <!-- Replace the receiver with Service which seems not working -->
+            android:exported="false" /> <!-- Replace the receiver with Service which seems not working -->
         <!--
         <service
             android:name=".backgrounds.GeofenceJobIntentService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         -->
-
         <activity android:name=".BaseActivity" />
-
         <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity android:name=".MainActivity" />
-
         <activity
             android:name=".ExpenseActivity"
             android:parentActivityName=".MainActivity"
@@ -81,26 +75,25 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity
             android:name=".BoardActivity"
             android:exported="true"
             android:parentActivityName=".MainActivity">
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity
             android:name=".SettingPrefActivity"
             android:parentActivityName=".MainActivity">
+
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity
             android:name=".StationMapActivity"
             android:label="@string/map_toolbar_title"
@@ -111,7 +104,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman2.MainActivity" />
         </activity>
-
         <activity android:name=".CropImageActivity" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -143,7 +135,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 
 </manifest>

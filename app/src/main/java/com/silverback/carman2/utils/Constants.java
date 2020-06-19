@@ -40,17 +40,15 @@ public class Constants {
     public static final int SNOOZE_DURATION = 1000 * 60 * 60;
 
     // Image and Icon Size
-    public static final int ICON_SIZE_TOOLBAR_EMBLEM = 70;
     public static final int ICON_SIZE_TOOLBAR_USERPIC = 50;
     public static final int ICON_SIZE_PREFERENCE = 40;
     public static final int ICON_SIZE_POSTING_LIST = 35;
     public static final int IMAGESPAN_THUMBNAIL_SIZE = 36;
-    public static final int BOARD_EDIT_THUMBNAIL_SIZE = 50;
     public static final int MAX_ICON_SIZE = (1024 * 1024) / 2;
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
 
     // Board
-    public static final int PAGINATION = 30;
+    public static final int PAGINATION = 20;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;

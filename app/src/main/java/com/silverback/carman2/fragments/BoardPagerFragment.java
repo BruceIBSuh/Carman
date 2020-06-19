@@ -84,6 +84,7 @@ public class BoardPagerFragment extends Fragment implements
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
     private List<DocumentSnapshot> snapshotList;
+    private List<DocumentSnapshot> autoshotList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
@@ -99,9 +100,10 @@ public class BoardPagerFragment extends Fragment implements
     private String automaker;
     private int currentPage;
     private boolean isViewOrder;
+    private boolean isAutoQuery;
 
     // Constructor
-    private BoardPagerFragment() {
+    public BoardPagerFragment() {
         // Required empty public constructor
     }
 
@@ -116,7 +118,9 @@ public class BoardPagerFragment extends Fragment implements
 
         return fragment;
     }
-    */
+
+     */
+
     // Singleton for AutoClub currentPage which has the checkbox values and title names.
     public static BoardPagerFragment newInstance(int page, ArrayList<String> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
@@ -135,10 +139,9 @@ public class BoardPagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         if(getArguments() != null) {
-            autoFilter = getArguments().getStringArrayList("autoFilter");
             currentPage = getArguments().getInt("currentPage");
-            automaker = autoFilter.get(0);
-            log.i("CURRENT PAGE: %s", currentPage);
+            autoFilter = getArguments().getStringArrayList("autoFilter");
+            if(autoFilter.size() > 0) automaker = autoFilter.get(0);
         }
 
         // Make the toolbar menu available in the Fragment.
@@ -152,6 +155,7 @@ public class BoardPagerFragment extends Fragment implements
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
+        autoshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
         pageHelper = new PagingQueryHelper();
@@ -228,7 +232,11 @@ public class BoardPagerFragment extends Fragment implements
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
         //pageHelper.setPostingQuery(currentPage, autoFilter);
-        pageHelper.setPostingQuery(currentPage, isViewOrder);
+
+        // Unless any autofilter is checked, the autoclub post is not queried.
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            if(!TextUtils.isEmpty(automaker)) pageHelper.setPostingQuery(currentPage, isViewOrder);
+        } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
         return localView;
     }
@@ -289,9 +297,10 @@ public class BoardPagerFragment extends Fragment implements
             //ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
             tvSorting = rootView.findViewById(R.id.tv_sorting_order);
+
             // Set the automaker emblem in the toolbar imageview which is created as a custom view
             // replacing the toolbar menu icon.
-            setAutoMakerEmblem(imgEmblem);
+            if(!TextUtils.isEmpty(automaker)) setAutoMakerEmblem(imgEmblem);
             rootView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
         }
 
@@ -309,6 +318,7 @@ public class BoardPagerFragment extends Fragment implements
             // span is set.
             String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
             tvSorting.setText(sortLabel);
+            snapshotList.clear();
             pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
 
             // Rotate the imageview holding emblem
@@ -358,9 +368,7 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         if(page == Constants.BOARD_AUTOCLUB) {
-            //int totalItemCount = layoutManager.getItemCount();
-            //int visibleItemCount = layoutManager.getChildCount();
-            pageHelper.setNextQuery();
+            pageHelper.setNextQuery(snapshots);
         } else postingAdapter.notifyDataSetChanged();
 
         // The AutoClub queries multiple where conditions based on the auto_filter and no order query
@@ -400,17 +408,35 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         if(page == Constants.BOARD_AUTOCLUB) {
-            log.i("autofiltered snapshotList: %s", snapshotList.size());
+            log.i("snpahostList: %s", snapshotList.size());
             // The autoclub repeats the next query manually until it comes to the last query. The
             // other board makes the next query automatically by scrolling. The autoclub updates
             // the adapter only when the last query is done.
-            if(snapshots.size() >= Constants.PAGINATION) {
-                //postingAdapter.notifyDataSetChanged();
-                pageHelper.setNextQuery();
-            }
-        }
+            // CONDITION SHOULD BE CREATED TO PREVENT EXCESSIVE QUERY RESULTS FROM ADDING TO THE
+            // LIST!!!
+            /*
+            recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                    super.onScrolled(recyclerView, dx, dy);
+                    if(layoutManager == null || dy == 0) return;
 
-        postingAdapter.notifyDataSetChanged();
+                    int firstItemPos = layoutManager.findFirstVisibleItemPosition();
+                    int visibleItemCount = layoutManager.getChildCount();
+                    int totalItemCount = layoutManager.getItemCount();
+
+                    //if(totalItemCount >= Constants.PAGINATION) pageHelper.setNextQuery(snapshots);
+
+                    log.i("scrolled: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
+                }
+            });
+            */
+            if(snapshots.size() >= Constants.PAGINATION){
+                pageHelper.setNextQuery(snapshots);
+            }else postingAdapter.notifyDataSetChanged();
+
+        } else postingAdapter.notifyDataSetChanged();
+
         pbPaging.setVisibility(View.GONE);
 
     }
@@ -420,6 +446,7 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         this.autoFilter = autofilter;
+        pagerAdapter.notifyDataSetChanged();
         pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
@@ -579,11 +606,14 @@ public class BoardPagerFragment extends Fragment implements
                             break;
                         }
                     }
-                });
+                }).addOnFailureListener(Exception::printStackTrace);
     }
 
 
-
+    /**
+     * This method sorts out posts based on checked autofilter values.
+     * @param snapshot
+     */
     private void createAutoClubPost(QueryDocumentSnapshot snapshot) {
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
