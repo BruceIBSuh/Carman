@@ -19,7 +19,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -54,8 +53,6 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -64,8 +61,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 /**
- * The viewpager contains this fragment consisting of 4 pages, the fragmentstateadapter of which shows
- * posts queried based on time, view counts, autoclub filter, and admin notification.
+ *
  */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
@@ -79,12 +75,9 @@ public class BoardPagerFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private PagingQueryHelper pageHelper;
     private BoardPagerAdapter pagerAdapter;
-    //private Source source;
-    //private ListenerRegistration postListener;
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
     private List<DocumentSnapshot> snapshotList;
-    private List<DocumentSnapshot> autoshotList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
@@ -100,7 +93,8 @@ public class BoardPagerFragment extends Fragment implements
     private String automaker;
     private int currentPage;
     private boolean isViewOrder;
-    private boolean isAutoQuery;
+    private boolean isLoading;
+    private boolean isLastPage;
 
     // Constructor
     public BoardPagerFragment() {
@@ -155,7 +149,6 @@ public class BoardPagerFragment extends Fragment implements
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
-        autoshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
         pageHelper = new PagingQueryHelper();
@@ -163,12 +156,8 @@ public class BoardPagerFragment extends Fragment implements
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
-        //if(currentPage == Constants.BOARD_AUTOCLUB) {
-            //autoFilter = ((BoardActivity)getActivity()).getAutoFilterValues();
-            ((BoardActivity)getActivity()).setAutoFilterListener(this);
-            pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
-        //}
-
+        ((BoardActivity)getActivity()).setAutoFilterListener(this);
+        pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         /*
          * Realtime update SnapshotListener: server vs cache policy.
          * When initially connecting to Firestore, the snapshot listener checks if there is any
@@ -185,17 +174,7 @@ public class BoardPagerFragment extends Fragment implements
                    Source.CACHE  : Source.SERVER ;
             log.i("source: %s", source);
         });
-
-
-        CollectionReference userRef = firestore.collection("users");
-        ListenerRegistration userListener = userRef.addSnapshotListener((querySnapshot, e) -> {
-            if(e != null) return;
-            String source = querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()?
-                    "Local" : "Server";
-            log.i("Source: %s", source);
-        });
-        userListener.remove();
-        */
+         */
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -231,11 +210,15 @@ public class BoardPagerFragment extends Fragment implements
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
-        //pageHelper.setPostingQuery(currentPage, autoFilter);
 
-        // Unless any autofilter is checked, the autoclub post is not queried.
+        // Unless any autofilter is checked and the automaker retrievedfrom the autofilter is null,
+        // the autoclub post is not queried.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(!TextUtils.isEmpty(automaker)) pageHelper.setPostingQuery(currentPage, isViewOrder);
+            if(!TextUtils.isEmpty(automaker)) {
+                pageHelper.setPostingQuery(currentPage, isViewOrder);
+                isLoading = false;
+                isLastPage = false;
+            }
         } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
         return localView;
@@ -246,7 +229,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
-        //postListener.remove();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -296,11 +278,13 @@ public class BoardPagerFragment extends Fragment implements
             View rootView = menu.getItem(0).getActionView();
             //ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
+            ProgressBar pbEmblem = rootView.findViewById(R.id.pb_emblem);
             tvSorting = rootView.findViewById(R.id.tv_sorting_order);
 
             // Set the automaker emblem in the toolbar imageview which is created as a custom view
             // replacing the toolbar menu icon.
-            if(!TextUtils.isEmpty(automaker)) setAutoMakerEmblem(imgEmblem);
+            if(!TextUtils.isEmpty(automaker)) setAutoMakerEmblem(pbEmblem, imgEmblem);
+
             rootView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
         }
 
@@ -347,7 +331,7 @@ public class BoardPagerFragment extends Fragment implements
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
-
+        log.i("First Query: %s", snapshots.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -355,7 +339,7 @@ public class BoardPagerFragment extends Fragment implements
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     snapshotList.add(snapshot);
-                    createAutoClubPost(snapshot);
+                    sortAutoClubPost(snapshot);
                     break;
 
                 case Constants.BOARD_NOTIFICATION:
@@ -395,8 +379,12 @@ public class BoardPagerFragment extends Fragment implements
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     snapshotList.add(snapshot);
-                    createAutoClubPost(snapshot);
+                    sortAutoClubPost(snapshot);
+                    isLoading = false;
+                    isLastPage = snapshots.size() < Constants.PAGINATION;
+                    postingAdapter.notifyDataSetChanged();
                     break;
+
                 case Constants.BOARD_NOTIFICATION:
                     snapshotList.add(snapshot);
                     break;
@@ -408,13 +396,17 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         if(page == Constants.BOARD_AUTOCLUB) {
-            log.i("snpahostList: %s", snapshotList.size());
+            log.i("snpahostList: %s, %s", snapshots.size(), snapshotList.size());
+            // Keep querying the autoclub posts until the sorted posts are less than the pagination
+            // number.
+            if(!isLastPage && snapshotList.size() < Constants.PAGINATION){
+                pageHelper.setNextQuery(snapshots);
+            }
             // The autoclub repeats the next query manually until it comes to the last query. The
             // other board makes the next query automatically by scrolling. The autoclub updates
             // the adapter only when the last query is done.
             // CONDITION SHOULD BE CREATED TO PREVENT EXCESSIVE QUERY RESULTS FROM ADDING TO THE
             // LIST!!!
-            /*
             recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -425,15 +417,15 @@ public class BoardPagerFragment extends Fragment implements
                     int visibleItemCount = layoutManager.getChildCount();
                     int totalItemCount = layoutManager.getItemCount();
 
-                    //if(totalItemCount >= Constants.PAGINATION) pageHelper.setNextQuery(snapshots);
-
-                    log.i("scrolled: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
+                    if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
+                        log.i("scrolled: %s, %s, %s, %s", snapshotList.size(), firstItemPos, visibleItemCount, totalItemCount);
+                        isLoading = true;
+                        pageHelper.setNextQuery(snapshots);
+                    }
                 }
             });
-            */
-            if(snapshots.size() >= Constants.PAGINATION){
-                pageHelper.setNextQuery(snapshots);
-            }else postingAdapter.notifyDataSetChanged();
+
+
 
         } else postingAdapter.notifyDataSetChanged();
 
@@ -539,11 +531,12 @@ public class BoardPagerFragment extends Fragment implements
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             final String viewerId = br.readLine();
 
+
             CollectionReference subCollection = docref.collection("viewers");
             subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
-                // In case the user does not exists in the "viewers" collection
+                // In case the user has not read the post before and adoes not exists in the "viewers"
+                // collection
                 if(snapshot == null || !snapshot.exists()) {
-                  // Increase the view count
                   docref.update("cnt_view", FieldValue.increment(1));
                   // Set timestamp and the user ip with the user id used as the document id.
                   Map<String, Object> viewerData = new HashMap<>();
@@ -551,32 +544,18 @@ public class BoardPagerFragment extends Fragment implements
                   Date date = calendar.getTime();
 
                   viewerData.put("timestamp", new Timestamp(date));
+                  // coding required.
                   viewerData.put("viewer_ip", "");
 
                   subCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {
-                      log.i("Successfully set the data");
-
                       // Listener to events for local changes, which is notified with the new data
                       // before the data is sent to the backend.
                       docref.get().addOnSuccessListener(data -> {
                           if(data != null && data.exists()) {
-                              //log.i("source: %s", source + "data: %s" + data.getData());
                               postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
                               postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
                           }
-                      });
-
-                      /*
-                      docref.addSnapshotListener(MetadataChanges.INCLUDE, (data, e) ->{
-                          if(e != null) return;
-                          //String source = data != null && data.getMetadata().hasPendingWrites()?"Local":"Servier";
-                          if(data != null && data.exists()) {
-                              //log.i("source: %s", source + "data: %s" + data.getData());
-                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
-                          }
-                      });
-                       */
+                      }).addOnFailureListener(Exception::printStackTrace);
                   });
                 }
             });
@@ -589,10 +568,12 @@ public class BoardPagerFragment extends Fragment implements
     // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
     // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
     // auto data as json type.
-    private void setAutoMakerEmblem(ImageView imgview) {
+    private void setAutoMakerEmblem(ProgressBar pb, ImageView imgview) {
+        // Make the progressbar visible until getting the emblem from Firetore
+        pb.setVisibility(View.VISIBLE);
         firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
-                .addOnSuccessListener(query -> {
-                    for(QueryDocumentSnapshot autoshot : query) {
+                .addOnSuccessListener(queires -> {
+                    for(QueryDocumentSnapshot autoshot : queires) {
                         if(autoshot.exists()) {
                             String emblem = autoshot.getString("auto_emblem");
                             // Empty Check. Refactor should be taken to show an empty icon, instead.
@@ -603,18 +584,24 @@ public class BoardPagerFragment extends Fragment implements
                                 final int y = imgview.getMeasuredHeight();
                                 imgutil.applyGlideToEmblem(uri, x, y, imgview);
                             }
+
+                            pb.setVisibility(View.GONE);
                             break;
                         }
                     }
-                }).addOnFailureListener(Exception::printStackTrace);
+
+                }).addOnFailureListener(e -> {
+                    pb.setVisibility(View.GONE);
+                    e.printStackTrace();
+                });
     }
 
 
-    /**
-     * This method sorts out posts based on checked autofilter values.
-     * @param snapshot
-     */
-    private void createAutoClubPost(QueryDocumentSnapshot snapshot) {
+
+    // This method sorts out the autoclub posts based on the autofilter by removing a document out of
+    // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
+    // notation
+    private void sortAutoClubPost(QueryDocumentSnapshot snapshot) {
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
             for(String filter : autoFilter) {
@@ -625,46 +612,6 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
     }
-
-
-    // Once posts being sequentially queried by the autofilter, on clicking the automaker emblem,
-    // they are sorted by the view counts and vice versa when clikcing again using Comparator<T>
-    // interface in Collection.Utils.
-    /*
-    private void sortDocumentByTimeOrView(){
-        Collections.sort(snapshotList, new SortViewCountAutoClub());
-        postingAdapter.notifyDataSetChanged();
-    }
-
-    // Implement Comparator<T> which can be passed to Collections.sort(List, Comparator) or Arrays.
-    // sort(Object[], Comparaotr) to have control over the sort order, which can be used to control
-    // not only the data structure order such as SortedSet or SortedMap, but also an ordering for
-    // collections of objects that don't have a Comparable. Comparable is, on the other hand, imposes
-    // a natual ordering of class objects using the class's compareTo method which is referred to
-    // as its natural comparison method.
-    private class SortViewCountAutoClub implements Comparator<DocumentSnapshot> {
-        @Override
-        public int compare(DocumentSnapshot o1, DocumentSnapshot o2) {
-            if(isViewOrder) {
-                Number view1 = (Number)o1.get("cnt_view");
-                Number view2 = (Number)o2.get("cnt_view");
-                if(view1 != null && view2 != null)
-                    // view count descending order
-                    return Integer.compare(view2.intValue(), view1.intValue());
-
-
-            } else {
-                Timestamp timestamp1 = (Timestamp)o1.get("timestamp");
-                Timestamp timestamp2 = (Timestamp)o2.get("timestamp");
-                if(timestamp1 != null && timestamp2 != null)
-                    // Timestamp descending order
-                    return Integer.compare((int)timestamp2.getSeconds(), (int)timestamp1.getSeconds());
-            }
-
-            return -1;
-        }
-    }
-     */
 }
 
 

@@ -88,7 +88,7 @@ public class FavoriteGeofenceHelper {
     }
 
     // PendingIntent is to be handed to GeofencingClient of LocationServices and Geofencingclient,
-    // thus, calls the service or broadcast receiver e at a later time.
+    // thus, calls the service or broadcast receiver  at a later time.
     // On Android 8.0 (API level 26) and higher, if an app is running in the background while monitoring
     // a geofence, then the device responds to geofencing events every couple of minutes.
     private PendingIntent getGeofencePendingIntent() {
@@ -178,8 +178,8 @@ public class FavoriteGeofenceHelper {
                 .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)//bitwise OR only
-                .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
-                .setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
+                //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                //.setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
                 .build()
         );
 

@@ -243,11 +243,14 @@ public class ApplyImageResourceUtil {
                 });
     }
 
+    // Mainly applied when downloading an embelm from Firestore and put it in the menu icon as
+    // using the actionLayout
     public void applyGlideToEmblem(Uri uri, int x, int y, ImageView view) {
         final float scale = mContext.getResources().getDisplayMetrics().density;
         // x is additionally multiplied by 1.5 b/c the emblem is mostly a rectangle shape.
         int px_x = (int)(x * scale + 0.5f);
         int px_y = (int)(y * scale + 0.5f);
+
         Glide.with(mContext).load(uri).override(px_x, px_y)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .fitCenter()

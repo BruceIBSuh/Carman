@@ -7,7 +7,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -30,7 +32,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     private CollectionReference colRef;
     private QuerySnapshot querySnapshot;
     private OnPaginationListener mListener;
-    private List<String> autofilter;
 
     // Fields
     private boolean isLoading;
@@ -49,7 +50,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     public PagingQueryHelper() {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
-        querySnapshot = null;
+
     }
 
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of
@@ -73,6 +74,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     //public void setPostingQuery(int page, ArrayList<String> autofilter) {
     public void setPostingQuery(int page, boolean isViewOrder) {
         Query query = colRef;
+        querySnapshot = null;
+
         currentPage = page;
         isLastPage = false;
         isLoading = false;
@@ -80,18 +83,17 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
-                query = query.orderBy("timestamp", Query.Direction.DESCENDING);
+                query = query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
 
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
-                query = query.orderBy("cnt_view", Query.Direction.DESCENDING);
+                query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
-
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = query.orderBy(field, Query.Direction.DESCENDING);
+                query = query.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION);
 
                 /*
                 this.field = "auto_club";
@@ -112,9 +114,11 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 */
                 break;
 
+
             // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION:
-                query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
+                query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING)
+                        .limit(Constants.PAGINATION);
 
                 break;
         }
@@ -123,9 +127,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         // Refactor should be considered to apply Source.CACHE or Source.SERVER depending on whehter
         // querysnapshot has existed or hasPendingWrite is true.
         //query.limit(Constants.PAGINATION).get(source).addOnSuccessListener((querySnapshot) -> {
-        query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+        query.addSnapshotListener(MetadataChanges.INCLUDE,(querySnapshot, e) -> {
             if(e != null) return;
-            log.i("querySnapshot: %s", querySnapshot.size());
             this.querySnapshot = querySnapshot;
             mListener.setFirstQuery(page, querySnapshot);
         });
@@ -136,7 +139,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         this.field = field;
         colRef = firestore.collection("board_general").document(docId).collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .addSnapshotListener((querySnapshot, e) -> {
+                .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
                     if(e != null) return;
                     this.querySnapshot = querySnapshot;
                     mListener.setFirstQuery(page, querySnapshot);
@@ -149,7 +152,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         mListener.setNextQueryStart(true);
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION)
-                .addSnapshotListener((nextSnapshot, e) -> {
+                .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
                     if (e != null || nextSnapshot == null) return;
                     // Hide the loading progressbar and add the query results to the list
                     mListener.setNextQueryStart(false);
@@ -192,7 +195,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             Query nextQuery = colRef;
             nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                     .limit(Constants.PAGINATION)
-                    .addSnapshotListener((nextSnapshot, e) -> {
+                    .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
                         // Check if the next query reaches the last document.
                         if(e != null || nextSnapshot == null) return;
 
@@ -207,4 +210,5 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     });
         }
     }
+
 }

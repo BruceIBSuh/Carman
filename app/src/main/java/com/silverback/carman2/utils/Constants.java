@@ -19,7 +19,7 @@ public class Constants {
     public static final int GALLERY = 1;
     public static final int CAMERA = 2;
 
-    // Favorite provider and Geofence
+    // Geofences
     public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
@@ -48,7 +48,7 @@ public class Constants {
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
 
     // Board
-    public static final int PAGINATION = 20;
+    public static final int PAGINATION = 50;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;

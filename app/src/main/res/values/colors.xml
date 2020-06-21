@@ -5,6 +5,7 @@
     <color name="colorAccent">#D81B60</color>
 
     <color name="primaryColor">#778899</color>
+    <color name="secondaryColor">#B0C4DE</color>
 
     <!-- BoardActivity -->
     <color name="bgToolbar">#778899</color>
