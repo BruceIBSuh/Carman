@@ -39,19 +39,22 @@
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".backgrounds.GeofenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver
             android:name=".backgrounds.SnoozeBroadcastReceiver"
             android:enabled="true"
             android:exported="false" />
-        <receiver
-            android:name=".backgrounds.GeofenceBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false" /> <!-- Replace the receiver with Service which seems not working -->
-        <!--
+
         <service
             android:name=".backgrounds.GeofenceJobIntentService"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-        -->
+
+
         <activity android:name=".BaseActivity" />
         <activity android:name=".IntroActivity">
             <intent-filter>

@@ -1,6 +1,5 @@
 package com.silverback.carman2.backgrounds;
 
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -38,8 +37,17 @@ import java.util.Locale;
  * API 28(Android O), to start a foreground service in a background thread when geofencing evnet
  * triggers.
  *
+ * Permission handling
+ * In Android O or higher, the JobScheduler will take care of wake locks on its own. Permissions
+ * should be defined in AndroidManifest.xml.
+ * android.permission.WAKE_LOCK: defined in <uses-permission />
+ * android.permission.BIND_JOB_SERVICE defined in <service android:permission />
+ *
  * The background service is very limited to run unless the app is in the foreground. Thus, to be
- * notified of geofence triggers, a broadcast receiver is applied and this class is suspended to run.
+ * notified of geofence triggers, when a broadcast receiver is triggered by a genfencing event,
+ * JonIntentService should replace IntentService in the background to create a notification as its
+ * output. When running on Android O(API 29) or later, the work will be dispatched as a job via
+ * JobScheduler.enqueue. To the contrary, when running on older versions, it will use startService.
  *
  * For refererence only.
  * The Android framework also provides the IntentService subclass of Service that uses a worker
@@ -57,14 +65,13 @@ public class GeofenceJobIntentService extends JobIntentService {
     private NotificationManagerCompat notiManager;
     private long geoTime;
 
-    static final int JOB_ID = 10000;
+    static final int JOB_ID = 2020;
     static void enqueueWork(Context context, Intent work) {
         enqueueWork(context, GeofenceJobIntentService.class, JOB_ID, work);
     }
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
-        log.i("onHandleWork starts");
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this);
         notiManager = NotificationManagerCompat.from(this);
 
@@ -98,6 +105,7 @@ public class GeofenceJobIntentService extends JobIntentService {
                         final int category = entity.category;
 
                         createNotification(notiId, id, name, addrs, category);
+                        break;
                     }
                 }
 
@@ -112,15 +120,12 @@ public class GeofenceJobIntentService extends JobIntentService {
                 geoTime = intent.getLongExtra(Constants.GEO_TIME, -1);
 
                 createNotification(snoozeNotiId, providerId, providerName, providerAddrs, category);
-                //Notification notiSnooze = createNotification(notiId++, providerName, category);
-                //notiManager.notify(notiId++, notiSnooze);
                 break;
         }
 
     }
 
     private void createNotification(int notiId, String providerId, String name, String addrs, int category) {
-
         // Make the notification title and bigText(contentText and extendedText).
         String title = null;
         String extendedText = null;
@@ -129,13 +134,11 @@ public class GeofenceJobIntentService extends JobIntentService {
 
         switch(category) {
             case Constants.GAS: // gas station
-                //title = String.format("%-6s%s", getString(R.string.noti_geofence_title_gas), name);
                 title = getString(R.string.noti_geofence_title_gas);
                 extendedText = getResources().getString(R.string.noti_geofence_content_gas);
                 break;
 
             case Constants.SVC: // car center
-                //title = String.format("%-6s%s", getString(R.string.noti_geofence_title_svc), name);
                 title = getString(R.string.noti_geofence_title_svc);
                 extendedText = getResources().getString(R.string.noti_geofence_content_svc);
                 break;
@@ -173,7 +176,6 @@ public class GeofenceJobIntentService extends JobIntentService {
         }
 
         Notification notification = mBuilder.build();
-
         // With the Noti tag, NotificationManager.cancel(id) does not work.
         //notiManager.notify(tag, notiId, notification);
         notiManager.notify(notiId, notification);
@@ -206,6 +208,8 @@ public class GeofenceJobIntentService extends JobIntentService {
 
     }
 
+    // When clicking the snooze button, renturn an PendingIntent that sends an broadcast to create
+    // WorkManager to make an snooze work delated for a fixed period.
     private PendingIntent createSnoozePendingIntent(int notiId, String providerId, String name, int category) {
         Intent snoozeIntent = new Intent(this, SnoozeBroadcastReceiver.class);
         snoozeIntent.setAction(Constants.NOTI_SNOOZE);
@@ -218,11 +222,10 @@ public class GeofenceJobIntentService extends JobIntentService {
         return PendingIntent.getBroadcast(this, notiId, snoozeIntent, 0);
     }
 
-    // Create a unique notification id.
+    // Create a unique notification id using the current time.
     private int createID() {
         Calendar calendar = Calendar.getInstance();
         //calendar.setTimeInMillis(System.currentTimeMillis());
-
         return Integer.parseInt(new SimpleDateFormat("ddHHmmss", Locale.getDefault()).format(calendar.getTime()));
 
     }
@@ -248,6 +251,7 @@ public class GeofenceJobIntentService extends JobIntentService {
     }
 
     // Check if Carman is running in the foreground.
+    /*
     private boolean isAppOnForeground() {
         ActivityManager activityManager
                 = (ActivityManager)getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
@@ -269,4 +273,6 @@ public class GeofenceJobIntentService extends JobIntentService {
 
         return false;
     }
+
+     */
 }

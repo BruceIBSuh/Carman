@@ -3,7 +3,6 @@ package com.silverback.carman2.utils;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
@@ -19,11 +18,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.ibnco.carman.convertgeocoords.GeoPoint;
 import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.backgrounds.GeofenceBroadcastReceiver;
-import com.silverback.carman2.backgrounds.GeofenceJobIntentService;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,12 +28,12 @@ import java.util.Map;
 
 /**
  * This class performs to add or remove a gas station or service center non only to Geofence but
- * also to the database in FavoriteProviderEntity of the Room.
+ * also to FavoriteProviderEntity of the Room.
  */
 public class FavoriteGeofenceHelper {
 
     // Constants
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
 
     // Objects
     private Context context;
@@ -96,26 +92,10 @@ public class FavoriteGeofenceHelper {
         if(geofencePendingIntent != null) return geofencePendingIntent;
         // Use FLAG_UPDATE_CURRENT so that the same pending intent back when calling addGeofences()
         // and removeGeofences()
-
         Intent geoIntent = new Intent(context, GeofenceBroadcastReceiver.class);
         geoIntent.setAction(Constants.NOTI_GEOFENCE);
         geofencePendingIntent = PendingIntent.getBroadcast(
                 context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        /*
-        // What if the pending intent calls Service based on IntentService?
-        Intent geoIntent = new Intent(context, GeofenceJobIntentService.class);
-        geoIntent.setAction(Constants.NOTI_GEOFENCE);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            log.i("startForegroundService");
-            geofencePendingIntent = PendingIntent.getForegroundService(
-                    context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        } else {
-            log.i("startService");
-            geofencePendingIntent = PendingIntent.getService(
-                    context, 0, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        }
-         */
 
         return geofencePendingIntent;
     }
@@ -217,7 +197,7 @@ public class FavoriteGeofenceHelper {
                             }
                         });
 
-                        // Notify GasManagerFragment ro ServiceManagerFragment of the completion of
+                        // Notify GasManagerFragment or ServiceManagerFragment of the completion of
                         // geofencing.
                         mListener.notifyAddGeofenceCompleted(placeHolder);
 

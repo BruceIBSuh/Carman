@@ -115,8 +115,8 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         EditTextPreference etMileage = findPreference(Constants.ODOMETER);
         if(etMileage != null) {
             etMileage.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
-            etMileage.setSummaryProvider(preference -> {
-                String summary = df.format(Integer.parseInt(((EditTextPreference) preference).getText()));
+            etMileage.setSummaryProvider(pref -> {
+                String summary = ((EditTextPreference)pref).getText();
                 return String.format("%s%3s", summary, "km");
             });
         }
@@ -126,7 +126,8 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         if(etAvg != null) {
             etAvg.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
             etAvg.setSummaryProvider(preference -> {
-                String summary = df.format(Integer.parseInt(((EditTextPreference)preference).getText()));
+                //String summary = df.format(Integer.parseInt(((EditTextPreference)preference).getText()));
+                String summary = ((EditTextPreference)preference).getText();
                 return String.format("%s%3s", summary, "km");
             });
         }

@@ -1,39 +1,29 @@
 package com.silverback.carman2.backgrounds;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.preference.PreferenceManager;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * SnoozeBoradcastReceiver
+ * NotificationSnoozeWorker
+ * GeofenceBroadcastReceiver
+ * GeofenceJobIntentService
+ */
 public class SnoozeBroadcastReceiver extends BroadcastReceiver {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(SnoozeBroadcastReceiver.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(SnoozeBroadcastReceiver.class);
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -58,33 +48,18 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
                 .putInt(Constants.GEO_CATEGORY, category)
                 .putLong(Constants.GEO_TIME, geoTime)
                 .build();
+
         OneTimeWorkRequest snoozeWorkRequest = new OneTimeWorkRequest.Builder(NotificationSnoozeWorker.class)
                 .setConstraints(constraints)
                 .setInitialDelay(pause, TimeUnit.MINUTES) //set the snooze duration by hours.
                 .setInputData(geoData)
                 .addTag(String.valueOf(notiId))
                 .build();
-        WorkManager.getInstance(context).enqueue(snoozeWorkRequest);
 
+
+        WorkManager.getInstance(context).enqueue(snoozeWorkRequest);
         // Cancel the notification with its id passed from the intent.
         NotificationManagerCompat.from(context).cancel(notiId);
-
-        /*
-        Intent geoIntent = new Intent(context, GeofenceTransitionService.class);
-        geoIntent.setAction(Constants.NOTI_SNOOZE);
-        geoIntent.putExtra("providerName", providerName);
-        geoIntent.putExtra("category", category);
-        geoIntent.putExtra("geoTime", geoTime);
-        geoIntent.putExtra("notiId", notiId);
-
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            log.i("getForegroundService");
-            PendingIntent.getForegroundService(context, 100, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        } else {
-            log.i("getService");
-            PendingIntent.getService(context, 100, geoIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        }
-        */
     }
 
 }

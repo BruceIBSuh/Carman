@@ -162,16 +162,14 @@ public class SettingSvcItemFragment extends Fragment implements
         switch(item.getItemId()) {
             case android.R.id.home:
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
-                break;
-                //return true;
+                return true;
 
             case R.id.menu_add_item:
                 if(getActivity() != null) dlgFragment.show(getActivity().getSupportFragmentManager(), null);
-                break;
-                //return false;
+                return true;
         }
 
-        return true;
+        return false;
     }
 
     @Override

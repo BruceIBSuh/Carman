@@ -11,9 +11,15 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
+/**
+ * The worker class is managed by WorkerManager defined in SnoozeBroadcastReceiver which manages
+ * the worker to be delayed for a fixed time and send an broadcast with an intent containing geofence
+ * data. When GeofenceBroadcastReceiver once receives an intent, it starts the GeofenceJobIntentService
+ * with getting NOTI_SNOOZE action.
+ */
 public class NotificationSnoozeWorker extends Worker {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(NotificationSnoozeWorker.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(NotificationSnoozeWorker.class);
 
     // Objects
     private Context context;
@@ -26,15 +32,6 @@ public class NotificationSnoozeWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        /*
-         * Refactor considered. WorkManager and AlarmManager put in togetehr should be OK?
-         * More research is required.
-         */
-        //AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        // MAKE THE SNOOZE DURATION SET IN SETTINGPREFERENCEACTIVITY WITH ANDROID N OR BELOW.(NOT CODED YET)
-        // ANDROID O AND HIGHER, THE DURATION IS SET BY EMBEDDED FUNCTION.
-        //final long delay = Constants.SNOOZE_DURATION;
-
         // Get the data which have been set in OneTimeWorkRequest defined in SnoozeBoradcastReceiver.
         String providerName = getInputData().getString(Constants.GEO_NAME);
         String providerId = getInputData().getString(Constants.GEO_ID);
@@ -53,17 +50,9 @@ public class NotificationSnoozeWorker extends Worker {
         geoIntent.putExtra(Constants.GEO_CATEGORY, category);
         geoIntent.putExtra(Constants.GEO_TIME, geoTime);
         geoIntent.putExtra(Constants.NOTI_ID, notiId);
+
         //PendingIntent.getBroadcast(context, notiId, geoIntent, PendingIntent.FLAG_ONE_SHOT);
-
         context.sendBroadcast(geoIntent);
-
-        /*
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);
-        } else {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delay, pendingIntent);
-        }
-         */
 
         return Result.success();
     }

@@ -38,8 +38,6 @@ import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PagingQueryHelper;
@@ -69,7 +67,7 @@ public class BoardPagerFragment extends Fragment implements
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
     private FirebaseFirestore firestore;
@@ -251,7 +249,7 @@ public class BoardPagerFragment extends Fragment implements
         // With All done, receive another LiveData containing the postion of the deleted posting item
         // and update the adapter.
         fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
-            log.i("Posting removed: %s", docId);
+            //log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
                 pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
@@ -331,7 +329,7 @@ public class BoardPagerFragment extends Fragment implements
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
-        log.i("First Query: %s", snapshots.size());
+        //log.i("First Query: %s", snapshots.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -353,6 +351,7 @@ public class BoardPagerFragment extends Fragment implements
 
         if(page == Constants.BOARD_AUTOCLUB) {
             pageHelper.setNextQuery(snapshots);
+            if(snapshotList.size() < Constants.PAGINATION) postingAdapter.notifyDataSetChanged();
         } else postingAdapter.notifyDataSetChanged();
 
         // The AutoClub queries multiple where conditions based on the auto_filter and no order query
@@ -370,6 +369,7 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setNextQueryStart(boolean isNextQuery) {
         if(isNextQuery) pbPaging.setVisibility(View.VISIBLE);
+        else pbPaging.setVisibility(View.GONE);
     }
 
     @Override
@@ -396,8 +396,7 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         if(page == Constants.BOARD_AUTOCLUB) {
-            log.i("snpahostList: %s, %s", snapshots.size(), snapshotList.size());
-            // Keep querying the autoclub posts until the sorted posts are less than the pagination
+            // Keep querying the autoclub posts as far as the sorted posts are less than the pagination
             // number.
             if(!isLastPage && snapshotList.size() < Constants.PAGINATION){
                 pageHelper.setNextQuery(snapshots);
@@ -415,17 +414,14 @@ public class BoardPagerFragment extends Fragment implements
 
                     int firstItemPos = layoutManager.findFirstVisibleItemPosition();
                     int visibleItemCount = layoutManager.getChildCount();
-                    int totalItemCount = layoutManager.getItemCount();
 
                     if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
-                        log.i("scrolled: %s, %s, %s, %s", snapshotList.size(), firstItemPos, visibleItemCount, totalItemCount);
                         isLoading = true;
                         pageHelper.setNextQuery(snapshots);
-                    }
+
+                    } else postingAdapter.notifyDataSetChanged();
                 }
             });
-
-
 
         } else postingAdapter.notifyDataSetChanged();
 
@@ -518,6 +514,21 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    // This method sorts out the autoclub posts based on the autofilter by removing a document out of
+    // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
+    // notation
+    private void sortAutoClubPost(QueryDocumentSnapshot snapshot) {
+        if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
+        else {
+            for(String filter : autoFilter) {
+                if ((snapshot.get("auto_filter." + filter) == null)) {
+                    snapshotList.remove(snapshot);
+                    break;
+                }
+            }
+        }
+    }
+
 
     // Check if a user is the post's owner or has read the post before in order to increate the view
     // count. In order to do so, get the user id from the internal storage and from the post as well.
@@ -589,7 +600,6 @@ public class BoardPagerFragment extends Fragment implements
                             break;
                         }
                     }
-
                 }).addOnFailureListener(e -> {
                     pb.setVisibility(View.GONE);
                     e.printStackTrace();
@@ -598,20 +608,7 @@ public class BoardPagerFragment extends Fragment implements
 
 
 
-    // This method sorts out the autoclub posts based on the autofilter by removing a document out of
-    // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
-    // notation
-    private void sortAutoClubPost(QueryDocumentSnapshot snapshot) {
-        if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
-        else {
-            for(String filter : autoFilter) {
-                if ((snapshot.get("auto_filter." + filter) == null)) {
-                    snapshotList.remove(snapshot);
-                    break;
-                }
-            }
-        }
-    }
+
 }
 
 
