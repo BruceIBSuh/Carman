@@ -103,7 +103,6 @@ public class SettingPrefActivity extends BaseActivity implements
         setContentView(R.layout.activity_general_setting);
 
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
-        log.i("RequestCode: %s", requestCode);
 
         // Permission check for CAMERA to get the user image.
         checkPermissions(Manifest.permission.CAMERA);
@@ -195,17 +194,18 @@ public class SettingPrefActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Check which fragment the parent activity contains at first, then if the fragment is
-        // SettingPreferenceFragment, send back to MainActivity an intent holding preference changes
-        // when clicking the Up button. Otherwise, if the parent activity contains any fragment other
-        // than SettingPreferenceFragment, just pop the fragment off the back stack, which works
-        // like the Back command.
+        // Check which fragment the parent activity contains, then if the fragment is SettingPreferenceFragment,
+        // send back to MainActivity an intent holding preference changes when clicking the Up button.
+        // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
+        // just pop the fragment off the back stack, which works like the Back command.
         Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
 
         if(item.getItemId() == android.R.id.home) {
+            // The activity contains SettingPrefFragment
             if (targetFragment instanceof SettingPrefFragment) {
                 // Upload user data to Firebase
                 uploadUserDataToFirebase(uploadData);
+
                 // Create Intent back to MainActivity which contains extras to notify the activity of
                 // which have been changed.
                 switch (requestCode) {
@@ -235,8 +235,10 @@ public class SettingPrefActivity extends BaseActivity implements
 
                     default: break;
                 }
+
                 finish();
                 return true;
+
             } else {
                 // The return value must be false to make optionsItemSelected() in SettingAutoFragment
                 // feasible.
@@ -244,9 +246,9 @@ public class SettingPrefActivity extends BaseActivity implements
                 getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
                 return false;
             }
-        }
 
-        return true;
+        } else return item.getItemId() != R.id.menu_add_service_item;
+
     }
 
     /*
@@ -265,8 +267,8 @@ public class SettingPrefActivity extends BaseActivity implements
         fragment.setArguments(args);
         fragment.setTargetFragment(caller, 0);
 
-        // In case a preference calls PreferenceFragmentCompat and newly set the title again, it makes
-        // the activity toolbar title changed as well.
+        // Chagne the toolbar title according to the fragment the parent activity contains. When
+        // returning to the SettingPrefFragment, the title
         String title = null;
         if(fragment instanceof SettingAutoFragment) title = getString(R.string.pref_auto_title);
         else if(fragment instanceof SettingFavorGasFragment) title = getString(R.string.pref_favorite_gas);

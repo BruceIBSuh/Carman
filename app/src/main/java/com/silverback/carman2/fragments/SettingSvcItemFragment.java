@@ -164,7 +164,7 @@ public class SettingSvcItemFragment extends Fragment implements
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
                 return true;
 
-            case R.id.menu_add_item:
+            case R.id.menu_add_service_item:
                 if(getActivity() != null) dlgFragment.show(getActivity().getSupportFragmentManager(), null);
                 return true;
         }

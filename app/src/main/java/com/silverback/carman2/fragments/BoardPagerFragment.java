@@ -336,8 +336,8 @@ public class BoardPagerFragment extends Fragment implements
             // is added as far as the post_general is true.
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
-                    snapshotList.add(snapshot);
                     sortAutoClubPost(snapshot);
+                    pageHelper.setNextQuery(snapshots);
                     break;
 
                 case Constants.BOARD_NOTIFICATION:
@@ -349,18 +349,13 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
+        /*
         if(page == Constants.BOARD_AUTOCLUB) {
-            pageHelper.setNextQuery(snapshots);
+            //pageHelper.setNextQuery(snapshots);
             if(snapshotList.size() < Constants.PAGINATION) postingAdapter.notifyDataSetChanged();
+
         } else postingAdapter.notifyDataSetChanged();
-
-        // The AutoClub queries multiple where conditions based on the auto_filter and no order query
-        // is made to avoid creating compound query index. For this reason, sort the query result
-        // which is saved as List using Collection.sort(List, Compatator<T>). Queries in the general
-        // board are made sequentially or in terms of view counts.
-        //if(currentPage == Constants.BOARD_AUTOCLUB) sortDocumentByTimeOrView();
-
-
+        */
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
         pbLoading.setVisibility(View.GONE);
@@ -378,7 +373,6 @@ public class BoardPagerFragment extends Fragment implements
         for(QueryDocumentSnapshot snapshot : snapshots) {
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
-                    snapshotList.add(snapshot);
                     sortAutoClubPost(snapshot);
                     isLoading = false;
                     isLastPage = snapshots.size() < Constants.PAGINATION;
@@ -396,11 +390,13 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         if(page == Constants.BOARD_AUTOCLUB) {
-            // Keep querying the autoclub posts as far as the sorted posts are less than the pagination
-            // number.
+            // Keep querying the autoclub posts until the sorted posts are equal to or more than
+            // the pagination limit unless the next query is the last page.
             if(!isLastPage && snapshotList.size() < Constants.PAGINATION){
                 pageHelper.setNextQuery(snapshots);
+                return;
             }
+
             // The autoclub repeats the next query manually until it comes to the last query. The
             // other board makes the next query automatically by scrolling. The autoclub updates
             // the adapter only when the last query is done.
@@ -419,12 +415,13 @@ public class BoardPagerFragment extends Fragment implements
                         isLoading = true;
                         pageHelper.setNextQuery(snapshots);
 
-                    } else postingAdapter.notifyDataSetChanged();
+                    } //else postingAdapter.notifyDataSetChanged();
                 }
             });
 
-        } else postingAdapter.notifyDataSetChanged();
+        } //else postingAdapter.notifyDataSetChanged();
 
+        postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.GONE);
 
     }
@@ -518,6 +515,7 @@ public class BoardPagerFragment extends Fragment implements
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
     // notation
     private void sortAutoClubPost(QueryDocumentSnapshot snapshot) {
+        snapshotList.add(snapshot);
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
             for(String filter : autoFilter) {

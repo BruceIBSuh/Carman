@@ -27,7 +27,8 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
  * to avoid compound query in Firestore with composite index. The autofilter should performs multiple
  * whereEqualTo() queries(Logical AND) with orderBy() and limit() based on a different field. For doing
  * so, it requires to create a compoite index which is very expensive to perform. Thus, query is made
- * in a simple way, the result is passed to the list and sorts out the list elements.
+ * in a simple way, the result is passed to the list and sorts out the list elements on the client
+ * side.
  */
 public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
@@ -141,7 +142,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 .limit(Constants.PAGINATION)
                 .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
                     if (e != null || nextSnapshot == null) return;
-                    log.i("nextSnapshot: %s", nextSnapshot.size());
                     // Hide the loading progressbar and add the query results to the list
                     mListener.setNextQueryStart(false);
                     mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
@@ -170,7 +170,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int firstItemPos = layoutManager.findFirstVisibleItemPosition();
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
-        log.i("position: %s, %s, %s", firstItemPos, visibleItemCount, totalItemCount);
 
         if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= totalItemCount) {
             isLoading = true;
@@ -188,14 +187,16 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                         // Check if the next query reaches the last document.
                         if(e != null || nextSnapshot == null) return;
 
-                        isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
-                        isLoading = false; // ready to make a next query
-                        log.i("isLastPage: %s, %s", nextSnapshot.size(), isLastPage);
-
                         // Hide the loading progressbar and add the query results to the list
                         mListener.setNextQueryStart(false);
-                        mListener.setNextQueryComplete(currentPage, nextSnapshot);
-                        querySnapshot = nextSnapshot;
+
+                        if(!isLastPage) {
+                            mListener.setNextQueryComplete(currentPage, nextSnapshot);
+                            querySnapshot = nextSnapshot;
+                        }
+
+                        isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
+                        isLoading = false; // ready to make a next query
                     });
         }
     }

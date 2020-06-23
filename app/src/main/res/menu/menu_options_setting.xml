@@ -2,9 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_add_item"
+        android:id="@+id/menu_add_service_item"
         android:title="@string/setting_toolbar_menu_add"
         android:icon="@drawable/ic_setting_add"
         app:showAsAction="ifRoom|withText" />
-
 </menu>
