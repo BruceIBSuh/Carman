@@ -337,7 +337,6 @@ public class BoardPagerFragment extends Fragment implements
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     sortAutoClubPost(snapshot);
-                    pageHelper.setNextQuery(snapshots);
                     break;
 
                 case Constants.BOARD_NOTIFICATION:
@@ -348,14 +347,12 @@ public class BoardPagerFragment extends Fragment implements
                     break;
             }
         }
-
-        /*
         if(page == Constants.BOARD_AUTOCLUB) {
-            //pageHelper.setNextQuery(snapshots);
+            pageHelper.setNextQuery(snapshots);
             if(snapshotList.size() < Constants.PAGINATION) postingAdapter.notifyDataSetChanged();
 
         } else postingAdapter.notifyDataSetChanged();
-        */
+
         // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
         // view of the custom recyclerview.
         pbLoading.setVisibility(View.GONE);
@@ -394,7 +391,6 @@ public class BoardPagerFragment extends Fragment implements
             // the pagination limit unless the next query is the last page.
             if(!isLastPage && snapshotList.size() < Constants.PAGINATION){
                 pageHelper.setNextQuery(snapshots);
-                return;
             }
 
             // The autoclub repeats the next query manually until it comes to the last query. The
