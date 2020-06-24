@@ -640,7 +640,6 @@ public class BoardActivity extends BaseActivity implements
         // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-        log.i("isLocked: %s", isLocked);
 
         JSONArray jsonAuto = new JSONArray(json);
         for(int i = 0; i < jsonAuto.length(); i++) {

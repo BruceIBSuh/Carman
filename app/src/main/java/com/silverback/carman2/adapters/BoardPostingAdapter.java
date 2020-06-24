@@ -65,6 +65,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         mListener = listener;
         snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        //setHasStableIds(true);
     }
 
     // Create 2 difference viewholders, one of which is to display the general post content and
@@ -172,6 +173,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
+    @Override
+    public long getItemId(int position) {
+        DocumentSnapshot snapshot =  snapshotList.get(position);
+        return snapshot.hashCode();
+    }
 
     @Override
     public int getItemCount() {

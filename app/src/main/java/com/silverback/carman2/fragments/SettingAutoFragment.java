@@ -55,7 +55,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // fields
     private String makerId, modelId;
     //private String emblem;
-    private boolean isMakerChanged, isModelChanged;
+    private boolean isMakerChanged, isModelChanged, isAutoTypeChanged, isEngineTypeChanged;
 
     // Constructor
     public SettingAutoFragment() {
@@ -150,7 +150,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             // the number of the previous auto maker, which can be retrieved by getValue();
             case Constants.AUTO_MAKER:
                 isMakerChanged = true;
-
                 autoType.setEnabled(false);
                 engineType.setEnabled(false);
                 autoModel.setEnabled(false);
@@ -192,16 +191,18 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 return true;
 
             case Constants.AUTO_TYPE:
+                isAutoTypeChanged = true;
                 autoType.setValue(valueName);
-                autoType.setSummary(valueName);
+                autoType.setSummaryProvider(autotypePref -> valueName);
                 autoModel.setEnabled(false); //until query completes.
 
                 setAutoModelEntries(makerId, valueName, engineType.getValue());
                 return true;
 
             case Constants.ENGINE_TYPE:
+                isEngineTypeChanged = true;
                 engineType.setValue(valueName);
-                engineType.setSummary(valueName);
+                engineType.setSummaryProvider(enginetypePref -> valueName);
                 autoModel.setEnabled(false);
 
                 setAutoModelEntries(makerId, autoType.getValue(), valueName);
@@ -218,8 +219,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 queryAutoModel(makerId, valueName);
 
                 // Once any automodel is selected, the autotype and enginetype should be disabled.
-                autoType.setEnabled(false);
-                engineType.setEnabled(false);
+                //autoType.setEnabled(false);
+                //engineType.setEnabled(false);
                 return true;
 
             default: return false;
@@ -249,7 +250,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoType.setEntries(arrAutoType);
             autoType.setEntryValues(arrAutoType);
             autoType.setValue(typeName);
-            autoType.setSummary(typeName);
+            autoType.setSummaryProvider(aytotypePref -> typeName);
         }
 
         if(makershot.get("engine_type") != null) {
@@ -259,7 +260,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             engineType.setEntries(arrEngineType);
             engineType.setEntryValues(arrEngineType);
             engineType.setValue(engineName);
-            engineType.setSummary(engineName);
+            engineType.setSummaryProvider(enginetypePref -> engineName);
         }
 
         // Retrieve the automodels by querying the automodel collection
@@ -304,15 +305,16 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         String typeAuto = modelshot.getString("auto_type");
         if(!TextUtils.isEmpty((typeAuto))) {
             autoType.setValue(typeAuto);
-            autoType.setSummary(typeAuto);
+            autoType.setSummaryProvider(autotypePref -> typeAuto);
         }
 
         // Reset the engine type value according to the auto model selected. Typecasting issue.
         List<String> typeList = (List<String>) modelshot.get("engine_type");
+        int engineValue = engineType.findIndexOfValue(engineType.getValue());
         if (typeList.size() == 1) {
             engineType.setValue(typeList.get(0));
-            engineType.setSummary(typeList.get(0));
-        } else if (typeList.size() > 1 && isModelChanged) {
+            engineType.setSummaryProvider(enginetypePref -> typeList.get(0));
+        } else if (isModelChanged && typeList.size() > 1 && engineValue == 0) {
             CharSequence[] arrType = typeList.toArray(new CharSequence[0]);
             engineTypeDialogFragment.setEngineType(arrType);
             engineTypeDialogFragment.show(getChildFragmentManager(), "engineTypeFragment");
@@ -395,9 +397,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
             // Initialize the automodel value and summary when the autotype or enginetype has a new
             // value.
-            if(isMakerChanged) {
+            if(isMakerChanged || isAutoTypeChanged || isEngineTypeChanged) {
                 autoModel.setValue(null);
-                autoModel.setSummary(getString(R.string.pref_entry_void));
+                autoModel.setSummaryProvider(preference -> getString(R.string.pref_entry_void));
             }
         });
     }
@@ -420,7 +422,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             builder.setTitle("Engine Type")
                     .setItems(types, (dialog, which) -> {
                         outerFragment.engineType.setValue(types[which].toString());
-                        outerFragment.engineType.setSummary(types[which]);
+                        outerFragment.engineType.setSummaryProvider(enginetypePref -> types[which]);
                     });
 
             return builder.create();

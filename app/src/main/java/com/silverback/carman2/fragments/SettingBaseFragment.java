@@ -50,20 +50,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     CollectionReference autoRef;
     String makerName, modelName, typeName, engineName, yearName;
 
-    /*
-    public interface OnCompleteAutoQueryListener {
-        void queryAutoMakerSnapshot(QueryDocumentSnapshot makershot);
-        void queryAutoModelSnapshot(QueryDocumentSnapshot modelshot);
-    }
-
-    // Attach the listener
-    void addCompleteAutoQueryListener(OnCompleteAutoQueryListener listener) {
-        mListener = listener;
-    }
-
-     */
-
-
     // Constructor
     public SettingBaseFragment() {
         super();
