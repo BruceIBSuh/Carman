@@ -162,7 +162,6 @@
         android:id="@+id/vg_nestedscrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginBottom="40dp"
         android:fillViewport="true"
         android:scrollbars="vertical"
         app:layout_dodgeInsetEdges="top"
@@ -188,8 +187,6 @@
                 android:id="@+id/recycler_comments"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:layout_marginBottom="100dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />

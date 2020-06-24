@@ -78,7 +78,8 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
  * A simple {@link Fragment} subclass.
- * This dialogfragment reads a post content when tapping  an item recycled in BoardPagerFragment.
+ * This dialogfragment reads a post content to the full size when tapping  an item recycled in
+ * BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
         View.OnClickListener,
@@ -104,6 +105,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     private List<DocumentSnapshot> snapshotList;
+    private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
 
 
@@ -112,7 +114,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private ConstraintLayout constPostingLayout, constCommentLayout;
     private Toolbar toolbar;
     private View underline;
-    //private RecyclerView recyclerComment;
+    private RecyclerView recyclerComment;
     private EditText etComment;
     private TextView tvCompathyCnt, tvCommentCnt;
 
@@ -176,15 +178,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Source.Cache.
         postRef = firestore.collection("board_general").document(documentId);
         postRef.get().addOnSuccessListener(aVoid -> {
-            ListenerRegistration commentListener = postRef.collection("comments")
-                    .addSnapshotListener((querySnapshot, e) -> {
+            commentListener = postRef.collection("comments")
+                    .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
                         if(e != null) return;
                         source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())
                                 ? Source.CACHE : Source.SERVER;
-                        log.i("BoardRadDlgFragment Source: %s", source);
                     });
 
-            commentListener.remove();
+
         });
 
         // Separate the text by line feeder("\n") to set the leading margin span to it, then return
@@ -224,7 +225,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         tvCommentCnt = localView.findViewById(R.id.tv_cnt_comment);
         tvCompathyCnt = localView.findViewById(R.id.tv_cnt_compathy);
         underline = localView.findViewById(R.id.view_underline_header);
-        RecyclerView recyclerComment = localView.findViewById(R.id.recycler_comments);
+        recyclerComment = localView.findViewById(R.id.recycler_comments);
 
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
@@ -263,7 +264,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
 
-
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
         // On clicking the comment button, show the comment input form.
@@ -283,7 +283,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // whether the document has local changes that haven't been written to the backend yet.
         // This property may determine the source of events
         postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
-            log.i("comment snapshot listener: %s", snapshot.getMetadata().hasPendingWrites());
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
                 long countComment = snapshot.getLong("cnt_comment");
@@ -303,8 +302,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Set the user image to the view on the header, the uri of which is provided as an arguemnt
         // from BoardPasoingAdapter. Otherwise, the default image is provided.
-        String userImage = (TextUtils.isEmpty(userPic))?
-                Constants.imgPath + "ic_user_blank_gray" : userPic;
+        String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray" : userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
 
@@ -354,6 +352,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        commentListener.remove();
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {
@@ -378,7 +382,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                             .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
                     // Make the comment view invisible
-                    constCommentLayout.setVisibility(View.INVISIBLE);
+                    constCommentLayout.setVisibility(View.GONE);
                     isCommentVisible = !isCommentVisible;
                 }
 
@@ -391,6 +395,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // and on showing the last one, another query get started.
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshot) {
+        snapshotList.clear();
         for(DocumentSnapshot document : snapshot) snapshotList.add(document);
         commentAdapter.notifyDataSetChanged();
     }
@@ -408,15 +413,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // Method for uploading the comment to Firestore.
     @SuppressWarnings("ConstantConditions")
     private boolean uploadComment() {
-
         Map<String, Object> comment = new HashMap<>();
         comment.put("comment", etComment.getText().toString());
         // Required to determine the standard to set time b/w server and local.
         //comment.put("timestamp", FieldValue.serverTimestamp());
         Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-        Date date = calendar.getTime();
-        comment.put("timestamp", new Timestamp(date));
-        log.i("date: %s", date);
+        //Date date = calendar.getTime();
+        //comment.put("timestamp", new Timestamp(date));
+        comment.put("timestamp", FieldValue.serverTimestamp());
         // Fetch the comment user id saved in the storage
         try(FileInputStream fis = getActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
@@ -435,10 +439,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     // increase the cnt_cooment in the parent document.
                     postRef.update("cnt_comment", FieldValue.increment(1));
                     // Update the recycler adapter to enlist the pending comment. Don't have to use
-                    // SnapshotListener, even thoug it may not update the RecyclerView of other users
+                    // SnapshotListener, even though it may not update the RecyclerView of other users
                     // simultaneously
-
-                    commentDoc.get(Source.CACHE).addOnSuccessListener(commentSnapshot -> {
+                    commentDoc.get(source).addOnSuccessListener(commentSnapshot -> {
                         snapshotList.add(0, commentSnapshot);
                         commentAdapter.notifyItemInserted(0);
                     });
@@ -458,8 +461,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
      */
 
-    // Display the view of contents and images in ConstraintLayout which is dynamically created
-    // using ConstraintSet. Images are managed by Glide.
+    // Display the text-based content and images, if any,  in ConstraintLayout which is dynamically
+    // created using ConstraintSet. Images are managed by Glide.
     // The regular expression makes text and images split with the markup which was made when images
     // were inserted. While looping the content, split parts of text and image are conntected to
     // ConstraintSets which are applied to the parent ConstraintLayout.
@@ -472,7 +475,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         final String REGEX_MARKUP = "\\[image_\\d]\\n";
         final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(content);
 
-        int index = 0; //
+        int index = 0;
         int start = 0;
         int constraintId = constPostingLayout.getId();
         int topConstraint;
@@ -482,7 +485,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Layout.LayoutParams. WHY?
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-
 
         // If the content contains images, which means the markup(s) exists in the content, the content
         // is split into parts of texts and images and respectively connected to ConstraintSet.
@@ -541,7 +543,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 0);
-            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 64);
+            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 8);
 
             tvSet.applyTo(constPostingLayout);
 
@@ -560,19 +562,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
             tvSet.applyTo(constPostingLayout);
 
-        // In case no text exists after the last image, the recyclerView is constrained to the last
-        // ImageView
+        // No text exists after the last image; the recyclerView is constrained to the last ImageView
         } else if(start == content.length()) {
-            /*
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(constPostingLayout);
-            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
+            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
             recyclerSet.applyTo(constPostingLayout);
-
-             */
         }
 
     }
@@ -584,10 +582,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
 
         int mCurrentState = STATE_IDLE;
-
         @Override
         public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-            log.i("vertical offset: %s", verticalOffset);
             if (verticalOffset == 0) {
                 if (mCurrentState != STATE_EXPANDED) onStateChanged(appBarLayout, STATE_EXPANDED);
                 mCurrentState = STATE_EXPANDED;

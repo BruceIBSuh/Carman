@@ -9,14 +9,14 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_marginBottom="3dp"
         android:padding="8dp"
         android:background="@drawable/bg_board_comment">
 
         <ImageView
             android:id="@+id/img_comment_user"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
             android:src="@drawable/ic_user_blank"
             android:contentDescription="@null"
             app:layout_constraintStart_toStartOf="parent"

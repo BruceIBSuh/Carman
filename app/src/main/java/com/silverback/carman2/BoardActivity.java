@@ -211,7 +211,6 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch(item.getItemId()) {
             case android.R.id.home:
                 // Check which child view the framelayout contains; if it holds the viewpager, just
@@ -293,7 +292,6 @@ public class BoardActivity extends BaseActivity implements
 
 
         if(TextUtils.isEmpty(boardTabLayout.getTabAt(0).getText())) {
-
             //boardTabLayout.setupWithViewPager(boardPager);
             //addTabIconAndTitle(this, boardTabLayout);
         }

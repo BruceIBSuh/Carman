@@ -17,13 +17,10 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -33,25 +30,23 @@ import com.silverback.carman2.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.text.DecimalFormat;
-
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
  * hierarchy of Preference objects, automatically persisting values in SharedPreferences.
  * Some preferences have custom dialog frragments which should implement the callbacks defined in
- * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing
- * params to the singleton constructor.
+ * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing params
+ * to the singleton constructor.
  */
 public class SettingPrefFragment extends SettingBaseFragment  {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefFragment.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefFragment.class);
 
     // Objects
     private SharedPreferences mSettings;
     private Preference userImagePref;
     private String nickname;
-    private DecimalFormat df;
+    //private DecimalFormat df;
 
     // UIs
     private Preference autoPref;
@@ -76,7 +71,7 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((SettingPrefActivity)getActivity()).getSettings();
 
-        df = BaseActivity.getDecimalFormatInstance();
+        //df = BaseActivity.getDecimalFormatInstance();
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -92,7 +87,6 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         autoPref = findPreference(Constants.AUTO_DATA);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-        log.i("automaker and automodel: %s, %s", makerName, modelName);
         //typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         //String yearName = mSettings.getString(Constants.AUTO_YEAR, null);
         //String jsonData = mSettings.getString(Constants.AUTO_DATA, null);
@@ -284,9 +278,6 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         }
 
     }
-
-
-
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

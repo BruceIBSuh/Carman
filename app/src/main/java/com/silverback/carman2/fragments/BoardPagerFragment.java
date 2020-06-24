@@ -193,8 +193,6 @@ public class BoardPagerFragment extends Fragment implements
         return localView;
     }
 
-
-
     @Override
     public void onPause() {
         super.onPause();
@@ -396,11 +394,9 @@ public class BoardPagerFragment extends Fragment implements
                     if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
                         pageHelper.setNextQuery(snapshots);
                         isLoading = true;
-
                     } //else postingAdapter.notifyDataSetChanged();
                 }
             });
-
         } //else postingAdapter.notifyDataSetChanged();
 
         postingAdapter.notifyDataSetChanged();
@@ -521,7 +517,6 @@ public class BoardPagerFragment extends Fragment implements
         try(FileInputStream fis = getActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             final String viewerId = br.readLine();
-
 
             CollectionReference subCollection = docref.collection("viewers");
             subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {

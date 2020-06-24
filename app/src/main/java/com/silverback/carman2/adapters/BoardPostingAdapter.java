@@ -51,9 +51,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgModel;
 
-    // Fields
-    private int index;
-
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
@@ -88,7 +85,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                         .inflate(R.layout.cardview_board_banner, viewGroup, false);
                 return new AdViewHolder(bannerView);
 
-
         }
 
     }
@@ -97,8 +93,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         int viewType = getItemViewType(position);
-        index = position + 1;
-
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
                 final DocumentSnapshot snapshot = snapshotList.get(position);
@@ -225,7 +219,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     class AdViewHolder extends RecyclerView.ViewHolder {
-
         AdViewHolder(View view) {
             super(view);
         }

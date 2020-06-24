@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
@@ -19,9 +19,12 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapter.CommentViewHolder> {
+public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
@@ -29,16 +32,18 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private ApplyImageResourceUtil imgUtil;
     private List<DocumentSnapshot> snapshotList;
     private FirebaseFirestore firestore;
+    private SimpleDateFormat sdf;
 
     // Constructor
     public BoardCommentAdapter(List<DocumentSnapshot> snapshotList) {
         this.snapshotList = snapshotList;
         firestore = FirebaseFirestore.getInstance();
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         log.i("Comments: %s", snapshotList.size());
     }
     @NonNull
     @Override
-    public BoardCommentAdapter.CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardview = (CardView) LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_board_comment, parent, false);
 
@@ -47,13 +52,18 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         return new CommentViewHolder(cardview);
     }
 
+
     @SuppressWarnings("ConstantConditions")
     @Override
-    public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         DocumentSnapshot document = snapshotList.get(position);
         //holder.tvCommentUser.setText(document.getString("user"));
-        holder.tvTimestamp.setText(String.valueOf(document.getDate("timestamp")));
-        holder.tvCommentContent.setText(document.getString("comment"));
+        if(document.getDate("timestamp") != null) {
+            Date timestamp = document.getDate("timestamp");
+            ((CommentViewHolder)holder).tvTimestamp.setText(sdf.format(timestamp));
+        }
+
+        ((CommentViewHolder)holder).tvCommentContent.setText(document.getString("comment"));
 
         // Retrieve the user name from the "users" collection.
         String userId = document.getString("user");
@@ -61,11 +71,11 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
                     DocumentSnapshot doc = task.getResult();
-                    holder.tvCommentUser.setText(doc.getString("user_name"));
+                    ((CommentViewHolder)holder).tvCommentUser.setText(doc.getString("user_name"));
                     // Check if the user_pic field exists. If so, attach the user image. Otherwise,
                     // attach the default image.
                     if(!TextUtils.isEmpty(doc.getString("user_pic")))
-                        holder.bindUserImage(Uri.parse(doc.getString("user_pic")));
+                        ((CommentViewHolder)holder).bindUserImage(Uri.parse(doc.getString("user_pic")));
                 }
             });
         }
@@ -73,7 +83,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
 
     @Override
-    public void onBindViewHolder(@NonNull CommentViewHolder holder, int position, List<Object> payloads) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
