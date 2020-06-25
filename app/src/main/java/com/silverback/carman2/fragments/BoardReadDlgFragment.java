@@ -453,14 +453,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         return true;
     }
 
-    /*
-    @Override
-    public void onPause() {
-        super.onPause();
-        if(bitmapTask != null) bitmapTask = null;
-    }
-     */
-
     // Display the text-based content and images, if any,  in ConstraintLayout which is dynamically
     // created using ConstraintSet. Images are managed by Glide.
     // The regular expression makes text and images split with the markup which was made when images
