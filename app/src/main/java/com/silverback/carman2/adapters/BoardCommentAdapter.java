@@ -11,12 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 
 import java.text.SimpleDateFormat;
@@ -26,7 +23,7 @@ import java.util.Locale;
 
 public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
     // Objects
     private ApplyImageResourceUtil imgUtil;
@@ -39,7 +36,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         this.snapshotList = snapshotList;
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        log.i("Comments: %s", snapshotList.size());
+        //log.i("Comments: %s", snapshotList.size());
     }
     @NonNull
     @Override
@@ -66,8 +63,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         ((CommentViewHolder)holder).tvCommentContent.setText(document.getString("comment"));
 
         // Retrieve the user name from the "users" collection.
-        String userId = document.getString("user");
-        if(userId != null && !userId.isEmpty()) {
+        String userId = document.getString("userId");
+        //if(userId != null && !userId.isEmpty()) {
+        if(!TextUtils.isEmpty(userId)) {
             firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
                     DocumentSnapshot doc = task.getResult();
@@ -83,13 +81,15 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+    public void onBindViewHolder(
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
             DocumentSnapshot snapshot = (DocumentSnapshot)payloads.get(0);
-            log.i("Partial Binding: %s", snapshot.getString("user"));
+            //log.i("Partial Binding: %s", snapshot.getString("user"));
         }
+
     }
 
     @Override

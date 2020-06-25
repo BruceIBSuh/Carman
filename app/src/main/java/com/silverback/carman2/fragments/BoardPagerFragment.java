@@ -25,7 +25,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -49,13 +48,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 
 /**
  *
@@ -297,6 +293,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
         if(snapshotList.size() > 0) snapshotList.clear();
+        if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
+
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -319,8 +317,8 @@ public class BoardPagerFragment extends Fragment implements
             isLastPage = snapshots.size() < Constants.PAGINATION;
             if(isLastPage) postingAdapter.notifyDataSetChanged();
             else {
-                pageHelper.setNextQuery(snapshots);
                 isLoading = true;
+                pageHelper.setNextQuery(snapshots);
             }
 
         } else {
@@ -335,9 +333,6 @@ public class BoardPagerFragment extends Fragment implements
 
         }
 
-        // If posts exist, dismiss the progressbar. No posts exist, set the textview to the empty
-        // view of the custom recyclerview.
-        if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
         pbLoading.setVisibility(View.GONE);
     }
 
@@ -526,11 +521,11 @@ public class BoardPagerFragment extends Fragment implements
                   docref.update("cnt_view", FieldValue.increment(1));
                   // Set timestamp and the user ip with the user id used as the document id.
                   Map<String, Object> viewerData = new HashMap<>();
+                  /*
                   Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
                   Date date = calendar.getTime();
-
-                  viewerData.put("timestamp", new Timestamp(date));
-                  // coding required.
+                   */
+                  viewerData.put("timestamp", FieldValue.serverTimestamp());
                   viewerData.put("viewer_ip", "");
 
                   subCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {

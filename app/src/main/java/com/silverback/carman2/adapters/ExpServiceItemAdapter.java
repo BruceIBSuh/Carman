@@ -49,7 +49,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     private DecimalFormat df;
 
     private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
-    private Drawable progressDrawable;
     public boolean[] arrCheckedState;
     public int[] arrItemCost;
     public String[] arrItemMemo;
@@ -131,7 +130,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         }
 
         // Calculate the value of progress
-        int period = (curMileage - lastMileage <= maxMileage) ? curMileage - lastMileage : maxMileage;
+        int period = Math.min(curMileage - lastMileage, maxMileage);
 
         // Set the progress color
         int progressColor = (period >= (maxMileage * 0.8))? warningColor : safeColor;
@@ -148,9 +147,11 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     /*
      * Partial Bind: onBindViewHolder(holder, pos, payloads) vs Full bind: onBindViewHolder(holder, pos)
      * The payloads parameter is a merge list from notifyItemChanged(int, Object) or
-     * notifyItemRangeChanged(int, int, Object).f the payloads list is not empty, the ViewHolder is currently bound to old data and
-     * Adapter may run an efficient partial update using the payload info. If the payload is empty, Adapter must run a full bind.
-     * Adapter should not assume that the payload passed in notify methods will be received by onBindViewHolder()
+     * notifyItemRangeChanged(int, int, Object).
+     * If the payloads list is not empty, the ViewHolder is currently bound to old data and
+     * Adapter may run an efficient partial update using the payload info. If the payload is empty,
+     * Adapter must run a full bind. Adapter should not assume that the payload passed in notify methods
+     * will be received by onBindViewHolder()
      */
     @Override
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int pos, @NonNull List<Object> payloads){

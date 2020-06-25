@@ -14,14 +14,10 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.R;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.viewmodels.ImageViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,7 +32,7 @@ import java.util.Locale;
 public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
 
     // Constants
     private final int CONTENT_VIEW_TYPE = 1;
@@ -49,7 +45,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private OnRecyclerItemClickListener mListener;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
-    private ImageViewModel imgModel;
 
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
@@ -58,7 +53,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Constructor
     public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
-        //super();
+        super();
         mListener = listener;
         snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -143,7 +138,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
                 // Set the listener for clicking the item with position
                 holder.itemView.setOnClickListener(view -> {
-                    log.i("position: %s, %s", position, holder.getAdapterPosition());
+                    //log.i("position: %s, %s", position, holder.getAdapterPosition());
                     if(mListener != null) mListener.onPostItemClicked(snapshot, position);
                 });
 
@@ -158,7 +153,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
