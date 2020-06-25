@@ -3,6 +3,8 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -20,6 +22,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
@@ -35,7 +38,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -47,6 +49,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
+import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -64,13 +67,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -94,6 +93,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
     private DocumentReference postRef;
@@ -148,12 +148,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.context = getContext();
 
         firestore = FirebaseFirestore.getInstance();
+        mSettings = ((BoardActivity)getActivity()).getSettings();
         snapshotList = new ArrayList<>();
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
@@ -177,28 +179,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // the listener to prevent connecting to the server. Instead, update the collection using
         // Source.Cache.
         postRef = firestore.collection("board_general").document(documentId);
-        postRef.get().addOnSuccessListener(aVoid -> {
-            commentListener = postRef.collection("comments")
-                    .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
-                        if(e != null) return;
-                        source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())
-                                ? Source.CACHE : Source.SERVER;
-                    });
-
-
-        });
-
-        // Separate the text by line feeder("\n") to set the leading margin span to it, then return
-        // a margin-formatted spannable string, which, in turn, set the image spans to display
-        // attached images as images are notified to retrieve by the task.
-        //spannable = translateParagraphSpan(postContent);
-
-        // Initiate the task to fetch images attached to the post
-        /*
-        if(imgUriList != null && imgUriList.size() > 0) {
-            bitmapTask = ThreadManager.startAttachedBitmapTask(context, imgUriList, imageModel);
-        }
-        */
+        postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
+                .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
+                    if(e != null) return;
+                    source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())
+                            ? Source.CACHE : Source.SERVER;
+                })
+        );
 
     }
 
@@ -207,7 +194,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        localView = inflater.inflate(R.layout.dialog_board_read, container, false);
+        localView = inflater.inflate(R.layout.fragment_board_read, container, false);
 
         AppBarLayout appbarLayout = localView.findViewById(R.id.appbar_board_read);
         toolbar = localView.findViewById(R.id.toolbar_board_read);
@@ -358,15 +345,33 @@ public class BoardReadDlgFragment extends DialogFragment implements
         commentListener.remove();
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {
         switch(v.getId()) {
 
             case R.id.imgbtn_comment:
-                if(isCommentVisible) constCommentLayout.setVisibility(View.INVISIBLE);
-                else constCommentLayout.setVisibility(View.VISIBLE);
-                isCommentVisible = !isCommentVisible;
+                // Check whether a user name is set. Otherwise, show an messagie in the snackbar to
+                // move to SettingPrefActivity to make a user name.
+                String userName = mSettings.getString(Constants.USER_NAME, null);
+                if(TextUtils.isEmpty(userName)) {
+                    Snackbar snackbar = Snackbar.make(
+                            constCommentLayout, getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
+                    snackbar.setAction(R.string.board_msg_action_setting, view -> {
+                        Intent intent = new Intent(getActivity(), SettingPrefActivity.class);
+                        intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
+                        startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
+                    }).show();
+                    return;
+
+                } else {
+                    int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
+                    constCommentLayout.setVisibility(visibility);
+                    constCommentLayout.setVisibility(View.VISIBLE);
+                    etComment.getText().clear();
+                    etComment.requestFocus();
+                    isCommentVisible = !isCommentVisible;
+                }
+
                 break;
 
             case R.id.imgbtn_send_comment:
@@ -375,23 +380,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     return;
                 }
 
-                // On finishing upload, close the soft input and the comment view.
-                if(uploadComment()) {
-                    // Close the soft input mehtod when clicking the upload button
-                    ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                            .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-                    // Make the comment view invisible
-                    constCommentLayout.setVisibility(View.GONE);
-                    isCommentVisible = !isCommentVisible;
-                }
-
+                // Upload the comment to Firestore, in which
+                uploadComment();
                 break;
         }
 
     }
 
-    // The following 3 callbacks are invoked by PagingQueryHelper to query comments up to the limit
+    // The following callbacks are invoked by PagingQueryHelper to query comments up to the limit
     // and on showing the last one, another query get started.
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshot) {
@@ -412,20 +408,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Method for uploading the comment to Firestore.
     @SuppressWarnings("ConstantConditions")
-    private boolean uploadComment() {
+    private void uploadComment() {
         Map<String, Object> comment = new HashMap<>();
         comment.put("comment", etComment.getText().toString());
-        // Required to determine the standard to set time b/w server and local.
-        //comment.put("timestamp", FieldValue.serverTimestamp());
-        Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-        //Date date = calendar.getTime();
-        //comment.put("timestamp", new Timestamp(date));
         comment.put("timestamp", FieldValue.serverTimestamp());
         // Fetch the comment user id saved in the storage
         try(FileInputStream fis = getActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             String commentId =  br.readLine();
-            comment.put("user", commentId);
+            comment.put("userId", commentId);
         } catch(IOException e) {
             e.printStackTrace();
         }
@@ -442,15 +433,24 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     // SnapshotListener, even though it may not update the RecyclerView of other users
                     // simultaneously
                     commentDoc.get(source).addOnSuccessListener(commentSnapshot -> {
+                        // Hide the soft input method.
+                        ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                                .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+                        // Make the comment view invisible and reset the flag.
+                        constCommentLayout.setVisibility(View.GONE);
+                        isCommentVisible = !isCommentVisible;
+
                         snapshotList.add(0, commentSnapshot);
                         commentAdapter.notifyItemInserted(0);
                     });
 
-                }).addOnFailureListener(e -> log.e("Add comments failed"));
+                }).addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
             }
         });
-
-        return true;
     }
 
     // Display the text-based content and images, if any,  in ConstraintLayout which is dynamically
@@ -481,8 +481,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // If the content contains images, which means the markup(s) exists in the content, the content
         // is split into parts of texts and images and respectively connected to ConstraintSet.
         while(m.find()) {
-            // Check if the content starts w/ text or image, which depends on the value of start and
-            // add the
+            // Check whether the content starts w/ text or image, which depends on the value of start.
             String paragraph = content.substring(start, m.start());
             TextView tv = new TextView(context);
             tv.setId(View.generateViewId());
@@ -508,7 +507,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             imgSet.clone(constPostingLayout);
             imgSet.connect(imgView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 0);
             imgSet.connect(imgView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 0);
-            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 16);
+            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 0);
             imgSet.applyTo(constPostingLayout);
 
             // Consider to apply Glide thumbnail() method.
@@ -534,8 +533,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.clone(constPostingLayout);
             tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
-            tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 0);
-            //tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 8);
+            tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 32);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 64);
 
             tvSet.applyTo(constPostingLayout);
 
@@ -554,14 +553,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
             tvSet.applyTo(constPostingLayout);
 
         // No text exists after the last image; the recyclerView is constrained to the last ImageView
         } else if(start == content.length()) {
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(constPostingLayout);
-            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
+            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
             recyclerSet.applyTo(constPostingLayout);
         }
 
@@ -606,13 +605,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         switch(state) {
             case STATE_COLLAPSED:
-                userPic = (TextUtils.isEmpty(userPic))?Constants.imgPath + "ic_user_blank_gray":userPic;
+                userPic = (TextUtils.isEmpty(userPic)) ? Constants.imgPath + "ic_user_blank_gray" : userPic;
                 toolbar.setNavigationIcon(null);
                 toolbar.setTitle(spannable);
                 toolbar.setSubtitle(userName);
                 imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
-
-                log.i("logo: %s, %s", toolbar.getChildAt(0), toolbar.getChildAt(1));
                 toolbar.setOnClickListener(view -> dismiss());
 
                 break;
@@ -638,7 +635,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private void setCompathyCount() {
         // Prevent repeated connection to Firestore every time when users click the button.
         if(hasCompathy) {
-            log.i("First click");
             Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
             return;
         }

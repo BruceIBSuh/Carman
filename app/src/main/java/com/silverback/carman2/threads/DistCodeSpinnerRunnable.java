@@ -10,6 +10,7 @@ import com.silverback.carman2.viewmodels.Opinet;
 import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -28,11 +29,9 @@ public class DistCodeSpinnerRunnable implements Runnable {
     // Objects
     private Context context;
     private DistCodeMethods task;
-    private SpinnerDistrictModel model;
 
     public interface DistCodeMethods {
         int getSidoCode();
-        //SpinnerDistrictModel getSpinnerDistrictModel();
         void setSigunCode(List<Opinet.DistrictCode> distCode);
         void setSpinnerDistCodeThread(Thread currentThread);
         void handleDistCodeSpinnerTask(int state);
@@ -60,7 +59,6 @@ public class DistCodeSpinnerRunnable implements Runnable {
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
             List<Opinet.DistrictCode> districtList = (List<Opinet.DistrictCode>)ois.readObject();
-            log.i("districtLiist size: %s", districtList.size());
 
             for(Opinet.DistrictCode obj : districtList) {
                 if(obj.getDistrictCode().substring(0, 2).equals(sidoCode)) {
@@ -75,7 +73,7 @@ public class DistCodeSpinnerRunnable implements Runnable {
             // SettingSpinnerDlgFragment as LiveData.
             //task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
 
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
             log.w("IOException: %s", e.getMessage());
             task.handleDistCodeSpinnerTask(SPINNER_DIST_CODE_FAIL);
         }

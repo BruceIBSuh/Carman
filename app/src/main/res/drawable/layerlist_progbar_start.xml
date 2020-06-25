@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/bg_start_on" />
     <item>
         <rotate
             android:drawable="@drawable/bg_progress_rotate"
             android:pivotX="50%"
             android:pivotY="50%" />
     </item>
-    <item android:drawable="@drawable/bg_start_on" />
 </layer-list>

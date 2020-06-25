@@ -37,7 +37,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -46,11 +45,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardEditFragment;
-import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
@@ -74,7 +70,7 @@ public class BoardActivity extends BaseActivity implements
         BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
     private OnAutoFilterCheckBoxListener mListener;
@@ -254,7 +250,6 @@ public class BoardActivity extends BaseActivity implements
                 // Refactor: WorkManager should be applied to upload a post as any network is
                 // re-established.
                 if(!isNetworkConnected) {
-                    log.e("no network error");
                     String errNoNetwork = getString(R.string.error_no_network_upload_fail);
                     Snackbar.make(coordinatorLayout, errNoNetwork, Snackbar.LENGTH_SHORT).show();
                     return false;
@@ -290,16 +285,9 @@ public class BoardActivity extends BaseActivity implements
         fabWrite.setVisibility(View.VISIBLE);
         if(isAutoFilter) animAutoFilter(isAutoFilter);
 
-
-        if(TextUtils.isEmpty(boardTabLayout.getTabAt(0).getText())) {
-            //boardTabLayout.setupWithViewPager(boardPager);
-            //addTabIconAndTitle(this, boardTabLayout);
-        }
-
         switch(position) {
             case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
                 getSupportActionBar().setTitle(getString(R.string.board_general_title));
-                log.i("tab title: %s", boardTabLayout.getTabAt(0).getText());
                 break;
 
             case Constants.BOARD_AUTOCLUB:
@@ -437,21 +425,16 @@ public class BoardActivity extends BaseActivity implements
 
         switch(requestCode) {
             case Constants.REQUEST_BOARD_GALLERY:
-                log.i("current fragment: %s, %s", writePostFragment, editPostFragment);
                 if(writePostFragment != null) writePostFragment.setUriFromImageChooser(data.getData());
                 else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(data.getData());
 
                 break;
-
+            /*
             case Constants.REQUEST_BOARD_CAMERA:
-                log.i("get uri from camera: %s", data.getData());
                 break;
-
+            */
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                String json = data.getStringExtra("jsonAutoData");
-                log.i("JSON Auto Data: %s", json);
-                jsonAutoFilter = json;
-
+                jsonAutoFilter = data.getStringExtra("jsonAutoData");
                 // Create the autofilter checkboxes and set inital values to the checkboxes
                 try{ createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
                 catch(JSONException e){e.printStackTrace();}
@@ -474,16 +457,14 @@ public class BoardActivity extends BaseActivity implements
     // checkbox state will manage to set the toolbar title.
     @Override
     public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
-        log.i("onChecedChanged: %s, %s", chkbox.getText(), chkbox.getTag());
         final int index = (int)chkbox.getTag();
-
         if(isChecked) {
             if(index == 1) cbAutoFilter.add(index, chkbox.getText().toString());
             else cbAutoFilter.add(chkbox.getText().toString());
 
         } else cbAutoFilter.remove(chkbox.getText().toString());
 
-        for(String filter : cbAutoFilter) log.i("filter : %s", filter);
+        //for(String filter : cbAutoFilter) log.i("filter : %s", filter);
         // As far as the automodel checkbox value changes, the toolbar title will be reset using
         // creteAutoClubTitle().
         clubTitle = createAutoClubTitle();
@@ -671,7 +652,7 @@ public class BoardActivity extends BaseActivity implements
 
                 // Add the checkbox value to the list if it is checked.
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText().toString());
-                for(String filter : cbAutoFilter) log.i("autofilter in order: %s", filter);
+                //for(String filter : cbAutoFilter) log.i("autofilter in order: %s", filter);
                 // Set the color and value according to a checkbox is checked or not.
                 cb.setOnCheckedChangeListener(this);
             }
@@ -805,7 +786,7 @@ public class BoardActivity extends BaseActivity implements
                 Intent cameraChooser = Intent.createChooser(cameraIntent, "Choose camera");
 
                 if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-                    log.i("Camera Intent");
+                    //log.i("Camera Intent");
                     startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
                 }
                 break;

@@ -102,11 +102,11 @@ public class IntroActivity extends BaseActivity  {
     }
 
 
-    // Invoked when and only when the application initiates to authenticate the user in Firebase.Auth.
-    // Once authenticated, upload the user to the "user" collection with data null at the moment, then
-    // have the document id saved in the internal storage. The user document ID is used to identify
-    // users instead of using Firebase.Auth UID for security reason.
-    // Finally, initiate DistCodeTask to retrieve the district codes from the Opinet.
+    // Invoked when and only when the application runs for the first time, authenticating the user
+    // in Firebase.Auth. Once authenticated, upload the user to the "user" collection with data null
+    // at the moment, then have the document id saved in the internal storage. The user document ID
+    // is used to identify users instead of using Firebase.Auth UID for security reason. Finally,
+    // initiate DistCodeTask to retrieve the district codes from the Opinet.
     //
     // Refactor requried: JSONARray as to the sido code and the service items currently defined as
     // resources and saved in SharedPreferences should be refactored to download directly from the server.

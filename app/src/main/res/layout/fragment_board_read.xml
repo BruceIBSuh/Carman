@@ -129,7 +129,6 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="@+id/img_compathy" />
 
-
                 <TextView
                     android:id="@+id/tv_autoinfo"
                     android:layout_width="0dp"
@@ -162,6 +161,7 @@
         android:id="@+id/vg_nestedscrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="40dp"
         android:fillViewport="true"
         android:scrollbars="vertical"
         app:layout_dodgeInsetEdges="top"
@@ -172,24 +172,23 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/background_light">
-
             <View
                 android:id="@+id/view_underline_header"
                 android:layout_width="0dp"
-                android:layout_height="2dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="1dp"
                 android:background="@android:color/transparent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintStart_toStartOf="parent" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_comments"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintVertical_bias="0.0"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -201,8 +200,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:padding="8dp"
-        android:background="#D3D3D3"
+        android:padding="5dp"
+        android:background="#FF9900"
         app:layout_dodgeInsetEdges="bottom">
 
         <TextView
