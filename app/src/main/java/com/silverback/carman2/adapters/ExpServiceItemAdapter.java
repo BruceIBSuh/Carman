@@ -313,7 +313,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     }
 
     // ProgressBar Animation class from StackOverflow
-    class ProgressBarAnimation extends Animation {
+    static class ProgressBarAnimation extends Animation {
 
         private ProgressBar progressBar;
         private float from;

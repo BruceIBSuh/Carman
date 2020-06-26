@@ -32,9 +32,9 @@ public class DistCodeDownloadRunnable implements Runnable {
     static final int DISTRICT_CODE_COMPLETE = 1;
     static final int DISTRICT_CODE_FAIL = -1;
 
-    // Constants
+    // Constants. API 29 and higher requires http to be https.
     private static final String API_KEY = "F186170711";
-    private static final String OPINET = "http://www.opinet.co.kr/api/areaCode.do?out=xml&code=" + API_KEY;
+    private static final String OPINET = "https://www.opinet.co.kr/api/areaCode.do?out=xml&code=" + API_KEY;
     private static final String OPINET_AREA = OPINET + "&area=";
 
     // Objects

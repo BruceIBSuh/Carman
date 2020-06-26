@@ -13,12 +13,11 @@ import androidx.preference.PreferenceDialogFragmentCompat;
 
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SigunSpinnerAdapter;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FragmentSharedModel;
-import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
 import com.silverback.carman2.threads.DistCodeSpinnerTask;
 import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,13 +34,13 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         AdapterView.OnItemSelectedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingSpinnerDlgFragment.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(SettingSpinnerDlgFragment.class);
 
     // Objects
-    private SpinnerDistrictModel distModel;
+    private OpinetViewModel opinetModel;
     private DistCodeSpinnerTask spinnerTask;
     private Spinner sidoSpinner, sigunSpinner;
-    private ArrayAdapter sidoAdapter;
+    private ArrayAdapter<CharSequence> sidoAdapter;
     private SigunSpinnerAdapter sigunAdapter;
     private FragmentSharedModel fragmentModel;
 
@@ -83,7 +82,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         int sidoCode = Integer.parseInt(districtCode.substring(0, 2));
         mSidoItemPos = (sidoCode < 14) ? sidoCode - 1 : sidoCode - 3;
 
-        distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         sidoAdapter = ArrayAdapter.createFromResource(getContext(), R.array.sido_name, R.layout.spinner_district_entry);
@@ -93,8 +92,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         sigunAdapter = new SigunSpinnerAdapter(getContext());
 
         // A Sigun list is notified as DistcodeSpinnerTask completes via SpinnerDistrictModel.
-        distModel.getSpinnerDataList().observe(this, sigunList -> {
-            log.i("getSpinnerDataList() done: %s", sigunList.size());
+        opinetModel.getSpinnerDataList().observe(this, sigunList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             // Add the Sigun dataset received from DistrictCodeTask by SpinnerDistrictMode.
             sigunAdapter.addSigunList(sigunList);
@@ -102,9 +100,10 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
             // Sigun codes downloaded from the Opinet.
             if(mSidoItemPos != tmpSidoPos) mSigunItemPos = 0;
             else {
-                for (int i = 0; i < sigunList.size(); i++) {
-                    log.i("district code obj: %s", sigunList.get(i).getDistrictCode());
-                    if (sigunList.get(i).getDistrictCode().equals(districtCode)) mSigunItemPos = i;
+                int position = 0;
+                for(Opinet.DistrictCode code :  sigunList) {
+                    if (code.getDistrictCode().equals(districtCode)) mSigunItemPos = position;
+                    position++;
                 }
             }
             sigunSpinner.setAdapter(sigunAdapter);
@@ -122,9 +121,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         // If the Sido spinner is selected as is the default Sido code is transferred
         if(parent == sidoSpinner) {
-            log.i("position: %s, %s", position, sidoAdapter.getItem(position));
             // Retrieve a new Sigun code list with the Sido given by by the Sido spinner.
-            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), distModel, position);
+            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), opinetModel, position);
             // The Sigun spinner is set to the first position if the Sido spinner changes.
             if(mSidoItemPos != position) mSigunItemPos = 0;
             tmpSidoPos = position;
@@ -133,9 +131,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        log.i("onNothingSelected");
-    }
+    public void onNothingSelected(AdapterView<?> parent) {}
 
     // Should override onDialogClosed() defined in SpinnerDialogPreference to be invoked
     @Override
@@ -144,7 +140,6 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         if(positive) {
             mSidoItemPos = tmpSidoPos;
             mSigunItemPos = tmpSigunPos;
-            log.i("Save the code: %s, %s", mSidoItemPos, mSigunItemPos);
 
             List<String> defaults = new ArrayList<>();
             defaults.add((String)sidoAdapter.getItem(mSidoItemPos));

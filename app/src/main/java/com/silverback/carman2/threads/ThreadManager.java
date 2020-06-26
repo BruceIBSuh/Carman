@@ -266,7 +266,7 @@ public class ThreadManager {
     // Bugs: no guarantee to coincide the position with the code. For example, Daegu is positioned
     // at 12, whereas the Sido code is 14.
     public static DistCodeSpinnerTask loadDistCodeSpinnerTask(
-            Context context, SpinnerDistrictModel model, int position) {
+            Context context, OpinetViewModel model, int position) {
 
         DistCodeSpinnerTask task = sInstance.mDistCodeSpinnerTaskQueue.poll();
         if(task == null) task = new DistCodeSpinnerTask(context);

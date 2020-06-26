@@ -6,8 +6,9 @@
     <uses-feature
         android:name="android.hardware,camera"
         android:required="false" />
-    <!-- ACCESS_BACKGROUND_LOCATION is required for Android 10(API 29) or above -->
+
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- ACCESS_BACKGROUND_LOCATION is required for Android 10(API 29) or above -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCAITON" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -49,6 +50,7 @@
             android:name=".backgrounds.SnoozeBroadcastReceiver"
             android:enabled="true"
             android:exported="false" />
+
 
         <service
             android:name=".backgrounds.GeofenceJobIntentService"

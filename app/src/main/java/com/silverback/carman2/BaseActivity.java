@@ -18,8 +18,7 @@ package com.silverback.carman2;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -29,10 +28,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.TypedValue;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -69,8 +68,9 @@ public class BaseActivity extends AppCompatActivity {
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
     // Constants
-    protected static final int REQUEST_PERMISSION_LOCATION = 1000;
-    protected static final int REQUEST_PERMISSION_CAMERA = 1001;
+    protected static final int REQUEST_PERMISSION_FINE_LOCATION = 1000;
+    protected static final int REQUEST_PERMISSION_BACKGROUND_LOCATION = 1001;
+    protected static final int REQUEST_PERMISSION_CAMERA = 1002;
 
     // Objects
     protected String userId;
@@ -186,22 +186,27 @@ public class BaseActivity extends AppCompatActivity {
      * Location: ACCESS_FINE_LOCATION
      * External Storage: READ_EXTERNAL_STORAGE
      */
+
     public void checkPermissions(String name) {
-        // Switch(String) is available from Android 4.4(KitKat API 19) and above.
         switch(name) {
             case Manifest.permission.ACCESS_FINE_LOCATION:
                 if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_LOCATION);
-                } else hasLocationPermission = true;
+                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_FINE_LOCATION);
+                }
+                break;
 
+            case Manifest.permission.ACCESS_BACKGROUND_LOCATION:
+                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
+                    //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                }
                 break;
 
             case Manifest.permission.CAMERA:
                 if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                         ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_CAMERA);
-                } else hasCameraPermission = true;
+                }
 
                 break;
 
@@ -209,18 +214,19 @@ public class BaseActivity extends AppCompatActivity {
         }
 
     }
+
     // Abstract method which is invoked by ActivityCompat.requestPermissions()
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         switch (requestCode) {
-
-            case REQUEST_PERMISSION_LOCATION:
+            case REQUEST_PERMISSION_FINE_LOCATION:
                 // When clicking Accept button on the dialog
+                log.i("fine location permission");
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     hasLocationPermission = true;
-                    // When clicking Deny button on the dialog
+                // When clicking Deny button on the dialog
                 else {
                     hasLocationPermission = false;
                     // Check if the user checks "Never Ask Again". When checked,
@@ -230,6 +236,13 @@ public class BaseActivity extends AppCompatActivity {
                         log.i("Never Ask Again");
                     }
                 }
+
+                break;
+
+            case REQUEST_PERMISSION_BACKGROUND_LOCATION:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    log.i("background location denied");
+                } else log.i("background location granted");
 
                 break;
 

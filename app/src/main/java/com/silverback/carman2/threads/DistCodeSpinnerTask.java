@@ -5,6 +5,7 @@ import android.content.Context;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.viewmodels.Opinet;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
 
 import java.util.List;
@@ -16,17 +17,16 @@ public class DistCodeSpinnerTask extends ThreadTask implements
     private static final LoggingHelper log = LoggingHelperFactory.create(DistCodeSpinnerTask.class);
 
     // Objects
-    private SpinnerDistrictModel model;
+    private OpinetViewModel model;
     private DistCodeSpinnerRunnable distCodeSpinnerRunnable;
     private int sidoCode;
-
 
     // Constructor
     DistCodeSpinnerTask(Context context) {
         distCodeSpinnerRunnable = new DistCodeSpinnerRunnable(context, this);
     }
 
-    void initSpinnerDistCodeTask(SpinnerDistrictModel model, int position) {
+    void initSpinnerDistCodeTask(OpinetViewModel model, int position) {
         sidoCode = position;
         this.model = model;
     }
@@ -44,19 +44,10 @@ public class DistCodeSpinnerTask extends ThreadTask implements
         setCurrentThread(currentThread);
     }
 
-
-
     @Override
     public int getSidoCode() {
         return sidoCode;
     }
-
-    /*
-    @Override
-    public SpinnerDistrictModel getSpinnerDistrictModel() {
-        return model;
-    }
-     */
 
     // Post(Set) value in SpinnerDistriceModel, which is notified to the parent fragment,
     // SettingSpinnerDlgFragment as LiveData.

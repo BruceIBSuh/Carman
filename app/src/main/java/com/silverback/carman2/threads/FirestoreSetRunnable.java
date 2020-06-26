@@ -24,7 +24,7 @@ public class FirestoreSetRunnable implements Runnable {
 
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(FirestoreSetRunnable.class);
-    private static final String OPINET = "http://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
+    private static final String OPINET = "https://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
 
     // Objects
     private FireStoreSetMethods mCallback;

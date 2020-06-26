@@ -5,14 +5,6 @@ import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-
 import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.View;
@@ -26,6 +18,13 @@ import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
@@ -35,15 +34,15 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SigunSpinnerAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.threads.DistCodeSpinnerTask;
+import com.silverback.carman2.threads.GeocoderReverseTask;
+import com.silverback.carman2.threads.GeocoderTask;
+import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.LocationViewModel;
-import com.silverback.carman2.viewmodels.SpinnerDistrictModel;
-import com.silverback.carman2.threads.GeocoderReverseTask;
-import com.silverback.carman2.threads.GeocoderTask;
-import com.silverback.carman2.threads.DistCodeSpinnerTask;
-import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         AdapterView.OnItemSelectedListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(RegisterDialogFragment.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(RegisterDialogFragment.class);
 
     // Constants
     static final int SVC_ID = 0;
@@ -74,7 +73,8 @@ public class RegisterDialogFragment extends DialogFragment implements
     private GeocoderReverseTask geocoderReverseTask;
     private GeocoderTask geocoderTask;
     private ThreadTask locationTask;
-    private SpinnerDistrictModel distModel;
+    //private SpinnerDistrictModel distModel;
+    private OpinetViewModel opinetModel;
     private LocationViewModel locationModel;
     private SigunSpinnerAdapter sigunAdapter;
     private AlertDialog dialog;
@@ -91,8 +91,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     private RatingBar ratingBar;
 
     // Fields
-    private int category;
-    private int mSidoItemPos, mSigunItemPos, tmpSidoPos, tmpSigunPos;
+    private int mSidoItemPos, mSigunItemPos, tmpSigunPos;
     private boolean isCurrentLocation;
     private boolean isRegistered;
 
@@ -129,7 +128,8 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         // ViewModel to fetch the sigun list of a given sido name
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
+        //distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
 
 
@@ -183,7 +183,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         nickname = mSettings.getString(Constants.USER_NAME, null);
         resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
         ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
-            log.i("Nickname required: %s", nickname);
+            //log.i("Nickname required: %s", nickname);
             if(TextUtils.isEmpty(nickname) && rating > 0) {
                 ratingBar.setRating(0f);
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
@@ -201,12 +201,12 @@ public class RegisterDialogFragment extends DialogFragment implements
         String sidoCode = distCode.substring(0, 2);
         String sigunCode = distCode.substring(2, 4);
 
-        mSidoItemPos = Integer.valueOf(sidoCode) - 1; // "01" is translated into 1 as Integer.
-        mSigunItemPos = Integer.valueOf(sigunCode) -1;
+        mSidoItemPos = Integer.parseInt(sidoCode) - 1; // "01" is translated into 1 as Integer.
+        mSigunItemPos = Integer.parseInt(sigunCode) -1;
 
 
         // Create the spinners for sido and sigun name.
-        ArrayAdapter sidoAdapter = ArrayAdapter.createFromResource(
+        ArrayAdapter<CharSequence> sidoAdapter = ArrayAdapter.createFromResource(
                 getContext(), R.array.sido_name, R.layout.spinner_district_entry);
         sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
@@ -215,7 +215,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         sigunAdapter = new SigunSpinnerAdapter(getContext());
 
         // Create the spinner for Comany list.
-        ArrayAdapter companyAdapter = ArrayAdapter.createFromResource(
+        ArrayAdapter<CharSequence> companyAdapter = ArrayAdapter.createFromResource(
                 getContext(), R.array.svc_company, R.layout.spinner_district_entry);
         companyAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
         companySpinner.setAdapter(companyAdapter);
@@ -234,7 +234,7 @@ public class RegisterDialogFragment extends DialogFragment implements
             btn.setOnClickListener(view -> {
 
                 if(isCurrentLocation && mLocation != null && mAddress != null) {
-                    log.i("Current Location process: %s, %s", mLocation, mAddress);
+                    //log.i("Current Location process: %s, %s", mLocation, mAddress);
                     registerService();
                     //dialog.dismiss();
 
@@ -259,7 +259,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         super.onActivityCreated(savedInstanceState);
 
         // Enlist the sigun names in SigunSpinner based upon a given sigun name.
-        distModel.getSpinnerDataList().observe(this, dataList -> {
+        opinetModel.getSpinnerDataList().observe(this, dataList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             sigunAdapter.addSigunList(dataList);
             /*
@@ -274,7 +274,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         // Fetch the current location using LocationTask and LocationViewModel, with which
         // GeocoderReverseTask is initiated to get the current address.
         locationModel.getLocation().observe(this, location->{
-            log.i("Current Location: %s", location);
+            //log.i("Current Location: %s", location);
             geocoderReverseTask = ThreadManager.startReverseGeocoderTask(getContext(), locationModel, location);
             mLocation = location;
 
@@ -306,7 +306,7 @@ public class RegisterDialogFragment extends DialogFragment implements
             mLocation = location;
             // Pass the location and address of an service provider to ServiceManagerFragment
             // using FragmentSharedModel which enables Fragments to communicate each other.
-            log.i("Geocoder Location: %s, %s", mLocation, mAddress);
+            //log.i("Geocoder Location: %s, %s", mLocation, mAddress);
             registerService();
         });
 
@@ -314,22 +314,21 @@ public class RegisterDialogFragment extends DialogFragment implements
     }
 
     @Override
-    public void onStop() {
+    public void onPause() {
         if(spinnerTask != null) spinnerTask = null;
         if(locationTask != null) locationTask = null;
         if(geocoderReverseTask != null) geocoderReverseTask = null;
         if(geocoderTask != null) geocoderTask = null;
 
-        super.onStop();
+        super.onPause();
     }
-
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         if(parent == sidoSpinner) {
-            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), distModel, position);
+            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), opinetModel, position);
             if(position != mSidoItemPos) mSigunItemPos = 0;
-            tmpSidoPos = position;
+            //int tmpSidoPos = position;
         } else {
             tmpSigunPos = position;
         }
@@ -360,7 +359,7 @@ public class RegisterDialogFragment extends DialogFragment implements
                             // center is queried or the same name is queried but the location is out of
                             // Constant.UPDATE_DISTANCE, isRegistered is set to false.
                             isRegistered = checkArea(mLocation, doc.getGeoPoint("location"));
-                            log.i("Registered: %s", isRegistered);
+                            //log.i("Registered: %s", isRegistered);
                         }
 
                     } else isRegistered = false;
@@ -368,32 +367,23 @@ public class RegisterDialogFragment extends DialogFragment implements
                     // In case isRegistered is set to false, add the service data, then pass the evaluation
                     // data including the id as SparseArray to ServiceManagerFragment to upload.
                     if(!isRegistered) {
-                        firestore.collection("svc_center").add(svcData)
-                                .addOnSuccessListener(docRef -> {
+                        firestore.collection("svc_center").add(svcData).addOnSuccessListener(docRef -> {
+                            // Getting the ID, pass the data as SparseArray to ServiceManagerFragment
+                            // to upload them to Firestore.`
+                            String generatedId = docRef.getId();
+                            SparseArray<Object> sparseArray = new SparseArray<>();
+                            sparseArray.put(SVC_ID, generatedId);
+                            sparseArray.put(LOCATION, mLocation);
+                            sparseArray.put(ADDRESS, mAddress);
+                            sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
+                            sparseArray.put(RATING, ratingBar.getRating());
+                            sparseArray.put(COMMENT, etServiceComment.getText().toString());
 
-                                    // Getting the ID, pass the data as SparseArray to ServiceManagerFragment
-                                    // to upload them to Firestore.`
-                                    String generatedId = docRef.getId();
-                                    log.i("Service ID: %s", generatedId);
-                                    SparseArray<Object> sparseArray = new SparseArray<>();
-                                    sparseArray.put(SVC_ID, generatedId);
-                                    sparseArray.put(LOCATION, mLocation);
-                                    sparseArray.put(ADDRESS, mAddress);
-                                    sparseArray.put(COMPANY, companySpinner.getSelectedItem().toString());
-                                    sparseArray.put(RATING, ratingBar.getRating());
-                                    sparseArray.put(COMMENT, etServiceComment.getText().toString());
-
-                                    fragmentModel.setServiceLocation(sparseArray);
-                                    dialog.dismiss();
-
-                                })
-                                .addOnFailureListener(e -> log.e("Add service data failed: %s", e.getMessage()));
+                            fragmentModel.setServiceLocation(sparseArray);
+                            dialog.dismiss();
+                        }).addOnFailureListener(Exception::printStackTrace);
                     }
-
-
-                }).addOnFailureListener(e -> {
-                    log.e("Query failed: %s", e.getMessage());
-                });
+                }).addOnFailureListener(Exception::printStackTrace);
     }
 
     // After querying the document with a service name, retrieve the geopoint to compare the current
@@ -401,7 +391,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     // location. Then, if the distance is out of the preset distance, set the data to Firestore.
     private boolean checkArea(Location location, GeoPoint geoPoint) {
         if(location == null || geoPoint == null) {
-            log.e("Incorrect address or location data");
+            //log.e("Incorrect address or location data");
             return false;
         }
 
@@ -411,9 +401,4 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         return location.distanceTo(geoLocation) < Constants.UPDATE_DISTANCE;
     }
-
-    private void handleProgressDialog() {
-
-    }
-
 }

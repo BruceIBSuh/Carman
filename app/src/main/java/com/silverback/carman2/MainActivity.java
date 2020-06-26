@@ -1,5 +1,6 @@
 package com.silverback.carman2;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -82,6 +83,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         bundle.putStringArray("defaults", getDefaultParams());
         generalFragment = new GeneralFragment();
         generalFragment.setArguments(bundle);
+
         // Attaches GeneralFragment as a default display at first or returning from the fragments
         // picked up by Toolbar menus.
         getSupportFragmentManager().beginTransaction()
@@ -131,8 +133,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         }
 
     }
-
-
 
     // DrawerLayout callbacks which should be applied at an appropritate time for update.
     /*

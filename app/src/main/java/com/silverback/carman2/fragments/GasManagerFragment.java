@@ -451,12 +451,14 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @SuppressWarnings("ConstantConditions")
     private void addGasFavorite() {
         // Disable the button when the parent activity gets started by the geofence notification.
-        //if(isGeofenceIntent) return;
+        log.i("addGasFavorite: %s", isGeofenceIntent);
+        if(isGeofenceIntent) return;
 
         // Pop up FavoriteListFragment when clicking the favorite button.
         if(TextUtils.isEmpty(tvStnName.getText())) {
             FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS)
                     .show(getActivity().getSupportFragmentManager(), null);
+
         // Remove the station both from the local db and Firestore, the result of which is notified
         // to FavoriteGeofenceHelper.OnGeofenceListener which implements the boolean value set to false.
         } else if(isFavoriteGas) {
@@ -481,7 +483,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
-                        if(snapshot != null && snapshot.exists()) {
+                        if (snapshot != null && snapshot.exists()) {
                             btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                             geofenceHelper.addFavoriteGeofence(snapshot, placeholder, Constants.GAS);
                         }

@@ -20,6 +20,8 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.backgrounds.GeofenceBroadcastReceiver;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderEntity;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,11 +31,14 @@ import java.util.Map;
 /**
  * This class performs to add or remove a gas station or service center non only to Geofence but
  * also to FavoriteProviderEntity of the Room.
+ * GeofencingClient:
+ * Geofence.Builder:
+ * GeofencingRequest.Builder:
  */
 public class FavoriteGeofenceHelper {
 
     // Constants
-    //private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
 
     // Objects
     private Context context;
@@ -121,13 +126,13 @@ public class FavoriteGeofenceHelper {
                 // a local map is used, KATEC coords should be applied.
                 GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
                 geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
-
                 providerName = snapshot.getString("stn_name");
                 providerCode = snapshot.getString("stn_code");
                 address = TextUtils.isEmpty(snapshot.getString("new_addrs"))?
                         snapshot.getString("old_addrs"):snapshot.getString("new_addrs");
-
                 evalReference = firestore.collection("gas_eval").document(providerId);
+
+                log.i("Geofence: %s, %s, %s, %s, %s, %s", providerId,  providerName, providerCode, address, geoPoint.getX(), geoPoint.getY());
                 break;
 
             case Constants.SVC:

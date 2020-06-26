@@ -1,9 +1,12 @@
 package com.silverback.carman2.threads;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.IntentSender;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Looper;
 import android.os.Process;
 
@@ -22,6 +25,8 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.CarmanLocationHelper;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
 
@@ -65,6 +70,8 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     public void run() {
         task.setDownloadThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+
+
 
         // Check if the location setting is successful. If successful, fetch the last known location
         // using FusedLocationProviderClient in onSuccess method.
@@ -112,21 +119,17 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             log.e("Location finished");
             mFusedLocationClient.removeLocationUpdates(locationCallback);
         }
-
-
-
-
     }
 
     @Override
     public void onFailure(@NonNull Exception e) {
 
-        if(e instanceof ResolvableApiException) {
+        if (e instanceof ResolvableApiException) {
             // Location Settings are not satisfied, but this can be fixed by showing the user a dialog
             try {
                 // Show the dialog by calling startResolutionForResult() and check the result in onActivityResult
                 ResolvableApiException resolvable = (ResolvableApiException) e;
-                resolvable.startResolutionForResult((Activity)context, REQUEST_CHECK_LOCATION_SETTINGS);
+                resolvable.startResolutionForResult((Activity) context, REQUEST_CHECK_LOCATION_SETTINGS);
             } catch (IntentSender.SendIntentException sendEx) {
                 e.printStackTrace();
             }
@@ -134,6 +137,5 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             task.handleLocationTask(CURRENT_LOCATION_FAIL);
         }
     }
-
 }
 

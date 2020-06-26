@@ -49,20 +49,23 @@ public class DistCodeSpinnerRunnable implements Runnable {
 
         // Make int position to String sidoCode
         final String sidoCode = convertCode(code);
-        log.i("converted sidoCode: %s", sidoCode);
         List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
 
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
         Uri uri = Uri.fromFile(file);
-
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
 
-            List<Opinet.DistrictCode> districtList = (List<Opinet.DistrictCode>)ois.readObject();
-
-            for(Opinet.DistrictCode obj : districtList) {
-                if(obj.getDistrictCode().substring(0, 2).equals(sidoCode)) {
-                    distCodeList.add(obj);
+            // To prevent ObjectInputStream.readObject() from incurring unchecked cast when the object
+            // is directly cast to List<Opinet.DistrictCode>, the object should be deserialized first.
+            Object objList = ois.readObject();
+            if(objList instanceof ArrayList<?>) {
+                for(Object distcode : (ArrayList<?>)objList) {
+                    if(distcode instanceof Opinet.DistrictCode) {
+                        if(((Opinet.DistrictCode) distcode).getDistrictCode().substring(0, 2).equals(sidoCode)){
+                            distCodeList.add((Opinet.DistrictCode) distcode);
+                        }
+                    }
                 }
             }
 
@@ -74,7 +77,7 @@ public class DistCodeSpinnerRunnable implements Runnable {
             //task.getSpinnerDistrictModel().getSpinnerDataList().postValue(distCodeList);
 
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
-            log.w("IOException: %s", e.getMessage());
+            e.printStackTrace();
             task.handleDistCodeSpinnerTask(SPINNER_DIST_CODE_FAIL);
         }
     }
@@ -82,7 +85,7 @@ public class DistCodeSpinnerRunnable implements Runnable {
     // Converts a position set by SidoSpinner to a Sido string format to handle exceptions that the
     // item position is not identical with the Sido code.
     private String convertCode(int code) {
-        String sidoCode = "01";
+        String sidoCode = "01"; //default value in case the method fails to receive any code.
         switch(code) {
             case 0: sidoCode = "01"; break; case 1: sidoCode = "02"; break;
             case 2: sidoCode = "03"; break; case 3: sidoCode = "04"; break;
