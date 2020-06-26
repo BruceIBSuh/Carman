@@ -158,8 +158,8 @@ public class FavoriteGeofenceHelper {
                 .setCircularRegion(geoPoint.getY(), geoPoint.getX(), Constants.GEOFENCE_RADIUS)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)//bitwise OR only
-                //.setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
-                //.setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
+                .setLoiteringDelay(Constants.GEOFENCE_LOITERING_TIME)
+                .setNotificationResponsiveness(Constants.GEOFENCE_RESPONSE_TIME)
                 .build()
         );
 
@@ -204,8 +204,6 @@ public class FavoriteGeofenceHelper {
                     }).addOnFailureListener(e -> mListener.notifyAddGeofenceFailed());
 
         } catch(SecurityException e) { e.printStackTrace(); }
-
-
     }
 
     // Delete the current station from DB and Geofence. To remove a favorite from Geofence, use

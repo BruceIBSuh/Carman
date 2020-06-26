@@ -26,7 +26,7 @@ public class StationListRunnable implements Runnable{
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListRunnable.class);
 
     // Constants
-    private static final String OPINET = "http://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
+    private static final String OPINET = "https://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
 
     // Objects
     private FirebaseFirestore fireStore;

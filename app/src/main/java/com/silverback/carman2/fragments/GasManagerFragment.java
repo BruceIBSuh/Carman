@@ -158,8 +158,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         //SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         date = BaseActivity.formatMilliseconds(dateFormat, visitTime);
-
-
         /*
          * Implements the interface of FavoriteGeofenceHelper.SetGefenceListener to notify the
          * favorite button of having the favroite station added or removed, re-setting the flag
@@ -173,6 +171,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
+                log.i("Geofence added");
                 Snackbar.make(getView(), R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
@@ -461,14 +460,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Remove the station both from the local db and Firestore, the result of which is notified
         // to FavoriteGeofenceHelper.OnGeofenceListener which implements the boolean value set to false.
         } else if(isFavoriteGas) {
+            log.i("favorite button clicked to remove");
             Snackbar snackbar = Snackbar.make(
                     localView, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
                 geofenceHelper.removeFavoriteGeofence(stnName, stnId, Constants.GAS);
                 btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite);
-            });
-
-            snackbar.show();
+            }).show();
 
         } else {
             // Add a station both to the local db and Firestore as far as the number of favorite stations

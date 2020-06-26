@@ -24,7 +24,7 @@ public class Constants {
     public static final String MIN_RADIUS = "250"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 30; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
-    public static final int GEOFENCE_RESPONSE_TIME = 1000 * 60 * 5;
+    public static final int GEOFENCE_RESPONSE_TIME = 1000 * 30;
 
     public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60 * 3;//Interval for downloading gas prices from Opinet (3 hrs)
     public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations

@@ -31,7 +31,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     // Objects
     private ArrayList<String> cbValues;
-    private int currentPage;
     private boolean isAutoClub;
 
     // Constructor
@@ -44,8 +43,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public Fragment getItem(int position) {
         log.i("Fragment page: %s", position);
-        currentPage = position;
-        //String automaker = (cbValues.size() > 0) ? cbValues.get(0) : null;
         if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
         /*

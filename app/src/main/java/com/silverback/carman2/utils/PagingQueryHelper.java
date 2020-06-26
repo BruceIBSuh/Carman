@@ -113,7 +113,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         // Refactor should be considered to apply Source.CACHE or Source.SERVER depending on whehter
         // querysnapshot has existed or hasPendingWrite is true.
         //query.limit(Constants.PAGINATION).get(source).addOnSuccessListener((querySnapshot) -> {
-        query.limit(Constants.PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE,(querySnapshot, e) -> {
+        query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             mListener.setFirstQuery(page, querySnapshot);

@@ -25,7 +25,7 @@ public class FavoritePriceRunnable implements Runnable {
     private static final LoggingHelper log = LoggingHelperFactory.create(FavoritePriceRunnable.class);
 
     private static final String API_KEY = "F186170711";
-    private static final String OPINET = "http://www.opinet.co.kr/api/";
+    private static final String OPINET = "https://www.opinet.co.kr/api/";
     private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
 
     // Objects

@@ -34,7 +34,7 @@ public class GasPriceRunnable implements Runnable {
 
     // constants
     private static final String API_KEY = "F186170711";
-    private static final String OPINET = "http://www.opinet.co.kr/api/";
+    private static final String OPINET = "https://www.opinet.co.kr/api/";
     private static final String URLavg = OPINET + "avgAllPrice.do?out=xml&code=" + API_KEY;
     private static final String URLsido = OPINET + "avgSidoPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String URLsigun = OPINET + "avgSigunPrice.do?out=xml&code=" + API_KEY + "&sido=";

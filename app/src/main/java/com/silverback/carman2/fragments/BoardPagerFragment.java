@@ -36,6 +36,8 @@ import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PagingQueryHelper;
@@ -53,16 +55,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- *
- */
+
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
         PagingQueryHelper.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
     // Objects
     private FirebaseFirestore firestore;
@@ -180,9 +180,10 @@ public class BoardPagerFragment extends Fragment implements
         // the autoclub post is not queried.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
-                pageHelper.setPostingQuery(currentPage, isViewOrder);
+                log.i("autoclub fragment get started");
                 isLoading = false;
                 isLastPage = false;
+                pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
         } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
@@ -292,9 +293,9 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
-        if(snapshotList.size() > 0) snapshotList.clear();
+        snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
-
+        log.i("query results: %s, %s", page, snapshots.size());
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -315,7 +316,10 @@ public class BoardPagerFragment extends Fragment implements
         if(page == Constants.BOARD_AUTOCLUB) {
             // First query comes to the end of the documents.
             isLastPage = snapshots.size() < Constants.PAGINATION;
-            if(isLastPage) postingAdapter.notifyDataSetChanged();
+            if(isLastPage) {
+                postingAdapter.notifyDataSetChanged();
+                log.i("autoclub: %s", snapshotList.size());
+            }
             else {
                 isLoading = true;
                 pageHelper.setNextQuery(snapshots);

@@ -394,10 +394,6 @@ public class BaseActivity extends AppCompatActivity {
         return new JSONArray(filterList).toString();
     }
 
-
-
-
-
     // The document id with which user data is uploaded to Firestore is used as USER ID. The Firebase
     // Auth id is not used for a security reason. Open and close file is so expensive that BaseActivity
     // opens the file and assign it to "userId" variable which is inherited to other activities.

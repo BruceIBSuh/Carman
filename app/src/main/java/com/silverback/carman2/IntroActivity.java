@@ -165,7 +165,6 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-
         mProgBar.setVisibility(View.VISIBLE);
         // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
         // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().

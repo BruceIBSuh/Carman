@@ -442,7 +442,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                         isCommentVisible = !isCommentVisible;
 
                         snapshotList.add(0, commentSnapshot);
-                        commentAdapter.notifyItemInserted(0);
+                        //commentAdapter.notifyItemInserted(0);
                     });
 
                 }).addOnFailureListener(e -> {

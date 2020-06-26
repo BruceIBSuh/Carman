@@ -269,7 +269,7 @@ public class GeneralFragment extends Fragment implements
         // if a distance b/w a new location and the previous location is within UPDATE_DISTANCE,
         // do not initiate the task to prevent frequent connection to the server.
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            log.i("no location retrieved: %s", location);
+            log.i("no location retrieved: %s, %s", location, mPrevLocation);
             if(location == null) return;
 
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {

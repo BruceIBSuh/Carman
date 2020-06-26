@@ -47,6 +47,8 @@ import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.fragments.BoardEditFragment;
 import com.silverback.carman2.fragments.BoardReadDlgFragment;
 import com.silverback.carman2.fragments.BoardWriteFragment;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
@@ -70,7 +72,7 @@ public class BoardActivity extends BaseActivity implements
         BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
     private OnAutoFilterCheckBoxListener mListener;
@@ -280,6 +282,7 @@ public class BoardActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPageSelected(int position){
+        log.i("onPageSelected");
         tabPage = position;
         menu.getItem(0).setVisible(false);
         fabWrite.setVisibility(View.VISIBLE);
@@ -438,7 +441,6 @@ public class BoardActivity extends BaseActivity implements
                 // Create the autofilter checkboxes and set inital values to the checkboxes
                 try{ createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
                 catch(JSONException e){e.printStackTrace();}
-
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
                 pagerAdapter.notifyDataSetChanged();
