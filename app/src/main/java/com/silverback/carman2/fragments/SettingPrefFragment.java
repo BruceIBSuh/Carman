@@ -1,6 +1,7 @@
 package com.silverback.carman2.fragments;
 
 
+import android.Manifest;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
@@ -17,6 +18,7 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.database.CarmanDatabase;
@@ -179,6 +181,9 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         userImagePref = findPreference(Constants.USER_IMAGE);
         userImagePref.setOnPreferenceClickListener(view -> {
+            // Carmera permission check.
+            ((BaseActivity)getActivity()).checkPermissions(getActivity(), Manifest.permission.CAMERA);
+
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;

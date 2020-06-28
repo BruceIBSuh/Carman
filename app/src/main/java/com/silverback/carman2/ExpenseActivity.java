@@ -7,6 +7,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
@@ -162,20 +163,27 @@ public class ExpenseActivity extends BaseActivity implements
             animSlideTabLayout();
         });
 
+        // TEMP: permissions
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            log.i("Background Location");
+            if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                log.i("no grants");
+                ActivityCompat.requestPermissions(this, new String[]{
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1000);
+            }
+        }
+
         // On finishing ExpenseTabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
         // attach it in the top FrameLayout.
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
+    public void onPause() {
+        super.onPause();
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
     }

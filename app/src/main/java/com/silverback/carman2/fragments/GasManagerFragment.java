@@ -1,8 +1,12 @@
 package com.silverback.carman2.fragments;
 
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -18,6 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -453,6 +459,14 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Disable the button when the parent activity gets started by the geofence notification.
         log.i("addGasFavorite: %s", isGeofenceIntent);
         if(isGeofenceIntent) return;
+
+        // Background Location permission check
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            log.i("Geofencing permission");
+            ((BaseActivity)getActivity()).checkPermissions(getActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
+
+
 
         // Pop up FavoriteListFragment when clicking the favorite button.
         if(TextUtils.isEmpty(tvStnName.getText())) {

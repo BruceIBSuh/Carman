@@ -105,7 +105,7 @@ public class SettingPrefActivity extends BaseActivity implements
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
 
         // Permission check for CAMERA to get the user image.
-        checkPermissions(Manifest.permission.CAMERA);
+        //checkPermissions(this, Manifest.permission.CAMERA);
 
         settingToolbar = findViewById(R.id.toolbar_setting);
         setSupportActionBar(settingToolbar);
@@ -576,4 +576,5 @@ public class SettingPrefActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
 }

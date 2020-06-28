@@ -20,6 +20,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -29,9 +30,11 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -83,6 +86,7 @@ public class BaseActivity extends AppCompatActivity {
     protected boolean isNetworkConnected;
     protected boolean hasLocationPermission;
     protected boolean hasCameraPermission;
+    protected boolean isFineLocationPermitted;
 
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
@@ -184,28 +188,76 @@ public class BaseActivity extends AppCompatActivity {
     /*
      * Permission Check: Location, Read External Storage
      * Location: ACCESS_FINE_LOCATION
-     * External Storage: READ_EXTERNAL_STORAGE
      */
-
-    public void checkPermissions(String name) {
+    public void checkPermissions(Activity activity, String name) {
         switch(name) {
             case Manifest.permission.ACCESS_FINE_LOCATION:
-                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_FINE_LOCATION);
+                if(ContextCompat.checkSelfPermission(activity, name) != PackageManager.PERMISSION_GRANTED) {
+                    isFineLocationPermitted = false;
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(activity, name)) {
+                        new AlertDialog.Builder(this)
+                                .setTitle("Fine Location permission")
+                                .setMessage("fine location permission requried")
+                                .setPositiveButton("confirm", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        //Prompt the user once explanation has been shown
+                                        ActivityCompat.requestPermissions(activity,
+                                                new String[]{
+                                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                                                REQUEST_PERMISSION_FINE_LOCATION);
+                                    }
+                                })
+                                .create()
+                                .show();
+                    } else {
+                        log.i("no rationale");
+                        ActivityCompat.requestPermissions(activity,
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                                REQUEST_PERMISSION_FINE_LOCATION);
+                    }
+
                 }
+
                 break;
 
             case Manifest.permission.ACCESS_BACKGROUND_LOCATION:
-                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
-                    //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                log.i("Backround Location permission");
+                if(ContextCompat.checkSelfPermission(activity, name) != PackageManager.PERMISSION_GRANTED) {
+                    if(ActivityCompat.shouldShowRequestPermissionRationale(activity, name)) {
+                        new AlertDialog.Builder(this)
+                                .setTitle("Backgroun Location permission")
+                                .setMessage("Backgound location permission is requried for geofencing")
+                                .setPositiveButton("confirm", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+                                        //Prompt the user once explanation has been shown
+                                        ActivityCompat.requestPermissions(activity,
+                                                new String[]{
+                                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                                        Manifest.permission.ACCESS_FINE_LOCATION, name},
+                                                REQUEST_PERMISSION_BACKGROUND_LOCATION);
+                                    }
+                                })
+                                .create()
+                                .show();
+                    } else {
+                        log.i("no rationale");
+                        ActivityCompat.requestPermissions(activity,
+                                new String[]{
+                                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                                        Manifest.permission.ACCESS_FINE_LOCATION, name},
+                                REQUEST_PERMISSION_BACKGROUND_LOCATION);
+                    }
+
                 }
                 break;
 
             case Manifest.permission.CAMERA:
                 if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_CAMERA);
+                        ActivityCompat.requestPermissions(activity, new String[]{name}, REQUEST_PERMISSION_CAMERA);
                 }
 
                 break;
@@ -218,17 +270,13 @@ public class BaseActivity extends AppCompatActivity {
     // Abstract method which is invoked by ActivityCompat.requestPermissions()
     @Override
     public void onRequestPermissionsResult(
-            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+            int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
 
         switch (requestCode) {
             case REQUEST_PERMISSION_FINE_LOCATION:
-                // When clicking Accept button on the dialog
-                log.i("fine location permission");
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    hasLocationPermission = true;
-                // When clicking Deny button on the dialog
-                else {
-                    hasLocationPermission = false;
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    isFineLocationPermitted = true;
+                } else {
                     // Check if the user checks "Never Ask Again". When checked,
                     // shouldShowRequestPermissionRationale returns false.
                     if(!ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -240,9 +288,12 @@ public class BaseActivity extends AppCompatActivity {
                 break;
 
             case REQUEST_PERMISSION_BACKGROUND_LOCATION:
+                log.i("back location process");
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    log.i("background location denied");
-                } else log.i("background location granted");
+                    log.i("background location granted");
+                } else {
+                    log.i("background location not granted");
+                }
 
                 break;
 
@@ -258,6 +309,11 @@ public class BaseActivity extends AppCompatActivity {
                 }
             default: break;
         }
+    }
+
+    private void showPermRationaleDialog(String perm) {
+        log.i("show permission rationale");
+        Toast.makeText(this, "Show Rationale", Toast.LENGTH_SHORT).show();
     }
 
     // Reference method to get a debug Hashkey for Kakao
@@ -428,5 +484,6 @@ public class BaseActivity extends AppCompatActivity {
 
         return sb.toString();
     }
+
 
 }
