@@ -163,19 +163,6 @@ public class ExpenseActivity extends BaseActivity implements
             animSlideTabLayout();
         });
 
-        // TEMP: permissions
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            log.i("Background Location");
-            if(ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-                log.i("no grants");
-                ActivityCompat.requestPermissions(this, new String[]{
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1000);
-            }
-        }
-
         // On finishing ExpenseTabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
         // attach it in the top FrameLayout.
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
