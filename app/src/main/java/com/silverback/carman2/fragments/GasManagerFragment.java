@@ -463,7 +463,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Background Location permission check
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             log.i("Geofencing permission");
-            ((BaseActivity)getActivity()).checkPermissions(getActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+            requestPermissions(new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1000);
+            //((BaseActivity)getActivity()).checkPermissions(getActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION);
         }
 
 
