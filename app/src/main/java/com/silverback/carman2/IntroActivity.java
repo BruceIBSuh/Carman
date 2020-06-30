@@ -90,9 +90,6 @@ public class IntroActivity extends BaseActivity  {
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
-
-        // Permission check for ACCESS_FINE_LOCATION to retrieve near stations in MainActivity.
-        checkPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
     }
 
     @Override

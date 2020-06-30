@@ -195,8 +195,17 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_subtitle_stations">
 
+        <com.silverback.carman2.views.StationRecyclerView
+            android:id="@+id/stationRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:fab="@id/fab_relocation"
+            app:progressbar="@id/progbar_stnlist"
+            app:textview="@id/tv_no_stations" />
+
         <ProgressBar
-            android:id="@+id/progbar_stn_list"
+            android:id="@+id/progbar_stnlist"
+            android:visibility="invisible"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_insetEdge="top"/>
@@ -223,14 +232,6 @@
             app:layout_anchor="@id/stationRecyclerView"
             app:layout_anchorGravity="right|bottom"
             app:rippleColor="@color/colorPrimary" />
-
-        <com.silverback.carman2.views.StationRecyclerView
-            android:id="@+id/stationRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:fab="@id/fab_relocation"
-            app:progressbar="@id/progbar_stn_list"
-            app:textview="@id/tv_no_stations" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

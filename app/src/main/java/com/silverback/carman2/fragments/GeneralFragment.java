@@ -1,7 +1,9 @@
 package com.silverback.carman2.fragments;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
@@ -19,10 +21,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
@@ -70,7 +77,7 @@ import java.util.regex.Pattern;
  */
 
 public class GeneralFragment extends Fragment implements
-        View.OnClickListener,
+        View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback,
         RecyclerView.OnItemTouchListener,
         StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener {
@@ -107,6 +114,7 @@ public class GeneralFragment extends Fragment implements
     private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
+    private ProgressBar pbStnRecyclerView;
 
     // Fields
     private String savedId;
@@ -116,6 +124,7 @@ public class GeneralFragment extends Fragment implements
     private boolean bExpenseSort;
     private boolean hasNearStations;//flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
+    private boolean isPermitted;
     private String latestItems;
 
     public GeneralFragment() {
@@ -142,9 +151,11 @@ public class GeneralFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
-        // Fetch the current location using the worker thread and return the value via ViewModel
-        // as the type of LiveData, on the basis of which the near stations is to be retrieved.
-        locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+        if(getArguments() != null) {
+            isPermitted = getArguments().getBoolean("permission");
+            log.i("permission in GeneralFragment: %s", getArguments().getBoolean("permission"));
+            locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -164,6 +175,7 @@ public class GeneralFragment extends Fragment implements
         opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
         fabLocation = childView.findViewById(R.id.fab_relocation);
+        pbStnRecyclerView = childView.findViewById(R.id.progbar_stnlist);
 
         // Attach event listeners
         childView.findViewById(R.id.imgbtn_expense).setOnClickListener(this);
@@ -541,7 +553,6 @@ public class GeneralFragment extends Fragment implements
 
         SpannableString spannableString;
         if(isNetworkConnected) {
-
             fabLocation.setVisibility(View.VISIBLE);
             String radius = defaults[1];
             String msg = getString(R.string.general_no_station_fetched);
@@ -628,7 +639,6 @@ public class GeneralFragment extends Fragment implements
         // When the fuel code has changed, reset the spinner selection to a new position, which
         // implements onItemSelected() to invalidate a new price data with the fuel code.
         if(!TextUtils.isEmpty(fuelCode)) {
-            log.i("fuel code changed: %s", fuelCode);
             String[] fuel = getResources().getStringArray(R.array.spinner_fuel_code);
             for (int i = 0; i < fuel.length; i++) {
                 if (fuel[i].matches(fuelCode)) {
@@ -646,4 +656,22 @@ public class GeneralFragment extends Fragment implements
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
+        log.i("onRequestPermissionResult: %s", permission[0]);
+        if (requestCode == Constants.REQUEST_PERMISSION_FINE_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                log.i("Access Fine Location permiited");
+                isPermitted = true;
+                locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+            } else {
+                String title = "Location Permission Rejected";
+                String msg = "You have denied to access Location which disables";
+                //showPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, title, msg);
+            }
+
+
+        }
+    }
 }

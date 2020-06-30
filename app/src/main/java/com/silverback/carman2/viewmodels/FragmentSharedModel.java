@@ -34,20 +34,13 @@ public class FragmentSharedModel extends ViewModel {
 
 
     private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
-
-
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
     private MutableLiveData<String> favoriteStnId;
     private MutableLiveData<Integer> imageItemSelected;
-
     private MutableLiveData<Integer> imageChooser;
-
-
     private MutableLiveData<String> strData;
-
     private MutableLiveData<String> firstPlaceholderId;
-
     private MutableLiveData<Integer> totalExpense;
 
     // AutoData used in SettingPreferenceActivity which is shared b/w SettingPrefereneFragment and
@@ -58,6 +51,8 @@ public class FragmentSharedModel extends ViewModel {
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
     // to show the names in the summary of the preference.
     private MutableLiveData<List<String>> defaultDistCode;
+    // PermissionDialogFragment and GeneralFragment to pass the dialog click event.
+    private MutableLiveData<Boolean> permission;
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
@@ -216,5 +211,11 @@ public class FragmentSharedModel extends ViewModel {
         if(autoData == null) autoData = new MutableLiveData<>();
         return autoData;
     }
+
+    public MutableLiveData<Boolean> getPermission() {
+        if(permission == null) permission = new MutableLiveData<>();
+        return permission;
+    }
+
 
 }

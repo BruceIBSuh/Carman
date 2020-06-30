@@ -18,9 +18,7 @@ package com.silverback.carman2;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -30,11 +28,8 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -42,7 +37,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.fragments.AlertDialogFragment;
 import com.silverback.carman2.fragments.PermissionDialogFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -68,7 +62,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class BaseActivity extends AppCompatActivity implements PermissionDialogFragment.OnDialogListener {
+public class BaseActivity extends AppCompatActivity implements PermissionDialogFragment.OnDialogListener{
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
@@ -87,12 +81,11 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
     // Fields
     private String permName;
     protected boolean isNetworkConnected;
-    protected boolean hasCameraPermission;
+    protected boolean isPermitted;
 
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
 
         // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
@@ -109,16 +102,7 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
         isNetworkConnected = notifyNetworkConnected(this);
     }
 
-    // Implements PermissionDialogFragment.OnDialogListener.
-    @Override
-    public void onPositiveClick(DialogFragment dialog) {
-        log.i("Dialog positive button clicked");
-    }
 
-    @Override
-    public void onNegativeClick(DialogFragment dialgo) {
-        log.i("Dialog negative button clicked");
-    }
 
     /**
      * ContextCompat.checkSelfPermission vs PermissionChecker
@@ -128,18 +112,17 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
      * which seems to be intended for other apps in IPC environment
      */
     public void checkPermissions(String name) {
-        //permName = name;
+        permName = name;
         switch(name) {
-            // Permit FINE_LOCATION
             case Manifest.permission.ACCESS_FINE_LOCATION:
-                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
-                    if(ActivityCompat.shouldShowRequestPermissionRationale(this, name)) {
-                        String title = "Fine Location Permission";
-                        String msg = "This permission is required to access the current location";
-                        showPermissionRationale(title, msg);
-                    }
-
-                    ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_FINE_LOCATION);
+                if(ContextCompat.checkSelfPermission(this, name) == PackageManager.PERMISSION_GRANTED) {
+                    isPermitted = true;
+                } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, name)) {
+                    String title = "Fine Location Permission";
+                    String msg = "This permission is required to access the current location";
+                    showPermissionRationale(title, msg);
+                } else {
+                    ActivityCompat.requestPermissions(this, new String[]{name}, Constants.REQUEST_PERMISSION_FINE_LOCATION);
                 }
 
                 break;
@@ -151,11 +134,12 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
                         String title = "Backkground Locatioin Permission";
                         String msg = "Geofencing requires this permission to be feasible";
                         showPermissionRationale(title, msg);
+                    } else {
+                        log.i("request ACCESS_BACKGROUND_LOCATION");
+                        ActivityCompat.requestPermissions(this,
+                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, name},
+                                REQUEST_PERMISSION_BACKGROUND_LOCATION);
                     }
-
-                    ActivityCompat.requestPermissions(
-                            this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, name},
-                            REQUEST_PERMISSION_BACKGROUND_LOCATION);
 
 
                 }
@@ -174,22 +158,26 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
 
     }
 
-    // Abstract method which is invoked by ActivityCompat.requestPermissions()
+    /*
+     * Manage a request code yourself vs use RequestPermission contract included in AndroidX Library
+     * (androidx.activity.1.2.0 alpha). Refactor should be made when the library releases an official
+     * version.
+     */
+    /*
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
 
+        log.i("onrequestpermissionresult");
         switch (requestCode) {
-            case REQUEST_PERMISSION_FINE_LOCATION:
+            case Constants.REQUEST_PERMISSION_FINE_LOCATION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                    log.i("Access Fine Location permiited");
+                    isPermitted = true;
                 } else {
-                    // Check if the user checks "Never Ask Again". When checked,
-                    // shouldShowRequestPermissionRationale returns false.
-                    if(!ActivityCompat.shouldShowRequestPermissionRationale(this,
-                            Manifest.permission.ACCESS_FINE_LOCATION)) {
-                        log.i("Never Ask Again");
-                    }
+                    String title = "Location Permission Rejected";
+                    String msg = "You have denied to access Location which disables";
+                    //showPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, title, msg);
                 }
 
                 break;
@@ -198,35 +186,38 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     log.i("background location granted");
                 } else {
+                    log.i("Access Background Location denied");
                     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        ActivityCompat.requestPermissions(this,
-                                new String[]{
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_BACKGROUND_LOCATION},
-                                REQUEST_PERMISSION_BACKGROUND_LOCATION);
+                        String title = "";
+                        String msg = "";
+                        //showPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION, title, msg);
                     }
                 }
 
                 break;
 
             case REQUEST_PERMISSION_CAMERA:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                    hasCameraPermission = true;
-                else {
-                    hasCameraPermission = false;
-                    if(!ActivityCompat.shouldShowRequestPermissionRationale(this,
-                            Manifest.permission.CAMERA)) {
-                        log.i("Never Ask Again");
-                    }
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    log.i("Camera permitted");
+                } else {
+                    log.i("Camera denied");
                 }
-            default: break;
+
+                break;
         }
     }
 
-    private void showPermissionRationale(String title, String msg) {
+     */
+
+    public void showPermissionRationale(String title, String msg) {
         DialogFragment rationaleFragment = new PermissionDialogFragment(this, title, msg);
         rationaleFragment.show(getSupportFragmentManager(), "rationaleFragment");
     }
+
+    public boolean getPermission() {
+        return isPermitted;
+    }
+
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
@@ -477,5 +468,13 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
     }
 
 
+    @Override
+    public void onPositiveClick(DialogFragment dialog, String permission) {
+        ActivityCompat.requestPermissions(this, new String[]{permName}, Constants.REQUEST_PERMISSION_FINE_LOCATION);
+    }
 
+    @Override
+    public void onNegativeClick(DialogFragment dialgo) {
+
+    }
 }

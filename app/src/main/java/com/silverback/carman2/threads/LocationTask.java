@@ -53,7 +53,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         viewModel.getLocationException().setValue(msg);
     }
 
-
     @Override
     public void handleLocationTask(int state) {
 
