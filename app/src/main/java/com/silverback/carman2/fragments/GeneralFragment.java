@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.SpannableString;
@@ -26,10 +27,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
@@ -50,15 +49,15 @@ import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.GasPriceTask;
+import com.silverback.carman2.threads.LocationTask;
+import com.silverback.carman2.threads.StationListTask;
+import com.silverback.carman2.threads.ThreadManager;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.LocationViewModel;
 import com.silverback.carman2.viewmodels.Opinet;
 import com.silverback.carman2.viewmodels.OpinetViewModel;
 import com.silverback.carman2.viewmodels.StationListViewModel;
-import com.silverback.carman2.threads.LocationTask;
-import com.silverback.carman2.threads.StationListTask;
-import com.silverback.carman2.threads.ThreadManager;
-import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.views.OpinetAvgPriceView;
 import com.silverback.carman2.views.StationRecyclerView;
 
@@ -77,13 +76,16 @@ import java.util.regex.Pattern;
  */
 
 public class GeneralFragment extends Fragment implements
-        View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback,
+        View.OnClickListener,
         RecyclerView.OnItemTouchListener,
         StationListAdapter.OnRecyclerItemClickListener,
         AdapterView.OnItemSelectedListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
+
+    private static final String permName = Manifest.permission.ACCESS_FINE_LOCATION;
+    private static final int REQUEST_PERM_FINE_LOCATION = 1000;
 
     // Objects
     private CarmanDatabase mDB;
@@ -114,7 +116,7 @@ public class GeneralFragment extends Fragment implements
     private TextView tvExpLabel, tvLatestExp;
     private TextView tvExpenseSort, tvStationsOrder;
     private FloatingActionButton fabLocation;
-    private ProgressBar pbStnRecyclerView;
+    private ProgressBar progbar;
 
     // Fields
     private String savedId;
@@ -124,7 +126,6 @@ public class GeneralFragment extends Fragment implements
     private boolean bExpenseSort;
     private boolean hasNearStations;//flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
-    private boolean isPermitted;
     private String latestItems;
 
     public GeneralFragment() {
@@ -151,11 +152,7 @@ public class GeneralFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
-        if(getArguments() != null) {
-            isPermitted = getArguments().getBoolean("permission");
-            log.i("permission in GeneralFragment: %s", getArguments().getBoolean("permission"));
-            locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
-        }
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -164,7 +161,6 @@ public class GeneralFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         childView = inflater.inflate(R.layout.fragment_general, container, false);
-
         //TextView tvDate = childView.findViewById(R.id.tv_today);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvExpLabel = childView.findViewById(R.id.tv_label_exp);
@@ -175,7 +171,7 @@ public class GeneralFragment extends Fragment implements
         opinetAvgPriceView = childView.findViewById(R.id.avgPriceView);
         stationRecyclerView = childView.findViewById(R.id.stationRecyclerView);
         fabLocation = childView.findViewById(R.id.fab_relocation);
-        pbStnRecyclerView = childView.findViewById(R.id.progbar_stnlist);
+        progbar = childView.findViewById(R.id.progbar_stnlist);
 
         // Attach event listeners
         childView.findViewById(R.id.imgbtn_expense).setOnClickListener(this);
@@ -189,7 +185,7 @@ public class GeneralFragment extends Fragment implements
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
         fuelSpinner.setAdapter(spinnerAdapter);
 
-        // Get the spinner String values and set the inital value with the default one saved in
+        // Get the spinner String values and set the inital value with the default saved in
         // SharedPreferences.
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
         defaults = getArguments().getStringArray("defaults");
@@ -207,9 +203,8 @@ public class GeneralFragment extends Fragment implements
         pricePagerAdapter.setFuelCode(defaultFuel);
         priceViewPager.setAdapter(pricePagerAdapter);
 
-        // Set Floating Action Button
-        // RecycerView.OnScrollListener is an abstract class which shows/hides the floating action
-        // button according to scolling or idling
+        // Set Floating Action Button RecycerView.OnScrollListener is an abstract class which shows/
+        // hides the floating action button according to scolling or idling
         fabLocation.setOnClickListener(this);
         fabLocation.setSize(FloatingActionButton.SIZE_AUTO);
         // Change the size of the Floating Action Button on scolling
@@ -218,12 +213,18 @@ public class GeneralFragment extends Fragment implements
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0 || dy < 0 && fabLocation.isShown()) fabLocation.hide();
             }
-            @Override
+                @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) fabLocation.show();
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
+
+        // Permission check for ACCESS_FINE_LOCATION as of API 23(Android 6) which apples the runtime
+        // permission.
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            checkLocationPermission();
+        }
 
         return childView;
     }
@@ -327,6 +328,12 @@ public class GeneralFragment extends Fragment implements
                 mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
 
+        });
+
+        fragmentModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
+            log.i("rational dialog clicked");
+            if(isPermitted) requestPermissions(new String[]{permName}, REQUEST_PERM_FINE_LOCATION);
+            else log.i("DENIED");
         });
 
 
@@ -656,22 +663,35 @@ public class GeneralFragment extends Fragment implements
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
+    private void checkLocationPermission() {
+        // Check permission to ACCESS_FINE_LOCATION(
+        if(ContextCompat.checkSelfPermission(getContext(), permName) == PackageManager.PERMISSION_GRANTED) {
+            progbar.setVisibility(View.VISIBLE);
+            locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+
+        } else if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), permName)) {
+            PermRationaleFragment permDialog = new PermRationaleFragment();
+            permDialog.setContents("Hell", "World");
+            permDialog.show(getActivity().getSupportFragmentManager(), null);
+
+        } else {
+            // requestPermission used in Fragment. ActivityCompat.requestPermission used in Activity.
+            requestPermissions(new String[]{permName}, REQUEST_PERM_FINE_LOCATION);
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
-        log.i("onRequestPermissionResult: %s", permission[0]);
-        if (requestCode == Constants.REQUEST_PERMISSION_FINE_LOCATION) {
+        if (requestCode == REQUEST_PERM_FINE_LOCATION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                log.i("Access Fine Location permiited");
-                isPermitted = true;
+                progbar.setVisibility(View.VISIBLE);
                 locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
             } else {
-                String title = "Location Permission Rejected";
-                String msg = "You have denied to access Location which disables";
-                //showPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, title, msg);
+                SpannableString msg = new SpannableString("Near Stations is required to have permission");
+                stationRecyclerView.showTextView(msg);
             }
-
-
         }
     }
 }

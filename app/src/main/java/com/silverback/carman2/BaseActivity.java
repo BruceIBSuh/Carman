@@ -16,12 +16,10 @@ package com.silverback.carman2;
  *
  */
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -29,15 +27,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.fragments.PermissionDialogFragment;
+import com.silverback.carman2.fragments.PermRationaleFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -62,7 +57,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class BaseActivity extends AppCompatActivity implements PermissionDialogFragment.OnDialogListener{
+public class BaseActivity extends AppCompatActivity {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
@@ -111,6 +106,10 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
      * two values plus PERMISSION_DENITED_APP_OP, calling Context.checkPermission, then ApppOpsManager,
      * which seems to be intended for other apps in IPC environment
      */
+
+
+    /*
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public void checkPermissions(String name) {
         permName = name;
         switch(name) {
@@ -122,7 +121,7 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
                     String msg = "This permission is required to access the current location";
                     showPermissionRationale(title, msg);
                 } else {
-                    ActivityCompat.requestPermissions(this, new String[]{name}, Constants.REQUEST_PERMISSION_FINE_LOCATION);
+                    requestPermissions(new String[]{name}, Constants.REQUEST_PERMISSION_FINE_LOCATION);
                 }
 
                 break;
@@ -157,6 +156,10 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
         }
 
     }
+
+     */
+
+
 
     /*
      * Manage a request code yourself vs use RequestPermission contract included in AndroidX Library
@@ -208,16 +211,6 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
     }
 
      */
-
-    public void showPermissionRationale(String title, String msg) {
-        DialogFragment rationaleFragment = new PermissionDialogFragment(this, title, msg);
-        rationaleFragment.show(getSupportFragmentManager(), "rationaleFragment");
-    }
-
-    public boolean getPermission() {
-        return isPermitted;
-    }
-
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
@@ -465,16 +458,5 @@ public class BaseActivity extends AppCompatActivity implements PermissionDialogF
         }
 
         return sb.toString();
-    }
-
-
-    @Override
-    public void onPositiveClick(DialogFragment dialog, String permission) {
-        ActivityCompat.requestPermissions(this, new String[]{permName}, Constants.REQUEST_PERMISSION_FINE_LOCATION);
-    }
-
-    @Override
-    public void onNegativeClick(DialogFragment dialgo) {
-
     }
 }

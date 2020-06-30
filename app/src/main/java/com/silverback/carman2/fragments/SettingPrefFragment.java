@@ -182,7 +182,7 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         userImagePref = findPreference(Constants.USER_IMAGE);
         userImagePref.setOnPreferenceClickListener(view -> {
             // Carmera permission check.
-            ((BaseActivity)getActivity()).checkPermissions(Manifest.permission.CAMERA);
+            //((BaseActivity)getActivity()).checkPermissions(Manifest.permission.CAMERA);
 
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();

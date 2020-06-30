@@ -1,6 +1,5 @@
 package com.silverback.carman2;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,13 +8,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
-import com.silverback.carman2.fragments.PermissionDialogFragment;
+import com.silverback.carman2.fragments.PermRationaleFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.GasPriceTask;
@@ -37,18 +37,20 @@ import java.io.File;
  * near stations should be replaced with a view to display other auto-related contents, creating a
  * button to call the near station fragment.
  */
-public class MainActivity extends BaseActivity implements FinishAppDialogFragment.NoticeDialogListener {
+public class MainActivity extends BaseActivity implements
+        FinishAppDialogFragment.NoticeDialogListener,
+        ActivityCompat.OnRequestPermissionsResultCallback {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
     private CarmanDatabase mDB;
-    private PermissionDialogFragment permisisonFragment;
     private GasPriceTask gasPriceTask;
     private OpinetViewModel opinetModel;
     private GeneralFragment generalFragment;
     private ApplyImageResourceUtil imgResUtil;
     private ImageViewModel imgModel;
+    private PermRationaleFragment permissionDialog;
     //private ActionBarDrawerToggle drawerToggle;
 
     @SuppressWarnings("ConstantConditions")
@@ -56,10 +58,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Check permission
-        checkPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
-        log.i("permission: %s", isPermitted);
 
         // Instantiation
         mDB = CarmanDatabase.getDatabaseInstance(this);
@@ -81,7 +79,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         // Get the default value of fuels, searching radius, and sorting order from BaseActivity
         // and set it to be bundled to pass it to GeneralFragment
         Bundle bundle = new Bundle();
-        bundle.putBoolean("permission", isPermitted);
         bundle.putStringArray("defaults", getDefaultParams());
         generalFragment = new GeneralFragment();
         generalFragment.setArguments(bundle);

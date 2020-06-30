@@ -31,6 +31,7 @@ import org.json.JSONObject;
 public class SettingSvcItemDlgFragment extends DialogFragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemDlgFragment.class);
+
     // Objects
     private FragmentSharedModel fragmentModel;
     private SharedPreferences mSettings;
@@ -42,9 +43,7 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null)
-            mSettings = ((SettingPrefActivity)getActivity()).getSettings();
-
+        if(getActivity() != null) mSettings = ((SettingPrefActivity)getActivity()).getSettings();
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 

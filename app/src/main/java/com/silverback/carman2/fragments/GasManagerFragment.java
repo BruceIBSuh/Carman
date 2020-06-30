@@ -466,7 +466,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Background Location permission check
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ((BaseActivity)getActivity()).checkPermissions(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+            //((BaseActivity)getActivity()).checkPermissions(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
         }
 
         // Pop up FavoriteListFragment when clicking the favorite button.
