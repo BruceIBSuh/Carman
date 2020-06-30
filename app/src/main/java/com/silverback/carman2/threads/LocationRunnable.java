@@ -65,14 +65,10 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
         locationRequest = mLocationHelper.setLocationRequest();
     }
 
-
     @Override
     public void run() {
         task.setDownloadThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
-
-
         // Check if the location setting is successful. If successful, fetch the last known location
         // using FusedLocationProviderClient in onSuccess method.
         mLocationHelper.checkLocationSetting(context)

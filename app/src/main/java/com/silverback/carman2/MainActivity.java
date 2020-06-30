@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
+import com.silverback.carman2.fragments.PermissionDialogFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.GasPriceTask;
@@ -42,6 +43,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
 
     // Objects
     private CarmanDatabase mDB;
+    private PermissionDialogFragment permisisonFragment;
     private GasPriceTask gasPriceTask;
     private OpinetViewModel opinetModel;
     private GeneralFragment generalFragment;
@@ -49,15 +51,15 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
     private ImageViewModel imgModel;
     //private ActionBarDrawerToggle drawerToggle;
 
-    // Fields
-    //private Drawable appbarIcon;
-
-
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Check permission
+        checkPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
+        log.i("permission: %s", isPermitted);
 
         // Instantiation
         mDB = CarmanDatabase.getDatabaseInstance(this);
@@ -76,10 +78,10 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);
         */
-
         // Get the default value of fuels, searching radius, and sorting order from BaseActivity
         // and set it to be bundled to pass it to GeneralFragment
         Bundle bundle = new Bundle();
+        bundle.putBoolean("permission", isPermitted);
         bundle.putStringArray("defaults", getDefaultParams());
         generalFragment = new GeneralFragment();
         generalFragment.setArguments(bundle);
@@ -90,6 +92,7 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
                 .replace(R.id.frame_main, generalFragment, "general")
                 .addToBackStack(null)
                 .commit();
+
     }
 
     @Override
@@ -148,9 +151,6 @@ public class MainActivity extends BaseActivity implements FinishAppDialogFragmen
         drawerToggle.onConfigurationChanged(newConfig);
     }
     */
-
-
-
 
     //The following callback methods are invoked by Toolbar working as Appbar or ActionBar
     @Override

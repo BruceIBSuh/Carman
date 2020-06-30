@@ -327,7 +327,6 @@
     <string name="sign_minus"><b>-</b></string>
 
 
-
     <!-- Default Service Item List shared in ServiceRecyclerView and SettingPreferenceActivity -->
     <string name="service_item_engine_oll">엔진오일 및 오일필터</string>
     <string name="service_item_aircleaner">에어클리너</string>

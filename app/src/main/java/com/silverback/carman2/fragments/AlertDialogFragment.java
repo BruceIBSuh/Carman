@@ -3,6 +3,8 @@ package com.silverback.carman2.fragments;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -10,14 +12,11 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.view.View;
-import android.widget.TextView;
-
 import com.silverback.carman2.R;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -98,8 +97,6 @@ public class AlertDialogFragment extends DialogFragment {
             sharedModel.getAlertPostResult().setValue(false);
             dismiss();
         });
-
-
 
         return builder.create();
     }

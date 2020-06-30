@@ -24,6 +24,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -57,6 +58,9 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
+import static androidx.core.content.PermissionChecker.checkSelfPermission;
 
 /**
  * This fragment provides the form to fill in the gas expense.
@@ -462,12 +466,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // Background Location permission check
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            log.i("Geofencing permission");
-            requestPermissions(new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, 1000);
-            //((BaseActivity)getActivity()).checkPermissions(getActivity(), Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+            ((BaseActivity)getActivity()).checkPermissions(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
         }
-
-
 
         // Pop up FavoriteListFragment when clicking the favorite button.
         if(TextUtils.isEmpty(tvStnName.getText())) {
