@@ -1,6 +1,6 @@
 package com.silverback.carman2;
 
-/**
+/*
  * Copyright (c) 2020 SilverBack
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,14 +28,9 @@ import android.os.Bundle;
 import android.util.TypedValue;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.DialogFragment;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.fragments.PermRationaleFragment;
-import com.silverback.carman2.logs.LoggingHelper;
-import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONArray;
@@ -50,7 +45,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -60,23 +54,15 @@ import java.util.Locale;
 public class BaseActivity extends AppCompatActivity {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
-
-    // Constants
-    protected static final int REQUEST_PERMISSION_FINE_LOCATION = 1000;
-    protected static final int REQUEST_PERMISSION_BACKGROUND_LOCATION = 1001;
-    protected static final int REQUEST_PERMISSION_CAMERA = 1002;
+    //private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
     // Objects
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
-    protected ApplyImageResourceUtil applyImageResourceUtil;
 
     // Fields
-    private String permName;
     protected boolean isNetworkConnected;
-    protected boolean isPermitted;
 
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
@@ -96,121 +82,6 @@ public class BaseActivity extends AppCompatActivity {
         // Checkk if the network connectivitis ok.
         isNetworkConnected = notifyNetworkConnected(this);
     }
-
-
-
-    /**
-     * ContextCompat.checkSelfPermission vs PermissionChecker
-     * ContextCompat.checkSelfPermission is preferred in terms of its simplicity that it returns
-     * PERMISSION_GRANTED or PERMISSION_DENITED. PermissionChecker, on the other hand, returns those
-     * two values plus PERMISSION_DENITED_APP_OP, calling Context.checkPermission, then ApppOpsManager,
-     * which seems to be intended for other apps in IPC environment
-     */
-
-
-    /*
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void checkPermissions(String name) {
-        permName = name;
-        switch(name) {
-            case Manifest.permission.ACCESS_FINE_LOCATION:
-                if(ContextCompat.checkSelfPermission(this, name) == PackageManager.PERMISSION_GRANTED) {
-                    isPermitted = true;
-                } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, name)) {
-                    String title = "Fine Location Permission";
-                    String msg = "This permission is required to access the current location";
-                    showPermissionRationale(title, msg);
-                } else {
-                    requestPermissions(new String[]{name}, Constants.REQUEST_PERMISSION_FINE_LOCATION);
-                }
-
-                break;
-
-            // Permit BACKGROUND_LOCATION AT API 29(Android 10) or higher.
-            case Manifest.permission.ACCESS_BACKGROUND_LOCATION:
-                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
-                    if(ActivityCompat.shouldShowRequestPermissionRationale(this, name)) {
-                        String title = "Backkground Locatioin Permission";
-                        String msg = "Geofencing requires this permission to be feasible";
-                        showPermissionRationale(title, msg);
-                    } else {
-                        log.i("request ACCESS_BACKGROUND_LOCATION");
-                        ActivityCompat.requestPermissions(this,
-                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, name},
-                                REQUEST_PERMISSION_BACKGROUND_LOCATION);
-                    }
-
-
-                }
-                break;
-
-            case Manifest.permission.CAMERA:
-                if(ContextCompat.checkSelfPermission(this, name) != PackageManager.PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        ActivityCompat.requestPermissions(this, new String[]{name}, REQUEST_PERMISSION_CAMERA);
-                }
-
-                break;
-
-            default: break;
-        }
-
-    }
-
-     */
-
-
-
-    /*
-     * Manage a request code yourself vs use RequestPermission contract included in AndroidX Library
-     * (androidx.activity.1.2.0 alpha). Refactor should be made when the library releases an official
-     * version.
-     */
-    /*
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
-
-        log.i("onrequestpermissionresult");
-        switch (requestCode) {
-            case Constants.REQUEST_PERMISSION_FINE_LOCATION:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    log.i("Access Fine Location permiited");
-                    isPermitted = true;
-                } else {
-                    String title = "Location Permission Rejected";
-                    String msg = "You have denied to access Location which disables";
-                    //showPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION, title, msg);
-                }
-
-                break;
-
-            case REQUEST_PERMISSION_BACKGROUND_LOCATION:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    log.i("background location granted");
-                } else {
-                    log.i("Access Background Location denied");
-                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        String title = "";
-                        String msg = "";
-                        //showPermissionRationale(Manifest.permission.ACCESS_BACKGROUND_LOCATION, title, msg);
-                    }
-                }
-
-                break;
-
-            case REQUEST_PERMISSION_CAMERA:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    log.i("Camera permitted");
-                } else {
-                    log.i("Camera denied");
-                }
-
-                break;
-        }
-    }
-
-     */
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
@@ -243,15 +114,10 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-
-
-    // DecimalFormat method
-    public static DecimalFormat getDecimalformatInstance() {
-        if(df == null) {
-            df = (DecimalFormat)NumberFormat.getInstance();
-            df.applyPattern("#,###");
-            df.setDecimalSeparatorAlwaysShown(false);
-        }
+    public DecimalFormat getDecimalFormat() {
+        DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(Locale.getDefault());
+        df.applyPattern("#,###");
+        df.setDecimalSeparatorAlwaysShown(false);
         return df;
     }
 
@@ -272,7 +138,6 @@ public class BaseActivity extends AppCompatActivity {
             Date date = sdf.parse(datetime);
             return date != null ? date.getTime() : 0;
         } catch(ParseException e) {
-            //log.e("ParseException: %s", e.getMessage());
             e.printStackTrace();
         }
         return -1;
@@ -350,34 +215,12 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    // Slide up and down the TabLayout when clicking the buttons on the toolbar.
-    /*
-    protected boolean animSlideTabLayout(FrameLayout frame, TabLayout tabLayout, boolean isTabVisible) {
-        float toolbarHeight = getActionbarHeight();
-        float tabEndValue = (!isTabVisible)? toolbarHeight : 0;
-
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(tabLayout, "y", tabEndValue);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(frame, "translationY", tabEndValue);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(1000);
-        slideTab.start();
-        slideViewPager.start();
-
-        return !isTabVisible;
-
-    }
-    */
-
-
     // Measures the size of an android attribute based on ?attr/actionBarSize
     public float getActionbarHeight() {
-
         TypedValue typedValue = new TypedValue();
-
         if(getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
             return TypedValue.complexToDimension(typedValue.data, getResources().getDisplayMetrics());
         }
-
         return -1;
     }
 
@@ -422,20 +265,10 @@ public class BaseActivity extends AppCompatActivity {
         try {
             return  new JSONArray(jsonServiceItem);
         } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
+            e.printStackTrace();
         }
 
         return null;
-    }
-
-    public String getDefaultAutoFilter() {
-        List<String> filterList = new ArrayList<>();
-        filterList.add(getString(R.string.board_filter_brand));
-        filterList.add(getString(R.string.board_filter_model));
-        filterList.add(getString(R.string.board_filter_type));
-        filterList.add(getString(R.string.board_filter_year));
-
-        return new JSONArray(filterList).toString();
     }
 
     // The document id with which user data is uploaded to Firestore is used as USER ID. The Firebase
@@ -458,5 +291,10 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         return sb.toString();
+    }
+
+
+    public SharedPreferences getSharedPreferernces() {
+        return mSettings;
     }
 }

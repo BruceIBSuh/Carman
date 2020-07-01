@@ -86,8 +86,8 @@ public class BoardPagerFragment extends Fragment implements
     private String automaker;
     private int currentPage;
     private boolean isViewOrder;
-    private boolean isLoading;
-    private boolean isLastPage;
+    private boolean isAutoClubLoading;
+    private boolean isAutoClubLastPage;
     private boolean isViewUpdated;
 
     // Constructor
@@ -180,11 +180,11 @@ public class BoardPagerFragment extends Fragment implements
         // the autoclub post is not queried.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
-                log.i("autoclub fragment get started");
-                isLoading = false;
-                isLastPage = false;
+                isAutoClubLoading = false;
+                isAutoClubLastPage = false;
                 pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
+
         } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
         return localView;
@@ -295,7 +295,7 @@ public class BoardPagerFragment extends Fragment implements
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
-        log.i("query results: %s, %s", page, snapshots.size());
+
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -315,26 +315,24 @@ public class BoardPagerFragment extends Fragment implements
 
         if(page == Constants.BOARD_AUTOCLUB) {
             // First query comes to the end of the documents.
-            isLastPage = snapshots.size() < Constants.PAGINATION;
-            if(isLastPage) {
+            isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
+            if(isAutoClubLastPage) {
                 postingAdapter.notifyDataSetChanged();
                 log.i("autoclub: %s", snapshotList.size());
             }
             else {
-                isLoading = true;
+                isAutoClubLoading = true;
                 pageHelper.setNextQuery(snapshots);
             }
 
         } else {
-
-            // ViewPager normally creates pages in a row at the same time. Thus, the recent page
-            // and the popular page will call notifyDataSetChanged() twice which incurs blinking
+            // ViewPager normally creates neighboringpages in a row at the same time. Thus, the recent
+            // page and the popular page will call notifyDataSetChanged() twice which incurs blinking
             // in RecyclerView. To prevent it, use a flag to update each page.
             if(!isViewUpdated) {
                 postingAdapter.notifyDataSetChanged();
                 isViewUpdated = !isViewUpdated;
             }
-
         }
 
         pbLoading.setVisibility(View.GONE);
@@ -349,7 +347,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
         if(snapshots.size() == 0) return;
-        isLastPage = snapshots.size() < Constants.PAGINATION;
+
+
         for(QueryDocumentSnapshot snapshot : snapshots) {
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
@@ -368,9 +367,11 @@ public class BoardPagerFragment extends Fragment implements
 
 
         if(page == Constants.BOARD_AUTOCLUB) {
+            isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
             // Keep querying the autoclub posts until the sorted posts are equal to or more than
             // the pagination limit unless the next query is the last page.
-            if(!isLastPage && snapshotList.size() < Constants.PAGINATION){
+            if(!isAutoClubLastPage && snapshotList.size() < Constants.PAGINATION){
+                isAutoClubLoading = true;
                 pageHelper.setNextQuery(snapshots);
                 return;
 
@@ -390,9 +391,9 @@ public class BoardPagerFragment extends Fragment implements
                     int firstItemPos = layoutManager.findFirstVisibleItemPosition();
                     int visibleItemCount = layoutManager.getChildCount();
 
-                    if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
+                    if(!isAutoClubLoading && !isAutoClubLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
+                        isAutoClubLoading = true;
                         pageHelper.setNextQuery(snapshots);
-                        isLoading = true;
                     } //else postingAdapter.notifyDataSetChanged();
                 }
             });

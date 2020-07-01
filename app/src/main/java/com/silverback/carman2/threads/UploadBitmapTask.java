@@ -26,7 +26,6 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     // Constructor
     UploadBitmapTask(Context context) {
         mBitmapResizeRunnable = new UploadBitmapRunnable(context, this);
-
         sparseImageArray = new SparseArray<>();
     }
 
@@ -65,7 +64,6 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
         // Create SparseArray with the uri downloaded from Storage as the value and the position
         // that the attached image is located as the key for purpose of put images in sequentially
         // right position in the content when reading the posting content
-        log.i("download image: %s %s", uri, position);
         sparseImageArray.put(key, uri);
         viewModel.getDownloadBitmapUri().postValue(sparseImageArray);
     }

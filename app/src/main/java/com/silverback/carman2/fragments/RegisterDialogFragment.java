@@ -29,6 +29,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.ExpenseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.SigunSpinnerAdapter;
@@ -121,7 +122,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         providerName = getArguments().getString("favoriteName");
         distCode = getArguments().getString("distCode");
         //category = getArguments().getInt("category");
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
         // Instantiate FirebaseFirestore
         firestore = FirebaseFirestore.getInstance();

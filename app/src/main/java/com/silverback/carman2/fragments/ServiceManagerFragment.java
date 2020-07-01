@@ -144,7 +144,7 @@ public class ServiceManagerFragment extends Fragment implements
         }
 
         // Instantiate objects.
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
 
@@ -322,8 +322,8 @@ public class ServiceManagerFragment extends Fragment implements
         });
 
         // Communicate b/w RecyclerView.ViewHolder and MemoPadFragment
-        fragmentModel.getSelectedMenu()
-                .observe(getViewLifecycleOwner(), data -> mAdapter.notifyItemChanged(itemPos, data));
+        fragmentModel.getSelectedMenu().observe(getViewLifecycleOwner(),
+                data -> mAdapter.notifyItemChanged(itemPos, data));
 
         // Get the params for removeGeofence() which are passed from FavroiteListFragment
         fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {

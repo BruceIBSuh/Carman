@@ -17,7 +17,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -26,7 +25,6 @@ import com.ibnco.carman.convertgeocoords.GeoTrans;
 import com.silverback.carman2.adapters.StationCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.utils.ConnectNaviHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +35,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
 
     // Objects
-    private ConnectNaviHelper naviHelper;
+    //private ConnectNaviHelper naviHelper;
     private double xCoord, yCoord;
     private double longitude, latitude;
     private RecyclerView recyclerComments;
@@ -72,7 +70,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         tvCarwash = findViewById(R.id.tv_carwash_payment);
         tvService = findViewById(R.id.tv_service);
         tvCVS = findViewById(R.id.tv_cvs);
-        FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
+        //FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
 
         recyclerComments = findViewById(R.id.recycler_stn_comments);
         recyclerComments.setLayoutManager(new LinearLayoutManager(this));

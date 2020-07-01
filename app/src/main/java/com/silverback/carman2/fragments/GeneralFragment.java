@@ -84,7 +84,7 @@ public class GeneralFragment extends Fragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GeneralFragment.class);
 
-    private static final String permName = Manifest.permission.ACCESS_FINE_LOCATION;
+    //private static final String permFineLocation = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final int REQUEST_PERM_FINE_LOCATION = 1000;
 
     // Objects
@@ -127,6 +127,7 @@ public class GeneralFragment extends Fragment implements
     private boolean hasNearStations;//flag to check whether near stations exist within the radius.
     private boolean isNetworkConnected;
     private String latestItems;
+    private String permFineLocation;
 
     public GeneralFragment() {
         // Required empty public constructor
@@ -139,11 +140,10 @@ public class GeneralFragment extends Fragment implements
         //isNetworkConnected = getArguments().getBoolean("notifyNetworkConnected");
         isNetworkConnected = BaseActivity.notifyNetworkConnected(getContext());
 
-        //favFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
-        favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        // To nest a fragment, call getChildFragmentManager() on the container fragment. Viewpager
-        // containing fragments is a good example.
+        favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
+        // To nest a fragment,  like the viewpager containing fragmgents, call getChildFragmentManager()
+        // on the container fragment. Viewpager
         pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
         // Create ViewModels
@@ -157,11 +157,9 @@ public class GeneralFragment extends Fragment implements
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         childView = inflater.inflate(R.layout.fragment_general, container, false);
-        //TextView tvDate = childView.findViewById(R.id.tv_today);
         fuelSpinner = childView.findViewById(R.id.spinner_fuel);
         tvExpLabel = childView.findViewById(R.id.tv_label_exp);
         tvLatestExp = childView.findViewById(R.id.tv_exp_stmts);
@@ -221,10 +219,11 @@ public class GeneralFragment extends Fragment implements
         });
 
         // Permission check for ACCESS_FINE_LOCATION as of API 23(Android 6) which apples the runtime
-        // permission.
+        // permission. Otherwise, just keep fetching the current location w/o granting permission.
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            permFineLocation = Manifest.permission.ACCESS_FINE_LOCATION;
             checkLocationPermission();
-        }
+        } else locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
 
         return childView;
     }
@@ -332,7 +331,7 @@ public class GeneralFragment extends Fragment implements
 
         fragmentModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
             log.i("rational dialog clicked");
-            if(isPermitted) requestPermissions(new String[]{permName}, REQUEST_PERM_FINE_LOCATION);
+            if(isPermitted) requestPermissions(new String[]{permFineLocation}, REQUEST_PERM_FINE_LOCATION);
             else log.i("DENIED");
         });
 
@@ -637,7 +636,7 @@ public class GeneralFragment extends Fragment implements
                 pricePagerAdapter.setFuelCode(defaults[0]);
                 pricePagerAdapter.notifyDataSetChanged();
                 priceViewPager.setAdapter(pricePagerAdapter);
-                ((MainActivity)getActivity()).getSettings().edit().putLong(
+                ((BaseActivity)getActivity()).getSharedPreferernces().edit().putLong(
                         Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             });
 
@@ -663,24 +662,38 @@ public class GeneralFragment extends Fragment implements
         }
     }
 
+
+    /*
+     * ContextCompat.checkSelfPermission vs PermissionChecker
+     * ContextCompat.checkSelfPermission is preferred in terms of its simplicity that it returns
+     * PERMISSION_GRANTED or PERMISSION_DENITED. PermissionChecker, on the other hand, returns those
+     * two values plus PERMISSION_DENITED_APP_OP, calling Context.checkPermission, then ApppOpsManager,
+     * which seems to be intended for other apps in IPC environment
+     * ActivityCompat.requestPermissions() used in Activity and requestPermissions() used in Fragment.
+     */
     @SuppressWarnings("ConstantConditions")
     private void checkLocationPermission() {
         // Check permission to ACCESS_FINE_LOCATION(
-        if(ContextCompat.checkSelfPermission(getContext(), permName) == PackageManager.PERMISSION_GRANTED) {
+        if(ContextCompat.checkSelfPermission(getContext(), permFineLocation) == PackageManager.PERMISSION_GRANTED) {
             progbar.setVisibility(View.VISIBLE);
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
 
-        } else if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), permName)) {
+        } else if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), permFineLocation)) {
             PermRationaleFragment permDialog = new PermRationaleFragment();
             permDialog.setContents("Hell", "World");
             permDialog.show(getActivity().getSupportFragmentManager(), null);
 
         } else {
             // requestPermission used in Fragment. ActivityCompat.requestPermission used in Activity.
-            requestPermissions(new String[]{permName}, REQUEST_PERM_FINE_LOCATION);
+            requestPermissions(new String[]{permFineLocation}, REQUEST_PERM_FINE_LOCATION);
         }
     }
 
+    /*
+     * Manage a request code yourself vs use RequestPermission contract included in AndroidX Library
+     * (androidx.activity.1.2.0 alpha). Refactor should be made when the library releases an official
+     * version.
+     */
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {

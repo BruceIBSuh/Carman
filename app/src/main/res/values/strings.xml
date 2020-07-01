@@ -7,10 +7,10 @@
     <string name="tab_gas">gas</string>
     <string name="tab_service">service</string>
     <string name="tab_stat">stat</string>
-    <string name="tab_setting">setting</string>
-    <string name="toolbar_mycar">my car</string>
-    <string name="toolbar_board">board</string>
-    <string name="toolbar_login">login</string>
+    <string name="toolbar_setting">설 정</string>
+    <string name="toolbar_mycar">내차관리</string>
+    <string name="toolbar_board">같이관리</string>
+    <string name="toolbar_login">로그인</string>
 
     <!--MainActivity$GeneralFragment-->
     <string name="general_subtitle_stations">주변 주유소</string>
@@ -349,6 +349,9 @@
     <string name="popup_msg_confirm">확인</string>
     <string name="btn_dialog_confirm">확인</string>
     <string name="btn_dialog_cancel">취소</string>
+
+    <!-- Permission -->
+    <string name="perm_msg_camera">카메라 기능을 사용할 수 없습니다. 권한 설정을 확인해 주세요</string>
 
     <!-- Error Messages -->
     <string name="errror_no_network">네트워크 연결에 실패하였습니다\n확인 후 다시 연결해 주세요</string>

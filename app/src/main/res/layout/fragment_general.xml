@@ -217,7 +217,7 @@
             android:layout_gravity="center"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center"/>
+            android:gravity="center" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab_relocation"

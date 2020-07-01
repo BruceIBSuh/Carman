@@ -16,7 +16,7 @@
 
     <item
         android:id="@+id/action_setting"
-        android:title="@string/tab_setting"
+        android:title="@string/toolbar_setting"
         android:icon="@drawable/ic_setting"
         app:showAsAction="never" />
 

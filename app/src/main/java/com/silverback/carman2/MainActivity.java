@@ -1,7 +1,6 @@
 package com.silverback.carman2;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Menu;
@@ -15,7 +14,6 @@ import androidx.lifecycle.ViewModelProvider;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.fragments.FinishAppDialogFragment;
 import com.silverback.carman2.fragments.GeneralFragment;
-import com.silverback.carman2.fragments.PermRationaleFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.threads.GasPriceTask;
@@ -28,6 +26,7 @@ import com.silverback.carman2.viewmodels.OpinetViewModel;
 import org.json.JSONArray;
 
 import java.io.File;
+import java.util.Objects;
 
 /*
  * This activity is a container holding GeneralFragment which is composed of the district gas prices,
@@ -50,7 +49,6 @@ public class MainActivity extends BaseActivity implements
     private GeneralFragment generalFragment;
     private ApplyImageResourceUtil imgResUtil;
     private ImageViewModel imgModel;
-    private PermRationaleFragment permissionDialog;
     //private ActionBarDrawerToggle drawerToggle;
 
     @SuppressWarnings("ConstantConditions")
@@ -233,7 +231,7 @@ public class MainActivity extends BaseActivity implements
         // stations. On leaving the app, clear the cache directory as far as the checkPriceUpdate
         // is satisfied.
         if(cacheDir != null && checkPriceUpdate()) {
-            for (File file : cacheDir.listFiles()) {
+            for (File file : Objects.requireNonNull(cacheDir.listFiles())) {
                 //if(!file.getName().equals(Constants.FILE_CACHED_STATION_PRICE))
                 file.delete();
             }
@@ -247,7 +245,10 @@ public class MainActivity extends BaseActivity implements
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
     // Referenced by child fragments.
+    /*
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+     */
 }

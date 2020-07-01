@@ -2,7 +2,6 @@ package com.silverback.carman2.fragments;
 
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -22,7 +21,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -42,10 +40,6 @@ import com.silverback.carman2.database.ExpenseBaseEntity;
 import com.silverback.carman2.database.GasManagerEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewmodels.FragmentSharedModel;
-import com.silverback.carman2.viewmodels.LocationViewModel;
-import com.silverback.carman2.viewmodels.OpinetViewModel;
-import com.silverback.carman2.viewmodels.StationListViewModel;
 import com.silverback.carman2.threads.FavoritePriceTask;
 import com.silverback.carman2.threads.LocationTask;
 import com.silverback.carman2.threads.StationListTask;
@@ -53,14 +47,15 @@ import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.FavoriteGeofenceHelper;
 import com.silverback.carman2.utils.NumberTextWatcher;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
+import com.silverback.carman2.viewmodels.LocationViewModel;
+import com.silverback.carman2.viewmodels.OpinetViewModel;
+import com.silverback.carman2.viewmodels.StationListViewModel;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
-import static androidx.core.content.PermissionChecker.checkSelfPermission;
 
 /**
  * This fragment provides the form to fill in the gas expense.
@@ -69,6 +64,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
+
+    // Constants
+    private static final int REQUEST_PERM_BACKGROUND_LOCATION = 1000;
+
 
     // Objects
     private CarmanDatabase mDB;
@@ -100,17 +99,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private String[] defaultParams;
     private TextView targetView; //reference to a clicked view which is used in ViewModel
     private String dateFormat;
-    private String stnName, stnId, stnCode, stnAddrs;
+    private String stnName, stnId;// stnCode, stnAddrs;
     private String date;
     private String nickname;
     private String userId;
     private String geoStnName, geoStnId;
+    private String permBackLocation;
     private long geoTime;
-
-
     private boolean isGeofenceIntent, isFavoriteGas;
     private int category;
-
 
     // Constructor
     public GasManagerFragment() {
@@ -144,7 +141,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings = ((ExpenseActivity)getActivity()).getSettings();
+        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
         // ViewModels: reconsider why the models references the ones defined in the parent activity;
         // it would rather  be better to redefine them here.
@@ -158,7 +155,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
 
         // Instantiate other miscellanies
-        df = BaseActivity.getDecimalFormatInstance();
+        //df = BaseActivity.getDecimalFormatInstance();
+        df = ((BaseActivity)getActivity()).getDecimalFormat();
         numPad = new NumberPadFragment();
 
         // Get the time that you have visited to the station. In case the parent activity gets started
@@ -253,7 +251,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvCarwashPaid.setOnClickListener(this);
         tvExtraPaid.setOnClickListener(this);
         btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
-        btnStnFavorite.setOnClickListener(view -> addGasFavorite());
+
+        // Check Geofencing permission(Background Location permission) first, then add a provider
+        // not only to Geofencing list but alos favorite provider in the room.
+        btnStnFavorite.setOnClickListener(view -> {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                permBackLocation = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+                checkBackgroundLocationPermission();
+            } else addGasFavorite();
+        });
+
         imgRefresh.setOnClickListener(view -> {
             locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
             stnProgbar.setVisibility(View.VISIBLE);
@@ -378,6 +385,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             etUnitPrice.setCursorVisible(false);
         });
 
+        sharedModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
+            log.i("rational dialog clicked");
+            if(isPermitted) requestPermissions(new String[]{permBackLocation}, REQUEST_PERM_BACKGROUND_LOCATION);
+            else log.i("DENIED");
+        });
+
 
     }
 
@@ -464,11 +477,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         log.i("addGasFavorite: %s", isGeofenceIntent);
         if(isGeofenceIntent) return;
 
-        // Background Location permission check
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            //((BaseActivity)getActivity()).checkPermissions(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
-        }
-
         // Pop up FavoriteListFragment when clicking the favorite button.
         if(TextUtils.isEmpty(tvStnName.getText())) {
             FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS)
@@ -511,6 +519,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     }
 
     // Method for inserting data to SQLite database
+    @SuppressWarnings("ConstantConditions")
     public boolean saveGasData(){
         // Null check for the parent activity
         if(!doEmptyCheck()) return false;
@@ -525,7 +534,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         basicEntity.dateTime = milliseconds;
         basicEntity.category = Constants.GAS;
         gasEntity.stnName = tvStnName.getText().toString();
-        gasEntity.stnAddrs = stnAddrs;
+        //gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;
         gasEntity.extraExpense = etExtraExpense.getText().toString();
 
@@ -537,8 +546,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             gasEntity.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
             gasEntity.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
 
-        } catch(ParseException e) {
-            log.e("ParseException: %s", e);
+        } catch(ParseException | NullPointerException e) {
+            e.printStackTrace();
         }
 
         basicEntity.totalExpense = gasEntity.gasPayment + gasEntity.washPayment + gasEntity.extraPayment;
@@ -630,19 +639,45 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Calculate an gas amount loaded with a given payment and unit price.  Unless a unit price is
     // given, toast a message to ask for inputting the price.
+    @SuppressWarnings("ConstantConditions")
     private void calculateGasAmount() {
-
         if(TextUtils.isEmpty(etUnitPrice.getText())) {
             Toast.makeText(getActivity(), R.string.toast_unit_price, Toast.LENGTH_SHORT).show();
-
         } else if(!TextUtils.isEmpty(etUnitPrice.getText()) && !TextUtils.isEmpty(tvGasPaid.getText())) {
             try {
+                // Convert Number to the primitive int type.
                 int price = df.parse(etUnitPrice.getText().toString()).intValue();
                 int paid = df.parse(tvGasPaid.getText().toString()).intValue();
                 String gasAmount = String.valueOf(paid/price);
                 tvGasLoaded.setText(gasAmount);
-            } catch(ParseException e) {
-                log.e("ParseException: %s", e.getMessage());
+            } catch(ParseException | NullPointerException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Permission check for ACCESS_BACKGROUND_LOCATION
+    @SuppressWarnings("ConstantConditions")
+    private void checkBackgroundLocationPermission(){
+        if(ContextCompat.checkSelfPermission(getContext(), permBackLocation) == PackageManager.PERMISSION_GRANTED) {
+            addGasFavorite();
+
+        } else if(ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), permBackLocation)) {
+            PermRationaleFragment permDialog = new PermRationaleFragment();
+            permDialog.setContents("Hell", "World");
+            permDialog.show(getActivity().getSupportFragmentManager(), null);
+
+        } else requestPermissions(new String[]{permBackLocation}, REQUEST_PERM_BACKGROUND_LOCATION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERM_BACKGROUND_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                addGasFavorite();
+            } else {
+
             }
         }
     }

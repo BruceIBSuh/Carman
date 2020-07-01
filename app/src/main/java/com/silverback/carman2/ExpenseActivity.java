@@ -325,9 +325,6 @@ public class ExpenseActivity extends BaseActivity implements
     */
 
     // Getter to be Referenced by the containing fragments
-    public SharedPreferences getSettings() {
-        return mSettings;
-    }
     public LocationViewModel getLocationViewModel() { return locationModel; }
     public PagerAdapterViewModel getPagerModel() { return pagerModel; }
 

@@ -71,7 +71,8 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         catch(JSONException e) {e.printStackTrace();}
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings = ((SettingPrefActivity)getActivity()).getSettings();
+        //mSettings = ((SettingPrefActivity)getActivity()).getSettings();
+        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
         //df = BaseActivity.getDecimalFormatInstance();
 
@@ -182,8 +183,6 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         userImagePref = findPreference(Constants.USER_IMAGE);
         userImagePref.setOnPreferenceClickListener(view -> {
             // Carmera permission check.
-            //((BaseActivity)getActivity()).checkPermissions(Manifest.permission.CAMERA);
-
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;

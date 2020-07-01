@@ -18,8 +18,8 @@ public class FragmentSharedModel extends ViewModel {
 
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
     private final MutableLiveData<SparseIntArray> selectedValue = new MutableLiveData<>();
-    private final MutableLiveData<SparseArray> selectedMemo = new MutableLiveData<>();
-    //private final MutableLiveData<JSONObject> jsonServiceItemObj = new MutableLiveData<>();
+    private final MutableLiveData<SparseArray<String>> selectedMemo = new MutableLiveData<>();
+    private final MutableLiveData<SparseArray<Object>> svcLocation = new MutableLiveData<>();
 
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
@@ -33,7 +33,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> editPosting;
 
 
-    private final MutableLiveData<SparseArray> svcLocation = new MutableLiveData<>();
+
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
     private MutableLiveData<String> favoriteStnId;
@@ -68,13 +68,13 @@ public class FragmentSharedModel extends ViewModel {
         return selectedValue;
     }
 
-
+    // Pass a String value in MemoPadFragment to ServiceManagerFragment
     public void setSelectedMemo(int key, String value) {
         SparseArray<String> sparseArray = new SparseArray<>(1);
         sparseArray.put(key, value);
         selectedMemo.setValue(sparseArray);
     }
-    public LiveData<SparseArray> getSelectedMenu() {
+    public LiveData<SparseArray<String>> getSelectedMenu() {
         return selectedMemo;
     }
 
@@ -94,10 +94,10 @@ public class FragmentSharedModel extends ViewModel {
 
 
     // Commmunicate b/w RegisterDialogFragment and ServiceManagerFragment
-    public void setServiceLocation(SparseArray sparseArray) {
+    public void setServiceLocation(SparseArray<Object> sparseArray) {
         svcLocation.setValue(sparseArray);
     }
-    public LiveData<SparseArray> getServiceLocation() {
+    public LiveData<SparseArray<Object>> getServiceLocation() {
         return svcLocation;
     }
 
@@ -125,26 +125,9 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<Boolean> getAlertGasResult() {
         return alertGasResult;
     }
-
-
     public void setAlertSvcResult(boolean b) {
         alertSvcResult.setValue(b);
     }
-
-    public MutableLiveData<Boolean> getAlertSvcResult() {
-        return alertSvcResult;
-    }
-
-    public MutableLiveData<Integer> getImageItemSelected() {
-        if(imageItemSelected == null) imageItemSelected = new MutableLiveData<>();
-        return imageItemSelected;
-    }
-
-    public MutableLiveData<String> getFragmentStringData() {
-        if(strData == null) strData = new MutableLiveData<>();
-        return strData;
-    }
-
 
     // Communicate b/w BoardWriteFragment and BoardChooserDlgFragme to notify which image chooser
     // out of camera or gallery is selected.
@@ -152,7 +135,6 @@ public class FragmentSharedModel extends ViewModel {
         if(imageChooser == null) imageChooser = new MutableLiveData<>();
         return imageChooser;
     }
-
 
     /**
      * Board-related LiveData

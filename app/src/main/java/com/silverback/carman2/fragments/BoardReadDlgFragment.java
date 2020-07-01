@@ -47,6 +47,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPrefActivity;
@@ -155,7 +156,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         this.context = getContext();
 
         firestore = FirebaseFirestore.getInstance();
-        mSettings = ((BoardActivity)getActivity()).getSettings();
+        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
         snapshotList = new ArrayList<>();
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);

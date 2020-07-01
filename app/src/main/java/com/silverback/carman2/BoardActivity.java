@@ -821,9 +821,5 @@ public class BoardActivity extends BaseActivity implements
     public ProgressBar getLoadingProgressBar() {
         return pbLoading;
     }
-    // Referenced in the child fragments.
-    public SharedPreferences getSettings() {
-        return mSettings;
-    }
 
 }

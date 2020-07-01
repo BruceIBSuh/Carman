@@ -6,14 +6,18 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
@@ -28,6 +32,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman2.fragments.CropImageDialogFragment;
+import com.silverback.carman2.fragments.PermRationaleFragment;
 import com.silverback.carman2.fragments.ProgbarDialogFragment;
 import com.silverback.carman2.fragments.SettingAutoFragment;
 import com.silverback.carman2.fragments.SettingFavorGasFragment;
@@ -36,6 +41,7 @@ import com.silverback.carman2.fragments.SettingPrefFragment;
 import com.silverback.carman2.fragments.SettingSvcItemFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.viewmodels.OpinetViewModel;
 import com.silverback.carman2.threads.GasPriceTask;
@@ -65,17 +71,20 @@ public class SettingPrefActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefActivity.class);
 
+
     // Constants
     private static final int REQUEST_CODE_GALLERY = 10;
     private static final int REQUEST_CODE_CAMERA = 11;
     private static final int REQUEST_CODE_CROP = 12;
+    private static final int REQUEST_PERM_CAMERA = 1000;
 
     // Objects
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgModel;
-    private OpinetViewModel opinetModel;
+    //private OpinetViewModel opinetModel;
+    private FragmentSharedModel fragmentModel;
     private SettingPrefFragment settingFragment;
     private GasPriceTask gasPriceTask;
     private Map<String, Object> uploadData;
@@ -92,6 +101,7 @@ public class SettingPrefActivity extends BaseActivity implements
     private String radius;
     private String userImage;
     private String jsonAutoData;
+    private String permCamera;
     private Uri downloadUserImageUri;
     private int requestCode;
 
@@ -122,7 +132,8 @@ public class SettingPrefActivity extends BaseActivity implements
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+        //opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+        FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
         uploadData = new HashMap<>();
 
         // Get the user id which is saved in the internal storage
@@ -152,6 +163,14 @@ public class SettingPrefActivity extends BaseActivity implements
             imgModel.getGlideDrawableTarget().observe(this, drawable ->
                 settingFragment.getUserImagePreference().setIcon(drawable));
         }
+
+        // On receiving the result of the educational dialogfragment showing the permission rationale,
+        // which was invoked by shouldShowRequestPermissionRationale(), request permission again
+        // if positive or show the message to tell the camera is disabled.
+        fragmentModel.getPermission().observe(this, isPermitted -> {
+            if(isPermitted) ActivityCompat.requestPermissions(this, new String[]{permCamera}, REQUEST_PERM_CAMERA);
+            else Snackbar.make(frameLayout, getString(R.string.perm_msg_camera), Snackbar.LENGTH_SHORT).show();
+        });
     }
 
     @Override
@@ -160,11 +179,14 @@ public class SettingPrefActivity extends BaseActivity implements
         //savedInstanceState.putString("userId", userId);//doubtful!!!
     }
 
+    /*
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         //userId = savedInstanceState.getString("userId");//doubtful!!!
     }
+
+     */
 
     @Override
     public void onResume(){
@@ -368,11 +390,15 @@ public class SettingPrefActivity extends BaseActivity implements
                 // Check if the carmear is available for the device.
                 if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) return;
 
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
-
-                if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    permCamera = Manifest.permission.CAMERA;
+                    checkCameraPermission();
+                } else {
+                    Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+                    if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+                        startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                    }
                 }
                 break;
 
@@ -418,7 +444,6 @@ public class SettingPrefActivity extends BaseActivity implements
         switch(requestCode) {
 
             case REQUEST_CODE_GALLERY:
-                //Uri galleryUri = data.getData();
                 imageUri = data.getData();
                 if(imageUri == null) return;
 
@@ -577,4 +602,37 @@ public class SettingPrefActivity extends BaseActivity implements
         return mSettings;
     }
 
+    // Check if the camera permission is granted.
+    private void checkCameraPermission() {
+        if(ContextCompat.checkSelfPermission(this, permCamera) == PackageManager.PERMISSION_GRANTED) {
+            Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+            if (cameraIntent.resolveActivity(getPackageManager()) != null)
+                startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+
+        } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, permCamera)) {
+            PermRationaleFragment permDialog = new PermRationaleFragment();
+            permDialog.setContents("Hell", "World");
+            permDialog.show(getSupportFragmentManager(), null);
+
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{permCamera}, REQUEST_CODE_CAMERA);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_PERM_CAMERA) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
+                if (cameraIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                }
+            } else {
+                Snackbar.make(frameLayout, getString(R.string.perm_msg_camera), Snackbar.LENGTH_SHORT).show();
+            }
+        }
+    }
 }

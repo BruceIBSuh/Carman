@@ -12,22 +12,24 @@ import androidx.lifecycle.ViewModel;
 
 public class ImageViewModel extends ViewModel {
 
-    private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
-    private MutableLiveData<SparseArray> downloadBitmapUri;
+    //private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
+    private MutableLiveData<SparseArray<String>> downloadBitmapUri;
     private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
     private MutableLiveData<Bitmap> glideBitmapTarget;
     private MutableLiveData<Drawable> glideDrawableTarget;
     private MutableLiveData<Drawable> glideDrawableToEmblem;
     private MutableLiveData<Uri> uriFromImageChooser;
 
+    /*
     public void setDownloadImage(int key, RoundedBitmapDrawable drawable) {
         SparseArray<RoundedBitmapDrawable> sparseArray = new SparseArray<>();
         sparseArray.put(key, drawable);
         downloadImage.postValue(sparseArray); // Background Thread!!
-
     }
 
-    public MutableLiveData<SparseArray> getDownloadBitmapUri() {
+     */
+
+    public MutableLiveData<SparseArray<String>> getDownloadBitmapUri() {
         if(downloadBitmapUri == null) downloadBitmapUri = new MutableLiveData<>();
         return downloadBitmapUri;
     }
