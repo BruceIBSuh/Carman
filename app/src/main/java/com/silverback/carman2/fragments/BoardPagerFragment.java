@@ -4,6 +4,7 @@ package com.silverback.carman2.fragments;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -23,6 +24,11 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
@@ -161,7 +167,6 @@ public class BoardPagerFragment extends Fragment implements
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
         FloatingActionButton fabWrite = ((BoardActivity)getActivity()).getFAB();
-
         recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -184,10 +189,15 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(automaker)) {
                 isAutoClubLoading = true;
                 isAutoClubLastPage = false;
-                pageHelper.setPostingQuery(currentPage, isViewOrder);
+                //pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
 
-        } else pageHelper.setPostingQuery(currentPage, isViewOrder);
+        } //else pageHelper.setPostingQuery(currentPage, isViewOrder);
+
+        // Apply WorManager in case the network connection is ready to query posts.
+        WorkRequest queryRequest = new OneTimeWorkRequest.Builder(FirestoreQueryWork.class)
+                .build();
+        WorkManager.getInstance(getActivity()).enqueue(queryRequest);
 
         return localView;
     }
@@ -298,7 +308,6 @@ public class BoardPagerFragment extends Fragment implements
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
 
-
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -380,7 +389,6 @@ public class BoardPagerFragment extends Fragment implements
                 log.i("next query count: %s", cntAutoclub);
                 isAutoClubLoading = true;
                 pageHelper.setNextQuery(snapshots);
-
             } else {
                 isAutoClubLoading = false;
                 postingAdapter.notifyDataSetChanged();
@@ -593,7 +601,20 @@ public class BoardPagerFragment extends Fragment implements
                 });
     }
 
+    // Worker that performs to make a first query
+    class FirestoreQueryWork extends Worker {
+        public FirestoreQueryWork(@NonNull Context context, @NonNull WorkerParameters params) {
+            super(context, params);
+        }
 
+        @NonNull
+        @Override
+        public Result doWork() {
+            log.i("Worker is working");
+            pageHelper.setPostingQuery(currentPage, isViewOrder);
+            return Result.success();
+        }
+    }
 
 
 }

@@ -13,7 +13,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-/**
+/*
  * This helper class is to paginate posting items downloaded from Firestore by its category passed
  * from the viewpager fragment(BoardPagerFragment) which is bound by FragmentStatePagerAdapter.
  * Query results will be sent back to the fragment by OnPaginationListener which is attached by
@@ -77,7 +77,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      * @param page current page to query
      * @param autofilter the autoclub page query conditions.
      */
-    //public void setPostingQuery(int page, ArrayList<String> autofilter) {
+
     public void setPostingQuery(int page, boolean isViewOrder) {
         Query query = colRef;
         queryPostShot = null;

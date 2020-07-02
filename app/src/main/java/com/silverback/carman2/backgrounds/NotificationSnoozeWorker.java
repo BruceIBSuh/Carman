@@ -11,7 +11,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
-/**
+/*
  * The worker class is managed by WorkerManager defined in SnoozeBroadcastReceiver which manages
  * the worker to be delayed for a fixed time and send an broadcast with an intent containing geofence
  * data. When GeofenceBroadcastReceiver once receives an intent, it starts the GeofenceJobIntentService

@@ -98,7 +98,6 @@ public class GeofenceResetWorker extends Worker {
     }
 
 
-
     // GeofencingRequest and its nested GeofencingRequestBuilder is to specify the geofences to monitor
     // and to set how related geofence events are triggered.
     // Initial trigger should be preferred to set INITIAL_TRIGGER_DWELL for reducing alert spam.
@@ -109,12 +108,10 @@ public class GeofenceResetWorker extends Worker {
         return requestBuilder.build();
     }
 
-
     private PendingIntent getGeofencePendingIntent() {
         if(mGeofencePendingIntent != null) {
             return mGeofencePendingIntent;
         }
-
         // To get the same pending intent back when calling addGeofences() and removeGeofences(),
         // use FLAG_UPDATE_CURRENT.
         //Intent geoIntent = new Intent(context, GeofenceTransitionService.class);

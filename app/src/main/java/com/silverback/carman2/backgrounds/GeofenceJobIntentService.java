@@ -30,8 +30,8 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * *****************Reference class not working for now.***************************************
+/*
+ * ***************** Reference class not working for now ***************************************
  *
  * This service subclasses JobIntentService, replacing IntentService, which is deprecated as of
  * API 28(Android O), to start a foreground service in a background thread when geofencing evnet
