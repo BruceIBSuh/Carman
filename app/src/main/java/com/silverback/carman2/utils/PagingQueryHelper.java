@@ -36,7 +36,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     // Objects
     private FirebaseFirestore firestore;
     private CollectionReference colRef;
-    private QuerySnapshot querySnapshot;
+    private QuerySnapshot queryPostShot;
     private OnPaginationListener mListener;
 
     // Fields
@@ -80,11 +80,11 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     //public void setPostingQuery(int page, ArrayList<String> autofilter) {
     public void setPostingQuery(int page, boolean isViewOrder) {
         Query query = colRef;
-        querySnapshot = null;
+        queryPostShot = null;
 
         currentPage = page;
         isLastPage = false;
-        isLoading = false;
+        isLoading = true;
 
         switch(page) {
             case Constants.BOARD_RECENT:
@@ -114,21 +114,30 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         // querysnapshot has existed or hasPendingWrite is true.
         //query.limit(Constants.PAGINATION).get(source).addOnSuccessListener((querySnapshot) -> {
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
-            if(e != null) return;
-            this.querySnapshot = querySnapshot;
-            mListener.setFirstQuery(page, querySnapshot);
+            isLoading = false;
+            if(e != null || querySnapshot == null || querySnapshot.size() == 0) return;
+            this.queryPostShot = querySnapshot;
+            isLastPage = (querySnapshot.size()) < Constants.PAGINATION;
+            mListener.setFirstQuery(page, queryPostShot);
+
         });
     }
 
     // Query comments in BoardRedDlgFragment
     public void setCommentQuery(int page, final String field, final String docId) {
         this.field = field;
+        queryPostShot = null;
+        isLastPage = false;
+        isLoading = true;
+
         colRef = firestore.collection("board_general").document(docId).collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
-                    if(e != null) return;
-                    this.querySnapshot = querySnapshot;
-                    mListener.setFirstQuery(page, querySnapshot);
+                .addSnapshotListener((queryCommentShot, e) -> {
+                    isLoading = false;
+                    if(e != null || queryCommentShot == null || queryCommentShot.size() == 0) return;
+                    this.queryPostShot = queryCommentShot;
+                    isLastPage = queryCommentShot.size() < Constants.PAGINATION;
+                    mListener.setFirstQuery(page, queryCommentShot);
                 });
     }
 
@@ -140,8 +149,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         mListener.setNextQueryStart(true);
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION)
-                .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
-                    if (e != null || nextSnapshot == null) return;
+                .addSnapshotListener((nextSnapshot, e) -> {
+                    if (e != null || nextSnapshot == null || nextSnapshot.size() == 0) return;
                     // Hide the loading progressbar and add the query results to the list
                     mListener.setNextQueryStart(false);
                     mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
@@ -177,7 +186,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             // Get the last visible document in the first query, then make the next query following
             // the document using startAfter(). QuerySnapshot must be invalidated with the value by
             // nextQuery.
-            DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+            DocumentSnapshot lastDoc = queryPostShot.getDocuments().get(queryPostShot.size() - 1);
             // Making the next query, the autoclub page has to be handled in a diffent way than
             // the other pages because it queries with different conditions.
             Query nextQuery = colRef;
@@ -192,7 +201,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
                         if(!isLastPage) {
                             mListener.setNextQueryComplete(currentPage, nextSnapshot);
-                            querySnapshot = nextSnapshot;
+                            queryPostShot = nextSnapshot;
                         }
 
                         isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;

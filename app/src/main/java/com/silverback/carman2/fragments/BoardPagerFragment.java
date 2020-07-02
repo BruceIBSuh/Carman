@@ -75,7 +75,7 @@ public class BoardPagerFragment extends Fragment implements
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
 
-    // UIs
+    // UIs */
     private LinearLayoutManager layoutManager;
     private ProgressBar pbLoading, pbPaging;
     private PostingRecyclerView recyclerPostView;
@@ -161,6 +161,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
         FloatingActionButton fabWrite = ((BoardActivity)getActivity()).getFAB();
+
         recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -172,6 +173,7 @@ public class BoardPagerFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
+
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
@@ -180,7 +182,7 @@ public class BoardPagerFragment extends Fragment implements
         // the autoclub post is not queried.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
-                isAutoClubLoading = false;
+                isAutoClubLoading = true;
                 isAutoClubLastPage = false;
                 pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
@@ -296,6 +298,7 @@ public class BoardPagerFragment extends Fragment implements
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
 
+
         for(QueryDocumentSnapshot snapshot : snapshots) {
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
@@ -313,14 +316,16 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
+        log.i("QuerySnapshots: %s, %s", snapshots.size(), snapshotList.size());
+
         if(page == Constants.BOARD_AUTOCLUB) {
             // First query comes to the end of the documents.
+            isAutoClubLoading = false;
             isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
             if(isAutoClubLastPage) {
                 postingAdapter.notifyDataSetChanged();
                 log.i("autoclub: %s", snapshotList.size());
-            }
-            else {
+            } else {
                 isAutoClubLoading = true;
                 pageHelper.setNextQuery(snapshots);
             }
@@ -344,10 +349,10 @@ public class BoardPagerFragment extends Fragment implements
         else pbPaging.setVisibility(View.GONE);
     }
 
+    int cntAutoclub = 0;
     @Override
     public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
         if(snapshots.size() == 0) return;
-
 
         for(QueryDocumentSnapshot snapshot : snapshots) {
             switch(page) {
@@ -365,17 +370,21 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-
         if(page == Constants.BOARD_AUTOCLUB) {
+            cntAutoclub++;
+            log.i("next query count: %s", cntAutoclub);
             isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
             // Keep querying the autoclub posts until the sorted posts are equal to or more than
             // the pagination limit unless the next query is the last page.
             if(!isAutoClubLastPage && snapshotList.size() < Constants.PAGINATION){
+                log.i("next query count: %s", cntAutoclub);
                 isAutoClubLoading = true;
                 pageHelper.setNextQuery(snapshots);
-                return;
 
-            } else postingAdapter.notifyDataSetChanged();
+            } else {
+                isAutoClubLoading = false;
+                postingAdapter.notifyDataSetChanged();
+            }
 
             // The autoclub repeats the next query manually until it comes to the last query. The
             // other board makes the next query automatically by scrolling. The autoclub updates
@@ -393,13 +402,16 @@ public class BoardPagerFragment extends Fragment implements
 
                     if(!isAutoClubLoading && !isAutoClubLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
                         isAutoClubLoading = true;
-                        pageHelper.setNextQuery(snapshots);
-                    } //else postingAdapter.notifyDataSetChanged();
+                        isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
+                        if(!isAutoClubLastPage) pageHelper.setNextQuery(snapshots);
+                    }
                 }
             });
-        } //else postingAdapter.notifyDataSetChanged();
+        } else postingAdapter.notifyDataSetChanged();
 
-        postingAdapter.notifyDataSetChanged();
+        log.i("Next QuerySnapshots: %s, %s", snapshots.size(), snapshotList.size());
+
+
         pbPaging.setVisibility(View.GONE);
 
     }
