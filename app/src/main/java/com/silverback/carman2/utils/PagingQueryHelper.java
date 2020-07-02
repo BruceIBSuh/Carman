@@ -170,8 +170,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int firstItemPos = layoutManager.findFirstVisibleItemPosition();
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
+        log.i("scroll state: %s, %s, %s, %s, %s", isLoading, isLastPage, firstItemPos, visibleItemCount, totalItemCount);
 
         if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= totalItemCount) {
+            log.i("next querying");
             isLoading = true;
             mListener.setNextQueryStart(true);
             // Get the last visible document in the first query, then make the next query following

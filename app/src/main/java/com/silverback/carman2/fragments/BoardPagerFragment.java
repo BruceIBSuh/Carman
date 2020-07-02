@@ -347,8 +347,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
         if(snapshots.size() == 0) return;
-
-
         for(QueryDocumentSnapshot snapshot : snapshots) {
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
@@ -368,6 +366,7 @@ public class BoardPagerFragment extends Fragment implements
 
         if(page == Constants.BOARD_AUTOCLUB) {
             isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
+            log.i("autoclub last page: %s", isAutoClubLastPage);
             // Keep querying the autoclub posts until the sorted posts are equal to or more than
             // the pagination limit unless the next query is the last page.
             if(!isAutoClubLastPage && snapshotList.size() < Constants.PAGINATION){
