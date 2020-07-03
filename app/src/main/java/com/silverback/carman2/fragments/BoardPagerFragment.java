@@ -24,7 +24,12 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.BackoffPolicy;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 import androidx.work.Worker;
@@ -38,10 +43,12 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
+import com.silverback.carman2.backgrounds.FirestoreQueryWorker;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -60,6 +67,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class BoardPagerFragment extends Fragment implements
@@ -80,6 +88,8 @@ public class BoardPagerFragment extends Fragment implements
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
+
+    private WorkRequest postingQueryRequest;
 
     // UIs */
     private LinearLayoutManager layoutManager;
@@ -137,7 +147,7 @@ public class BoardPagerFragment extends Fragment implements
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
-        pageHelper = new PagingQueryHelper();
+        pageHelper = new PagingQueryHelper(firestore);
         pageHelper.setOnPaginationListener(this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
@@ -183,22 +193,34 @@ public class BoardPagerFragment extends Fragment implements
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
 
-        // Unless any autofilter is checked and the automaker retrievedfrom the autofilter is null,
-        // the autoclub post is not queried.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
                 isAutoClubLoading = true;
                 isAutoClubLastPage = false;
-                //pageHelper.setPostingQuery(currentPage, isViewOrder);
+                pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
+        } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
-        } //else pageHelper.setPostingQuery(currentPage, isViewOrder);
+        // Check the network state and if ok, start to query posts.
+        /*
+        WorkManager.getInstance(getContext()).getWorkInfosByTagLiveData("postingQuery")
+                .observe(getViewLifecycleOwner(), workinfo -> {
+                    for(WorkInfo info : workinfo) {
+                        if(info.getState() == WorkInfo.State.ENQUEUED) {
+                            log.i("network state: %s");
+                            if(currentPage == Constants.BOARD_AUTOCLUB) {
+                                if(!TextUtils.isEmpty(automaker)) {
+                                    isAutoClubLoading = true;
+                                    isAutoClubLastPage = false;
+                                    pageHelper.setPostingQuery(currentPage, isViewOrder);
+                                }
+                            } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
-        // Apply WorManager in case the network connection is ready to query posts.
-        WorkRequest queryRequest = new OneTimeWorkRequest.Builder(FirestoreQueryWork.class)
-                .build();
-        WorkManager.getInstance(getActivity()).enqueue(queryRequest);
+                        }
+                    }
+                });
 
+        */
         return localView;
     }
 
@@ -600,23 +622,6 @@ public class BoardPagerFragment extends Fragment implements
                     e.printStackTrace();
                 });
     }
-
-    // Worker that performs to make a first query
-    class FirestoreQueryWork extends Worker {
-        public FirestoreQueryWork(@NonNull Context context, @NonNull WorkerParameters params) {
-            super(context, params);
-        }
-
-        @NonNull
-        @Override
-        public Result doWork() {
-            log.i("Worker is working");
-            pageHelper.setPostingQuery(currentPage, isViewOrder);
-            return Result.success();
-        }
-    }
-
-
 }
 
 

@@ -88,6 +88,7 @@ public class IntroActivity extends BaseActivity  {
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
+
     }
 
     @Override

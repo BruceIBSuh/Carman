@@ -248,7 +248,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         recyclerComment.setAdapter(commentAdapter);
 
         // Pagination using PagingQueryHelper which requires refactor.
-        PagingQueryHelper pagingUtil = new PagingQueryHelper();
+        PagingQueryHelper pagingUtil = new PagingQueryHelper(firestore);
         pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
 

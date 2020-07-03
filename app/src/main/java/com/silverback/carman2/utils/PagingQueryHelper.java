@@ -1,8 +1,17 @@
 package com.silverback.carman2.utils;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.BackoffPolicy;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -10,8 +19,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.silverback.carman2.backgrounds.FirestoreQueryWorker;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /*
  * This helper class is to paginate posting items downloaded from Firestore by its category passed
@@ -53,10 +65,9 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     }
 
     // private constructor
-    public PagingQueryHelper() {
-        firestore = FirebaseFirestore.getInstance();
+    public PagingQueryHelper(FirebaseFirestore firestore) {
+        this.firestore = firestore;
         colRef = firestore.collection("board_general");
-
     }
 
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of
@@ -77,7 +88,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      * @param page current page to query
      * @param autofilter the autoclub page query conditions.
      */
-
     public void setPostingQuery(int page, boolean isViewOrder) {
         Query query = colRef;
         queryPostShot = null;
