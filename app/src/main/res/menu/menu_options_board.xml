@@ -6,7 +6,6 @@
     <!-- custom layout to replace android:actionLayout with android:icon for resizing the icon -->
     <item
         android:id="@+id/action_automaker_emblem"
-        android:title="@string/toolbar_mycar"
         android:visible="false"
         app:actionLayout="@layout/view_automaker_emblem"
         app:showAsAction="ifRoom|withText" />
@@ -14,7 +13,6 @@
     <item
         android:id="@+id/action_upload_post"
         android:icon="@drawable/ic_board_upload"
-        android:title="@string/toolbar_board"
         android:visible="false"
         app:showAsAction="ifRoom|withText" />
 

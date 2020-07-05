@@ -12,13 +12,13 @@ import androidx.work.WorkerParameters;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class FirestoreQueryWorker extends Worker {
+public class NetworkStateWorker extends Worker {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(FirestoreQueryWorker.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(NetworkStateWorker.class);
 
     private Context context;
 
-    public FirestoreQueryWorker(@NonNull Context context, @NonNull WorkerParameters params) {
+    public NetworkStateWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
         this.context = context;
     }
@@ -30,7 +30,9 @@ public class FirestoreQueryWorker extends Worker {
         // Deprecated as of Android 10(API 29)
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        Data outputData = new Data.Builder().putBoolean("network", isConnected).build();
-        return Result.success(outputData);
+        if(isConnected) {
+            Data outputData = new Data.Builder().putBoolean("network", isConnected).build();
+            return Result.success(outputData);
+        } else return Result.failure();
     }
 }

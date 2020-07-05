@@ -57,7 +57,6 @@ public class SnoozeBroadcastReceiver extends BroadcastReceiver {
                 .addTag(String.valueOf(notiId))
                 .build();
 
-
         WorkManager.getInstance(context).enqueue(snoozeWorkRequest);
         // Cancel the notification with its id passed from the intent.
         NotificationManagerCompat.from(context).cancel(notiId);

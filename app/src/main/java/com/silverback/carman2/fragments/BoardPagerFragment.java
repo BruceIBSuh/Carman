@@ -4,7 +4,6 @@ package com.silverback.carman2.fragments;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -24,16 +23,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.BackoffPolicy;
-import androidx.work.Constraints;
-import androidx.work.Data;
-import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
@@ -43,12 +33,10 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
-import com.silverback.carman2.backgrounds.FirestoreQueryWorker;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -67,7 +55,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 
 public class BoardPagerFragment extends Fragment implements
@@ -89,9 +76,9 @@ public class BoardPagerFragment extends Fragment implements
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
 
-    private WorkRequest postingQueryRequest;
+    private WorkRequest networkRequest;
 
-    // UIs */
+    // UIs
     private LinearLayoutManager layoutManager;
     private ProgressBar pbLoading, pbPaging;
     private PostingRecyclerView recyclerPostView;
@@ -102,8 +89,8 @@ public class BoardPagerFragment extends Fragment implements
     private String automaker;
     private int currentPage;
     private boolean isViewOrder;
-    private boolean isAutoClubLoading;
-    private boolean isAutoClubLastPage;
+    private boolean isLoading;
+    private boolean isLastPage;
     private boolean isViewUpdated;
 
     // Constructor
@@ -133,7 +120,6 @@ public class BoardPagerFragment extends Fragment implements
             autoFilter = getArguments().getStringArrayList("autoFilter");
             if(autoFilter.size() > 0) automaker = autoFilter.get(0);
         }
-
         // Make the toolbar menu available in the Fragment.
         setHasOptionsMenu(true);
 
@@ -195,32 +181,12 @@ public class BoardPagerFragment extends Fragment implements
 
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
-                isAutoClubLoading = true;
-                isAutoClubLastPage = false;
+                isLoading = true;
+                isLastPage = false;
                 pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
         } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
-        // Check the network state and if ok, start to query posts.
-        /*
-        WorkManager.getInstance(getContext()).getWorkInfosByTagLiveData("postingQuery")
-                .observe(getViewLifecycleOwner(), workinfo -> {
-                    for(WorkInfo info : workinfo) {
-                        if(info.getState() == WorkInfo.State.ENQUEUED) {
-                            log.i("network state: %s");
-                            if(currentPage == Constants.BOARD_AUTOCLUB) {
-                                if(!TextUtils.isEmpty(automaker)) {
-                                    isAutoClubLoading = true;
-                                    isAutoClubLastPage = false;
-                                    pageHelper.setPostingQuery(currentPage, isViewOrder);
-                                }
-                            } else pageHelper.setPostingQuery(currentPage, isViewOrder);
-
-                        }
-                    }
-                });
-
-        */
         return localView;
     }
 
@@ -270,20 +236,20 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Do something different from in the parent activity
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            //final MenuItem emblem = menu.findItem(R.id.action_automaker_emblem);
-            menu.getItem(0).setVisible(true);
-            //emblem.setVisible(true);
             View rootView = menu.getItem(0).getActionView();
-            //ImageView imgEmblem = (ImageView)menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
             ProgressBar pbEmblem = rootView.findViewById(R.id.pb_emblem);
             tvSorting = rootView.findViewById(R.id.tv_sorting_order);
 
-            // Set the automaker emblem in the toolbar imageview which is created as a custom view
-            // replacing the toolbar menu icon.
-            if(!TextUtils.isEmpty(automaker)) setAutoMakerEmblem(pbEmblem, imgEmblem);
-
-            rootView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
+            if(TextUtils.isEmpty(automaker)) {
+                menu.getItem(0).setVisible(false);
+                rootView.setVisibility(View.INVISIBLE);
+            } else {
+                menu.getItem(0).setVisible(true);
+                rootView.setVisibility(View.VISIBLE);
+                setAutoMakerEmblem(pbEmblem, imgEmblem);
+                rootView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
+            }
         }
 
         super.onCreateOptionsMenu(menu, inflater);
@@ -316,7 +282,7 @@ public class BoardPagerFragment extends Fragment implements
             });
 
             rotation.start();
-            return true;
+            return false;
         }
 
         return false;
@@ -337,6 +303,7 @@ public class BoardPagerFragment extends Fragment implements
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     sortAutoClubPost(snapshot);
+                    log.i("sorted snapshot: %s", snapshotList.size());
                     break;
                 case Constants.BOARD_NOTIFICATION:
                     snapshotList.add(snapshot);
@@ -347,17 +314,16 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        log.i("QuerySnapshots: %s, %s", snapshots.size(), snapshotList.size());
-
         if(page == Constants.BOARD_AUTOCLUB) {
             // First query comes to the end of the documents.
-            isAutoClubLoading = false;
-            isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
-            if(isAutoClubLastPage) {
+            isLoading = false;
+            isLastPage = snapshots.size() < Constants.PAGINATION;
+
+            if(isLastPage) {
                 postingAdapter.notifyDataSetChanged();
                 log.i("autoclub: %s", snapshotList.size());
             } else {
-                isAutoClubLoading = true;
+                isLoading = true;
                 pageHelper.setNextQuery(snapshots);
             }
 
@@ -376,11 +342,12 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void setNextQueryStart(boolean isNextQuery) {
-        if(isNextQuery) pbPaging.setVisibility(View.VISIBLE);
-        else pbPaging.setVisibility(View.GONE);
+        if(currentPage != Constants.BOARD_AUTOCLUB) {
+            if (isNextQuery) pbPaging.setVisibility(View.VISIBLE);
+            else pbPaging.setVisibility(View.GONE);
+        }
     }
 
-    int cntAutoclub = 0;
     @Override
     public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
         if(snapshots.size() == 0) return;
@@ -389,6 +356,7 @@ public class BoardPagerFragment extends Fragment implements
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     sortAutoClubPost(snapshot);
+                    log.i("next sorted snapshotList: %s", snapshotList.size());
                     break;
 
                 case Constants.BOARD_NOTIFICATION:
@@ -402,17 +370,14 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         if(page == Constants.BOARD_AUTOCLUB) {
-            cntAutoclub++;
-            log.i("next query count: %s", cntAutoclub);
-            isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
+            isLastPage = snapshots.size() < Constants.PAGINATION;
             // Keep querying the autoclub posts until the sorted posts are equal to or more than
             // the pagination limit unless the next query is the last page.
-            if(!isAutoClubLastPage && snapshotList.size() < Constants.PAGINATION){
-                log.i("next query count: %s", cntAutoclub);
-                isAutoClubLoading = true;
+            if(!isLastPage && snapshotList.size() < Constants.PAGINATION){
+                isLoading = true;
                 pageHelper.setNextQuery(snapshots);
             } else {
-                isAutoClubLoading = false;
+                isLoading = false;
                 postingAdapter.notifyDataSetChanged();
             }
 
@@ -430,17 +395,14 @@ public class BoardPagerFragment extends Fragment implements
                     int firstItemPos = layoutManager.findFirstVisibleItemPosition();
                     int visibleItemCount = layoutManager.getChildCount();
 
-                    if(!isAutoClubLoading && !isAutoClubLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
-                        isAutoClubLoading = true;
-                        isAutoClubLastPage = snapshots.size() < Constants.PAGINATION;
-                        if(!isAutoClubLastPage) pageHelper.setNextQuery(snapshots);
+                    if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
+                        isLoading = true;
+                        isLastPage = snapshots.size() < Constants.PAGINATION;
+                        if(!isLastPage) pageHelper.setNextQuery(snapshots);
                     }
                 }
             });
         } else postingAdapter.notifyDataSetChanged();
-
-        log.i("Next QuerySnapshots: %s, %s", snapshots.size(), snapshotList.size());
-
 
         pbPaging.setVisibility(View.GONE);
 

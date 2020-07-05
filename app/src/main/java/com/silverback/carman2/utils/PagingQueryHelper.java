@@ -1,28 +1,35 @@
 package com.silverback.carman2.utils;
 
 import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
-import androidx.work.Data;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.silverback.carman2.backgrounds.FirestoreQueryWorker;
+import com.silverback.carman2.backgrounds.NetworkStateWorker;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /*
@@ -41,6 +48,9 @@ import java.util.concurrent.TimeUnit;
  * so, it requires to create a compoite index which is very expensive to perform. Thus, query is made
  * in a simple way, the result is passed to the list and sorts out the list elements on the client
  * side.
+ *
+ * @boolean isLastPage
+ * @booelan isLoading
  */
 public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
@@ -91,7 +101,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     public void setPostingQuery(int page, boolean isViewOrder) {
         Query query = colRef;
         queryPostShot = null;
-
         currentPage = page;
         isLastPage = false;
         isLoading = true;
@@ -119,15 +128,20 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 break;
         }
 
-        // Add SnapshotListener to the query built up to the board with its own conditions.
-        // Refactor should be considered to apply Source.CACHE or Source.SERVER depending on whehter
-        // querysnapshot has existed or hasPendingWrite is true.
-        //query.limit(Constants.PAGINATION).get(source).addOnSuccessListener((querySnapshot) -> {
-        query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+        query.limit(Constants.PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
             isLoading = false;
-            if(e != null || querySnapshot == null || querySnapshot.size() == 0) return;
+            if(e != null || querySnapshot == null) return;
+            /*
+            for(DocumentChange change : querySnapshot.getDocumentChanges()) {
+                if(change.getType() == DocumentChange.Type.ADDED) log.i("added");
+                String source = querySnapshot.getMetadata().isFromCache()? "local cache" : "server";
+                log.i("Data from: %s", source);
+            }
+             */
+            log.i("query post: %s, %s", querySnapshot.size(), querySnapshot.getMetadata().isFromCache());
             this.queryPostShot = querySnapshot;
             isLastPage = (querySnapshot.size()) < Constants.PAGINATION;
+            //isLoading = false;
             mListener.setFirstQuery(page, queryPostShot);
 
         });
@@ -142,12 +156,14 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
         colRef = firestore.collection("board_general").document(docId).collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .addSnapshotListener((queryCommentShot, e) -> {
+                .addSnapshotListener(MetadataChanges.INCLUDE, (queryCommentShot, e) -> {
                     isLoading = false;
-                    if(e != null || queryCommentShot == null || queryCommentShot.size() == 0) return;
+                    if(e != null || queryCommentShot == null) return;
+
                     this.queryPostShot = queryCommentShot;
                     isLastPage = queryCommentShot.size() < Constants.PAGINATION;
                     mListener.setFirstQuery(page, queryCommentShot);
+                    log.i("query comment: %s, %s, %s", isLastPage, queryCommentShot.size(), queryCommentShot.getMetadata().isFromCache());
                 });
     }
 
@@ -157,10 +173,11 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     public void setNextQuery(QuerySnapshot querySnapshot) {
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         mListener.setNextQueryStart(true);
+
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION)
                 .addSnapshotListener((nextSnapshot, e) -> {
-                    if (e != null || nextSnapshot == null || nextSnapshot.size() == 0) return;
+                    if (e != null) return;
                     // Hide the loading progressbar and add the query results to the list
                     mListener.setNextQueryStart(false);
                     mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
@@ -189,7 +206,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         int firstItemPos = layoutManager.findFirstVisibleItemPosition();
         int visibleItemCount = layoutManager.getChildCount();
         int totalItemCount = layoutManager.getItemCount();
-        log.i("scroll state: %s, %s, %s, %s, %s", isLoading, isLastPage, firstItemPos, visibleItemCount, totalItemCount);
+        //log.i("scroll state: %s, %s, %s, %s, %s", isLoading, isLastPage, firstItemPos, visibleItemCount, totalItemCount);
 
         if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= totalItemCount) {
             log.i("next querying");
@@ -205,21 +222,25 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                     .limit(Constants.PAGINATION)
                     .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
+                        isLoading = false; // ready to make a next query
                         // Check if the next query reaches the last document.
                         if(e != null || nextSnapshot == null) return;
 
                         // Hide the loading progressbar and add the query results to the list
                         mListener.setNextQueryStart(false);
 
+                        // Ths must be checked. Otherwise, call the listener repeatedly while scrolling.
+                        // After this, isLastPage must be reset.
                         if(!isLastPage) {
                             mListener.setNextQueryComplete(currentPage, nextSnapshot);
                             queryPostShot = nextSnapshot;
                         }
-
+                        // Reset the fields.
                         isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
-                        isLoading = false; // ready to make a next query
                     });
         }
     }
+
+
 
 }

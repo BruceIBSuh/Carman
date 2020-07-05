@@ -192,7 +192,8 @@ public class BoardActivity extends BaseActivity implements
         this.menu = menu;
         getMenuInflater().inflate(R.menu.menu_options_board, menu);
 
-        // What's difference b/w return true and super.onCreateOptionsMenu(menu)
+        // What's difference b/w return true and super.onCreateOptionsMenu(menu) is, if true, no
+        // menu are able to be set in the child and, if false, menu are able to be set.
         //return true;
         return super.onCreateOptionsMenu(menu);
     }
@@ -297,14 +298,10 @@ public class BoardActivity extends BaseActivity implements
                 if(cbAutoFilter.size() > 0) {
                     clubTitle = createAutoClubTitle();
                     getSupportActionBar().setTitle(clubTitle);
+                    //menu.getItem(0).setVisible(true);
                 } else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
 
-                // Set the visibility and the icon to the automaker menu icon.
-                //menu.getItem(0).setVisible(true);
-                //menu.getItem(0).setIcon(R.drawable.ic_automaker_hyundai); // Refactor required.
-
                 animAutoFilter(isAutoFilter);
-
                 break;
 
             case Constants.BOARD_NOTIFICATION:
@@ -432,10 +429,7 @@ public class BoardActivity extends BaseActivity implements
                 else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(data.getData());
 
                 break;
-            /*
-            case Constants.REQUEST_BOARD_CAMERA:
-                break;
-            */
+
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                 jsonAutoFilter = data.getStringExtra("jsonAutoData");
                 // Create the autofilter checkboxes and set inital values to the checkboxes
@@ -447,7 +441,10 @@ public class BoardActivity extends BaseActivity implements
                 boardPager.setAdapter(pagerAdapter);
                 boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
 
+                log.i("Reset tabLayout and action menu");
+                addTabIconAndTitle(this, boardTabLayout);
                 menu.getItem(0).setVisible(true);
+                menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
                 break;
 
             default: break;
@@ -665,9 +662,6 @@ public class BoardActivity extends BaseActivity implements
 
         // Create the autofilter lock and handle the event when clicking the imageview.
         setAutoFilterLock(v, jsonAuto);
-
-        // Once an auto maker is fetched, download the uri string for its emblem.
-        //if(emblemIcon == null) setAutoMakerEmblem();
     }
 
     /*

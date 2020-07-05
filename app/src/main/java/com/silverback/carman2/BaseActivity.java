@@ -33,12 +33,10 @@ import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
 import com.google.android.material.tabs.TabLayout;
-import com.silverback.carman2.backgrounds.FirestoreQueryWorker;
+import com.silverback.carman2.backgrounds.NetworkStateWorker;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
@@ -71,6 +69,7 @@ public class BaseActivity extends AppCompatActivity {
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
+
     // Fields
     protected boolean isNetworkConnected;
 
@@ -90,7 +89,6 @@ public class BaseActivity extends AppCompatActivity {
         userId = getUserIdFromStorage(this);
 
         // Checkk if the network connectivitis ok.
-        checkNetworkConnected();
         isNetworkConnected = notifyNetworkConnected(this);
     }
 
@@ -102,12 +100,12 @@ public class BaseActivity extends AppCompatActivity {
         //return connManager.isActiveNetworkMetered();
     }
 
-    private void checkNetworkConnected() {
+    public WorkRequest requestNetworkConnectedWork() {
         // WorkManager to check the network connectivity before querying posts from Firestore.
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build();
-        WorkRequest postingQueryRequest = new OneTimeWorkRequest.Builder(FirestoreQueryWorker.class)
+        return new OneTimeWorkRequest.Builder(NetworkStateWorker.class)
                 .setConstraints(constraints)
                 .setBackoffCriteria(
                         BackoffPolicy.LINEAR, //BackoffPolicy.Exponential.
@@ -115,20 +113,6 @@ public class BaseActivity extends AppCompatActivity {
                         TimeUnit.MILLISECONDS)
                 .addTag("postingQuery")
                 .build();
-
-        WorkManager.getInstance(this).enqueue(postingQueryRequest);
-        WorkManager.getInstance(this).getWorkInfosByTagLiveData("postingQuery")
-                .observe(this, workInfos -> {
-                    for(WorkInfo info : workInfos) {
-                        if(info.getState() == WorkInfo.State.ENQUEUED || info.getState() == WorkInfo.State.SUCCEEDED) {
-                            log.i("network connected");
-                        }else {
-                            log.i("network disconnected");
-                        }
-
-                        break;
-                    }
-                });
     }
 
     // DefaultParams: fuelCode, radius to locate, sorting radius

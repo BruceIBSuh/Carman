@@ -157,7 +157,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
+
         snapshotList = new ArrayList<>();
+        commentAdapter = new BoardCommentAdapter(snapshotList);
+
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -180,6 +183,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // the listener to prevent connecting to the server. Instead, update the collection using
         // Source.Cache.
         postRef = firestore.collection("board_general").document(documentId);
+        /*
         postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
                 .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
                     if(e != null) return;
@@ -187,6 +191,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                             ? Source.CACHE : Source.SERVER;
                 })
         );
+         */
 
     }
 
@@ -221,7 +226,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // navigation icon(back arrow) should be handled in setToolbarTitleIcon().
         toolbar.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
-        autoTitle = ((BoardActivity) getActivity()).getAutoClubTitle();
+        autoTitle = ((BoardActivity)getActivity()).getAutoClubTitle();
 
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
         // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
@@ -244,7 +249,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
-        commentAdapter = new BoardCommentAdapter(snapshotList);
+        //commentAdapter = new BoardCommentAdapter(snapshotList);
         recyclerComment.setAdapter(commentAdapter);
 
         // Pagination using PagingQueryHelper which requires refactor.
@@ -343,7 +348,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     @Override
     public void onPause() {
         super.onPause();
-        commentListener.remove();
+        //commentListener.remove();
     }
 
     @Override
@@ -381,7 +386,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     return;
                 }
 
-                // Upload the comment to Firestore, in which
                 uploadComment();
                 break;
         }
@@ -402,8 +406,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
     @Override
     public void setNextQueryComplete(int page, QuerySnapshot querySnapshot) {
+        if(querySnapshot.size() == 0) return;
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
-        //pagingProgressBar.setVisibility(View.INVISIBLE);
         commentAdapter.notifyDataSetChanged();
     }
 
