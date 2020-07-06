@@ -20,11 +20,13 @@ import androidx.work.WorkRequest;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.backgrounds.NetworkStateWorker;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
@@ -58,6 +60,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     // Objects
     private FirebaseFirestore firestore;
     private CollectionReference colRef;
+    private Source source;
     private QuerySnapshot queryPostShot;
     private OnPaginationListener mListener;
 
@@ -78,6 +81,12 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     public PagingQueryHelper(FirebaseFirestore firestore) {
         this.firestore = firestore;
         colRef = firestore.collection("board_general");
+        colRef.addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
+            source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()) ?
+                    Source.CACHE : Source.SERVER;
+
+        });
+
     }
 
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of
@@ -99,8 +108,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      * @param autofilter the autoclub page query conditions.
      */
     public void setPostingQuery(int page, boolean isViewOrder) {
-        Query query = colRef;
         queryPostShot = null;
+        Query query = colRef;
         currentPage = page;
         isLastPage = false;
         isLoading = true;
@@ -128,33 +137,43 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 break;
         }
 
+        /*
         query.limit(Constants.PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
             isLoading = false;
             if(e != null || querySnapshot == null) return;
-            /*
+
             for(DocumentChange change : querySnapshot.getDocumentChanges()) {
                 if(change.getType() == DocumentChange.Type.ADDED) log.i("added");
                 String source = querySnapshot.getMetadata().isFromCache()? "local cache" : "server";
                 log.i("Data from: %s", source);
             }
-             */
-            log.i("query post: %s, %s", querySnapshot.size(), querySnapshot.getMetadata().isFromCache());
+
             this.queryPostShot = querySnapshot;
             isLastPage = (querySnapshot.size()) < Constants.PAGINATION;
-            //isLoading = false;
             mListener.setFirstQuery(page, queryPostShot);
 
         });
+        */
+
+        query.limit(Constants.PAGINATION).get(Source.SERVER).addOnSuccessListener(snapshots -> {
+            log.i("cache or server: %s", snapshots.getMetadata().isFromCache());
+            isLoading = false;
+            this.queryPostShot = snapshots;
+            isLastPage = (snapshots.size()) < Constants.PAGINATION;
+            mListener.setFirstQuery(page, queryPostShot);
+
+        }).addOnFailureListener(Exception::printStackTrace);
     }
 
-    // Query comments in BoardRedDlgFragment
-    public void setCommentQuery(int page, final String field, final String docId) {
-        this.field = field;
+    // Query post comments which is called in BoardReadDlgFragment
+    public void setCommentQuery(int page, final String field, final DocumentReference docRef) {
         queryPostShot = null;
+        this.field = field;
         isLastPage = false;
         isLoading = true;
 
-        colRef = firestore.collection("board_general").document(docId).collection("comments");
+        //colRef = firestore.collection("board_general").document(docId).collection("comments");
+        colRef = docRef.collection("comments");
         colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                 .addSnapshotListener(MetadataChanges.INCLUDE, (queryCommentShot, e) -> {
                     isLoading = false;
@@ -163,7 +182,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     this.queryPostShot = queryCommentShot;
                     isLastPage = queryCommentShot.size() < Constants.PAGINATION;
                     mListener.setFirstQuery(page, queryCommentShot);
-                    log.i("query comment: %s, %s, %s", isLastPage, queryCommentShot.size(), queryCommentShot.getMetadata().isFromCache());
                 });
     }
 
@@ -174,11 +192,19 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         mListener.setNextQueryStart(true);
 
+        /*
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION)
                 .addSnapshotListener((nextSnapshot, e) -> {
                     if (e != null) return;
                     // Hide the loading progressbar and add the query results to the list
+                    mListener.setNextQueryStart(false);
+                    mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
+                });
+
+         */
+        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
+                .limit(Constants.PAGINATION).get(source).addOnSuccessListener(nextSnapshot -> {
                     mListener.setNextQueryStart(false);
                     mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
                 });
@@ -209,7 +235,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         //log.i("scroll state: %s, %s, %s, %s, %s", isLoading, isLastPage, firstItemPos, visibleItemCount, totalItemCount);
 
         if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= totalItemCount) {
-            log.i("next querying");
             isLoading = true;
             mListener.setNextQueryStart(true);
             // Get the last visible document in the first query, then make the next query following
@@ -219,6 +244,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             // Making the next query, the autoclub page has to be handled in a diffent way than
             // the other pages because it queries with different conditions.
             Query nextQuery = colRef;
+            /*
             nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                     .limit(Constants.PAGINATION)
                     .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
@@ -238,6 +264,19 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                         // Reset the fields.
                         isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
                     });
+
+             */
+            nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
+                    .limit(Constants.PAGINATION).get(source).addOnSuccessListener(nextSnapshot -> {
+                        isLoading = false;
+                        mListener.setNextQueryStart(false);
+                        if(!isLastPage) {
+                            mListener.setNextQueryComplete(currentPage, nextSnapshot);
+                            queryPostShot = nextSnapshot;
+                        }
+                        // Reset the fields.
+                        isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
+            });
         }
     }
 

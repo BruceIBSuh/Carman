@@ -264,6 +264,7 @@ public class BoardActivity extends BaseActivity implements
                         frameLayout.getChildAt(0) == writePostFragment.getView();
                 if(isWriteMode) writePostFragment.prepareAttachedImages();
                 else editPostFragment.prepareUpdate();
+
                 return true;
 
             default:

@@ -33,6 +33,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
@@ -67,6 +68,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Objects
     private FirebaseFirestore firestore;
+    private Source source;
     private PagingQueryHelper pageHelper;
     private BoardPagerAdapter pagerAdapter;
     private FragmentSharedModel fragmentModel;
@@ -140,6 +142,7 @@ public class BoardPagerFragment extends Fragment implements
         // values changes.
         ((BoardActivity)getActivity()).setAutoFilterListener(this);
         pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -188,6 +191,12 @@ public class BoardPagerFragment extends Fragment implements
         } else pageHelper.setPostingQuery(currentPage, isViewOrder);
 
         return localView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        log.i("onResume");
     }
 
     @Override
@@ -293,6 +302,7 @@ public class BoardPagerFragment extends Fragment implements
     // the next query results.
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
+        log.i("first query: %s", snapshots.size());
         snapshotList.clear();
         if(snapshots.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
 
@@ -303,7 +313,6 @@ public class BoardPagerFragment extends Fragment implements
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     sortAutoClubPost(snapshot);
-                    log.i("sorted snapshot: %s", snapshotList.size());
                     break;
                 case Constants.BOARD_NOTIFICATION:
                     snapshotList.add(snapshot);
@@ -322,6 +331,7 @@ public class BoardPagerFragment extends Fragment implements
             if(isLastPage) {
                 postingAdapter.notifyDataSetChanged();
                 log.i("autoclub: %s", snapshotList.size());
+                return;
             } else {
                 isLoading = true;
                 pageHelper.setNextQuery(snapshots);
@@ -350,13 +360,13 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
+        log.i("Next queried: %s", snapshots.size());
         if(snapshots.size() == 0) return;
 
         for(QueryDocumentSnapshot snapshot : snapshots) {
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     sortAutoClubPost(snapshot);
-                    log.i("next sorted snapshotList: %s", snapshotList.size());
                     break;
 
                 case Constants.BOARD_NOTIFICATION:
@@ -402,7 +412,9 @@ public class BoardPagerFragment extends Fragment implements
                     }
                 }
             });
+
         } else postingAdapter.notifyDataSetChanged();
+
 
         pbPaging.setVisibility(View.GONE);
 

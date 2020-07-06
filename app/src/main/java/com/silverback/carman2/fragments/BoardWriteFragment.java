@@ -265,8 +265,7 @@ public class BoardWriteFragment extends DialogFragment implements
             if(pbFragment != null) pbFragment.dismiss();
             ((BoardActivity)getActivity()).addViewPager();
         });
-
-         */
+        */
     }
 
     @Override
@@ -368,7 +367,7 @@ public class BoardWriteFragment extends DialogFragment implements
         imgViewModel.getDownloadBitmapUri().observe(requireActivity(), sparseArray -> {
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
-            downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
+            downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
             if(uriImgList.size() == downloadImages.size()) {
                 // On completing optimization of attached images, start uploading a post.
                 pbFragment.dismiss();

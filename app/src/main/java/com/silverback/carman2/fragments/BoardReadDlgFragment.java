@@ -94,6 +94,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private PagingQueryHelper pagingUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -193,6 +194,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         );
          */
 
+        // Instantiate PagingQueryHelper to paginate comments in a post.
+        pagingUtil = new PagingQueryHelper(firestore);
+        pagingUtil.setOnPaginationListener(this);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -249,12 +253,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
-        //commentAdapter = new BoardCommentAdapter(snapshotList);
         recyclerComment.setAdapter(commentAdapter);
-
-        // Pagination using PagingQueryHelper which requires refactor.
-        PagingQueryHelper pagingUtil = new PagingQueryHelper(firestore);
-        pagingUtil.setOnPaginationListener(this);
         recyclerComment.addOnScrollListener(pagingUtil);
 
         // Event handler for clicking buttons
@@ -266,10 +265,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Upload the comment to Firestore, which needs to refactor for filtering text.
         btnSendComment.setOnClickListener(this);
 
+        // If the user is the owner of a post, display the edit menu in the toolbar.
+        inflateEditMenuInToolbar();
 
-        // BoardPagerFragment has already updatedd the posting items when created, the comment list
-        // shouldn't be updated from the server.
-        pagingUtil.setCommentQuery(tabPage, "timestamp", documentId);
+        // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
+        // is set.
+        String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray" : userPic;
+        int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
+        imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
@@ -285,19 +288,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
             }
         });
 
-        // Toolbar menu: if the post is written by the user, show the menu for editting the post.
-        // Consider that a new dialogfragment should be created or reuse BoardWriteFragment with
-        // putting the data in the fragment.
-        inflateEditMenuInToolbar();
-
         // Rearrange the text by paragraphs
         readContentView(postContent);
-
-        // Set the user image to the view on the header, the uri of which is provided as an arguemnt
-        // from BoardPasoingAdapter. Otherwise, the default image is provided.
-        String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray" : userPic;
-        int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
-        imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
+        // Query comments
+        pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
 
         return localView;
     }
@@ -354,7 +348,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     @Override
     public void onClick(View v) {
         switch(v.getId()) {
-
             case R.id.imgbtn_comment:
                 // Check whether a user name is set. Otherwise, show an messagie in the snackbar to
                 // move to SettingPrefActivity to make a user name.
@@ -372,7 +365,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 } else {
                     int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
                     constCommentLayout.setVisibility(visibility);
-                    constCommentLayout.setVisibility(View.VISIBLE);
+                    //constCommentLayout.setVisibility(View.VISIBLE);
                     etComment.getText().clear();
                     etComment.requestFocus();
                     isCommentVisible = !isCommentVisible;
@@ -408,7 +401,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public void setNextQueryComplete(int page, QuerySnapshot querySnapshot) {
         if(querySnapshot.size() == 0) return;
         for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
-        commentAdapter.notifyDataSetChanged();
+        //commentAdapter.notifyDataSetChanged();
+        commentAdapter.notifyItemInserted(0);
     }
 
     // Method for uploading the comment to Firestore.
@@ -426,34 +420,25 @@ public class BoardReadDlgFragment extends DialogFragment implements
             e.printStackTrace();
         }
 
-        // First, get the document with a given id, then add data
-        //DocumentReference documentRef = firestore.collection("board_general").document(documentId);
+        // Get the document first, then the comment sub collection is retrieved. If successful, update
+        // the comment count in the document and reset the fields.
         postRef.get().addOnSuccessListener(document -> {
             if(document.exists()) {
                 final CollectionReference colRef = document.getReference().collection("comments");
                 colRef.add(comment).addOnSuccessListener(commentDoc -> {
-                    // increase the cnt_cooment in the parent document.
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    // Update the recycler adapter to enlist the pending comment. Don't have to use
-                    // SnapshotListener, even though it may not update the RecyclerView of other users
-                    // simultaneously
-                    commentDoc.get(source).addOnSuccessListener(commentSnapshot -> {
-                        // Hide the soft input method.
-                        ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                                .hideSoftInputFromWindow(localView.getWindowToken(), 0);
-
-                        // Make the comment view invisible and reset the flag.
-                        constCommentLayout.setVisibility(View.GONE);
-                        isCommentVisible = !isCommentVisible;
-
-                        snapshotList.add(0, commentSnapshot);
-                        //commentAdapter.notifyItemInserted(0);
-                    });
-
                 }).addOnFailureListener(e -> {
                     e.printStackTrace();
                     Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+
+                // Hide the soft input method.
+                ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                        .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+
+                // Make the comment view invisible and reset the flag.
+                constCommentLayout.setVisibility(View.GONE);
+                isCommentVisible = !isCommentVisible;
             }
         });
     }

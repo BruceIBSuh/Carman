@@ -15,6 +15,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman2.R;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
+import com.silverback.carman2.utils.Constants;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,7 +37,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         this.snapshotList = snapshotList;
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        //log.i("Comments: %s", snapshotList.size());
     }
     @NonNull
     @Override
@@ -45,7 +45,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 .inflate(R.layout.cardview_board_comment, parent, false);
 
         imgUtil = new ApplyImageResourceUtil(parent.getContext());
-
         return new CommentViewHolder(cardview);
     }
 
@@ -74,6 +73,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     // attach the default image.
                     if(!TextUtils.isEmpty(doc.getString("user_pic")))
                         ((CommentViewHolder)holder).bindUserImage(Uri.parse(doc.getString("user_pic")));
+                    else ((CommentViewHolder)holder).bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_gray"));
                 }
             });
         }
@@ -115,7 +115,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             int x = imgUserPic.getWidth();
             int y = imgUserPic.getHeight();
             imgUtil.applyGlideToImageView(uri, imgUserPic, x, y, true);
-
         }
     }
 }

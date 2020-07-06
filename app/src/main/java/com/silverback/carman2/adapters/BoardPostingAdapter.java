@@ -138,7 +138,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
                 // Set the listener for clicking the item with position
                 holder.itemView.setOnClickListener(view -> {
-                    //log.i("position: %s, %s", position, holder.getAdapterPosition());
                     if(mListener != null) mListener.onPostItemClicked(snapshot, position);
                 });
 
