@@ -81,12 +81,6 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
     public PagingQueryHelper(FirebaseFirestore firestore) {
         this.firestore = firestore;
         colRef = firestore.collection("board_general");
-        colRef.addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
-            source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites()) ?
-                    Source.CACHE : Source.SERVER;
-
-        });
-
     }
 
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of

@@ -40,6 +40,9 @@ import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.postingboard.PostingBoardLiveData;
+import com.silverback.carman2.postingboard.PostingBoardRepository;
+import com.silverback.carman2.postingboard.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.PagingQueryHelper;
@@ -71,6 +74,9 @@ public class BoardPagerFragment extends Fragment implements
     private Source source;
     private PagingQueryHelper pageHelper;
     private BoardPagerAdapter pagerAdapter;
+
+    private PostingBoardViewModel postingModel;
+
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
     private List<DocumentSnapshot> snapshotList;
@@ -130,6 +136,8 @@ public class BoardPagerFragment extends Fragment implements
         imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
+        postingModel = new ViewModelProvider(this).get(PostingBoardViewModel.class);
+
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
@@ -182,26 +190,26 @@ public class BoardPagerFragment extends Fragment implements
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
 
+        //PostingBoardRepository repo = new PostingBoardRepository();
+        /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
                 isLoading = true;
                 isLastPage = false;
                 pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
-        } else pageHelper.setPostingQuery(currentPage, isViewOrder);
+        } else {
+            pageHelper.setPostingQuery(currentPage, isViewOrder);
+
+        }
+
+         */
+
+
+        //repo.setPostingQuery(currentPage, isViewOrder);
+        getBoardPost();
 
         return localView;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        log.i("onResume");
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -595,6 +603,16 @@ public class BoardPagerFragment extends Fragment implements
                     pb.setVisibility(View.GONE);
                     e.printStackTrace();
                 });
+    }
+
+
+    private void getBoardPost() {
+        PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
+        if(postLiveData != null) {
+            postLiveData.observe(getViewLifecycleOwner(), operation -> {
+                log.i("post livedata: %s", operation.getType());
+            });
+        }
     }
 }
 
