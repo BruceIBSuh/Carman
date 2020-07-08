@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,7 +33,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
@@ -41,12 +41,10 @@ import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.postingboard.PostingBoardLiveData;
-import com.silverback.carman2.postingboard.PostingBoardModelFactory;
-import com.silverback.carman2.postingboard.PostingBoardRepository;
 import com.silverback.carman2.postingboard.PostingBoardViewModel;
+import com.silverback.carman2.postingboard.PostingBoardModelFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.PagingQueryHelper;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
@@ -64,7 +62,7 @@ import java.util.Map;
 
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
-        PagingQueryHelper.OnPaginationListener,
+        //PagingQueryHelper.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
@@ -73,11 +71,10 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private Source source;
-    private PagingQueryHelper pageHelper;
+    //private PagingQueryHelper pageHelper;
     private BoardPagerAdapter pagerAdapter;
 
     private PostingBoardViewModel postingModel;
-    private PostingBoardModelFactory modelFactory;
 
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
@@ -94,6 +91,7 @@ public class BoardPagerFragment extends Fragment implements
     private PostingRecyclerView recyclerPostView;
     private TextView tvEmptyView;
     private TextView tvSorting;
+    private FloatingActionButton fabWrite;
 
     // Fields
     private String automaker;
@@ -102,7 +100,7 @@ public class BoardPagerFragment extends Fragment implements
     private boolean isLoading;
     private boolean isLastPage;
     private boolean isViewUpdated;
-    private ViewModelProvider.Factory PostingBoardModelFactory;
+    private boolean isScrolling;
 
     // Constructor
     public BoardPagerFragment() {
@@ -139,22 +137,25 @@ public class BoardPagerFragment extends Fragment implements
         imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
-
-        postingModel = new ViewModelProvider(this, modelFactory).get(PostingBoardViewModel.class);
-
+        //postingModel = new ViewModelProvider(this).get(PostingBoardViewModel.class);
+        log.i("page and order: %s, %s", currentPage, isViewOrder);
+        postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(currentPage, isViewOrder))
+                .get(PostingBoardViewModel.class);
 
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
-        pageHelper = new PagingQueryHelper(firestore);
-        pageHelper.setOnPaginationListener(this);
+        //pageHelper = new PagingQueryHelper(firestore);
+        //pageHelper.setOnPaginationListener(this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
         ((BoardActivity)getActivity()).setAutoFilterListener(this);
         pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
+
+
 
     }
 
@@ -177,8 +178,11 @@ public class BoardPagerFragment extends Fragment implements
         //itemAnimator.setSupportsChangeAnimations(false);
         recyclerPostView.setAdapter(postingAdapter);
 
+
         // Show/hide Floating Action Button as the recyclerview scrolls.
-        FloatingActionButton fabWrite = ((BoardActivity)getActivity()).getFAB();
+        fabWrite = ((BoardActivity)getActivity()).getFAB();
+        setRecyclerViewScrollListener();
+        /*
         recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -190,10 +194,12 @@ public class BoardPagerFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
             }
         });
-
+        */
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
-        recyclerPostView.addOnScrollListener(pageHelper);
+        //recyclerPostView.addOnScrollListener(pageHelper);
+
+        //PostingBoardRepository repo = new PostingBoardRepository();
         /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
@@ -208,9 +214,8 @@ public class BoardPagerFragment extends Fragment implements
 
          */
 
-
-        //repo.setPostingQuery(currentPage, isViewOrder);
-        getBoardPost();
+        // VERY VERY CRITICAL METHOD!!
+        queryPostSnapshot();
 
         return localView;
     }
@@ -225,7 +230,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) {
                 // Instead of using notifyItemInserted(), query should be done due to the post
                 // sequential number to be updated..
-                pageHelper.setPostingQuery(currentPage, isViewOrder);
+                //pageHelper.setPostingQuery(currentPage, isViewOrder);
 
             }
         });
@@ -237,13 +242,13 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
             //log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
-                pageHelper.setPostingQuery(currentPage, isViewOrder);
+                //pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
         });
 
         fragmentModel.getEditPosting().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                pageHelper.setPostingQuery(currentPage, isViewOrder);
+                //pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
         });
 
@@ -287,7 +292,7 @@ public class BoardPagerFragment extends Fragment implements
             String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
             tvSorting.setText(sortLabel);
             snapshotList.clear();
-            pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
+            //pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
 
             // Rotate the imageview holding emblem
             ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
@@ -311,6 +316,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Implement PagingQueryHelper.OnPaginationListener which notifies the adapter of the first and
     // the next query results.
+    /*
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
         log.i("first query: %s", snapshots.size());
@@ -345,7 +351,7 @@ public class BoardPagerFragment extends Fragment implements
                 return;
             } else {
                 isLoading = true;
-                pageHelper.setNextQuery(snapshots);
+                //pageHelper.setNextQuery(snapshots);
             }
 
         } else {
@@ -419,7 +425,7 @@ public class BoardPagerFragment extends Fragment implements
                     if(!isLoading && !isLastPage && firstItemPos + visibleItemCount >= snapshotList.size()) {
                         isLoading = true;
                         isLastPage = snapshots.size() < Constants.PAGINATION;
-                        if(!isLastPage) pageHelper.setNextQuery(snapshots);
+                        //if(!isLastPage) pageHelper.setNextQuery(snapshots);
                     }
                 }
             });
@@ -431,13 +437,15 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+     */
+
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
     // performa a new query with new autofilter values
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         this.autoFilter = autofilter;
         pagerAdapter.notifyDataSetChanged();
-        pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
+        //pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
         // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
@@ -519,7 +527,8 @@ public class BoardPagerFragment extends Fragment implements
     // This method sorts out the autoclub posts based on the autofilter by removing a document out of
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
     // notation
-    private void sortAutoClubPost(QueryDocumentSnapshot snapshot) {
+    private void sortAutoClubPost(DocumentSnapshot snapshot) {
+        if(!snapshot.exists()) return;
         snapshotList.add(snapshot);
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
@@ -530,6 +539,8 @@ public class BoardPagerFragment extends Fragment implements
                 }
             }
         }
+
+        log.i("autoclub list: %s", snapshotList.size());
     }
 
 
@@ -608,14 +619,79 @@ public class BoardPagerFragment extends Fragment implements
                 });
     }
 
-
-    private void getBoardPost() {
+    // LiveData
+    int index = 0;
+    private void queryPostSnapshot() {
         PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
         if(postLiveData != null) {
             postLiveData.observe(getViewLifecycleOwner(), operation -> {
-                log.i("post livedata: %s", operation.getSnapshot().getString("post_title"));
+                int type = operation.getType();
+                DocumentSnapshot postshot = operation.getDocumentSnapshot();
+                switch(type) {
+                    case 0: // ADDED
+                        log.i("ADDED");
+                        if(currentPage == Constants.BOARD_AUTOCLUB) {
+                            sortAutoClubPost(postshot);
+                        } else snapshotList.add(postshot);
+
+                        break;
+
+                    case 1: // MODIFIED
+                        log.i("MODIFIED");
+                        snapshotList.set(index, postshot);
+                        break;
+
+                    case 2: // REMOVED
+                        log.i("REMOVED");
+                        snapshotList.remove(index);
+                        break;
+
+                }
+
+                postingAdapter.notifyDataSetChanged();
+
             });
+            index ++;
+
+
         }
+    }
+
+    private void setRecyclerViewScrollListener() {
+        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
+                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
+                    isScrolling = true;
+                else fabWrite.show();
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
+
+                LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
+                if (layoutManager != null) {
+                    int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
+                    int visiblePostCount = layoutManager.getChildCount();
+                    int totalPostCount = layoutManager.getItemCount();
+
+                    if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                        isScrolling = false;
+                        queryPostSnapshot();
+                    }
+                }
+
+
+            }
+
+        };
+
+        recyclerPostView.addOnScrollListener(scrollListener);
     }
 }
 

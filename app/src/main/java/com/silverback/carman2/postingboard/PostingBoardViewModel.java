@@ -5,21 +5,26 @@ import androidx.lifecycle.ViewModel;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-//@SuppressWarnings("WeakerAccess")
+@SuppressWarnings("WeakerAccess")
 public class PostingBoardViewModel extends ViewModel {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardViewModel.class);
 
-    // Not only instantiate PostingBoardRepository but also implement PostingBoardLiveDataCallback
-    // interface at the same time.
-    private PostingBoardLiveDataCallback mLiveDataCallback = new PostingBoardRepository();
+    // Objects
+    private PostingBoardLiveDataCallback mCallback;
 
+    // Implement to get the livedata in the repo.
     public interface PostingBoardLiveDataCallback {
         PostingBoardLiveData getPostingBoardLiveData();
     }
-    // Referenced in getBoardPost()
+
+    public PostingBoardViewModel(int page, boolean isViewOrder) {
+        mCallback = new PostingBoardRepository(page, isViewOrder);
+    }
+
+
     public PostingBoardLiveData getPostingBoardLiveData() {
-        return mLiveDataCallback.getPostingBoardLiveData();
+        return mCallback.getPostingBoardLiveData();
     }
 
 

@@ -15,7 +15,8 @@ public class PostingBoardOperation {
     public int getType() {
         return type;
     }
-    public DocumentSnapshot getSnapshot() {
+
+    public DocumentSnapshot getDocumentSnapshot() {
         return snapshot;
     }
 }
