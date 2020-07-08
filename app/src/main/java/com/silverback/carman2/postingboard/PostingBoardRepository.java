@@ -4,12 +4,16 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
 public class PostingBoardRepository implements
-        PostingBoardViewModel.PostingBoardRepo,
+        PostingBoardViewModel.PostingBoardLiveDataCallback,
         PostingBoardLiveData.OnLastVisibleListener,
         PostingBoardLiveData.OnLastPostListener {
+
+    private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardRepository.class);
 
     private FirebaseFirestore firestore;
     private CollectionReference colRef;
@@ -17,10 +21,11 @@ public class PostingBoardRepository implements
     private DocumentSnapshot lastVisibleshot;
     private boolean isLastPage;
 
-    public PostingBoardRepository() {
+    public PostingBoardRepository(int page, boolean isViewOrder) {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
-        setPostingQuery(2, true);
+        setPostingQuery(page, isViewOrder);
+        log.i("page and sort: %s, %s", page, isViewOrder);
     }
 
     public void setPostingQuery(int page, boolean isViewOrder) {
@@ -49,9 +54,10 @@ public class PostingBoardRepository implements
 
     }
 
+    // Implement PostingBoardViewModel.PostingBoardLiveDataCallback to instantiate PostingBoardLiveData.class
+    // with params, the result of which should be notified to the view(BoardPagerFragment).
     @Override
     public PostingBoardLiveData getPostingBoardLiveData() {
-
         if(isLastPage) return null;
         if(lastVisibleshot != null) query = query.startAfter(lastVisibleshot);
 
@@ -67,6 +73,5 @@ public class PostingBoardRepository implements
     public void setLastPage(boolean isLastPage) {
         this.isLastPage = isLastPage;
     }
-
 
 }

@@ -88,8 +88,8 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
             }
         }
 
-        // Listeners are notified of the last visible post or the last post.
-        int shotSize = querySnapshot.size();
+        // Listeners are notified of the last visible post and the last post.
+        final int shotSize = querySnapshot.size();
         if(shotSize < Constants.PAGINATION) {
             lastPostCallback.setLastPage(true);
         } else {
@@ -97,4 +97,5 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
             lastVisibleCallback.setLastVisible(lastVisibleShot);
         }
     }
+
 }
