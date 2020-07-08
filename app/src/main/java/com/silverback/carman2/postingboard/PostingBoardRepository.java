@@ -7,7 +7,7 @@ import com.google.firebase.firestore.Query;
 import com.silverback.carman2.utils.Constants;
 
 public class PostingBoardRepository implements
-        PostingBoardViewModel.PostingBoardRepo,
+        PostingBoardViewModel.PostingBoardLiveDataCallback,
         PostingBoardLiveData.OnLastVisibleListener,
         PostingBoardLiveData.OnLastPostListener {
 
@@ -20,7 +20,6 @@ public class PostingBoardRepository implements
     public PostingBoardRepository() {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
-        setPostingQuery(2, true);
     }
 
     public void setPostingQuery(int page, boolean isViewOrder) {
@@ -51,7 +50,6 @@ public class PostingBoardRepository implements
 
     @Override
     public PostingBoardLiveData getPostingBoardLiveData() {
-
         if(isLastPage) return null;
         if(lastVisibleshot != null) query = query.startAfter(lastVisibleshot);
 

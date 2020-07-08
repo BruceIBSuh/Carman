@@ -41,6 +41,7 @@ import com.silverback.carman2.adapters.BoardPostingAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.postingboard.PostingBoardLiveData;
+import com.silverback.carman2.postingboard.PostingBoardModelFactory;
 import com.silverback.carman2.postingboard.PostingBoardRepository;
 import com.silverback.carman2.postingboard.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
@@ -76,6 +77,7 @@ public class BoardPagerFragment extends Fragment implements
     private BoardPagerAdapter pagerAdapter;
 
     private PostingBoardViewModel postingModel;
+    private PostingBoardModelFactory modelFactory;
 
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
@@ -100,6 +102,7 @@ public class BoardPagerFragment extends Fragment implements
     private boolean isLoading;
     private boolean isLastPage;
     private boolean isViewUpdated;
+    private ViewModelProvider.Factory PostingBoardModelFactory;
 
     // Constructor
     public BoardPagerFragment() {
@@ -136,7 +139,9 @@ public class BoardPagerFragment extends Fragment implements
         imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
-        postingModel = new ViewModelProvider(this).get(PostingBoardViewModel.class);
+
+        postingModel = new ViewModelProvider(this, modelFactory).get(PostingBoardViewModel.class);
+
 
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
@@ -189,8 +194,6 @@ public class BoardPagerFragment extends Fragment implements
         // Paginate the recyclerview with the preset limit attaching OnScrollListener because
         // PagingQueryHelper subclasses RecyclerView.OnScrollListner.
         recyclerPostView.addOnScrollListener(pageHelper);
-
-        //PostingBoardRepository repo = new PostingBoardRepository();
         /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
@@ -610,7 +613,7 @@ public class BoardPagerFragment extends Fragment implements
         PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
         if(postLiveData != null) {
             postLiveData.observe(getViewLifecycleOwner(), operation -> {
-                log.i("post livedata: %s", operation.getType());
+                log.i("post livedata: %s", operation.getSnapshot().getString("post_title"));
             });
         }
     }

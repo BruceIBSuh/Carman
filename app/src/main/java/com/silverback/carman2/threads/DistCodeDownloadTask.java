@@ -12,8 +12,6 @@ public class DistCodeDownloadTask extends ThreadTask
     // Logging
     private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadTask.class);
 
-
-
     // Objects
     private OpinetViewModel model;
     private Runnable opinetDistCodeRunnable;
