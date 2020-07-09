@@ -11,13 +11,11 @@ public class PostingBoardModelFactory implements ViewModelProvider.Factory {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardModelFactory.class);
 
-    private int page;
-    private boolean isViewOrder;
+    private PostingBoardRepository repo;
 
-    public PostingBoardModelFactory(int page, boolean isViewOrder) {
-        this.page = page;
-        this.isViewOrder = isViewOrder;
-        log.i("params: %s, %s", page, isViewOrder);
+
+    public PostingBoardModelFactory(PostingBoardRepository repo) {
+        this.repo = repo;
     }
 
     @SuppressWarnings("unchecked")
@@ -25,7 +23,7 @@ public class PostingBoardModelFactory implements ViewModelProvider.Factory {
     @Override
     public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
         if(modelClass.equals(PostingBoardViewModel.class)) {
-            return (T) new PostingBoardViewModel(page, isViewOrder);
+            return (T) new PostingBoardViewModel(repo);
 
         } else throw new IllegalArgumentException("unexpected model class: " + modelClass);
     }

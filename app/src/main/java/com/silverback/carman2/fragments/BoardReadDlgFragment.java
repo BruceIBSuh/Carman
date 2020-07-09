@@ -82,8 +82,8 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
-        View.OnClickListener,
-        PagingQueryHelper.OnPaginationListener {
+        View.OnClickListener {
+        //PagingQueryHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -196,7 +196,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Instantiate PagingQueryHelper to paginate comments in a post.
         pagingUtil = new PagingQueryHelper(firestore);
-        pagingUtil.setOnPaginationListener(this);
+        //pagingUtil.setOnPaginationListener(this);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -254,7 +254,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
         recyclerComment.setAdapter(commentAdapter);
-        recyclerComment.addOnScrollListener(pagingUtil);
+        //recyclerComment.addOnScrollListener(pagingUtil);
 
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
@@ -291,7 +291,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Rearrange the text by paragraphs
         readContentView(postContent);
         // Query comments
-        pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
+        //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
 
         return localView;
     }
@@ -387,6 +387,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // The following callbacks are invoked by PagingQueryHelper to query comments up to the limit
     // and on showing the last one, another query get started.
+    /*
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshot) {
         snapshotList.clear();
@@ -404,6 +405,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //commentAdapter.notifyDataSetChanged();
         commentAdapter.notifyItemInserted(0);
     }
+
+     */
 
     // Method for uploading the comment to Firestore.
     @SuppressWarnings("ConstantConditions")

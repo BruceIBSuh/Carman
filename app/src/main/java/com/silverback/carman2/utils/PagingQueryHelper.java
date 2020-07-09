@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  * @boolean isLastPage
  * @booelan isLoading
  */
-public class PagingQueryHelper extends RecyclerView.OnScrollListener {
+public class PagingQueryHelper {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PagingQueryHelper.class);
     // Objects
@@ -72,9 +72,9 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
 
     // Interface w/ BoardPagerFragment to notify the state of querying process and pagination.
     public interface OnPaginationListener {
-        void setFirstQuery(int page, QuerySnapshot snapshot);
+        void setFirstQuery(QuerySnapshot snapshot);
         void setNextQueryStart(boolean b);
-        void setNextQueryComplete(int page, QuerySnapshot snapshot);
+        void setNextQueryComplete(QuerySnapshot snapshot);
     }
 
     // private constructor
@@ -101,13 +101,16 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
      * @param page current page to query
      * @param autofilter the autoclub page query conditions.
      */
-    public void setPostingQuery(int page, boolean isViewOrder) {
+    public void setPostingQuery(boolean isViewOrder) {
         queryPostShot = null;
         Query query = colRef;
-        currentPage = page;
+        //currentPage = page;
         isLastPage = false;
         isLoading = true;
 
+        this.field = (isViewOrder)? "cnt_view" : "timestamp";
+        query = query.orderBy(field, Query.Direction.DESCENDING);
+        /*
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -131,9 +134,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 break;
         }
 
-        /*
+         */
+
         query.limit(Constants.PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
-            isLoading = false;
+            //isLoading = false;
             if(e != null || querySnapshot == null) return;
 
             for(DocumentChange change : querySnapshot.getDocumentChanges()) {
@@ -143,12 +147,12 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             }
 
             this.queryPostShot = querySnapshot;
-            isLastPage = (querySnapshot.size()) < Constants.PAGINATION;
-            mListener.setFirstQuery(page, queryPostShot);
+            //isLastPage = (querySnapshot.size()) < Constants.PAGINATION;
+            mListener.setFirstQuery(queryPostShot);
 
         });
-        */
 
+        /*
         query.limit(Constants.PAGINATION).get(Source.SERVER).addOnSuccessListener(snapshots -> {
             log.i("cache or server: %s", snapshots.getMetadata().isFromCache());
             isLoading = false;
@@ -157,9 +161,12 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             mListener.setFirstQuery(page, queryPostShot);
 
         }).addOnFailureListener(Exception::printStackTrace);
+
+         */
     }
 
     // Query post comments which is called in BoardReadDlgFragment
+    /*
     public void setCommentQuery(int page, final String field, final DocumentReference docRef) {
         queryPostShot = null;
         this.field = field;
@@ -178,6 +185,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                     mListener.setFirstQuery(page, queryCommentShot);
                 });
     }
+
+     */
 
     // Make the next query manually particularily for the autoclub which performs a regular query
     // based on either cnt_view or timestamp, the results of which will be passed to the list
@@ -200,11 +209,12 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION).get(source).addOnSuccessListener(nextSnapshot -> {
                     mListener.setNextQueryStart(false);
-                    mListener.setNextQueryComplete(Constants.BOARD_AUTOCLUB, nextSnapshot);
+                    mListener.setNextQueryComplete(nextSnapshot);
                 });
     }
 
     // Callback method to be invoked when RecyclerView's scroll state changes.
+    /*
     @Override
     public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
         super.onScrollStateChanged(recyclerView, newState);
@@ -238,7 +248,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             // Making the next query, the autoclub page has to be handled in a diffent way than
             // the other pages because it queries with different conditions.
             Query nextQuery = colRef;
-            /*
+
             nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                     .limit(Constants.PAGINATION)
                     .addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
@@ -259,7 +269,7 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                         isLastPage = (nextSnapshot.size()) < Constants.PAGINATION;
                     });
 
-             */
+
             nextQuery.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                     .limit(Constants.PAGINATION).get(source).addOnSuccessListener(nextSnapshot -> {
                         isLoading = false;
@@ -273,6 +283,9 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             });
         }
     }
+
+     */
+
 
 
 

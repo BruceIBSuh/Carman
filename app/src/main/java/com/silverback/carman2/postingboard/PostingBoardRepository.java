@@ -20,16 +20,17 @@ public class PostingBoardRepository implements
     private Query query;
     private DocumentSnapshot lastVisibleshot;
     private boolean isLastPage;
+    private int page;
 
-    public PostingBoardRepository(int page, boolean isViewOrder) {
+    public PostingBoardRepository() {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
-        setPostingQuery(page, isViewOrder);
-        log.i("page and sort: %s, %s", page, isViewOrder);
     }
 
     public void setPostingQuery(int page, boolean isViewOrder) {
         query = colRef;
+        this.page = page;
+
         switch(page) {
             case Constants.BOARD_RECENT:
                 //this.field = "timestamp";
@@ -40,12 +41,13 @@ public class PostingBoardRepository implements
                 //this.field = "cnt_view";
                 query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
-
+            /*
             case Constants.BOARD_AUTOCLUB:
+                log.i("autoclub query: %s", isViewOrder);
                 String field = (isViewOrder)? "cnt_view" : "timestamp";
                 query = query.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
-
+            */
             // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION:
                 query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
@@ -61,7 +63,7 @@ public class PostingBoardRepository implements
         if(isLastPage) return null;
         if(lastVisibleshot != null) query = query.startAfter(lastVisibleshot);
 
-        return new PostingBoardLiveData(query, this, this);
+        return new PostingBoardLiveData(query, page, this, this);
     }
 
     @Override

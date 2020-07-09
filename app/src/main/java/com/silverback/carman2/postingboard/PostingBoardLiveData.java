@@ -28,6 +28,8 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     private OnLastVisibleListener lastVisibleCallback;
     private OnLastPostListener lastPostCallback;
 
+    private int page;
+
     // Interface
     public interface OnLastVisibleListener {
         void setLastVisible(DocumentSnapshot lastVisible);
@@ -39,12 +41,13 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
 
 
     // Constructor
-    public PostingBoardLiveData(
-            Query query, OnLastVisibleListener lastVisbleCallback, OnLastPostListener lastPostCallback) {
+    public PostingBoardLiveData(Query query, int page,
+            OnLastVisibleListener lastVisbleCallback, OnLastPostListener lastPostCallback) {
 
         this.query = query;
         this.lastVisibleCallback = lastVisbleCallback;
         this.lastPostCallback = lastPostCallback;
+        this.page = page;
 
     }
 
@@ -66,7 +69,9 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException e) {
         if(e != null || querySnapshot == null) return;
 
+
         for(DocumentChange documentChange : querySnapshot.getDocumentChanges()) {
+            log.i("LiveData page: %s", page);
             switch(documentChange.getType()) {
                 case ADDED:
                     DocumentSnapshot addShot = documentChange.getDocument();
