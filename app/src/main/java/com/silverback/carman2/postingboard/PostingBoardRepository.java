@@ -11,7 +11,7 @@ import com.silverback.carman2.utils.Constants;
 public class PostingBoardRepository implements
         PostingBoardViewModel.PostingBoardLiveDataCallback,
         PostingBoardLiveData.OnLastVisibleListener,
-        PostingBoardLiveData.OnLastPostListener {
+        PostingBoardLiveData.OnLastPageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardRepository.class);
 
@@ -20,41 +20,35 @@ public class PostingBoardRepository implements
     private Query query;
     private DocumentSnapshot lastVisibleshot;
     private boolean isLastPage;
-    private boolean isViewOrder;
+    private int page;
 
-    public PostingBoardRepository(int page) {
+    public PostingBoardRepository() {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
-        setPostingQuery(page);
     }
 
-    public void setPostingQuery(int page) {
+    public void setPostingQuery(int page, boolean isViewOrder) {
         query = colRef;
+        this.page = page;
+
         switch(page) {
             case Constants.BOARD_RECENT:
+                //this.field = "timestamp";
                 query = query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
 
             case Constants.BOARD_POPULAR:
+                //this.field = "cnt_view";
                 query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
-                break;
-            /*
-            case Constants.BOARD_AUTOCLUB:
-                log.i("isViewOrder : %s", isViewOrder);
-                String field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = query.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION);
-                isViewOrder = !isViewOrder;
-                break;
 
-             */
-
-            // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION:
                 query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
 
     }
+
+    public void setPostingComment(){}
 
     // Implement PostingBoardViewModel.PostingBoardLiveDataCallback to instantiate PostingBoardLiveData.class
     // with params, the result of which should be notified to the view(BoardPagerFragment).
@@ -63,7 +57,7 @@ public class PostingBoardRepository implements
         if(isLastPage) return null;
         if(lastVisibleshot != null) query = query.startAfter(lastVisibleshot);
 
-        return new PostingBoardLiveData(query, this, this);
+        return new PostingBoardLiveData(query, page, this, this);
     }
 
     @Override

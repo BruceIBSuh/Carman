@@ -45,7 +45,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
@@ -56,7 +55,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.PagingQueryHelper;
+import com.silverback.carman2.postingboard.PostingClubRepository;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -82,8 +81,8 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
-        View.OnClickListener,
-        PagingQueryHelper.OnPaginationListener {
+        View.OnClickListener {
+        //PagingQueryHelper.OnPaginationListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -94,7 +93,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private Context context;
-    private PagingQueryHelper pagingUtil;
+    private PostingClubRepository pagingUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -195,8 +194,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
          */
 
         // Instantiate PagingQueryHelper to paginate comments in a post.
-        pagingUtil = new PagingQueryHelper(firestore);
-        pagingUtil.setOnPaginationListener(this);
+        pagingUtil = new PostingClubRepository(firestore);
+        //pagingUtil.setOnPaginationListener(this);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -254,7 +253,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
         recyclerComment.setAdapter(commentAdapter);
-        recyclerComment.addOnScrollListener(pagingUtil);
+        //recyclerComment.addOnScrollListener(pagingUtil);
 
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
@@ -291,7 +290,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Rearrange the text by paragraphs
         readContentView(postContent);
         // Query comments
-        pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
+        //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
 
         return localView;
     }
@@ -387,6 +386,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // The following callbacks are invoked by PagingQueryHelper to query comments up to the limit
     // and on showing the last one, another query get started.
+    /*
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshot) {
         snapshotList.clear();
@@ -404,6 +404,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //commentAdapter.notifyDataSetChanged();
         commentAdapter.notifyItemInserted(0);
     }
+
+     */
 
     // Method for uploading the comment to Firestore.
     @SuppressWarnings("ConstantConditions")

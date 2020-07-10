@@ -18,15 +18,12 @@ public class PostingBoardViewModel extends ViewModel {
         PostingBoardLiveData getPostingBoardLiveData();
     }
 
-    // Constructor
-    public PostingBoardViewModel(int page) {
-        mCallback = new PostingBoardRepository(page);
+    public PostingBoardViewModel(PostingBoardRepository repo) {
+        mCallback = (PostingBoardLiveDataCallback) repo;
     }
 
 
     public PostingBoardLiveData getPostingBoardLiveData() {
         return mCallback.getPostingBoardLiveData();
     }
-
-
 }
