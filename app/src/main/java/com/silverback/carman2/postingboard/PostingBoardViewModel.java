@@ -18,8 +18,9 @@ public class PostingBoardViewModel extends ViewModel {
         PostingBoardLiveData getPostingBoardLiveData();
     }
 
-    public PostingBoardViewModel(int page, boolean isViewOrder) {
-        mCallback = new PostingBoardRepository(page, isViewOrder);
+    // Constructor
+    public PostingBoardViewModel(int page) {
+        mCallback = new PostingBoardRepository(page);
     }
 
 

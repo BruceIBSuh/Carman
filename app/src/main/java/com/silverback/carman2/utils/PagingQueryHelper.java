@@ -108,6 +108,10 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
         isLastPage = false;
         isLoading = true;
 
+        this.field = (isViewOrder)? "cnt_view" : "timestamp";
+        query = query.orderBy(field, Query.Direction.DESCENDING);
+
+        /*
         switch(page) {
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -130,25 +134,19 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
                 query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
+        */
 
-        /*
         query.limit(Constants.PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
             isLoading = false;
             if(e != null || querySnapshot == null) return;
-
-            for(DocumentChange change : querySnapshot.getDocumentChanges()) {
-                if(change.getType() == DocumentChange.Type.ADDED) log.i("added");
-                String source = querySnapshot.getMetadata().isFromCache()? "local cache" : "server";
-                log.i("Data from: %s", source);
-            }
 
             this.queryPostShot = querySnapshot;
             isLastPage = (querySnapshot.size()) < Constants.PAGINATION;
             mListener.setFirstQuery(page, queryPostShot);
 
         });
-        */
 
+        /*
         query.limit(Constants.PAGINATION).get(Source.SERVER).addOnSuccessListener(snapshots -> {
             log.i("cache or server: %s", snapshots.getMetadata().isFromCache());
             isLoading = false;
@@ -157,6 +155,8 @@ public class PagingQueryHelper extends RecyclerView.OnScrollListener {
             mListener.setFirstQuery(page, queryPostShot);
 
         }).addOnFailureListener(Exception::printStackTrace);
+
+         */
     }
 
     // Query post comments which is called in BoardReadDlgFragment

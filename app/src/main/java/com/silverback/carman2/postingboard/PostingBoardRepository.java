@@ -20,31 +20,33 @@ public class PostingBoardRepository implements
     private Query query;
     private DocumentSnapshot lastVisibleshot;
     private boolean isLastPage;
+    private boolean isViewOrder;
 
-    public PostingBoardRepository(int page, boolean isViewOrder) {
+    public PostingBoardRepository(int page) {
         firestore = FirebaseFirestore.getInstance();
         colRef = firestore.collection("board_general");
-        setPostingQuery(page, isViewOrder);
-        log.i("page and sort: %s, %s", page, isViewOrder);
+        setPostingQuery(page);
     }
 
-    public void setPostingQuery(int page, boolean isViewOrder) {
+    public void setPostingQuery(int page) {
         query = colRef;
         switch(page) {
             case Constants.BOARD_RECENT:
-                //this.field = "timestamp";
                 query = query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
 
             case Constants.BOARD_POPULAR:
-                //this.field = "cnt_view";
                 query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
-
+            /*
             case Constants.BOARD_AUTOCLUB:
+                log.i("isViewOrder : %s", isViewOrder);
                 String field = (isViewOrder)? "cnt_view" : "timestamp";
                 query = query.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                isViewOrder = !isViewOrder;
                 break;
+
+             */
 
             // Should create a new collection managed by Admin.(e.g. board_admin)
             case Constants.BOARD_NOTIFICATION:

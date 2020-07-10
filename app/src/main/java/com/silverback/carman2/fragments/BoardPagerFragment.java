@@ -33,6 +33,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
@@ -45,6 +46,7 @@ import com.silverback.carman2.postingboard.PostingBoardViewModel;
 import com.silverback.carman2.postingboard.PostingBoardModelFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.PagingQueryHelper;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
@@ -62,7 +64,7 @@ import java.util.Map;
 
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
-        //PagingQueryHelper.OnPaginationListener,
+        PagingQueryHelper.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
@@ -71,7 +73,7 @@ public class BoardPagerFragment extends Fragment implements
     // Objects
     private FirebaseFirestore firestore;
     private Source source;
-    //private PagingQueryHelper pageHelper;
+    private PagingQueryHelper pageHelper;
     private BoardPagerAdapter pagerAdapter;
 
     private PostingBoardViewModel postingModel;
@@ -84,6 +86,8 @@ public class BoardPagerFragment extends Fragment implements
     private ApplyImageResourceUtil imgutil;
 
     private WorkRequest networkRequest;
+
+    private QuerySnapshot lastShots;
 
     // UIs
     private LinearLayoutManager layoutManager;
@@ -138,17 +142,22 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         //postingModel = new ViewModelProvider(this).get(PostingBoardViewModel.class);
+        /*
         log.i("page and order: %s, %s", currentPage, isViewOrder);
-        postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(currentPage, isViewOrder))
-                .get(PostingBoardViewModel.class);
+        //if(currentPage != Constants.BOARD_AUTOCLUB) {
+            postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(currentPage))
+                    .get(PostingBoardViewModel.class);
+        //}
+
+         */
 
         //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         snapshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(snapshotList, this);
 
-        //pageHelper = new PagingQueryHelper(firestore);
-        //pageHelper.setOnPaginationListener(this);
+        pageHelper = new PagingQueryHelper(firestore);
+        pageHelper.setOnPaginationListener(this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
@@ -200,7 +209,6 @@ public class BoardPagerFragment extends Fragment implements
         //recyclerPostView.addOnScrollListener(pageHelper);
 
         //PostingBoardRepository repo = new PostingBoardRepository();
-        /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!TextUtils.isEmpty(automaker)) {
                 isLoading = true;
@@ -208,14 +216,14 @@ public class BoardPagerFragment extends Fragment implements
                 pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
         } else {
-            pageHelper.setPostingQuery(currentPage, isViewOrder);
+            //pageHelper.setPostingQuery(currentPage, isViewOrder);
+            postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(currentPage))
+                    .get(PostingBoardViewModel.class);
 
+            // VERY VERY CRITICAL METHOD!!
+            queryPostSnapshot();
         }
 
-         */
-
-        // VERY VERY CRITICAL METHOD!!
-        queryPostSnapshot();
 
         return localView;
     }
@@ -292,7 +300,8 @@ public class BoardPagerFragment extends Fragment implements
             String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
             tvSorting.setText(sortLabel);
             snapshotList.clear();
-            //pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
+            pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
+            //queryPostSnapshot();
 
             // Rotate the imageview holding emblem
             ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
@@ -316,7 +325,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Implement PagingQueryHelper.OnPaginationListener which notifies the adapter of the first and
     // the next query results.
-    /*
+
     @Override
     public void setFirstQuery(int page, QuerySnapshot snapshots) {
         log.i("first query: %s", snapshots.size());
@@ -327,6 +336,8 @@ public class BoardPagerFragment extends Fragment implements
             // In the autoclub page, the query result is added to the list regardless of whether the
             // field value of 'post_general" is true or not. The other boards, however, the result
             // is added as far as the post_general is true.
+            sortAutoClubPost(snapshot);
+            /*
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
                     sortAutoClubPost(snapshot);
@@ -338,7 +349,11 @@ public class BoardPagerFragment extends Fragment implements
                     if((boolean)snapshot.get("post_general")) snapshotList.add(snapshot);
                     break;
             }
+
+             */
         }
+        postingAdapter.notifyDataSetChanged();
+
 
         if(page == Constants.BOARD_AUTOCLUB) {
             // First query comes to the end of the documents.
@@ -351,10 +366,12 @@ public class BoardPagerFragment extends Fragment implements
                 return;
             } else {
                 isLoading = true;
-                //pageHelper.setNextQuery(snapshots);
+                pageHelper.setNextQuery(snapshots);
             }
 
-        } else {
+        }
+        /*
+        else {
             // ViewPager normally creates neighboringpages in a row at the same time. Thus, the recent
             // page and the popular page will call notifyDataSetChanged() twice which incurs blinking
             // in RecyclerView. To prevent it, use a flag to update each page.
@@ -363,6 +380,8 @@ public class BoardPagerFragment extends Fragment implements
                 isViewUpdated = !isViewUpdated;
             }
         }
+
+         */
 
         pbLoading.setVisibility(View.GONE);
     }
@@ -379,7 +398,12 @@ public class BoardPagerFragment extends Fragment implements
     public void setNextQueryComplete(int page, QuerySnapshot snapshots) {
         log.i("Next queried: %s", snapshots.size());
         if(snapshots.size() == 0) return;
+        lastShots = snapshots;
 
+        for(QueryDocumentSnapshot snapshot : snapshots) {
+            sortAutoClubPost(snapshot);
+        }
+        /*
         for(QueryDocumentSnapshot snapshot : snapshots) {
             switch(page) {
                 case Constants.BOARD_AUTOCLUB:
@@ -395,6 +419,8 @@ public class BoardPagerFragment extends Fragment implements
                     break;
             }
         }
+
+         */
 
         if(page == Constants.BOARD_AUTOCLUB) {
             isLastPage = snapshots.size() < Constants.PAGINATION;
@@ -413,6 +439,7 @@ public class BoardPagerFragment extends Fragment implements
             // the adapter only when the last query is done.
             // CONDITION SHOULD BE CREATED TO PREVENT EXCESSIVE QUERY RESULTS FROM ADDING TO THE
             // LIST!!!
+            /*
             recyclerPostView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                 @Override
                 public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -430,14 +457,14 @@ public class BoardPagerFragment extends Fragment implements
                 }
             });
 
-        } else postingAdapter.notifyDataSetChanged();
+             */
+
+        } //else postingAdapter.notifyDataSetChanged();
 
 
         pbPaging.setVisibility(View.GONE);
 
     }
-
-     */
 
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
     // performa a new query with new autofilter values
@@ -539,8 +566,6 @@ public class BoardPagerFragment extends Fragment implements
                 }
             }
         }
-
-        log.i("autoclub list: %s", snapshotList.size());
     }
 
 
@@ -622,6 +647,8 @@ public class BoardPagerFragment extends Fragment implements
     // LiveData
     int index = 0;
     private void queryPostSnapshot() {
+        if(currentPage == Constants.BOARD_AUTOCLUB) return;
+
         PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
         if(postLiveData != null) {
             postLiveData.observe(getViewLifecycleOwner(), operation -> {
@@ -630,15 +657,17 @@ public class BoardPagerFragment extends Fragment implements
                 switch(type) {
                     case 0: // ADDED
                         log.i("ADDED");
+                        /*
                         if(currentPage == Constants.BOARD_AUTOCLUB) {
                             sortAutoClubPost(postshot);
                         } else snapshotList.add(postshot);
-
+                        */
+                        snapshotList.add(postshot);
                         break;
 
                     case 1: // MODIFIED
                         log.i("MODIFIED");
-                        snapshotList.set(index, postshot);
+                        //snapshotList.set(index, postshot);
                         break;
 
                     case 2: // REMOVED
@@ -649,10 +678,12 @@ public class BoardPagerFragment extends Fragment implements
                 }
 
                 postingAdapter.notifyDataSetChanged();
-
+                index ++;
+                log.i("post index: %s", index);
             });
-            index ++;
 
+            index = 0;
+            pbLoading.setVisibility(View.GONE);
 
         }
     }
@@ -682,7 +713,10 @@ public class BoardPagerFragment extends Fragment implements
 
                     if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         isScrolling = false;
-                        queryPostSnapshot();
+
+                        if(currentPage == Constants.BOARD_AUTOCLUB) {
+                            pageHelper.setNextQuery(lastShots);
+                        } else queryPostSnapshot();
                     }
                 }
 
