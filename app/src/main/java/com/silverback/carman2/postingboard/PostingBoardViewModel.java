@@ -26,6 +26,4 @@ public class PostingBoardViewModel extends ViewModel {
     public PostingBoardLiveData getPostingBoardLiveData() {
         return mCallback.getPostingBoardLiveData();
     }
-
-
 }

@@ -45,7 +45,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
@@ -56,7 +55,7 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.PagingQueryHelper;
+import com.silverback.carman2.postingboard.PostingClubRepository;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -94,7 +93,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private Context context;
-    private PagingQueryHelper pagingUtil;
+    private PostingClubRepository pagingUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -195,7 +194,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
          */
 
         // Instantiate PagingQueryHelper to paginate comments in a post.
-        pagingUtil = new PagingQueryHelper(firestore);
+        pagingUtil = new PostingClubRepository(firestore);
         //pagingUtil.setOnPaginationListener(this);
     }
 

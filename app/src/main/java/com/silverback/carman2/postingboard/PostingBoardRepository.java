@@ -11,7 +11,7 @@ import com.silverback.carman2.utils.Constants;
 public class PostingBoardRepository implements
         PostingBoardViewModel.PostingBoardLiveDataCallback,
         PostingBoardLiveData.OnLastVisibleListener,
-        PostingBoardLiveData.OnLastPostListener {
+        PostingBoardLiveData.OnLastPageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardRepository.class);
 
@@ -40,21 +40,15 @@ public class PostingBoardRepository implements
             case Constants.BOARD_POPULAR:
                 //this.field = "cnt_view";
                 query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
-                break;
-            /*
-            case Constants.BOARD_AUTOCLUB:
-                log.i("autoclub query: %s", isViewOrder);
-                String field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = query.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION);
-                break;
-            */
-            // Should create a new collection managed by Admin.(e.g. board_admin)
+
             case Constants.BOARD_NOTIFICATION:
                 query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
 
     }
+
+    public void setPostingComment(){}
 
     // Implement PostingBoardViewModel.PostingBoardLiveDataCallback to instantiate PostingBoardLiveData.class
     // with params, the result of which should be notified to the view(BoardPagerFragment).

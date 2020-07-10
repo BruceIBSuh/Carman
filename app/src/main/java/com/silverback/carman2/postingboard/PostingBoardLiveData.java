@@ -9,6 +9,7 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -26,7 +27,7 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     private Query query;
     private ListenerRegistration listenerRegit;
     private OnLastVisibleListener lastVisibleCallback;
-    private OnLastPostListener lastPostCallback;
+    private OnLastPageListener lastPostCallback;
 
     private int page;
 
@@ -35,14 +36,14 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
         void setLastVisible(DocumentSnapshot lastVisible);
     }
 
-    public interface OnLastPostListener {
+    public interface OnLastPageListener {
         void setLastPage(boolean isLastPage);
     }
 
 
     // Constructor
     public PostingBoardLiveData(Query query, int page,
-            OnLastVisibleListener lastVisbleCallback, OnLastPostListener lastPostCallback) {
+            OnLastVisibleListener lastVisbleCallback, OnLastPageListener lastPostCallback) {
 
         this.query = query;
         this.lastVisibleCallback = lastVisbleCallback;
@@ -57,7 +58,7 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     @Override
     protected void onActive() {
         log.i("onActive() state");
-        listenerRegit = query.addSnapshotListener(this);
+        listenerRegit = query.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }
 
     @Override
@@ -68,7 +69,6 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     @Override
     public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException e) {
         if(e != null || querySnapshot == null) return;
-
 
         for(DocumentChange documentChange : querySnapshot.getDocumentChanges()) {
             log.i("LiveData page: %s", page);
