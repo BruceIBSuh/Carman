@@ -7,6 +7,9 @@ import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
@@ -100,6 +104,9 @@ public class BoardWriteFragment extends DialogFragment implements
             userId = getArguments().getString("userId");
             tabPage = getArguments().getInt("tabPage");
         }
+
+        // Make the toolbar menu available in the Fragment.
+        setHasOptionsMenu(true);
 
         isNetworkConnected = BaseActivity.notifyNetworkConnected(getContext());
         applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
@@ -188,6 +195,22 @@ public class BoardWriteFragment extends DialogFragment implements
         spanHandler = new BoardImageSpanHandler(etPostBody, this);
 
         return localView;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        menu.getItem(0).setVisible(false);
+        menu.getItem(1).setVisible(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == R.id.action_upload_post) {
+            prepareAttachedImages();
+            return true;
+        }
+
+        return false;
     }
 
     // When fragments finish their lifecycle, the instance of a viewmodel exists in ViewModelStore,
@@ -336,7 +359,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
         if(TextUtils.isEmpty(userId) || !doEmptyCheck()) return;
 
-        // Instantiate the fragment to display the progressbar.
+        // Instantiate the fragment for displaying the progressbar.
         pbFragment = new ProgbarDialogFragment();
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();

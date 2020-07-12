@@ -17,9 +17,10 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 
 /**
- * MVVM Pattenr based query and pagination class for the posting board.
+ * MVVM Pattern based query and pagination class for the posting board.
  */
-public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implements EventListener<QuerySnapshot> {
+public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implements
+        EventListener<QuerySnapshot> {
 
     private final static LoggingHelper log = LoggingHelperFactory.create(PostingBoardLiveData.class);
 
@@ -28,8 +29,6 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     private ListenerRegistration listenerRegit;
     private OnLastVisibleListener lastVisibleCallback;
     private OnLastPageListener lastPostCallback;
-
-    private int page;
 
     // Interface
     public interface OnLastVisibleListener {
@@ -42,14 +41,11 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
 
 
     // Constructor
-    public PostingBoardLiveData(Query query, int page,
+    public PostingBoardLiveData(Query query,
             OnLastVisibleListener lastVisbleCallback, OnLastPageListener lastPostCallback) {
-
         this.query = query;
         this.lastVisibleCallback = lastVisbleCallback;
         this.lastPostCallback = lastPostCallback;
-        this.page = page;
-
     }
 
     // LiveData has the following methods to get notified when number of active Observers changes
@@ -58,20 +54,19 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     @Override
     protected void onActive() {
         log.i("onActive() state");
-        listenerRegit = query.addSnapshotListener(MetadataChanges.INCLUDE, this);
+        listenerRegit = query.addSnapshotListener(this);
     }
 
     @Override
     protected void onInactive() {
+        log.i("onInactive() state");
         listenerRegit.remove();
     }
 
     @Override
     public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException e) {
         if(e != null || querySnapshot == null) return;
-
         for(DocumentChange documentChange : querySnapshot.getDocumentChanges()) {
-            log.i("LiveData page: %s", page);
             switch(documentChange.getType()) {
                 case ADDED:
                     DocumentSnapshot addShot = documentChange.getDocument();
@@ -95,8 +90,10 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
 
         // Listeners are notified of the last visible post and the last post.
         final int shotSize = querySnapshot.size();
+        log.i("querySnapshot size: %s", shotSize);
         if(shotSize < Constants.PAGINATION) {
             lastPostCallback.setLastPage(true);
+            listenerRegit.remove();
         } else {
             DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(shotSize - 1);
             lastVisibleCallback.setLastVisible(lastVisibleShot);

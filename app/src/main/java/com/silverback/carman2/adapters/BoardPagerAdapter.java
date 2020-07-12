@@ -39,6 +39,16 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
 
     }
 
+    /*
+    @NonNull
+    @Override
+    public Object instantiateItem (@NonNull ViewGroup container, int position){
+        log.i("instantiate Item: %s", container, position);
+        return null;
+    }
+
+     */
+
     @NonNull
     @Override
     public Fragment getItem(int position) {
@@ -64,6 +74,7 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // OnCheckedChanged() in BoardActivity.
     @Override
     public int getItemPosition(@NonNull Object object) {
+        log.i("getItemPosition: %s", object);
         if(isAutoClub) return POSITION_NONE;
         else return POSITION_UNCHANGED;
     }

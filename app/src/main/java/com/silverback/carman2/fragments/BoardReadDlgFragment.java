@@ -53,9 +53,12 @@ import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.postingboard.PostingBoardLiveData;
+import com.silverback.carman2.postingboard.PostingBoardModelFactory;
+import com.silverback.carman2.postingboard.PostingBoardRepository;
+import com.silverback.carman2.postingboard.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.postingboard.PostingClubRepository;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -80,9 +83,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * This dialogfragment reads a post content to the full size when tapping  an item recycled in
  * BoardPagerFragment.
  */
-public class BoardReadDlgFragment extends DialogFragment implements
-        View.OnClickListener {
-        //PagingQueryHelper.OnPaginationListener {
+public class BoardReadDlgFragment extends DialogFragment implements View.OnClickListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -93,7 +94,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private Context context;
-    private PostingClubRepository pagingUtil;
+    private PostingBoardRepository postRepo;
+    private PostingBoardViewModel postingModel;
+    //private PostingClubRepository pagingUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -105,7 +108,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
-    private List<DocumentSnapshot> snapshotList;
+    private List<DocumentSnapshot> commentShotList;
     private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
 
@@ -123,10 +126,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
-    //private String autoClub;
     private String userId, documentId;
     private int tabPage;
-    //private int position;
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
@@ -158,8 +159,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
-        snapshotList = new ArrayList<>();
-        commentAdapter = new BoardCommentAdapter(snapshotList);
+        commentShotList = new ArrayList<>();
+        commentAdapter = new BoardCommentAdapter(commentShotList);
 
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
@@ -194,8 +195,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
          */
 
         // Instantiate PagingQueryHelper to paginate comments in a post.
-        pagingUtil = new PostingClubRepository(firestore);
+        //pagingUtil = new PostingClubRepository(firestore);
         //pagingUtil.setOnPaginationListener(this);
+        postRepo = new PostingBoardRepository();
+        postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
+                .get(PostingBoardViewModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -289,8 +293,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Rearrange the text by paragraphs
         readContentView(postContent);
+
         // Query comments
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
+        queryCommentSnapshot(postRef);
 
         return localView;
     }
@@ -739,5 +745,41 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 }
             }
         });
+    }
+
+    private void queryCommentSnapshot(DocumentReference docref) {
+        postRepo.setCommentQuery(docref);
+        PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
+        if(postLiveData != null) {
+            postLiveData.observe(getViewLifecycleOwner(), operation -> {
+                int type = operation.getType();
+                DocumentSnapshot postshot = operation.getDocumentSnapshot();
+                switch(type) {
+                    case 0: // ADDED
+                        commentShotList.add(postshot);
+                        break;
+
+                    case 1: // MODIFIED
+                        log.i("MODIFIED");
+                        for(int i = 0; i < commentShotList.size(); i++) {
+                            DocumentSnapshot snapshot = commentShotList.get(i);
+                            if(snapshot.getId().equals(postshot.getId())) {
+                                commentShotList.remove(snapshot);
+                                commentShotList.add(i, postshot);
+                            }
+                        }
+                        break;
+
+                    case 2: // REMOVED
+                        for(int i = 0; i < commentShotList.size(); i++) {
+                            DocumentSnapshot snapshot = commentShotList.get(i);
+                            if(snapshot.getId().equals(postshot.getId())) commentShotList.remove(snapshot);
+                        }
+                        break;
+                }
+                commentAdapter.notifyDataSetChanged();
+
+            });
+        }
     }
 }

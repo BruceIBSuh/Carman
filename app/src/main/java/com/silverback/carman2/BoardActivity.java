@@ -238,8 +238,7 @@ public class BoardActivity extends BaseActivity implements
                         // As BoardPagerFragment comes in, the tabLayout animates to display and the
                         // menu for uploading is made invisible.
                         animTabHeight(true);
-                        menu.getItem(1).setVisible(false);
-
+                        //menu.getItem(1).setVisible(false);
                         addViewPager();
 
                     }).show();
@@ -248,6 +247,8 @@ public class BoardActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_upload_post:
+                return false;
+                /*
                 // Network check. If no network exists, no matter what is wifi or mobile data,
                 // show the error message and nothing is done.
                 // Refactor: WorkManager should be applied to upload a post as any network is
@@ -266,9 +267,9 @@ public class BoardActivity extends BaseActivity implements
                 else editPostFragment.prepareUpdate();
 
                 return true;
+                 */
 
-            default:
-                return super.onOptionsItemSelected(item);
+            default: return super.onOptionsItemSelected(item);
         }
 
     }
@@ -339,7 +340,7 @@ public class BoardActivity extends BaseActivity implements
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
             }).show();
-            //snackbar.show();
+
             return;
         }
 
@@ -356,7 +357,6 @@ public class BoardActivity extends BaseActivity implements
         Bundle args = new Bundle();
         args.putString("userId", userId);
         args.putInt("tabPage", tabPage);
-        //args.putString("autoData", mSettings.getString(Constants.AUTO_DATA, null));
 
         // Handle the toolbar menu as the write board comes in.
         if(tabPage != Constants.BOARD_AUTOCLUB) {
@@ -468,8 +468,7 @@ public class BoardActivity extends BaseActivity implements
         // As far as the automodel checkbox value changes, the toolbar title will be reset using
         // creteAutoClubTitle().
         clubTitle = createAutoClubTitle();
-        if (getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
-
+        if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
         // Referenced in BoardPagerFragment for purpose of requerying posts with new
         // conditions.
         //if(!isLocked)
@@ -479,6 +478,8 @@ public class BoardActivity extends BaseActivity implements
         // POST_NONE in getItemPosition() of BoardPagerAdapter, which destroys not only the autoclub
         // fragment but also the tab titles. Thus, recreate the title here.
         addTabIconAndTitle(this, boardTabLayout);
+        log.i("cbAutofilter checked: %s, %s", chkbox, isChecked);
+        //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
     }
 
 
@@ -724,8 +725,6 @@ public class BoardActivity extends BaseActivity implements
         frameLayout.addView(boardPager);
         fabWrite.setVisibility(View.VISIBLE);
         getSupportActionBar().setTitle(getString(R.string.board_general_title));
-
-
 
         // Animations differs according to whether the current page is on the auto club or not.
         if(tabPage == Constants.BOARD_AUTOCLUB) {

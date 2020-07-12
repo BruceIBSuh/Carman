@@ -24,7 +24,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.WorkRequest;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
@@ -35,7 +34,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
@@ -48,7 +46,7 @@ import com.silverback.carman2.postingboard.PostingBoardRepository;
 import com.silverback.carman2.postingboard.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.postingboard.PostingClubRepository;
+import com.silverback.carman2.postingboard.QueryClubPostingUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
@@ -66,7 +64,7 @@ import java.util.Map;
 
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
-        PostingClubRepository.OnPaginationListener,
+        QueryClubPostingUtil.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
@@ -74,22 +72,18 @@ public class BoardPagerFragment extends Fragment implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private Source source;
-    private PostingClubRepository clubRepo;
-    private BoardPagerAdapter pagerAdapter;
-
     private PostingBoardViewModel postingModel;
     private PostingBoardRepository postRepo;
-
+    private QueryClubPostingUtil clubRepo;
+    private BoardPagerAdapter pagerAdapter;
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
-    private List<DocumentSnapshot> snapshotList;
+    private List<DocumentSnapshot> postshotList;
     private List<DocumentSnapshot> clubshotList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
-
-    private WorkRequest networkRequest;
+    private Menu menu;
 
     // UIs
     private LinearLayoutManager layoutManager;
@@ -135,6 +129,7 @@ public class BoardPagerFragment extends Fragment implements
             autoFilter = getArguments().getStringArrayList("autoFilter");
             if(autoFilter.size() > 0) automaker = autoFilter.get(0);
         }
+
         // Make the toolbar menu available in the Fragment.
         setHasOptionsMenu(true);
 
@@ -143,20 +138,19 @@ public class BoardPagerFragment extends Fragment implements
         imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
-        //pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
-        snapshotList = new ArrayList<>();
+        postshotList = new ArrayList<>();
         clubshotList = new ArrayList<>();
 
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            clubRepo = new PostingClubRepository(firestore);
+            clubRepo = new QueryClubPostingUtil(firestore);
             clubRepo.setOnPaginationListener(this);
             postingAdapter = new BoardPostingAdapter(clubshotList, this);
         } else {
             postRepo = new PostingBoardRepository();
             postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
                     .get(PostingBoardViewModel.class);
-            postingAdapter = new BoardPostingAdapter(snapshotList, this);
+            postingAdapter = new BoardPostingAdapter(postshotList, this);
         }
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
@@ -179,6 +173,7 @@ public class BoardPagerFragment extends Fragment implements
         // In case of inserting the banner, the item size will change.
         recyclerPostView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+
         recyclerPostView.setLayoutManager(layoutManager);
         //recyclerPostView.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)recyclerPostView.getItemAnimator();
@@ -191,29 +186,28 @@ public class BoardPagerFragment extends Fragment implements
         setRecyclerViewScrollListener();
 
         if(currentPage == Constants.BOARD_AUTOCLUB) {
+            // Initialize the club board if any filter is set.
             if(!TextUtils.isEmpty(automaker)) {
                 isLastPage = false;
+                //postshotList.clear();
+                clubshotList.clear();
                 clubRepo.setPostingQuery(isViewOrder);
             }
 
-        } else queryPostSnapshot(currentPage, isViewOrder);
-
+        } else queryPostSnapshot(currentPage);
 
         return localView;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onActivityCreated(Bundle bundle) {
         super.onActivityCreated(bundle);
+
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
-        fragmentModel.getFirestorePostingDone().observe(getActivity(), docId -> {
+        fragmentModel.getFirestorePostingDone().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                // Instead of using notifyItemInserted(), query should be done due to the post
-                // sequential number to be updated..
-                //pageHelper.setPostingQuery(currentPage, isViewOrder);
-
+                log.i("upload a new post done: %s", docId);
             }
         });
 
@@ -221,7 +215,7 @@ public class BoardPagerFragment extends Fragment implements
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the postion of the deleted posting item
         // and update the adapter.
-        fragmentModel.getRemovedPosting().observe(getActivity(), docId -> {
+        fragmentModel.getRemovedPosting().observe(requireActivity(), docId -> {
             //log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
                 //pageHelper.setPostingQuery(currentPage, isViewOrder);
@@ -242,6 +236,9 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Do something different from in the parent activity
+        this.menu = menu;
+        if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
+
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             View rootView = menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
@@ -270,6 +267,11 @@ public class BoardPagerFragment extends Fragment implements
             // span is set.
             String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
             tvSorting.setText(sortLabel);
+
+            // Initialize fields when clicking the menu for switching timestamp and cnt_view
+            isLastPage = false;
+            //postshotList.clear();
+            clubshotList.clear();
             clubRepo.setPostingQuery(isViewOrder);
 
             // Rotate the imageview holding emblem
@@ -285,103 +287,16 @@ public class BoardPagerFragment extends Fragment implements
             });
 
             rotation.start();
-            return false;
+            return true;
         }
 
         return false;
     }
 
-
     @Override
-    public void setClubInitQuerySnapshot(QuerySnapshot firstSnapshot) {
-        log.i("club query: %s", firstSnapshot);
-        snapshotList.clear();
-        clubshotList.clear();
-
-        queryClubSnapshot(firstSnapshot);
-
-        if(firstSnapshot.size() < Constants.PAGINATION) {
-            isLastPage = true;
-            postingAdapter.notifyDataSetChanged();
-        } else {
-            isLastPage = false;
-            if(clubshotList.size() < Constants.PAGINATION) clubRepo.setNextQuery();
-            else postingAdapter.notifyDataSetChanged();
-        }
-
-        pbLoading.setVisibility(View.GONE);
-    }
-
-
-    @Override
-    public void setClubNextQuerySnapshot(QuerySnapshot nextSnapshot) {
-        queryClubSnapshot(nextSnapshot);
-
-        if(nextSnapshot.size() < Constants.PAGINATION) {
-            isLastPage = true;
-            postingAdapter.notifyDataSetChanged();
-        } else {
-            isLastPage = false;
-            if(clubshotList.size() < Constants.PAGINATION) clubRepo.setNextQuery();
-            else postingAdapter.notifyDataSetChanged();
-        }
-
-        pbLoading.setVisibility(View.GONE);
-    }
-
-
-    private void queryClubSnapshot(QuerySnapshot snapshots) {
-
-        for(DocumentChange documentChange : snapshots.getDocumentChanges()) {
-            switch(documentChange.getType()) {
-                case ADDED:
-                    DocumentSnapshot addSnapshot = documentChange.getDocument();
-                    sortAutoClubPost(addSnapshot);
-                    break;
-
-                case MODIFIED:
-                    DocumentSnapshot modifySnapshot = documentChange.getDocument();
-                    for(int i = 0; i < snapshotList.size(); i++) {
-                        DocumentSnapshot snapshot = snapshotList.get(i);
-                        if(snapshot.getId().equals(modifySnapshot.getId())) {
-                            snapshotList.remove(snapshot);
-                            snapshotList.add(i, modifySnapshot);
-                            break;
-                        }
-                    }
-
-                    sortAutoClubPost(modifySnapshot);
-                    break;
-
-                case REMOVED:
-                    DocumentSnapshot removeSnapshot = documentChange.getDocument();
-                    for(int i = 0; i < snapshotList.size(); i++) {
-                        DocumentSnapshot snapshot = snapshotList.get(i);
-                        if(snapshot.getId().equals(removeSnapshot.getId())) {
-                            snapshotList.remove(snapshot);
-                            break;
-                        }
-                    }
-                    sortAutoClubPost(removeSnapshot);
-                    break;
-            }
-        }
-    }
-
-    // This method sorts out the autoclub posts based on the autofilter by removing a document out of
-    // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
-    // notation
-    private void sortAutoClubPost(DocumentSnapshot snapshot) {
-        clubshotList.add(snapshot);
-        if(snapshot.get("auto_filter") == null) clubshotList.remove(snapshot);
-        else {
-            for(String filter : autoFilter) {
-                if ((snapshot.get("auto_filter." + filter) == null)) {
-                    clubshotList.remove(snapshot);
-                    break;
-                }
-            }
-        }
+    public void onResume() {
+        super.onResume();
+        log.i("resume cycler in BoardPagerFragment");
     }
 
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
@@ -469,7 +384,177 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    // Callback implemented by QueryClubPostingUtil.setPostingQuery() when initiating query for
+    // the autoclub post. Receiving a result querysnapshot, categorize each snapshot by type, then
+    // update the postshotList. To get the club list, filter the postshot list with the autofilter
+    // using sortAutoClubPost(), adding a filtered snapshot to the club list. If the club list is
+    // less than the pagination number, keep querying posts to add more club posts, calling
+    // QueryClubPostingUtil.setNextQuery().
+    @Override
+    public void setClubQuerySnapshot(QuerySnapshot snapshots) {
+        if(snapshots.size() == 0) {
+            recyclerPostView.setEmptyView(tvEmptyView);
+            return;
+        }
 
+        for(DocumentChange documentChange : snapshots.getDocumentChanges()) {
+            switch(documentChange.getType()) {
+                case ADDED:
+                    DocumentSnapshot addSnapshot = documentChange.getDocument();
+                    postshotList.add(addSnapshot);
+                    sortAutoClubPost(addSnapshot);
+                    break;
+
+                case MODIFIED:
+                    DocumentSnapshot modifySnapshot = documentChange.getDocument();
+                    for(int i = 0; i < postshotList.size(); i++) {
+                        DocumentSnapshot snapshot = postshotList.get(i);
+                        if(snapshot.getId().equals(modifySnapshot.getId())) {
+                            postshotList.remove(snapshot);
+                            postshotList.add(i, modifySnapshot);
+                            break;
+                        }
+                    }
+
+                    sortAutoClubPost(modifySnapshot);
+                    break;
+
+                case REMOVED:
+                    DocumentSnapshot removeSnapshot = documentChange.getDocument();
+                    for(int i = 0; i < postshotList.size(); i++) {
+                        DocumentSnapshot snapshot = postshotList.get(i);
+                        if(snapshot.getId().equals(removeSnapshot.getId())) {
+                            postshotList.remove(snapshot);
+                            break;
+                        }
+                    }
+
+                    sortAutoClubPost(removeSnapshot);
+                    break;
+            }
+        }
+
+        if(snapshots.size() < Constants.PAGINATION) {
+            isLastPage = true;
+            postingAdapter.notifyDataSetChanged();
+        } else {
+            isLastPage = false;
+            if(clubshotList.size() < Constants.PAGINATION) clubRepo.setNextQuery();
+            else postingAdapter.notifyDataSetChanged();
+        }
+
+        pbLoading.setVisibility(View.GONE);
+    }
+
+    // This method sorts out the autoclub posts based on the autofilter by removing a document out of
+    // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
+    // notation
+    private void sortAutoClubPost(DocumentSnapshot snapshot) {
+        clubshotList.add(snapshot);
+        if(snapshot.get("auto_filter") == null) clubshotList.remove(snapshot);
+        else {
+            for(String filter : autoFilter) {
+                if ((snapshot.get("auto_filter." + filter) == null)) {
+                    clubshotList.remove(snapshot);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Query the general board except for the club board.
+    private void queryPostSnapshot(int page) {
+        postRepo.setPostingQuery(page);
+        // Notified of documentsnapshot from the livedata
+        PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
+        if(postLiveData != null) {
+            postLiveData.observe(getViewLifecycleOwner(), operation -> {
+                int type = operation.getType();
+                DocumentSnapshot postshot = operation.getDocumentSnapshot();
+                // Add a post only if the post_general field is set to true at the general board.
+
+                if(page != Constants.BOARD_NOTIFICATION) {
+                    if(postshot.get("post_general") == null || !(boolean)postshot.get("post_general"))
+                        return;
+                }
+                
+                switch(type) {
+                    case 0: // ADDED
+                        log.i("new post added: %s", postshot.getString("post_title"));
+                        postshotList.add(postshot);
+                        break;
+
+                    case 1: // MODIFIED
+                        log.i("MODIFIED");
+                        for(int i = 0; i < postshotList.size(); i++) {
+                            DocumentSnapshot snapshot = postshotList.get(i);
+                            if(snapshot.getId().equals(postshot.getId())) {
+                                postshotList.remove(snapshot);
+                                postshotList.add(i, postshot);
+                                break;
+                            }
+                        }
+
+                        break;
+
+                    case 2: // REMOVED
+                        for(int i = 0; i < postshotList.size(); i++) {
+                            DocumentSnapshot snapshot = postshotList.get(i);
+                            if(snapshot.getId().equals(postshot.getId())) {
+                                log.i("snapshot removed: %s", snapshot.getString("post_title"));
+                                postshotList.remove(snapshot);
+                                break;
+                            }
+
+                        }
+
+                        break;
+                }
+
+                //if(currentPage != Constants.BOARD_AUTOCLUB) postingAdapter.notifyDataSetChanged();
+                postingAdapter.notifyDataSetChanged();
+            });
+
+            pbLoading.setVisibility(View.GONE);
+        }
+    }
+
+    private void setRecyclerViewScrollListener() {
+        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
+                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
+                    isScrolling = true;
+                else fabWrite.show();
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
+
+                LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
+                if (layoutManager != null) {
+                    int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
+                    int visiblePostCount = layoutManager.getChildCount();
+                    int totalPostCount = layoutManager.getItemCount();
+
+                    if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                        isScrolling = false;
+
+                        if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
+                        else if(!isLastPage) clubRepo.setNextQuery();
+                    }
+                }
+            }
+
+        };
+
+        recyclerPostView.addOnScrollListener(scrollListener);
+    }
 
     // Check if a user is the post's owner or has read the post before in order to increate the view
     // count. In order to do so, get the user id from the internal storage and from the post as well.
@@ -545,88 +630,6 @@ public class BoardPagerFragment extends Fragment implements
                     e.printStackTrace();
                 });
     }
-
-
-
-    // LiveData
-    //int index = 0;
-    private void queryPostSnapshot(int page, boolean isViewOrder) {
-        postRepo.setPostingQuery(page, isViewOrder);
-
-        PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
-        if(postLiveData != null) {
-            postLiveData.observe(getViewLifecycleOwner(), operation -> {
-                int type = operation.getType();
-                DocumentSnapshot postshot = operation.getDocumentSnapshot();
-                switch(type) {
-                    case 0: // ADDED
-                        snapshotList.add(postshot);
-                        break;
-
-                    case 1: // MODIFIED
-                        log.i("MODIFIED");
-                        for(int i = 0; i < snapshotList.size(); i++) {
-                            DocumentSnapshot snapshot = snapshotList.get(i);
-                            if(snapshot.getId().equals(postshot.getId())) {
-                                snapshotList.remove(snapshot);
-                                snapshotList.add(i, postshot);
-                            }
-                        }
-                        break;
-
-                    case 2: // REMOVED
-                        for(int i = 0; i < snapshotList.size(); i++) {
-                            DocumentSnapshot snapshot = snapshotList.get(i);
-                            if(snapshot.getId().equals(postshot.getId())) snapshotList.remove(snapshot);
-                        }
-                        break;
-
-                }
-
-                if(currentPage != Constants.BOARD_AUTOCLUB) postingAdapter.notifyDataSetChanged();
-            });
-        }
-    }
-
-    private void setRecyclerViewScrollListener() {
-        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
-                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
-                    isScrolling = true;
-                else fabWrite.show();
-            }
-
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-
-                if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
-
-                LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
-                if (layoutManager != null) {
-                    int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
-                    int visiblePostCount = layoutManager.getChildCount();
-                    int totalPostCount = layoutManager.getItemCount();
-
-                    if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                        isScrolling = false;
-
-                        if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage, isViewOrder);
-                        else if(!isLastPage) clubRepo.setNextQuery();
-                    }
-                }
-            }
-
-        };
-
-        recyclerPostView.addOnScrollListener(scrollListener);
-    }
-
-
-
 }
 
 

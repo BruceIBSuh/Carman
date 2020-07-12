@@ -1,6 +1,7 @@
 package com.silverback.carman2.postingboard;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -27,28 +28,31 @@ public class PostingBoardRepository implements
         colRef = firestore.collection("board_general");
     }
 
-    public void setPostingQuery(int page, boolean isViewOrder) {
+    public void setPostingQuery(int page) {
         query = colRef;
         this.page = page;
 
         switch(page) {
             case Constants.BOARD_RECENT:
-                //this.field = "timestamp";
                 query = query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
 
             case Constants.BOARD_POPULAR:
-                //this.field = "cnt_view";
                 query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                break;
 
             case Constants.BOARD_NOTIFICATION:
-                query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
+                query = firestore.collection("board_admin")
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
         }
 
     }
 
-    public void setPostingComment(){}
+    public void setCommentQuery(DocumentReference docRef){
+        query = docRef.collection("comments").orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(Constants.PAGINATION);
+    }
 
     // Implement PostingBoardViewModel.PostingBoardLiveDataCallback to instantiate PostingBoardLiveData.class
     // with params, the result of which should be notified to the view(BoardPagerFragment).
@@ -57,7 +61,7 @@ public class PostingBoardRepository implements
         if(isLastPage) return null;
         if(lastVisibleshot != null) query = query.startAfter(lastVisibleshot);
 
-        return new PostingBoardLiveData(query, page, this, this);
+        return new PostingBoardLiveData(query, this, this);
     }
 
     @Override

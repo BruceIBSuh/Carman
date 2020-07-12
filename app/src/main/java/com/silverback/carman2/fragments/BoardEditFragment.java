@@ -9,6 +9,9 @@ import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -245,6 +248,23 @@ public class BoardEditFragment extends BoardBaseFragment implements
 
         return localView;
     }
+
+    @Override
+    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        menu.getItem(0).setVisible(false);
+        menu.getItem(1).setVisible(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == R.id.action_upload_post) {
+            prepareUpdate();
+            return true;
+        }
+
+        return false;
+    }
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
