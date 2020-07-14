@@ -283,12 +283,14 @@ public class BoardWriteFragment extends DialogFragment implements
         // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
         // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
-
+        /*
         fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
             log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
             if(pbFragment != null) pbFragment.dismiss();
             ((BoardActivity)getActivity()).addViewPager();
         });
+
+         */
 
     }
 

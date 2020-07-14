@@ -206,10 +206,10 @@ public class BoardPagerFragment extends Fragment implements
         } else queryPostSnapshot(currentPage);
 
 
-
-        //isLoading = true;
-        //queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-
+        /*
+        isLoading = true;
+        queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+        */
         return localView;
     }
 
@@ -327,12 +327,14 @@ public class BoardPagerFragment extends Fragment implements
                     isLoading = true;
                     queryPagingUtil.setNextQuery();
                     return;
-                } else postingAdapter.notifyDataSetChanged();
+                } //else postingAdapter.notifyDataSetChanged();
 
             } else postshotList.add(document);
+
+            postingAdapter.notifyDataSetChanged();
         }
 
-        if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
+        //if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
         isViewUpdated = !isViewUpdated;
 
         pbLoading.setVisibility(View.GONE);
@@ -351,12 +353,13 @@ public class BoardPagerFragment extends Fragment implements
                     isLoading = true;
                     queryPagingUtil.setNextQuery();
                     return;
-                } else postingAdapter.notifyDataSetChanged();
+                } //else postingAdapter.notifyDataSetChanged();
 
             } else postshotList.add(document);
+            postingAdapter.notifyDataSetChanged();
         }
 
-        postingAdapter.notifyDataSetChanged();
+
         isLoading = false;
         //if(isViewUpdated) postingAdapter.notifyDataSetChanged();
         //isViewUpdated = !isViewUpdated;
@@ -624,6 +627,7 @@ public class BoardPagerFragment extends Fragment implements
 
                     if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         isScrolling = false;
+                        //if(!isLastPage && !isLoading) queryPagingUtil.setNextQuery();
 
                         if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         else if(!isLastPage) clubRepo.setNextQuery();
