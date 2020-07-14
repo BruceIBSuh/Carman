@@ -145,7 +145,9 @@ public class FragmentSharedModel extends ViewModel {
      */
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
-    public MutableLiveData<String> getFirestorePostingDone() {
+
+
+    public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
     }

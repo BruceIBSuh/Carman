@@ -1,4 +1,4 @@
-package com.silverback.carman2.postingboard;
+package com.silverback.carman2.board;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
