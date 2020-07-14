@@ -189,7 +189,7 @@ public class BoardPagerFragment extends Fragment implements
             // Initialize the club board if any filter is set.
             if(!TextUtils.isEmpty(automaker)) {
                 isLastPage = false;
-                //postshotList.clear();
+                postshotList.clear();
                 clubshotList.clear();
                 clubRepo.setPostingQuery(isViewOrder);
             }
@@ -208,7 +208,8 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getFirestorePostingDone().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 log.i("upload a new post done: %s", docId);
-            }
+            } else log.i("upload ends in fail");
+
         });
 
         // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
@@ -392,6 +393,7 @@ public class BoardPagerFragment extends Fragment implements
     // QueryClubPostingUtil.setNextQuery().
     @Override
     public void setClubQuerySnapshot(QuerySnapshot snapshots) {
+        // The empty textview would be shown w/o snapshots.
         if(snapshots.size() == 0) {
             recyclerPostView.setEmptyView(tvEmptyView);
             return;
@@ -400,12 +402,14 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentChange documentChange : snapshots.getDocumentChanges()) {
             switch(documentChange.getType()) {
                 case ADDED:
+                    log.i("clubshot ADDED");
                     DocumentSnapshot addSnapshot = documentChange.getDocument();
                     postshotList.add(addSnapshot);
                     sortAutoClubPost(addSnapshot);
                     break;
 
                 case MODIFIED:
+                    log.i("clubshot MODIFIED");
                     DocumentSnapshot modifySnapshot = documentChange.getDocument();
                     for(int i = 0; i < postshotList.size(); i++) {
                         DocumentSnapshot snapshot = postshotList.get(i);
@@ -420,6 +424,7 @@ public class BoardPagerFragment extends Fragment implements
                     break;
 
                 case REMOVED:
+                    log.i("clubshot REMOVED");
                     DocumentSnapshot removeSnapshot = documentChange.getDocument();
                     for(int i = 0; i < postshotList.size(); i++) {
                         DocumentSnapshot snapshot = postshotList.get(i);
@@ -439,10 +444,17 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter.notifyDataSetChanged();
         } else {
             isLastPage = false;
+            log.i("clubshotList: %s", clubshotList.size());
             if(clubshotList.size() < Constants.PAGINATION) clubRepo.setNextQuery();
             else postingAdapter.notifyDataSetChanged();
         }
 
+
+    }
+
+    @Override
+    public void notifyQueryDone() {
+        log.i("QUERY DONE");
         pbLoading.setVisibility(View.GONE);
     }
 

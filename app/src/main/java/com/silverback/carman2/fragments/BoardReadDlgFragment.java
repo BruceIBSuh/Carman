@@ -777,6 +777,7 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
                         }
                         break;
                 }
+
                 commentAdapter.notifyDataSetChanged();
 
             });

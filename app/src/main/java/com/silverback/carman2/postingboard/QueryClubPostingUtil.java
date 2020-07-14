@@ -51,6 +51,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
     // Interface w/ BoardPagerFragment to notify the state of querying process and pagination.
     public interface OnPaginationListener {
         void setClubQuerySnapshot(QuerySnapshot snapshot);
+        void notifyQueryDone();
         //void setClubNextQuerySnapshot(QuerySnapshot snapshot);
     }
     // Method for implementing the inteface in BoardPagerFragment, which notifies the caller of
@@ -75,7 +76,6 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
     // based on either cnt_view or timestamp, the results of which will be passed to the list
     // and sorted out with the autofilter values.
     public void setNextQuery() {
-        log.i("querySnapshot: %s", querySnapshot.size());
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         Query nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
                 .limit(Constants.PAGINATION);
@@ -83,16 +83,21 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
         listenerRegit = nextQuery.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }
 
+
     @Override
     public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException e) {
         if (e != null || querySnapshot == null) return;
-
         this.querySnapshot = querySnapshot;
         mCallback.setClubQuerySnapshot(querySnapshot);
 
         // In case of querying the last page, remove the listener.
         // However, if the listener is removed, adding or removing a post will not be updated!!
-        if(querySnapshot.size() < Constants.PAGINATION) listenerRegit.remove();
+        if(querySnapshot.size() < Constants.PAGINATION) {
+            listenerRegit.remove();
+            mCallback.notifyQueryDone();
+        }
+
+
     }
 
 }
