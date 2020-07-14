@@ -1,4 +1,4 @@
-package com.silverback.carman2.postingboard;
+package com.silverback.carman2.board;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;

@@ -1,4 +1,4 @@
-package com.silverback.carman2.postingboard;
+package com.silverback.carman2.board;
 
 import androidx.annotation.Nullable;
 
@@ -92,7 +92,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
 
         // In case of querying the last page, remove the listener.
         // However, if the listener is removed, adding or removing a post will not be updated!!
-        if(querySnapshot.size() < Constants.PAGINATION) listenerRegit.remove();
+        //if(querySnapshot.size() < Constants.PAGINATION) listenerRegit.remove();
     }
 
 }

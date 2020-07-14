@@ -47,6 +47,6 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     @Override
     public void notifyUploadDone(String documentId) {
         log.i("notifyUploadDone: %s", documentId);
-        if(!TextUtils.isEmpty(documentId)) viewModel.getFirestorePostingDone().postValue(documentId);
+        if(!TextUtils.isEmpty(documentId)) viewModel.getNewPosting().postValue(documentId);
     }
 }

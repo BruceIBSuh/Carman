@@ -428,7 +428,6 @@ public class BoardActivity extends BaseActivity implements
             case Constants.REQUEST_BOARD_GALLERY:
                 if(writePostFragment != null) writePostFragment.setUriFromImageChooser(data.getData());
                 else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(data.getData());
-
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
@@ -719,6 +718,9 @@ public class BoardActivity extends BaseActivity implements
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
         if(frameLayout.getChildCount() > 0) frameLayout.removeView(frameLayout.getChildAt(0));
+
+        pagerAdapter.notifyDataSetChanged();
+
         // If the tabLayout height is 0,  put the height back to the default size.
         if(!isTabHeight) animTabHeight(true);
 
@@ -737,8 +739,7 @@ public class BoardActivity extends BaseActivity implements
             if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
 
-        //Toast.makeText(this, "Upload Done", Toast.LENGTH_SHORT).show();
-
+        addTabIconAndTitle(this, boardTabLayout);
     }
 
     // Referenced either in BoardWriteFragmnet or in BoardEditFragment and notified of which media
@@ -815,5 +816,4 @@ public class BoardActivity extends BaseActivity implements
     public ProgressBar getLoadingProgressBar() {
         return pbLoading;
     }
-
 }

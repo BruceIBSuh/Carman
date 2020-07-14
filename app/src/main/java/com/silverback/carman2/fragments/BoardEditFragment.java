@@ -22,6 +22,7 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -59,7 +60,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * This fragment is to edit an existing post if and only if a user is the owner of the post.
  */
-public class BoardEditFragment extends BoardBaseFragment implements
+public class BoardEditFragment extends Fragment implements
         BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 

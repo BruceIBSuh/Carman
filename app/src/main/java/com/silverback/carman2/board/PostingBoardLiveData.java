@@ -1,4 +1,4 @@
-package com.silverback.carman2.postingboard;
+package com.silverback.carman2.board;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -54,7 +54,7 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     @Override
     protected void onActive() {
         log.i("onActive() state");
-        listenerRegit = query.addSnapshotListener(this);
+        listenerRegit = query.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }
 
     @Override
@@ -90,7 +90,6 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
 
         // Listeners are notified of the last visible post and the last post.
         final int shotSize = querySnapshot.size();
-        log.i("querySnapshot size: %s", shotSize);
         if(shotSize < Constants.PAGINATION) {
             lastPostCallback.setLastPage(true);
             listenerRegit.remove();
