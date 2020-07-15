@@ -70,18 +70,21 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
             switch(documentChange.getType()) {
                 case ADDED:
                     DocumentSnapshot addShot = documentChange.getDocument();
+                    log.i("Added: %s", addShot.getString("post_title"));
                     PostingBoardOperation addPost = new PostingBoardOperation(addShot, 0);
                     setValue(addPost);
                     break;
 
                 case MODIFIED:
                     DocumentSnapshot modifyShot = documentChange.getDocument();
+                    log.i("Modified: %s", modifyShot.getString("post_title"));
                     PostingBoardOperation modifyPost = new PostingBoardOperation(modifyShot, 1);
                     setValue(modifyPost);
                     break;
 
                 case REMOVED:
                     DocumentSnapshot removeShot = documentChange.getDocument();
+                    log.i("Removed: %s", removeShot.getString("post_title"));
                     PostingBoardOperation removePost = new PostingBoardOperation(removeShot, 2);
                     setValue(removePost);
                     break;

@@ -34,11 +34,13 @@ public class PostingBoardRepository implements
 
         switch(page) {
             case Constants.BOARD_RECENT:
-                query = query.orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                query = query.whereEqualTo("post_general", true)
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
 
             case Constants.BOARD_POPULAR:
-                query = query.orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                query = query.whereEqualTo("post_general", true)
+                        .orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
                 break;
 
             case Constants.BOARD_NOTIFICATION:

@@ -18,6 +18,7 @@ public class PostingBoardViewModel extends ViewModel {
         PostingBoardLiveData getPostingBoardLiveData();
     }
 
+    // Constructor
     public PostingBoardViewModel(PostingBoardRepository repo) {
         mCallback = (PostingBoardLiveDataCallback) repo;
     }
