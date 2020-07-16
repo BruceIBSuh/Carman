@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -45,6 +46,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
@@ -59,6 +61,7 @@ import com.silverback.carman2.board.PostingBoardRepository;
 import com.silverback.carman2.board.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
+import com.silverback.carman2.utils.QueryPaginationUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -83,7 +86,8 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * This dialogfragment reads a post content to the full size when tapping  an item recycled in
  * BoardPagerFragment.
  */
-public class BoardReadDlgFragment extends DialogFragment implements View.OnClickListener {
+public class BoardReadDlgFragment extends DialogFragment implements
+        View.OnClickListener, QueryPaginationUtil.OnQueryPaginationCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -97,6 +101,7 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
     private PostingBoardRepository postRepo;
     private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
+    private QueryPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -132,6 +137,9 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
     private boolean hasCompathy;
+    private boolean isLoading;
+
+
 
     // Interface to notify BoardActivity of pressing the edit menu in the toolbar which is visible
     // only when a user reads his/her own post, comparing the ids of the user and board_general
@@ -159,6 +167,7 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
         firestore = FirebaseFirestore.getInstance();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
+        queryPaginationUtil = new QueryPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(commentShotList);
 
@@ -194,12 +203,17 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
         );
          */
 
+
+
+        /*
         // Instantiate PagingQueryHelper to paginate comments in a post.
         //pagingUtil = new PostingClubRepository(firestore);
         //pagingUtil.setOnPaginationListener(this);
         postRepo = new PostingBoardRepository();
         postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
                 .get(PostingBoardViewModel.class);
+
+         */
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -225,7 +239,9 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
         tvCommentCnt = localView.findViewById(R.id.tv_cnt_comment);
         tvCompathyCnt = localView.findViewById(R.id.tv_cnt_compathy);
         underline = localView.findViewById(R.id.view_underline_header);
+
         recyclerComment = localView.findViewById(R.id.recycler_comments);
+        setRecyclerViewScrollListener();
 
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
@@ -296,7 +312,8 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
 
         // Query comments
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
-        queryCommentSnapshot(postRef);
+        //queryCommentSnapshot(postRef);
+        queryPaginationUtil.setCommentQuery(postRef);
 
         return localView;
     }
@@ -388,6 +405,83 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
                 break;
         }
 
+    }
+
+    @Override
+    public void getFirstQueryResult(QuerySnapshot postShots) {
+        commentShotList.clear();
+        log.i("comment shot: %s", postShots.size());
+        for(DocumentSnapshot comment : postShots) {
+            commentShotList.add(comment);
+            commentAdapter.notifyDataSetChanged();
+        }
+        // In case the first query retrieves shots less than the pagination number, no more loading
+        // is made.
+        isLoading = (postShots.size() < Constants.PAGINATION);
+    }
+
+    @Override
+    public void getNextQueryResult(QuerySnapshot nextShots) {
+        for(DocumentSnapshot comment : nextShots) {
+            commentShotList.add(comment);
+            commentAdapter.notifyDataSetChanged();
+        }
+
+        isLoading = (nextShots.size() < Constants.PAGINATION);
+    }
+
+    @Override
+    public void getLastQueryResult(QuerySnapshot lastShots) {
+
+        for(DocumentSnapshot comment : lastShots) {
+            commentShotList.add(comment);
+        }
+        commentAdapter.notifyDataSetChanged();
+        isLoading = true;
+
+    }
+
+    // Subclass of RecyclerView.ScrollViewListner
+    private void setRecyclerViewScrollListener() {
+        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+            boolean isScrolling;
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
+                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
+                    isScrolling = true;
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                //if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
+
+                LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
+                if (layoutManager != null) {
+                    int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
+                    int visiblePostCount = layoutManager.getChildCount();
+                    int totalPostCount = layoutManager.getItemCount();
+
+                    if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                        isScrolling = false;
+                        if(!isLoading) {
+                            isLoading = true;
+                            //pbPaging.setVisibility(View.VISIBLE);
+                            queryPaginationUtil.setNextQuery();
+                        }
+
+                        //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
+                        //else if(!isLastPage) clubRepo.setNextQuery();
+                    }
+                }
+            }
+
+        };
+
+        recyclerComment.addOnScrollListener(scrollListener);
     }
 
     // The following callbacks are invoked by PagingQueryHelper to query comments up to the limit
@@ -747,6 +841,7 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
         });
     }
 
+    /*
     private void queryCommentSnapshot(DocumentReference docref) {
         postRepo.setCommentQuery(docref);
         PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
@@ -783,4 +878,6 @@ public class BoardReadDlgFragment extends DialogFragment implements View.OnClick
             });
         }
     }
+
+     */
 }

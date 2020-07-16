@@ -1,13 +1,9 @@
 package com.silverback.carman2.utils;
 
-import androidx.annotation.Nullable;
-import androidx.lifecycle.LiveData;
-
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -27,16 +23,15 @@ public class QueryPaginationUtil {
     private QuerySnapshot querySnapshot;
 
     // Fields
-    private String field;
-    private int page;
     private boolean isUpdated;
-    private boolean isLastPage;
+    private String field;
 
 
     // Interface
     public interface OnQueryPaginationCallback {
         void getFirstQueryResult(QuerySnapshot postShots);
         void getNextQueryResult(QuerySnapshot nextShots);
+        void getLastQueryResult(QuerySnapshot lastShots);
     }
 
     // Constructor
@@ -44,11 +39,9 @@ public class QueryPaginationUtil {
         this.firestore = firestore;
         colRef = firestore.collection("board_general");
         mCallback = callback;
-
     }
 
     public void setPostQuery(int page, boolean isViewOrder) {
-        this.page = page;
         query = colRef;
         querySnapshot = null;
 
@@ -75,23 +68,56 @@ public class QueryPaginationUtil {
 
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-            //boolean hasPendingChange = querySnapshot.getMetadata().hasPendingWrites();
-            //log.i("hasPendingChange: %s, %s", page, hasPendingChange);
+
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
+
+            /*
+            if(querySnapshot.size() < Constants.PAGINATION) {
+                this.querySnapshot = null;
+                mCallback.getLastQueryResult(querySnapshot);
+            } else {
+                this.querySnapshot = querySnapshot;
+                mCallback.getFirstQueryResult(querySnapshot);
+            }
+
+             */
         });
 
     }
 
+    public void setCommentQuery(DocumentReference docRef){
+        querySnapshot = null;
+        query = docRef.collection("comments").orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(Constants.PAGINATION);
+
+        query.addSnapshotListener((commentSnapshot, e) -> {
+            // exceepthion handling required
+            if(e != null || commentSnapshot == null) return;
+
+            // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
+            // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
+            this.querySnapshot = commentSnapshot;
+            mCallback.getFirstQueryResult(commentSnapshot);
+        });
+    }
+
     public void setNextQuery() {
         DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        log.i("last visible shot: %s", lastVisibleShot.getString("post_title"));
+        log.i("lastVisibleshot: %s", lastVisibleShot.getString("post_title"));
+
         query = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot);
         query.limit(Constants.PAGINATION).addSnapshotListener((nextSnapshot, e) -> {
-            if(e != null) return;
-            mCallback.getNextQueryResult(nextSnapshot);
-            if(nextSnapshot.size() < Constants.PAGINATION) querySnapshot = null;
-            else this.querySnapshot = nextSnapshot;
+
+            if(e != null || nextSnapshot == null) return;
+
+            if(nextSnapshot.size() < Constants.PAGINATION) {
+                querySnapshot = null;
+                mCallback.getLastQueryResult(nextSnapshot);
+            } else {
+                this.querySnapshot = nextSnapshot;
+                mCallback.getNextQueryResult(nextSnapshot);
+            }
 
         });
     }

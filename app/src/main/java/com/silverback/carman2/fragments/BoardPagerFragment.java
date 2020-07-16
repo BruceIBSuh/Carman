@@ -66,7 +66,7 @@ import java.util.Map;
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
         QueryPaginationUtil.OnQueryPaginationCallback,
-        QueryClubPostingUtil.OnPaginationListener,
+        //QueryClubPostingUtil.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
     // Logging
@@ -84,7 +84,7 @@ public class BoardPagerFragment extends Fragment implements
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
     private List<DocumentSnapshot> postshotList;
-    private List<DocumentSnapshot> clubshotList;
+    //private List<DocumentSnapshot> clubshotList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
@@ -103,7 +103,7 @@ public class BoardPagerFragment extends Fragment implements
     private boolean isLoading;
     private boolean isLastPage;
     private boolean isViewUpdated;
-    private boolean isScrolling;
+    //private boolean isScrolling;
     private boolean isFirstShot;
 
     // Constructor
@@ -145,19 +145,22 @@ public class BoardPagerFragment extends Fragment implements
 
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         postshotList = new ArrayList<>();
-        clubshotList = new ArrayList<>();
+        //clubshotList = new ArrayList<>();
+        postingAdapter = new BoardPostingAdapter(postshotList, this);
 
-
+        /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            clubRepo = new QueryClubPostingUtil(firestore);
-            clubRepo.setOnPaginationListener(this);
+            //clubRepo = new QueryClubPostingUtil(firestore);
+            //clubRepo.setOnPaginationListener(this);
             postingAdapter = new BoardPostingAdapter(clubshotList, this);
         } else {
-            postRepo = new PostingBoardRepository();
-            postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
-                    .get(PostingBoardViewModel.class);
+            //postRepo = new PostingBoardRepository();
+            //postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo)).get(PostingBoardViewModel.class);
             postingAdapter = new BoardPostingAdapter(postshotList, this);
         }
+         */
+
+
 
         queryPagingUtil = new QueryPaginationUtil(firestore, this);
         postingAdapter = new BoardPostingAdapter(postshotList, this);
@@ -194,9 +197,21 @@ public class BoardPagerFragment extends Fragment implements
         fabWrite = ((BoardActivity)getActivity()).getFAB();
         setRecyclerViewScrollListener();
 
+        // Based on MVVM
+        /*
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            // Initialize the club board if any filter is set.
+            if(!TextUtils.isEmpty(automaker)) {
+                isLastPage = false;
+                //postshotList.clear();
+                clubshotList.clear();
+                clubRepo.setPostingQuery(isViewOrder);
+            }
 
+        } else queryPostSnapshot(currentPage);
+        */
 
-
+        queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         return localView;
     }
 
@@ -206,6 +221,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
+        /*
         fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 log.i("Upload Post: %s", docId);
@@ -228,7 +244,7 @@ public class BoardPagerFragment extends Fragment implements
                 //pageHelper.setPostingQuery(currentPage, isViewOrder);
             }
         });
-
+        */
     }
 
     // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
@@ -297,22 +313,7 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        // Based on MVVM
-        /*
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            // Initialize the club board if any filter is set.
-            if(!TextUtils.isEmpty(automaker)) {
-                isLastPage = false;
-                //postshotList.clear();
-                clubshotList.clear();
-                clubRepo.setPostingQuery(isViewOrder);
-            }
-
-        } else queryPostSnapshot(currentPage);
-        */
-        isLoading = true;
-        isFirstShot = true;
-        queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+        //postshotList.clear();
     }
 
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
@@ -402,19 +403,21 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        log.i("FirstQueryResult: %s", isFirstShot);
         postshotList.clear();
-        isLoading = false;
-        isViewUpdated = false;
-        isLastPage = querySnapshot.size() < Constants.PAGINATION;
+        log.i("First Query: %s", querySnapshot);
+        if(querySnapshot == null || querySnapshot.size() == 0) {
+            recyclerPostView.setEmptyView(tvEmptyView);
+            return;
+        }
 
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postshotList.add(document);
+            postingAdapter.notifyDataSetChanged();
         }
 
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(!isLastPage && postshotList.size() < Constants.PAGINATION) {
+            if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 //pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
@@ -422,24 +425,22 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
+        //if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
         isViewUpdated = !isViewUpdated;
         pbLoading.setVisibility(View.GONE);
-        isLoading = false;
+        isLoading = querySnapshot.size() < Constants.PAGINATION;
     }
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
-        isLastPage = nextShots.size() < Constants.PAGINATION;
-        log.i("isLastPage: %s, %s", nextShots.size(), isLastPage);
-
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postshotList.add(document);
+            postingAdapter.notifyDataSetChanged();
         }
 
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(!isLastPage && postshotList.size() < Constants.PAGINATION) {
+            if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
@@ -447,19 +448,33 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        isLoading = false;
         postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.INVISIBLE);
+        isLoading = nextShots.size() < Constants.PAGINATION;
         //if(isViewUpdated) postingAdapter.notifyDataSetChanged();
         //isViewUpdated = !isViewUpdated;
     }
 
+    @Override
+    public void getLastQueryResult(QuerySnapshot lastShots) {
+        for(DocumentSnapshot document : lastShots) {
+            if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
+            else postshotList.add(document);
+        }
+
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            if(postshotList.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
+        }
+
+        postingAdapter.notifyDataSetChanged();
+        pbPaging.setVisibility(View.GONE);
+        isLoading = true;
+    }
 
 
     // This method sorts out the autoclub posts based on the autofilter by removing a document out of
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
     // notation
-
     private void sortClubPost(DocumentSnapshot snapshot) {
         postshotList.add(snapshot);
         if(snapshot.get("auto_filter") == null) postshotList.remove(snapshot);
@@ -476,7 +491,7 @@ public class BoardPagerFragment extends Fragment implements
 
 
 
-
+    /*
     // Callback implemented by QueryClubPostingUtil.setPostingQuery() when initiating query for
     // the autoclub post. Receiving a result querysnapshot, categorize each snapshot by type, then
     // update the postshotList. To get the club list, filter the postshot list with the autofilter
@@ -609,10 +624,11 @@ public class BoardPagerFragment extends Fragment implements
             pbLoading.setVisibility(View.GONE);
         }
     }
-
+    */
     // Subclass of RecyclerView.ScrollViewListner
     private void setRecyclerViewScrollListener() {
         RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+            boolean isScrolling;
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -633,13 +649,12 @@ public class BoardPagerFragment extends Fragment implements
                     int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
                     int visiblePostCount = layoutManager.getChildCount();
                     int totalPostCount = layoutManager.getItemCount();
-                    log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastPage, firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
                     if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                        log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastPage, firstVisibleProductPosition, visiblePostCount, totalPostCount);
                         isScrolling = false;
-
-                        if(!isLastPage && !isLoading) {
-                            log.i("scroll with next query");
+                        log.i("scroll with next query");
+                        if(!isLoading) {
                             isLoading = true;
                             pbPaging.setVisibility(View.VISIBLE);
                             queryPagingUtil.setNextQuery();
