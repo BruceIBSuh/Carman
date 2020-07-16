@@ -195,19 +195,8 @@ public class BoardPagerFragment extends Fragment implements
         setRecyclerViewScrollListener();
 
 
-        // Based on MVVM
-        /*
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            // Initialize the club board if any filter is set.
-            if(!TextUtils.isEmpty(automaker)) {
-                isLastPage = false;
-                //postshotList.clear();
-                clubshotList.clear();
-                clubRepo.setPostingQuery(isViewOrder);
-            }
 
-        } else queryPostSnapshot(currentPage);
-        */
+
         return localView;
     }
 
@@ -308,7 +297,19 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        // Based on MVVM
+        /*
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            // Initialize the club board if any filter is set.
+            if(!TextUtils.isEmpty(automaker)) {
+                isLastPage = false;
+                //postshotList.clear();
+                clubshotList.clear();
+                clubRepo.setPostingQuery(isViewOrder);
+            }
 
+        } else queryPostSnapshot(currentPage);
+        */
         isLoading = true;
         isFirstShot = true;
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
@@ -402,36 +403,29 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         log.i("FirstQueryResult: %s", isFirstShot);
-        if(isFirstShot) postshotList.clear();
+        postshotList.clear();
         isLoading = false;
         isViewUpdated = false;
         isLastPage = querySnapshot.size() < Constants.PAGINATION;
 
         for(DocumentSnapshot document : querySnapshot) {
-            //if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
-            //else postshotList.add(document);
-            postshotList.add(document);
-            postingAdapter.notifyDataSetChanged();
+            if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
+            else postshotList.add(document);
         }
 
-        /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!isLastPage && postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
-                pbPaging.setVisibility(View.VISIBLE);
+                //pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
                 return;
-            } else
+            }
         }
 
-         */
-
-        //if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
+        if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
         isViewUpdated = !isViewUpdated;
         pbLoading.setVisibility(View.GONE);
-
         isLoading = false;
-        isFirstShot = !isFirstShot;
     }
 
     @Override
@@ -440,14 +434,10 @@ public class BoardPagerFragment extends Fragment implements
         log.i("isLastPage: %s, %s", nextShots.size(), isLastPage);
 
         for(DocumentSnapshot document : nextShots) {
-            //if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
-            //else postshotList.add(document);
-
-            postshotList.add(document);
-            postingAdapter.notifyDataSetChanged();
+            if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
+            else postshotList.add(document);
         }
 
-        /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(!isLastPage && postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
@@ -457,36 +447,14 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-         */
-
         isLoading = false;
-        //postingAdapter.notifyDataSetChanged();
+        postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.INVISIBLE);
         //if(isViewUpdated) postingAdapter.notifyDataSetChanged();
         //isViewUpdated = !isViewUpdated;
     }
 
-    @Override
-    public void getClubQueryResult(QuerySnapshot clubShots) {
-        if(TextUtils.isEmpty(automaker)) {
-            recyclerPostView.setEmptyView(tvEmptyView);
-            return;
-        }
 
-        postshotList.clear();
-        isLastPage = clubShots.size() < Constants.PAGINATION;
-        for(DocumentSnapshot document : clubShots) sortClubPost(document);
-
-        if(!isLastPage && postshotList.size() < Constants.PAGINATION) {
-            isLoading = true;
-            pbPaging.setVisibility(View.VISIBLE);
-            queryPagingUtil.setNextQuery();
-        } else {
-            isLoading = false;
-            postingAdapter.notifyDataSetChanged();
-            pbPaging.setVisibility(View.INVISIBLE);
-        }
-    }
 
     // This method sorts out the autoclub posts based on the autofilter by removing a document out of
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
@@ -665,15 +633,16 @@ public class BoardPagerFragment extends Fragment implements
                     int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
                     int visiblePostCount = layoutManager.getChildCount();
                     int totalPostCount = layoutManager.getItemCount();
+                    log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastPage, firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
                     if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                        log.i("pagination: %s, %s", isLoading, isLastPage);
                         isScrolling = false;
 
                         if(!isLastPage && !isLoading) {
+                            log.i("scroll with next query");
                             isLoading = true;
                             pbPaging.setVisibility(View.VISIBLE);
-                            queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+                            queryPagingUtil.setNextQuery();
                         }
 
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);

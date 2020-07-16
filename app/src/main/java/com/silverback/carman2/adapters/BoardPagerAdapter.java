@@ -75,8 +75,9 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @Override
     public int getItemPosition(@NonNull Object object) {
         log.i("getItemPosition: %s", object);
-        if(isAutoClub) return POSITION_NONE;
-        else return POSITION_UNCHANGED;
+        return POSITION_NONE;
+        //if(isAutoClub) return POSITION_NONE;
+        //else return POSITION_UNCHANGED;
     }
 
     public void setAutoFilterValues(ArrayList<String> values) {

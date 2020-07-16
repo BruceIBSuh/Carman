@@ -14,7 +14,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-public class QueryPaginationUtil implements EventListener<QuerySnapshot> {
+public class QueryPaginationUtil {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(QueryPaginationUtil.class);
 
@@ -37,7 +37,6 @@ public class QueryPaginationUtil implements EventListener<QuerySnapshot> {
     public interface OnQueryPaginationCallback {
         void getFirstQueryResult(QuerySnapshot postShots);
         void getNextQueryResult(QuerySnapshot nextShots);
-        void getClubQueryResult(QuerySnapshot clubShots);
     }
 
     // Constructor
@@ -47,20 +46,6 @@ public class QueryPaginationUtil implements EventListener<QuerySnapshot> {
         mCallback = callback;
 
     }
-
-    @Override
-    public void onEvent(@Nullable QuerySnapshot querySnapshot, @Nullable FirebaseFirestoreException e) {
-        log.i("QuerySnapshot: %s", querySnapshot.size());
-        isLastPage = querySnapshot.size() < Constants.PAGINATION;
-        log.i("Last Page: %s", isLastPage);
-        this.querySnapshot = querySnapshot;
-        if(!isLastPage) {
-            if (page == Constants.BOARD_AUTOCLUB) mCallback.getClubQueryResult(querySnapshot);
-            else mCallback.getFirstQueryResult(querySnapshot);
-        }
-
-    }
-
 
     public void setPostQuery(int page, boolean isViewOrder) {
         this.page = page;
@@ -88,31 +73,26 @@ public class QueryPaginationUtil implements EventListener<QuerySnapshot> {
                 break;
         }
 
-        query.limit(Constants.PAGINATION).addSnapshotListener(this);
-
-        /*
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             //boolean hasPendingChange = querySnapshot.getMetadata().hasPendingWrites();
             //log.i("hasPendingChange: %s, %s", page, hasPendingChange);
             this.querySnapshot = querySnapshot;
-            if(page == Constants.BOARD_AUTOCLUB) mCallback.getClubQueryResult(querySnapshot);
-            else mCallback.getFirstQueryResult(querySnapshot);
-
+            mCallback.getFirstQueryResult(querySnapshot);
         });
 
-         */
     }
 
     public void setNextQuery() {
         DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        log.i("last visible shot: %s", lastVisibleShot);
+        log.i("last visible shot: %s", lastVisibleShot.getString("post_title"));
         query = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot);
-        query.limit(Constants.PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (nextSnapshot, e) -> {
+        query.limit(Constants.PAGINATION).addSnapshotListener((nextSnapshot, e) -> {
             if(e != null) return;
+            mCallback.getNextQueryResult(nextSnapshot);
+            if(nextSnapshot.size() < Constants.PAGINATION) querySnapshot = null;
+            else this.querySnapshot = nextSnapshot;
 
-            this.querySnapshot = nextSnapshot;
-            mCallback.getNextQueryResult(querySnapshot);
         });
     }
 }

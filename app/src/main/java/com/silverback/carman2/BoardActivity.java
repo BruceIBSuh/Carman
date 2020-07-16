@@ -718,9 +718,6 @@ public class BoardActivity extends BaseActivity implements
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
         if(frameLayout.getChildCount() > 0) frameLayout.removeView(frameLayout.getChildAt(0));
-
-        pagerAdapter.notifyDataSetChanged();
-
         // If the tabLayout height is 0,  put the height back to the default size.
         if(!isTabHeight) animTabHeight(true);
 
@@ -739,6 +736,7 @@ public class BoardActivity extends BaseActivity implements
             if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
 
+        pagerAdapter.notifyDataSetChanged();
         addTabIconAndTitle(this, boardTabLayout);
     }
 
