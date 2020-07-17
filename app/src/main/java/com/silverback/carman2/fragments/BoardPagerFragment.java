@@ -291,6 +291,11 @@ public class BoardPagerFragment extends Fragment implements
             //clubshotList.clear();
             //clubRepo.setPostingQuery(isViewOrder);
 
+            // Requery the autoclub post with the field switched.
+            isLoading = true;
+            pbPaging.setVisibility(View.GONE);
+            queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+
             // Rotate the imageview holding emblem
             ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
             rotation.setDuration(500);
@@ -363,76 +368,56 @@ public class BoardPagerFragment extends Fragment implements
                 .addToBackStack(null)
                 .commit();
 
-        /*
-        // Query the user(posting writer) with userId given to fetch the autoclub which contains
-        // auto_maker, auto_model, eco_type and auto_year as JSON string. On completion, set it to
-        // the fragment arguments and pass them to BoardReadDlgFragment
-        firestore.collection("users").document(snapshot.getString("user_id")).get()
-                .addOnSuccessListener(document -> {
-                    if(document.exists()) {
-                        String auto = document.getString("user_club");
-                        if(!TextUtils.isEmpty(auto)) bundle.putString("autoClub", auto);
-
-                        readPostFragment.setArguments(bundle);
-                        // What if Fragment calls another fragment? What is getChildFragmentManager() for?
-                        // android.R.id.content makes DialogFragment fit to the full screen.
-                        getActivity().getSupportFragmentManager().beginTransaction()
-                                .add(android.R.id.content, readPostFragment)
-                                .addToBackStack(null)
-                                .commit();
-                    }
-                });
-        */
-
-        /*
-        postDialogFragment.setArguments(bundle);
-        // What if Fragment calls another fragment? What is getChildFragmentManager() for?
-        // android.R.id.content makes DialogFragment fit to the full screen.
-        getActivity().getSupportFragmentManager().beginTransaction()
-                .add(android.R.id.content, postDialogFragment)
-                .addToBackStack(null)
-                .commit();
-        */
-
         // Update the field of "cnt_view" increasing the number.
         DocumentReference docref = snapshot.getReference();
         addViewCount(docref, position);
-        //docref.update("cnt_view", FieldValue.increment(1));
+
 
     }
 
+    // Implement QueryPaginationUtil.OnQueryPaginationCallback called by QueryPaginationUtil.
+    // setPostQuery()
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         postshotList.clear();
-        log.i("First Query: %s", querySnapshot);
+
+        // In case that no post exists or the automaker filter is emepty in the autoclub page,
+        // display the empty view.
         if(querySnapshot == null || querySnapshot.size() == 0) {
             recyclerPostView.setEmptyView(tvEmptyView);
             return;
+        } else if(currentPage == Constants.BOARD_AUTOCLUB && TextUtils.isEmpty(automaker)) {
+            recyclerPostView.setEmptyView(tvEmptyView);
+            return;
         }
-
+        // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
+        // Autoclub sorts out the document snapshot with given filters.
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postshotList.add(document);
+            // Consider if it is appropraite to call nofityDataSetChanged every time.
             postingAdapter.notifyDataSetChanged();
         }
 
+        // If the sorted posts are less than the pagination number, keep querying until it's up to
+        // the number.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
-                //pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
                 return;
             }
         }
 
-        //if(!isViewUpdated) postingAdapter.notifyDataSetChanged();
-        isViewUpdated = !isViewUpdated;
+        //isViewUpdated = !isViewUpdated;
         pbLoading.setVisibility(View.GONE);
-        isLoading = querySnapshot.size() < Constants.PAGINATION;
+        isLoading = false;
     }
 
+    // Called by QueryPaginationUtil.setNextQuery()
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
+        log.i("next query: %s", nextShots.size());
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postshotList.add(document);
@@ -448,25 +433,30 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        postingAdapter.notifyDataSetChanged();
+        //postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.INVISIBLE);
-        isLoading = nextShots.size() < Constants.PAGINATION;
-        //if(isViewUpdated) postingAdapter.notifyDataSetChanged();
-        //isViewUpdated = !isViewUpdated;
+        isLoading = false;
     }
 
+    // Called by QueryPaginationTuil.setLastQuery()
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
+        log.i("last query: %s", lastShots.size());
         for(DocumentSnapshot document : lastShots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postshotList.add(document);
+            postingAdapter.notifyDataSetChanged();
         }
 
+        // On clicking the filter item on the AutoClub page, if noting has been posted, display
+        // the empty view.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(postshotList.size() == 0) recyclerPostView.setEmptyView(tvEmptyView);
+            if(postshotList.size() == 0) {
+                recyclerPostView.setEmptyView(tvEmptyView);
+            }
         }
 
-        postingAdapter.notifyDataSetChanged();
+
         pbPaging.setVisibility(View.GONE);
         isLoading = true;
     }
@@ -482,7 +472,6 @@ public class BoardPagerFragment extends Fragment implements
             for(String filter : autoFilter) {
                 if ((snapshot.get("auto_filter." + filter) == null)) {
                     postshotList.remove(snapshot);
-                    log.i("filtered club list: %s", postshotList.size());
                     break;
                 }
             }
@@ -649,16 +638,15 @@ public class BoardPagerFragment extends Fragment implements
                     int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
                     int visiblePostCount = layoutManager.getChildCount();
                     int totalPostCount = layoutManager.getItemCount();
+                    log.i("pagination: %s, %s, %s, %s", isLoading, firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
-                    if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                        log.i("pagination: %s, %s, %s, %s, %s", isLoading, isLastPage, firstVisibleProductPosition, visiblePostCount, totalPostCount);
-                        isScrolling = false;
+                    if (!isLoading && isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         log.i("scroll with next query");
-                        if(!isLoading) {
-                            isLoading = true;
-                            pbPaging.setVisibility(View.VISIBLE);
-                            queryPagingUtil.setNextQuery();
-                        }
+                        isScrolling = false;
+                        isLoading = true;
+
+                        pbPaging.setVisibility(View.VISIBLE);
+                        queryPagingUtil.setNextQuery();
 
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();

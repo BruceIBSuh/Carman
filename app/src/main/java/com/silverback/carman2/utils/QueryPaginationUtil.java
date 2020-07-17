@@ -1,6 +1,7 @@
 package com.silverback.carman2.utils;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -9,6 +10,9 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class QueryPaginationUtil {
 
@@ -39,6 +43,7 @@ public class QueryPaginationUtil {
         this.firestore = firestore;
         colRef = firestore.collection("board_general");
         mCallback = callback;
+        //firestore.clearPersistence();
     }
 
     public void setPostQuery(int page, boolean isViewOrder) {
@@ -48,17 +53,17 @@ public class QueryPaginationUtil {
         switch(page){
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
-                query = query.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_POPULAR:
                 this.field = "cnt_view";
-                query = query.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = query.orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_NOTIFICATION:
@@ -68,20 +73,8 @@ public class QueryPaginationUtil {
 
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
-
-            /*
-            if(querySnapshot.size() < Constants.PAGINATION) {
-                this.querySnapshot = null;
-                mCallback.getLastQueryResult(querySnapshot);
-            } else {
-                this.querySnapshot = querySnapshot;
-                mCallback.getFirstQueryResult(querySnapshot);
-            }
-
-             */
         });
 
     }
@@ -106,19 +99,39 @@ public class QueryPaginationUtil {
         DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         log.i("lastVisibleshot: %s", lastVisibleShot.getString("post_title"));
 
+        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot).limit(Constants.PAGINATION)
+                .addSnapshotListener((nextSnapshot, e) -> {
+
+                    if(e != null || nextSnapshot == null) return;
+                    log.i("meta data: %s", nextSnapshot.getMetadata().isFromCache());
+
+                    if(nextSnapshot.size() >= Constants.PAGINATION) {
+                        log.i("query next: %s", nextSnapshot.size());
+                        this.querySnapshot = nextSnapshot;
+                        mCallback.getNextQueryResult(nextSnapshot);
+                    } else {
+                        log.i("query last: %s", nextSnapshot.size());
+                        querySnapshot = null;
+                        mCallback.getLastQueryResult(nextSnapshot);
+                    }
+                });
+        /*
         query = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot);
         query.limit(Constants.PAGINATION).addSnapshotListener((nextSnapshot, e) -> {
 
+
             if(e != null || nextSnapshot == null) return;
 
-            if(nextSnapshot.size() < Constants.PAGINATION) {
-                querySnapshot = null;
-                mCallback.getLastQueryResult(nextSnapshot);
-            } else {
+            if(nextSnapshot.size() >= Constants.PAGINATION) {
                 this.querySnapshot = nextSnapshot;
                 mCallback.getNextQueryResult(nextSnapshot);
+            } else {
+                querySnapshot = null;
+                mCallback.getLastQueryResult(nextSnapshot);
             }
 
         });
+
+         */
     }
 }

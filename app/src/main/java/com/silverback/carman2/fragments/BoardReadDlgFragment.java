@@ -44,10 +44,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Source;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
@@ -55,10 +53,6 @@ import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.adapters.BoardCommentAdapter;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.board.PostingBoardLiveData;
-import com.silverback.carman2.board.PostingBoardModelFactory;
-import com.silverback.carman2.board.PostingBoardRepository;
-import com.silverback.carman2.board.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.QueryPaginationUtil;
@@ -98,15 +92,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Objects
     private Context context;
-    private PostingBoardRepository postRepo;
-    private PostingBoardViewModel postingModel;
+    //private PostingBoardRepository postRepo;
+    //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
     private QueryPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
     private DocumentReference postRef;
-    private Source source;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
     private FragmentSharedModel sharedModel;
@@ -114,7 +107,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private String postTitle, postContent, userName, userPic;
     private List<String> imgUriList;
     private List<DocumentSnapshot> commentShotList;
-    private ListenerRegistration commentListener;
+    //private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
 
 
@@ -527,11 +520,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
         postRef.get().addOnSuccessListener(document -> {
             if(document.exists()) {
                 final CollectionReference colRef = document.getReference().collection("comments");
-                colRef.add(comment).addOnSuccessListener(commentDoc -> {
-                    postRef.update("cnt_comment", FieldValue.increment(1));
-                }).addOnFailureListener(e -> {
-                    e.printStackTrace();
-                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                colRef.add(comment).addOnSuccessListener(commentDoc -> postRef.update("cnt_comment",
+                        FieldValue.increment(1))).addOnFailureListener(e -> {
+                            e.printStackTrace();
+                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
 
                 // Hide the soft input method.
