@@ -27,7 +27,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -38,16 +37,11 @@ import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.adapters.BoardPagerAdapter;
 import com.silverback.carman2.adapters.BoardPostingAdapter;
-import com.silverback.carman2.board.PostingBoardLiveData;
-import com.silverback.carman2.board.PostingBoardModelFactory;
-import com.silverback.carman2.board.PostingBoardRepository;
-import com.silverback.carman2.board.QueryClubPostingUtil;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.board.PostingBoardViewModel;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.QueryPaginationUtil;
+import com.silverback.carman2.utils.QueryPostPaginationUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.views.PostingRecyclerView;
 
@@ -65,7 +59,7 @@ import java.util.Map;
 
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
-        QueryPaginationUtil.OnQueryPaginationCallback,
+        QueryPostPaginationUtil.OnQueryPaginationCallback,
         //QueryClubPostingUtil.OnPaginationListener,
         BoardPostingAdapter.OnRecyclerItemClickListener {
 
@@ -74,17 +68,17 @@ public class BoardPagerFragment extends Fragment implements
 
     // Objects
     private FirebaseFirestore firestore;
-    private PostingBoardViewModel postingModel;
-    private PostingBoardRepository postRepo;
-    private QueryClubPostingUtil clubRepo;
-    private QueryPaginationUtil queryPagingUtil;
+    //private PostingBoardViewModel postingModel;
+    //private PostingBoardRepository postRepo;
+    //private QueryClubPostingUtil clubRepo;
+    //private ListenerRegistration listenerRegistration;
+    private QueryPostPaginationUtil queryPagingUtil;
 
 
     private BoardPagerAdapter pagerAdapter;
     private FragmentSharedModel fragmentModel;
     private BoardPostingAdapter postingAdapter;
     private List<DocumentSnapshot> postshotList;
-    //private List<DocumentSnapshot> clubshotList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
@@ -101,10 +95,9 @@ public class BoardPagerFragment extends Fragment implements
     private int currentPage;
     private boolean isViewOrder;
     private boolean isLoading;
-    private boolean isLastPage;
-    private boolean isViewUpdated;
+    //private boolean isLastPage;
+    //private boolean isViewUpdated;
     //private boolean isScrolling;
-    private boolean isFirstShot;
 
     // Constructor
     public BoardPagerFragment() {
@@ -142,10 +135,8 @@ public class BoardPagerFragment extends Fragment implements
         imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
-
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         postshotList = new ArrayList<>();
-        //clubshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postshotList, this);
 
         /*
@@ -159,10 +150,7 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter = new BoardPostingAdapter(postshotList, this);
         }
          */
-
-
-
-        queryPagingUtil = new QueryPaginationUtil(firestore, this);
+        queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
         postingAdapter = new BoardPostingAdapter(postshotList, this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
@@ -221,10 +209,10 @@ public class BoardPagerFragment extends Fragment implements
 
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
-        /*
         fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 log.i("Upload Post: %s", docId);
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             }
         });
 
@@ -235,16 +223,16 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel.getRemovedPosting().observe(requireActivity(), docId -> {
             //log.i("Posting removed: %s", docId);
             if(!TextUtils.isEmpty(docId)) {
-                //pageHelper.setPostingQuery(currentPage, isViewOrder);
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             }
         });
 
         fragmentModel.getEditPosting().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                //pageHelper.setPostingQuery(currentPage, isViewOrder);
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             }
         });
-        */
+
     }
 
     // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
@@ -394,22 +382,24 @@ public class BoardPagerFragment extends Fragment implements
         // Autoclub sorts out the document snapshot with given filters.
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
-            else postshotList.add(document);
-            // Consider if it is appropraite to call nofityDataSetChanged every time.
-            postingAdapter.notifyDataSetChanged();
+            else {
+                postshotList.add(document);
+                // Consider if it is appropraite to call nofityDataSetChanged every time.
+                postingAdapter.notifyDataSetChanged();
+            }
+
         }
 
         // If the sorted posts are less than the pagination number, keep querying until it's up to
-        // the number.
+        // the number. Manually update the adapter each time posts amounts to the pagination number.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextQuery();
                 return;
-            }
+            } else postingAdapter.notifyDataSetChanged();
         }
 
-        //isViewUpdated = !isViewUpdated;
         pbLoading.setVisibility(View.GONE);
         isLoading = false;
     }
@@ -420,17 +410,21 @@ public class BoardPagerFragment extends Fragment implements
         log.i("next query: %s", nextShots.size());
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
-            else postshotList.add(document);
-            postingAdapter.notifyDataSetChanged();
+            else {
+                postshotList.add(document);
+                postingAdapter.notifyDataSetChanged();
+            }
         }
 
+        // Keep querying if sorted posts are less than the pagination number. When it reaches the
+        // number, update the apdater.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
                 return;
-            }
+            } else postingAdapter.notifyDataSetChanged();
         }
 
         //postingAdapter.notifyDataSetChanged();
@@ -438,10 +432,8 @@ public class BoardPagerFragment extends Fragment implements
         isLoading = false;
     }
 
-    // Called by QueryPaginationTuil.setLastQuery()
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
-        log.i("last query: %s", lastShots.size());
         for(DocumentSnapshot document : lastShots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postshotList.add(document);
@@ -456,9 +448,8 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-
         pbPaging.setVisibility(View.GONE);
-        isLoading = true;
+        isLoading = true; // Block the scroll listener from keeping querying.
     }
 
 
@@ -477,8 +468,6 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
     }
-
-
 
     /*
     // Callback implemented by QueryClubPostingUtil.setPostingQuery() when initiating query for
@@ -638,7 +627,6 @@ public class BoardPagerFragment extends Fragment implements
                     int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
                     int visiblePostCount = layoutManager.getChildCount();
                     int totalPostCount = layoutManager.getItemCount();
-                    log.i("pagination: %s, %s, %s, %s", isLoading, firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
                     if (!isLoading && isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         log.i("scroll with next query");
@@ -647,7 +635,6 @@ public class BoardPagerFragment extends Fragment implements
 
                         pbPaging.setVisibility(View.VISIBLE);
                         queryPagingUtil.setNextQuery();
-
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();
                     }

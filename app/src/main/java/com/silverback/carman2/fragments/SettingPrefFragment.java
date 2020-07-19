@@ -1,12 +1,12 @@
 package com.silverback.carman2.fragments;
 
 
-import android.Manifest;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
@@ -20,13 +20,13 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
-import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 import com.silverback.carman2.views.NameDialogPreference;
+import com.silverback.carman2.views.ProgressBarPreference;
 import com.silverback.carman2.views.SpinnerDialogPreference;
 
 import org.json.JSONArray;
@@ -51,7 +51,7 @@ public class SettingPrefFragment extends SettingBaseFragment  {
     //private DecimalFormat df;
 
     // UIs
-    private Preference autoPref;
+    private ProgressBarPreference autoPref;
     private SpinnerDialogPreference spinnerPref;
     private Preference favorite;
 
@@ -85,9 +85,10 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         if(userName != null) nickname = namePref.getSummary().toString();
 
         // Call SettingAutoFragment which contains the preferences to have the auto data which will
-        // be used as filter for querying the board. On clicking the Up button, the preference values
-        // are notified here as the JSONString and reset the preference summary.
+        // be used as filter for querying the posting board. On clicking the Up button, the preference
+        // values are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
+        //autoPref.showProgressBar(true);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
         //typeName = mSettings.getString(Constants.AUTO_TYPE, null);
@@ -214,7 +215,11 @@ public class SettingPrefFragment extends SettingBaseFragment  {
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
             mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
-            if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
+
+            if(!TextUtils.isEmpty(makerName)) {
+                queryAutoMaker(makerName);
+                autoPref.showProgressBar(true);
+            }
         });
 
         // Observe whether the district has changed in the custom spinner list view. If any change
@@ -244,6 +249,9 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         } else {
             String summary = String.format("%s (%s)", makerName, regMakerNum);
             setSpannedAutoSummary(autoPref, summary);
+
+            // Hide the progressbar in the preference
+            autoPref.showProgressBar(false);
         }
     }
     // queryAutoModel() defined in the parent fragment(SettingBaseFragment) queries the auto model,
@@ -257,6 +265,10 @@ public class SettingPrefFragment extends SettingBaseFragment  {
             String num = String.valueOf(modelshot.getLong("reg_number"));
             String summary = String.format("%s(%s)  %s(%s)", makerName, regMakerNum, modelName, num);
             setSpannedAutoSummary(autoPref, summary);
+
+            // Hide the progressbar in the autodata preference when the auto data are succeessfully
+            // retrieved.
+            autoPref.showProgressBar(false);
         }
     }
 

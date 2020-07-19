@@ -30,7 +30,6 @@ public class PostingRecyclerView extends RecyclerView {
     }
 
     private void initEmptyView() {
-
         if(mEmptyView != null) {
             int emptyView = (getAdapter() == null || getAdapter().getItemCount() == 0)? VISIBLE : GONE;
             int thisView = (getAdapter() == null || getAdapter().getItemCount() == 0)? GONE : VISIBLE;

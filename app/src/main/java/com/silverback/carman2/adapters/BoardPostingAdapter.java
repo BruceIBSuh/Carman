@@ -95,7 +95,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 int offset = (position / AD_POSITION) - 1;
-                int index = (AD_POSITION > position) ? position + 1 : position - offset;
+                //int index = (AD_POSITION > position) ? position + 1 : position - offset;
+                int index = position + 1;
 
                 // Timestamp consists of seconds and nanoseconds. To format it as date, get the
                 // seconds using Timestamp.getSeconds() and apply SimpleDateFormat.format() despite
@@ -174,8 +175,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Guess this will be useful to apply plug-in ads.
     @Override
     public int getItemViewType(int position) {
-        return (position > 0 && position % AD_POSITION == 0) ? AD_VIEW_TYPE : CONTENT_VIEW_TYPE;
-        //return -1;
+        //return (position > 0 && position % AD_POSITION == 0) ? AD_VIEW_TYPE : CONTENT_VIEW_TYPE;
+        return 1;
     }
 
     // ViewHolders

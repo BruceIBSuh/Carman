@@ -55,7 +55,8 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.QueryPaginationUtil;
+import com.silverback.carman2.utils.QueryCommentPagingUtil;
+import com.silverback.carman2.utils.QueryPostPaginationUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -81,7 +82,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
-        View.OnClickListener, QueryPaginationUtil.OnQueryPaginationCallback {
+        View.OnClickListener, QueryCommentPagingUtil.OnQueryPaginationCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -95,7 +96,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
-    private QueryPaginationUtil queryPaginationUtil;
+    private QueryCommentPagingUtil queryCommentPagingUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -160,7 +161,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
-        queryPaginationUtil = new QueryPaginationUtil(firestore, this);
+        queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(commentShotList);
 
@@ -306,7 +307,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Query comments
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
         //queryCommentSnapshot(postRef);
-        queryPaginationUtil.setCommentQuery(postRef);
+        queryCommentPagingUtil.setCommentQuery(postRef);
 
         return localView;
     }
@@ -463,7 +464,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                         if(!isLoading) {
                             isLoading = true;
                             //pbPaging.setVisibility(View.VISIBLE);
-                            queryPaginationUtil.setNextQuery();
+                            queryCommentPagingUtil.setNextQuery();
                         }
 
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);

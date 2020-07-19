@@ -55,4 +55,8 @@
         <attr name="btn4" format="string|reference" />
     </declare-styleable>
 
+    <declare-styleable name="ProgressBarPreference">
+        <attr name="pbAutoData" format="reference" />
+    </declare-styleable>
+
 </resources>

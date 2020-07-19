@@ -54,7 +54,7 @@ public class OpinetSigunPriceView extends OpinetPriceView {
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetSigunPriceView_sigunPriceUp, 0);
             priceDownColor = typedArray.getColor(R.styleable.OpinetSigunPriceView_sigunPriceDown, 0);
-            log.i("Color: %d, %d", priceUpColor, priceDownColor);
+            //log.i("Color: %d, %d", priceUpColor, priceDownColor);
 
         } finally {
             typedArray.recycle();

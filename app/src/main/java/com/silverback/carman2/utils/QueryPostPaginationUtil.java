@@ -1,27 +1,21 @@
 package com.silverback.carman2.utils;
 
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+public class QueryPostPaginationUtil {
 
-public class QueryPaginationUtil {
-
-    private static final LoggingHelper log = LoggingHelperFactory.create(QueryPaginationUtil.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(QueryPostPaginationUtil.class);
 
     // Objects
     private OnQueryPaginationCallback mCallback;
     private FirebaseFirestore firestore;
-
     private CollectionReference colRef;
     private Query query;
     private QuerySnapshot querySnapshot;
@@ -29,7 +23,6 @@ public class QueryPaginationUtil {
     // Fields
     private boolean isUpdated;
     private String field;
-
 
     // Interface
     public interface OnQueryPaginationCallback {
@@ -39,11 +32,10 @@ public class QueryPaginationUtil {
     }
 
     // Constructor
-    public QueryPaginationUtil(FirebaseFirestore firestore, OnQueryPaginationCallback callback) {
+    public QueryPostPaginationUtil(FirebaseFirestore firestore, OnQueryPaginationCallback callback) {
         this.firestore = firestore;
         colRef = firestore.collection("board_general");
         mCallback = callback;
-        //firestore.clearPersistence();
     }
 
     public void setPostQuery(int page, boolean isViewOrder) {
@@ -71,39 +63,59 @@ public class QueryPaginationUtil {
                 break;
         }
 
+
+        query.limit(Constants.PAGINATION).get().addOnSuccessListener(querySnapshot -> {
+            this.querySnapshot = querySnapshot;
+            mCallback.getFirstQueryResult(querySnapshot);
+        }).addOnFailureListener(Exception::printStackTrace);
+
+        /*
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
 
+         */
     }
 
-    public void setCommentQuery(DocumentReference docRef){
-        querySnapshot = null;
-        query = docRef.collection("comments").orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(Constants.PAGINATION);
 
-        query.addSnapshotListener((commentSnapshot, e) -> {
-            // exceepthion handling required
-            if(e != null || commentSnapshot == null) return;
-
-            // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
-            // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
-            this.querySnapshot = commentSnapshot;
-            mCallback.getFirstQueryResult(commentSnapshot);
-        });
-    }
 
     public void setNextQuery() {
         DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        log.i("lastVisibleshot: %s", lastVisibleShot.getString("post_title"));
-
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot).limit(Constants.PAGINATION)
-                .addSnapshotListener((nextSnapshot, e) -> {
+                .get()
+                .addOnSuccessListener(nextSnapshot -> {
+                    if(nextSnapshot.size() >= Constants.PAGINATION) {
+                        this.querySnapshot = nextSnapshot;
+                        mCallback.getNextQueryResult(nextSnapshot);
+                    } else {
+                        querySnapshot = null;
+                        mCallback.getLastQueryResult(nextSnapshot);
+                    }
+                }).addOnFailureListener(Exception::printStackTrace);
 
+        /*
+        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot)
+                .limit(Constants.PAGINATION)
+                .addSnapshotListener((nextSnapshot, e) -> {
                     if(e != null || nextSnapshot == null) return;
                     log.i("meta data: %s", nextSnapshot.getMetadata().isFromCache());
+                    for(DocumentChange dc : nextSnapshot.getDocumentChanges()) {
+                        switch(dc.getType()){
+                            case ADDED:
+                                log.i("ADDED: %s", dc.getDocument().getString("post_title"));
+                                break;
+
+                            case MODIFIED:
+                                log.i("MODIFIED: %s", dc.getDocument().getString("post_title"));
+                                break;
+
+                            case REMOVED:
+                                log.i("REMOVED: %s", dc.getDocument().getString("post_title"));
+                                break;
+                        }
+                    }
 
                     if(nextSnapshot.size() >= Constants.PAGINATION) {
                         log.i("query next: %s", nextSnapshot.size());
@@ -115,22 +127,6 @@ public class QueryPaginationUtil {
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
                 });
-        /*
-        query = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot);
-        query.limit(Constants.PAGINATION).addSnapshotListener((nextSnapshot, e) -> {
-
-
-            if(e != null || nextSnapshot == null) return;
-
-            if(nextSnapshot.size() >= Constants.PAGINATION) {
-                this.querySnapshot = nextSnapshot;
-                mCallback.getNextQueryResult(nextSnapshot);
-            } else {
-                querySnapshot = null;
-                mCallback.getLastQueryResult(nextSnapshot);
-            }
-
-        });
 
          */
     }
