@@ -30,7 +30,8 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
     private MutableLiveData<String> removedPosting;
-    private MutableLiveData<String> editPosting;
+    private MutableLiveData<String> editedPosting;
+    private MutableLiveData<Integer> newComment;
 
 
 
@@ -159,10 +160,18 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w BoardEditFragment and BoardPagerFragment
-    public MutableLiveData<String> getEditPosting() {
-        if(editPosting == null) editPosting = new MutableLiveData<>();
-        return editPosting;
+    public MutableLiveData<String> getEditedPosting() {
+        if(editedPosting == null) editedPosting = new MutableLiveData<>();
+        return editedPosting;
     }
+
+    /*
+    public MutableLiveData<Integer> getNewComment() {
+        if(newComment == null) newComment = new MutableLiveData<>();
+        return newComment;
+    }
+
+     */
 
 
     // Commnumcate b/w GeneralFragment and PricePagerFragment in MainActivity to pass the station id

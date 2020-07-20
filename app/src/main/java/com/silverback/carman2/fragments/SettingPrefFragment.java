@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
@@ -95,7 +94,8 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
 
         // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
-        // query the reg. number of the automaker and the automodel, if the model name is given.
+        // query the registration number of the automaker and the automodel, if the model name is given.
+        // At the same time, show the progressbar until the number is queried.
         if(TextUtils.isEmpty(makerName))
             autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
         else {
@@ -246,21 +246,11 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         // Hide the progressbar in the preference
         autoPref.showProgressBar(false);
 
+        // If the automodel exisits, keep querying the model registration number. If not, hide the
+        // progressbar when the automaker queries the number.
         if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
-        //String automaker = makershot.getString("auto_maker");
-        //log.i("emblem: %s", makershot.getString("auto_emblem"));
+        else autoPref.showProgressBar(false);
 
-        //if(!TextUtils.isEmpty(modelName)) {
-        /*
-        if(TextUtils.isEmpty(modelName)) {
-
-
-        } else {
-            log.i("weirdo: %s", modelName);
-            queryAutoModel(makershot.getId(), modelName);
-        }
-
-         */
     }
     // queryAutoModel() defined in the parent fragment(SettingBaseFragment) queries the auto model,
     // the result of which implement the method to have the registration number of the auto model,

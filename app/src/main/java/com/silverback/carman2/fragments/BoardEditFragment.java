@@ -468,7 +468,7 @@ public class BoardEditFragment extends Fragment implements
 
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
             // Upon completing upload, notify BaordPagerFragment of the document id to update.
-            sharedModel.getEditPosting().setValue(docId);
+            sharedModel.getEditedPosting().setValue(docId);
             pbFragment.dismiss();
             ((BoardActivity)getActivity()).addViewPager();
 

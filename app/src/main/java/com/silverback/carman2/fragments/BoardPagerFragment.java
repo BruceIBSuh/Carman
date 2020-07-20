@@ -227,11 +227,20 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
 
-        fragmentModel.getEditPosting().observe(requireActivity(), docId -> {
+        fragmentModel.getEditedPosting().observe(requireActivity(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             }
         });
+
+        // Notified of uploading a comment done.
+        /*
+        fragmentModel.getNewComment().observe(requireActivity(), position -> {
+            log.i("comment done: %s", position);
+            postingAdapter.notifyItemChanged(position);
+        });
+
+         */
 
     }
 
@@ -331,6 +340,9 @@ public class BoardPagerFragment extends Fragment implements
         BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
+        // TEST CODING FOR UPDATING THE COMMENT NUMBER
+        bundle.putInt("position", position);
+
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
 
@@ -359,8 +371,6 @@ public class BoardPagerFragment extends Fragment implements
         // Update the field of "cnt_view" increasing the number.
         DocumentReference docref = snapshot.getReference();
         addViewCount(docref, position);
-
-
     }
 
     // Implement QueryPaginationUtil.OnQueryPaginationCallback called by QueryPaginationUtil.
@@ -679,7 +689,7 @@ public class BoardPagerFragment extends Fragment implements
                       docref.get().addOnSuccessListener(data -> {
                           if(data != null && data.exists()) {
                               postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
+                              //postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
                           }
                       }).addOnFailureListener(Exception::printStackTrace);
                   });

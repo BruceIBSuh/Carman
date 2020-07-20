@@ -153,11 +153,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
             ((PostViewHolder)holder).tvViewCount.setText(String.valueOf(payloads.get(0)));
-            ((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(payloads.get(1)));
+            //((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(payloads.get(1)));
         }
     }
 

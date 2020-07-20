@@ -44,6 +44,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BaseActivity;
@@ -95,6 +96,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
+    private ListenerRegistration listenerRegistration;
     private QueryCommentPagingUtil queryCommentPagingUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
@@ -126,6 +128,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private String tabTitle;
     private String userId, documentId;
     private int tabPage;
+    private int position; // item poistion in the recyclerview.
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
@@ -170,6 +173,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
+            position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
@@ -290,7 +294,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
         // whether the document has local changes that haven't been written to the backend yet.
         // This property may determine the source of events
-        postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+        listenerRegistration = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
                 long countComment = snapshot.getLong("cnt_comment");
@@ -357,7 +361,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     @Override
     public void onPause() {
         super.onPause();
-        //commentListener.remove();
+        listenerRegistration.remove();
     }
 
     @Override
@@ -521,10 +525,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
         postRef.get().addOnSuccessListener(document -> {
             if(document.exists()) {
                 final CollectionReference colRef = document.getReference().collection("comments");
-                colRef.add(comment).addOnSuccessListener(commentDoc -> postRef.update("cnt_comment",
-                        FieldValue.increment(1))).addOnFailureListener(e -> {
-                            e.printStackTrace();
-                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+                colRef.add(comment).addOnSuccessListener(commentDoc -> {
+                    postRef.update("cnt_comment", FieldValue.increment(1));
+                    //sharedModel.getNewComment().setValue(position, commentDoc);
+                }).addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
 
                 // Hide the soft input method.
