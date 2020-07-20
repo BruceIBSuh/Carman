@@ -247,17 +247,19 @@ public class BoardActivity extends BaseActivity implements
                 return true;
 
             case R.id.action_upload_post:
-                return false;
-                /*
+                //return false;
+
                 // Network check. If no network exists, no matter what is wifi or mobile data,
                 // show the error message and nothing is done.
                 // Refactor: WorkManager should be applied to upload a post as any network is
                 // re-established.
+                /*
                 if(!isNetworkConnected) {
                     String errNoNetwork = getString(R.string.error_no_network_upload_fail);
                     Snackbar.make(coordinatorLayout, errNoNetwork, Snackbar.LENGTH_SHORT).show();
                     return false;
                 }
+                */
 
                 // Make it differencitated that what the current page contains b/w BoardWriteFragment
                 // and BoardEditFragment.
@@ -267,7 +269,7 @@ public class BoardActivity extends BaseActivity implements
                 else editPostFragment.prepareUpdate();
 
                 return true;
-                 */
+
 
             default: return super.onOptionsItemSelected(item);
         }
@@ -285,7 +287,6 @@ public class BoardActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onPageSelected(int position){
-        log.i("onPageSelected");
         tabPage = position;
         menu.getItem(0).setVisible(false);
         fabWrite.setVisibility(View.VISIBLE);
@@ -394,6 +395,7 @@ public class BoardActivity extends BaseActivity implements
     public void onEditClicked(Bundle bundle) {
         if(writePostFragment != null) writePostFragment = null;
         if(frameLayout.getChildAt(0) instanceof ViewPager) frameLayout.removeView(boardPager);
+
         editPostFragment = new BoardEditFragment();
         editPostFragment.setArguments(bundle);
 
@@ -404,12 +406,15 @@ public class BoardActivity extends BaseActivity implements
         // Hide the emblem and set the club title if the current page is autoclub.
         if(tabPage == Constants.BOARD_AUTOCLUB) getSupportActionBar().setTitle(clubTitle);
         else getSupportActionBar().setTitle(getString(R.string.board_title_edit));
-        if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
+
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
         // workable as BoardPagerFragment comes in.(may replace getViewTreeObeserver() in onCreate().
         tabHeight = boardTabLayout.getMeasuredHeight();
         animTabHeight(false);
+
+        //if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
+        menu.getItem(0).setVisible(false);
         menu.getItem(1).setVisible(true);
         fabWrite.setVisibility(View.GONE);
     }
@@ -627,18 +632,18 @@ public class BoardActivity extends BaseActivity implements
             cb.setTextColor(Color.WHITE);
 
             if(jsonAuto.optString(i).equals("null")) {
-                cb.setEnabled(false);
                 switch(i) {
                     case 1: cb.setText(R.string.pref_auto_model);break;
                     case 2: cb.setText(R.string.pref_engine_type);break;
                     case 3: cb.setText(R.string.board_filter_year);break;
                 }
 
+                cb.setEnabled(false);
+
             } else {
                 // The automaker is a necessary checkbox to be checked as far as jsonAuto has set
                 // any checkbox. Other autofilter values depends on whether it is the locked mode
                 // which retrieves each values from SharedPreferences.
-
                 cb.setText(jsonAuto.optString(i));
                 if(i == 0) {
                     cb.setChecked(true);

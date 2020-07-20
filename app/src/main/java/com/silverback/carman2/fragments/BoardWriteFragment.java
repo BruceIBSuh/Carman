@@ -205,10 +205,13 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        /*
         if(item.getItemId() == R.id.action_upload_post) {
             prepareAttachedImages();
             return true;
         }
+
+         */
 
         return false;
     }

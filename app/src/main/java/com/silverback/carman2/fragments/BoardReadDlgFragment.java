@@ -56,7 +56,6 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.QueryCommentPagingUtil;
-import com.silverback.carman2.utils.QueryPostPaginationUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -338,7 +337,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // the alert dialog. Picking the confirm button, FragmentSharedModel.getPostRemoved()
         // notifies BoardPagerFragment that the user has deleted the post w/ the item position.
         // To prevent the model from autmatically invoking the method, set the value to false;
-        sharedModel.getAlertPostResult().setValue(false);
+        //sharedModel.getAlertPostResult().setValue(false);
         sharedModel.getAlertPostResult().observe(requireActivity(), result -> {
             // The post will be deleted from Firestore.
             log.i("Alert confirms to delete the post");
@@ -401,6 +400,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
+    // Implement QueryCommentPagingUtil.OnQueryPaginationCallback, overriding the follwoing methods.
     @Override
     public void getFirstQueryResult(QuerySnapshot postShots) {
         commentShotList.clear();
@@ -435,7 +435,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // Subclass of RecyclerView.ScrollViewListner
+    // Subclass of RecyclerView.ScrollViewListner.
     private void setRecyclerViewScrollListener() {
         RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
             boolean isScrolling;

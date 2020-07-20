@@ -258,11 +258,13 @@ public class BoardEditFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        /*
         if(item.getItemId() == R.id.action_upload_post) {
+            log.i("edited upload clicked");
             prepareUpdate();
             return true;
         }
-
+        */
         return false;
     }
 
@@ -428,9 +430,7 @@ public class BoardEditFragment extends Fragment implements
 
             // If no images newly added to the post, update the post directly. Otherwise, make attached
             // images uploaded to Storage first, then updatePost().
-            if(cntUploadImage == 0) updatePost();
-
-
+            //if(cntUploadImage == 0) updatePost();
         }
     }
 

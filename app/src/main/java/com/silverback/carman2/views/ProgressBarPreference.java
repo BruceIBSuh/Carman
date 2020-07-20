@@ -19,30 +19,26 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 public class ProgressBarPreference extends Preference {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ProgressBarPreference.class);
-
-    // Objects
-    private ProgressBar pbAutoData;
-
+    /*
     public ProgressBarPreference(Context context) {
         super(context);
     }
+    */
     public ProgressBarPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
+    /*
     public ProgressBarPreference(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         getAttributes(context, attrs);
     }
+     */
 
     protected void getAttributes(Context context, AttributeSet attrs) {
-        //this.setWidgetLayoutResource(R.layout.view_pref_autodata);
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ProgressBarPreference);
-        try {
-
-        } finally {
-            typedArray.recycle();
-        }
+        try {}
+        finally { typedArray.recycle();}
     }
 
     public void showProgressBar(boolean isVisible) {

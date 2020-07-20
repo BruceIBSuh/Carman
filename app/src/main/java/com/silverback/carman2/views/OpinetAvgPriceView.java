@@ -62,7 +62,6 @@ public class OpinetAvgPriceView extends OpinetPriceView {
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetAvgPriceView_avgPriceUp, 0);
             priceDownColor = typedArray.getColor(R.styleable.OpinetAvgPriceView_avgPriceDown, 0);
-            log.i("Color: %d, %d", priceUpColor, priceDownColor);
         } finally {
             typedArray.recycle();
         }

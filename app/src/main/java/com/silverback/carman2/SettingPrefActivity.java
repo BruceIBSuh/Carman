@@ -274,7 +274,7 @@ public class SettingPrefActivity extends BaseActivity implements
     }
 
     /*
-     * Invoked when a preference which has an associated (dialog)fragment is tapped. If you do not
+     * Invoked when a preference which has an associated custom (dialog)fragment is tapped. If you do not
      * implement onPreferenceStartFragment(), a fallback implementation is used instead. While this works
      * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
      * transitions b/w Fragment objects and update the title in the toolbar, if applicable.

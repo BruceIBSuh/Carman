@@ -68,6 +68,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
     // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String name) {
+        log.i("query automaker: %s", name);
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(DocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {

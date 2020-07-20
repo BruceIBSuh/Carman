@@ -22,6 +22,8 @@ import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.database.CarmanDatabase;
 import com.silverback.carman2.database.FavoriteProviderDao;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -42,12 +44,14 @@ import org.json.JSONException;
 public class SettingPrefFragment extends SettingBaseFragment  {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefFragment.class);
 
     // Objects
     private SharedPreferences mSettings;
+    private FragmentSharedModel fragmentModel;
     private Preference userImagePref;
     private String nickname;
+
     //private DecimalFormat df;
 
     // UIs
@@ -71,10 +75,8 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         catch(JSONException e) {e.printStackTrace();}
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        //mSettings = ((SettingPrefActivity)getActivity()).getSettings();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
-
-        //df = BaseActivity.getDecimalFormatInstance();
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
         // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which is verified to a new one by querying.
@@ -91,17 +93,15 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         //autoPref.showProgressBar(true);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-        //typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-        //String yearName = mSettings.getString(Constants.AUTO_YEAR, null);
-        //String jsonData = mSettings.getString(Constants.AUTO_DATA, null);
-        //if(!TextUtils.isEmpty(jsonData)) parseAutoData(jsonData);
-        // set the void summary to the auto preference unless the auto maker name is given. Otherwise,
-        // query the registration number of the auto maker and model with the make name, notifying
-        // the listener
-        // Invalidate the summary of the autodata preference as far as any preference value of
-        // SettingAutoFragment have been changed.
-        if(TextUtils.isEmpty(makerName)) autoPref.setSummary(getString(R.string.pref_entry_void));
-        else queryAutoMaker(makerName);
+
+        // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
+        // query the reg. number of the automaker and the automodel, if the model name is given.
+        if(TextUtils.isEmpty(makerName))
+            autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
+        else {
+            autoPref.showProgressBar(true);
+            queryAutoMaker(makerName);
+        }
 
         // Preference for selecting a fuel out of gas, diesel, lpg and premium, which should be
         // improved with more energy source such as eletricity and hydrogene provided.
@@ -208,15 +208,15 @@ public class SettingPrefFragment extends SettingBaseFragment  {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-
         // Observe whether the auto data in SettingAutoFragment has changed.
         fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonString -> {
+            autoPref.setSummaryProvider(preference -> "Loading...");
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
             mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
-
+            log.i("auto data: %s, %s", makerName, modelName);
             if(!TextUtils.isEmpty(makerName)) {
+                log.i("makername: %s", makerName);
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
             }
@@ -241,18 +241,26 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = String.valueOf(makershot.getLong("reg_number"));
+        String summary = String.format("%s (%s)", makerName, regMakerNum);
+        setSpannedAutoSummary(autoPref, summary);
+        // Hide the progressbar in the preference
+        autoPref.showProgressBar(false);
+
+        if(!TextUtils.isEmpty(modelName)) queryAutoModel(makershot.getId(), modelName);
         //String automaker = makershot.getString("auto_maker");
         //log.i("emblem: %s", makershot.getString("auto_emblem"));
 
-        if(!TextUtils.isEmpty(modelName)) {
-            queryAutoModel(makershot.getId(), modelName);
-        } else {
-            String summary = String.format("%s (%s)", makerName, regMakerNum);
-            setSpannedAutoSummary(autoPref, summary);
+        //if(!TextUtils.isEmpty(modelName)) {
+        /*
+        if(TextUtils.isEmpty(modelName)) {
 
-            // Hide the progressbar in the preference
-            autoPref.showProgressBar(false);
+
+        } else {
+            log.i("weirdo: %s", modelName);
+            queryAutoModel(makershot.getId(), modelName);
         }
+
+         */
     }
     // queryAutoModel() defined in the parent fragment(SettingBaseFragment) queries the auto model,
     // the result of which implement the method to have the registration number of the auto model,

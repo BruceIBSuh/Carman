@@ -17,6 +17,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -31,11 +32,9 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * This fragment is a split screen PreferenceFragmentCompat which may display multiple preferences
+ * This fragment is a split screen PreferenceFragmentCompat which displays multiple preferences
  * on a separate screen with its own preference hierarchy that is concerned with the auto data.
- * Firestore holds comprehensive data to download but special care is required for latency. Thus,
- * upon completion of auto colleciton all at once, transactions should be made with Source.Cache.
- *
+ * Firestore holds comprehensive data to download but special care is required for latency.
  */
 public class SettingAutoFragment extends SettingBaseFragment implements
         Preference.OnPreferenceChangeListener {
@@ -48,13 +47,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // Objects
     private FragmentSharedModel fragmentModel;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
-
-    // UIs
     private EngineTypeDialogFragment engineTypeDialogFragment;
 
     // fields
     private String makerId, modelId;
-    //private String emblem;
     private boolean isMakerChanged, isModelChanged, isAutoTypeChanged, isEngineTypeChanged;
 
     // Constructor
@@ -69,8 +65,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);// necessary for the options menu feasible in fragment
 
-        mSettings = ((SettingPrefActivity)getActivity()).getSettings();
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         engineTypeDialogFragment = new EngineTypeDialogFragment(this);
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
@@ -101,6 +97,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         engineName = mSettings.getString(Constants.ENGINE_TYPE, null);
         yearName = mSettings.getString(Constants.AUTO_YEAR, null);
         log.i("Initial auto preference values: %s, %s, %s, %s, %s", makerName, modelName, typeName, engineName, yearName);
+
         // Initially, query all auto makers to set entry(values) to the auto maker preference.
         // useSimpleSummaryProvider does not work b/c every time the fragment is instantiated, the
         // entries is set which may disable to call the summary.
@@ -114,14 +111,13 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // Set the entries(values) to the auto year preference.
         List<String> yearList = new ArrayList<>();
         int year = Calendar.getInstance().get(Calendar.YEAR);
-        for (int i = year; i >= (year - LONGEVITY); i--) yearList.add(String.valueOf(i));
+        for (int i = year + 1; i >= ((year + 1) - LONGEVITY); i--) yearList.add(String.valueOf(i));
         String[] mYearEntries = yearList.toArray(new String[LONGEVITY]);
         autoYear.setEntries(mYearEntries);
         autoYear.setEntryValues(mYearEntries);
 
-        // As long as the automaker name is given, query the auto data to retrieve the reg. number
-        // of that automaker and continue to query the auto model if an auto model name is provided.
-        // Otherwise, dependent preferences should be disabled until an automaker is selected.
+        // Given the automaker name, query the registration number of the automaker and the dependent
+        // preferences are set disabled until queryAutoMaker() completes.
         if(!TextUtils.isEmpty(makerName)) {
             queryAutoMaker(makerName);
         } else {
@@ -142,6 +138,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // If successful, set the auto model preference to be enabled and set entries to it
         // queried with the maker and type id.
         final String valueName = (String)value;
+        log.i("onPreferenceChange value: %s", valueName);
 
         switch(preference.getKey()) {
             // If the auto maker preference changes, query the registration number, setting
@@ -257,6 +254,12 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             List<String> engineTypeList = (List<String>) makershot.get("engine_type");
             engineTypeList.add(0, getString(R.string.pref_entry_void));
             String[] arrEngineType = engineTypeList.toArray(new String[0]);
+
+            // The engine name should be saved as null when it's not set b/c it is referenced in
+            // the autofilter checkbox. To show the summary, however, the null value should be
+            // the String value to select the list item and show the summary.
+            if(TextUtils.isEmpty(engineName)) engineName = getString(R.string.pref_entry_void);
+
             engineType.setEntries(arrEngineType);
             engineType.setEntryValues(arrEngineType);
             engineType.setValue(engineName);
@@ -358,15 +361,14 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             dataList.add(engineType.getValue());
             dataList.add(autoYear.getValue());
 
-            for(String str : dataList) log.i("autodata: %s", str);
 
             JSONArray json = new JSONArray(dataList);
             fragmentModel.getAutoData().setValue(json.toString());
 
-            //DownloadImageTask task = ThreadManager.downloadBitmapTask(getContext(), emblem, null);
+            return true;
         }
 
-        return true;
+        return false;
     }
 
 
@@ -405,7 +407,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     }
 
     // Static nested class to create AlertDialog to select an engine type if an model has multiple
-    // engine type.
+    // engine types.
     @SuppressWarnings("ConstantConditions")
     public static class EngineTypeDialogFragment extends DialogFragment {
         private SettingAutoFragment outerFragment;
