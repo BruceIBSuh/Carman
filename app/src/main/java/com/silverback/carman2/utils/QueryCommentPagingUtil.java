@@ -53,6 +53,8 @@ public class QueryCommentPagingUtil {
                 .limit(Constants.PAGINATION)
                 .addSnapshotListener((nextSnapshot, e) -> {
                     if(e != null || nextSnapshot == null) return;
+
+                    /*
                     log.i("meta data: %s", nextSnapshot.getMetadata().isFromCache());
                     for(DocumentChange dc : nextSnapshot.getDocumentChanges()) {
                         switch(dc.getType()){
@@ -68,14 +70,17 @@ public class QueryCommentPagingUtil {
                         }
                     }
 
-                    if(nextSnapshot.size() >= Constants.PAGINATION) {
-                        log.i("query next: %s", nextSnapshot.size());
-                        this.querySnapshot = nextSnapshot;
-                        mCallback.getNextQueryResult(nextSnapshot);
-                    } else {
+                     */
+
+                    if(nextSnapshot.size() < Constants.PAGINATION) {
                         log.i("query last: %s", nextSnapshot.size());
                         querySnapshot = null;
                         mCallback.getLastQueryResult(nextSnapshot);
+
+                    } else {
+                        log.i("query next: %s", nextSnapshot.size());
+                        this.querySnapshot = nextSnapshot;
+                        mCallback.getNextQueryResult(nextSnapshot);
                     }
                 });
 

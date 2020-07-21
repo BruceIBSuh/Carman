@@ -3,6 +3,7 @@ package com.silverback.carman2.adapters;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman2.R;
+import com.silverback.carman2.logs.LoggingHelper;
+import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 
@@ -32,7 +35,7 @@ import java.util.Locale;
 public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
 
     // Constants
     private final int CONTENT_VIEW_TYPE = 1;
@@ -153,11 +156,15 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
-        } else {
-            ((PostViewHolder)holder).tvViewCount.setText(String.valueOf(payloads.get(0)));
+        } else  {
+            if(payloads.get(0).equals("view")) {
+                ((PostViewHolder)holder).tvViewCount.setText((String)payloads.get(1));
+            } else if(payloads.get(0).equals("comment")) {
+                ((PostViewHolder)holder).tvCommentCount.setText((String)payloads.get(1));
+            }
+            //((PostViewHolder)holder).tvViewCount.setText(String.valueOf(payloads.get(0)));
             //((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(payloads.get(1)));
         }
     }
@@ -213,7 +220,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     }
 
-    class AdViewHolder extends RecyclerView.ViewHolder {
+    static class AdViewHolder extends RecyclerView.ViewHolder {
         AdViewHolder(View view) {
             super(view);
         }

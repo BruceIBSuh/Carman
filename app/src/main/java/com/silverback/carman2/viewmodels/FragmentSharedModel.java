@@ -27,11 +27,12 @@ public class FragmentSharedModel extends ViewModel {
     // SettingSvcItemDlgFragment and SettingServiceItemFragment
     private MutableLiveData<JSONObject> jsonServiceItemObj;
 
+    //
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
     private MutableLiveData<String> removedPosting;
     private MutableLiveData<String> editedPosting;
-    private MutableLiveData<Integer> newComment;
+    private MutableLiveData<SparseArray<Long>> newComment;
 
 
 
@@ -165,13 +166,11 @@ public class FragmentSharedModel extends ViewModel {
         return editedPosting;
     }
 
-    /*
-    public MutableLiveData<Integer> getNewComment() {
+    public MutableLiveData<SparseArray<Long>> getNewComment() {
         if(newComment == null) newComment = new MutableLiveData<>();
         return newComment;
     }
 
-     */
 
 
     // Commnumcate b/w GeneralFragment and PricePagerFragment in MainActivity to pass the station id

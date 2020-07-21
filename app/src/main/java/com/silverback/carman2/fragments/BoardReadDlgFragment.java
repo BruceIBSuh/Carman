@@ -12,6 +12,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -57,6 +59,7 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.utils.QueryCommentPagingUtil;
+import com.silverback.carman2.utils.QueryPostPaginationUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
 
@@ -82,7 +85,9 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
  * BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
-        View.OnClickListener, QueryCommentPagingUtil.OnQueryPaginationCallback {
+        View.OnClickListener,
+        QueryPostPaginationUtil.OnQueryPaginationCallback {
+        //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
 
@@ -97,7 +102,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
     private ListenerRegistration listenerRegistration;
-    private QueryCommentPagingUtil queryCommentPagingUtil;
+    //private QueryCommentPagingUtil queryCommentPagingUtil;
+    private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
@@ -115,6 +121,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // UIs
     private View localView;
+    private NestedScrollView nestedScrollView;
     private ConstraintLayout constPostingLayout, constCommentLayout;
     private Toolbar toolbar;
     private View underline;
@@ -163,7 +170,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
-        queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
+        //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
+        queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(commentShotList);
 
@@ -221,6 +229,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         localView = inflater.inflate(R.layout.fragment_board_read, container, false);
 
         AppBarLayout appbarLayout = localView.findViewById(R.id.appbar_board_read);
+        NestedScrollView nestedScrollView = localView.findViewById(R.id.vg_nestedscrollview);
         toolbar = localView.findViewById(R.id.toolbar_board_read);
         constPostingLayout = localView.findViewById(R.id.constraint_posting);
         constCommentLayout = localView.findViewById(R.id.constraint_comment);
@@ -236,10 +245,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         tvCommentCnt = localView.findViewById(R.id.tv_cnt_comment);
         tvCompathyCnt = localView.findViewById(R.id.tv_cnt_compathy);
         underline = localView.findViewById(R.id.view_underline_header);
-
         recyclerComment = localView.findViewById(R.id.recycler_comments);
-        setRecyclerViewScrollListener();
-
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as follows. Also, the
@@ -258,6 +264,21 @@ public class BoardReadDlgFragment extends DialogFragment implements
             }
         });
 
+        // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
+        // it feasible to listen to scrolling, use the parent scollview listener.
+        nestedScrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
+                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                    View childView = v.getChildAt(v.getChildCount() - 1);
+                    if(childView != null) {
+                        if(!isLoading && (scrollY >= (childView.getMeasuredHeight() - v.getMeasuredHeight())
+                                && scrollY > oldScrollY)) {
+                            log.i("next query by scrolling");
+                            isLoading = true;
+                            queryPaginationUtil.setNextQuery();
+                }
+            }
+        });
+
         tvTitle.setText(postTitle);
         tvUserName.setText(userName);
         tvDate.setText(getArguments().getString("timestamp"));
@@ -270,6 +291,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // RecyclerView for showing comments
         recyclerComment.setLayoutManager(new LinearLayoutManager(context));
         recyclerComment.setAdapter(commentAdapter);
+        //setRecyclerViewScrollListener();
         //recyclerComment.addOnScrollListener(pagingUtil);
 
         // Event handler for clicking buttons
@@ -297,10 +319,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
         listenerRegistration = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
-                long countComment = snapshot.getLong("cnt_comment");
-                long countCompathy = snapshot.getLong("cnt_compathy");
-                tvCommentCnt.setText(String.valueOf(countComment));
-                tvCompathyCnt.setText(String.valueOf(countCompathy));
+                long cntComment = snapshot.getLong("cnt_comment");
+                long cntCompathy = snapshot.getLong("cnt_compathy");
+                tvCommentCnt.setText(String.valueOf(cntComment));
+                tvCompathyCnt.setText(String.valueOf(cntCompathy));
             }
         });
 
@@ -310,7 +332,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Query comments
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
         //queryCommentSnapshot(postRef);
-        queryCommentPagingUtil.setCommentQuery(postRef);
+        //queryCommentPagingUtil.setCommentQuery(postRef);
+        queryPaginationUtil.setCommentQuery(postRef);
 
         return localView;
     }
@@ -415,23 +438,25 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
         // In case the first query retrieves shots less than the pagination number, no more loading
         // is made.
-        isLoading = (postShots.size() < Constants.PAGINATION);
+        isLoading = postShots.size() < Constants.PAGINATION;
     }
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
+        log.i("next commentshot: %s", nextShots.size());
         for(DocumentSnapshot comment : nextShots) {
             commentShotList.add(comment);
             commentAdapter.notifyDataSetChanged();
         }
 
-        isLoading = (nextShots.size() < Constants.PAGINATION);
+        isLoading = nextShots.size() < Constants.PAGINATION;;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
 
         for(DocumentSnapshot comment : lastShots) {
+            log.i("last comments: %s", comment.getString("comment"));
             commentShotList.add(comment);
         }
         commentAdapter.notifyDataSetChanged();
@@ -440,36 +465,38 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
     // Subclass of RecyclerView.ScrollViewListner.
+    /*
     private void setRecyclerViewScrollListener() {
         RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
             boolean isScrolling;
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
+
                 //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
-                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
+                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+                    log.i("newState: %s", newState);
                     isScrolling = true;
+                }
             }
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-
                 //if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
-
+                log.i("onScrolled");
                 LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
                 if (layoutManager != null) {
                     int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
                     int visiblePostCount = layoutManager.getChildCount();
                     int totalPostCount = layoutManager.getItemCount();
-
-                    if (isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                    log.i("layout: %s, %s, %s, %s", isScrolling, firstVisibleProductPosition, visiblePostCount, totalPostCount);
+                    if (!isLoading && isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         isScrolling = false;
-                        if(!isLoading) {
-                            isLoading = true;
-                            //pbPaging.setVisibility(View.VISIBLE);
-                            queryCommentPagingUtil.setNextQuery();
-                        }
+                        isLoading = true;
+                        log.i("next query by scrolling");
+                        //pbPaging.setVisibility(View.VISIBLE);
+                        queryCommentPagingUtil.setNextQuery();
 
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();
@@ -481,6 +508,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         recyclerComment.addOnScrollListener(scrollListener);
     }
+
+     */
 
     // The following callbacks are invoked by PagingQueryHelper to query comments up to the limit
     // and on showing the last one, another query get started.
@@ -527,7 +556,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 final CollectionReference colRef = document.getReference().collection("comments");
                 colRef.add(comment).addOnSuccessListener(commentDoc -> {
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    //sharedModel.getNewComment().setValue(position, commentDoc);
+                    queryPaginationUtil.setCommentQuery(postRef);
+
+                    SparseArray<Long> sparseArray = new SparseArray<>();
+                    sparseArray.put(position, document.getLong("cnt_comment") + 1);
+                    sharedModel.getNewComment().setValue(sparseArray);
+
                 }).addOnFailureListener(e -> {
                     e.printStackTrace();
                     Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -662,7 +696,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // scrolling changes which keep the view being invalidated. The abstract class may, in turn,
     // receive changes and only notifies the specified state to the view.
     abstract class AppBarStateChangeListener implements AppBarLayout.OnOffsetChangedListener {
-
         int mCurrentState = STATE_IDLE;
         @Override
         public final void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
@@ -702,7 +735,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setSubtitle(userName);
                 imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
                 toolbar.setOnClickListener(view -> dismiss());
-
                 break;
 
             case STATE_EXPANDED:
@@ -713,9 +745,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 toolbar.setLogo(null);
                 break;
 
-            case STATE_IDLE:
-                log.i("STATE_IDLE");
-                break;
+            case STATE_IDLE: break;
 
         }
     }

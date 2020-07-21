@@ -167,11 +167,13 @@
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
+        <!-- (Nested)ScrollView may have only a single child -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraint_posting"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/background_light">
+
             <View
                 android:id="@+id/view_underline_header"
                 android:layout_width="0dp"
@@ -183,8 +185,9 @@
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_comments"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"

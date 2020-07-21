@@ -79,6 +79,19 @@ public class QueryPostPaginationUtil {
          */
     }
 
+    public void setCommentQuery(DocumentReference docRef){
+        querySnapshot = null;
+        this.field = "timestamp";
+        docRef.collection("comments").orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                .get()
+                .addOnSuccessListener(queryCommentShot -> {
+                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
+                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
+                    this.querySnapshot = queryCommentShot;
+                    mCallback.getFirstQueryResult(queryCommentShot);
+                }).addOnFailureListener(Exception::printStackTrace);
+    }
+
 
 
     public void setNextQuery() {

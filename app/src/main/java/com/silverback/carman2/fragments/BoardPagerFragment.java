@@ -31,6 +31,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BoardActivity;
@@ -56,7 +58,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-
+/**
+ * The viewpager statically creates this fragment using BoardPagerAdapter, which has the recyclerview
+ * to show the posting board by category.
+ *
+ * QueryPostPaginationUtil is a util class that performs query and pagination based on orderby() and
+ * limit(). The util class is made of the initial, next, and last query for pagination, listening to
+ * scrolling of the recyclerview. MVVM based architecture is provided in the board package just for
+ * referernce.
+ *
+ * Instead of using SnapshotListener for realtime update, which seems difficult to handle cache data
+ * in the viewpager fragments, the util simply reads posts using get() and update is made by requerying
+ * posts notified by the viewmodel(FragmentSharedModel). Comments in BoardReadDlgFragment, however,
+ * applies SnapshotListener.
+ *
+ */
 public class BoardPagerFragment extends Fragment implements
         BoardActivity.OnAutoFilterCheckBoxListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback,
@@ -233,14 +249,13 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
 
-        // Notified of uploading a comment done.
-        /*
-        fragmentModel.getNewComment().observe(requireActivity(), position -> {
-            log.i("comment done: %s", position);
-            postingAdapter.notifyItemChanged(position);
+        fragmentModel.getNewComment().observe(requireActivity(), sparseArray -> {
+            log.i("Sparse Comment: %s, %s", sparseArray.keyAt(0), sparseArray.valueAt(0));
+            List<Object> comments = new ArrayList<>();
+            comments.add(0, "comment");
+            comments.add(1, String.valueOf(sparseArray.valueAt(0)));
+            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), comments);
         });
-
-         */
 
     }
 
@@ -688,8 +703,11 @@ public class BoardPagerFragment extends Fragment implements
                       // before the data is sent to the backend.
                       docref.get().addOnSuccessListener(data -> {
                           if(data != null && data.exists()) {
-                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                              //postingAdapter.notifyItemChanged(position, data.getLong("cnt_comment"));
+                              List<Object> cntView = new ArrayList<>();
+                              cntView.add(0, "view");
+                              cntView.add(1, String.valueOf(data.getLong("cnt_view")));
+                              //postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                              postingAdapter.notifyItemChanged(position, cntView);
                           }
                       }).addOnFailureListener(Exception::printStackTrace);
                   });

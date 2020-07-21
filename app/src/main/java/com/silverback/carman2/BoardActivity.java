@@ -58,11 +58,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * This activity consists of the appbar component, the framelayout to alternatively contain the
- * viewpager and the fragment to write or edit a post, and the layout to show dynamically created
- * checkboxes which are used not only as query conditions of each board, but also as field values
- * for each fragment. Plus, there is a nested interface, OnFilterCheckBoxListener, which notifies
- * BoardPagerFragmen of which checkbox has changed.
+ * This activity mainly contains a framelayout that alternatively holds the viewpager or the fragments
+ * to edit or write a post
+ *
+ * The viewpager has a fragment that is statically created by each posting board controlled by the
+ * fragmentstatepageradatper. This should be refactored with ViewPager2 in the near future.
+ *
+ * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab by replacing the
+ * viewpager. The fragment to edit a post(BoardEditFragment) replaces the viewpager in the same way
+ * when clicking the edit button, which turns visible in the toolbar as long as the fragment to read
+ * a post(BoardReadDlgFragment) pops up and the post is owned by the user.
+ *
+ * Communications b/w the fragments are mostly made by the viewmodel(FramentSharedModel). Some cases
+ * use the interface, though. OnAutoFilterCheckBoxListener passes any change of the checkbox values
+ * to BoardPagerFragment for dynamically querying posts based on it.  OnEditModeListener defined in
+ * BoardReadDlgFragment notifies that the user chooses the edit button to open BoardEditFragment.
+ *
+ * The toolbar menu should be basically handled in this parent activity but may be controlled by
+ * each fragment. Thus, the return value in OnOptionsItemSelected() should be true or false.
  */
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
@@ -135,10 +148,8 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         tabPage = Constants.BOARD_RECENT;
 
-
-        // The reason to use cbAutoFilter as ArrrayList<CharSequence> is that the list goes to the
-        // singleton of BoardPagerFragment, which should be passed to onCreate() of the same fragment
-        // as Bundle.putCharSequenceArrayList().
+        // The chkboxList is created by whether the autodata is set and the cbAutoFilter is created
+        // by wheteher each checkbox item is checked.
         chkboxList = new ArrayList<>();
         cbAutoFilter = new ArrayList<>();
 
