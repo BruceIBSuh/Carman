@@ -2,6 +2,7 @@ package com.silverback.carman2.viewmodels;
 
 import android.util.SparseArray;
 import android.util.SparseIntArray;
+import android.util.SparseLongArray;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
@@ -32,7 +33,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> newPosting;
     private MutableLiveData<String> removedPosting;
     private MutableLiveData<String> editedPosting;
-    private MutableLiveData<SparseArray<Long>> newComment;
+    private MutableLiveData<SparseLongArray> newComment;
 
 
 
@@ -148,7 +149,6 @@ public class FragmentSharedModel extends ViewModel {
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
 
-
     public MutableLiveData<String> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
@@ -166,7 +166,8 @@ public class FragmentSharedModel extends ViewModel {
         return editedPosting;
     }
 
-    public MutableLiveData<SparseArray<Long>> getNewComment() {
+    // Communicate b/w BoardPagerFragment and BoardReadDlgFragment to pass a new comment in a post.
+    public MutableLiveData<SparseLongArray> getNewComment() {
         if(newComment == null) newComment = new MutableLiveData<>();
         return newComment;
     }

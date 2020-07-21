@@ -34,12 +34,11 @@ public class QueryPostPaginationUtil {
     // Constructor
     public QueryPostPaginationUtil(FirebaseFirestore firestore, OnQueryPaginationCallback callback) {
         this.firestore = firestore;
-        colRef = firestore.collection("board_general");
         mCallback = callback;
     }
 
     public void setPostQuery(int page, boolean isViewOrder) {
-        query = colRef;
+        colRef = firestore.collection("board_general");
         querySnapshot = null;
 
         switch(page){
@@ -82,7 +81,8 @@ public class QueryPostPaginationUtil {
     public void setCommentQuery(DocumentReference docRef){
         querySnapshot = null;
         this.field = "timestamp";
-        docRef.collection("comments").orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+        colRef = docRef.collection("comments");
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
                 .get()
                 .addOnSuccessListener(queryCommentShot -> {
                     // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
@@ -91,8 +91,6 @@ public class QueryPostPaginationUtil {
                     mCallback.getFirstQueryResult(queryCommentShot);
                 }).addOnFailureListener(Exception::printStackTrace);
     }
-
-
 
     public void setNextQuery() {
         DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);

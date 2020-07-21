@@ -249,12 +249,10 @@ public class BoardPagerFragment extends Fragment implements
             }
         });
 
+        // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,
+        // the livedata of which is created when a comment has finished uploadingb in BoardReadDlgFragment.
         fragmentModel.getNewComment().observe(requireActivity(), sparseArray -> {
-            log.i("Sparse Comment: %s, %s", sparseArray.keyAt(0), sparseArray.valueAt(0));
-            List<Object> comments = new ArrayList<>();
-            comments.add(0, "comment");
-            comments.add(1, String.valueOf(sparseArray.valueAt(0)));
-            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), comments);
+            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray);
         });
 
     }
@@ -702,13 +700,10 @@ public class BoardPagerFragment extends Fragment implements
                       // Listener to events for local changes, which is notified with the new data
                       // before the data is sent to the backend.
                       docref.get().addOnSuccessListener(data -> {
-                          if(data != null && data.exists()) {
-                              List<Object> cntView = new ArrayList<>();
-                              cntView.add(0, "view");
-                              cntView.add(1, String.valueOf(data.getLong("cnt_view")));
-                              //postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                              postingAdapter.notifyItemChanged(position, cntView);
-                          }
+                          if(data != null && data.exists())
+                              // Partial binding to BoardPostingAdapter to update the view count in
+                              // the post document.
+                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
                       }).addOnFailureListener(Exception::printStackTrace);
                   });
                 }

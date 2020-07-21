@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.SparseArray;
+import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -152,20 +153,26 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    // Partial binding when the count is increased in terms of the view count and comment count.
+    // Do a partial binding for updating either the view count or the comment count, which is passed
+    // with payloads. No payload performs the full binding.
+    // pa
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else  {
-            if(payloads.get(0).equals("view")) {
-                ((PostViewHolder)holder).tvViewCount.setText((String)payloads.get(1));
-            } else if(payloads.get(0).equals("comment")) {
-                ((PostViewHolder)holder).tvCommentCount.setText((String)payloads.get(1));
+            for(Object payload : payloads) {
+                // The view count is passed as the type of Long.
+                if(payload instanceof Long) {
+                    ((PostViewHolder) holder).tvViewCount.setText(String.valueOf(payload));
+                // The comment count is passed as SparseLongArray.
+                } else if(payload instanceof SparseLongArray) {
+                    SparseLongArray sparseArray = (SparseLongArray)payload;
+                    ((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(sparseArray.valueAt(0)));
+                }
             }
-            //((PostViewHolder)holder).tvViewCount.setText(String.valueOf(payloads.get(0)));
-            //((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(payloads.get(1)));
         }
     }
 

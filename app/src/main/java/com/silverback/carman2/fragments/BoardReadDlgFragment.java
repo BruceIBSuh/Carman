@@ -12,13 +12,12 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
-import android.util.SparseArray;
+import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -58,7 +57,6 @@ import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ApplyImageResourceUtil;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.utils.QueryCommentPagingUtil;
 import com.silverback.carman2.utils.QueryPostPaginationUtil;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import com.silverback.carman2.viewmodels.ImageViewModel;
@@ -121,7 +119,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // UIs
     private View localView;
-    private NestedScrollView nestedScrollView;
     private ConstraintLayout constPostingLayout, constCommentLayout;
     private Toolbar toolbar;
     private View underline;
@@ -268,13 +265,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // it feasible to listen to scrolling, use the parent scollview listener.
         nestedScrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
                 (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-                    View childView = v.getChildAt(v.getChildCount() - 1);
-                    if(childView != null) {
-                        if(!isLoading && (scrollY >= (childView.getMeasuredHeight() - v.getMeasuredHeight())
-                                && scrollY > oldScrollY)) {
-                            log.i("next query by scrolling");
-                            isLoading = true;
-                            queryPaginationUtil.setNextQuery();
+
+            if((scrollY >= (recyclerComment.getMeasuredHeight() - v.getMeasuredHeight()) && scrollY > oldScrollY)) {
+                if(!isLoading) {
+                    isLoading = true;
+                    queryPaginationUtil.setNextQuery();
                 }
             }
         });
@@ -333,6 +328,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
         //queryCommentSnapshot(postRef);
         //queryCommentPagingUtil.setCommentQuery(postRef);
+        isLoading = true;
         queryPaginationUtil.setCommentQuery(postRef);
 
         return localView;
@@ -431,7 +427,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     @Override
     public void getFirstQueryResult(QuerySnapshot postShots) {
         commentShotList.clear();
-        log.i("comment shot: %s", postShots.size());
         for(DocumentSnapshot comment : postShots) {
             commentShotList.add(comment);
             commentAdapter.notifyDataSetChanged();
@@ -448,20 +443,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
             commentShotList.add(comment);
             commentAdapter.notifyDataSetChanged();
         }
-
-        isLoading = nextShots.size() < Constants.PAGINATION;;
+        isLoading = nextShots.size() < Constants.PAGINATION;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
-
-        for(DocumentSnapshot comment : lastShots) {
-            log.i("last comments: %s", comment.getString("comment"));
-            commentShotList.add(comment);
-        }
+        for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
         commentAdapter.notifyDataSetChanged();
         isLoading = true;
-
     }
 
     // Subclass of RecyclerView.ScrollViewListner.
@@ -558,7 +547,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     postRef.update("cnt_comment", FieldValue.increment(1));
                     queryPaginationUtil.setCommentQuery(postRef);
 
-                    SparseArray<Long> sparseArray = new SparseArray<>();
+                    // Create the viewmodel livedata as SparseArray<Long>
+                    SparseLongArray sparseArray = new SparseLongArray();
                     sparseArray.put(position, document.getLong("cnt_comment") + 1);
                     sharedModel.getNewComment().setValue(sparseArray);
 
@@ -578,11 +568,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
         });
     }
 
-    // Display the text-based content and images, if any,  in ConstraintLayout which is dynamically
-    // created using ConstraintSet. Images are managed by Glide.
-    // The regular expression makes text and images split with the markup which was made when images
-    // were inserted. While looping the content, split parts of text and image are conntected to
+    // Make up the text-based content and any image attached in ConstraintLayout which is dynamically
+    // created by ConstraintSet. Images should be managed by Glide.
+    //
+    // The regular expression makes text and images split with the markup which was inserted when images
+    // were created. While looping the content, split parts of text and image are conntected by
     // ConstraintSets which are applied to the parent ConstraintLayout.
+    //
     // The recyclerview which displays comments at the bottom should be coordinated according to
     // whether the content has images or not.
     private void readContentView(String content) {
@@ -646,7 +638,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Coordinate the position b/w the last part, no matter what is image or text in the content,
         // and the following recycler view by the patterns.
-
         // No image attached
         if(start == 0) {
             TextView noImageText = new TextView(context);
