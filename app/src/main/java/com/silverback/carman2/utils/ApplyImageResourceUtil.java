@@ -43,6 +43,8 @@ import java.io.IOException;
  * This class is to manage image resources which are mostly picked from the gallery or taken by the
  * camera and enables Glide to apply images, no matter the type of images are bitmap or drawable,
  * to icons(drawable) and views(bitmap)
+ *
+ * Glide Cache Handling: skipMemoryCache(boolean), diskCacheStrategy(enum)
  */
 public class ApplyImageResourceUtil {
 
@@ -228,6 +230,7 @@ public class ApplyImageResourceUtil {
         int px_x = (int)(size * scale + 0.5f);
         int px_y = (int)(size * scale + 0.5f);
 
+        // Glide will put all image resources into the memory cache by default.
         Glide.with(mContext).load(Uri.parse(uriString)).override(px_x, px_y)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .fitCenter()
@@ -253,6 +256,7 @@ public class ApplyImageResourceUtil {
 
         Glide.with(mContext).load(uri).override(px_x, px_y)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                //.diskCacheStrategy(DiskCacheStrategy.NONE)
                 .fitCenter()
                 .into(view);
     }

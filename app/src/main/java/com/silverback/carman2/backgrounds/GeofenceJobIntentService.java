@@ -65,7 +65,7 @@ public class GeofenceJobIntentService extends JobIntentService {
     private NotificationManagerCompat notiManager;
     private long geoTime;
 
-    static final int JOB_ID = 2020;
+    static final int JOB_ID = 1000;
     static void enqueueWork(Context context, Intent work) {
         enqueueWork(context, GeofenceJobIntentService.class, JOB_ID, work);
     }

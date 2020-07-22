@@ -444,7 +444,7 @@ public class BoardPagerFragment extends Fragment implements
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
-                pbPaging.setVisibility(View.VISIBLE);
+                //pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
                 return;
             } else postingAdapter.notifyDataSetChanged();
@@ -663,7 +663,7 @@ public class BoardPagerFragment extends Fragment implements
                         isScrolling = false;
                         isLoading = true;
 
-                        pbPaging.setVisibility(View.VISIBLE);
+                        if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
                         queryPagingUtil.setNextQuery();
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();
@@ -730,20 +730,18 @@ public class BoardPagerFragment extends Fragment implements
         firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
                 .addOnSuccessListener(queires -> {
                     for(QueryDocumentSnapshot autoshot : queires) {
-                        if(autoshot.exists()) {
-                            String emblem = autoshot.getString("auto_emblem");
-                            // Empty Check. Refactor should be taken to show an empty icon, instead.
-                            if(TextUtils.isEmpty(emblem)) return;
-                            else {
-                                Uri uri = Uri.parse(emblem);
-                                final int x = imgview.getMeasuredWidth();
-                                final int y = imgview.getMeasuredHeight();
-                                imgutil.applyGlideToEmblem(uri, x, y, imgview);
-                            }
-
-                            pb.setVisibility(View.GONE);
-                            break;
+                        String emblem = autoshot.getString("auto_emblem");
+                        // Empty Check. Refactor should be taken to show an empty icon, instead.
+                        if(TextUtils.isEmpty(emblem)) return;
+                        else {
+                            Uri uri = Uri.parse(emblem);
+                            final int x = imgview.getMeasuredWidth();
+                            final int y = imgview.getMeasuredHeight();
+                            imgutil.applyGlideToEmblem(uri, x, y, imgview);
                         }
+
+                        pb.setVisibility(View.GONE);
+                        break;
                     }
                 }).addOnFailureListener(e -> {
                     pb.setVisibility(View.GONE);

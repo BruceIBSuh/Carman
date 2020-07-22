@@ -96,7 +96,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         typeName = mSettings.getString(Constants.AUTO_TYPE, null);
         engineName = mSettings.getString(Constants.ENGINE_TYPE, null);
         yearName = mSettings.getString(Constants.AUTO_YEAR, null);
-        log.i("Initial auto preference values: %s, %s, %s, %s, %s", makerName, modelName, typeName, engineName, yearName);
 
         // Initially, query all auto makers to set entry(values) to the auto maker preference.
         // useSimpleSummaryProvider does not work b/c every time the fragment is instantiated, the
@@ -193,6 +192,13 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 autoType.setSummaryProvider(autotypePref -> valueName);
                 autoModel.setEnabled(false); //until query completes.
 
+                // Decrease the reg number if the autotype changes which makes the automodel void.
+                if(!TextUtils.isEmpty(autoModel.getValue())) {
+                    autoRef.document(makerId).collection("auto_model").document(modelId)
+                            .update("reg_number", FieldValue.increment(-1));
+                            //.addOnSuccessListener(aVoid -> log.i("decrease the reg number successfully"));
+                }
+
                 setAutoModelEntries(makerId, valueName, engineType.getValue());
                 return true;
 
@@ -201,6 +207,13 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 engineType.setValue(valueName);
                 engineType.setSummaryProvider(enginetypePref -> valueName);
                 autoModel.setEnabled(false);
+
+                // Decrease the reg number if the autotype changes which makes the automodel void.
+                if(!TextUtils.isEmpty(autoModel.getValue())) {
+                    autoRef.document(makerId).collection("auto_model").document(modelId)
+                            .update("reg_number", FieldValue.increment(-1));
+                            //.addOnSuccessListener(aVoid -> log.i("decrease the reg number successfully"));
+                }
 
                 setAutoModelEntries(makerId, autoType.getValue(), valueName);
                 return true;
