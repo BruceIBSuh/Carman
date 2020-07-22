@@ -121,10 +121,10 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         try {
             JSONArray json = new JSONArray(jsonString);
             for(int i = 0; i < json.length(); i++) autoDataList.add(json.optString(i));
-            makerName = json.optString(0);
-            modelName = json.optString(1);
-            typeName = json.optString(2);
-            yearName = json.optString(3);
+            makerName = (json.isNull(0))? null : json.optString(0);
+            modelName = (json.isNull(1))? null : json.optString(1);
+            typeName = (json.isNull(2))? null : json.optString(2);
+            yearName = (json.isNull(3))? null : json.optString(3);
         } catch(JSONException e) {
             e.printStackTrace();
         }

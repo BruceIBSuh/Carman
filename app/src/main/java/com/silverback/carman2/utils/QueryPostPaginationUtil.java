@@ -29,6 +29,7 @@ public class QueryPostPaginationUtil {
         void getFirstQueryResult(QuerySnapshot postShots);
         void getNextQueryResult(QuerySnapshot nextShots);
         void getLastQueryResult(QuerySnapshot lastShots);
+        void getQueryErrorResult(Exception e);
     }
 
     // Constructor
@@ -66,7 +67,7 @@ public class QueryPostPaginationUtil {
         query.limit(Constants.PAGINATION).get().addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
-        }).addOnFailureListener(Exception::printStackTrace);
+        }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
 
         /*
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
@@ -89,7 +90,7 @@ public class QueryPostPaginationUtil {
                     // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
                     this.querySnapshot = queryCommentShot;
                     mCallback.getFirstQueryResult(queryCommentShot);
-                }).addOnFailureListener(Exception::printStackTrace);
+                }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
     }
 
     public void setNextQuery() {
@@ -104,7 +105,7 @@ public class QueryPostPaginationUtil {
                         querySnapshot = null;
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
-                }).addOnFailureListener(Exception::printStackTrace);
+                }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
 
         /*
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot)

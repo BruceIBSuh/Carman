@@ -423,7 +423,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // Implement QueryCommentPagingUtil.OnQueryPaginationCallback, overriding the follwoing methods.
+    // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods.
     @Override
     public void getFirstQueryResult(QuerySnapshot postShots) {
         commentShotList.clear();
@@ -438,11 +438,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
-        log.i("next commentshot: %s", nextShots.size());
         for(DocumentSnapshot comment : nextShots) {
             commentShotList.add(comment);
             commentAdapter.notifyDataSetChanged();
         }
+
         isLoading = nextShots.size() < Constants.PAGINATION;
     }
 
@@ -450,6 +450,12 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public void getLastQueryResult(QuerySnapshot lastShots) {
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
         commentAdapter.notifyDataSetChanged();
+        isLoading = true;
+    }
+
+    @Override
+    public void getQueryErrorResult(Exception e) {
+        Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
         isLoading = true;
     }
 

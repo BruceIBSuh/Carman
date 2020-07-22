@@ -210,16 +210,20 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         super.onViewCreated(view, savedInstanceState);
         // Observe whether the auto data in SettingAutoFragment has changed.
         fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonString -> {
-            autoPref.setSummaryProvider(preference -> "Loading...");
+            mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
-            mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
-            log.i("auto data: %s, %s", makerName, modelName);
+
+            // The null value that JSONObject returns seems different than that of regular return
+            // value. Thus, JSONObject.isNull(int index) should be checked, then set the null value
+            // if it is true. This is firmly at bug issues.
             if(!TextUtils.isEmpty(makerName)) {
-                log.i("makername: %s", makerName);
+                log.i("Weirdly, return value seems wrong!!");
+                autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
             }
+
         });
 
         // Observe whether the district has changed in the custom spinner list view. If any change

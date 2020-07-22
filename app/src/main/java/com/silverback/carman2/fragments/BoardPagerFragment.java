@@ -18,6 +18,7 @@ import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -386,8 +387,7 @@ public class BoardPagerFragment extends Fragment implements
         addViewCount(docref, position);
     }
 
-    // Implement QueryPaginationUtil.OnQueryPaginationCallback called by QueryPaginationUtil.
-    // setPostQuery()
+    // Implement QueryPaginationUtil.OnQueryPaginationCallback overriding the following 4 methods
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         postshotList.clear();
@@ -473,6 +473,13 @@ public class BoardPagerFragment extends Fragment implements
 
         pbPaging.setVisibility(View.GONE);
         isLoading = true; // Block the scroll listener from keeping querying.
+    }
+
+    @Override
+    public void getQueryErrorResult(Exception e) {
+        pbLoading.setVisibility(View.GONE);
+        Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        isLoading = true;
     }
 
 
