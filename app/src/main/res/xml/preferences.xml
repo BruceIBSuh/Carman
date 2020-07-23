@@ -73,7 +73,7 @@
     <PreferenceCategory
         app:title="@string/pref_category_favorites"
         app:key="pref_favorites"
-        app:icon="@drawable/ic_setting_station" >
+        app:icon="@drawable/ic_setting_favorite" >
         <Preference
             app:title="@string/pref_designated_provider"
             app:key="carman_pref_favorite_provider" />
@@ -111,12 +111,9 @@
 
         <SwitchPreferenceCompat
             app:title="@string/pref_app_notification"
-            app:key="carman_pref_geofence_notification" />
-        <!--
-        <com.silverback.carman2.views.ProgressImagePreference
-            app:enabled="true"
-            app:key="carman_pref_profile_image" />
-        -->
+            app:key="carman_pref_geofence_notification"
+            app:defaultValue="true"
+            app:useSimpleSummaryProvider="true" />
 
         <Preference
             app:key="carman_pref_user_image"

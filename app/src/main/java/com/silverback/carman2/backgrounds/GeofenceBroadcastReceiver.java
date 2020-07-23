@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.widget.Toast;
@@ -15,6 +16,7 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.app.TaskStackBuilder;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofenceStatusCodes;
@@ -40,10 +42,16 @@ import java.util.Locale;
  */
 public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
-    //private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceBroadcastReceiver.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(GeofenceBroadcastReceiver.class);
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        //log.i("Geofence broadcasting: %s", intent);
-        GeofenceJobIntentService.enqueueWork(context, intent);
+        log.i("Geofence broadcasting: %s", intent);
+
+        // Trigger the geofence if the notification is set to true in the setting.
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean isGeofence = settings.getBoolean(Constants.NOTIFICATION_GEOFENCE, true);
+        log.i("isGeofence: %s", isGeofence);
+        if(isGeofence) GeofenceJobIntentService.enqueueWork(context, intent);
     }
 }

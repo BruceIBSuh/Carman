@@ -54,7 +54,7 @@ public class SettingPrefFragment extends SettingBaseFragment  {
     //private DecimalFormat df;
 
     // UIs
-    private ProgressBarPreference autoPref;
+    private ProgressBarPreference autoPref; // custom preference to show the progressbar.
     private SpinnerDialogPreference spinnerPref;
     private Preference favorite;
 
@@ -176,7 +176,7 @@ public class SettingPrefFragment extends SettingBaseFragment  {
 
         // Preference for whether the geofence notification is permiited to receive or not.
         SwitchPreferenceCompat switchGeofencePref = findPreference(Constants.NOTIFICATION_GEOFENCE);
-        switchGeofencePref.setChecked(true);
+        log.i("notification switch: %s", mSettings.getBoolean(Constants.NOTIFICATION_GEOFENCE, true));
 
         // Image Editor which pops up the dialog to select which resource location to find an image.
         // Consider to replace this with the custom preference defined as ProgressImagePreference.
@@ -214,11 +214,10 @@ public class SettingPrefFragment extends SettingBaseFragment  {
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
 
-            // The null value that JSONObject returns seems different than that of regular return
-            // value. Thus, JSONObject.isNull(int index) should be checked, then set the null value
-            // if it is true. This is firmly at bug issues.
+            // The null value that JSONObject returns seems different than that of other regular
+            // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
+            // if it is true. This is firmly at bug issue.
             if(!TextUtils.isEmpty(makerName)) {
-                log.i("Weirdly, return value seems wrong!!");
                 autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);

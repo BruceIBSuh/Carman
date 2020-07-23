@@ -121,6 +121,10 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         try {
             JSONArray json = new JSONArray(jsonString);
             for(int i = 0; i < json.length(); i++) autoDataList.add(json.optString(i));
+
+            // The null value that JSONObject returns seems different than that of other regular objects.
+            // Thus, JSONObject.isNull(int) should be checked, then, if true,  set the null value to it .
+            // This is firmly at bug issue.
             makerName = (json.isNull(0))? null : json.optString(0);
             modelName = (json.isNull(1))? null : json.optString(1);
             typeName = (json.isNull(2))? null : json.optString(2);

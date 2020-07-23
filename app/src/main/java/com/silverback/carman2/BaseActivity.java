@@ -63,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 public class BaseActivity extends AppCompatActivity {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
     // Objects
     protected String userId;

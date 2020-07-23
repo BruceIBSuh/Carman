@@ -217,6 +217,7 @@ public class BoardPagerFragment extends Fragment implements
         */
 
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+        pbLoading.setVisibility(View.VISIBLE);
         return localView;
     }
 
@@ -444,7 +445,6 @@ public class BoardPagerFragment extends Fragment implements
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
-                //pbPaging.setVisibility(View.VISIBLE);
                 queryPagingUtil.setNextQuery();
                 return;
             } else postingAdapter.notifyDataSetChanged();

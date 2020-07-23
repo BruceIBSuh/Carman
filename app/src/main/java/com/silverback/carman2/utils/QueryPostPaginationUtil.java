@@ -38,6 +38,9 @@ public class QueryPostPaginationUtil {
         mCallback = callback;
     }
 
+    // Make an initial query for the posting board by category. Recent and popular board are made of
+    // composite index in Firestore. Autoclub board once queries posts, then filters them with given
+    // keyword in the client side.
     public void setPostQuery(int page, boolean isViewOrder) {
         colRef = firestore.collection("board_general");
         querySnapshot = null;
@@ -79,6 +82,7 @@ public class QueryPostPaginationUtil {
          */
     }
 
+    // Make an initial query of comments in BoardReadDlgFragment.
     public void setCommentQuery(DocumentReference docRef){
         querySnapshot = null;
         this.field = "timestamp";
@@ -93,6 +97,8 @@ public class QueryPostPaginationUtil {
                 }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
     }
 
+    // The recyclerview scorll listener notifies that the view scrolls down to the last item and needs
+    // to make an next query, which will be repeated until query comes to the last page.
     public void setNextQuery() {
         DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot).limit(Constants.PAGINATION)

@@ -577,16 +577,19 @@ public class BoardActivity extends BaseActivity implements
     // whether a post is open not only to the autoclub  but also to the general board. Checked values
     // in the checkboxes are added to cbAutoFilter in order to be used as a query condition.
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
-        // Switch the filter b/w ViewPager containing BoardPagerFragment and BoardWriteFragment.
+        // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginStart(10);
 
+        // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
+        // It is appropriate that JSONArray.isNull(int) be applied.
+        JSONArray jsonAuto = new JSONArray(json);
         // If no autodata is initially given, show the spanned message to initiate startActivityForResult()
         // to have users set the auto data in SettingPreferenceActivity.
-        if(TextUtils.isEmpty(json)) {
+        if(jsonAuto.isNull(0)) {
             TextView tvMessage = new TextView(context);
             String msg = getString(R.string.board_filter_join);
             SpannableString ss = new SpannableString(msg);
@@ -635,7 +638,7 @@ public class BoardActivity extends BaseActivity implements
         // as default values.
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
 
-        JSONArray jsonAuto = new JSONArray(json);
+
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTag(i);
