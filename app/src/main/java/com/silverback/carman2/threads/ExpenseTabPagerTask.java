@@ -12,14 +12,14 @@ import com.silverback.carman2.viewmodels.PagerAdapterViewModel;
 import org.json.JSONArray;
 
 public class ExpenseTabPagerTask extends ThreadTask implements
-        ExpenseTabPagerRunnable.TabPagerMethods, ServiceItemsRunnable.ServiceItemsMethods {
+        ExpenseTabPagerRunnable.TabPagerMethods, ExpenseSvcItemsRunnable.ServiceItemsMethods {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTabPagerTask.class);
 
     // Objects
     private Context context;
     private ExpenseTabPagerRunnable mExpenseTabPagerRunnable;
-    private ServiceItemsRunnable mServiceItemsRunnable;
+    private ExpenseSvcItemsRunnable mExpenseSvcItemsRunnable;
     private FragmentManager fragmentManager;
     private PagerAdapterViewModel pagerModel;
     private String[] defaults;
@@ -30,7 +30,7 @@ public class ExpenseTabPagerTask extends ThreadTask implements
     ExpenseTabPagerTask(Context context) {
         super();
         mExpenseTabPagerRunnable = new ExpenseTabPagerRunnable(context, this);
-        mServiceItemsRunnable = new ServiceItemsRunnable(this);
+        mExpenseSvcItemsRunnable = new ExpenseSvcItemsRunnable(this);
     }
 
     void initPagerTask(FragmentManager fm, PagerAdapterViewModel viewModel,
@@ -47,7 +47,7 @@ public class ExpenseTabPagerTask extends ThreadTask implements
         return mExpenseTabPagerRunnable;
     }
     Runnable getServiceItemsRunnable() {
-        return mServiceItemsRunnable;
+        return mExpenseSvcItemsRunnable;
     }
 
     @Override
@@ -84,10 +84,10 @@ public class ExpenseTabPagerTask extends ThreadTask implements
 
     @Override
     public void setTabPagerAdapter(ExpTabPagerAdapter adapter) {
-        log.i("Task TabPagerAdapter: %s", adapter);
         pagerModel.getPagerAdapter().postValue(adapter);
     }
 
+    int cnt = 0;
     @Override
     public void setJsonSvcArray(JSONArray jsonArray) {
         pagerModel.getJsonServiceArray().postValue(jsonArray);
@@ -96,7 +96,15 @@ public class ExpenseTabPagerTask extends ThreadTask implements
 
     @Override
     public void handleRecyclerTask(int state) {
+        int outstate = -1;
+        switch(state) {
+            case ExpenseSvcItemsRunnable.TASK_COMPLETE:
+                break;
+            case ExpenseSvcItemsRunnable.TASK_FAIL:
+                break;
+        }
 
+        sThreadManager.handleState(this, outstate);
     }
 
 

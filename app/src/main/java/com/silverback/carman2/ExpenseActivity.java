@@ -145,6 +145,7 @@ public class ExpenseActivity extends BaseActivity implements
         position = 0;
         tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
+
         // callback when tabPagerTask finished.
         pagerModel.getPagerAdapter().observe(this, adapter -> {
             tabPagerAdapter = adapter;
@@ -152,7 +153,7 @@ public class ExpenseActivity extends BaseActivity implements
             tabPager.setCurrentItem(position);
             expTabLayout.setupWithViewPager(tabPager);
 
-            // Create the viewpager to show the recent expenditure of gas or service. It should be
+            // Create the viewpager to show the recent expenses of gas or service. It should be
             // added to the framelayout because StatFragment cannot be applied in the same way as
             // in the other fragments.
             expensePager = new ExpenseViewPager(this);
@@ -192,7 +193,6 @@ public class ExpenseActivity extends BaseActivity implements
 
         switch(item.getItemId()) {
             case android.R.id.home:
-                log.i("isGeofencing: %s", isGeofencing);
                 if(isGeofencing) {
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
@@ -208,6 +208,7 @@ public class ExpenseActivity extends BaseActivity implements
                 if(position == Constants.GAS) isSaved = ((GasManagerFragment)fragment).saveGasData();
                 else if(position == Constants.SVC) isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
                 if(isSaved) finish();
+
                 return isSaved;
 
             default: return false;

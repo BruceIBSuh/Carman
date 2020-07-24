@@ -26,7 +26,6 @@ public class ExpRecentPagerAdapter extends FragmentStatePagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int position) {
-        log.i("position: %s", position);
         return ExpensePagerFragment.create(position);
     }
 

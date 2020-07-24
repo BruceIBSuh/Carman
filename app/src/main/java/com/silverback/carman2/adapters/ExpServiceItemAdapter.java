@@ -2,6 +2,7 @@ package com.silverback.carman2.adapters;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
@@ -54,6 +55,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     public String[] arrItemMemo;
 
     // Fields
+    private SharedPreferences mSettings;
     private String format, unit, month;
     private int curMileage;
     private int safeColor, warningColor, progressColor;
@@ -69,7 +71,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     }
 
     // Constructor
-    public ExpServiceItemAdapter(JSONArray jsonArray, OnParentFragmentListener listener) {
+    public ExpServiceItemAdapter(JSONArray jsonArray, String period, OnParentFragmentListener listener) {
         super();
 
         this.jsonArray = jsonArray;
@@ -139,7 +141,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
         // Animate the progress
         ProgressBarAnimation pbAnim = new ProgressBarAnimation(holder.pb, 0, period);
-        pbAnim.setDuration(1000);
+        pbAnim.setDuration(500);
         holder.pb.setMax(maxMileage);
         holder.pb.startAnimation(pbAnim);
     }

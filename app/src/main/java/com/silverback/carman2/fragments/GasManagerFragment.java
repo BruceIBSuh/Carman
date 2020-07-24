@@ -74,7 +74,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FirebaseFirestore firestore;
     private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
-    private FragmentSharedModel sharedModel;
+    private FragmentSharedModel fragmentModel;
     private OpinetViewModel opinetViewModel;
 
     private FavoriteGeofenceHelper geofenceHelper;
@@ -145,7 +145,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // ViewModels: reconsider why the models references the ones defined in the parent activity;
         // it would rather  be better to redefine them here.
-        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         locationModel = ((ExpenseActivity)getActivity()).getLocationViewModel();
         stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
@@ -318,7 +318,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Share a value input in NumberPadFragment as the view id passes to NumberPadFragment when
         // clicking, then returns an input value as SparseArray which contains the view id, which
         // may identify the view invoking NumberPadFragment and fill in the value into the view.
-        sharedModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
+        fragmentModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
             log.i("View ID: %s", data.keyAt(0));
             //targetView = localView.findViewById(data.keyAt(0));
             if(targetView != null) {
@@ -368,7 +368,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // In doing so, this fragment communicates w/ FavoriteListFragment to retrieve a favorite
         // station picked out of FavoriteListFragment using FragmentSharedModel. With the station id,
         // FavoritePriceTask gets started to have the gas price.
-        sharedModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), entity -> {
+        fragmentModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), entity -> {
             tvStnName.setText(entity.providerName);
             btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             stnId = entity.providerId;
@@ -385,7 +385,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             etUnitPrice.setCursorVisible(false);
         });
 
-        sharedModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
+        fragmentModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
             log.i("rational dialog clicked");
             if(isPermitted) requestPermissions(new String[]{permBackLocation}, REQUEST_PERM_BACKGROUND_LOCATION);
             else log.i("DENIED");
@@ -400,7 +400,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Must define FragmentSharedModel.setCurrentFragment() in onResume(), not onActivityCreated()
         // because the value of FragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // of ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        sharedModel.setCurrentFragment(this);
+        //fragmentModel.setCurrentFragment(this);
+        fragmentModel.getExpenseGasFragment().setValue(this);
     }
 
     @Override
@@ -524,7 +525,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Null check for the parent activity
         if(!doEmptyCheck()) return false;
 
-        sharedModel.setCurrentFragment(this);
+        fragmentModel.setCurrentFragment(this);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
 
         // Create Entity instances both of which are correlated by Foreinkey
@@ -543,6 +544,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             gasEntity.gasPayment = df.parse(tvGasPaid.getText().toString()).intValue();
             gasEntity.gasAmount = df.parse(tvGasLoaded.getText().toString()).intValue();
             gasEntity.unitPrice = df.parse(etUnitPrice.getText().toString()).intValue();
+            // BUG!!
+            // W/System.err:     at java.text.NumberFormat.parse(NumberFormat.java:351)
+            // at com.silverback.carman2.fragments.GasManagerFragment.saveGasData(GasManagerFragment.java:546)
             gasEntity.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
             gasEntity.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
 

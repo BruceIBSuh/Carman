@@ -110,10 +110,11 @@
         app:icon="@drawable/ic_setting_app" >
 
         <SwitchPreferenceCompat
-            app:title="@string/pref_app_notification"
+            app:title="@string/pref_app_geofence_title"
             app:key="carman_pref_geofence_notification"
             app:defaultValue="true"
-            app:useSimpleSummaryProvider="true" />
+            app:summaryOn="@string/pref_app_geofnece_on"
+            app:summaryOff= "@string/pref_app_geofence_off" />
 
         <Preference
             app:key="carman_pref_user_image"

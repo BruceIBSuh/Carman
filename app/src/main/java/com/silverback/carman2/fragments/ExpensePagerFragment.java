@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,6 +18,7 @@ import com.silverback.carman2.database.GasManagerDao;
 import com.silverback.carman2.database.ServiceManagerDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
+import com.silverback.carman2.utils.Constants;
 import com.silverback.carman2.viewmodels.FragmentSharedModel;
 
 import java.text.DecimalFormat;
@@ -30,7 +32,7 @@ public class ExpensePagerFragment extends Fragment {
 
     // Objects
     private CarmanDatabase mDB;
-    private FragmentSharedModel fragmentSharedModel;
+    private FragmentSharedModel fragmentModel;
     private Fragment currentFragment;
     private List<GasManagerDao.RecentGasData> gasDataList;
     private List<ServiceManagerDao.RecentServiceData> serviceList;
@@ -66,10 +68,10 @@ public class ExpensePagerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getActivity() == null) return;
-
+        if(getArguments() != null) numPage = getArguments().getInt("page");
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     @Override
@@ -87,16 +89,42 @@ public class ExpensePagerFragment extends Fragment {
 
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        fragmentModel.getExpenseGasFragment().observe(requireActivity(), fragment -> {
+            log.i("gasfragment");
+            currentFragment = fragment;
+            mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
+                gasDataList = data;
+                lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
+                tvLastInfo.setText(lastInfo);
+                tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+            });
+
+        });
+
+        fragmentModel.getExpenseSvcFragment().observe(requireActivity(), fragment -> {
+            log.i("svcFragment");
+            currentFragment = fragment;
+            mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
+                serviceList = data;
+                lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
+                tvLastInfo.setText(lastInfo);
+                tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+            });
+
+        });
+        /*
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
-        fragmentSharedModel.getCurrentFragment().observe(this, fragment -> {
-            log.i("target fragment: %s", fragment);
+        fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
+            log.i("fragment: %s", fragment);
             currentFragment = fragment;
             if(getArguments() != null) numPage = getArguments().getInt("page");
 
             // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
-                mDB.gasManagerModel().loadRecentGasData().observe(this, data -> {
+                log.i("current fragment invoked: %s", index);
+                index++;
+                mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
                     gasDataList = data;
                     lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
@@ -104,7 +132,9 @@ public class ExpensePagerFragment extends Fragment {
                 });
 
             } else if(currentFragment instanceof ServiceManagerFragment) {
-                mDB.serviceManagerModel().loadRecentServiceData().observe(this, data -> {
+                log.i("current fragment invoked: %s", index);
+                index++;
+                mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
                     serviceList = data;
                     lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
@@ -113,6 +143,8 @@ public class ExpensePagerFragment extends Fragment {
 
             }
         });
+
+         */
 
     }
 

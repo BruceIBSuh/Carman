@@ -8,9 +8,9 @@ import com.silverback.carman2.logs.LoggingHelperFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-public class ServiceItemsRunnable implements Runnable {
+public class ExpenseSvcItemsRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemsRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseSvcItemsRunnable.class);
     static final int TASK_COMPLETE = 1;
     static final int TASK_FAIL = -1;
 
@@ -28,7 +28,7 @@ public class ServiceItemsRunnable implements Runnable {
     }
 
     // Constructor
-    ServiceItemsRunnable(ServiceItemsMethods task) {
+    ExpenseSvcItemsRunnable(ServiceItemsMethods task) {
         this.task = task;
     }
 
@@ -42,9 +42,10 @@ public class ServiceItemsRunnable implements Runnable {
         try {
             JSONArray jsonArray = new JSONArray(jsonItemsString);
             task.setJsonSvcArray(jsonArray);
+            task.handleRecyclerTask(TASK_COMPLETE);
 
         } catch(JSONException e) {
-            log.i("JSONException: %s", e.getMessage());
+            //log.i("JSONException: %s", e.getMessage());
             task.handleRecyclerTask(TASK_FAIL);
         }
 

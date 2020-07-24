@@ -14,7 +14,6 @@ public class ExpenseViewPager extends ViewPager {
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseViewPager.class);
 
     // Objects
-
     public ExpenseViewPager(Context context) {
         super(context);
     }
@@ -45,6 +44,4 @@ public class ExpenseViewPager extends ViewPager {
 
         setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
     }
-
-
 }

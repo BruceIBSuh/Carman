@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman2.database.FavoriteProviderEntity;
+import com.silverback.carman2.utils.Constants;
 
 import org.json.JSONObject;
 
@@ -60,6 +61,17 @@ public class FragmentSharedModel extends ViewModel {
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
+
+    private MutableLiveData<Fragment> expenseGasFragment;
+    private MutableLiveData<Fragment> expenseSvcFragment;
+    public MutableLiveData<Fragment> getExpenseGasFragment() {
+        if(expenseGasFragment == null) expenseGasFragment = new MutableLiveData<>();
+        return expenseGasFragment;
+    }
+    public MutableLiveData<Fragment> getExpenseSvcFragment(){
+        if(expenseSvcFragment == null) expenseSvcFragment = new MutableLiveData<>();
+        return expenseSvcFragment;
+    }
 
     public void setSelectedValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.

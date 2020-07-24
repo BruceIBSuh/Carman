@@ -106,11 +106,11 @@ public class ServiceManagerFragment extends Fragment implements
     private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isSvcFavorite;
-
     private String userId;
     private String svcId;
     private String svcName;
     private String svcComment;
+    private String svcPeriod;
     private String geoSvcName;
     private float svcRating;
     private long geoTime;
@@ -148,7 +148,9 @@ public class ServiceManagerFragment extends Fragment implements
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
 
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        log.i("service period: %s", mSettings.getString(Constants.SERVICE_PERIOD, null));
+
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
@@ -159,15 +161,16 @@ public class ServiceManagerFragment extends Fragment implements
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
-        // The service item data is saved in SharedPreferences as String type, which should be
-        // converted to JSONArray.
+        // The service items are saved in SharedPreferences as JSONString type, which should be
+        // converted to JSONArray. The service period retrieved from SharedPrefernces is passed to
+        // the adapter as well.
+        /*
         try {
             String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
             jsonServiceArray = new JSONArray(json);
-            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
+            svcPeriod = mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_mileage));
+            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
+        } catch(JSONException e) {e.printStackTrace();}
 
         for(int i = 0; i < jsonServiceArray.length(); i++) {
             try {
@@ -183,9 +186,12 @@ public class ServiceManagerFragment extends Fragment implements
                     }
                 });
             } catch(JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
+                //log.e("JSONException: %s", e.getMessage());
+                e.printStackTrace();
             }
         }
+
+         */
 
         // Attach the listener for callback methods invoked by addGeofence or removeGeofence
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
@@ -264,17 +270,17 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
-        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
+        locationModel.getLocation().observe(requireActivity(), location -> {
             log.i("Service Location: %s", location);
             this.location = location;
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
 
-        // Notified of the service items by ExpenseTabPagerTask, ServiceItemRunnable of which converts
-        // JSONString to JSONArray in backgorund,
-        pagerAdapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
+        // ExpenseTabPagerTask initiated in the parent activity runs ExpenseSvcItemsRunnable which
+        // notifies this fragment of receiving the livedata JSONArray containing the service items.
+        pagerAdapterModel.getJsonServiceArray().observe(requireActivity(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
-            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, this);
+            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
             if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
 
             // Query the latest service history from ServiceManagerEntity and update the adapter, making
@@ -283,22 +289,23 @@ public class ServiceManagerFragment extends Fragment implements
                 try {
                     final int pos = i;
                     final String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                    mDB.serviceManagerModel().loadServiceData(name).observe(getActivity(), data -> {
+                    mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
                         if(data != null) {
                             mAdapter.setServiceData(pos, data);
                             mAdapter.notifyItemChanged(pos, data);
                         } else {
-                            log.i("No service data: %s, %s", pos, name);
+                            //log.i("No service data: %s, %s", pos, name);
                             mAdapter.setServiceData(pos, null);
                         }
                     });
                 } catch(JSONException e) {
-                    log.e("JSONException: %s", e.getMessage());
+                    e.printStackTrace();
+                    //log.e("JSONException: %s", e.getMessage());
                 }
             }
         });
 
-        // Codes should added in accordance to the progress of the service centre database as like
+        // Codes should be added in accordance to the progress of the service centre database as like
         // in the gas station db.
         svcCenterModel.getCurrentSVC().observe(getViewLifecycleOwner(), svcData -> {
             //checkSvcFavorite(svcData, Constants.SVC);
@@ -338,7 +345,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
         // update the data in Firestore.
         // Retrieving the evaluation and the comment, set or update the data with the passed id.
-        fragmentModel.getServiceLocation().observe(getActivity(), sparseArray -> {
+        fragmentModel.getServiceLocation().observe(requireActivity(), sparseArray -> {
             svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
             svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
             svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
@@ -353,14 +360,18 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
+    int index = 0;
     @Override
     public void onResume() {
         super.onResume();
+        index ++;
         // ******** MORE RESEARCH REQUIRED ********
-        // Must define FragmentSharedModel.setCurrentFragment() in onCreate , not onActivityCreated()
-        // because the value of ragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
+        // Must define FragmentSharedModel.setCurrentFragment() in onCreate, not onActivityCreated()
+        // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        fragmentModel.setCurrentFragment(this);
+        log.i("servicemanagerfragment: %s", index);
+        //fragmentModel.setCurrentFragment(this);
+        //fragmentModel.getExpenseSvcFragment().setValue(this);
 
     }
 
@@ -593,7 +604,6 @@ public class ServiceManagerFragment extends Fragment implements
         return true;
     }
 
-    @SuppressWarnings("ConstantConditions")
     private void uploadServiceEvaluation(String svcId) {
         if(svcRating > 0) {
             Map<String, Object> ratingData = new HashMap<>();
