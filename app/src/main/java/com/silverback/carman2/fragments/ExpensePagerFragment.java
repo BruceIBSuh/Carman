@@ -24,6 +24,9 @@ import com.silverback.carman2.viewmodels.FragmentSharedModel;
 import java.text.DecimalFormat;
 import java.util.List;
 
+/**
+ * This fragment i
+ */
 public class ExpensePagerFragment extends Fragment {
 
     // Logging
@@ -83,60 +86,31 @@ public class ExpensePagerFragment extends Fragment {
         tvLastInfo = localView.findViewById(R.id.tv_lastInfo);
         tvPage = localView.findViewById(R.id.tv_page);
 
-
         return localView;
     }
 
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        fragmentModel.getExpenseGasFragment().observe(requireActivity(), fragment -> {
-            log.i("gasfragment");
-            currentFragment = fragment;
-            mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
-                gasDataList = data;
-                lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
-                tvLastInfo.setText(lastInfo);
-                tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
-            });
 
-        });
-
-        fragmentModel.getExpenseSvcFragment().observe(requireActivity(), fragment -> {
-            log.i("svcFragment");
-            currentFragment = fragment;
-            mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
-                serviceList = data;
-                lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
-                tvLastInfo.setText(lastInfo);
-                tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
-            });
-
-        });
-        /*
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
         fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
-            log.i("fragment: %s", fragment);
             currentFragment = fragment;
-            if(getArguments() != null) numPage = getArguments().getInt("page");
-
             // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
-                log.i("current fragment invoked: %s", index);
-                index++;
+                log.i("current fragment invoked");
                 mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
                     gasDataList = data;
-                    lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
+                    lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
             } else if(currentFragment instanceof ServiceManagerFragment) {
-                log.i("current fragment invoked: %s", index);
-                index++;
+                log.i("current fragment invoked");
                 mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
                     serviceList = data;
-                    lastInfo = (data.size() > numPage)?displayLastInfo(numPage):getString(R.string.toast_expense_no_data);
+                    lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
                     tvLastInfo.setText(lastInfo);
                     tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
@@ -144,14 +118,11 @@ public class ExpensePagerFragment extends Fragment {
             }
         });
 
-         */
-
     }
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
     @SuppressWarnings("ConstantConditions")
     private String displayLastInfo(int pos) {
-
         // The latest mileage should be retrieved from SharedPreferernces. Otherwise, the last mileage
         // be retrieved from DB because the mileage value column in GasManagerTable and
         String format = getContext().getResources().getString(R.string.date_format_1);

@@ -21,7 +21,6 @@ public abstract class ServiceManagerDao {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerDao.class);
 
-
     @Query("SELECT service_id, date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity " +
             "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
             "ORDER BY service_id DESC LIMIT " + Constants.NUM_RECENT_PAGES)

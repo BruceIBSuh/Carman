@@ -35,7 +35,6 @@ public class ExpenseTabPagerTask extends ThreadTask implements
 
     void initPagerTask(FragmentManager fm, PagerAdapterViewModel viewModel,
                        String[] defaults, String jsonDistrict, String jsonSvcItems) {
-
         fragmentManager = fm;
         pagerModel = viewModel;
         this.defaults = defaults;
@@ -87,7 +86,6 @@ public class ExpenseTabPagerTask extends ThreadTask implements
         pagerModel.getPagerAdapter().postValue(adapter);
     }
 
-    int cnt = 0;
     @Override
     public void setJsonSvcArray(JSONArray jsonArray) {
         pagerModel.getJsonServiceArray().postValue(jsonArray);

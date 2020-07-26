@@ -137,7 +137,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
         }
 
-
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
@@ -242,7 +241,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvDateTime.setText(date);
         tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
         //tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
-        stnProgbar.setVisibility(View.VISIBLE);
+
+        // TEST CODING REQUIRED.
+        //stnProgbar.setVisibility(View.VISIBLE);
 
         // Attach the event listeners
         etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
@@ -400,8 +401,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Must define FragmentSharedModel.setCurrentFragment() in onResume(), not onActivityCreated()
         // because the value of FragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // of ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        //fragmentModel.setCurrentFragment(this);
-        fragmentModel.getExpenseGasFragment().setValue(this);
+        fragmentModel.setCurrentFragment(this);
+        //fragmentModel.getExpenseGasFragment().setValue(this);
     }
 
     @Override

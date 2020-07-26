@@ -52,7 +52,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     @NonNull
     @Override
     public Fragment getItem(int position) {
-        log.i("Fragment page: %s", position);
         if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
         /*

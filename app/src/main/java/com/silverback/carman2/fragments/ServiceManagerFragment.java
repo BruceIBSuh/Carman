@@ -110,7 +110,7 @@ public class ServiceManagerFragment extends Fragment implements
     private String svcId;
     private String svcName;
     private String svcComment;
-    private String svcPeriod;
+    private int svcPeriod;
     private String geoSvcName;
     private float svcRating;
     private long geoTime;
@@ -148,7 +148,10 @@ public class ServiceManagerFragment extends Fragment implements
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
 
-        log.i("service period: %s", mSettings.getString(Constants.SERVICE_PERIOD, null));
+        // Get the service periond unit from SharedPreferences and pass it to the adapter as int type.
+        String period = mSettings.getString(Constants.SERVICE_PERIOD, null);
+        if(period.equals(getString(R.string.pref_svc_period_mileage))) svcPeriod = 0;
+        else if(period.equals(getString(R.string.pref_svc_period_month))) svcPeriod = 1;
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
@@ -217,7 +220,7 @@ public class ServiceManagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
+        View localView = inflater.inflate(R.layout.fragment_service_manager2, container, false);
 
         relativeLayout = localView.findViewById(R.id.rl_service);
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
@@ -267,17 +270,15 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
         locationModel.getLocation().observe(requireActivity(), location -> {
-            log.i("Service Location: %s", location);
             this.location = location;
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
 
         // ExpenseTabPagerTask initiated in the parent activity runs ExpenseSvcItemsRunnable which
-        // notifies this fragment of receiving the livedata JSONArray containing the service items.
+        // notifies this of receiving the livedata JSONArray containing the service items.
         pagerAdapterModel.getJsonServiceArray().observe(requireActivity(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
@@ -293,15 +294,9 @@ public class ServiceManagerFragment extends Fragment implements
                         if(data != null) {
                             mAdapter.setServiceData(pos, data);
                             mAdapter.notifyItemChanged(pos, data);
-                        } else {
-                            //log.i("No service data: %s, %s", pos, name);
-                            mAdapter.setServiceData(pos, null);
-                        }
+                        } else mAdapter.setServiceData(pos, null);
                     });
-                } catch(JSONException e) {
-                    e.printStackTrace();
-                    //log.e("JSONException: %s", e.getMessage());
-                }
+                } catch(JSONException e) { e.printStackTrace(); }
             }
         });
 
@@ -360,17 +355,15 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    int index = 0;
     @Override
     public void onResume() {
         super.onResume();
-        index ++;
         // ******** MORE RESEARCH REQUIRED ********
         // Must define FragmentSharedModel.setCurrentFragment() in onCreate, not onActivityCreated()
         // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        log.i("servicemanagerfragment: %s", index);
-        //fragmentModel.setCurrentFragment(this);
+        log.i("servicemanagerfragment");
+        fragmentModel.setCurrentFragment(this);
         //fragmentModel.getExpenseSvcFragment().setValue(this);
 
     }
@@ -491,7 +484,6 @@ public class ServiceManagerFragment extends Fragment implements
         // Add the service center with the favorite list and geofence as far as it has been
         // already registered in RegisterDialogFragment.
         } else {
-
             if (TextUtils.isEmpty(svcId)) {
                 InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(etServiceName.getWindowToken(), 0);
@@ -529,6 +521,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         String dateFormat = getString(R.string.date_format_1);
         long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDate.getText().toString());
+        log.i("service data saved: %s", milliseconds);
         int mileage;
 
         try {
@@ -563,18 +556,12 @@ public class ServiceManagerFragment extends Fragment implements
             }
         }
 
-        for(ServicedItemEntity obj : itemEntityList) {
-            log.i("ServicedItemEntity: %s", obj.itemName);
-        }
-
-
         // Insert data into both ExpenseBaseEntity and ServiceManagerEntity at the same time
         // using @Transaction in ServiceManagerDao.
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-
             return true;
 
         } else return false;

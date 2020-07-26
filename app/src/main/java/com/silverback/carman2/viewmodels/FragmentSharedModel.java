@@ -62,6 +62,7 @@ public class FragmentSharedModel extends ViewModel {
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() { return fragment; }
 
+    /*
     private MutableLiveData<Fragment> expenseGasFragment;
     private MutableLiveData<Fragment> expenseSvcFragment;
     public MutableLiveData<Fragment> getExpenseGasFragment() {
@@ -72,6 +73,7 @@ public class FragmentSharedModel extends ViewModel {
         if(expenseSvcFragment == null) expenseSvcFragment = new MutableLiveData<>();
         return expenseSvcFragment;
     }
+     */
 
     public void setSelectedValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.

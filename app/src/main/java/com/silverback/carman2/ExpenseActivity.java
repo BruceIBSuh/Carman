@@ -159,14 +159,15 @@ public class ExpenseActivity extends BaseActivity implements
             expensePager = new ExpenseViewPager(this);
             expensePager.setId(View.generateViewId());
             recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
-
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
         });
 
         // On finishing ExpenseTabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
         // attach it in the top FrameLayout.
-        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+
+        // Consider this process should be behind the layout to lessen the ram load.
+        //locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override
@@ -223,7 +224,6 @@ public class ExpenseActivity extends BaseActivity implements
 
     @Override
     public void onPageSelected(int position) {
-        log.i("onPageSelected: %s", position);
         topFrame.removeAllViews();
         this.position = position;
         saveMenuItem.setVisible(true);
@@ -278,13 +278,12 @@ public class ExpenseActivity extends BaseActivity implements
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.
     private void animSlideTabLayout() {
-        float toolbarHeight = getActionbarHeight();
-
+        final float toolbarHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", toolbarHeight);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
         slideTab.setDuration(1000);
-        slideViewPager.setDuration(0);
+        slideViewPager.setDuration(100);
         animSet.play(slideViewPager).before(slideTab);
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
@@ -303,9 +302,6 @@ public class ExpenseActivity extends BaseActivity implements
         });
 
         animSet.start();
-
-
-
     }
 
     // Measures the size of an android attribute based on ?attr/actionBarSize

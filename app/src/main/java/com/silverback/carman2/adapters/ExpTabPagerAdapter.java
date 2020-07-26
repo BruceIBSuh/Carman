@@ -20,7 +20,6 @@ public class ExpTabPagerAdapter extends FragmentStatePagerAdapter {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
     }
 
-
     private final Fragment[] fragments = new Fragment[] {
             new GasManagerFragment(),
             new ServiceManagerFragment(),

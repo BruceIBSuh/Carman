@@ -226,8 +226,8 @@
     <string name="pref_snackbar_delete_no_history">정비/점검 리스트에서 삭제하시겠습니까?</string>
     <string name="pref_category_app_setting">앱 설정</string>
     <string name="pref_app_geofence_title">즐겨찾기 방문 자동 알림</string>
-    <string name="pref_app_geofnece_on">즐겨찾는 주유소/서비스센터 자동 알림 <b>설정</b></string>
-    <string name="pref_app_geofence_off">즐겨찾는 주유소/서비스센터 자동 알림 <b>해제</b></string>
+    <string name="pref_app_geofnece_on">방문 자동 알림 <b>설정</b></string>
+    <string name="pref_app_geofence_off">방문 자동 알림 <b>해제</b></string>
     <string name="pref_app_userImage">사용자 이미지 편집</string>
     <string name="pref_dialog_district">관심 지역</string>
     <string name="pref_dialog_district_title">관심지역 설정 </string>
