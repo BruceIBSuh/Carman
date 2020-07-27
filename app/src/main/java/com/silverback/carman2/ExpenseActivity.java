@@ -5,6 +5,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.app.ActionBar;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -13,7 +14,10 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
@@ -97,7 +101,6 @@ public class ExpenseActivity extends BaseActivity implements
     // Fields
     private int position = 0;
     private int category;
-    //private boolean isTabVisible = false;
     private String pageTitle;
     private boolean isGeofencing;
 
@@ -156,9 +159,15 @@ public class ExpenseActivity extends BaseActivity implements
             // Create the viewpager to show the recent expenses of gas or service. It should be
             // added to the framelayout because StatFragment cannot be applied in the same way as
             // in the other fragments.
+            /*
             expensePager = new ExpenseViewPager(this);
             expensePager.setId(View.generateViewId());
+            expensePager.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
             recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+
+             */
+            createExpenseViewPager(position);
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
         });
@@ -167,12 +176,14 @@ public class ExpenseActivity extends BaseActivity implements
         // attach it in the top FrameLayout.
 
         // Consider this process should be behind the layout to lessen the ram load.
-        //locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        expensePager.clearOnPageChangeListeners();
+
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
     }
@@ -232,6 +243,7 @@ public class ExpenseActivity extends BaseActivity implements
             case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
+
                 break;
 
             case Constants.SVC:
@@ -245,9 +257,8 @@ public class ExpenseActivity extends BaseActivity implements
                 StatGraphFragment statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
-                break;
-        }
 
+        }
     }
 
     @Override
@@ -280,18 +291,17 @@ public class ExpenseActivity extends BaseActivity implements
     private void animSlideTabLayout() {
         final float toolbarHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "y", toolbarHeight);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "translationY", toolbarHeight);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(100);
-        animSet.play(slideViewPager).before(slideTab);
+        slideTab.setDuration(500);
+        slideViewPager.setDuration(1000);
+        //animSet.play(slideViewPager).before(slideTab);
+        animSet.play(slideTab).before(slideViewPager);
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
-                //isTabVisible = !isTabVisible;
-                expensePager.setAdapter(recentPagerAdapter);
-                expensePager.setCurrentItem(0);
-                topFrame.removeAllViews();
+                if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
+                //createExpenseViewPager(position);
                 topFrame.addView(expensePager);
 
                 // In case that this activity is started by the geofence notification, ServiceFragment
@@ -300,7 +310,6 @@ public class ExpenseActivity extends BaseActivity implements
                 if(isGeofencing && category == Constants.SVC) tabPager.setCurrentItem(category);
             }
         });
-
         animSet.start();
     }
 
@@ -320,6 +329,24 @@ public class ExpenseActivity extends BaseActivity implements
         topFrame.setAlpha(bgAlpha);
     }
     */
+
+    private void createExpenseViewPager(int position) {
+        int height = 0;
+        switch(position) {
+            case 0: height = 300; break;
+            case 1: height = 200; break;
+            case 2: height = 500; break;
+        }
+        expensePager = new ExpenseViewPager(this);
+        expensePager.setId(View.generateViewId());
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT, height);
+        expensePager.setLayoutParams(params);
+
+        recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+        expensePager.setAdapter(recentPagerAdapter);
+        expensePager.setCurrentItem(0);
+    }
 
     // Getter to be Referenced by the containing fragments
     public LocationViewModel getLocationViewModel() { return locationModel; }
