@@ -54,15 +54,19 @@
                 app:tabTextColor="@android:color/background_light"
                 app:layout_collapseMode="parallax" />
 
-            <!-- Take care of minHeight -->
-            <!-- layout_marginTop must be equal to the height of TabLayout-->
-            <!-- Because of StatGraphFragment, which does not need ViewPager, use FrameLayout instead of ViewPager-->
+            <!--
+            FrameLayout contains the viewpager which shows the 5 recent expenses of gas or service
+            management. At the same time, the layout is replaced with the custom graphview when it
+            comes to the stat fragment in the tab pager. Initially, the layout is covered with the
+            toolbar at the top of the screen and should offset the toolbar and tab height.
+
+            -->
             <FrameLayout
                 android:id="@+id/frame_top_fragments"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="?attr/actionBarSize"
                 android:layout_marginTop="?attr/actionBarSize"
+                android:layout_marginBottom="?attr/actionBarSize"
                 app:layout_collapseMode="parallax" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>

@@ -154,9 +154,9 @@ public class ServiceManagerFragment extends Fragment implements
         else if(period.equals(getString(R.string.pref_svc_period_month))) svcPeriod = 1;
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
         pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
-        svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
 
 
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());

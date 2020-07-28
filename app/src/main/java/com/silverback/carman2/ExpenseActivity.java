@@ -5,6 +5,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.ActionBar;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -80,13 +81,10 @@ public class ExpenseActivity extends BaseActivity implements
 
     // Objects
     private ViewPager tabPager;
-    private ExpenseViewPager expensePager;
-
+    private ViewPager expensePager;
     private LocationViewModel locationModel;
     private PagerAdapterViewModel pagerModel;
-
     private ExpTabPagerAdapter tabPagerAdapter;
-    private ExpRecentPagerAdapter recentPagerAdapter;
 
     private ThreadTask tabPagerTask;
     private ThreadTask locationTask;
@@ -135,45 +133,39 @@ public class ExpenseActivity extends BaseActivity implements
         appBar.addOnOffsetChangedListener(this);
         tabPager.addOnPageChangeListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
-
         expTabLayout.setupWithViewPager(tabPager);
 
         // Fetch the values from SharedPreferences
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
 
+
+
         // Create ExpTabPagerAdapter that containts GeneralFragment and ServiceFragment in the
         // background, trasferring params to each fragment and return the adapter.
         // Set the initial page number.
-        position = 0;
+
         tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(), pagerModel,
                 getDefaultParams(), jsonDistrict, jsonSvcItems);
 
         // callback when tabPagerTask finished.
         pagerModel.getPagerAdapter().observe(this, adapter -> {
+            position = 0;
             tabPagerAdapter = adapter;
             tabPager.setAdapter(tabPagerAdapter);
             tabPager.setCurrentItem(position);
             expTabLayout.setupWithViewPager(tabPager);
 
-            // Create the viewpager to show the recent expenses of gas or service. It should be
-            // added to the framelayout because StatFragment cannot be applied in the same way as
-            // in the other fragments.
-            /*
-            expensePager = new ExpenseViewPager(this);
-            expensePager.setId(View.generateViewId());
-            expensePager.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-            recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
-
-             */
-            createExpenseViewPager(position);
+            // Create the tab and slide down the tab and the topFrame to offset the toolbar height.
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
         });
 
-        // On finishing ExpenseTabPagerTask, set the ExpRecentPagerAdapter to ExpenseViewPager and
-        // attach it in the top FrameLayout.
+        // Create the viewpager for showing the recent expenses.
+        expensePager = new ViewPager(this);
+        expensePager.setId(View.generateViewId());
+        ExpRecentPagerAdapter recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+        expensePager.setAdapter(recentPagerAdapter);
 
         // Consider this process should be behind the layout to lessen the ram load.
         locationTask = ThreadManager.fetchLocationTask(this, locationModel);
@@ -182,7 +174,6 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        expensePager.clearOnPageChangeListeners();
 
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
@@ -198,11 +189,8 @@ public class ExpenseActivity extends BaseActivity implements
         return super.onCreateOptionsMenu(menu);
     }
 
-    // Home button in Toolbar event handler, saving data in the current fragment
-    // in SQLite
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch(item.getItemId()) {
             case android.R.id.home:
                 if(isGeofencing) {
@@ -225,14 +213,15 @@ public class ExpenseActivity extends BaseActivity implements
 
             default: return false;
         }
-
-        //return super.onOptionsItemSelected(item);
     }
 
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+        //log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+    }
 
+    int topFrameHeight = 0;
     @Override
     public void onPageSelected(int position) {
         topFrame.removeAllViews();
@@ -242,13 +231,16 @@ public class ExpenseActivity extends BaseActivity implements
         switch(position) {
             case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
-                topFrame.addView(expensePager);
-
+                //createExpenseViewPager(280);
+                //topFrame.addView(expensePager);
+                topFrameHeight = 280;
                 break;
 
             case Constants.SVC:
                 pageTitle = getString(R.string.exp_title_service);
-                topFrame.addView(expensePager);
+                //createExpenseViewPager(220);
+                //topFrame.addView(expensePager);
+                topFrameHeight = 220;
                 break;
 
             case Constants.STAT:
@@ -258,11 +250,20 @@ public class ExpenseActivity extends BaseActivity implements
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
 
+
+
+                break;
         }
     }
 
     @Override
-    public void onPageScrollStateChanged(int state) {}
+    public void onPageScrollStateChanged(int state) {
+        log.i("onPageScrollstateChanged: %s", state);
+        if(position >= 0 && position <= 1 && state == 0) {
+            createExpenseViewPager(topFrameHeight);
+            topFrame.addView(expensePager);
+        }
+    }
 
 
     // AppBarLayout.OnOffsetChangeListener invokes this method
@@ -270,10 +271,8 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
         appBar.post(() -> {
-            if(Math.abs(scroll) == 0)
-                getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
-            else if(Math.abs(scroll) == appBar.getTotalScrollRange())
-                getSupportActionBar().setTitle(pageTitle);
+            if(Math.abs(scroll) == 0) getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
+            else if(Math.abs(scroll) == appBar.getTotalScrollRange()) getSupportActionBar().setTitle(pageTitle);
         });
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
@@ -293,17 +292,15 @@ public class ExpenseActivity extends BaseActivity implements
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "translationY", toolbarHeight);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
-        slideTab.setDuration(500);
+        slideTab.setDuration(1000);
         slideViewPager.setDuration(1000);
-        //animSet.play(slideViewPager).before(slideTab);
-        animSet.play(slideTab).before(slideViewPager);
+        animSet.play(slideTab).with(slideViewPager);
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
                 if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
-                //createExpenseViewPager(position);
+                createExpenseViewPager(280);
                 topFrame.addView(expensePager);
-
                 // In case that this activity is started by the geofence notification, ServiceFragment
                 // must be set to the current page only after the viewpager at the top has added to
                 // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
@@ -313,39 +310,37 @@ public class ExpenseActivity extends BaseActivity implements
         animSet.start();
     }
 
-    // Measures the size of an android attribute based on ?attr/actionBarSize
-    /*
-    private float getActionbarHeight() {
-        TypedValue typedValue = new TypedValue();
-        if(getTheme().resolveAttribute(android.R.attr.actionBarSize, typedValue, true)) {
-            return TypedValue.complexToDimension(typedValue.data, getResources().getDisplayMetrics());
-        }
-        return -1;
-    }
+    private void createExpenseViewPager(int height) {
+        ValueAnimator anim = ValueAnimator.ofInt(0, height);
+        anim.addUpdateListener(valueAnimator -> {
+            int value = (Integer)valueAnimator.getAnimatedValue();
+            ViewGroup.LayoutParams params = topFrame.getLayoutParams();
+            params.height = value;
+            topFrame.setLayoutParams(params);
+        });
 
+        anim.setDuration(500);
+        anim.start();
 
-    private void setBackgroundOpacity(int maxRange, int scroll) {
-        float bgAlpha = (float)((100 + (scroll * 100 / maxRange)) * 0.01);
-        topFrame.setAlpha(bgAlpha);
-    }
-    */
+        anim.addListener(new AnimatorListenerAdapter() {
+            public void onAnimationEnd(Animator animator) {
+                super.onAnimationEnd(animator);
+                //ExpRecentPagerAdapter recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+                //expensePager.setAdapter(recentPagerAdapter);
+                expensePager.setCurrentItem(0);
+            }
+        });
 
-    private void createExpenseViewPager(int position) {
-        int height = 0;
-        switch(position) {
-            case 0: height = 300; break;
-            case 1: height = 200; break;
-            case 2: height = 500; break;
-        }
-        expensePager = new ExpenseViewPager(this);
-        expensePager.setId(View.generateViewId());
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT, height);
+        /*
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, height);
         expensePager.setLayoutParams(params);
 
-        recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
+        ExpRecentPagerAdapter recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
         expensePager.setAdapter(recentPagerAdapter);
         expensePager.setCurrentItem(0);
+
+         */
     }
 
     // Getter to be Referenced by the containing fragments
