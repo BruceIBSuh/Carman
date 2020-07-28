@@ -1,29 +1,19 @@
 package com.silverback.carman2;
 
-import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.ActionBar;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
@@ -42,7 +32,6 @@ import com.silverback.carman2.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman2.threads.ThreadManager;
 import com.silverback.carman2.threads.ThreadTask;
 import com.silverback.carman2.utils.Constants;
-import com.silverback.carman2.views.ExpenseViewPager;
 
 /*
  * This activity is largely compolsed of two viewpagers. The viewpager which is synced w/ the tab
@@ -97,10 +86,12 @@ public class ExpenseActivity extends BaseActivity implements
 
 
     // Fields
-    private int position = 0;
+    private int position;
+    private int prevHeight;
     private int category;
     private String pageTitle;
     private boolean isGeofencing;
+    private boolean isScrolling;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -218,10 +209,9 @@ public class ExpenseActivity extends BaseActivity implements
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
     @Override
     public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        //log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+        isScrolling = (positionOffset == 0f && positionOffsetPixels == 0);
     }
 
-    int topFrameHeight = 0;
     @Override
     public void onPageSelected(int position) {
         topFrame.removeAllViews();
@@ -231,37 +221,46 @@ public class ExpenseActivity extends BaseActivity implements
         switch(position) {
             case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
-                //createExpenseViewPager(280);
-                //topFrame.addView(expensePager);
-                topFrameHeight = 280;
+                log.i("pager height in GAS: %s", expensePager.getMeasuredHeight());
+                topFrame.addView(expensePager);
                 break;
 
             case Constants.SVC:
                 pageTitle = getString(R.string.exp_title_service);
-                //createExpenseViewPager(220);
-                //topFrame.addView(expensePager);
-                topFrameHeight = 220;
+                topFrame.addView(expensePager);
                 break;
 
             case Constants.STAT:
                 pageTitle = getString(R.string.exp_title_stat);
                 saveMenuItem.setVisible(false);
+
                 StatGraphFragment statGraphFragment = new StatGraphFragment();
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
 
-
-
                 break;
         }
     }
-
     @Override
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollstateChanged: %s", state);
-        if(position >= 0 && position <= 1 && state == 0) {
-            createExpenseViewPager(topFrameHeight);
-            topFrame.addView(expensePager);
+        if(state == 0) {
+            switch(position) {
+                case Constants.GAS:
+                    animSlideTopFrame(prevHeight, 280);
+                    prevHeight = 280;
+                    break;
+
+                case Constants.SVC:
+                    animSlideTopFrame(prevHeight, 250);
+                    prevHeight = 250;
+                    break;
+
+                case Constants.STAT:
+                    animSlideTopFrame(prevHeight, 450);
+                    prevHeight = 450;
+                    break;
+            }
         }
     }
 
@@ -293,14 +292,19 @@ public class ExpenseActivity extends BaseActivity implements
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "translationY", toolbarHeight);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
         slideTab.setDuration(1000);
-        slideViewPager.setDuration(1000);
-        animSet.play(slideTab).with(slideViewPager);
+        slideViewPager.setDuration(100);
+        animSet.play(slideTab).before(slideViewPager);
+
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
                 if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
-                createExpenseViewPager(280);
+                log.i("First ExpensePager height: %s", expensePager.getMeasuredHeight());
+                animSlideTopFrame(0, 280);
+                prevHeight = 280;
+
                 topFrame.addView(expensePager);
+
                 // In case that this activity is started by the geofence notification, ServiceFragment
                 // must be set to the current page only after the viewpager at the top has added to
                 // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
@@ -310,8 +314,8 @@ public class ExpenseActivity extends BaseActivity implements
         animSet.start();
     }
 
-    private void createExpenseViewPager(int height) {
-        ValueAnimator anim = ValueAnimator.ofInt(0, height);
+    private void animSlideTopFrame(int prevHeight, int height) {
+        ValueAnimator anim = ValueAnimator.ofInt(prevHeight, height);
         anim.addUpdateListener(valueAnimator -> {
             int value = (Integer)valueAnimator.getAnimatedValue();
             ViewGroup.LayoutParams params = topFrame.getLayoutParams();
@@ -327,7 +331,7 @@ public class ExpenseActivity extends BaseActivity implements
                 super.onAnimationEnd(animator);
                 //ExpRecentPagerAdapter recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
                 //expensePager.setAdapter(recentPagerAdapter);
-                expensePager.setCurrentItem(0);
+                if(position != Constants.STAT) expensePager.setCurrentItem(0);
             }
         });
 
