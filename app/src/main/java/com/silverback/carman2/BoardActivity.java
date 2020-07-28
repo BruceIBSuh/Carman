@@ -519,9 +519,7 @@ public class BoardActivity extends BaseActivity implements
     // state: true - full height false - 0 height.
     private void animTabHeight(boolean isShown) {
         isTabHeight = isShown;
-        ValueAnimator anim = (isShown)?
-                ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
-
+        ValueAnimator anim = (isShown)? ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
         anim.addUpdateListener(valueAnimator -> {
             int val = (Integer) valueAnimator.getAnimatedValue();
             ViewGroup.LayoutParams params = boardTabLayout.getLayoutParams();

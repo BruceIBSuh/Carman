@@ -70,7 +70,7 @@ public class ExpenseViewPager extends ViewPager {
                 height = firstChild.getMeasuredHeight();
             }
 
-            //height = (height == 0) ? 400 : height;
+            //height = (height == 0) ? 300 : height;
             heightMeasureSpec = MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY);
             setMeasuredDimension(widthMeasureSpec, heightMeasureSpec);
         }

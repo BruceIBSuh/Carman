@@ -5,6 +5,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.ActionBar;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -167,7 +168,7 @@ public class ExpenseActivity extends BaseActivity implements
             recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
 
              */
-            createExpenseViewPager(position);
+            //createExpenseViewPager(position);
             addTabIconAndTitle(this, expTabLayout);
             animSlideTabLayout();
         });
@@ -176,13 +177,12 @@ public class ExpenseActivity extends BaseActivity implements
         // attach it in the top FrameLayout.
 
         // Consider this process should be behind the layout to lessen the ram load.
-        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+        //locationTask = ThreadManager.fetchLocationTask(this, locationModel);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        expensePager.clearOnPageChangeListeners();
 
         if (locationTask != null) locationTask = null;
         if (tabPagerTask != null) tabPagerTask = null;
@@ -243,12 +243,22 @@ public class ExpenseActivity extends BaseActivity implements
             case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
                 topFrame.addView(expensePager);
-
+                log.i("topFrame measure: %s", topFrame.getMeasuredHeight());
                 break;
 
             case Constants.SVC:
                 pageTitle = getString(R.string.exp_title_service);
                 topFrame.addView(expensePager);
+                log.i("topFrame measure: %s", topFrame.getMeasuredHeight());
+                ValueAnimator animPager = ValueAnimator.ofInt(topFrame.getMeasuredHeight(), 280);
+                animPager.addUpdateListener(valueAnimator -> {
+                    int val = (Integer) valueAnimator.getAnimatedValue();
+                    ViewGroup.LayoutParams params = topFrame.getLayoutParams();
+                    params.height = val;
+                    topFrame.setLayoutParams(params);
+                });
+                animPager.setDuration(1000);
+                animPager.start();
                 break;
 
             case Constants.STAT:
@@ -258,6 +268,15 @@ public class ExpenseActivity extends BaseActivity implements
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.frame_top_fragments, statGraphFragment).commit();
 
+                ValueAnimator anim = ValueAnimator.ofInt(topFrame.getMeasuredHeight(), 450);
+                anim.addUpdateListener(valueAnimator -> {
+                    int val = (Integer) valueAnimator.getAnimatedValue();
+                    ViewGroup.LayoutParams params = topFrame.getLayoutParams();
+                    params.height = val;
+                    topFrame.setLayoutParams(params);
+                });
+                anim.setDuration(1000);
+                anim.start();
         }
     }
 
@@ -293,7 +312,21 @@ public class ExpenseActivity extends BaseActivity implements
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "translationY", toolbarHeight);
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
-        slideTab.setDuration(500);
+        slideTab.setDuration(1000);
+        slideTab.addListener(new AnimatorListenerAdapter(){
+            public void onAnimationEnd(Animator animator) {
+                super.onAnimationEnd(animator);
+                if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
+                createExpenseViewPager();
+                topFrame.addView(expensePager);
+                // In case that this activity is started by the geofence notification, ServiceFragment
+                // must be set to the current page only after the viewpager at the top has added to
+                // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
+                if(isGeofencing && category == Constants.SVC) tabPager.setCurrentItem(category);
+            }
+        });
+        slideTab.start();
+        /*
         slideViewPager.setDuration(1000);
         //animSet.play(slideViewPager).before(slideTab);
         animSet.play(slideTab).before(slideViewPager);
@@ -301,7 +334,7 @@ public class ExpenseActivity extends BaseActivity implements
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
                 if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
-                //createExpenseViewPager(position);
+                createExpenseViewPager();
                 topFrame.addView(expensePager);
 
                 // In case that this activity is started by the geofence notification, ServiceFragment
@@ -311,6 +344,8 @@ public class ExpenseActivity extends BaseActivity implements
             }
         });
         animSet.start();
+
+         */
     }
 
     // Measures the size of an android attribute based on ?attr/actionBarSize
@@ -330,22 +365,17 @@ public class ExpenseActivity extends BaseActivity implements
     }
     */
 
-    private void createExpenseViewPager(int position) {
-        int height = 0;
-        switch(position) {
-            case 0: height = 300; break;
-            case 1: height = 200; break;
-            case 2: height = 500; break;
-        }
+    private void createExpenseViewPager() {
         expensePager = new ExpenseViewPager(this);
         expensePager.setId(View.generateViewId());
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT, height);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 200);
         expensePager.setLayoutParams(params);
 
         recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
         expensePager.setAdapter(recentPagerAdapter);
         expensePager.setCurrentItem(0);
+        expensePager.invalidate();
     }
 
     // Getter to be Referenced by the containing fragments
