@@ -290,6 +290,7 @@ public class StatGraphView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mViewWidth = measureWidth(widthMeasureSpec);
+        // TEST CODE : add 100
         int mViewHeight = measureHeight(heightMeasureSpec);
 
         setMeasuredDimension(mViewWidth, mViewHeight);
@@ -298,10 +299,10 @@ public class StatGraphView extends View {
 
     private int measureWidth(int measureSpec) {
         int preferred = 0;
-        if(monthLabel != null) {
+        //if(monthLabel != null) {
             preferred = monthLabel.length * interval + GRAPH_SIDE_MARGIN * 2;
             //Log.d(TAG, "Preferred Value: " + preferred);
-        }
+        //}
 
         return getMeasurement(measureSpec, preferred);
     }

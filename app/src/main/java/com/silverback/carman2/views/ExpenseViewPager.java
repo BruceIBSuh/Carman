@@ -104,6 +104,7 @@ public class ExpenseViewPager extends ViewPager {
             log.i("mode: %s", mode);
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             int height = 0; // working as minHeight;
+
             for(int i = 0; i < getChildCount(); i++) {
                 View child = getChildAt(i);
                 log.i("child: %s", child);
