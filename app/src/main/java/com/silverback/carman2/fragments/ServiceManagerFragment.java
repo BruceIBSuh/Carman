@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -91,7 +92,7 @@ public class ServiceManagerFragment extends Fragment implements
     private String svcCompany;
 
     // UIs
-    private ConstraintLayout parentLayout;
+    private RelativeLayout parentLayout;
     private RecyclerView recyclerServiceItems;
     private ProgressBar progbar;
     private EditText etServiceName;
@@ -149,7 +150,7 @@ public class ServiceManagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
 
         // Get the service periond unit from SharedPreferences and pass it to the adapter as int type.
-        String period = mSettings.getString(Constants.SERVICE_PERIOD, null);
+        String period = mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_mileage));
         if(period.equals(getString(R.string.pref_svc_period_mileage))) svcPeriod = 0;
         else if(period.equals(getString(R.string.pref_svc_period_month))) svcPeriod = 1;
 

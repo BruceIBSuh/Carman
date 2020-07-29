@@ -152,9 +152,14 @@ public class BoardActivity extends BaseActivity implements
         chkboxList = new ArrayList<>();
         cbAutoFilter = new ArrayList<>();
 
+        // Create the autofilter checkbox if the auto data is set. If null, it catches the exception
+        // that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
         try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
-        catch (JSONException e) {e.printStackTrace();}
+        catch(NullPointerException e) {
+            setNoAutofilterText();}
+        catch(JSONException e) {e.printStackTrace();}
+
 
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
@@ -559,12 +564,36 @@ public class BoardActivity extends BaseActivity implements
             int end = ssb.length();
             ssb.setSpan(new RelativeSizeSpan(0.5f), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        } else {
-            ssb.append(chkboxList.get(0).getText());
-        }
+        } else { ssb.append(chkboxList.get(0).getText());}
 
         ssb.append(String.format("%4s", getString(R.string.board_filter_club)));
         return ssb;
+    }
+
+    // In case that any auto filter that is initially saved as a json string is not set, show the
+    // text which contains a clickable span to initiate SettingPrefActivity to set the auto filter.
+    private void setNoAutofilterText() {
+        TextView tvMessage = new TextView(this);
+        String msg = getString(R.string.board_filter_join);
+        SpannableString ss = new SpannableString(msg);
+        ClickableSpan clickableSpan = new ClickableSpan(){
+            @Override
+            public void onClick(@NonNull View textView) {
+                int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
+                Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
+                intent.putExtra("requestCode", requestCode);
+                startActivityForResult(intent, requestCode);
+            }
+        };
+
+        ss.setSpan(clickableSpan, 7, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        tvMessage.setText(ss);
+        // Required to make ClickableSpan workable.
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMarginStart(10);
+        tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
+        cbLayout.addView(tvMessage, params);
     }
 
 
@@ -587,7 +616,8 @@ public class BoardActivity extends BaseActivity implements
         JSONArray jsonAuto = new JSONArray(json);
         // If no autodata is initially given, show the spanned message to initiate startActivityForResult()
         // to have users set the auto data in SettingPreferenceActivity.
-        if(jsonAuto.isNull(0)) {
+        /*
+        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) {
             TextView tvMessage = new TextView(context);
             String msg = getString(R.string.board_filter_join);
             SpannableString ss = new SpannableString(msg);
@@ -609,6 +639,8 @@ public class BoardActivity extends BaseActivity implements
 
             return;
         }
+
+         */
 
         // Create the header and the general checkbox controlled by setting visibility which depends
         // on which fragment the frame contains; header turns visible in BoardPagerFragment and the
