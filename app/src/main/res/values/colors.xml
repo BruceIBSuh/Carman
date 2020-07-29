@@ -7,6 +7,11 @@
     <color name="primaryColor">#778899</color>
     <color name="secondaryColor">#B0C4DE</color>
 
+    <!-- ExpenseActivity -->
+    <color name="gasThemeColor">#FF9900</color>
+    <color name="serviceThemeColor">#808000</color>
+    <color name="svcItemExpense">#C0C0C0</color>
+
     <!-- BoardActivity -->
     <color name="bgToolbar">#778899</color>
     <!--<color name="bgBoardComment">#F5F5F5</color>-->
@@ -27,8 +32,8 @@
     <color name="priceDown">#0080FF</color>
 
     <color name="mainThemeColor">#1EA4FF</color>
-    <color name="gasThemeColor">#FF9900</color>
-    <color name="serviceThemeColor">#808000</color>
+
+
     <color name="statThemeColor">#7D1540</color>
     <color name="settingThemeColor">#009900</color>
     <color name="settingItemThemeColor">#999900</color>

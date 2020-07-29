@@ -57,9 +57,13 @@
             <!--
             FrameLayout contains the viewpager which shows the 5 recent expenses of gas or service
             management. At the same time, the layout is replaced with the custom graphview when it
-            comes to the stat fragment in the tab pager. Initially, the layout is covered with the
-            toolbar at the top of the screen and should offset the toolbar and tab height.
+            comes to the stat fragment in the tab pager.
 
+            Initially, the layout is right down with the toolbar by setting top margin and as the
+            tab is sliding down, it moves down as well to the extent of the tab height, which is
+            defined equal to the toolbar height, actually. As long as the layout moves donw, it will
+            be coverend with the bottom layout, which should be compentsated by setting the bottm
+            margin.
             -->
             <FrameLayout
                 android:id="@+id/frame_top_fragments"

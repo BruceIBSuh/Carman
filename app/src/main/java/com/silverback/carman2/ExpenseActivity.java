@@ -7,15 +7,19 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -83,6 +87,7 @@ public class ExpenseActivity extends BaseActivity implements
     private TabLayout expTabLayout;
     private FrameLayout topFrame;
     private MenuItem saveMenuItem;
+    private ViewTreeObserver vto;
 
 
     // Fields
@@ -91,7 +96,6 @@ public class ExpenseActivity extends BaseActivity implements
     private int category;
     private String pageTitle;
     private boolean isGeofencing;
-    private boolean isScrolling;
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -135,9 +139,8 @@ public class ExpenseActivity extends BaseActivity implements
         // Create ExpTabPagerAdapter that containts GeneralFragment and ServiceFragment in the
         // background, trasferring params to each fragment and return the adapter.
         // Set the initial page number.
-
-        tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(), pagerModel,
-                getDefaultParams(), jsonDistrict, jsonSvcItems);
+        tabPagerTask = ThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(),
+                pagerModel, getDefaultParams(), jsonDistrict, jsonSvcItems);
 
         // callback when tabPagerTask finished.
         pagerModel.getPagerAdapter().observe(this, adapter -> {
@@ -207,13 +210,15 @@ public class ExpenseActivity extends BaseActivity implements
     }
 
     // The following 3 overriding methods are invoked by ViewPager.OnPageChangeListener.
+    // onPageScrollStateChanged() is invoked immediately after onPageSelected(), thus the animation
+    // should be called in onPageScorllStateChaged() when the callback is set to 0 for displaying
+    // the anim naturally.
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        isScrolling = (positionOffset == 0f && positionOffsetPixels == 0);
-    }
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
 
     @Override
     public void onPageSelected(int position) {
+        log.i("onPageSelected");
         topFrame.removeAllViews();
         this.position = position;
         saveMenuItem.setVisible(true);
@@ -221,7 +226,6 @@ public class ExpenseActivity extends BaseActivity implements
         switch(position) {
             case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
-                log.i("pager height in GAS: %s", expensePager.getMeasuredHeight());
                 topFrame.addView(expensePager);
                 break;
 
@@ -241,24 +245,23 @@ public class ExpenseActivity extends BaseActivity implements
                 break;
         }
     }
+
     @Override
     public void onPageScrollStateChanged(int state) {
         log.i("onPageScrollstateChanged: %s", state);
         if(state == 0) {
             switch(position) {
                 case Constants.GAS:
-                    animSlideTopFrame(prevHeight, 280);
-                    prevHeight = 280;
+                    animSlideTopFrame(prevHeight, 100);
+                    prevHeight = 100;
                     break;
-
                 case Constants.SVC:
-                    animSlideTopFrame(prevHeight, 250);
-                    prevHeight = 250;
+                    animSlideTopFrame(prevHeight, 90);
+                    prevHeight = 90;
                     break;
-
                 case Constants.STAT:
-                    animSlideTopFrame(prevHeight, 450);
-                    prevHeight = 450;
+                    animSlideTopFrame(prevHeight, 160);
+                    prevHeight = 160;
                     break;
             }
         }
@@ -293,15 +296,15 @@ public class ExpenseActivity extends BaseActivity implements
         ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(100);
-        animSet.play(slideTab).before(slideViewPager);
+        animSet.play(slideTab).with(slideViewPager);
 
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
                 if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
                 log.i("First ExpensePager height: %s", expensePager.getMeasuredHeight());
-                animSlideTopFrame(0, 280);
-                prevHeight = 280;
+                animSlideTopFrame(0, 100);
+                prevHeight = 100;
 
                 topFrame.addView(expensePager);
 
@@ -314,12 +317,19 @@ public class ExpenseActivity extends BaseActivity implements
         animSet.start();
     }
 
-    private void animSlideTopFrame(int prevHeight, int height) {
-        ValueAnimator anim = ValueAnimator.ofInt(prevHeight, height);
+    private void animSlideTopFrame(int oldY, int newY) {
+        // Convert the dp unit to pixels
+        int prevHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                oldY, getResources().getDisplayMetrics());
+        int newHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                newY, getResources().getDisplayMetrics());
+
+        // Animate to slide the top frame down to the measured height.
+        ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
+        ViewGroup.LayoutParams params = topFrame.getLayoutParams();
+
         anim.addUpdateListener(valueAnimator -> {
-            int value = (Integer)valueAnimator.getAnimatedValue();
-            ViewGroup.LayoutParams params = topFrame.getLayoutParams();
-            params.height = value;
+            params.height = (Integer)valueAnimator.getAnimatedValue();;
             topFrame.setLayoutParams(params);
         });
 
@@ -335,16 +345,6 @@ public class ExpenseActivity extends BaseActivity implements
             }
         });
 
-        /*
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, height);
-        expensePager.setLayoutParams(params);
-
-        ExpRecentPagerAdapter recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
-        expensePager.setAdapter(recentPagerAdapter);
-        expensePager.setCurrentItem(0);
-
-         */
     }
 
     // Getter to be Referenced by the containing fragments
