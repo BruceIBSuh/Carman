@@ -239,7 +239,7 @@ public class FavoriteGeofenceHelper {
                 evalReference.get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
                         DocumentSnapshot doc = task.getResult();
-                        if(doc.getDouble("favorite_num") > 0)
+                        if(doc.exists() && doc.getLong("favorite_num") > 0)
                             evalReference.update("favorite_num", FieldValue.increment(-1));
                     }
                 });

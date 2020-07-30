@@ -197,7 +197,8 @@ public class ServiceManagerFragment extends Fragment implements
 
          */
 
-        // Attach the listener for callback methods invoked by addGeofence or removeGeofence
+        // Attach the listener which invokes the following callback methods when a location is added
+        // to or removed from the favorite provider as well as geofence list.
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
@@ -231,7 +232,7 @@ public class ServiceManagerFragment extends Fragment implements
         Button btnDate = localView.findViewById(R.id.btn_svc_date);
         Button btnReg = localView.findViewById(R.id.btn_register);
         btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
-        tvTotalCost = localView.findViewById(R.id.tv_gas_payment);
+        tvTotalCost = localView.findViewById(R.id.tv_svc_payment);
         TextView tvPeriod = localView.findViewById(R.id.tv_period);
 
         tvMileage.setOnClickListener(this);
@@ -309,7 +310,8 @@ public class ServiceManagerFragment extends Fragment implements
             //checkSvcFavorite(svcData, Constants.SVC);
         });
 
-        // Communcate w/ NumberPadFragment
+        // Communcate w/ NumberPadFragment to put a number selected in the num pad into the textview
+        // in this fragment.
         fragmentModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
@@ -317,7 +319,6 @@ public class ServiceManagerFragment extends Fragment implements
                 case R.id.tv_mileage:
                     tvMileage.setText(df.format(value));
                     break;
-
                 case R.id.tv_value_cost:
                     mAdapter.notifyItemChanged(itemPos, data);
                     totalExpense += data.valueAt(0);
@@ -398,8 +399,7 @@ public class ServiceManagerFragment extends Fragment implements
                     Snackbar.make(parentLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
                     return;
                 } else {
-                    RegisterDialogFragment.newInstance(svcName, distCode)
-                            .show(getActivity().getSupportFragmentManager(), null);
+                    RegisterDialogFragment.newInstance(svcName, distCode).show(getActivity().getSupportFragmentManager(), null);
                 }
 
                 break;
@@ -429,7 +429,6 @@ public class ServiceManagerFragment extends Fragment implements
 
     @Override
     public void inputItemMemo(String title, TextView targetView, int position) {
-        log.i("Item Info: %s %s %s", title, targetView.getId(), position);
         itemPos = position;
 
         Bundle args = new Bundle();
@@ -451,20 +450,17 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public int getCurrentMileage() {
         try {
-            return df.parse(tvMileage.getText().toString()).intValue();
-        } catch(ParseException e) {
-            log.e("ParseException: %s", e.getMessage());
-        }
-
+            //return df.parse(tvMileage.getText().toString()).intValue();
+            Number num = df.parse(tvMileage.getText().toString());
+            if(num != null) return num.intValue();
+        } catch(ParseException e) { e.printStackTrace();}
         return -1;
     }
 
     // Register the service center with the favorite list and the geofence.
     @SuppressWarnings("ConstantConditions")
     private void addServiceFavorite() {
-
-        //if(isGeofenceIntent) return;
-
+        // if(isGeofenceIntent) return;
         // Retrieve a service center from the favorite list, the value of which is sent via
         // fragmentSharedModel.getFavoriteName()
         if(TextUtils.isEmpty(etServiceName.getText())) {
@@ -572,7 +568,6 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     private boolean doEmptyCheck() {
-
         if(TextUtils.isEmpty(etServiceName.getText())) {
             String msg = getString(R.string.svc_snackbar_stnname);
             Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();

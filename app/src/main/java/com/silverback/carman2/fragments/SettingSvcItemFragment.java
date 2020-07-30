@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,6 +23,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.adapters.SettingServiceItemAdapter;
@@ -77,52 +80,20 @@ public class SettingSvcItemFragment extends Fragment implements
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings =((SettingPrefActivity)getActivity()).getSettings();
+        mSettings =((BaseActivity)getActivity()).getSharedPreferernces();
         dlgFragment = new SettingSvcItemDlgFragment();
 
         String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        int average = Integer.parseInt(mSettings.getString(Constants.AVERAGE, "10000"));
         try {
             jsonSvcItemArray = new JSONArray(json);
-            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, this);
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
+            mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, average, this);
+        } catch(JSONException e) { e.printStackTrace();}
 
         // ViewModel to share data b/w SettingServiceItemFragment and SettingSvcItemDlgFragment.
         // SettingServiceDlgFragmnt adds a service item with its mileage and time to check, data of
         // which are passed here using FragmentSharedModel as the type of List<String>
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        fragmentModel.getJsonServiceItemObj().observe(this, jsonObject -> {
-            // This is kind of an expedient code to invoke getItemCount() in which a new item is added
-            // to ArrayList(svcItemList). A right coding should be notifyItemChanged(position, payloads)
-            // which calls the partial binding to update the dataset but it seems not work here.
-            // It looks like the new item has not been added to the list before notifyItemChanged
-            // is called such that payloads shouldn't be passed.
-            boolean isExist = false;
-            for(int i = 0; i < jsonSvcItemArray.length(); i++) {
-                // Compare Strings which is required to refactor with RegExp.
-                try {
-                    isExist = jsonSvcItemArray.optJSONObject(i).getString("name").contains(jsonObject.getString("name"));
-                    log.i("isExist: %s", isExist);
-                    if(isExist) break;
-                } catch (JSONException e) {
-                    log.e("JSONException: %s", e.getMessage());
-                }
-            }
-
-            if(!isExist) {
-                jsonSvcItemArray.put(jsonObject);
-                recyclerView.scrollToPosition(jsonSvcItemArray.length() - 1);
-                mAdapter.notifyItemChanged(mAdapter.getItemCount());
-
-            } else {
-                Snackbar snackbar = Snackbar.make(getView(), R.string.pref_snackbar_msg, Snackbar.LENGTH_SHORT);
-                TextView tvMessage = snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text);
-                tvMessage.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-                snackbar.show();
-            }
-        });
-
     }
 
 
@@ -150,6 +121,41 @@ public class SettingSvcItemFragment extends Fragment implements
         if(fragmentModel != null) fragmentModel = null;
     }
 
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        fragmentModel.getJsonServiceItemObj().observe(requireActivity(), jsonObject -> {
+            // This is kind of an expedient code to invoke getItemCount() in which a new item is added
+            // to ArrayList(svcItemList). A right coding should be notifyItemChanged(position, payloads)
+            // which calls the partial binding to update the dataset but it seems not work here.
+            // It looks like the new item has not been added to the list before notifyItemChanged
+            // is called such that payloads shouldn't be passed.
+            boolean isItemExist = false;
+
+            // Check if a new item is valid by comparing its name w/ existing item names.
+            for(int i = 0; i < jsonSvcItemArray.length(); i++) {
+                // Compare Strings which is required to refactor with RegExp.
+                try {
+                    String itemName = jsonSvcItemArray.optJSONObject(i).getString("name");
+                    isItemExist = itemName.equalsIgnoreCase(jsonObject.getString("name"));
+                    if(isItemExist) break;
+                } catch (JSONException e) {e.printStackTrace();}
+            }
+
+            if(!isItemExist) {
+                jsonSvcItemArray.put(jsonObject);
+                recyclerView.scrollToPosition(jsonSvcItemArray.length() - 1);
+                mAdapter.notifyItemChanged(mAdapter.getItemCount());
+
+            } else {
+                Snackbar snackbar = Snackbar.make(recyclerView, R.string.pref_snackbar_msg, Snackbar.LENGTH_SHORT);
+                TextView tvMessage = snackbar.getView().findViewById(com.google.android.material.R.id.snackbar_text);
+                tvMessage.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                snackbar.show();
+            }
+        });
+    }
+
     // Create the Toolbar option menu when the fragment is instantiated.
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
@@ -161,6 +167,7 @@ public class SettingSvcItemFragment extends Fragment implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
+                log.i("save checklist");
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
                 return true;
 
@@ -185,15 +192,11 @@ public class SettingSvcItemFragment extends Fragment implements
             // notifyItemRangeChanged(int start, int count, Object payload)
             mAdapter.notifyItemRangeChanged(Math.min(from, to), Math.abs(from - to) + 1, true);
 
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-
-
+        } catch(JSONException e) { e.printStackTrace(); }
     }
 
     @Override
-    public void delServiceItem(final int position) {
+    public void delServiceItem(int position) {
 
         // Check if any maintenance history exists with this item.
         String itemName = jsonSvcItemArray.optJSONObject(position).optString("name");
@@ -226,6 +229,18 @@ public class SettingSvcItemFragment extends Fragment implements
         snackbar.show();
 
 
+    }
+
+    @Override
+    public void modifyServiceItem(int position, SparseArray<String> sparseArray) {
+        String mileage = sparseArray.valueAt(0);
+        String month = sparseArray.valueAt(1);
+        log.i("callback values: %s, %s", mileage, month);
+        try {
+            jsonSvcItemArray.optJSONObject(position).put("mileage", mileage);
+            jsonSvcItemArray.optJSONObject(position).put("month", month);
+
+        } catch(JSONException e) {e.printStackTrace();}
     }
 
     /*

@@ -1,7 +1,10 @@
 package com.silverback.carman2.adapters;
 
 import android.content.Context;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +44,8 @@ public class SettingServiceItemAdapter
     private OnServiceItemAdapterCallback mCallback;
     //private OnAdapterCallback mListener;
 
+    private SparseArray<String> sparseItemArray;
+    private int average;
     private ViewGroup parent;
 
 
@@ -48,17 +53,19 @@ public class SettingServiceItemAdapter
     public interface OnServiceItemAdapterCallback {
         void dragServiceItem(int from, int to);
         void delServiceItem(int position);
+        void modifyServiceItem(int position, SparseArray<String> value);
     }
 
     // Constructor
-    public SettingServiceItemAdapter(JSONArray jsonArray, OnServiceItemAdapterCallback callback) {
+    public SettingServiceItemAdapter(JSONArray jsonArray, int average, OnServiceItemAdapterCallback callback) {
 
         mCallback = callback;
         jsonSvcItemArray = jsonArray;
+        this.average = average;
         svcItemList = new ArrayList<>();
+        sparseItemArray = new SparseArray<>();
 
-        for(int i = 0; i < jsonSvcItemArray.length(); i++)
-            svcItemList.add(jsonSvcItemArray.optJSONObject(i));
+        for(int i = 0; i < jsonSvcItemArray.length(); i++) svcItemList.add(jsonSvcItemArray.optJSONObject(i));
     }
 
 
@@ -66,10 +73,7 @@ public class SettingServiceItemAdapter
     @Override
     public SettingServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.parent = parent;
-
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_setting_service, parent, false);
-
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.cardview_setting_service, parent, false);
         return new SettingServiceItemHolder(itemView);
     }
 
@@ -82,9 +86,27 @@ public class SettingServiceItemAdapter
             holder.etMileage.setHint(jsonSvcItemArray.getJSONObject(position).getString("mileage"));
             holder.etMonth.setHint(jsonSvcItemArray.getJSONObject(position).getString("month"));
 
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
+            // The month value is dependent on the mileage value.
+            holder.etMileage.setOnFocusChangeListener((v, hasFocus) -> {
+                if(hasFocus) checkServiceItemChange(holder.etMileage, holder.etMonth, position);
+                else {
+                    log.i("modify vlaue: %s, %s", holder.etMileage.getText(), holder.etMonth.getText());
+                    sparseItemArray.put(0, holder.etMileage.getText().toString());
+                    sparseItemArray.put(1, holder.etMonth.getText().toString());
+                    mCallback.modifyServiceItem(position, sparseItemArray);
+                }
+            });
+
+           holder.etMonth.setOnFocusChangeListener((v, hasFocus) -> {
+               if(hasFocus) {
+
+               } else {
+                   sparseItemArray.put(0, holder.etMileage.getText().toString());
+                   sparseItemArray.put(1, holder.etMonth.getText().toString());
+                   mCallback.modifyServiceItem(position, sparseItemArray);
+               }
+           });
+        } catch(JSONException e) { e.printStackTrace();}
     }
 
     @Override
@@ -95,10 +117,8 @@ public class SettingServiceItemAdapter
         // dragging.
         if(payloads.size() == 0 ) {
             super.onBindViewHolder(holder, position, payloads);
-
         // When dragging, change the postion number betweein from and to position.
         } else if(payloads.get(0) instanceof Boolean) {
-            log.i("partial binding - dragging: %s", position);
             holder.tvNumber.setText(String.valueOf((position + 1)));
         }
 
@@ -145,10 +165,24 @@ public class SettingServiceItemAdapter
         */
     }
 
+    private void checkServiceItemChange(EditText mileage, EditText month, int position) {
+        mileage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                log.i("onTextChanged: %s, %s", position, charSequence);
+                int mileagePeriod = Integer.parseInt(charSequence.toString());
+                // (mileage/average) * 12 not workng due to int casting.
+                int monthPeriod = mileagePeriod * 12 / average;
+                month.setText(String.valueOf(monthPeriod));
+            }
+            @Override
+            public void afterTextChanged(Editable editable) {}
+        });
+    }
 
-    /**
-     * RecyclerView.ViewHolder
-     */
+
     static class SettingServiceItemHolder extends RecyclerView.ViewHolder {
 
         TextView tvNumber;
@@ -162,6 +196,5 @@ public class SettingServiceItemAdapter
             etMileage = v.findViewById(R.id.et_default_mileage);
             etMonth = v.findViewById(R.id.et_default_month);
         }
-
     }
 }

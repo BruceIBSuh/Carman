@@ -15,6 +15,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 
+import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.R;
 import com.silverback.carman2.SettingPrefActivity;
 import com.silverback.carman2.logs.LoggingHelper;
@@ -27,6 +28,9 @@ import org.json.JSONObject;
 
 /**
  * A simple {@link Fragment} subclass.
+ * This fragment is to create a service item which requires the values of item name, mileage, and
+ * month to input. The values will be passed back to SettingSvcItemFragment using FragmentModel.
+ * getJsonServicItemObj() as JSONObject type.
  */
 public class SettingSvcItemDlgFragment extends DialogFragment {
 
@@ -43,7 +47,7 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null) mSettings = ((SettingPrefActivity)getActivity()).getSettings();
+        if(getActivity() != null) mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
@@ -59,7 +63,6 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
         EditText etItemName = localView.findViewById(R.id.et_item_name);
         EditText etMileage = localView.findViewById(R.id.et_period_km);
         EditText etMonth = localView.findViewById(R.id.et_period_month);
-        boolean isMileage = false;
 
         etMileage.setOnFocusChangeListener((v, hasFocus) -> {
             if(!TextUtils.isEmpty(etMileage.getText()) && !hasFocus) {
@@ -80,11 +83,9 @@ public class SettingSvcItemDlgFragment extends DialogFragment {
                 jsonObject.put("mileage", etMileage.getText().toString());
                 jsonObject.put("month", etMonth.getText().toString());
                 fragmentModel.getJsonServiceItemObj().setValue(jsonObject);
+            } catch(JSONException e) { e.printStackTrace();}
 
-            } catch(JSONException e) {
-                log.e("JSONException: %s", e.getMessage());
-            }
-        }).setNegativeButton(cancel, (dialog, which) -> {});
+        }).setNegativeButton(cancel, (dialog, which) -> dismiss());
 
         return builder.create();
 

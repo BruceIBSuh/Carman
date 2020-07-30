@@ -10,7 +10,7 @@
     <!-- ExpenseActivity -->
     <color name="gasThemeColor">#FF9900</color>
     <color name="serviceThemeColor">#808000</color>
-    <color name="svcItemExpense">#C0C0C0</color>
+    <color name="svcItemExpense">#D3D3D3</color>
 
     <!-- BoardActivity -->
     <color name="bgToolbar">#778899</color>

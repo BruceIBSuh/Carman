@@ -146,9 +146,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             ssb.setSpan(new StyleSpan(Typeface.BOLD), mileageUnit.length() + 1, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             maxValue = maxMonth * 30 * 24 * 60;
             lapse = (int)((System.currentTimeMillis() - lastTime) / (1000 * 60));
-            log.i("Time gap: %s", lastTime);
-            log.i("Month lapse: %s, %s, %s", lapse, System.currentTimeMillis() - lastTime, maxValue);
-
         }
 
         holder.tvMaxPeriod.setText(ssb);
@@ -168,7 +165,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
      */
     @Override
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int pos, @NonNull List<Object> payloads){
-
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, pos, payloads);
         } else {
@@ -297,16 +293,17 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             int convStartValue = (int)TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP, startValue, target.getResources().getDisplayMetrics());
 
-            ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue).setDuration(500);
+            ViewGroup.LayoutParams params = layout.getLayoutParams();
+            ValueAnimator animSlide = ValueAnimator.ofInt(convStartValue, convEndValue);
             animSlide.addUpdateListener(valueAnimator -> {
-                target.getLayoutParams().height = (Integer)valueAnimator.getAnimatedValue();
-                target.requestLayout();
-
+                //target.getLayoutParams().height = (Integer)valueAnimator.getAnimatedValue();
+               // target.requestLayout();
+                params.height = (Integer)valueAnimator.getAnimatedValue();
+                layout.setLayoutParams(params);
             });
 
-            AnimatorSet animSet = new AnimatorSet();
-            animSet.play(animSlide);
-            animSet.start();
+            animSlide.setDuration(500);
+            animSlide.start();
         }
 
     }
