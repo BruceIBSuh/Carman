@@ -85,6 +85,7 @@ public class SettingSvcItemFragment extends Fragment implements
 
         String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
         int average = Integer.parseInt(mSettings.getString(Constants.AVERAGE, "10000"));
+        log.i("average mileage: %s", average);
         try {
             jsonSvcItemArray = new JSONArray(json);
             mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, average, this);
@@ -167,7 +168,6 @@ public class SettingSvcItemFragment extends Fragment implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
-                log.i("save checklist");
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
                 return true;
 
@@ -232,9 +232,10 @@ public class SettingSvcItemFragment extends Fragment implements
     }
 
     @Override
-    public void modifyServiceItem(int position, SparseArray<String> sparseArray) {
+    public void changeServicePeriod(int position, SparseArray<String> sparseArray) {
         String mileage = sparseArray.valueAt(0);
         String month = sparseArray.valueAt(1);
+
         log.i("callback values: %s, %s", mileage, month);
         try {
             jsonSvcItemArray.optJSONObject(position).put("mileage", mileage);
@@ -263,6 +264,7 @@ public class SettingSvcItemFragment extends Fragment implements
 
 
     // Method for switching the location of an service item using Up and Down button
+    /*
     private void swapJSONObject(int index, int mode) {
         JSONObject obj = jsonSvcItemArray.optJSONObject(index);
         try {
@@ -285,6 +287,5 @@ public class SettingSvcItemFragment extends Fragment implements
         }
     }
 
-
-
+     */
 }

@@ -12,7 +12,7 @@
         android:id="@+id/view_memo_title"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:background="@android:color/holo_blue_light"
+        android:background="@color/bgToolbar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"

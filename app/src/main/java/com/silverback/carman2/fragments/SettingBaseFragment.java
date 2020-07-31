@@ -68,7 +68,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
     // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String name) {
-        log.i("query automaker: %s", name);
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(DocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
@@ -84,8 +83,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // abstract method which should be implemented either in SettingAutoFragment or in SettingPreference
     // Fragment.
     void queryAutoModel(String makerId, String modelName) {
-        log.i("Model name: %s", modelName);
-        //if(TextUtils.isEmpty(model)) mListener.queryAutoModelSnapshot(null);
         autoRef.document(makerId).collection("auto_model").whereEqualTo("model_name", modelName).get()
                 .addOnSuccessListener(queries -> {
                     for(DocumentSnapshot modelshot : queries) {
@@ -119,19 +116,17 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     List<String> parseAutoData(String jsonString) {
         List<String> autoDataList = new ArrayList<>();
         try {
-            JSONArray json = new JSONArray(jsonString);
-            for(int i = 0; i < json.length(); i++) autoDataList.add(json.optString(i));
+            JSONArray jsonObject = new JSONArray(jsonString);
+            for(int i = 0; i < jsonObject.length(); i++) autoDataList.add(jsonObject.optString(i));
 
             // The null value that JSONObject returns seems different than that of other regular objects.
             // Thus, JSONObject.isNull(int) should be checked, then, if true,  set the null value to it .
             // This is firmly at bug issue.
-            makerName = (json.isNull(0))? null : json.optString(0);
-            modelName = (json.isNull(1))? null : json.optString(1);
-            typeName = (json.isNull(2))? null : json.optString(2);
-            yearName = (json.isNull(3))? null : json.optString(3);
-        } catch(JSONException e) {
-            e.printStackTrace();
-        }
+            makerName = (jsonObject.isNull(0))? null : jsonObject.optString(0);
+            modelName = (jsonObject.isNull(1))? null : jsonObject.optString(1);
+            typeName = (jsonObject.isNull(2))? null : jsonObject.optString(2);
+            yearName = (jsonObject.isNull(3))? null : jsonObject.optString(3);
+        } catch(JSONException e) {e.printStackTrace();}
 
         return autoDataList;
     }

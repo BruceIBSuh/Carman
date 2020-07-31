@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import androidx.preference.Preference;
 
 import com.silverback.carman2.R;
+import com.silverback.carman2.fragments.SettingAutoFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 
@@ -37,6 +38,10 @@ public class ProgressBarPreference extends Preference {
     }
 
     public void showProgressBar(boolean isVisible) {
+        if(isVisible) this.setEnabled(false);
+        else this.setEnabled(true);
+
+        // Set a wdiget at the right side of an preference
         setWidgetLayoutResource(isVisible? R.layout.view_pref_autodata : 0);
         notifyChanged();
     }

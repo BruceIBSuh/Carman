@@ -89,7 +89,6 @@ public class SettingPrefFragment extends SettingBaseFragment  {
         // be used as filter for querying the posting board. On clicking the Up button, the preference
         // values are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
-        //autoPref.showProgressBar(true);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
 

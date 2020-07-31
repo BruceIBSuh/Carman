@@ -14,9 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman2.R;
-import com.silverback.carman2.database.FavoriteProviderEntity;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.ItemTouchHelperCallback;
@@ -26,10 +24,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This RecyclerView adapter
+ */
 public class SettingServiceItemAdapter
         extends RecyclerView.Adapter<SettingServiceItemAdapter.SettingServiceItemHolder>
         implements ItemTouchHelperCallback.RecyclerItemMoveListener {
@@ -46,14 +46,14 @@ public class SettingServiceItemAdapter
 
     private SparseArray<String> sparseItemArray;
     private int average;
-    private ViewGroup parent;
+    //private ViewGroup parent;
 
 
     // Interface
     public interface OnServiceItemAdapterCallback {
         void dragServiceItem(int from, int to);
         void delServiceItem(int position);
-        void modifyServiceItem(int position, SparseArray<String> value);
+        void changeServicePeriod(int position, SparseArray<String> value);
     }
 
     // Constructor
@@ -65,16 +65,17 @@ public class SettingServiceItemAdapter
         svcItemList = new ArrayList<>();
         sparseItemArray = new SparseArray<>();
 
-        for(int i = 0; i < jsonSvcItemArray.length(); i++) svcItemList.add(jsonSvcItemArray.optJSONObject(i));
+        for(int i = 0; i < jsonSvcItemArray.length(); i++)
+            svcItemList.add(jsonSvcItemArray.optJSONObject(i));
     }
 
 
     @NonNull
     @Override
     public SettingServiceItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        this.parent = parent;
-        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.cardview_setting_service, parent, false);
-        return new SettingServiceItemHolder(itemView);
+        //this.parent = parent;
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.cardview_setting_service, parent, false);
+        return new SettingServiceItemHolder(view);
     }
 
     @Override
@@ -86,26 +87,15 @@ public class SettingServiceItemAdapter
             holder.etMileage.setHint(jsonSvcItemArray.getJSONObject(position).getString("mileage"));
             holder.etMonth.setHint(jsonSvcItemArray.getJSONObject(position).getString("month"));
 
-            // The month value is dependent on the mileage value.
+            // The edittexts gains focus, call
             holder.etMileage.setOnFocusChangeListener((v, hasFocus) -> {
-                if(hasFocus) checkServiceItemChange(holder.etMileage, holder.etMonth, position);
-                else {
-                    log.i("modify vlaue: %s, %s", holder.etMileage.getText(), holder.etMonth.getText());
-                    sparseItemArray.put(0, holder.etMileage.getText().toString());
-                    sparseItemArray.put(1, holder.etMonth.getText().toString());
-                    mCallback.modifyServiceItem(position, sparseItemArray);
-                }
+                if (hasFocus) setServiceMileage(holder.etMileage, holder.etMonth, position);
             });
 
            holder.etMonth.setOnFocusChangeListener((v, hasFocus) -> {
-               if(hasFocus) {
-
-               } else {
-                   sparseItemArray.put(0, holder.etMileage.getText().toString());
-                   sparseItemArray.put(1, holder.etMonth.getText().toString());
-                   mCallback.modifyServiceItem(position, sparseItemArray);
-               }
+               if(hasFocus) setServiceMonth(holder.etMonth, holder.etMileage, position);
            });
+
         } catch(JSONException e) { e.printStackTrace();}
     }
 
@@ -165,20 +155,41 @@ public class SettingServiceItemAdapter
         */
     }
 
-    private void checkServiceItemChange(EditText mileage, EditText month, int position) {
+    private void setServiceMileage(EditText mileage, EditText month, int position) {
         mileage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                log.i("onTextChanged: %s, %s", position, charSequence);
-                int mileagePeriod = Integer.parseInt(charSequence.toString());
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            @Override
+            public void afterTextChanged(Editable editable) {
+                int mileagePeriod = Integer.parseInt(editable.toString());
                 // (mileage/average) * 12 not workng due to int casting.
                 int monthPeriod = mileagePeriod * 12 / average;
-                month.setText(String.valueOf(monthPeriod));
+                if(monthPeriod > 0) {
+                    month.setText(String.valueOf(monthPeriod));
+                    sparseItemArray.put(0, editable.toString());
+                    sparseItemArray.put(1, month.getText().toString());
+                    mCallback.changeServicePeriod(position, sparseItemArray);
+                }
             }
+        });
+    }
+    
+    private void setServiceMonth(EditText month, EditText mileage, int position) {
+        month.addTextChangedListener(new TextWatcher() {
             @Override
-            public void afterTextChanged(Editable editable) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            @Override
+            public void afterTextChanged(Editable editable) {
+                log.i("mileage hint: %s", mileage.getHint().toString());
+                CharSequence period = (TextUtils.isEmpty(editable)? month.getHint() : month.getText());
+                sparseItemArray.put(0, mileage.getHint().toString());
+                sparseItemArray.put(1, period.toString());
+                mCallback.changeServicePeriod(position, sparseItemArray);
+            }
         });
     }
 
