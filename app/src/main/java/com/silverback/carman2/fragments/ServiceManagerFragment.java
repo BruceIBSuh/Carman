@@ -19,7 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -230,7 +229,7 @@ public class ServiceManagerFragment extends Fragment implements
         etServiceName = localView.findViewById(R.id.et_service_provider);
         tvMileage = localView.findViewById(R.id.tv_mileage);
         Button btnDate = localView.findViewById(R.id.btn_svc_date);
-        Button btnReg = localView.findViewById(R.id.btn_register);
+        Button btnReg = localView.findViewById(R.id.btn_register_service);
         btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
         tvTotalCost = localView.findViewById(R.id.tv_svc_payment);
         TextView tvPeriod = localView.findViewById(R.id.tv_period);
@@ -388,7 +387,7 @@ public class ServiceManagerFragment extends Fragment implements
                     numPad.show(getActivity().getSupportFragmentManager(), null);
                 break;
 
-            case R.id.btn_register:
+            case R.id.btn_register_service:
                 svcName = etServiceName.getText().toString();
                 if(etServiceName.getText().toString().isEmpty()) {
                     Snackbar.make(parentLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();

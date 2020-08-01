@@ -269,6 +269,8 @@ public class SettingPrefActivity extends BaseActivity implements
                 return false;
             }
 
+        // The return value should be false when it comes to the menu that adds a new service item,
+        // which means this method will be handled in the SettingSvcItemFragment.
         } else return item.getItemId() != R.id.menu_add_service_item;
 
     }

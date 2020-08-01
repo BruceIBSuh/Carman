@@ -48,8 +48,8 @@ public class SettingSvcItemFragment extends Fragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingSvcItemFragment.class);
 
     // Constants for the mode param in modifyJSONArray()
-    //private static final int MOVEUP = 3;
-    //private static final int MOVEDOWN = 4;
+    private static final int MOVEUP = 3;
+    private static final int MOVEDOWN = 4;
 
 
     // Objects
@@ -85,6 +85,7 @@ public class SettingSvcItemFragment extends Fragment implements
 
         String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
         int average = Integer.parseInt(mSettings.getString(Constants.AVERAGE, "10000"));
+        log.i("average mileage: %s", average);
         try {
             jsonSvcItemArray = new JSONArray(json);
             mAdapter = new SettingServiceItemAdapter(jsonSvcItemArray, average, this);
@@ -124,10 +125,12 @@ public class SettingSvcItemFragment extends Fragment implements
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        // Receive a new service item from SettingSvcItemDlgFragment and check any existing item
-        // is the same as the new item.
         fragmentModel.getJsonServiceItemObj().observe(requireActivity(), jsonObject -> {
+            // This is kind of an expedient code to invoke getItemCount() in which a new item is added
+            // to ArrayList(svcItemList). A right coding should be notifyItemChanged(position, payloads)
+            // which calls the partial binding to update the dataset but it seems not work here.
+            // It looks like the new item has not been added to the list before notifyItemChanged
+            // is called such that payloads shouldn't be passed.
             boolean isItemExist = false;
 
             // Check if a new item is valid by comparing its name w/ existing item names.
@@ -165,7 +168,6 @@ public class SettingSvcItemFragment extends Fragment implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
-                log.i("save checklist");
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonSvcItemArray.toString()).apply();
                 return true;
 
@@ -212,6 +214,7 @@ public class SettingSvcItemFragment extends Fragment implements
             jsonSvcItemArray.remove(position);
             mAdapter.notifyItemRemoved(position);
             mAdapter.notifyItemRangeChanged(position, jsonSvcItemArray.length() - position, true);
+
             snackbar.dismiss();
 
         }).addCallback(new Snackbar.Callback() {
@@ -229,13 +232,15 @@ public class SettingSvcItemFragment extends Fragment implements
     }
 
     @Override
-    public void modifyServiceItem(int position, SparseArray<String> sparseArray) {
+    public void changeServicePeriod(int position, SparseArray<String> sparseArray) {
         String mileage = sparseArray.valueAt(0);
         String month = sparseArray.valueAt(1);
+
         log.i("callback values: %s, %s", mileage, month);
         try {
             jsonSvcItemArray.optJSONObject(position).put("mileage", mileage);
             jsonSvcItemArray.optJSONObject(position).put("month", month);
+
         } catch(JSONException e) {e.printStackTrace();}
     }
 
@@ -281,5 +286,6 @@ public class SettingSvcItemFragment extends Fragment implements
             log.e("JSONException: %s", e.getMessage());
         }
     }
+
      */
 }
