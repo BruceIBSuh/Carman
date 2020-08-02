@@ -24,13 +24,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * This abstract fragment is
+ */
 public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingBaseFragment.class);
 
     // Objects
-    protected FirebaseFirestore firestore;
     //private QueryDocumentSnapshot makershot, modelshot;
     //private OnCompleteAutoQueryListener mListener;
 
@@ -44,8 +46,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // Constructor
     public SettingBaseFragment() {
         super();
-        firestore = FirebaseFirestore.getInstance();
-        autoRef = firestore.collection("autodata");
+        autoRef = FirebaseFirestore.getInstance().collection("autodata");
         // Attach the sanpshot listener to the basic collection, which initially downloades all
         // the auto data from Firestore, then manage the data with Firestore cache framework
         // once the listener is removed.
@@ -75,7 +76,9 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
                     break;
                 }
             }
-        }).addOnFailureListener(Throwable::printStackTrace);
+        }).addOnFailureListener(e -> {
+            log.i("queryAutoMaker failed: %s", e.getMessage());
+        });
     }
 
     // Once the automaker queyr completes, continue to query the automodel if an model name is given.
@@ -91,7 +94,9 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
                             break;
                         }
                     }
-                }).addOnFailureListener(Exception::printStackTrace);
+                }).addOnFailureListener(e -> {
+                    log.i("queryAutoModel failed: %s", e.getMessage());
+                });
     }
 
 

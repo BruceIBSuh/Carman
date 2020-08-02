@@ -4,12 +4,10 @@
     xmlns:cardview="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="30dp" >
-
         <TextView
             android:id="@+id/tv_stat_date"
             android:layout_width="0dp"
@@ -38,7 +36,7 @@
             android:id="@+id/tv_stat_expense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:gravity="end|center_vertical"
             android:textSize="@dimen/smallText"
             cardview:layout_constraintHorizontal_weight="1"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_mileage"
@@ -50,8 +48,7 @@
             android:id="@+id/tv_stat_location"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="3dp"
+            android:layout_marginStart="8dp"
             android:gravity="start"
             android:textSize="@dimen/smallText"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_expense"
@@ -59,7 +56,6 @@
             cardview:layout_constraintHorizontal_weight="3"
             cardview:layout_constraintStart_toEndOf="@+id/tv_stat_expense"
             cardview:layout_constraintTop_toTopOf="@+id/tv_stat_expense" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

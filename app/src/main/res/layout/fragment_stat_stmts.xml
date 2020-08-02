@@ -43,15 +43,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_stats" />
 
-    <TextView
+    <TextView style="@style/TableHeader"
         android:id="@+id/tv_label_date"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/stat_header_date"
-        android:textColor="@color/white"
-        android:textSize="@dimen/smallText"
-        android:textStyle="bold"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintBottom_toBottomOf="@+id/view_labels"
         app:layout_constraintEnd_toStartOf="@+id/tv_label_mileage"
@@ -59,49 +56,39 @@
         app:layout_constraintStart_toStartOf="@+id/view_labels"
         app:layout_constraintTop_toTopOf="@+id/view_labels" />
 
-    <TextView
+    <TextView style="@style/TableHeader"
         android:id="@+id/tv_label_mileage"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/stat_header_milegae"
-        android:textColor="@color/white"
-        android:textSize="@dimen/smallText"
-        android:textStyle="bold"
         app:layout_constraintHorizontal_weight="1.5"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
-        app:layout_constraintEnd_toStartOf="@+id/tv_label_expense"
         app:layout_constraintStart_toEndOf="@+id/tv_label_date"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
+        app:layout_constraintEnd_toStartOf="@+id/tv_label_expense"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_date"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_date" />
 
-    <TextView
+    <TextView style="@style/TableHeader"
         android:id="@+id/tv_label_expense"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/stat_header_payment"
-        android:textColor="@color/white"
-        android:textSize="@dimen/smallText"
-        android:textStyle="bold"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
         app:layout_constraintEnd_toStartOf="@+id/tv_label_location"
         app:layout_constraintStart_toEndOf="@+id/tv_label_mileage"
         app:layout_constraintTop_toTopOf="@+id/tv_label_mileage" />
 
-    <TextView
+    <TextView style="@style/TableHeader"
         android:id="@+id/tv_label_location"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:gravity="center"
         android:text="@string/stat_header_provider"
-        android:textColor="@color/white"
-        android:textSize="@dimen/smallText"
-        android:textStyle="bold"
+        app:layout_constraintHorizontal_weight="3"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_expense"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight="3"
         app:layout_constraintStart_toEndOf="@+id/tv_label_expense"
         app:layout_constraintTop_toTopOf="@+id/tv_label_expense" />
 

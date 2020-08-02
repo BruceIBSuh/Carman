@@ -13,7 +13,6 @@ import com.silverback.carman2.R;
 import com.silverback.carman2.database.ExpenseBaseDao;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
-import com.silverback.carman2.viewholders.ExpenseStatHolder;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpStatStmtsAdapte
     @Override
     public ExpenseStatHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_statstmts, parent, false);
+                .inflate(R.layout.cardview_service_stmts, parent, false);
 
         return new ExpenseStatHolder(cardView);
     }
