@@ -95,7 +95,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
                 final DocumentSnapshot snapshot = snapshotList.get(position);
-
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 int offset = (position / AD_POSITION) - 1;
@@ -134,8 +133,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
                 // invoked and the imageview is made null to prevent images from having wrong positions.
                 if(snapshot.get("post_images") != null) {
-                    String thumb = ((ArrayList<String>)snapshot.get("post_images")).get(0);
-                    postHolder.bindAttachedImage(Uri.parse(thumb));
+                    List<String> postImages = (List<String>)snapshot.get("post_images");
+                    String thumbnail = postImages.get(0);
+                    if(!TextUtils.isEmpty(thumbnail)) postHolder.bindAttachedImage(Uri.parse(thumbnail));
                 } else {
                     Glide.with(context).clear(postHolder.imgAttached);
                     postHolder.imgAttached.setImageDrawable(null);
@@ -155,10 +155,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Do a partial binding for updating either the view count or the comment count, which is passed
     // with payloads. No payload performs the full binding.
-    // pa
     @Override
-    public void onBindViewHolder(
-            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
 
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);

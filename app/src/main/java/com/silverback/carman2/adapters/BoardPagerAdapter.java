@@ -1,24 +1,18 @@
 package com.silverback.carman2.adapters;
 
-import android.util.SparseArray;
-import android.view.View;
-import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
 
 import com.silverback.carman2.fragments.BoardPagerFragment;
 import com.silverback.carman2.logs.LoggingHelper;
 import com.silverback.carman2.logs.LoggingHelperFactory;
 import com.silverback.carman2.utils.Constants;
+
 import java.util.ArrayList;
 
-/*
+/**
  * This viewpager adapter subclasses FragmentStatePagerAdapter instead of FragmentPagerAdapter.
  * In general, FragmentPagerAdapter is preferred when displaying the tab-synced fragments that do not
  * contain lots of heavy data. However, displaying not a few items with bitmaps may burden the adapter.

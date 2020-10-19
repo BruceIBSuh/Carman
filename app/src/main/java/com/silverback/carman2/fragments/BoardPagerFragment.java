@@ -189,9 +189,9 @@ public class BoardPagerFragment extends Fragment implements
 
         // In case of inserting the banner, the item size will change.
         recyclerPostView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
 
-        recyclerPostView.setLayoutManager(layoutManager);
+        recyclerPostView.setLayoutManager(layout);
         //recyclerPostView.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)recyclerPostView.getItemAnimator();
         //itemAnimator.setSupportsChangeAnimations(false);
@@ -327,11 +327,6 @@ public class BoardPagerFragment extends Fragment implements
         return false;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        //postshotList.clear();
-    }
 
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
     // performa a new query with new autofilter values
@@ -453,6 +448,8 @@ public class BoardPagerFragment extends Fragment implements
         //postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.INVISIBLE);
         isLoading = false;
+
+
     }
 
     @Override
@@ -633,6 +630,7 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
     */
+
     // Subclass of RecyclerView.ScrollViewListner
     private void setRecyclerViewScrollListener() {
         RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
@@ -641,30 +639,39 @@ public class BoardPagerFragment extends Fragment implements
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
-                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL)
-                    isScrolling = true;
+                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) isScrolling = true;
                 else fabWrite.show();
             }
 
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                //if ((dy > 0 || dy < 0) && fabWrite.isShown()) fabWrite.hide();
+                // FAB visibility control: while scrolling, it shouldn't be shown.
+                if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
 
-                if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
+                LinearLayoutManager layout = ((LinearLayoutManager) recyclerView.getLayoutManager());
+                if (layout != null) {
+                    int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
+                    int visiblePostCount = layout.getChildCount();
+                    int totalPostCount = layout.getItemCount();
+                    log.i("pos info: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
-                LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
-                if (layoutManager != null) {
-                    int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
-                    int visiblePostCount = layoutManager.getChildCount();
-                    int totalPostCount = layoutManager.getItemCount();
 
                     if (!isLoading && isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         log.i("scroll with next query");
                         isScrolling = false;
                         isLoading = true;
 
+
                         if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
-                        queryPagingUtil.setNextQuery();
+
+                        // If the totalPostCount is less than Constants.Pagination, setNextQuery should
+                        // return null value, which results in causing error as in Notification board.
+                        // Accordingly, a condition has to be added to prevent setNextQuery().
+                        if(totalPostCount >= Constants.PAGINATION) queryPagingUtil.setNextQuery();
+
+
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();
                     }

@@ -50,7 +50,7 @@ public class PostingRecyclerView extends RecyclerView {
 
         @Override
         public void onItemRangeInserted(int positionStart, int itemCount) {
-            log.i("onItemRandeInserted");
+            log.i("onItemRangeInserted");
             super.onItemRangeInserted(positionStart, itemCount);
             initEmptyView();
         }

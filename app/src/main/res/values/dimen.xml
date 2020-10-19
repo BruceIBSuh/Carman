@@ -8,8 +8,6 @@
     <dimen name="boardTab">14dp</dimen>
     <dimen name="tableHeader">14dp</dimen>
 
-
-
     <dimen name="extraLargeText">17sp</dimen>
     <dimen name="largeText">16sp</dimen>
     <dimen name="mediumText">15sp</dimen>

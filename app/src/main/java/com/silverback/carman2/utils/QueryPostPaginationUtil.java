@@ -108,10 +108,14 @@ public class QueryPostPaginationUtil {
                         this.querySnapshot = nextSnapshot;
                         mCallback.getNextQueryResult(nextSnapshot);
                     } else {
+                        log.i("last page");
                         querySnapshot = null;
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
-                }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
+                }).addOnFailureListener(e -> {
+                    log.e("error in querying");
+                    mCallback.getQueryErrorResult(e);
+                });
 
         /*
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot)

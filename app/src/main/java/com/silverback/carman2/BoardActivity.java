@@ -61,7 +61,7 @@ import java.util.List;
  * to edit or write a post
  *
  * The viewpager has a fragment that is statically created by each posting board controlled by the
- * fragmentstatepageradatper. This should be refactored with ViewPager2 in the near future.
+ * fragmentstatepageradatper(This should be refactored with ViewPager2 in the near future).
  *
  * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab by replacing the
  * viewpager. The fragment to edit a post(BoardEditFragment) replaces the viewpager in the same way
@@ -116,7 +116,7 @@ public class BoardActivity extends BaseActivity implements
     private boolean isAutoFilter, isTabHeight, isLocked;
 
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
-    // have a query with new conditions to make the recyclerview updated.
+    // have a query given new conditions to make the recyclerview updated.
     public interface OnAutoFilterCheckBoxListener {
         void onCheckBoxValueChange(ArrayList<String> autofilter);
     }
