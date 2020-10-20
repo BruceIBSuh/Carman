@@ -14,7 +14,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.widget.AbsListView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,8 +31,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman2.BoardActivity;
@@ -60,12 +57,12 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The viewpager statically creates this fragment using BoardPagerAdapter, which has the recyclerview
- * to show the posting board by category.
+ * The viewpager statically creates this fragment using BoardPagerAdapter, which has the custom
+ * recyclerview to show the posting board by category.
  *
  * QueryPostPaginationUtil is a util class that performs query and pagination based on orderby() and
  * limit(). The util class is made of the initial, next, and last query for pagination, listening to
- * scrolling of the recyclerview. MVVM based architecture is provided in the board package just for
+ * scrolling of the recyclerview. MVVM-based architecture is provided in the board package just for
  * referernce.
  *
  * Instead of using SnapshotListener for realtime update, which seems difficult to handle cache data
@@ -111,7 +108,7 @@ public class BoardPagerFragment extends Fragment implements
     private String automaker;
     private int currentPage;
     private boolean isViewOrder;
-    private boolean isLoading;
+    private boolean isLoading; // to block the RecyclerView from scrolling while loading posts.
     //private boolean isLastPage;
     //private boolean isViewUpdated;
     //private boolean isScrolling;
@@ -121,7 +118,8 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    // Singleton for AutoClub currentPage which has the checkbox values and title names.
+    // Singleton for the autoclub page which has the checkbox values and title names to display
+    // overlaying the tab menu.
     public static BoardPagerFragment newInstance(int page, ArrayList<String> values) {
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
@@ -137,7 +135,7 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        // When it comes to the autoclub page, it will pass the arguments of page and filter values.
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
             autoFilter = getArguments().getStringArrayList("autoFilter");
@@ -147,6 +145,7 @@ public class BoardPagerFragment extends Fragment implements
         // Make the toolbar menu available in the Fragment.
         setHasOptionsMenu(true);
 
+        // Instantiate objects.
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         imgutil = new ApplyImageResourceUtil(getContext());
@@ -155,7 +154,6 @@ public class BoardPagerFragment extends Fragment implements
         pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
         postshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postshotList, this);
-
         /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             //clubRepo = new QueryClubPostingUtil(firestore);
@@ -167,6 +165,8 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter = new BoardPostingAdapter(postshotList, this);
         }
          */
+        // Instantiate the query and pagination util class and create the RecyclerView adapter to
+        // show the posting list.
         queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
         postingAdapter = new BoardPostingAdapter(postshotList, this);
 
@@ -196,11 +196,12 @@ public class BoardPagerFragment extends Fragment implements
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)recyclerPostView.getItemAnimator();
         //itemAnimator.setSupportsChangeAnimations(false);
         recyclerPostView.setAdapter(postingAdapter);
+        recyclerPostView.addOnScrollListener(setRecyclerViewScrollListener());
 
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
         fabWrite = ((BoardActivity)getActivity()).getFAB();
-        setRecyclerViewScrollListener();
+        //setRecyclerViewScrollListener();
 
         // Based on MVVM
         /*
@@ -253,9 +254,9 @@ public class BoardPagerFragment extends Fragment implements
 
         // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,
         // the livedata of which is created when a comment has finished uploadingb in BoardReadDlgFragment.
-        fragmentModel.getNewComment().observe(requireActivity(), sparseArray -> {
-            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray);
-        });
+        fragmentModel.getNewComment().observe(requireActivity(), sparseArray ->
+            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray)
+        );
 
     }
 
@@ -383,13 +384,21 @@ public class BoardPagerFragment extends Fragment implements
         addViewCount(docref, position);
     }
 
-    // Implement QueryPaginationUtil.OnQueryPaginationCallback overriding the following 4 methods
+    /**
+     * Implement QueryPaginationUtil.OnQueryPaginationCallback overriding the following 4 methods that
+     * performs to query posts witH orderBy() and limit() conditioned up to the pagination number
+     * which is defined in Constants.PAGINATION.
+     *
+     * getFirestQueryResult(): setPostQuery() has completed with queried posts up to the pagination number.
+     * getNextQueryResult(): setNextQuery() has completed with queried posts up to the pagination number.
+     * getLastQueryResult(); setNextQuery() has completed with queried posts under the pagination number.
+     * getQueryErrorResult(); callback invoked if any error has occurred while querying.
+     */
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         postshotList.clear();
-
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
-        // display the empty view.
+        // display the empty view in the custom RecyclerView.
         if(querySnapshot == null || querySnapshot.size() == 0) {
             recyclerPostView.setEmptyView(tvEmptyView);
             return;
@@ -397,20 +406,21 @@ public class BoardPagerFragment extends Fragment implements
             recyclerPostView.setEmptyView(tvEmptyView);
             return;
         }
+
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
-        // Autoclub sorts out the document snapshot with given filters.
+        // The autoclub page should separately handle query and pagination to sorts out the document
+        // snapshot with given filters.
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
-                postshotList.add(document);
                 // Consider if it is appropraite to call nofityDataSetChanged every time.
+                postshotList.add(document);
                 postingAdapter.notifyDataSetChanged();
             }
-
         }
 
         // If the sorted posts are less than the pagination number, keep querying until it's up to
-        // the number. Manually update the adapter each time posts amounts to the pagination number.
+        // the number. Manually update the adapter each time posts amount to the pagination number.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             if(postshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
@@ -426,7 +436,6 @@ public class BoardPagerFragment extends Fragment implements
     // Called by QueryPaginationUtil.setNextQuery()
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
-        log.i("next query: %s", nextShots.size());
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
@@ -445,11 +454,8 @@ public class BoardPagerFragment extends Fragment implements
             } else postingAdapter.notifyDataSetChanged();
         }
 
-        //postingAdapter.notifyDataSetChanged();
         pbPaging.setVisibility(View.INVISIBLE);
         isLoading = false;
-
-
     }
 
     @Override
@@ -460,12 +466,10 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter.notifyDataSetChanged();
         }
 
-        // On clicking the filter item on the AutoClub page, if noting has been posted, display
+        // On clicking the filter item on the autoclub page, if nothing has been posted, display
         // the empty view.
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(postshotList.size() == 0) {
-                recyclerPostView.setEmptyView(tvEmptyView);
-            }
+        if(currentPage == Constants.BOARD_AUTOCLUB && postshotList.size() == 0) {
+            recyclerPostView.setEmptyView(tvEmptyView);
         }
 
         pbPaging.setVisibility(View.GONE);
@@ -631,26 +635,54 @@ public class BoardPagerFragment extends Fragment implements
     }
     */
 
-    // Subclass of RecyclerView.ScrollViewListner
-    private void setRecyclerViewScrollListener() {
-        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
-            boolean isScrolling;
+    // RecyclerView.OnScrollListener is an abstract class to receive messages when a scrolling event
+    // has occurred on that RecyclerView, which has 2 abstract methods of onScrollStateChanged() and
+    // onScrolled(); the former is to be invoked when RecyclerView's scroll state changes and the
+    // latter invoked when the RecyclerView has been scrolled.
+    private RecyclerView.OnScrollListener setRecyclerViewScrollListener() {
+        // RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+        return new RecyclerView.OnScrollListener() {
+            //boolean isScrolling;
+            /*
+             * Callback to be invoked when RecyclerView's scroll state changes.
+             * @param recyclerView being scrolled.
+             * @param newState: SCROLL_STATE_IDLE, SCROLL_STATE_DRAGGING, SCROLL_STATE_SETTLING
+             */
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    //isScrolling = false;
+                    // Exclude the fab from showing on the notificaiton page.
+                    if(currentPage != Constants.BOARD_NOTIFICATION) fabWrite.show();
+                } else {
+                    //isScrolling = true;
+                    if(fabWrite.isShown()) fabWrite.hide();
+                }
+
+                /*
                 if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) isScrolling = true;
                 else fabWrite.show();
+                */
             }
 
+            /*
+             * Callback to be invoked when the RecyclerView has been scrolled, which will be called
+             * right after the scroll has completed. This callback will also be called if visible
+             * item range changes after a layout calculation, in which dx and dy will be 0.
+             * @param recyclerView being scrolled
+             * @param dx The amount of horizontal scroll
+             * @param dy The amount of vertical scroll
+             */
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 //if ((dy > 0 || dy < 0) && fabWrite.isShown()) fabWrite.hide();
-                // FAB visibility control: while scrolling, it shouldn't be shown.
-                if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
 
-                LinearLayoutManager layout = ((LinearLayoutManager) recyclerView.getLayoutManager());
+                // FAB visibility control that hides the button while scrolling.
+                //if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
+
+                LinearLayoutManager layout = (LinearLayoutManager)recyclerView.getLayoutManager();
                 if (layout != null) {
                     int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
                     int visiblePostCount = layout.getChildCount();
@@ -658,19 +690,19 @@ public class BoardPagerFragment extends Fragment implements
                     log.i("pos info: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
 
-                    if (!isLoading && isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                        log.i("scroll with next query");
-                        isScrolling = false;
+                    if (!isLoading && /*isScrolling &&*/ (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                        //isScrolling = false;
                         isLoading = true;
 
+                        //if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
 
-                        if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
-
-                        // If the totalPostCount is less than Constants.Pagination, setNextQuery should
-                        // return null value, which results in causing error as in Notification board.
-                        // Accordingly, a condition has to be added to prevent setNextQuery().
-                        if(totalPostCount >= Constants.PAGINATION) queryPagingUtil.setNextQuery();
-
+                        // If the totalPostCount is less than Constants.Pagination, setNextQuery will
+                        // return null value, which results in an error as in Notification board. Accrodingly,
+                        // a condition has to be added to prevent setNextQuery().
+                        if(currentPage != Constants.BOARD_AUTOCLUB && totalPostCount >= Constants.PAGINATION) {
+                            pbPaging.setVisibility(View.VISIBLE);
+                            queryPagingUtil.setNextQuery();
+                        }
 
                         //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();
@@ -679,16 +711,17 @@ public class BoardPagerFragment extends Fragment implements
             }
 
         };
-
-        recyclerPostView.addOnScrollListener(scrollListener);
     }
 
-    // Check if a user is the post's owner or has read the post before in order to increate the view
-    // count. In order to do so, get the user id from the internal storage and from the post as well.
-    // Get the user id and query the "viewers" sub-collection to check if the user id exists in the
-    // documents, which means whether the user has read the post before. If so, do not increase
-    // the view count. Otherwise, add the user id to the "viewers" collection and increase the
-    // view count;
+
+    /*
+     * Check if a user is the post's owner or has read the post before in order to increate the view
+     * count. In order to do so, get the user id from the internal storage and from the post as well.
+     * Get the user id and query the "viewers" sub-collection to check if the user id exists in the
+     * documents, which means whether the user has read the post before. If so, do not increase
+     * the view count. Otherwise, add the user id to the "viewers" collection and increase the
+     * view count;
+     */
     @SuppressWarnings("ConstantConditions")
     private void addViewCount(DocumentReference docref, int position) {
         try(FileInputStream fis = getActivity().openFileInput("userId");

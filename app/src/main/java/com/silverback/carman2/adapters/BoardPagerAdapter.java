@@ -30,7 +30,6 @@ public class BoardPagerAdapter extends FragmentStatePagerAdapter {
     // Constructor
     public BoardPagerAdapter(FragmentManager fm) {
         super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-
     }
 
     /*
