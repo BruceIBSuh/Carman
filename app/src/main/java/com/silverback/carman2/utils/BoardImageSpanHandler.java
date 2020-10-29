@@ -20,7 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * When SpanWatcher is attached to a Spannable, its methods will be called to notify that other
  * markup objects have been added, changed, or removed.
  *
@@ -44,15 +43,16 @@ import java.util.regex.Pattern;
  ***** Surrounded Text ******
  * When deleting a surrounded text with the text handles, TextWatcher.onAfterTextChanged() manages
  * to detect which spans to have deleted usinsg getSpanStart() which should be -1.
+ *
  ****** Line breaker issue *****
  * When inserting an imagespan, a line breaker inserts at the end to start a new paragraph. In case
  * an imagespan inserts in the middle, however, a single line is left empty due to the line breaker
  * and the cursor is located at the
  */
+
+
 public class BoardImageSpanHandler implements SpanWatcher {
-
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardImageSpanHandler.class);
-
     private final String markup = "\\[image_\\d]\\n";
 
     // Objects

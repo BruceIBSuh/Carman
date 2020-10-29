@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2012 The Carman Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.silverback.carman2;
 
 import android.animation.Animator;
@@ -57,20 +72,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * This activity mainly contains a framelayout that alternatively holds the viewpager or the fragments
- * to edit or write a post
+ * This activity mainly contains a framelayout that alternatively holds either the viewpager or the
+ * fragments to edit or write a post
  *
- * The viewpager has a fragment that is statically created by each posting board controlled by the
- * fragmentstatepageradatper(This should be refactored with ViewPager2 in the near future).
+ * The viewpager has fragments that are statically created by each posting board by category and
+ * controlled by the fragmentstatepageradatper(This should be refactored with ViewPager2).
  *
- * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab by replacing the
- * viewpager. The fragment to edit a post(BoardEditFragment) replaces the viewpager in the same way
- * when clicking the edit button, which turns visible in the toolbar as long as the fragment to read
- * a post(BoardReadDlgFragment) pops up and the post is owned by the user.
+ * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab, replacing the
+ * viewpager in the activity. The fragment to edit a post(BoardEditFragment) replaces the viewpager
+ * in the same way when clicking the edit button, which turns visible in the toolbar as long as the
+ * fragment to read a post(BoardReadDlgFragment) pops up and the post is owned by the user.
  *
  * Communications b/w the fragments are mostly made by the viewmodel(FramentSharedModel). Some cases
- * use the interface, though. OnAutoFilterCheckBoxListener passes any change of the checkbox values
- * to BoardPagerFragment for dynamically querying posts based on it.  OnEditModeListener defined in
+ * use interfaces, though. OnAutoFilterCheckBoxListener passes any change of the checkbox values to
+ * BoardPagerFragment for dynamically querying posts based on it.  OnEditModeListener defined in
  * BoardReadDlgFragment notifies that the user chooses the edit button to open BoardEditFragment.
  *
  * The toolbar menu should be basically handled in this parent activity but may be controlled by
@@ -81,7 +96,8 @@ public class BoardActivity extends BaseActivity implements
         CheckBox.OnCheckedChangeListener,
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener,
-        BoardReadDlgFragment.OnEditModeListener {
+        BoardReadDlgFragment.OnEditModeListener
+{
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
@@ -102,12 +118,12 @@ public class BoardActivity extends BaseActivity implements
     private ViewPager boardPager;
     private ProgressBar pbLoading;
     private FloatingActionButton fabWrite;
-    private List<CheckBox> chkboxList;
-    private ArrayList<String> cbAutoFilter;//having checkbox values for working as autofilter.
     private TextView tvAutoFilterLabel;
     private CheckBox cbGeneral;
 
     // Fields
+    private List<CheckBox> chkboxList;
+    private ArrayList<String> cbAutoFilter;//having checkbox values for working as autofilter.
     private boolean isGeneral; //check if a post should be uploaded to the general or just auto.
     private String jsonAutoFilter; //auto data saved in SharedPreferences as JSON String.
     private SpannableStringBuilder clubTitle;
@@ -116,7 +132,7 @@ public class BoardActivity extends BaseActivity implements
     private boolean isAutoFilter, isTabHeight, isLocked;
 
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
-    // have a query given new conditions to make the recyclerview updated.
+    // queries posts with new conditions to make the recyclerview updated.
     public interface OnAutoFilterCheckBoxListener {
         void onCheckBoxValueChange(ArrayList<String> autofilter);
     }
@@ -193,7 +209,6 @@ public class BoardActivity extends BaseActivity implements
         super.onResume();
     }
 
-    // Attach listeners to the parent activity when a fragment is attached to the parent activity.
     @Override
     public void onAttachFragment(@NonNull Fragment fragment) {
         if(fragment instanceof BoardReadDlgFragment) {
@@ -480,7 +495,6 @@ public class BoardActivity extends BaseActivity implements
         if(isChecked) {
             if(index == 1) cbAutoFilter.add(index, chkbox.getText().toString());
             else cbAutoFilter.add(chkbox.getText().toString());
-
         } else cbAutoFilter.remove(chkbox.getText().toString());
 
         //for(String filter : cbAutoFilter) log.i("filter : %s", filter);
@@ -489,8 +503,7 @@ public class BoardActivity extends BaseActivity implements
         clubTitle = createAutoClubTitle();
         if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
         // Referenced in BoardPagerFragment for purpose of requerying posts with new
-        // conditions.
-        //if(!isLocked)
+        // conditions
         mListener.onCheckBoxValueChange(cbAutoFilter);
 
         // To enable the autoclub enabled when clicking the autofilter, the viewpager is set to

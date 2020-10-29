@@ -53,7 +53,7 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 /**
  * A simple {@link Fragment} subclass.
  * This Fragment is to wrtie a post, attach images, and upload the post to FireStore. Images are
- * uploaded to Storage first and the post receives the urls.
+ * uploaded to Storage first, which returns the image url and upload a post with the urls.
  *
  *
  */
@@ -349,13 +349,14 @@ public class BoardWriteFragment extends DialogFragment implements
         imgUri = uri;
     }
 
-    /*
+    /**
      * UPLOAD PROCESS
      * The process of uploading the post consists of three steps.
      * First, upload attached images to Firebase Storage, if any.
      * Second, check whether the attached images safely completes uploading.
      * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
      */
+
     // Invoked when the upload menu in the toolbar is pressed.
     @SuppressWarnings("ConstantConditions")
     public void prepareAttachedImages() {
@@ -370,7 +371,7 @@ public class BoardWriteFragment extends DialogFragment implements
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
 
-        //getChildFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
+        // getChildFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
         // No image posting makes an immediate uploading but postings with images attached
         // should take the uploading process that images starts uploading first and image
         // URIs would be sent back if uploading images is successful,then uploading gets

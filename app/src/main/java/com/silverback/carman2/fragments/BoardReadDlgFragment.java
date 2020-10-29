@@ -1,5 +1,19 @@
+/*
+ * Copyright (C) 2012 The Carman Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.silverback.carman2.fragments;
-
 
 import android.app.Dialog;
 import android.content.Context;
@@ -31,7 +45,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,6 +61,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.silverback.carman2.BaseActivity;
 import com.silverback.carman2.BoardActivity;
 import com.silverback.carman2.R;
@@ -78,8 +93,7 @@ import java.util.regex.Pattern;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
- * A simple {@link Fragment} subclass.
- * This dialogfragment reads a post content to the full size when tapping  an item recycled in
+ * This dialogfragment reads a post content in the full size when tapping  an item recycled in
  * BoardPagerFragment.
  */
 public class BoardReadDlgFragment extends DialogFragment implements
@@ -105,6 +119,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private SharedPreferences mSettings;
     private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
+    private FirebaseStorage firebaseStorage;
     private DocumentReference postRef;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
@@ -116,7 +131,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
 
-
     // UIs
     private View localView;
     private ConstraintLayout constPostingLayout, constCommentLayout;
@@ -125,8 +139,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private RecyclerView recyclerComment;
     private EditText etComment;
     private TextView tvCompathyCnt, tvCommentCnt;
-
-
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
@@ -139,11 +151,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private boolean hasCompathy;
     private boolean isLoading;
 
-
-
     // Interface to notify BoardActivity of pressing the edit menu in the toolbar which is visible
-    // only when a user reads his/her own post, comparing the ids of the user and board_general
-    // collection.
+    // only when a user reads his/her own post
     public interface OnEditModeListener {
         void onEditClicked(Bundle bundle);
     }
@@ -165,6 +174,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         this.context = getContext();
 
         firestore = FirebaseFirestore.getInstance();
+        firebaseStorage = FirebaseStorage.getInstance();
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
@@ -356,22 +366,31 @@ public class BoardReadDlgFragment extends DialogFragment implements
             toolbar.setContentInsetStartWithNavigation(0);
         });
 
-        // The user reads one's own posting and pick the delete button in the toolbar to pop up
-        // the alert dialog. Picking the confirm button, FragmentSharedModel.getPostRemoved()
-        // notifies BoardPagerFragment that the user has deleted the post w/ the item position.
-        // To prevent the model from autmatically invoking the method, set the value to false;
-        //sharedModel.getAlertPostResult().setValue(false);
+        // If a post is the user's own one, the delete button appears on the toolbar. When tapping the
+        // button and picking the confirm button, FragmentSharedModel.getPostRemoved() notifies
+        // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
+        // the model from automatically invoking the method, initially set the value to false;
         sharedModel.getAlertPostResult().observe(requireActivity(), result -> {
-            // The post will be deleted from Firestore.
-            log.i("Alert confirms to delete the post");
+            // Confirmed in the didalog.
             if(result) {
+                // If the post contains any image, delete the image(s) from Storage first
+                if(imgUriList.size() > 0){
+                    for(int i = 0; i < imgUriList.size(); i++) {
+                        StorageReference imgRef = firebaseStorage.getReferenceFromUrl(imgUriList.get(i));
+                        imgRef.delete().addOnSuccessListener(bVoid -> {
+                            // Notify BoardPagerFragment that the post has been deleted.
+                            log.i("attached images deleted");
+                        }).addOnFailureListener(Throwable::printStackTrace);
+                    }
+                }
+
+                // Delete the post then notify BoardPagerFragment of successfully deleting it for
+                // updating the list.
                 postRef.delete().addOnSuccessListener(aVoid -> {
-                    //Snackbar.make(getView(), R.string.board_msg_delete, Snackbar.LENGTH_SHORT).show();
                     sharedModel.getRemovedPosting().setValue(documentId);
                     dismiss();
-                })
                 // Method reference in Lambda which uses class name and method name w/o parenthesis
-                .addOnFailureListener(Throwable::printStackTrace);
+                }).addOnFailureListener(Throwable::printStackTrace);
             }
         });
 
@@ -423,7 +442,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods.
+    // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods
+    // to show comments on the post by the pagination.
     @Override
     public void getFirstQueryResult(QuerySnapshot postShots) {
         commentShotList.clear();
@@ -576,11 +596,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Make up the text-based content and any image attached in ConstraintLayout which is dynamically
     // created by ConstraintSet. Images should be managed by Glide.
-    //
     // The regular expression makes text and images split with the markup which was inserted when images
     // were created. While looping the content, split parts of text and image are conntected by
     // ConstraintSets which are applied to the parent ConstraintLayout.
-    //
     // The recyclerview which displays comments at the bottom should be coordinated according to
     // whether the content has images or not.
     private void readContentView(String content) {
@@ -716,8 +734,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
         abstract void onStateChanged(AppBarLayout appBarLayout, int state);
     }
 
-    // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by the
-    // the abstract class of AppBarStateChangeListener.
+    // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by
+    // AppBarStateChangeListener.
     private void setToolbarTitleIcon(int state) {
         SpannableString spannable = new SpannableString(postTitle);
         int size = Math.abs(appbarOffset) / 6;
@@ -782,12 +800,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // If a user is the owner of the post, show the menus in the toolbar which edit or delete the post.
+    // As long as a post belongs to the user,  show the menu in the toolbar which enables the user
+    // to edits or delete the post.
     @SuppressWarnings("ConstantConditions")
     private void inflateEditMenuInToolbar() {
         // The userId here means the id of user who writes the posting item whereas the viewId means
-        // the id of who reads the item. If both ids are equal, the edit buttons(revise and delete)
-        // are visible, which means the writer(userId) can edit one's own post.
+        // the id of who reads the item. If both ids are equal, the edit buttons are visible, which
+        // means the writer(userId) can edit one's own post.
         try (FileInputStream fis = getActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 

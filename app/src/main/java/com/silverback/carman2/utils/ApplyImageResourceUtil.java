@@ -173,7 +173,6 @@ public class ApplyImageResourceUtil {
      * @return bytearray.
      */
     public synchronized byte[] compressBitmap(Bitmap bitmap, int maxSize)  {
-
         int compressDensity = 100;
         int streamLength;
         ByteArrayOutputStream baos;

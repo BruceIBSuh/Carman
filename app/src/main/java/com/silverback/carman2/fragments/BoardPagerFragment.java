@@ -237,7 +237,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
-        // With All done, receive another LiveData containing the postion of the deleted posting item
+        // With All done, receive another LiveData containing the position of the deleted posting item
         // and update the adapter.
         fragmentModel.getRemovedPosting().observe(requireActivity(), docId -> {
             //log.i("Posting removed: %s", docId);
