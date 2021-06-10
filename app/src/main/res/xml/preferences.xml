@@ -7,7 +7,7 @@
         app:key="carman_pref_basic_info"
         app:icon="@drawable/ic_setting_basic" >
 
-        <com.silverback.carman2.views.NameDialogPreference
+        <com.silverback.carman.views.NameDialogPreference
             app:key="carman_pref_nickname"
             app:title="@string/pref_title_username"
             app:dialogTitle="@string/pref_title_username"
@@ -23,7 +23,7 @@
 
         </Preference>
         -->
-        <com.silverback.carman2.views.ProgressBarPreference
+        <com.silverback.carman.views.ProgressBarPreference
             app:fragment="com.silverback.carman2.fragments.SettingAutoFragment"
             app:key="carman_pref_auto"
             app:title="@string/pref_title_autodata" />
@@ -52,7 +52,7 @@
         app:title="@string/pref_category_location"
         app:key="pref_location"
         app:icon="@drawable/ic_setting_location">
-        <com.silverback.carman2.views.SpinnerDialogPreference
+        <com.silverback.carman.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
             app:key="carman_pref_district"
             app:dialogTitle="@string/pref_dialog_district_title"

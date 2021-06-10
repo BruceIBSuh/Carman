@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.silverback.carman2">
+    package="com.silverback.carman">
 
     <uses-feature
         android:name="android.hardware,camera"
@@ -56,48 +56,49 @@
         <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" />
+        <activity android:name=".MainActivity2" />
         <activity
             android:name=".ExpenseActivity"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".MainActivity2"
             android:windowSoftInputMode="adjustPan">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.silverback.carman2.MainActivity" />
+                android:value="com.silverback.carman.MainActivity2" />
         </activity>
         <activity
             android:name=".BoardActivity"
             android:exported="true"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity2">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.silverback.carman2.MainActivity" />
+                android:value="com.silverback.carman.MainActivity2" />
         </activity>
         <activity
             android:name=".SettingPrefActivity"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity2">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.silverback.carman2.MainActivity" />
+                android:value="com.silverback.carman.MainActivity2" />
         </activity>
         <activity
             android:name=".StationMapActivity"
             android:label="@string/map_toolbar_title"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity2">
 
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.silverback.carman2.MainActivity" />
+                android:value="com.silverback.carman.MainActivity2" />
         </activity>
         <activity android:name=".CropImageActivity" />
         <!--
@@ -123,7 +124,7 @@
         -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.silverback.carman2.fileprovider"
+            android:authorities="com.silverback.carman.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

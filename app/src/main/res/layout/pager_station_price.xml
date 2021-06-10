@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     tools:context=".fragments.GeneralFragment">
 
-    <com.silverback.carman2.views.OpinetStationPriceView
+    <com.silverback.carman.views.OpinetStationPriceView
         android:id="@+id/stationPriceView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

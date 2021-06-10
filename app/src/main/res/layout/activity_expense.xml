@@ -9,7 +9,7 @@
     android:fitsSystemWindows="true"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    tools:context="com.silverback.carman2.ExpenseActivity">
+    tools:context="com.silverback.carman.ExpenseActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
@@ -70,7 +70,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="?attr/actionBarSize"
                 android:layout_marginBottom="?attr/actionBarSize"
-                app:layout_collapseMode="parallax" />
+                app:layout_collapseMode="parallax" >
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/exppager"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </FrameLayout>
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
@@ -84,7 +91,7 @@
         android:fillViewport="true"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
-        <androidx.viewpager.widget.ViewPager
+        <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/tabpager"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />

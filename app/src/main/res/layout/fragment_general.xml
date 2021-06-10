@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".fragments.GeneralFragment">
 
-    <com.silverback.carman2.views.OpinetAvgPriceView
+    <com.silverback.carman.views.OpinetAvgPriceView
         android:id="@+id/avgPriceView"
         android:layout_width="120dp"
         android:layout_height="wrap_content"
@@ -195,7 +195,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_subtitle_stations">
 
-        <com.silverback.carman2.views.StationRecyclerView
+        <com.silverback.carman.views.StationRecyclerView
             android:id="@+id/stationRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

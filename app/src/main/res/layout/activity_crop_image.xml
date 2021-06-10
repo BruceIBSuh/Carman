@@ -32,7 +32,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar_crop_Image" />
 
-    <com.silverback.carman2.views.DrawEditorView
+    <com.silverback.carman.views.DrawEditorView
         android:id="@+id/view_custom_drawEditorView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

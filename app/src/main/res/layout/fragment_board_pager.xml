@@ -9,7 +9,7 @@
     tools:context=".fragments.BoardPagerFragment">
 
     <!--<androidx.recyclerview.widget.RecyclerView-->
-    <com.silverback.carman2.views.PostingRecyclerView
+    <com.silverback.carman.views.PostingRecyclerView
         android:id="@+id/recycler_board_postings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -6,7 +6,7 @@
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.silverback.carman2.ExpenseActivity">
+    tools:context="com.silverback.carman.ExpenseActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"

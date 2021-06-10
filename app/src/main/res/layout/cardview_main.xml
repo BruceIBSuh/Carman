@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="100dp"
+    app:cardBackgroundColor="@color/bgRecentExp">
+
+    <TextView
+        android:id="@+id/textview"
+        android:layout_width="match_parent"
+        android:layout_height="100dp" />
+
+    <!--
+    <com.silverback.carman.views.OpinetAvgPriceView
+        android:id="@+id/avgPriceView"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_colored_border"
+        android:gravity="center"
+        android:padding="5dp"
+        app:avgPriceDown="@color/priceDown"
+        app:avgPriceUp="@color/priceUp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    -->
+
+</androidx.cardview.widget.CardView>
