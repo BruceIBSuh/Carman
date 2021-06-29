@@ -3,6 +3,8 @@ package com.silverback.carman.threads;
 import android.content.Context;
 import android.location.Location;
 
+import androidx.lifecycle.ViewModelProvider;
+
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.LocationViewModel;
@@ -24,7 +26,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void initLocationTask(LocationViewModel model) {
-        //sThreadManager = threadManager;
         viewModel = model;
     }
 
@@ -43,14 +44,14 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     @Override
     public void setCurrentLocation(Location location) {
-        log.i("Update Location from worker thread");
+        log.i("current location:%s", location);
         mLocation = location;
-        viewModel.getLocation().setValue(mLocation);
+        viewModel.getLocation().postValue(mLocation);
     }
 
     @Override
     public void notifyLocationException(String msg) {
-        viewModel.getLocationException().setValue(msg);
+        viewModel.getLocationException().postValue(msg);
     }
 
     @Override

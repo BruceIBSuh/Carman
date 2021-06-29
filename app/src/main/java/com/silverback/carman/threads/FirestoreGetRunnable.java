@@ -22,7 +22,7 @@ public class FirestoreGetRunnable implements Runnable {
 
 
     // Objects
-    private FireStoreGetMethods mCallback;
+    private final FireStoreGetMethods mCallback;
     private FirebaseFirestore firestore;
     private List<Opinet.GasStnParcelable> stnList;
 
@@ -43,11 +43,9 @@ public class FirestoreGetRunnable implements Runnable {
 
     @Override
     public void run() {
-
         mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         stnList = mCallback.getStationList();
-
         try {
             if(Thread.interrupted()) throw new InterruptedException();
         } catch (InterruptedException e) {
@@ -57,9 +55,9 @@ public class FirestoreGetRunnable implements Runnable {
 
         // Bugs have occurred many times here. NullPointerException is brought about due to
         for(int i = 0; i < stnList.size(); i++) {
-
             final int pos = i;
             final String stnId = stnList.get(pos).getStnId();
+            log.i("firestore doc id:%s", stnId);
             final DocumentReference docRef = firestore.collection("gas_station").document(stnId);
             docRef.addSnapshotListener((snapshot, e) -> {
                 if(e != null) {
@@ -80,14 +78,14 @@ public class FirestoreGetRunnable implements Runnable {
                 // to notify when it should send the notification to end up the array.
                 if (snapshot != null && snapshot.exists()){
                     if(snapshot.get("carwash") != null) {
-                        mCallback.setCarWashInfo(pos, (boolean)snapshot.get("carwash"));
+                        log.i("car wash:%s", snapshot.getBoolean("carwash"));
+                        mCallback.setCarWashInfo(pos, snapshot.getBoolean("carwash"));
                         mCallback.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                     } else {
                         log.e("carwash value is null:%s", snapshot.getString("stnName"));
                         mCallback.setCarWashInfo(pos, false);
                         setStationData(pos);
                     }
-
                 } else {
                     setStationData(pos);
                 }

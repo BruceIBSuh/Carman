@@ -143,7 +143,8 @@ public class GeneralFragment extends Fragment implements
         favFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         // To nest a fragment,  like the viewpager containing fragmgents, call getChildFragmentManager()
         // on the container fragment. Viewpager
-        pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+
+        //pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
 
         // Create ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -198,7 +199,7 @@ public class GeneralFragment extends Fragment implements
         // sigun price and the first placeholder station
         opinetAvgPriceView.addPriceView(defaultFuel);
         pricePagerAdapter.setFuelCode(defaultFuel);
-        priceViewPager.setAdapter(pricePagerAdapter);
+        //priceViewPager.setAdapter(pricePagerAdapter);
 
         // Set Floating Action Button RecycerView.OnScrollListener is an abstract class which shows/
         // hides the floating action button according to scolling or idling
@@ -386,7 +387,7 @@ public class GeneralFragment extends Fragment implements
 
             // Attach the viewpager adatepr with a fuel code selected by the spinner.
             pricePagerAdapter.setFuelCode(defaults[0]);
-            priceViewPager.setAdapter(pricePagerAdapter);
+            //priceViewPager.setAdapter(pricePagerAdapter);
 
             // Retrieve near stations based on a newly selected fuel code if the spinner selection
             // has changed. Temporarily make this not working for preventing excessive access to the
@@ -634,7 +635,7 @@ public class GeneralFragment extends Fragment implements
             opinetModel.distPriceComplete().observe(getViewLifecycleOwner(), isDone -> {
                 pricePagerAdapter.setFuelCode(defaults[0]);
                 pricePagerAdapter.notifyDataSetChanged();
-                priceViewPager.setAdapter(pricePagerAdapter);
+                //priceViewPager.setAdapter(pricePagerAdapter);
                 ((BaseActivity)getActivity()).getSharedPreferernces().edit().putLong(
                         Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
             });

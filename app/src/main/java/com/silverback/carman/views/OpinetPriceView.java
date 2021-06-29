@@ -15,9 +15,8 @@ import com.silverback.carman.logs.LoggingHelperFactory;
  * The abstract class is subclassed by OpinetAvgPriceView, OpinetSidoPriceView, OpinetSigunPriceView
  * and OpinetStationPriceView, inheriting setColoredTextView() which makes the color of price
  * difference colored according to whether the price is up or down.
- *
- *
  */
+
 public abstract class OpinetPriceView extends LinearLayout {
 
     // Logging
@@ -48,8 +47,6 @@ public abstract class OpinetPriceView extends LinearLayout {
     protected void setColoredTextView(TextView textView, float price, float diff) {
 
         int colorDiff = (diff > 0)? priceUpColor : priceDownColor;
-        log.i("colorDiff: %s", colorDiff);
-
         // Create SpannableStringBuilder to change the text color in the spanned price difference.
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         ssb.append(Float.toString(price)).append(" (");
@@ -58,7 +55,6 @@ public abstract class OpinetPriceView extends LinearLayout {
         ssb.setSpan(new ForegroundColorSpan(colorDiff), start, ssb.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.append(")");
 
-        log.i("Diff: %s, %s", price, diff);
         textView.setText(ssb);
     }
 }

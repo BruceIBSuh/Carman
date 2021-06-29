@@ -27,6 +27,14 @@ android {
         }
     }
 
+
+    buildFeatures {
+        //viewBinding true
+        dataBinding true
+    }
+
+
+
     sourceSets { main { java.srcDirs = ['src/main/java', 'src/main/java/com.silverback.carman'] } }
     productFlavors {}
     compileOptions {
@@ -34,11 +42,6 @@ android {
         targetCompatibility = '1.8'
     }
 
-    /*
-    dataBinding {
-        enabled = true;
-    }
-    */
 }
 
 dependencies {
@@ -59,21 +62,21 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.room:room-runtime:2.3.0' //Room dependency
     annotationProcessor 'androidx.room:room-compiler:2.3.0' // For Kotlin, use kapt.
-    implementation 'androidx.work:work-runtime:2.6.0-alpha02' //WorkManager
+    implementation 'androidx.work:work-runtime:2.6.0-beta01' //WorkManager
     implementation 'androidx.viewpager:viewpager:1.0.0'
 
 
-    implementation 'com.google.android.material:material:1.4.0-beta01'
+    implementation 'com.google.android.material:material:1.4.0-rc01'
     //implementation 'com.android.support:design:28.0.0'
 
 
     // Firebase. guava is required to avoid conflicts b/w Firebase and guava. not sure.
     implementation 'com.google.firebase:firebase-auth:21.0.1'
-    implementation 'com.google.firebase:firebase-firestore:23.0.0'
+    implementation 'com.google.firebase:firebase-firestore:23.0.1'
     implementation 'com.google.firebase:firebase-storage:20.0.0'
     implementation 'com.google.guava:guava:27.0.1-android'
 

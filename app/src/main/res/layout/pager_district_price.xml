@@ -6,11 +6,12 @@
     android:id="@+id/content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
     tools:context=".fragments.GeneralFragment">
 
     <com.silverback.carman.views.OpinetSidoPriceView
         android:id="@+id/sidoPriceView"
-        android:layout_width="90dp"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -20,7 +21,7 @@
 
     <com.silverback.carman.views.OpinetSigunPriceView
         android:id="@+id/sigunPriceView"
-        android:layout_width="90dp"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginStart="24dp"
         app:layout_constraintBottom_toBottomOf="parent"

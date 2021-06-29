@@ -99,8 +99,7 @@ public class  BoardActivity extends BaseActivity implements
         CheckBox.OnCheckedChangeListener,
         ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener,
-        BoardReadDlgFragment.OnEditModeListener
-{
+        BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
@@ -257,7 +256,7 @@ public class  BoardActivity extends BaseActivity implements
             case android.R.id.home:
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
-                if(frameLayout.getChildAt(0) instanceof ViewPager) {
+                if(frameLayout.getChildAt(0) instanceof ViewPager2) {
                     frameLayout.removeView(boardPager);
                     finish();
 

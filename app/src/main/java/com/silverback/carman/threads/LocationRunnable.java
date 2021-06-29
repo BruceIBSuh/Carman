@@ -93,6 +93,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
             mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
             mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                 if(location != null) {
+                    log.i("location fetched:%s", location);
                     task.setCurrentLocation(location);
                     task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
 

@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentManager;
 
@@ -103,7 +104,7 @@ public class ThreadManager {
 
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
-    private Queue<ThreadTask> mTaskWorkQueue;
+    private final Queue<ThreadTask> mTaskWorkQueue;
     private final Queue<DistCodeDownloadTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
@@ -119,10 +120,10 @@ public class ThreadManager {
     private final ThreadPoolExecutor mDecodeThreadPool;
 
     // An object that manages Messages in a Thread
-    private Handler mMainHandler;
+    private final Handler mMainHandler;
 
     // ThreadManager instance as a singleton
-    private static ThreadManager sInstance;
+    private static final ThreadManager sInstance;
 
     // A static block that sets class fields
     static {
@@ -171,7 +172,7 @@ public class ThreadManager {
          */
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @Override
-            public void handleMessage(Message msg) {
+            public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask)msg.obj;
                 recycleTask(task);
             }

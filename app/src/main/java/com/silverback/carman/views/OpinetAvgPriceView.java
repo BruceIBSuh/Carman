@@ -32,6 +32,8 @@ public class OpinetAvgPriceView extends OpinetPriceView {
     private WeakReference<View> mThisView;
     private TextView tvAvgPrice;
 
+    private float price;
+    private float diff;
     // Fields
     //private int priceUpColor, priceDownColor; //Inherited from OpinetPriceView
 
@@ -50,15 +52,12 @@ public class OpinetAvgPriceView extends OpinetPriceView {
         getAttributes(context, attrs);
     }
 
-    @SuppressWarnings("ConstantConditions")
-    protected void getAttributes(Context context, AttributeSet attrs) {
 
+    protected void getAttributes(Context context, AttributeSet attrs) {
         //LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         //linearLayout = (LinearLayout)inflater.inflate(R.layout.view_avg_price, this, true);
         LayoutInflater.from(context).inflate(R.layout.view_avg_price, this, true);
-
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetAvgPriceView);
-
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetAvgPriceView_avgPriceUp, 0);
             priceDownColor = typedArray.getColor(R.styleable.OpinetAvgPriceView_avgPriceDown, 0);
@@ -72,15 +71,6 @@ public class OpinetAvgPriceView extends OpinetPriceView {
         tvAvgTitle.setText(getResources().getString(R.string.general_opinet_subtitle_avgPrice));
     }
 
-    public void showAvgView() {
-
-        mThisView = new WeakReference<View>(this);
-        View localView = mThisView.get();
-
-        if(localView != null) {
-            localView.setVisibility(View.VISIBLE);
-        }
-    }
 
     @SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode){
@@ -94,8 +84,8 @@ public class OpinetAvgPriceView extends OpinetPriceView {
 
             for (Opinet.OilPrice opinet : avgPrice) {
                 if (opinet.getProductCode().matches(fuelCode)) {
-                    float price = opinet.getPrice();
-                    float diff = opinet.getDiff();
+                    this.price = opinet.getPrice();
+                    this.diff = opinet.getDiff();
                     log.i("AvgPriceView: %s, %s, %s", opinet.getProductCode(), price, diff);
 
                     setColoredTextView(tvAvgPrice, price, diff);
@@ -115,6 +105,14 @@ public class OpinetAvgPriceView extends OpinetPriceView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+    }
+
+    public float getAvgGasPrice() {
+        return this.price;
+    }
+
+    public float getAvgGasDiff() {
+        return this.diff;
     }
 
     @Override

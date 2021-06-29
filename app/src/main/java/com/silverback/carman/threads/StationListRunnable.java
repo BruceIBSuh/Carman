@@ -52,7 +52,6 @@ public class StationListRunnable implements Runnable{
 
     @Override
     public void run() {
-
         mTask.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
@@ -63,6 +62,7 @@ public class StationListRunnable implements Runnable{
         String fuelCode = defaultParams[0];
         String radius = defaultParams[1];
         String sort = defaultParams[2];
+        log.i("defaultParams: %s, %s, %s", fuelCode, radius, sort);
 
         // Convert longitute and latitude-based location to TM(Transverse Mercator), then again to
         // Katec location using convertgeocoords which is distributed over internet^^ tnx.
@@ -80,7 +80,6 @@ public class StationListRunnable implements Runnable{
                 + "&sort=" + sort // 1: price 2: distance
                 + "&prodcd=" + fuelCode;
 
-
         XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
         HttpURLConnection conn = null;
         InputStream is = null;
@@ -95,7 +94,7 @@ public class StationListRunnable implements Runnable{
             conn.connect();
             is = new BufferedInputStream(conn.getInputStream());
             mStationList = xmlHandler.parseStationListParcelable(is);
-
+            log.i("mStationList:%d", mStationList.size());
             // Get near stations which may be the current station if MIN_RADIUS is given as param or
             // it should be near stations located within SEARCHING_RADIUS.
             if(mStationList.size() > 0) {

@@ -62,7 +62,7 @@ public class QueryPostPaginationUtil {
                 break;
 
             case Constants.BOARD_NOTIFICATION:
-                query = firestore.collection("board_admin").orderBy("timestamp", Query.Direction.DESCENDING);
+                query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
 

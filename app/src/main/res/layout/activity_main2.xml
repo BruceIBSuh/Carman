@@ -2,92 +2,131 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
-    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:backgroundTint="#FFB300"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
-        android:fitsSystemWindows="true"
         android:layout_width="match_parent"
-        android:layout_height="300dp" >
-
+        android:layout_height="wrap_content">
         <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:minHeight="?android:actionBarSize"
-            app:toolbarId="@+id/toolbar"
+            app:contentScrim="@android:color/transparent"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:layout_scrollInterpolator="@android:anim/decelerate_interpolator"
-            app:contentScrim="@android:color/transparent">
-
-            <ImageView
+            app:toolbarId="@+id/toolbar" >
+            <include
+                android:id="@+id/main_header"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/ioniq5"
-                android:scaleType="fitXY"
-                android:contentDescription="@string/app_name" />
-
+                android:layout_marginTop="?attr/actionBarSize"
+                android:layout_marginBottom="8dp"
+                layout="@layout/main_content_priceinfo" />
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
                 app:layout_collapseMode="pin" />
-
         </com.google.android.material.appbar.CollapsingToolbarLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_contents"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_green_light"
 
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-    <!--
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_stations"
+    <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/bgRecentExp"
-        app:layout_insetEdge="bottom"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-    -->
-    <com.silverback.carman.views.StationRecyclerView
-        android:id="@+id/stationRecyclerView"
+        android:animateLayoutChanges="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:layout_anchor="@id/appbar"
+        app:layout_anchorGravity="bottom" >
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_contents"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+        <com.silverback.carman.views.StationRecyclerView
+            android:id="@+id/stationRecyclerView"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="100dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/view_price_info"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@color/bgRecentExp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layout_insetEdge="bottom"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+        android:layout_marginTop="?attr/actionBarSize"
+        android:orientation="vertical"
+        android:background="#FF9900"
+        app:layout_anchor="@id/appbar"
+        app:layout_anchorGravity="bottom">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hello World" />
+    </LinearLayout>
+
+
     <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:src="@android:drawable/ic_menu_mylocation"
-        android:visibility="invisible"
+        android:layout_margin="16dp"
         android:contentDescription="@string/app_name"
+        android:src="@android:drawable/ic_menu_mylocation"
         app:backgroundTint="@color/colorAccent"
+        app:rippleColor="@color/colorPrimary"
         app:borderWidth="0dp"
         app:elevation="6dp"
         app:layout_anchor="@id/stationRecyclerView"
-        app:layout_anchorGravity="right|bottom"
-        app:rippleColor="@color/colorPrimary" />
+        app:layout_anchorGravity="right|bottom" />
     -->
-    <Button
-        android:id="@+id/btn_station"
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/view4"
+        style="@style/Widget.AppCompat.Button.Borderless"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Station Searching"
-        android:layout_gravity="bottom" />
+        android:layout_gravity="bottom"
+        android:background="#FB8C00"
+        app:layout_insetEdge="bottom">
+
+        <ImageButton
+            android:id="@+id/imgbtn_station"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/app_name"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_gas_station" />
+
+        <ImageButton
+            android:id="@+id/imgbtn_svc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@string/app_name"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imgbtn_station"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_service_center" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

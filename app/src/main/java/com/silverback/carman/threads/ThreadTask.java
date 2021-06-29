@@ -1,5 +1,7 @@
 package com.silverback.carman.threads;
 
+import androidx.lifecycle.ViewModel;
+
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -8,13 +10,13 @@ public class ThreadTask {
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadTask.class);
 
     // Objects
-    static ThreadManager sThreadManager;
+    protected static ThreadManager2 sThreadManager;
     private Thread mCurrentThread;
     Thread mThreadThis;
 
-    //Constructor
-    ThreadTask(){
-        sThreadManager = ThreadManager.getInstance();
+    // Constructor
+    public ThreadTask(){
+        sThreadManager = ThreadManager2.getInstance();
     }
 
     /*
@@ -32,10 +34,8 @@ public class ThreadTask {
      * notes for getCurrentThread()
      */
     void setCurrentThread(Thread thread) {
-        //synchronized(sThreadManager) {
-            mCurrentThread = thread;
-            log.d("ThreadTask current Thread: %s", mCurrentThread);
-        //}
+        mCurrentThread = thread;
+        log.d("ThreadTask current Thread: %s", mCurrentThread);
     }
 
 }

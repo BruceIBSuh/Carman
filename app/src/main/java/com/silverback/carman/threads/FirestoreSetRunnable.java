@@ -27,9 +27,9 @@ public class FirestoreSetRunnable implements Runnable {
     private static final String OPINET = "https://www.opinet.co.kr/api/detailById.do?code=F186170711&out=xml";
 
     // Objects
-    private FireStoreSetMethods mCallback;
+    private final FireStoreSetMethods mCallback;
     private FirebaseFirestore fireStore;
-    private XmlPullParserHandler xmlHandler;
+    private final XmlPullParserHandler xmlHandler;
 
     // Interface
     public interface FireStoreSetMethods {

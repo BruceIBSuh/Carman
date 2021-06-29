@@ -90,7 +90,6 @@ public class StationRecyclerView extends RecyclerView {
     // Invoked from the parent GeneralFragment which is notified of successfully having a station
     // list completed.
     public void showStationListRecyclerView() {
-
         mThisView = new WeakReference<>(this);
         View localView = mThisView.get();
 

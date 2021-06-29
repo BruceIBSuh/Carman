@@ -1,9 +1,7 @@
 package com.silverback.carman.threads;
 
-
 import android.location.Location;
 import android.util.SparseBooleanArray;
-
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
@@ -49,7 +47,6 @@ public class StationListTask extends ThreadTask implements
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
         sparseBooleanArray = new SparseBooleanArray();
-
     }
 
     void initStationTask(StationListViewModel model, Location location, String[] params) {
@@ -92,7 +89,7 @@ public class StationListTask extends ThreadTask implements
         // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
         // incur a unexpectable result.
         if(sparseBooleanArray.size() == mStationList.size()) {
-            //log.i("Invoke CarWash viewmodel");
+            log.i("Invoke CarWash viewmodel");
             viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
         }
     }
@@ -111,6 +108,7 @@ public class StationListTask extends ThreadTask implements
         //viewModel.getExceptionMessage().postValue(msg);
     }
     */
+
 
     // The following  callbacks are invoked by StationListRunnable to retrieve stations within
     // a radius and location, then give them back by setStationList().
@@ -141,7 +139,7 @@ public class StationListTask extends ThreadTask implements
         int outState = -1;
         switch (state) {
             case DOWNLOAD_NEAR_STATIONS_COMPLETE:
-                outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_COMPLETED;
+                outState = ThreadManager2.DOWNLOAD_NEAR_STATIONS;
                 break;
 
             case DOWNLOAD_CURRENT_STATION_COMPLETE:
@@ -153,7 +151,6 @@ public class StationListTask extends ThreadTask implements
                 break;
 
             case FIRESTORE_SET_COMPLETE:
-                log.i("FireStore Set Complete");
                 outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
                 break;
 
