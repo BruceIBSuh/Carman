@@ -53,7 +53,6 @@ public class OpinetSidoPriceView extends OpinetPriceView {
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetSidoPriceView_sidoPriceUp, 0);
             priceDownColor = typedArray.getColor(R.styleable.OpinetSidoPriceView_sidoPriceDown, 0);
-            log.i("Color: %d, %d", priceUpColor, priceDownColor);
 
         } finally {
             typedArray.recycle();
@@ -63,10 +62,6 @@ public class OpinetSidoPriceView extends OpinetPriceView {
 
     @SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
-
-
-
-
         File sidoFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIDO_PRICE);
         Uri uriSido = Uri.fromFile(sidoFile);
 

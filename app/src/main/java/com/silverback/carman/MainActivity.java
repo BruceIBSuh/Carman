@@ -1,164 +1,246 @@
 package com.silverback.carman;
 
+import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
+import android.text.SpannableString;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
-import com.silverback.carman.database.CarmanDatabase;
-import com.silverback.carman.fragments.FinishAppDialogFragment;
-import com.silverback.carman.fragments.GeneralFragment;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman.adapters.MainContentAdapter;
+import com.silverback.carman.adapters.PricePagerAdapter;
+import com.silverback.carman.adapters.StationListAdapter;
+import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.GasPriceTask;
+import com.silverback.carman.threads.LocationTask;
+import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.ImageViewModel;
-import com.silverback.carman.viewmodels.OpinetViewModel;
+import com.silverback.carman.viewmodels.LocationViewModel;
+import com.silverback.carman.viewmodels.Opinet;
+import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.views.OpinetAvgPriceView;
+import com.silverback.carman.views.OpinetSidoPriceView;
+import com.silverback.carman.views.OpinetSigunPriceView;
+import com.silverback.carman.views.StationRecyclerView;
 
-import org.json.JSONArray;
-
-import java.io.File;
+import java.util.List;
 import java.util.Objects;
 
-/*
- * This activity is a container holding GeneralFragment which is composed of the district gas prices,
- * the latest gas and service expenditure, and near stations located in the default radius.
- * Additional fragment should be added to the activity at a later time to show a variety of contents
- * ahead of displaying GeneralFragment. Alternatively, the recyclerview positioned at the bottom for
- * near stations should be replaced with a view to display other auto-related contents, creating a
- * button to call the near station fragment.
- */
 public class MainActivity extends BaseActivity implements
-        FinishAppDialogFragment.NoticeDialogListener,
-        ActivityCompat.OnRequestPermissionsResultCallback {
+        StationListAdapter.OnRecyclerItemClickListener,
+        AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
     // Objects
-    private CarmanDatabase mDB;
-    private GasPriceTask gasPriceTask;
-    private OpinetViewModel opinetModel;
-    private GeneralFragment generalFragment;
-    private ApplyImageResourceUtil imgResUtil;
-    private ImageViewModel imgModel;
-    //private ActionBarDrawerToggle drawerToggle;
+    private ActivityMainBinding binding;
 
-    @SuppressWarnings("ConstantConditions")
+    private LocationViewModel locationModel;
+    private StationListViewModel stnModel;
+    private ImageViewModel imgModel;
+
+    private LocationTask locationTask;
+    private Location mPrevLocation;
+
+    private List<Opinet.GasStnParcelable> mStationList;
+    private PricePagerAdapter pricePagerAdapter;
+    private StationListAdapter mAdapter;
+    private StationListTask stationListTask;
+
+    private ApplyImageResourceUtil imgResUtil;
+
+    // Fields
+    private String[] defaults;
+    private String defaultFuel;
+    private boolean isStationOn = false;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        View rootView = binding.getRoot();
+        setContentView(rootView);
 
-        // Instantiation
-        mDB = CarmanDatabase.getDatabaseInstance(this);
-        imgResUtil = new ApplyImageResourceUtil(this);
+        // Set the toolbar
+        setSupportActionBar(binding.toolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+        Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
+        binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPrice(offset));
+
+        // Price info
+        setSpinnerToDefaultFuel();
+        binding.mainHeader.avgPriceView.addPriceView(defaultFuel);
+
+        // Set the fuel-selecting spinner
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
+                this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
+        spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
+        binding.mainHeader.spinnerGas.setAdapter(spinnerAdapter);
+
+        binding.mainHeader.spinnerGas.setOnItemSelectedListener(this);
+
+        // ViewPager2
+        pricePagerAdapter = new PricePagerAdapter(this);
+        pricePagerAdapter.setFuelCode(defaultFuel);
+        binding.mainHeader.viewpagerPrice.setAdapter(pricePagerAdapter);
+
+        // MainContent RecyclerView
+        MainContentAdapter adapter = new MainContentAdapter();
+        MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(50, 0);
+        binding.recyclerContents.setAdapter(adapter);
+        binding.recyclerContents.addItemDecoration(itemDeco);
+
+        // ViewModels
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+        // Instantiate utils
+        imgResUtil = new ApplyImageResourceUtil(this);
+
+        // Event Handlers
+        binding.imgbtnStation.setOnClickListener(view -> {
+            if(!isStationOn) locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+            else {
+                binding.stationRecyclerView.setVisibility(View.GONE);
+                binding.recyclerContents.setVisibility(View.VISIBLE);
+                isStationOn = !isStationOn;
+            }
+        });
 
 
-        Toolbar toolbar = findViewById(R.id.toolbar_main);
-        setSupportActionBar(toolbar);
-        String title = mSettings.getString(Constants.USER_NAME, null);
-        getSupportActionBar().setHomeButtonEnabled(false);
-        if(title != null) getSupportActionBar().setTitle(title);
+        locationModel.getLocation().observe(this, location -> {
+            if(location == null) return;
+            if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
+                log.i("location fetched: %s", location);
+                mPrevLocation = location;
+                ThreadManager2.startStationListTask(stnModel, location, getDefaultParams());
+            } else {
+                binding.recyclerContents.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                isStationOn = !isStationOn;
+                Snackbar.make(rootView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
+            }
+        });
 
-        /*
-        DrawerLayout drawerLayout = findViewById(R.id.drawerLayout);
-        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name,R.string.app_name);
-        */
-        // Get the default value of fuels, searching radius, and sorting order from BaseActivity
-        // and set it to be bundled to pass it to GeneralFragment
-        Bundle bundle = new Bundle();
-        bundle.putStringArray("defaults", getDefaultParams());
-        generalFragment = new GeneralFragment();
-        generalFragment.setArguments(bundle);
+        // Location has failed to fetch.
+        locationModel.getLocationException().observe(this, exception -> {
+            log.i("Exception occurred while fetching location");
+            SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
+            binding.stationRecyclerView.showTextView(spannableString);
 
-        // Attaches GeneralFragment as a default display at first or returning from the fragments
-        // picked up by Toolbar menus.
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_main, generalFragment, "general")
-                .addToBackStack(null)
-                .commit();
+        });
+
+        // Receive station(s) within the radius. If no stations exist, post the message that
+        // indicate why it failed to fetch stations. It would be caused by any network problem or
+        // no stations actually exist within the radius.
+        stnModel.getNearStationList().observe(this, stnList -> {
+            if (stnList != null && stnList.size() > 0) {
+                mStationList = stnList;
+                mAdapter = new StationListAdapter(mStationList, this);
+                binding.stationRecyclerView.setAdapter(mAdapter);
+                binding.stationRecyclerView.showStationListRecyclerView();
+
+                binding.recyclerContents.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+
+                isStationOn = !isStationOn;
+
+            } else {
+                log.i("no station");
+                // No near stations post an message that contains the clickable span to link to the
+                // SettingPreferenceActivity for resetting the searching radius.
+                //SpannableString spannableString = handleStationListException();
+                //stationRecyclerView.showTextView(spannableString);
+            }
+        });
+
+        // Update the carwash info to StationList and notify the data change to Adapter.
+        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+        // e.g. when the view is not attached.
+        stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
+            for(int i = 0; i < sparseArray.size(); i++) {
+                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
+                mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
+            }
+        });
 
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        // Set the user name and customizable icon in the toolbar.
+        String title = mSettings.getString(Constants.USER_NAME, null);
+        if(title != null) Objects.requireNonNull(getSupportActionBar()).setTitle(title);
 
-        // The activity gets started by the Geofence notification which launches GasManagerFragment
-        // or ServiceManagerFragment at first and when clikcing the up button, the activity receives
-        // the boolean extra that indicates how the app launches. This process has to call the price
-        // task for displaying the price information.
-        if(getIntent() != null && getIntent().getBooleanExtra("isGeofencing", false)) {
-            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                JSONArray json = getDistrictJSONArray();
-                String distCode = (json != null) ?
-                        json.optString(2) : getResources().getStringArray(R.array.default_district)[2];
-                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
-            });
-        }
-
-        // MUST be located here b/c it has to be redrawn when startActivityForResult() is called.
-        // Get the user image uri, if any, from SharedPreferences, then uses Glide to a drawable
-        // fitting to the action bar, the result of which is notified using ImageViewModel.
-        String userImage = mSettings.getString(Constants.USER_IMAGE, null);
-        String imgUri = (TextUtils.isEmpty(userImage))? Constants.imgPath + "ic_user_blank_gray" : userImage;
+        String userImg = mSettings.getString(Constants.USER_IMAGE, null);
+        String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray" : userImg;
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
-        // In case the user image has changed in SettingPreferenceActivity, the uri of a new image
-        // is sent in onActivityResult() as a result of startActivityForResult() which called
-        // SettingPreferenceActivity. The img uri is processed to Drawable by Glide, the custom target
-        // of which is passed via ImageViewModel and reset to the Icon when the activity resumes
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
+
+        String avgPrice = String.valueOf(binding.mainHeader.avgPriceView.getAvgGasPrice());
+        log.i("avgPrice:%s", avgPrice);
+        binding.tvCollapsedAvgPrice.setText(avgPrice);
+
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if(gasPriceTask != null) {
-            log.i("gasPriceTaskk: %s", gasPriceTask.getCurrentThread());
-            gasPriceTask = null;
-        }
-
+        if(locationTask != null) locationTask = null;
+        if(stationListTask != null) stationListTask = null;
     }
 
-    // DrawerLayout callbacks which should be applied at an appropritate time for update.
-    /*
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        drawerToggle.syncState();
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        drawerToggle.onConfigurationChanged(newConfig);
-    }
-    */
-
-    //The following callback methods are invoked by Toolbar working as Appbar or ActionBar
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_options_main, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
+    //@SuppressWarnings("all")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if(item.getItemId() == R.id.action_garage) {
+            startActivity(new Intent(this, ExpenseActivity.class));
+        } else if(item.getItemId() == R.id.action_board) {
+            startActivity(new Intent(this, BoardActivity.class));
+        } else if(item.getItemId() == R.id.action_login) {
+            log.i("login process required");
+        } else if(item.getItemId() == R.id.action_setting) {
+            Intent settingIntent = new Intent(this, SettingPrefActivity.class);
+            int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
+            settingIntent.putExtra("requestCode", requestCode);
+            startActivityForResult(settingIntent, requestCode);
+        }
+
+        return true;
+        /*
         switch(item.getItemId()) {
             case R.id.action_garage:
-                startActivity(new Intent(MainActivity.this, ExpenseActivity.class));
+                startActivity(new Intent(this, ExpenseActivity.class));
                 return true;
 
             case R.id.action_board:
@@ -176,79 +258,80 @@ public class MainActivity extends BaseActivity implements
                 settingIntent.putExtra("requestCode", requestCode);
                 startActivityForResult(settingIntent, requestCode);
                 return true;
-
             default: return false;
         }
-    }
-
-
-    // startActivityForResult() has this callback invoked by getting an intent that contains new
-    // values reset in SettingPreferenceActivity. The toolbar title should be replace with a new name
-    // and PriceViewPager should be updated with a new district, both of which have been reset
-    // in SettingPreferenceActivity.
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-
-        if(requestCode != Constants.REQUEST_MAIN_SETTING_GENERAL || resultCode != RESULT_OK) return;
-
-        String distCode = intent.getStringExtra("district");
-        String userName = intent.getStringExtra("userName");
-        String fuelCode = intent.getStringExtra("fuelCode");
-        String radius = intent.getStringExtra("radius");
-        String uriImage = intent.getStringExtra("userImage");
-        log.i("onActivityResult in Main: %s, %s, %s, %s", distCode, fuelCode, radius, uriImage);
-
-        // Must make the null check, not String.isEmpty() because the blank name should be included.
-        if(userName != null) getSupportActionBar().setTitle(userName);
-        if(uriImage != null) imgResUtil.applyGlideToDrawable(uriImage, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
-        else imgModel.getGlideDrawableTarget().setValue(null);
-
-
-        // Invalidate PricePagerView with new district and price data reset in SettingPreferenceActivity.
-        //generalFragment = ((GeneralFragment)getSupportFragmentManager().findFragmentByTag("general"));
-        if(generalFragment != null) generalFragment.resetGeneralFragment(distCode, fuelCode, radius);
+         */
     }
 
     @Override
-    public void onBackPressed(){
-        // Pop up the dialog to confirm to leave the app.
-        FinishAppDialogFragment alertDialog = new FinishAppDialogFragment();
-        alertDialog.show(getSupportFragmentManager(), "FinishAppDialogFragment");
+    public void onItemClicked(final int pos) {
+        Intent intent = new Intent(this, StationMapActivity.class);
+        intent.putExtra("gasStationId", mStationList.get(pos).getStnId());
+        startActivity(intent);
     }
 
-    // Implements FinsihAppDialogFragment.NoticeDialogListener, overriding onDialogPositiveClick()
-    // and onDialogNegativeClick().
-    // When clicking the confirm button, the app closes, clearing the cache files that contain
-    // the gas prices as far as the update condition is met and garbage-collecting all the threads
-    // in the threadpool. AT the same time, destroy the db instance which exists statically.
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    public void onDialogPositiveClick(DialogFragment dialog) {
-        File cacheDir = getCacheDir();
-        // CacheDir contains not only the price data of the average, sido, sigun but also the near
-        // stations. On leaving the app, clear the cache directory as far as the checkPriceUpdate
-        // is satisfied.
-        if(cacheDir != null && checkPriceUpdate()) {
-            for (File file : Objects.requireNonNull(cacheDir.listFiles())) {
-                //if(!file.getName().equals(Constants.FILE_CACHED_STATION_PRICE))
-                file.delete();
-            }
+    public void onBackPressed() {
+
+    }
+
+    // The following 2 methods are the fuel spinner event handler.
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
+        switch(pos){
+            case 0: defaults[0] = "B027"; break; // gasoline
+            case 1: defaults[0] = "D047"; break; // diesel
+            case 2: defaults[0] = "K015"; break; // LPG
+            case 3: defaults[0] = "B034"; break; // premium gasoline
+            default: break;
         }
 
-        ThreadManager.cancelAllThreads();
-        if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
-        finishAffinity();
+        if(!defaultFuel.matches(defaults[0])) {
+            defaultFuel = defaults[0];
+            log.i("onItemSelected:%s", defaultFuel);
+            // Retrives the price data respectively saved in the cache directory with a fuel selected
+            // by the spinner.
+            binding.mainHeader.avgPriceView.addPriceView(defaultFuel);
+
+            // Attach the viewpager adatepr with a fuel code selected by the spinner.
+            pricePagerAdapter.setFuelCode(defaultFuel);
+            binding.mainHeader.viewpagerPrice.setAdapter(pricePagerAdapter);
+
+            // Retrieve near stations based on a newly selected fuel code if the spinner selection
+            // has changed. Temporarily make this not working for preventing excessive access to the
+            // server.
+            stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
+        }
     }
+
     @Override
-    public void onDialogNegativeClick(DialogFragment dialog) {}
+    public void onNothingSelected(AdapterView<?> adapterView) {
 
-    // Referenced by child fragments.
-    /*
-    public SharedPreferences getSettings() {
-        return mSettings;
     }
 
-     */
+    // Ref: expand the station recyclerview up to wrap_content
+    private void showCollapsedPrice(int offset) {
+        //log.i("offset:%s, %s", offset, appbar.getTotalScrollRange());
+        //float value = (float)Math.abs(offset) / appbar.getTotalScrollRange();
+        //priceView.setAlpha(value);
+        if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
+            binding.viewCollapsedPrice.setVisibility(View.VISIBLE);
+            ObjectAnimator objAnim = ObjectAnimator.ofFloat(binding.viewCollapsedPrice, "alpha", 0f, 1f);
+            objAnim.setDuration(500);
+            objAnim.start();
+        } else binding.viewCollapsedPrice.setVisibility(View.GONE);
+    }
+
+    private void setSpinnerToDefaultFuel() {
+        String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
+        defaults = getDefaultParams();
+        for(int i = 0; i < code.length; i++) {
+            if(code[i].matches(defaults[0])) {
+                binding.mainHeader.spinnerGas.setSelection(i);
+                defaultFuel = defaults[0];
+            }
+        }
+    }
+
 }
+

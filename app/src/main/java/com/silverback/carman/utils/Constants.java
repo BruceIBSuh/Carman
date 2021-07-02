@@ -58,15 +58,15 @@ public class Constants {
 
 
     // File names for FileProvider
-    public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman2.AVG_PRICE";
-    public static final String FILE_CACHED_SIDO_PRICE = "com.silverback.carman2.SIDO_PRICE";
-    public static final String FILE_CACHED_SIGUN_PRICE = "com.silverback.carman2.SIGUN_PRICE";
-    public static final String FILE_CACHED_NEAR_STATIONS = "com.silverback.carman2.STN_LIST";
-    public static final String FILE_FAVORITE_PRICE = "com.silverback.carman2.FAV_PRICE";
-    public static final String FILE_DISTRICT_CODE = "com.silverback.carman2.DIST_CODE";
-    public static final String OPINET_LAST_UPDATE = "com.silverback.carman2.UPDATE";
+    public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman.AVG_PRICE";
+    public static final String FILE_CACHED_SIDO_PRICE = "com.silverback.carman.SIDO_PRICE";
+    public static final String FILE_CACHED_SIGUN_PRICE = "com.silverback.carman.SIGUN_PRICE";
+    public static final String FILE_CACHED_NEAR_STATIONS = "com.silverback.carman.STN_LIST";
+    public static final String FILE_FAVORITE_PRICE = "com.silverback.carman.FAV_PRICE";
+    public static final String FILE_DISTRICT_CODE = "com.silverback.carman.DIST_CODE";
+    public static final String OPINET_LAST_UPDATE = "com.silverback.carman.UPDATE";
     public static final String FILE_IMAGES = "com.silverback.carman2.fileprovider";
-    public static final String FILE_AUTO_DATA = "com.silverback.carman2.autodata";
+    public static final String FILE_AUTO_DATA = "com.silverback.carman.autodata";
 
 
     // SharedPreferences key name, which is the key name of each preference.xml
@@ -101,40 +101,40 @@ public class Constants {
 
     public static final String THEME = "carman_pref_ls_theme";
     public static final String GUIDE = "carman_pref_intro_guide";
-    public static final String CoverImageWidth = "com.ibnco.carman.coverimage.width";
-    public static final String CoverImageHeight = "com.ibnco.carman.coverimage.height";
+    public static final String CoverImageWidth = "com.silverback.carman.coverimage.width";
+    public static final String CoverImageHeight = "com.silverback.carman.coverimage.height";
     public static final String CODE = "carman_pref_district_code";
     public static final String SERVICE_ITEMS = "carman_service_checklist";
 
     public static final String GEOFENCE_LIST = "geofence_list_for_reboot";
 
     // Geofence Notification
-    public static final String CHANNEL_ID = "com.silverback.carman2";
-    public static final String NOTI_TAG = "com.silverback.carman2.notification";
-    public static final String NOTI_ID = "com.silverback.carman2.notiId";
-    public static final String NOTI_GEOFENCE= "com.silverback.carman2.geofencetranstionservice.geofencing";
-    public static final String NOTI_SNOOZE = "com.silverback.carman2.geofencetransitionservice.snooze";
-    public static final String NOTI_DISMISS = "com.silverback.carman2.geofencetransitionservice.dismiss";
+    public static final String CHANNEL_ID = "com.silverback.carman";
+    public static final String NOTI_TAG = "com.silverback.carman.notification";
+    public static final String NOTI_ID = "com.silverback.carman.notiId";
+    public static final String NOTI_GEOFENCE= "com.silverback.carman.geofencetranstionservice.geofencing";
+    public static final String NOTI_SNOOZE = "com.silverback.carman.geofencetransitionservice.snooze";
+    public static final String NOTI_DISMISS = "com.silverback.carman.geofencetransitionservice.dismiss";
 
     // Geofence Keys
-    public static final String GEO_CATEGORY = "com.silverback.carman2.geofence.category";
-    public static final String GEO_INTENT = "com.silverback.carman2.geofence.pendingintent";
-    public static final String GEO_NAME = "com.silverback.carman2.geofence.name";
-    public static final String GEO_ID = "com.silverback.carman2.geofence.id";
-    public static final String GEO_TIME = "com.silverback.carman2.geofence.time";
-    public static final String GEO_ADDRS = "com.silverback.carman2.geofence.addrs";
-    public static final String GEO_LOCATION = "com.silverback.carman2.geofence.location";
+    public static final String GEO_CATEGORY = "com.silverback.carman.geofence.category";
+    public static final String GEO_INTENT = "com.silverback.carman.geofence.pendingintent";
+    public static final String GEO_NAME = "com.silverback.carman.geofence.name";
+    public static final String GEO_ID = "com.silverback.carman.geofence.id";
+    public static final String GEO_TIME = "com.silverback.carman.geofence.time";
+    public static final String GEO_ADDRS = "com.silverback.carman.geofence.addrs";
+    public static final String GEO_LOCATION = "com.silverback.carman.geofence.location";
 
 
 
     // FetchAddrsIntentService resultCode
-    public static final String GEOCODER_ADDRS_DATA_KEY = "com.ibnco.carman.geocoder_addrs";
+    public static final String GEOCODER_ADDRS_DATA_KEY = "com.silverback.carman.geocoder_addrs";
     public static final int GEOCODER_ADDRS_FAIL = -1;
     public static final int GEOCODER_ADDRS_LOCATION_SUCCESS = 1;
     public static final int GEOCODER_ADDRS_NAME_SUCCESS = 2;
 
     // Drawable path
-    public static final String imgPath = "android.resource://com.silverback.carman2/drawable/";
+    public static final String imgPath = "android.resource://com.silverback.carman/drawable/";
 
 
 }

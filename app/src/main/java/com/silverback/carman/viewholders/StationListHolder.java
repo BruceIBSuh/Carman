@@ -1,32 +1,30 @@
 package com.silverback.carman.viewholders;
 
 import android.content.Context;
-import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
-import com.silverback.carman.logs.LoggingHelper;
-import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.databinding.CardviewGasStationsBinding;
 import com.silverback.carman.viewmodels.Opinet;
 
 import java.text.DecimalFormat;
 
-import androidx.cardview.widget.CardView;
-import androidx.recyclerview.widget.RecyclerView;
-
 public class StationListHolder extends RecyclerView.ViewHolder {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationListHolder.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(StationListHolder.class);
 
     // Objects
-    private Context context;
-    private static DecimalFormat df;
-    private ImageView imgLogo;
-    private TextView tvName, tvPrice, tvDistance, tvWashLabel;
-    private String price, distance, carwash;
-    private String stnName, stnId;
+    private final CardviewGasStationsBinding binding;
+    private final Context context;
+    private static final DecimalFormat df;
+    //private ImageView imgLogo;
+    //private TextView tvName, tvPrice, tvDistance, tvWashLabel;
+    //private String price, distance, carwash;
+    //private String stnId;
     public TextView tvWashValue;
 
     static {
@@ -34,31 +32,27 @@ public class StationListHolder extends RecyclerView.ViewHolder {
     }
 
     // Constructor
-    public StationListHolder(CardView cardView) {
-        super(cardView);
-        this.context = cardView.getContext();
-        //this.cardView = cardView;
-        imgLogo = cardView.findViewById(R.id.img_logo);
-        tvName = cardView.findViewById(R.id.tv_station_name);
-        tvPrice = cardView.findViewById(R.id.tv_value_price);
-        tvDistance = cardView.findViewById(R.id.tv_value_distance);
-        tvWashLabel = cardView.findViewById(R.id.tv_label_carwash);
-        tvWashValue = cardView.findViewById(R.id.tv_value_carwash);
+    public StationListHolder(Context context, CardviewGasStationsBinding binding) {
+        super(binding.getRoot());
+        this.binding = binding;
+        this.context = context;
     }
 
     public void bindToStationList(Opinet.GasStnParcelable data) {
-        this.stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
-        this.stnName = data.getStnName();
+        String stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
         int resLogo = getGasStationImage(data.getStnCode());
-        imgLogo.setImageResource(resLogo);
-        tvName.setText(data.getStnName());
-        tvPrice.setText(String.format("%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
-        tvDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
+
+        binding.imgLogo.setImageResource(resLogo);
+        binding.tvStationName.setText(data.getStnName());
+        binding.tvValuePrice.setText(String.format("%s%2s", df.format(data.getStnPrice()),
+                context.getString(R.string.unit_won)));
+        binding.tvValueDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()),
+                context.getString(R.string.unit_meter)));
 
         String strCarwash = (data.getIsWash())?
                 context.getString(R.string.general_carwash_yes):
                 context.getString(R.string.general_carwash_no);
-        tvWashValue.setText(strCarwash);
+        binding.tvValueCarwash.setText(strCarwash);
 
     }
 

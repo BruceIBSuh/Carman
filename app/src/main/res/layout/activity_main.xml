@@ -3,50 +3,128 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/vg_main"
+    android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:backgroundTint="#FFB300"
+    android:fitsSystemWindows="true" >
+    <!--tools:viewBindingIgnore="true" > -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:contentScrim="@android:color/transparent"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:layout_scrollInterpolator="@android:anim/decelerate_interpolator"
+            app:toolbarId="@+id/toolbar" >
+            <include
+                android:id="@+id/main_header"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="?attr/actionBarSize"
+                layout="@layout/main_content_priceinfo" />
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/bgToolbar"
+                app:layout_collapseMode="pin" />
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:id="@+id/frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:layout_anchor="@id/appbar"
+        app:layout_anchorGravity="bottom" >
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_contents"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+        <com.silverback.carman.views.StationRecyclerView
+            android:id="@+id/stationRecyclerView"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="100dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/view_collapsed_price"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#E0E0E0">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/general_opinet_subtitle_avgPrice" />
+        <TextView
+            android:id="@+id/tv_collapsed_avg_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+
+    <!--
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/app_name"
+        android:src="@android:drawable/ic_menu_mylocation"
+        app:backgroundTint="@color/colorAccent"
+        app:rippleColor="@color/colorPrimary"
+        app:borderWidth="0dp"
+        app:elevation="6dp"
+        app:layout_anchor="@id/stationRecyclerView"
+        app:layout_anchorGravity="right|bottom" />
+    -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/view4"
+        style="@style/Widget.AppCompat.Button.Borderless"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#FB8C00"
+        app:layout_insetEdge="bottom">
 
-        <androidx.appcompat.widget.Toolbar
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            android:id="@+id/toolbar_main"
-            android:layout_width="0dp"
-            android:layout_height="?attr/actionBarSize"
-            android:fitsSystemWindows="true"
-            android:background="@color/bgToolbar"
-            android:elevation="1dp"
-            android:gravity="start"
-            app:contentInsetStartWithNavigation="0dp"
-            app:contentInsetStart="3dp"
-            app:contentInsetEnd="0dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:titleMarginStart="8dp"
-            app:titleTextColor="#FFFFFF" />
-
-        <FrameLayout
-            android:id="@+id/frame_main"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
+        <ImageButton
+            android:id="@+id/imgbtn_station"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="@string/app_name"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/toolbar_main" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_gas_station" />
+
+        <ImageButton
+            android:id="@+id/imgbtn_svc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@string/app_name"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imgbtn_station"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_service_center" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!--<androidx.drawerlayout.widget.DrawerLayout
-        android:id="@+id/drawerLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"/>-->
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-

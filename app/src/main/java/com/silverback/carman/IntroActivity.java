@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.database.CarmanDatabase;
+import com.silverback.carman.databinding.ActivityIntroBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.DistCodeDownloadTask;
@@ -52,7 +53,10 @@ import java.util.Map;
 
 public class IntroActivity extends BaseActivity  {
     private static final LoggingHelper log = LoggingHelperFactory.create(IntroActivity.class);
+
     // Objects
+
+    private ActivityIntroBinding binding;
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
@@ -62,13 +66,11 @@ public class IntroActivity extends BaseActivity  {
     private OpinetViewModel opinetModel;
     private String[] defaultDistrict;
 
-    // UI's
-    private ProgressBar mProgBar;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_intro);
+        binding = ActivityIntroBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
@@ -79,12 +81,10 @@ public class IntroActivity extends BaseActivity  {
         // Retrieve resources.
         defaultDistrict = getResources().getStringArray(R.array.default_district);
 
-        mProgBar = findViewById(R.id.pb_intro);
         // On clicking the start button, fork the process into the first-time launching or the regular
         // process depending upon whether the Firebase anonymous authentication is registered.
-        ImageButton btnStart = findViewById(R.id.btn_start);
-        btnStart.setOnClickListener(view -> {
-            mProgBar.setVisibility(View.VISIBLE);
+        binding.btnStart.setOnClickListener(view -> {
+            binding.pbIntro.setVisibility(View.VISIBLE);
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
@@ -147,7 +147,7 @@ public class IntroActivity extends BaseActivity  {
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
                     try {
                         if (isComplete) {
-                            mProgBar.setVisibility(View.INVISIBLE);
+                            binding.pbIntro.setVisibility(View.INVISIBLE);
                             regularInitProcess();
                         } else throw new FileNotFoundException();
                     } catch(FileNotFoundException e) { e.printStackTrace();}
@@ -162,14 +162,13 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-        mProgBar.setVisibility(View.VISIBLE);
+        binding.pbIntro.setVisibility(View.VISIBLE);
         // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
         // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().
         if(checkPriceUpdate()) {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
-            log.i("District Code: %s", distCode);
 
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
@@ -180,15 +179,15 @@ public class IntroActivity extends BaseActivity  {
                 // SharedPreferences to check whether the price should be updated for the next initiation.
                 opinetModel.distPriceComplete().observe(this, isDone -> {
                     mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-                    startActivity(new Intent(this, MainActivity2.class));
-                    mProgBar.setVisibility(View.GONE);
+                    startActivity(new Intent(this, MainActivity.class));
+                    binding.pbIntro.setVisibility(View.GONE);
                     finish();
                 });
             });
 
         } else {
-            startActivity(new Intent(this, MainActivity2.class));
-            mProgBar.setVisibility(View.GONE);
+            startActivity(new Intent(this, MainActivity.class));
+            binding.pbIntro.setVisibility(View.GONE);
             finish();
         }
     }

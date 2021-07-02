@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -11,6 +12,7 @@ import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
+import com.silverback.carman.databinding.CardviewGasStationsBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
@@ -32,8 +34,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
 
     // Objects
+    private CardviewGasStationsBinding binding;
     private Context context;
-    //private DecimalFormat df;
     private List<Opinet.GasStnParcelable> stationList;
     private final OnRecyclerItemClickListener mListener;
 
@@ -45,7 +47,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     // Constructor
     public StationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
         super();
-        //df = BaseActivity.getDecimalFormatInstance();
         stationList = list;
         mListener = listener;
     }
@@ -55,10 +56,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     @Override
     public StationListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_gas_stations, parent, false);
-
-        return new StationListHolder(cardView);
+        binding = CardviewGasStationsBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        return new StationListHolder(context, binding);
     }
 
     @Override
@@ -68,7 +67,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         holder.bindToStationList(data);
 
         holder.itemView.setOnClickListener(view -> {
-            log.i("cardview position: %s, %s", position, mListener);
             if(mListener != null) mListener.onItemClicked(position);
         });
 
@@ -77,21 +75,19 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
-
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
-            log.i("payloads empty");
-
-        }else{
+        } else {
             log.i("Carwash: %s", payloads.size());
             // On receiving car wash values, set the progressbar to be View.GONE and set the message
             // to the textview.
             for(Object obj : payloads) {
-                String msg = ((boolean)obj)?context.getString(R.string.general_carwash_yes):context.getString(R.string.general_carwash_no);
-                holder.tvWashValue.setText(msg);
+                String msg = ((boolean)obj) ?
+                        context.getString(R.string.general_carwash_yes):
+                        context.getString(R.string.general_carwash_no);
+                binding.tvValueCarwash.setText(msg);
             }
         }
-
     }
 
     @Override

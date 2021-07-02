@@ -5,7 +5,9 @@ import android.content.res.TypedArray;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -43,7 +45,6 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     protected void getAttributes(Context context, AttributeSet attrs) {
-
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setHasFixedSize(true);
         setLayoutManager(layoutManager);
@@ -53,6 +54,7 @@ public class StationRecyclerView extends RecyclerView {
             mPBResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
             mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
             mFabResId = typedArray.getResourceId(R.styleable.StationRecyclerView_fab, -3);
+            log.i("custom view:%s %s %s", mPBResId, mTextViewResId, mFabResId);
         } finally {
             typedArray.recycle();
         }
@@ -94,10 +96,10 @@ public class StationRecyclerView extends RecyclerView {
         View localView = mThisView.get();
 
         if(localView != null) {
-            ((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
-            ((View)getParent()).findViewById(mTextViewResId).setVisibility(View.GONE);
-            ((View)getParent()).findViewById(mFabResId).setVisibility(View.VISIBLE);
-
+            log.i("localview");
+            //((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
+            //((View)getParent()).findViewById(mTextViewResId).setVisibility(View.GONE);
+            //((View)getParent()).findViewById(mFabResId).setVisibility(View.VISIBLE);
             localView.setVisibility(View.VISIBLE);
         }
     }
