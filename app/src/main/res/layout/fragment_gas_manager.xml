@@ -260,7 +260,7 @@
         android:layout_height="21dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
-        android:labelFor="@id/tv_carwash_payment"
+        android:labelFor="@id/tv_carwash"
         android:minWidth="80dp"
         android:text="@string/gas_label_expense_wash"
         android:textSize="@dimen/largeText"
@@ -269,7 +269,7 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_extra" />
 
     <TextView
-        android:id="@+id/tv_carwash_payment"
+        android:id="@+id/tv_carwash"
         android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -289,9 +289,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/unit_won"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_carwash_payment"
-        app:layout_constraintStart_toEndOf="@+id/tv_carwash_payment"
-        app:layout_constraintTop_toTopOf="@+id/tv_carwash_payment" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_carwash"
+        app:layout_constraintStart_toEndOf="@+id/tv_carwash"
+        app:layout_constraintTop_toTopOf="@+id/tv_carwash" />
 
     <TextView
         android:id="@+id/tv_label_extra"

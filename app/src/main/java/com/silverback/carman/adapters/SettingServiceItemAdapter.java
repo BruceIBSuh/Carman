@@ -203,7 +203,7 @@ public class SettingServiceItemAdapter
         SettingServiceItemHolder(View v) {
             super(v);
             tvNumber = v.findViewById(R.id.tv_number);
-            tvItemName = v.findViewById(R.id.tv_service_item);
+            tvItemName = v.findViewById(R.id.tv_name);
             etMileage = v.findViewById(R.id.et_default_mileage);
             etMonth = v.findViewById(R.id.et_default_month);
         }

@@ -21,7 +21,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -35,7 +34,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman.BaseActivity;
-import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
@@ -234,7 +232,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         tvOdometer = localView.findViewById(R.id.tv_mileage);
         tvGasPaid = localView.findViewById(R.id.tv_gas_payment);
         tvGasLoaded = localView.findViewById(R.id.tv_gas_amount);
-        tvCarwashPaid = localView.findViewById(R.id.tv_carwash_payment);
+        tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
         tvExtraPaid = localView.findViewById(R.id.tv_extra_payment);
         etExtraExpense = localView.findViewById(R.id.et_extra_expense);
         ratingBar = localView.findViewById(R.id.ratingBar);
@@ -452,7 +450,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 initValue = tvGasPaid.getHint().toString();
                 break;
 
-            case R.id.tv_carwash_payment:
+            case R.id.tv_carwash:
                 initValue = tvCarwashPaid.getHint().toString();
                 break;
 

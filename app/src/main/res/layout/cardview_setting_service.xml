@@ -28,7 +28,7 @@
             cardview:layout_constraintBottom_toBottomOf="parent" />
 
         <TextView
-            android:id="@+id/tv_service_item"
+            android:id="@+id/tv_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="@dimen/mediumText"
@@ -48,9 +48,9 @@
             android:inputType="numberDecimal"
             android:padding="5dp"
             android:textSize="@dimen/smallText"
-            cardview:layout_constraintBottom_toBottomOf="@+id/tv_service_item"
+            cardview:layout_constraintBottom_toBottomOf="@+id/tv_name"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_unit_mileage"
-            cardview:layout_constraintTop_toTopOf="@+id/tv_service_item"
+            cardview:layout_constraintTop_toTopOf="@+id/tv_name"
             tools:ignore="AutoFill" />
 
         <TextView

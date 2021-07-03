@@ -4,8 +4,8 @@ import android.location.Location;
 import android.os.Process;
 
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman.convertgeocoords.GeoPoint;
-import com.silverback.carman.convertgeocoords.GeoTrans;
+import com.silverback.carman.coords.GeoPoint;
+import com.silverback.carman.coords.GeoTrans;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;

@@ -1,79 +1,91 @@
 package com.silverback.carman;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.widget.TextView;
+import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.silverback.carman.convertgeocoords.GeoPoint;
-import com.silverback.carman.convertgeocoords.GeoTrans;
+import com.naver.maps.geometry.LatLng;
+import com.naver.maps.geometry.Tm128;
+import com.naver.maps.map.CameraPosition;
+import com.naver.maps.map.CameraUpdate;
+import com.naver.maps.map.LocationTrackingMode;
+import com.naver.maps.map.MapFragment;
+import com.naver.maps.map.NaverMap;
+import com.naver.maps.map.NaverMapOptions;
+import com.naver.maps.map.OnMapReadyCallback;
+import com.naver.maps.map.overlay.Marker;
+import com.naver.maps.map.util.FusedLocationSource;
 import com.silverback.carman.adapters.StationCommentAdapter;
+import com.silverback.carman.databinding.ActivityStationMapBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class StationMapActivity extends BaseActivity implements OnMapReadyCallback {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
+    private static final int PERMISSION_REQUEST_CODE = 100;
+    private static final String[] PERMISSIONS = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+    };
+
 
     // Objects
-    //private ConnectNaviHelper naviHelper;
-    private double xCoord, yCoord;
-    private double longitude, latitude;
-    private RecyclerView recyclerComments;
+    private ActivityStationMapBinding binding;
+    private FirebaseFirestore firestore;
+    private FusedLocationSource fusedLocationSource;
+    private NaverMap naverMap;
     private StationCommentAdapter commentAdapter;
-
-    // UIs
-    private TextView tvName, tvAddrs, tvCarwash, tvService,tvCVS;
     private String stnName;
+    private String stnId;
 
-
-
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_station_map);
-
-        final String stnId = getIntent().getStringExtra("gasStationId");
-        log.i("Station ID: %s", stnId);
-
-        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        binding = ActivityStationMapBinding.inflate(getLayoutInflater());
+        View rootView = binding.getRoot();
+        setContentView(rootView);
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
-        Toolbar mapToolbar = findViewById(R.id.tb_map);
-        setSupportActionBar(mapToolbar);
+        setSupportActionBar(binding.tbMap);
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
-        // UIs
-        tvName = findViewById(R.id.tv_service_item);
-        tvAddrs = findViewById(R.id.tv_address);
-        tvCarwash = findViewById(R.id.tv_carwash_payment);
-        tvService = findViewById(R.id.tv_service);
-        tvCVS = findViewById(R.id.tv_cvs);
-        //FloatingActionButton fabNavi = findViewById(R.id.fab_navi);
+        stnId = getIntent().getStringExtra("gasStationId");
 
-        recyclerComments = findViewById(R.id.recycler_stn_comments);
-        recyclerComments.setLayoutManager(new LinearLayoutManager(this));
+        // Instantiate Objects
+        firestore = FirebaseFirestore.getInstance();
+        fusedLocationSource = new FusedLocationSource(this, PERMISSION_REQUEST_CODE);
+
+
+        // Call Naver map to MapFragment. Select alternatively either MapFragment or MapView.
+        // When using MapView instead, the activity lifecycle should be considered.
+        FragmentManager fm = getSupportFragmentManager();
+        MapFragment mapFragment = (MapFragment)fm.findFragmentById(R.id.frame_map);
+        if(mapFragment == null) {
+            NaverMapOptions options = new NaverMapOptions()
+                    .camera(new CameraPosition(new LatLng(35.1798159, 129.0750222), 8))
+                    .mapType(NaverMap.MapType.Terrain);
+            mapFragment = MapFragment.newInstance(options);
+            fm.beginTransaction().add(R.id.frame_map, mapFragment).commit();
+        }
+        mapFragment.getMapAsync(this);
+
+
+        binding.recyclerStnComments.setLayoutManager(new LinearLayoutManager(this));
         //recyclerComments.setItemViewCacheSize(20);
         //recyclerComments.setDrawingCacheEnabled(true);
 
@@ -94,11 +106,13 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
          * To handle success and failure in the same listener, attach an OnCompleteListener.
          */
         // Retrive the gas station data from Firestore with the station id.
+        /*
         firestore.collection("gas_station").document(stnId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
                     // Translate the boolean values to Strings.
+
                     String carwash = (snapshot.getBoolean("carwash"))?
                             getString(R.string.map_value_ok):getString(R.string.map_value_not_ok);
                     String service = (snapshot.getBoolean("service"))?
@@ -108,11 +122,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
                     // Set the String values to TextViews
                     stnName = snapshot.getString("stn_name");
-                    tvName.setText(snapshot.getString("stn_name"));
-                    tvAddrs.setText(String.format("%s%15s", snapshot.getString("new_addrs"), snapshot.getString("phone")));
-                    tvCarwash.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), carwash));
-                    tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), service));
-                    tvCVS.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), cvs));
+                    binding.tvServiceItem.setText(snapshot.getString("stn_name"));
+                    binding.tvAddress.setText(String.format("%s%15s", snapshot.getString("new_addrs"), snapshot.getString("phone")));
+                    //binding.tvCarwashPayment.setText(String.format("%s%5s", getString(R.string.map_cardview_wash), carwash));
+                    //binding.tvService.setText(String.format("%s%5s", getString(R.string.map_cardview_service), service));
+                    //binding.tvCvs.setText(String.format("%s%5s", getString(R.string.map_cardview_cvs), cvs));
 
                     xCoord = snapshot.getDouble("katec_x");
                     yCoord = snapshot.getDouble("katec_y");
@@ -135,10 +149,13 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                 log.e("Read the FireStore failed: %s", task.getException());
             }
 
+
         });
+        */
 
         // Retrive comments on the gas station from "comments" collection which is contained in
         // a station document.
+        /*
         firestore.collection("gas_eval").document(stnId).collection("comments")
                 .orderBy("timestamp", Query.Direction.DESCENDING).get()
                 .addOnCompleteListener(task -> {
@@ -149,7 +166,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                         }
 
                         commentAdapter = new StationCommentAdapter(snapshotList);
-                        recyclerComments.setAdapter(commentAdapter);
+                        binding.recyclerStnComments.setAdapter(commentAdapter);
                     }
                 }).addOnFailureListener(e -> {});
         /*
@@ -192,6 +209,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+
+
+    /*
     @Override
     public void onMapReady(GoogleMap googleMap) {
 
@@ -213,6 +233,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         googleMap.moveCamera(cameraUpdate);
         googleMap.animateCamera(cameraUpdate);
     }
+     */
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -224,5 +245,75 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         return super.onOptionsItemSelected(item);
     }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    public void onMapReady(@NonNull NaverMap naverMap) {
+        this.naverMap = naverMap;
+        naverMap.setMapType(NaverMap.MapType.Navi);
+        naverMap.setLocationSource(fusedLocationSource);
+        ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_REQUEST_CODE);
+
+        DocumentReference docRef = firestore.collection("gas_station").document(stnId);
+        docRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if(document.exists()) {
+                    double x = document.getDouble("katec_x");
+                    double y = document.getDouble("katec_y");
+                    displayMap(x, y);
+
+                    boolean wash = document.getBoolean("carwash");
+                    log.i("car wash: %s", wash);
+                    //dispStationInfo(document);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // request code와 권한획득 여부 확인
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
+            }
+        }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void dispStationInfo(DocumentSnapshot data) throws NullPointerException {
+        binding.tvName.setText(data.get("stn_name", String.class));
+        binding.tvAddress.setText(data.get("new_addrs", String.class));
+
+        boolean isWash = (boolean)data.get("carwash");
+        boolean isCvs = (boolean)data.get("cvs");
+        boolean isSvc = (boolean)data.get("service");
+        log.i("boolean values:%s %s %s", isWash, isCvs, isSvc);
+        String wash = (isWash)? getString(R.string.map_value_ok):getString(R.string.map_value_not_ok);
+        String cvs = (isCvs)? getString(R.string.map_value_yes):getString(R.string.map_value_no);
+        String svc = (isSvc)? getString(R.string.map_value_yes):getString(R.string.map_value_no);
+
+        binding.tvCarwash.setText(wash);
+        binding.tvCvs.setText(cvs);
+        binding.tvService.setText(svc);
+    }
+
+    private void displayMap(double x, double y) {
+        Tm128 tm128 = new Tm128(x, y);
+        LatLng coords = tm128.toLatLng();
+
+        CameraUpdate cameraUpdate = CameraUpdate.scrollAndZoomTo(coords, 12);
+        naverMap.moveCamera(cameraUpdate);
+
+        Marker marker = new Marker();
+        marker.setPosition(coords);
+        marker.setMap(naverMap);
+    }
+
+
 
 }

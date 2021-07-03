@@ -225,7 +225,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             super(view);
 
             layout = view.findViewById(R.id.constraint_stmts);
-            tvItemName = view.findViewById(R.id.tv_service_item);
+            tvItemName = view.findViewById(R.id.tv_name);
             tvLastService = view.findViewById(R.id.tv_last_service);
             tvItemCost = view.findViewById(R.id.tv_value_cost);
             tvItemMemo = view.findViewById(R.id.tv_item_info);

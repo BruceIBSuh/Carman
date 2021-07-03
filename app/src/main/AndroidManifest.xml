@@ -108,12 +108,18 @@
              sign the APK for publishing.
              You can define the keys for the debug and release targets in src/debug/ and src/release/.
         -->
+        <!--
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
+            android:value="${MAPS_API_KEY}" />
+
         <meta-data
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_app_key" />
+        -->
+        <meta-data
+            android:name="com.naver.maps.map.CLIENT_ID"
+            android:value="ortunjkmiq" />
         <!--
         <provider android:name=".database.DataProvider"
             android:authorities="com.silverback.carman2.models.provider"
@@ -121,6 +127,7 @@
             android:grantUriPermissions="true"
             android:permission="true" />
         -->
+        <!--
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.silverback.carman.fileprovider"
@@ -130,6 +137,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+        -->
     </application>
 
 </manifest>

@@ -1,1 +1,1 @@
-include ':app', ':geoconverter';
+include ':app';

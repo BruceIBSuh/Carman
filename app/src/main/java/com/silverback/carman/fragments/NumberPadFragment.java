@@ -113,7 +113,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_liter));
                 break;
 
-            case R.id.tv_carwash_payment:
+            case R.id.tv_carwash:
                 itemLabel = getString(R.string.gas_label_expense_wash);
                 isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
                 break;

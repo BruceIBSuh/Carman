@@ -6,7 +6,7 @@
     tools:showIn="@layout/activity_main"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="2dp">
+    android:padding="8dp">
 
     <View
         android:id="@+id/view2"

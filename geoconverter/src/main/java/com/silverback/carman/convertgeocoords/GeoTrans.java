@@ -15,23 +15,23 @@ public class GeoTrans {
 	public static final int TM=2;
 	public static final int GRS80=3;
 	
-	private static double[] m_Ind = new double[3];
-	private static double[] m_Es = new double[3];
-	private static double[] m_Esp = new double[3];
-	private static double[] src_m = new double[3];
-	private static double[] dst_m = new double[3];
+	private static final double[] m_Ind = new double[3];
+	private static final double[] m_Es = new double[3];
+	private static final double[] m_Esp = new double[3];
+	private static final double[] src_m = new double[3];
+	private static final double[] dst_m = new double[3];
 
-	private static double EPSLN = 0.0000000001;
-	private static double[] m_arMajor = new double[3];
-	private static double[] m_arMinor = new double[3];
+	private static final double EPSLN = 0.0000000001;
+	private static final double[] m_arMajor = new double[3];
+	private static final double[] m_arMinor = new double[3];
 
-	private static double[] m_arScaleFactor = new double[3];
-	private static double[] m_arLonCenter = new double[3];
-	private static double[] m_arLatCenter = new double[3];
-	private static double[] m_arFalseNorthing = new double[3];
-	private static double[] m_arFalseEasting = new double[3];
+	private static final double[] m_arScaleFactor = new double[3];
+	private static final double[] m_arLonCenter = new double[3];
+	private static final double[] m_arLatCenter = new double[3];
+	private static final double[] m_arFalseNorthing = new double[3];
+	private static final double[] m_arFalseEasting = new double[3];
 	
-	private static double[] datum_params = new double[3];
+	private static final double[] datum_params = new double[3];
 	
 	static {
 		m_arScaleFactor[GEO] = 1;
@@ -161,7 +161,6 @@ public class GeoTrans {
 	
 	public static void geo2tm(int dsttype, GeoPoint in_pt, GeoPoint out_pt) {
 		double x, y;
-		
 		transform(GEO, dsttype, in_pt);
 		double delta_lon = in_pt.x - m_arLonCenter[dsttype];
 		double sin_phi = Math.sin(in_pt.y);

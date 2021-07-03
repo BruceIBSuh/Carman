@@ -19,7 +19,7 @@
             cardview:layout_dodgeInsetEdges="top">
 
             <TextView
-                android:id="@+id/tv_service_item"
+                android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minWidth="100dp"
@@ -33,16 +33,16 @@
                 android:layout_marginStart="24dp"
                 android:textSize="@dimen/extraSmallText"
                 cardview:layout_constraintEnd_toStartOf="@+id/chkbox"
-                cardview:layout_constraintBottom_toBottomOf="@+id/tv_service_item"
-                cardview:layout_constraintTop_toTopOf="@+id/tv_service_item" />
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_name"
+                cardview:layout_constraintTop_toTopOf="@+id/tv_name" />
 
             <CheckBox
                 android:id="@+id/chkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                cardview:layout_constraintBottom_toBottomOf="@+id/tv_service_item"
+                cardview:layout_constraintBottom_toBottomOf="@+id/tv_name"
                 cardview:layout_constraintEnd_toEndOf="parent"
-                cardview:layout_constraintTop_toTopOf="@+id/tv_service_item" />
+                cardview:layout_constraintTop_toTopOf="@+id/tv_name" />
 
             <TextView
                 android:id="@+id/tv_label_period"
@@ -51,8 +51,8 @@
                 android:layout_marginTop="5dp"
                 android:text="@string/svc_label_period"
                 android:textSize="@dimen/extraSmallText"
-                cardview:layout_constraintStart_toStartOf="@+id/tv_service_item"
-                cardview:layout_constraintTop_toBottomOf="@+id/tv_service_item" />
+                cardview:layout_constraintStart_toStartOf="@+id/tv_name"
+                cardview:layout_constraintTop_toBottomOf="@+id/tv_name" />
 
             <TextView
                 android:id="@+id/tv_max_period"
