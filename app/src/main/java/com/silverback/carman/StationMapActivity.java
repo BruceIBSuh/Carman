@@ -262,9 +262,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                     double x = document.getDouble("katec_x");
                     double y = document.getDouble("katec_y");
                     displayMap(x, y);
-
-                    boolean wash = document.getBoolean("carwash");
-                    log.i("car wash: %s", wash);
+                    //BUG!!!boolean java.lang.Boolean.booleanValue()' on a null object reference
+                    //boolean wash = document.getBoolean("carwash");
+                    //log.i("car wash: %s", wash);
                     //dispStationInfo(document);
                 }
             }

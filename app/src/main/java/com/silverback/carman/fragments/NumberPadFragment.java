@@ -34,8 +34,8 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     private static final LoggingHelper log = LoggingHelperFactory.create(NumberPadFragment.class);
 
     // Constants
-    private String[] arrNumber = { "100", "50", "10", "1"};
-    private String[] arrCurrency = { "5만", "1만", "5천", "1천" };
+    private final String[] arrNumber = { "100", "50", "10", "1"};
+    private final String[] arrCurrency = { "5만", "1만", "5천", "1천" };
 
     // Objects
     private FragmentSharedModel fragmentModel;

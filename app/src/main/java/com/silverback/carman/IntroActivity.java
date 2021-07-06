@@ -55,7 +55,6 @@ public class IntroActivity extends BaseActivity  {
     private static final LoggingHelper log = LoggingHelperFactory.create(IntroActivity.class);
 
     // Objects
-
     private ActivityIntroBinding binding;
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;

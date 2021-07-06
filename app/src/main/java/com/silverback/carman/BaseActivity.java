@@ -38,6 +38,7 @@ import androidx.work.WorkRequest;
 
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman.backgrounds.NetworkStateWorker;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 
 import org.json.JSONArray;
@@ -65,6 +66,7 @@ public class BaseActivity extends AppCompatActivity {
     //private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
     // Objects
+    protected ThreadManager2 thread;
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
@@ -82,6 +84,9 @@ public class BaseActivity extends AppCompatActivity {
         if(Build.VERSION.SDK_INT != Build.VERSION_CODES.O_MR1)
             super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+
+        // Create the work thread which will last until the app ends.
+        thread = ThreadManager2.getInstance();
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
