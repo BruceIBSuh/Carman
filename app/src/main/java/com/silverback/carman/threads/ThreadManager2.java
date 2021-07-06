@@ -109,7 +109,7 @@ public class ThreadManager2 {
         }
     }
 
-    /*
+
     @SuppressWarnings("all")
     public static synchronized void cancelAllThreads() {
 
@@ -135,7 +135,7 @@ public class ThreadManager2 {
             }
         }
     }
-    */
+
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
         if(locationTask == null) locationTask = new LocationTask(context);

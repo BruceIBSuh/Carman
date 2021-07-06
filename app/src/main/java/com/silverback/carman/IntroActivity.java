@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityIntroBinding;
@@ -83,7 +84,7 @@ public class IntroActivity extends BaseActivity  {
         // On clicking the start button, fork the process into the first-time launching or the regular
         // process depending upon whether the Firebase anonymous authentication is registered.
         binding.btnStart.setOnClickListener(view -> {
-            binding.pbIntro.setVisibility(View.VISIBLE);
+            binding.progbarIntro.setVisibility(View.VISIBLE);
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
@@ -108,9 +109,12 @@ public class IntroActivity extends BaseActivity  {
     // resources and saved in SharedPreferences should be refactored to download directly from the server.
     @SuppressWarnings("ConstantConditions")
     private void firstInitProcess() {
+        log.i("first running authentication");
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
+                log.i("current user:%s", mAuth.getUid());
                 Map<String, Object> userData = new HashMap<>();
+                userData.put("user_id", mAuth.getUid());
                 userData.put("user_name", null);
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
@@ -146,7 +150,7 @@ public class IntroActivity extends BaseActivity  {
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
                     try {
                         if (isComplete) {
-                            binding.pbIntro.setVisibility(View.INVISIBLE);
+                            binding.progbarIntro.setVisibility(View.INVISIBLE);
                             regularInitProcess();
                         } else throw new FileNotFoundException();
                     } catch(FileNotFoundException e) { e.printStackTrace();}
@@ -161,7 +165,7 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-        binding.pbIntro.setVisibility(View.VISIBLE);
+        binding.progbarIntro.setVisibility(View.VISIBLE);
         // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
         // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().
         if(checkPriceUpdate()) {
@@ -179,14 +183,14 @@ public class IntroActivity extends BaseActivity  {
                 opinetModel.distPriceComplete().observe(this, isDone -> {
                     mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                     startActivity(new Intent(this, MainActivity.class));
-                    binding.pbIntro.setVisibility(View.GONE);
+                    binding.progbarIntro.setVisibility(View.GONE);
                     finish();
                 });
             });
 
         } else {
             startActivity(new Intent(this, MainActivity.class));
-            binding.pbIntro.setVisibility(View.GONE);
+            binding.progbarIntro.setVisibility(View.GONE);
             finish();
         }
     }

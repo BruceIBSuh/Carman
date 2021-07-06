@@ -22,7 +22,7 @@
             app:layout_scrollInterpolator="@android:anim/decelerate_interpolator"
             app:toolbarId="@+id/toolbar" >
             <include
-                android:id="@+id/main_header"
+                android:id="@+id/main_top_frame"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginTop="?attr/actionBarSize"

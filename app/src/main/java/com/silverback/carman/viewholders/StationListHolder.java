@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.CardviewGasStationsBinding;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
 
 import java.text.DecimalFormat;
@@ -15,7 +17,7 @@ import java.text.DecimalFormat;
 public class StationListHolder extends RecyclerView.ViewHolder {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(StationListHolder.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationListHolder.class);
 
     // Objects
     private final CardviewGasStationsBinding binding;
@@ -44,16 +46,18 @@ public class StationListHolder extends RecyclerView.ViewHolder {
 
         binding.imgLogo.setImageResource(resLogo);
         binding.tvStationName.setText(data.getStnName());
-        binding.tvValuePrice.setText(String.format("%s%2s", df.format(data.getStnPrice()),
-                context.getString(R.string.unit_won)));
-        binding.tvValueDistance.setText(String.format("%s%4s", df.format(data.getStnDistance()),
-                context.getString(R.string.unit_meter)));
+        binding.tvValuePrice.setText(String.format(
+                "%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
+        binding.tvValueDistance.setText(String.format(
+                "%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
 
-        String strCarwash = (data.getIsWash())?
-                context.getString(R.string.general_carwash_yes):
+        String strCarwash = (data.getIsWash())? context.getString(R.string.general_carwash_yes):
                 context.getString(R.string.general_carwash_no);
         binding.tvValueCarwash.setText(strCarwash);
+    }
 
+    public TextView getCarWashView() {
+        return binding.tvValueCarwash;
     }
 
     private static int getGasStationImage(String name) {

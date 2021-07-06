@@ -62,7 +62,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull StationListHolder holder, int position) {
-
         final Opinet.GasStnParcelable data = stationList.get(position);
         holder.bindToStationList(data);
 
@@ -74,7 +73,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
 
     @Override
-    public void onBindViewHolder(@NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(
+            @NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
@@ -85,7 +85,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
                 String msg = ((boolean)obj) ?
                         context.getString(R.string.general_carwash_yes):
                         context.getString(R.string.general_carwash_no);
-                binding.tvValueCarwash.setText(msg);
+                // Update the car wash value.
+                holder.getCarWashView().setText(msg);
             }
         }
     }
@@ -101,7 +102,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
      */
     @SuppressWarnings("unchecked")
     public List<Opinet.GasStnParcelable> sortStationList(boolean bStationOrder) {
-
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
         Uri uri = Uri.fromFile(file);
 
