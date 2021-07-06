@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.LocationViewModel;
+import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.concurrent.BlockingQueue;
@@ -37,10 +38,12 @@ public class ThreadManager2 {
 
     // Objects
     private static final ThreadManager2 sInstance; //Singleton instance of the class
-    private final BlockingQueue<Runnable> mDownloadWorkQueue;
-    private final ThreadPoolExecutor mDownloadExecutor;
+    private final BlockingQueue<Runnable> mWorkQueue;
+    private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
+    private static DistCodeDownloadTask distCodeTask;
+    private static GasPriceTask gasPriceTask;
     private static LocationTask locationTask;
     private static StationListTask stnListTask;
 
@@ -53,13 +56,13 @@ public class ThreadManager2 {
 
     // Constructor
     private ThreadManager2() {
-        mDownloadWorkQueue = new LinkedBlockingQueue<>();
-        mDownloadExecutor = new ThreadPoolExecutor(
+        mWorkQueue = new LinkedBlockingQueue<>();
+        threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
                 MAXIMUM_POOL_SIZE,
                 KEEP_ALIVE_TIME,
                 KEEP_ALIVE_TIME_UNIT,
-                mDownloadWorkQueue
+                mWorkQueue
         );
 
         mMainHandler = new Handler(Looper.getMainLooper()) {
@@ -91,14 +94,14 @@ public class ThreadManager2 {
             // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
             // from the Opinet and update other fields including the carwash field in Firestore.
             case DOWNLOAD_NEAR_STATIONS:
-                mDownloadExecutor.execute(((StationListTask)task).getFireStoreRunnable());
+                threadPoolExecutor.execute(((StationListTask)task).getFireStoreRunnable());
                 //msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                mDownloadExecutor.execute(((StationListTask) task).setFireStoreRunnalbe());
+                threadPoolExecutor.execute(((StationListTask) task).setFireStoreRunnalbe());
                 //msg.sendToTarget();
                 break;
 
@@ -110,14 +113,56 @@ public class ThreadManager2 {
     }
 
 
+    // Download the district code from Opinet, which is fulfilled only once when the app runs first
+    // time.
+    public static DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+        if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
+        sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
+        return distCodeTask;
+    }
+
+    // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
+    // file location.
+    public static GasPriceTask startGasPriceTask(
+            Context context, OpinetViewModel model, String distCode, String stnId) {
+
+        if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
+        gasPriceTask.initPriceTask(model, distCode, stnId);
+
+        sInstance.threadPoolExecutor.execute(gasPriceTask.getAvgPriceRunnable());
+        sInstance.threadPoolExecutor.execute(gasPriceTask.getSidoPriceRunnable());
+        sInstance.threadPoolExecutor.execute(gasPriceTask.getSigunPriceRunnable());
+        sInstance.threadPoolExecutor.execute(gasPriceTask.getStationPriceRunnable());
+
+        return gasPriceTask;
+    }
+
+    public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
+        if(locationTask == null) locationTask = new LocationTask(context);
+        locationTask.initLocationTask(model);
+        sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
+        return locationTask;
+    }
+
+
+    // Download stations around the current location from Opinet given the current location fetched
+    // by LocationTask and defaut params transferred from OpinetStationListFragment
+    public static StationListTask startStationListTask(
+            StationListViewModel model, Location location, String[] params) {
+        if(stnListTask == null) stnListTask = new StationListTask();
+        stnListTask.initStationTask(model, location, params);
+        sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
+        return stnListTask;
+    }
+
     @SuppressWarnings("all")
     public static synchronized void cancelAllThreads() {
 
-        ThreadTask[] taskDownloadArray = new ThreadTask[sInstance.mDownloadWorkQueue.size()];
+        ThreadTask[] taskDownloadArray = new ThreadTask[sInstance.mWorkQueue.size()];
         //ThreadTask[] taskDecodeArray = new ThreadTask[sInstance.mDecodeWorkQueue.size()];
 
         // Populates the array with the task objects in the queue
-        sInstance.mDownloadWorkQueue.toArray(taskDownloadArray);
+        sInstance.mWorkQueue.toArray(taskDownloadArray);
         //sInstance.mDecodeWorkQueue.toArray(taskDecodeArray);
 
         // Stores the array length in order to iterate over the array
@@ -134,25 +179,6 @@ public class ThreadManager2 {
                 thread.interrupt();
             }
         }
-    }
-
-
-    public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
-        if(locationTask == null) locationTask = new LocationTask(context);
-        locationTask.initLocationTask(model);
-        sInstance.mDownloadExecutor.execute(locationTask.getLocationRunnable());
-        return locationTask;
-    }
-
-
-    // Download stations around the current location from Opinet given the current location fetched
-    // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public static StationListTask startStationListTask(
-            StationListViewModel model, Location location, String[] params) {
-        if(stnListTask == null) stnListTask = new StationListTask();
-        stnListTask.initStationTask(model, location, params);
-        sInstance.mDownloadExecutor.execute(stnListTask.getStationListRunnable());
-        return stnListTask;
     }
 
     private void recycleTask(ThreadTask task) {

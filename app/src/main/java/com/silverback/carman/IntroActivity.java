@@ -20,6 +20,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.DistCodeDownloadTask;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
@@ -84,7 +85,7 @@ public class IntroActivity extends BaseActivity  {
         // On clicking the start button, fork the process into the first-time launching or the regular
         // process depending upon whether the Firebase anonymous authentication is registered.
         binding.btnStart.setOnClickListener(view -> {
-            binding.progbarIntro.setVisibility(View.VISIBLE);
+            binding.pbIntro.setVisibility(View.VISIBLE);
             if(mAuth.getCurrentUser() == null) firstInitProcess();
             else regularInitProcess();
         });
@@ -109,7 +110,6 @@ public class IntroActivity extends BaseActivity  {
     // resources and saved in SharedPreferences should be refactored to download directly from the server.
     @SuppressWarnings("ConstantConditions")
     private void firstInitProcess() {
-        log.i("first running authentication");
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 log.i("current user:%s", mAuth.getUid());
@@ -144,13 +144,13 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
-                distCodeTask = ThreadManager.saveDistrictCodeTask(this, opinetModel);
+                distCodeTask = ThreadManager2.saveDistrictCodeTask(this, opinetModel);
                 // Notified of having the district codes(sigun codes) complete, which was running in the
                 // background by DistrictCodeTask only during firstInitProcess().
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
                     try {
                         if (isComplete) {
-                            binding.progbarIntro.setVisibility(View.INVISIBLE);
+                            binding.pbIntro.setVisibility(View.INVISIBLE);
                             regularInitProcess();
                         } else throw new FileNotFoundException();
                     } catch(FileNotFoundException e) { e.printStackTrace();}
@@ -165,7 +165,7 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-        binding.progbarIntro.setVisibility(View.VISIBLE);
+        binding.pbIntro.setVisibility(View.VISIBLE);
         // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
         // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().
         if(checkPriceUpdate()) {
@@ -176,21 +176,21 @@ public class IntroActivity extends BaseActivity  {
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
                 //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
-                gasPriceTask = ThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
+                gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
                 // SharedPreferences to check whether the price should be updated for the next initiation.
                 opinetModel.distPriceComplete().observe(this, isDone -> {
                     mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                     startActivity(new Intent(this, MainActivity.class));
-                    binding.progbarIntro.setVisibility(View.GONE);
+                    binding.pbIntro.setVisibility(View.GONE);
                     finish();
                 });
             });
 
         } else {
             startActivity(new Intent(this, MainActivity.class));
-            binding.progbarIntro.setVisibility(View.GONE);
+            binding.pbIntro.setVisibility(View.GONE);
             finish();
         }
     }

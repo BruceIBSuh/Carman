@@ -113,8 +113,8 @@ public class BaseActivity extends AppCompatActivity {
 
 
     // Runtime Permission using RequestPermission contract.
-    private final ActivityResultLauncher<String> requestPermissionLaucher = registerForActivityResult(
-            new ActivityResultContracts.RequestPermission(), isGranted -> {
+    private final ActivityResultLauncher<String> requestPermissionLaucher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if(isGranted) log.i("Granted");
                 else log.i("Denied");
             });
@@ -128,8 +128,6 @@ public class BaseActivity extends AppCompatActivity {
                     .show();
         } else requestPermissionLaucher.launch(perm);
     }
-
-
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
@@ -156,7 +154,6 @@ public class BaseActivity extends AppCompatActivity {
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
     protected final String[] getDefaultParams() {
-
         String[] defaultParams = new String[3];
         defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
         defaultParams[1] = mSettings.getString(Constants.SEARCHING_RADIUS, "2500");
@@ -216,8 +213,6 @@ public class BaseActivity extends AppCompatActivity {
         long lastUpdate = mSettings.getLong(Constants.OPINET_LAST_UPDATE, 0L);
         return (currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;
     }
-
-
 
     // Reference method to get a debug Hashkey for Kakao
     // or by using Terminal,
@@ -289,9 +284,7 @@ public class BaseActivity extends AppCompatActivity {
 
     // Match the gas station with its logo image by the station code.
     public static int getGasStationImage(String name) {
-
         int resId = -1;
-
         switch(name) {
             case "SKE": resId = R.drawable.logo_sk; break;
             case "GSC": resId = R.drawable.logo_gs; break;
@@ -360,7 +353,5 @@ public class BaseActivity extends AppCompatActivity {
     public SharedPreferences getSharedPreferernces() {
         return mSettings;
     }
-
-
 
 }

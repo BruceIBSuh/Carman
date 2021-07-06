@@ -8,7 +8,7 @@
     android:background="@color/primaryColor"
     tools:context=".IntroActivity">
     <ProgressBar
-        android:id="@+id/progbar_intro"
+        android:id="@+id/pb_intro"
         android:visibility="invisible"
         android:indeterminateDrawable="@drawable/layerlist_progbar_start"
         android:layout_width="100dp"

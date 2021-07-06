@@ -38,8 +38,8 @@ public class DistCodeDownloadRunnable implements Runnable {
     private static final String OPINET_AREA = OPINET + "&area=";
 
     // Objects
-    private Context context;
-    private OpinetDistCodeMethods mTask;
+    private final Context context;
+    private final OpinetDistCodeMethods mTask;
 
 
     // Interface
