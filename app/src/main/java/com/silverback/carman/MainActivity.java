@@ -1,5 +1,6 @@
 package com.silverback.carman;
 
+import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.location.Location;
@@ -16,6 +17,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -25,7 +27,9 @@ import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
+import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
+import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
@@ -43,11 +47,13 @@ import com.silverback.carman.views.OpinetSidoPriceView;
 import com.silverback.carman.views.OpinetSigunPriceView;
 import com.silverback.carman.views.StationRecyclerView;
 
+import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
+        FinishAppDialogFragment.NoticeDialogListener,
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -90,20 +96,19 @@ public class MainActivity extends BaseActivity implements
 
         // Price info
         setSpinnerToDefaultFuel();
-        binding.mainHeader.avgPriceView.addPriceView(defaultFuel);
+        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);
 
         // Set the fuel-selecting spinner
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
                 this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
-        binding.mainHeader.spinnerGas.setAdapter(spinnerAdapter);
-
-        binding.mainHeader.spinnerGas.setOnItemSelectedListener(this);
+        binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
+        binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
 
         // ViewPager2
         pricePagerAdapter = new PricePagerAdapter(this);
         pricePagerAdapter.setFuelCode(defaultFuel);
-        binding.mainHeader.viewpagerPrice.setAdapter(pricePagerAdapter);
+        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
 
         // MainContent RecyclerView
         MainContentAdapter adapter = new MainContentAdapter();
@@ -120,14 +125,16 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.imgbtnStation.setOnClickListener(view -> {
-            if(!isStationOn) locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-            else {
-                binding.stationRecyclerView.setVisibility(View.GONE);
-                binding.recyclerContents.setVisibility(View.VISIBLE);
-                isStationOn = !isStationOn;
-            }
+            // Location permission check
+            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+                if(!isStationOn) locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+                else {
+                    binding.stationRecyclerView.setVisibility(View.GONE);
+                    binding.recyclerContents.setVisibility(View.VISIBLE);
+                    isStationOn = !isStationOn;
+                }
+            });
         });
-
 
         locationModel.getLocation().observe(this, location -> {
             if(location == null) return;
@@ -158,12 +165,10 @@ public class MainActivity extends BaseActivity implements
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
                 mAdapter = new StationListAdapter(mStationList, this);
-                binding.stationRecyclerView.setAdapter(mAdapter);
-                binding.stationRecyclerView.showStationListRecyclerView();
-
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
-
+                binding.stationRecyclerView.setAdapter(mAdapter);
+                binding.stationRecyclerView.showStationListRecyclerView();
                 isStationOn = !isStationOn;
 
             } else {
@@ -201,7 +206,7 @@ public class MainActivity extends BaseActivity implements
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
 
-        String avgPrice = String.valueOf(binding.mainHeader.avgPriceView.getAvgGasPrice());
+        String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
         log.i("avgPrice:%s", avgPrice);
         binding.tvCollapsedAvgPrice.setText(avgPrice);
 
@@ -272,7 +277,8 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onBackPressed() {
-
+        FinishAppDialogFragment endDialog = new FinishAppDialogFragment();
+        endDialog.show(getSupportFragmentManager(), "endDialog");
     }
 
     // The following 2 methods are the fuel spinner event handler.
@@ -291,11 +297,11 @@ public class MainActivity extends BaseActivity implements
             log.i("onItemSelected:%s", defaultFuel);
             // Retrives the price data respectively saved in the cache directory with a fuel selected
             // by the spinner.
-            binding.mainHeader.avgPriceView.addPriceView(defaultFuel);
+            binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);
 
             // Attach the viewpager adatepr with a fuel code selected by the spinner.
             pricePagerAdapter.setFuelCode(defaultFuel);
-            binding.mainHeader.viewpagerPrice.setAdapter(pricePagerAdapter);
+            binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
 
             // Retrieve near stations based on a newly selected fuel code if the spinner selection
             // has changed. Temporarily make this not working for preventing excessive access to the
@@ -306,6 +312,26 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
+
+    // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
+    @Override
+    public void onDialogPositiveClick(DialogFragment dialog) {
+        File cacheDir = getCacheDir();
+        if(cacheDir != null && checkPriceUpdate()) {
+            for(File file : Objects.requireNonNull(cacheDir.listFiles())) {
+                file.delete();
+            }
+        }
+
+        ThreadManager2.cancelAllThreads();
+        if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
+        finishAffinity();
+    }
+
+    @Override
+    public void onDialogNegativeClick(DialogFragment dialog) {
 
     }
 
@@ -327,11 +353,12 @@ public class MainActivity extends BaseActivity implements
         defaults = getDefaultParams();
         for(int i = 0; i < code.length; i++) {
             if(code[i].matches(defaults[0])) {
-                binding.mainHeader.spinnerGas.setSelection(i);
+                binding.mainTopFrame.spinnerGas.setSelection(i);
                 defaultFuel = defaults[0];
             }
         }
     }
+
 
 }
 

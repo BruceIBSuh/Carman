@@ -140,7 +140,7 @@
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
-
+    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_navi"
         android:layout_width="wrap_content"
@@ -149,5 +149,5 @@
         android:layout_margin="5dp"
         app:layout_anchor="@+id/vg_constraint"
         app:layout_anchorGravity="end|top"/>
-
+    -->
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

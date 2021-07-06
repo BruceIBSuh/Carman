@@ -17,7 +17,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.geometry.Tm128;
-import com.naver.maps.map.CameraPosition;
 import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationTrackingMode;
 import com.naver.maps.map.MapFragment;
@@ -35,16 +34,17 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationMapActivity.class);
-    private static final int PERMISSION_REQUEST_CODE = 100;
-    private static final String[] PERMISSIONS = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-    };
+//    private static final int PERMISSION_REQUEST_CODE = 100;
+//    private static final String[] PERMISSIONS = {
+//            Manifest.permission.ACCESS_FINE_LOCATION,
+//            Manifest.permission.ACCESS_COARSE_LOCATION
+//    };
 
 
     // Objects
     private ActivityStationMapBinding binding;
     private FirebaseFirestore firestore;
+    private DocumentSnapshot document;
     private FusedLocationSource fusedLocationSource;
     private NaverMap naverMap;
     private StationCommentAdapter commentAdapter;
@@ -68,22 +68,20 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
         // Instantiate Objects
         firestore = FirebaseFirestore.getInstance();
-        fusedLocationSource = new FusedLocationSource(this, PERMISSION_REQUEST_CODE);
+        fusedLocationSource = new FusedLocationSource(this, 100);//Naver api for getting the current position
 
+        // Retrieve the station data from Firestore.
+        DocumentReference docRef = firestore.collection("gas_station").document(stnId);
+        docRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                this.document = task.getResult();
+                if(document.exists()) dispStationInfo();
+            }
+        });
 
         // Call Naver map to MapFragment. Select alternatively either MapFragment or MapView.
         // When using MapView instead, the activity lifecycle should be considered.
-        FragmentManager fm = getSupportFragmentManager();
-        MapFragment mapFragment = (MapFragment)fm.findFragmentById(R.id.frame_map);
-        if(mapFragment == null) {
-            NaverMapOptions options = new NaverMapOptions()
-                    .camera(new CameraPosition(new LatLng(35.1798159, 129.0750222), 8))
-                    .mapType(NaverMap.MapType.Terrain);
-            mapFragment = MapFragment.newInstance(options);
-            fm.beginTransaction().add(R.id.frame_map, mapFragment).commit();
-        }
-        mapFragment.getMapAsync(this);
-
+        createNaverMap();
 
         binding.recyclerStnComments.setLayoutManager(new LinearLayoutManager(this));
         //recyclerComments.setItemViewCacheSize(20);
@@ -209,8 +207,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
-
-
     /*
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -238,60 +234,49 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            log.i("onOptionsItemSelected in SettingPreferenceActivity");
             finish();
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
+//
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode,
+//                                           @NonNull String[] permissions,  @NonNull int[] grantResults) {
+//        if (fusedLocationSource.onRequestPermissionsResult(
+//                requestCode, permissions, grantResults)) {
+//            if (!fusedLocationSource.isActivated()) { // Permission denied
+//                naverMap.setLocationTrackingMode(LocationTrackingMode.None);
+//            }
+//            return;
+//        }
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//    }
+//
 
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.naverMap = naverMap;
-        naverMap.setMapType(NaverMap.MapType.Navi);
         naverMap.setLocationSource(fusedLocationSource);
-        ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_REQUEST_CODE);
-
-        DocumentReference docRef = firestore.collection("gas_station").document(stnId);
-        docRef.get().addOnCompleteListener(task -> {
-            if(task.isSuccessful()) {
-                DocumentSnapshot document = task.getResult();
-                if(document.exists()) {
-                    double x = document.getDouble("katec_x");
-                    double y = document.getDouble("katec_y");
-                    displayMap(x, y);
-
-                    boolean wash = document.getBoolean("carwash");
-                    log.i("car wash: %s", wash);
-                    //dispStationInfo(document);
-                }
-            }
+        checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+            naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
+            double x = document.getDouble("katec_x");
+            double y = document.getDouble("katec_y");
+            displayMap(x, y);
         });
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        // request code와 권한획득 여부 확인
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
-            }
-        }
-    }
 
     @SuppressWarnings("ConstantConditions")
-    private void dispStationInfo(DocumentSnapshot data) throws NullPointerException {
-        binding.tvName.setText(data.get("stn_name", String.class));
-        binding.tvAddress.setText(data.get("new_addrs", String.class));
+    private void dispStationInfo() throws NullPointerException {
+        binding.tvName.setText(document.get("stn_name", String.class));
+        binding.tvAddress.setText(document.get("new_addrs", String.class));
 
-        boolean isWash = (boolean)data.get("carwash");
-        boolean isCvs = (boolean)data.get("cvs");
-        boolean isSvc = (boolean)data.get("service");
+        boolean isWash = (boolean)document.get("carwash");
+        boolean isCvs = (boolean)document.get("cvs");
+        boolean isSvc = (boolean)document.get("service");
         log.i("boolean values:%s %s %s", isWash, isCvs, isSvc);
         String wash = (isWash)? getString(R.string.map_value_ok):getString(R.string.map_value_not_ok);
         String cvs = (isCvs)? getString(R.string.map_value_yes):getString(R.string.map_value_no);
@@ -302,15 +287,34 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         binding.tvService.setText(svc);
     }
 
-    private void displayMap(double x, double y) {
+    private void createNaverMap() {
+        FragmentManager fm = getSupportFragmentManager();
+        MapFragment mapFragment = (MapFragment)fm.findFragmentById(R.id.frame_map);
+        if(mapFragment == null) {
+            NaverMapOptions options = new NaverMapOptions()
+                    .mapType(NaverMap.MapType.Navi)
+                    .locationButtonEnabled(true)
+                    .scrollGesturesEnabled(true)
+                    .zoomGesturesEnabled(true);
+
+            mapFragment = MapFragment.newInstance(options);
+            fm.beginTransaction().add(R.id.frame_map, mapFragment).commit();
+        }
+
+        mapFragment.getMapAsync(this);
+    }
+
+    private void displayMap(double x, double y) throws NullPointerException {
         Tm128 tm128 = new Tm128(x, y);
         LatLng coords = tm128.toLatLng();
 
-        CameraUpdate cameraUpdate = CameraUpdate.scrollAndZoomTo(coords, 12);
+        CameraUpdate cameraUpdate = CameraUpdate.scrollAndZoomTo(coords, 13);
         naverMap.moveCamera(cameraUpdate);
 
         Marker marker = new Marker();
         marker.setPosition(coords);
+        marker.setWidth(50);
+        marker.setHeight(80);
         marker.setMap(naverMap);
     }
 

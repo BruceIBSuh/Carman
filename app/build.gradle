@@ -72,14 +72,17 @@ dependencies {
     //implementation 'com.android.support:design:28.0.0'
 
 
-    // Firebase. guava is required to avoid conflicts b/w Firebase and guava. not sure.
-    implementation 'com.google.firebase:firebase-auth:21.0.1'
-    implementation 'com.google.firebase:firebase-firestore:23.0.1'
-    implementation 'com.google.firebase:firebase-storage:20.0.0'
+    // Firebase Android Bom(Bill of Materials) enables you to manage all your Firebase library
+    // versions by specifying the BoM's version only.
+    implementation platform('com.google.firebase:firebase-bom:28.2.0')
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    //guava is required to avoid conflicts b/w Firebase and guava. not sure.
     implementation 'com.google.guava:guava:27.0.1-android'
 
-    // WorkManager
 
+    // WorkManager
 
     // Kakao api
     //implementation 'com.kakao.sdk:kakaonavi:1.17.0'

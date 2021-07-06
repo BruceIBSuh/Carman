@@ -20,15 +20,21 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.View;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
@@ -36,8 +42,12 @@ import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkRequest;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman.backgrounds.NetworkStateWorker;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 
 import org.json.JSONArray;
@@ -62,15 +72,21 @@ import java.util.concurrent.TimeUnit;
 public class BaseActivity extends AppCompatActivity {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
+
+    protected interface PermissionCallback {
+        void performAction();
+    }
 
     // Objects
+    protected ThreadManager2 workThread;
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
 
     // Fields
     protected boolean isNetworkConnected;
+
 
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
@@ -83,13 +99,37 @@ public class BaseActivity extends AppCompatActivity {
             super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
+        // Create the Work Thread
+        workThread = ThreadManager2.getInstance();
+
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
-        userId = getUserIdFromStorage(this);
+
+        //userId = getUserIdFromStorage(this);
 
         // Checkk if the network connectivitis ok.
         isNetworkConnected = notifyNetworkConnected(this);
     }
+
+
+    // Runtime Permission using RequestPermission contract.
+    private final ActivityResultLauncher<String> requestPermissionLaucher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if(isGranted) log.i("Granted");
+                else log.i("Denied");
+            });
+
+    protected void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
+        if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
+            callback.performAction();
+        } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+            Snackbar.make(rootView, "Location permission required", Snackbar.LENGTH_INDEFINITE)
+                    .setAction("OK", view -> requestPermissionLaucher.launch(perm))
+                    .show();
+        } else requestPermissionLaucher.launch(perm);
+    }
+
+
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
@@ -320,4 +360,7 @@ public class BaseActivity extends AppCompatActivity {
     public SharedPreferences getSharedPreferernces() {
         return mSettings;
     }
+
+
+
 }
