@@ -5,14 +5,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
-
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
@@ -20,41 +21,20 @@
             app:contentScrim="?attr/colorPrimary"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:titleEnabled="false" >
-
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/tb_map"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
-                android:elevation="3dp"
-                android:fitsSystemWindows="true"
+
                 app:layout_collapseMode="pin"
                 app:titleTextColor="#F5F5F5" />
-
             <FrameLayout
                 android:id="@+id/frame_map"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_collapseMode="pin" />
-            <!--
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/map_fragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:name="com.naver.maps.map.MapFragment"
+                android:layout_height="wrap_content"
                 app:layout_collapseMode="parallax"/>
-            -->
-            <!--
-            <fragment
-                android:id="@+id/google_map"
-                android:name="com.google.android.gms.maps.SupportMapFragment"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_collapseMode="parallax"
-                tools:context=".StationMapActivity" />
-            -->
         </com.google.android.material.appbar.CollapsingToolbarLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -62,84 +42,68 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:scrollbars="vertical"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
-        app:behavior_overlapTop="95dp" >
-
-        <LinearLayout
+        app:layout_insetEdge="bottom"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:behavior_overlapTop="100dp" >
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/vg_constraint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/vg_constraint"
-                android:layout_width="match_parent"
+            android:padding="10dp"
+            android:background="#DDB0C4DE">
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:background="#DDB0C4DE">
-
-                <TextView
-                    android:id="@+id/tv_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/tv_address"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="@dimen/smallText"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_name" />
-
-
-                <TextView
-                    android:id="@+id/tv_price_info"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_address" />
-
-                <TextView
-                    android:id="@+id/tv_carwash"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tv_price_info" />
-
-                <TextView
-                    android:id="@+id/tv_service"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    app:layout_constraintStart_toEndOf="@+id/tv_carwash"
-                    app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash"/>
-
-                <TextView
-                    android:id="@+id/tv_cvs"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    app:layout_constraintStart_toEndOf="@+id/tv_service"
-                    app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_stn_comments"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:textSize="16sp"
+                android:textStyle="bold"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_carwash"/>
-
-        </LinearLayout>
-
+                app:layout_constraintTop_toTopOf="parent" />
+            <TextView
+                android:id="@+id/tv_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/smallText"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_name" />
+            <TextView
+                android:id="@+id/tv_price_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_address" />
+            <TextView
+                android:id="@+id/tv_carwash"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_price_info" />
+            <TextView
+                android:id="@+id/tv_service"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                app:layout_constraintStart_toEndOf="@+id/tv_carwash"
+                app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash"/>
+            <TextView
+                android:id="@+id/tv_cvs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                app:layout_constraintStart_toEndOf="@+id/tv_service"
+                app:layout_constraintBaseline_toBaselineOf="@+id/tv_carwash" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_stn_comments"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#c8c8c8"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
     <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_navi"

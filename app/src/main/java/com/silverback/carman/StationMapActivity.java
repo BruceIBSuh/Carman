@@ -40,7 +40,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 //            Manifest.permission.ACCESS_COARSE_LOCATION
 //    };
 
-
     // Objects
     private ActivityStationMapBinding binding;
     private FirebaseFirestore firestore;
@@ -58,18 +57,15 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         binding = ActivityStationMapBinding.inflate(getLayoutInflater());
         View rootView = binding.getRoot();
         setContentView(rootView);
-
+        // Intent data from MainActivity
+        stnId = getIntent().getStringExtra("gasStationId");
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         setSupportActionBar(binding.tbMap);
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
-
-        stnId = getIntent().getStringExtra("gasStationId");
-
         // Instantiate Objects
         firestore = FirebaseFirestore.getInstance();
         fusedLocationSource = new FusedLocationSource(this, 100);//Naver api for getting the current position
-
         // Retrieve the station data from Firestore.
         DocumentReference docRef = firestore.collection("gas_station").document(stnId);
         docRef.get().addOnCompleteListener(task -> {
@@ -83,7 +79,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         // When using MapView instead, the activity lifecycle should be considered.
         createNaverMap();
 
-        binding.recyclerStnComments.setLayoutManager(new LinearLayoutManager(this));
+        //binding.recyclerStnComments.setLayoutManager(new LinearLayoutManager(this));
         //recyclerComments.setItemViewCacheSize(20);
         //recyclerComments.setDrawingCacheEnabled(true);
 
@@ -198,38 +194,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     }
 
-    /*
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    /*
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-
-        LatLng dest = new LatLng(latitude, longitude);
-
-        // Add a marker in Sydney and move the camera
-        googleMap.addMarker(new MarkerOptions().position(dest).title(stnName));
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(dest));
-
-        googleMap.getUiSettings().setMyLocationButtonEnabled(true);
-        try {
-            googleMap.setMyLocationEnabled(true);
-            MapsInitializer.initialize(this);
-        } catch(SecurityException e) {
-            //Log.e(LOG_TAG, "SecurityException: " + e.getMessage());
-        }
-
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(dest, 15);
-        googleMap.moveCamera(cameraUpdate);
-        googleMap.animateCamera(cameraUpdate);
-    }
-     */
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -239,20 +203,20 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         }
         return super.onOptionsItemSelected(item);
     }
-//
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode,
-//                                           @NonNull String[] permissions,  @NonNull int[] grantResults) {
-//        if (fusedLocationSource.onRequestPermissionsResult(
-//                requestCode, permissions, grantResults)) {
-//            if (!fusedLocationSource.isActivated()) { // Permission denied
-//                naverMap.setLocationTrackingMode(LocationTrackingMode.None);
-//            }
-//            return;
-//        }
-//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-//    }
-//
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,  @NonNull int[] grantResults) {
+        if (fusedLocationSource.onRequestPermissionsResult(
+                requestCode, permissions, grantResults)) {
+            if (!fusedLocationSource.isActivated()) { // Permission denied
+                naverMap.setLocationTrackingMode(LocationTrackingMode.None);
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -266,8 +230,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
             displayMap(x, y);
         });
     }
-
-
 
     @SuppressWarnings("ConstantConditions")
     private void dispStationInfo() throws NullPointerException {

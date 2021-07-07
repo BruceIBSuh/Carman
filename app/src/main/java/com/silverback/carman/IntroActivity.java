@@ -144,7 +144,7 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
-                distCodeTask = ThreadManager2.saveDistrictCodeTask(this, opinetModel);
+                distCodeTask = workerThread.saveDistrictCodeTask(this, opinetModel);
                 // Notified of having the district codes(sigun codes) complete, which was running in the
                 // background by DistrictCodeTask only during firstInitProcess().
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
@@ -176,7 +176,7 @@ public class IntroActivity extends BaseActivity  {
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
                 //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
-                gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, distCode, stnId);
+                gasPriceTask = workerThread.startGasPriceTask(this, opinetModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
                 // SharedPreferences to check whether the price should be updated for the next initiation.

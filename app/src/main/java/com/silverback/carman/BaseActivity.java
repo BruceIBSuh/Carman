@@ -79,7 +79,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // Objects
-    protected ThreadManager2 workThread;
+    protected ThreadManager2 workerThread;
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
@@ -100,7 +100,7 @@ public class BaseActivity extends AppCompatActivity {
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
         // Create the Work Thread
-        workThread = ThreadManager2.getInstance();
+        workerThread = ThreadManager2.getInstance();
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);

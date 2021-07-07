@@ -115,7 +115,7 @@ public class ThreadManager2 {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+    public DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
         if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
         sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
         return distCodeTask;
@@ -123,9 +123,7 @@ public class ThreadManager2 {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public static GasPriceTask startGasPriceTask(
-            Context context, OpinetViewModel model, String distCode, String stnId) {
-
+    public GasPriceTask startGasPriceTask(Context context, OpinetViewModel model, String distCode, String stnId) {
         if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
         gasPriceTask.initPriceTask(model, distCode, stnId);
 
