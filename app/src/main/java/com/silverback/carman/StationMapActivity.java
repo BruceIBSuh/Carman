@@ -59,13 +59,16 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         setContentView(rootView);
         // Intent data from MainActivity
         stnId = getIntent().getStringExtra("gasStationId");
+
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         setSupportActionBar(binding.tbMap);
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
+
         // Instantiate Objects
         firestore = FirebaseFirestore.getInstance();
         fusedLocationSource = new FusedLocationSource(this, 100);//Naver api for getting the current position
+
         // Retrieve the station data from Firestore.
         DocumentReference docRef = firestore.collection("gas_station").document(stnId);
         docRef.get().addOnCompleteListener(task -> {
@@ -79,9 +82,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         // When using MapView instead, the activity lifecycle should be considered.
         createNaverMap();
 
-        //binding.recyclerStnComments.setLayoutManager(new LinearLayoutManager(this));
-        //recyclerComments.setItemViewCacheSize(20);
-        //recyclerComments.setDrawingCacheEnabled(true);
+        binding.recyclerComments.setLayoutManager(new LinearLayoutManager(this));
+        binding.recyclerComments.setItemViewCacheSize(20);
+        binding.recyclerComments.setDrawingCacheEnabled(true);
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
         // KakaoNavi as an installed app is first applied.
@@ -204,6 +207,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         return super.onOptionsItemSelected(item);
     }
 
+    /*
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,  @NonNull int[] grantResults) {
@@ -217,6 +221,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
+     */
+
 
     @SuppressWarnings("ConstantConditions")
     @Override
@@ -225,10 +231,13 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         naverMap.setLocationSource(fusedLocationSource);
         checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
             naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
-            double x = document.getDouble("katec_x");
-            double y = document.getDouble("katec_y");
-            displayMap(x, y);
         });
+
+        double x = document.getDouble("katec_x");
+        double y = document.getDouble("katec_y");
+        if(x != -1 || y != -1)  displayMap(x, y);
+
+        //createNaverMap();
     }
 
     @SuppressWarnings("ConstantConditions")

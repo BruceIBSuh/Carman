@@ -38,12 +38,14 @@ import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
 import com.silverback.carman.database.GasManagerEntity;
+import com.silverback.carman.databinding.FragmentGasManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
 import com.silverback.carman.utils.NumberTextWatcher;
@@ -70,6 +72,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
 
     // Objects
+    private FragmentGasManagerBinding binding;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
     private LocationViewModel locationModel;
@@ -87,13 +90,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private Location mPrevLocation;
 
     // UIs
-    private View localView;
-    private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
-    private EditText etUnitPrice, etExtraExpense, etGasComment;
-    private RatingBar ratingBar;
-    private ProgressBar stnProgbar;
-    private ImageButton imgRefresh;
-    private ImageButton btnStnFavorite;
+    //private View localView;
+    //private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
+    //private EditText etUnitPrice, etExtraExpense, etGasComment;
+    //private RatingBar ratingBar;
+    //private ProgressBar stnProgbar;
+    //private ImageButton imgRefresh;
+    //private ImageButton btnStnFavorite;
 
     // Fields
     private String[] defaultParams;
@@ -146,7 +149,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // it would rather  be better to redefine them here.
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         //locationModel = ((ExpenseActivity)getActivity()).getLocationViewModel();
-
         stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
 
@@ -166,6 +168,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         //SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         date = BaseActivity.formatMilliseconds(dateFormat, visitTime);
+
         /*
          * Implements the interface of FavoriteGeofenceHelper.SetGefenceListener to notify the
          * favorite button of having the favroite station added or removed, re-setting the flag
@@ -202,7 +205,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 }
                 */
 
-                Snackbar.make(localView, R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(), R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
 
             }
@@ -218,55 +221,60 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        binding = FragmentGasManagerBinding.inflate(inflater, container, false);
+        View localView = binding.getRoot();
+
         // Check if it's possible to change the soft input mode on the fragment basis. Seems not work.
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         // Inflate the layout for this fragment
-        localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
-        tvDateTime = localView.findViewById(R.id.tv_date_time);
-        tvStnName = localView.findViewById(R.id.tv_station_name);
-        stnProgbar = localView.findViewById(R.id.pb_search_station);
-        imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
-        btnStnFavorite = localView.findViewById(R.id.btn_gas_favorite);
-        etUnitPrice = localView.findViewById(R.id.et_unit_price);
-        tvOdometer = localView.findViewById(R.id.tv_mileage);
-        tvGasPaid = localView.findViewById(R.id.tv_gas_payment);
-        tvGasLoaded = localView.findViewById(R.id.tv_gas_amount);
-        tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
-        tvExtraPaid = localView.findViewById(R.id.tv_extra_payment);
-        etExtraExpense = localView.findViewById(R.id.et_extra_expense);
-        ratingBar = localView.findViewById(R.id.ratingBar);
-        etGasComment = localView.findViewById(R.id.et_service_comment);
+        //localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
+//        tvDateTime = localView.findViewById(R.id.tv_date_time);
+//        tvStnName = localView.findViewById(R.id.tv_station_name);
+//        stnProgbar = localView.findViewById(R.id.pb_search_station);
+//        imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
+//        btnStnFavorite = localView.findViewById(R.id.btn_gas_favorite);
+//        etUnitPrice = localView.findViewById(R.id.et_unit_price);
+//        tvOdometer = localView.findViewById(R.id.tv_mileage);
+//        tvGasPaid = localView.findViewById(R.id.tv_gas_payment);
+//        tvGasLoaded = localView.findViewById(R.id.tv_gas_amount);
+//        tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
+//        tvExtraPaid = localView.findViewById(R.id.tv_extra_payment);
+//        etExtraExpense = localView.findViewById(R.id.et_extra_expense);
+//        ratingBar = localView.findViewById(R.id.ratingBar);
+//        etGasComment = localView.findViewById(R.id.et_service_comment);
         Button btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
 
-        tvDateTime.setText(date);
-        tvOdometer.setText(mSettings.getString(Constants.ODOMETER, "0"));
-        //tvGasPaid.setText(mSettings.getString(Constants.PAYMENT, "0"));
+
+        binding.tvDateTime.setText(date);
+        binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
+        binding.tvGasPayment.setText(mSettings.getString(Constants.PAYMENT, "0"));
 
         // TEST CODING REQUIRED.
-        //stnProgbar.setVisibility(View.VISIBLE);
+        binding.pbSearchStation.setVisibility(View.VISIBLE);
 
         // Attach the event listeners
-        etUnitPrice.addTextChangedListener(new NumberTextWatcher(etUnitPrice));
-        tvOdometer.setOnClickListener(this);
-        tvGasPaid.setOnClickListener(this);
-        tvCarwashPaid.setOnClickListener(this);
-        tvExtraPaid.setOnClickListener(this);
-        btnResetRating.setOnClickListener(view -> ratingBar.setRating(0f));
+        binding.etUnitPrice.addTextChangedListener(new NumberTextWatcher(binding.etUnitPrice));
+        binding.tvMileage.setOnClickListener(this);
+        binding.tvGasPayment.setOnClickListener(this);
+        binding.tvCarwash.setOnClickListener(this);
+        binding.tvExtraPayment.setOnClickListener(this);
+        binding.btnResetRatingbar.setOnClickListener(view -> binding.ratingBar.setRating(0f));
 
         // Check Geofencing permission(Background Location permission) first, then add a provider
         // not only to Geofencing list but alos favorite provider in the room.
-        btnStnFavorite.setOnClickListener(view -> {
+        binding.btnGasFavorite.setOnClickListener(view -> {
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 permBackLocation = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
                 checkBackgroundLocationPermission();
             } else addGasFavorite();
         });
 
-        imgRefresh.setOnClickListener(view -> {
-            locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
-            stnProgbar.setVisibility(View.VISIBLE);
-            imgRefresh.setVisibility(View.GONE);
+        binding.imgbtnRefresh.setOnClickListener(view -> {
+            locationTask = ThreadManager2.fetchLocationTask(getContext(), locationModel);
+            binding.pbSearchStation.setVisibility(View.VISIBLE);
+            binding.imgbtnRefresh.setVisibility(View.GONE);
         });
 
 
@@ -274,14 +282,14 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // nick name(vehicle name) has been created.
         nickname = mSettings.getString(Constants.USER_NAME, null);
         // In case of writing the ratingbar and comment, it is required to have a registered nickname.
-        ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
+        binding.ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
             if(TextUtils.isEmpty(nickname) && rating > 0) {
-                ratingBar.setRating(0f);
+                binding.ratingBar.setRating(0f);
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
             }
         });
 
-        etGasComment.setOnFocusChangeListener((view, b) -> {
+        binding.etServiceComment.setOnFocusChangeListener((view, b) -> {
             if(b && TextUtils.isEmpty(nickname)) {
                 Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
                 view.clearFocus();
@@ -292,21 +300,21 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // the pendingintent passes the name, id, time.
         if(isGeofenceIntent) {
             if(category == Constants.GAS) {
-                tvStnName.setText(geoStnName);
+                binding.tvStationName.setText(geoStnName);
                 stnId = geoStnId;
                 isFavoriteGas = true;
 
                 // Hanldinthe UIs
-                btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-                stnProgbar.setVisibility(View.GONE);
+                binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                binding.pbSearchStation.setVisibility(View.GONE);
                 //btnChangeDate.setVisibility(View.GONE);
 
                 // Task to fetch the gas price of a station with the station ID.
                 favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, false);
 
             } else if(category == Constants.SVC) {
-                stnProgbar.setVisibility(View.GONE);
-                imgRefresh.setVisibility(View.VISIBLE);
+                binding.pbSearchStation.setVisibility(View.GONE);
+                binding.imgbtnRefresh.setVisibility(View.VISIBLE);
             }
         }
 
@@ -316,10 +324,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     @Override
     //public void onActivityCreated(Bundle savedInstanceState) {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        //super.onActivityCreated(savedInstanceState);
         super.onViewCreated(view, savedInstanceState);
-
-
         // Share a value input in NumberPadFragment as the view id passes to NumberPadFragment when
         // clicking, then returns an input value as SparseArray which contains the view id, which
         // may identify the view invoking NumberPadFragment and fill in the value into the view.
@@ -344,40 +349,40 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         };
 
         locationModel.getLocation().observe(getViewLifecycleOwner(), locationObserver);
+        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
+            final String[] defaults = getResources().getStringArray(R.array.default_district);
+            log.i("Location: %s", location);
+            // Exclude the case that the fragment gets started by GeofenceIntent
+            if(isGeofenceIntent) return;
 
-//        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-//            final String[] defaults = getResources().getStringArray(R.array.default_district);
-//            log.i("Location: %s", location);
-//            // Exclude the case that the fragment gets started by GeofenceIntent
-//            if(isGeofenceIntent) return;
-//
-//            // Fetch the current station only if the current location is out of the update distance.
-//            if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
-//                stnListTask = ThreadManager.startStationListTask(stnListModel, location, defaults);
-//                mPrevLocation = location;
-//            } else {
-//                stnProgbar.setVisibility(View.GONE);
-//                imgRefresh.setVisibility(View.VISIBLE);
-//            }
-//        });
+            // Fetch the current station only if the current location is out of the update distance.
+            if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
+                stnListTask = ThreadManager2.startStationListTask(stnListModel, location, defaults);
+                mPrevLocation = location;
+            } else {
+                binding.pbSearchStation.setVisibility(View.GONE);
+                binding.imgbtnRefresh.setVisibility(View.VISIBLE);
+            }
+        });
 
         // Check if a fetched current station has registered with Favorite right after a current station
         // is retrieved by StationListViewModel.
         stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
+            log.i("current station");
             if(curStn != null) {
                 stnName = curStn.getStnName();
                 stnId = curStn.getStnId();
-                tvStnName.setText(stnName);
-                etUnitPrice.setText(String.valueOf(curStn.getStnPrice()));
-                etUnitPrice.setCursorVisible(false);
+                binding.tvStationName.setText(stnName);
+                binding.etUnitPrice.setText(String.valueOf(curStn.getStnPrice()));
+                binding.etUnitPrice.setCursorVisible(false);
 
                 // Query Favorite with the fetched station name or station id to tell whether the station
                 // has registered with Favorite.
                 checkGasFavorite(stnName, stnId);
             }
 
-            stnProgbar.setVisibility(View.GONE);
-            imgRefresh.setVisibility(View.VISIBLE);
+            binding.pbSearchStation.setVisibility(View.GONE);
+            binding.imgbtnRefresh.setVisibility(View.VISIBLE);
         });
 
         // Under the condition that no currnet station is fetched because of not within GEOFENCE_RADIUS,
@@ -386,8 +391,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // station picked out of FavoriteListFragment using FragmentSharedModel. With the station id,
         // FavoritePriceTask gets started to have the gas price.
         fragmentModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), entity -> {
-            tvStnName.setText(entity.providerName);
-            btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            binding.tvStationName.setText(entity.providerName);
+            binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             stnId = entity.providerId;
             isFavoriteGas = true;
 
@@ -398,8 +403,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
         opinetViewModel.getFavoritePriceData().observe(getViewLifecycleOwner(), data -> {
             log.i("Favorite price data: %s", data.get(defaultParams[0]));
-            etUnitPrice.setText(String.valueOf(data.get(defaultParams[0])));
-            etUnitPrice.setCursorVisible(false);
+            binding.etUnitPrice.setText(String.valueOf(data.get(defaultParams[0])));
+            binding.etUnitPrice.setCursorVisible(false);
         });
 
         fragmentModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
@@ -443,19 +448,19 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Pass the current saved value to NumberPadFragment
         switch(v.getId()) {
             case R.id.tv_mileage:
-                initValue = tvOdometer.getText().toString();
+                initValue = binding.tvMileage.getText().toString();
                 break;
 
             case R.id.tv_gas_payment:
-                initValue = tvGasPaid.getHint().toString();
+                initValue = binding.tvGasPayment.getHint().toString();
                 break;
 
             case R.id.tv_carwash:
-                initValue = tvCarwashPaid.getHint().toString();
+                initValue = binding.tvCarwash.getHint().toString();
                 break;
 
             case R.id.tv_extra_payment:
-                initValue = tvExtraPaid.getHint().toString();
+                initValue = binding.tvExtraPayment.getHint().toString();
                 break;
         }
 
@@ -467,9 +472,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         args.putString("initValue", initValue);
         numPad.setArguments(args);
 
-        if(getActivity() != null)
-            numPad.show(getActivity().getSupportFragmentManager(), "numberPad");
-
+        if(getActivity() != null) numPad.show(getActivity().getSupportFragmentManager(), "numberPad");
     }
 
     // Query FavoriteProviderEntity with the fetched station name or station id to tell whether the
@@ -477,13 +480,12 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private void checkGasFavorite(String name, String id) {
         mDB.favoriteModel().findFavoriteGasName(name, id, Constants.GAS)
                 .observe(getViewLifecycleOwner(), stnName -> {
-
                     if (TextUtils.isEmpty(stnName)) {
-                    isFavoriteGas = false;
-                    btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                        isFavoriteGas = false;
+                        binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite);
                     } else {
                         isFavoriteGas = true;
-                    btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                        binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                     }
                 });
     }
@@ -496,7 +498,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         if(isGeofenceIntent) return;
 
         // Pop up FavoriteListFragment when clicking the favorite button.
-        if(TextUtils.isEmpty(tvStnName.getText())) {
+        if(TextUtils.isEmpty(binding.tvStationName.getText())) {
             FavoriteListFragment.newInstance(getString(R.string.exp_title_gas), Constants.GAS)
                     .show(getActivity().getSupportFragmentManager(), null);
 
@@ -505,10 +507,10 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         } else if(isFavoriteGas) {
             log.i("favorite button clicked to remove");
             Snackbar snackbar = Snackbar.make(
-                    localView, getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
+                    binding.getRoot(), getString(R.string.gas_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
                 geofenceHelper.removeFavoriteGeofence(stnName, stnId, Constants.GAS);
-                btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                binding.getRoot().setBackgroundResource(R.drawable.btn_favorite);
             }).show();
 
         } else {
@@ -516,7 +518,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             // is less than Constants.MAX_FAVORITE, currently set to 10.
             final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.GAS);
             if(placeholder == Constants.MAX_FAVORITE) {
-                Snackbar.make(localView, R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(), R.string.exp_snackbar_favorite_limit, Snackbar.LENGTH_SHORT).show();
 
             } else {
                 // Then, retrieve the station data which pass to FavoriteGeofenceHelper to register with
@@ -525,7 +527,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                     if(task.isSuccessful()) {
                         DocumentSnapshot snapshot = task.getResult();
                         if (snapshot != null && snapshot.exists()) {
-                            btnStnFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                            binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                             geofenceHelper.addFavoriteGeofence(snapshot, placeholder, Constants.GAS);
                         }
                     }
@@ -543,7 +545,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         if(!doEmptyCheck()) return false;
 
         fragmentModel.setCurrentFragment(this);
-        long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDateTime.getText().toString());
+        long milliseconds = BaseActivity.parseDateTime(dateFormat, binding.tvDateTime.getText().toString());
 
         // Create Entity instances both of which are correlated by Foreinkey
         ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
@@ -551,21 +553,21 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         basicEntity.dateTime = milliseconds;
         basicEntity.category = Constants.GAS;
-        gasEntity.stnName = tvStnName.getText().toString();
+        gasEntity.stnName = binding.tvStationName.getText().toString();
         //gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;
-        gasEntity.extraExpense = etExtraExpense.getText().toString();
+        gasEntity.extraExpense = binding.tvExtraPayment.getText().toString();
 
         try {
-            basicEntity.mileage = df.parse(tvOdometer.getText().toString()).intValue();
-            gasEntity.gasPayment = df.parse(tvGasPaid.getText().toString()).intValue();
-            gasEntity.gasAmount = df.parse(tvGasLoaded.getText().toString()).intValue();
-            gasEntity.unitPrice = df.parse(etUnitPrice.getText().toString()).intValue();
+            basicEntity.mileage = df.parse(binding.tvMileage.getText().toString()).intValue();
+            gasEntity.gasPayment = df.parse(binding.tvGasPayment.getText().toString()).intValue();
+            gasEntity.gasAmount = df.parse(binding.tvGasAmount.getText().toString()).intValue();
+            gasEntity.unitPrice = df.parse(binding.etUnitPrice.getText().toString()).intValue();
             // BUG!!
             // W/System.err:     at java.text.NumberFormat.parse(NumberFormat.java:351)
             // at com.silverback.carman2.fragments.GasManagerFragment.saveGasData(GasManagerFragment.java:546)
-            gasEntity.washPayment = df.parse(tvCarwashPaid.getText().toString()).intValue();
-            gasEntity.extraPayment = df.parse(tvExtraPaid.getText().toString()).intValue();
+            gasEntity.washPayment = df.parse(binding.tvCarwash.getText().toString()).intValue();
+            gasEntity.extraPayment = df.parse(binding.tvExtraPayment.getText().toString()).intValue();
 
         } catch(ParseException | NullPointerException e) {
             e.printStackTrace();
@@ -576,15 +578,15 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Insert the data to the local db.
         int rowId = mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
         if(rowId > 0) {
-            mSettings.edit().putString(Constants.ODOMETER, tvOdometer.getText().toString()).apply();
+            mSettings.edit().putString(Constants.ODOMETER, binding.tvMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
 
             // FireStore Process to upload the rating and comments with Station ID.
-            if(ratingBar.getRating() > 0) {
-                log.i("RatingBar: %s", ratingBar.getRating());
+            if(binding.ratingBar.getRating() > 0) {
+                log.i("RatingBar: %s", binding.ratingBar.getRating());
                 Map<String, Object> ratingData = new HashMap<>();
                 ratingData.put("eval_num", FieldValue.increment(1));
-                ratingData.put("eval_sum", FieldValue.increment(ratingBar.getRating()));
+                ratingData.put("eval_sum", FieldValue.increment(binding.ratingBar.getRating()));
 
                 DocumentReference docRef = firestore.collection("gas_eval").document(stnId);
                 docRef.get().addOnSuccessListener(snapshot -> {
@@ -602,13 +604,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
 
             // Add ranting or comments to the Firestore, if any.
-            if(!TextUtils.isEmpty(etGasComment.getText())) {
+            if(!TextUtils.isEmpty(binding.etServiceComment.getText())) {
 
                 Map<String, Object> commentData = new HashMap<>();
                 commentData.put("timestamp", FieldValue.serverTimestamp());
                 commentData.put("name", nickname);
-                commentData.put("comments", etGasComment.getText().toString());
-                commentData.put("rating", ratingBar.getRating());
+                commentData.put("comments", binding.etServiceComment.getText().toString());
+                commentData.put("rating", binding.ratingBar.getRating());
 
                 firestore.collection("gas_eval").document(stnId).collection("comments").document(userId)
                         .set(commentData).addOnCompleteListener(task -> {
@@ -631,27 +633,27 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // checked.
     private boolean doEmptyCheck() {
         // Check if the gas station name is empty
-        if(TextUtils.isEmpty(tvStnName.getText())) {
+        if(TextUtils.isEmpty(binding.tvStationName.getText())) {
             String msg = getResources().getString(R.string.toast_station_name);
             //Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-            Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return false;
         }
 
         // Check if the gas unit price is empty
-        if(TextUtils.isEmpty(etUnitPrice.getText())) {
+        if(TextUtils.isEmpty(binding.etUnitPrice.getText())) {
             String msg = getResources().getString(R.string.toast_unit_price);
             //Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-            Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
-            etUnitPrice.requestFocus();
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+            binding.etUnitPrice.requestFocus();
             return false;
         }
 
         // Check if the payment is empty.
-        if(tvGasPaid.getText().toString().matches("0")) {
+        if(binding.tvGasPayment.getText().toString().matches("0")) {
             String msg = getResources().getString(R.string.toast_payment);
             //Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-            Snackbar.make(localView, msg, Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return false;
         }
 
@@ -662,15 +664,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     // given, toast a message to ask for inputting the price.
     @SuppressWarnings("ConstantConditions")
     private void calculateGasAmount() {
-        if(TextUtils.isEmpty(etUnitPrice.getText())) {
+        if(TextUtils.isEmpty(binding.etUnitPrice.getText())) {
             Toast.makeText(getActivity(), R.string.toast_unit_price, Toast.LENGTH_SHORT).show();
-        } else if(!TextUtils.isEmpty(etUnitPrice.getText()) && !TextUtils.isEmpty(tvGasPaid.getText())) {
+        } else if(!TextUtils.isEmpty(binding.etUnitPrice.getText()) &&
+                !TextUtils.isEmpty(binding.tvGasPayment.getText())) {
             try {
                 // Convert Number to the primitive int type.
-                int price = df.parse(etUnitPrice.getText().toString()).intValue();
-                int paid = df.parse(tvGasPaid.getText().toString()).intValue();
+                int price = df.parse(binding.etUnitPrice.getText().toString()).intValue();
+                int paid = df.parse(binding.tvGasPayment.getText().toString()).intValue();
                 String gasAmount = String.valueOf(paid/price);
-                tvGasLoaded.setText(gasAmount);
+                binding.tvGasAmount.setText(gasAmount);
             } catch(ParseException | NullPointerException e) {
                 e.printStackTrace();
             }

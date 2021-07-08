@@ -6,7 +6,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.silverback.carman.fragments.GasManagerFragment">
-
     <TextView
         android:id="@+id/tv_subtitle_gas_expense"
         android:layout_width="0dp"
@@ -20,8 +19,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-
     <TextView
         android:id="@+id/tv_label_date"
         android:layout_width="wrap_content"
@@ -34,7 +31,6 @@
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_gas_expense" />
-
     <TextView
         android:id="@+id/tv_date_time"
         android:layout_width="wrap_content"

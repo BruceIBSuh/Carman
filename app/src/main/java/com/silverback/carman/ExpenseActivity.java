@@ -27,10 +27,12 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.ExpRecentAdapter;
 import com.silverback.carman.adapters.ExpTabAdapter;
+import com.silverback.carman.databinding.ActivityExpenseBinding;
 import com.silverback.carman.fragments.StatGraphFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.threads.ThreadTask;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.LocationViewModel;
@@ -72,8 +74,7 @@ public class ExpenseActivity extends BaseActivity implements
     private static final int MENU_ITEM_ID = 1000;
 
     // Objects
-    private ViewPager2 tabPager;
-    private ViewPager2 expensePager;
+    private ActivityExpenseBinding binding;
     private LocationViewModel locationModel;
     private PagerAdapterViewModel pagerModel;
     private ExpTabAdapter tabPagerAdapter;
@@ -81,13 +82,8 @@ public class ExpenseActivity extends BaseActivity implements
     private ThreadTask tabPagerTask;
     private ThreadTask locationTask;
 
-    // UIs
-    private AppBarLayout appBar;
-    private TabLayout expTabLayout;
-    private FrameLayout topFrame;
     private MenuItem saveMenuItem;
     private ViewTreeObserver vto;
-
 
     // Fields
     private int position;
@@ -100,7 +96,9 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_expense);
+        binding = ActivityExpenseBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
         // Check if the activity gets started by tabbing the geofence notification.
         if(getIntent().getAction() != null) {
             if(getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
@@ -113,23 +111,17 @@ public class ExpenseActivity extends BaseActivity implements
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
 
-        appBar = findViewById(R.id.appBar);
-        Toolbar toolbar = findViewById(R.id.toolbar_main);
-        expTabLayout = findViewById(R.id.tab_expense);
-        topFrame = findViewById(R.id.frame_top_fragments);
-        tabPager = findViewById(R.id.tabpager);
-        expensePager = findViewById(R.id.exppager);
-
         // Set the toolbar as the working action bar
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbarMain);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        appBar.addOnOffsetChangedListener(this);
+        binding.appBar.addOnOffsetChangedListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
         ExpTabAdapter expTabAdapter = new ExpTabAdapter(getSupportFragmentManager(), getLifecycle());
-        tabPager.setAdapter(expTabAdapter);
+        binding.tabpager.setAdapter(expTabAdapter);
         //tabPager.setCurrentItem(0);
+
         // Associate TabLayout with ViewPager2 using TabLayoutMediator.
         String[] titles = getResources().getStringArray(R.array.tab_carman_title);
         Drawable[] icons = {
@@ -138,7 +130,7 @@ public class ExpenseActivity extends BaseActivity implements
                 AppCompatResources.getDrawable(this, R.drawable.ic_stats)
         };
 
-        new TabLayoutMediator(expTabLayout, tabPager, (tab, pos) -> {
+        new TabLayoutMediator(binding.tabExpense, binding.tabpager, (tab, pos) -> {
             tab.setText(titles[pos]);
             tab.setIcon(icons[pos]);
             animSlideTabLayout();
@@ -158,11 +150,11 @@ public class ExpenseActivity extends BaseActivity implements
 
 
         ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        expensePager.setAdapter(recentAdapter);
+        binding.exppager.setAdapter(recentAdapter);
 
 
         // Consider this process should be behind the layout to lessen the ram load.
-        locationTask = ThreadManager.fetchLocationTask(this, locationModel);
+        locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
     }
 
     @Override
@@ -219,19 +211,19 @@ public class ExpenseActivity extends BaseActivity implements
     @Override
     public void onPageSelected(int position) {
         log.i("onPageSelected");
-        topFrame.removeAllViews();
+        binding.frameTopFragments.removeAllViews();
         this.position = position;
         saveMenuItem.setVisible(true);
 
         switch(position) {
             case Constants.GAS: // GasManagerFragment
                 pageTitle = getString(R.string.exp_title_gas);
-                topFrame.addView(expensePager);
+                binding.frameTopFragments.addView(binding.exppager);
                 break;
 
             case Constants.SVC:
                 pageTitle = getString(R.string.exp_title_service);
-                topFrame.addView(expensePager);
+                binding.frameTopFragments.addView(binding.exppager);
                 break;
 
             case Constants.STAT:
@@ -272,9 +264,9 @@ public class ExpenseActivity extends BaseActivity implements
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
-        appBar.post(() -> {
+        binding.appBar.post(() -> {
             if(Math.abs(scroll) == 0) getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
-            else if(Math.abs(scroll) == appBar.getTotalScrollRange()) getSupportActionBar().setTitle(pageTitle);
+            else if(Math.abs(scroll) == binding.appBar.getTotalScrollRange()) getSupportActionBar().setTitle(pageTitle);
         });
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
@@ -292,8 +284,8 @@ public class ExpenseActivity extends BaseActivity implements
     private void animSlideTabLayout() {
         final float toolbarHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(expTabLayout, "translationY", toolbarHeight);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(topFrame, "translationY", toolbarHeight);
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
+        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(binding.frameTopFragments, "translationY", toolbarHeight);
         slideTab.setDuration(1000);
         slideViewPager.setDuration(100);
         animSet.play(slideTab).with(slideViewPager);
@@ -301,17 +293,17 @@ public class ExpenseActivity extends BaseActivity implements
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
-                if(topFrame.getChildCount() > 0) topFrame.removeAllViews();
-                log.i("First ExpensePager height: %s", expensePager.getMeasuredHeight());
+                if(binding.frameTopFragments.getChildCount() > 0) binding.frameTopFragments.removeAllViews();
+                log.i("First ExpensePager height: %s", binding.exppager.getMeasuredHeight());
                 animSlideTopFrame(0, 100);
                 prevHeight = 100;
 
-                topFrame.addView(expensePager);
+                binding.frameTopFragments.addView(binding.exppager);
 
                 // In case that this activity is started by the geofence notification, ServiceFragment
                 // must be set to the current page only after the viewpager at the top has added to
                 // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
-                if(isGeofencing && category == Constants.SVC) tabPager.setCurrentItem(category);
+                if(isGeofencing && category == Constants.SVC) binding.tabpager.setCurrentItem(category);
             }
         });
         animSet.start();
@@ -326,11 +318,11 @@ public class ExpenseActivity extends BaseActivity implements
 
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
-        ViewGroup.LayoutParams params = topFrame.getLayoutParams();
+        ViewGroup.LayoutParams params = binding.frameTopFragments.getLayoutParams();
 
         anim.addUpdateListener(valueAnimator -> {
             params.height = (Integer)valueAnimator.getAnimatedValue();;
-            topFrame.setLayoutParams(params);
+            binding.frameTopFragments.setLayoutParams(params);
         });
 
         anim.setDuration(500);
@@ -341,7 +333,7 @@ public class ExpenseActivity extends BaseActivity implements
                 super.onAnimationEnd(animator);
                 //ExpRecentPagerAdapter recentPagerAdapter = new ExpRecentPagerAdapter(getSupportFragmentManager());
                 //expensePager.setAdapter(recentPagerAdapter);
-                if(position != Constants.STAT) expensePager.setCurrentItem(0);
+                if(position != Constants.STAT) binding.exppager.setCurrentItem(0);
             }
         });
 
