@@ -101,6 +101,7 @@ public class BaseActivity extends AppCompatActivity {
 
         // Create the Work Thread
         workerThread = ThreadManager2.getInstance();
+        log.i("ThreadPoolExecutor: %s", workerThread);
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
