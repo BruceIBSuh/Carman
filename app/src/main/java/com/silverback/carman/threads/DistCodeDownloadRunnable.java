@@ -27,7 +27,7 @@ import java.util.List;
 public class DistCodeDownloadRunnable implements Runnable {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadRunnable.class);
+    //private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadRunnable.class);
 
     static final int DISTRICT_CODE_COMPLETE = 1;
     static final int DISTRICT_CODE_FAIL = -1;
@@ -40,7 +40,6 @@ public class DistCodeDownloadRunnable implements Runnable {
     // Objects
     private final Context context;
     private final OpinetDistCodeMethods mTask;
-
 
     // Interface
     public interface OpinetDistCodeMethods {

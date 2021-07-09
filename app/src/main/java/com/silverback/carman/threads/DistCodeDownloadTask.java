@@ -17,7 +17,7 @@ public class DistCodeDownloadTask extends ThreadTask
     private final Runnable opinetDistCodeRunnable;
 
     // Constructor
-    DistCodeDownloadTask(Context context, OpinetViewModel model) {
+    public DistCodeDownloadTask(Context context, OpinetViewModel model) {
         super(); // ThreadTask
         this.model = model;
         opinetDistCodeRunnable = new DistCodeDownloadRunnable(context, this);

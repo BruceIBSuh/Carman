@@ -155,8 +155,10 @@ public class ServiceManagerFragment extends Fragment implements
 
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
-        pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
-        locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
+        pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
+        //pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
+        locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
+        //locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
 
 
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());

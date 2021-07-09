@@ -44,7 +44,7 @@ public class StationListRunnable implements Runnable{
     }
 
     // Constructor
-    StationListRunnable(StationListMethod task) {
+    public StationListRunnable(StationListMethod task) {
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         mStationList = null;
         mTask = task;

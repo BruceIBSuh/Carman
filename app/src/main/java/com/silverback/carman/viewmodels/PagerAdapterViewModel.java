@@ -15,7 +15,6 @@ public class PagerAdapterViewModel extends ViewModel {
     private static final LoggingHelper log = LoggingHelperFactory.create(PagerAdapterViewModel.class);
 
     private MutableLiveData<ExpTabAdapter> pagerAdapter;
-
     private MutableLiveData<ExpServiceItemAdapter> serviceAdapter;
     private MutableLiveData<JSONArray> jsonServiceArray;
 

@@ -5,9 +5,8 @@
     <dimen name="subtitle">16sp</dimen>
 
     <!-- Text Size -->
-    <dimen name="boardTab">14dp</dimen>
+    <dimen name="boardTab">11sp</dimen>
     <dimen name="tableHeader">14dp</dimen>
-
     <dimen name="extraLargeText">17sp</dimen>
     <dimen name="largeText">16sp</dimen>
     <dimen name="mediumText">15sp</dimen>

@@ -1,5 +1,6 @@
 package com.silverback.carman.threads;
 
+import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
@@ -7,11 +8,13 @@ import android.os.Looper;
 import android.os.Message;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
+import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.concurrent.BlockingQueue;
@@ -31,8 +34,8 @@ public class ThreadManager2 {
     //static final int FIRESTORE_STATION_SET_COMPLETED = 104;
 
     // Determine the threadpool parameters.
-    private static final int CORE_POOL_SIZE = 4;// Sets the initial threadpool size to 4
-    private static final int MAXIMUM_POOL_SIZE = 4;// Sets the maximum threadpool size to 4
+    private static final int CORE_POOL_SIZE = 3;// Sets the initial threadpool size to 4
+    private static final int MAXIMUM_POOL_SIZE = 5;// Sets the maximum threadpool size to 4
     private static final int KEEP_ALIVE_TIME = 1;
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT;// Sets the Time Unit to seconds
 
@@ -42,12 +45,12 @@ public class ThreadManager2 {
     private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
-    private static DistCodeDownloadTask distCodeTask;
-    private static GasPriceTask gasPriceTask;
-    private static LocationTask locationTask;
+    private DistCodeDownloadTask distCodeTask;
+    private GasPriceTask gasPriceTask;
+    private LocationTask locationTask;
     private static StationListTask stnListTask;
+    private ExpenseTabPagerTask expenseTask;
 
-    // Initializie a static block that sets class fields
     static {
         KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS; //The time unit for "keep alive" is in seconds
         sInstance = new ThreadManager2();// Creates a single static instance of ThreadManager
@@ -115,9 +118,12 @@ public class ThreadManager2 {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+    public DistCodeDownloadTask saveDistrictCodeTask(Activity context, OpinetViewModel model) {
         if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
         sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
+
+        log.i("queue: %s", sInstance.threadPoolExecutor.getQueue());
+
         return distCodeTask;
     }
 
@@ -132,10 +138,12 @@ public class ThreadManager2 {
         sInstance.threadPoolExecutor.execute(gasPriceTask.getSigunPriceRunnable());
         sInstance.threadPoolExecutor.execute(gasPriceTask.getStationPriceRunnable());
 
+        log.i("queue: %s", sInstance.threadPoolExecutor.getQueue());
+
         return gasPriceTask;
     }
 
-    public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
+    public LocationTask fetchLocationTask(Context context, LocationViewModel model){
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
         sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
@@ -151,6 +159,19 @@ public class ThreadManager2 {
         stnListTask.initStationTask(model, location, params);
         sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
         return stnListTask;
+    }
+
+    public ExpenseTabPagerTask startExpenseTabPagerTask(
+            Context context, FragmentManager fm, PagerAdapterViewModel model,
+            String[] defaults, String jsonDistrict, String jsonSvcItem){
+
+        if(expenseTask == null) expenseTask = new ExpenseTabPagerTask(context);
+        expenseTask.initPagerTask(fm, model, defaults, jsonDistrict, jsonSvcItem);
+
+        sInstance.threadPoolExecutor.execute(expenseTask.getTabPagerRunnable());
+        sInstance.threadPoolExecutor.execute(expenseTask.getServiceItemsRunnable());
+
+        return expenseTask;
     }
 
     @SuppressWarnings("all")

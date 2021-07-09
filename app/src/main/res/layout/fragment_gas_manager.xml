@@ -83,7 +83,7 @@
     <ProgressBar
         style="?android:attr/progressBarStyle"
         android:id="@+id/pb_search_station"
-        android:visibility="gone"
+        android:visibility="visible"
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:layout_marginEnd="3dp"

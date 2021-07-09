@@ -12,17 +12,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
-import android.widget.Spinner;
-import android.widget.TextView;
 
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
@@ -42,10 +35,6 @@ import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.StationListViewModel;
-import com.silverback.carman.views.OpinetAvgPriceView;
-import com.silverback.carman.views.OpinetSidoPriceView;
-import com.silverback.carman.views.OpinetSigunPriceView;
-import com.silverback.carman.views.StationRecyclerView;
 
 import java.io.File;
 import java.util.List;
@@ -127,7 +116,7 @@ public class MainActivity extends BaseActivity implements
         binding.imgbtnStation.setOnClickListener(view -> {
             // Location permission check
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
-                if(!isStationOn) locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+                if(!isStationOn) locationTask = mWorkThread.fetchLocationTask(this, locationModel);
                 else {
                     binding.stationRecyclerView.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.VISIBLE);

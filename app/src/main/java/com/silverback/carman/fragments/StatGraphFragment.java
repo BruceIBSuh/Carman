@@ -103,8 +103,8 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstancestate) {
-        super.onActivityCreated(savedInstancestate);
+    public void onViewCreated(@NonNull View view, Bundle savedInstancestate) {
+        super.onViewCreated(view, savedInstancestate);
 
         // Get the selected item position of the spinner defined in StatStmtsFragment for querying
         // the expense by category
@@ -133,7 +133,6 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
 
     @Override
     public void onClick(View view) {
-
         switch(view.getId()) {
 
             case R.id.btn_arrow_left:
@@ -164,7 +163,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         long end = calendar.getTimeInMillis();
 
         mDB.expenseBaseModel().loadMonthlyExpense(gas, service, start, end)
-                .observe(this, data -> graph.setGraphData(calcMonthlyExpense(data)));
+                .observe(getViewLifecycleOwner(), data -> graph.setGraphData(calcMonthlyExpense(data)));
     }
 
     private int[] calcMonthlyExpense(List<ExpenseBaseDao.ExpenseByMonth> data) {

@@ -5,13 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
 
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityIntroBinding;
@@ -19,8 +16,6 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.DistCodeDownloadTask;
 import com.silverback.carman.threads.GasPriceTask;
-import com.silverback.carman.threads.ThreadManager;
-import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
@@ -144,7 +139,7 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
-                distCodeTask = workerThread.saveDistrictCodeTask(this, opinetModel);
+                distCodeTask = mWorkThread.saveDistrictCodeTask(this, opinetModel);
                 // Notified of having the district codes(sigun codes) complete, which was running in the
                 // background by DistrictCodeTask only during firstInitProcess().
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
@@ -176,7 +171,7 @@ public class IntroActivity extends BaseActivity  {
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
                 //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
-                gasPriceTask = workerThread.startGasPriceTask(this, opinetModel, distCode, stnId);
+                gasPriceTask = mWorkThread.startGasPriceTask(this, opinetModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
                 // SharedPreferences to check whether the price should be updated for the next initiation.

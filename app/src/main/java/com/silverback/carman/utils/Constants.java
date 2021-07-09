@@ -22,7 +22,7 @@ public class Constants {
 
     // Geofences
     public static final int MAX_FAVORITE = 10;
-    public static final String MIN_RADIUS = "250"; //Current station locating radius
+    public static final String MIN_RADIUS = "200"; //Current station locating radius
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 30; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final int GEOFENCE_RESPONSE_TIME = 1000 * 30;

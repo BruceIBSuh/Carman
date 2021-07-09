@@ -34,6 +34,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman.BaseActivity;
+import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
@@ -75,7 +76,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private FragmentGasManagerBinding binding;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
-    private LocationViewModel locationModel;
     private StationListViewModel stnListModel;
     private FragmentSharedModel fragmentModel;
     private OpinetViewModel opinetViewModel;
@@ -87,16 +87,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private SharedPreferences mSettings;
     private DecimalFormat df;
     private NumberPadFragment numPad;
-    private Location mPrevLocation;
-
-    // UIs
-    //private View localView;
-    //private TextView tvStnName, tvOdometer, tvDateTime, tvGasPaid, tvGasLoaded, tvCarwashPaid, tvExtraPaid;
-    //private EditText etUnitPrice, etExtraExpense, etGasComment;
-    //private RatingBar ratingBar;
-    //private ProgressBar stnProgbar;
-    //private ImageButton imgRefresh;
-    //private ImageButton btnStnFavorite;
 
     // Fields
     private String[] defaultParams;
@@ -147,10 +137,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
         // ViewModels: reconsider why the models references the ones defined in the parent activity;
         // it would rather  be better to redefine them here.
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        //locationModel = ((ExpenseActivity)getActivity()).getLocationViewModel();
-        stnListModel = new ViewModelProvider(getActivity()).get(StationListViewModel.class);
-        opinetViewModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        stnListModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
+        opinetViewModel = new ViewModelProvider(requireActivity()).get(OpinetViewModel.class);
 
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
@@ -228,25 +217,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Check if it's possible to change the soft input mode on the fragment basis. Seems not work.
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
-        // Inflate the layout for this fragment
-        //localView = inflater.inflate(R.layout.fragment_gas_manager, container, false);
-//        tvDateTime = localView.findViewById(R.id.tv_date_time);
-//        tvStnName = localView.findViewById(R.id.tv_station_name);
-//        stnProgbar = localView.findViewById(R.id.pb_search_station);
-//        imgRefresh = localView.findViewById(R.id.imgbtn_refresh);
-//        btnStnFavorite = localView.findViewById(R.id.btn_gas_favorite);
-//        etUnitPrice = localView.findViewById(R.id.et_unit_price);
-//        tvOdometer = localView.findViewById(R.id.tv_mileage);
-//        tvGasPaid = localView.findViewById(R.id.tv_gas_payment);
-//        tvGasLoaded = localView.findViewById(R.id.tv_gas_amount);
-//        tvCarwashPaid = localView.findViewById(R.id.tv_carwash);
-//        tvExtraPaid = localView.findViewById(R.id.tv_extra_payment);
-//        etExtraExpense = localView.findViewById(R.id.et_extra_expense);
-//        ratingBar = localView.findViewById(R.id.ratingBar);
-//        etGasComment = localView.findViewById(R.id.et_service_comment);
-        Button btnResetRating = localView.findViewById(R.id.btn_reset_ratingbar);
-
-
         binding.tvDateTime.setText(date);
         binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
         binding.tvGasPayment.setText(mSettings.getString(Constants.PAYMENT, "0"));
@@ -272,15 +242,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         });
 
         binding.imgbtnRefresh.setOnClickListener(view -> {
-            locationTask = ThreadManager2.fetchLocationTask(getContext(), locationModel);
-            binding.pbSearchStation.setVisibility(View.VISIBLE);
-            binding.imgbtnRefresh.setVisibility(View.GONE);
+//            locationTask = ThreadManager2.fetchLocationTask(getContext(), locationModel);
+//            binding.pbSearchStation.setVisibility(View.VISIBLE);
+//            binding.imgbtnRefresh.setVisibility(View.GONE);
         });
 
 
         // Manager the comment and the rating bar which should be allowed to make as far as the
         // nick name(vehicle name) has been created.
         nickname = mSettings.getString(Constants.USER_NAME, null);
+
         // In case of writing the ratingbar and comment, it is required to have a registered nickname.
         binding.ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
             if(TextUtils.isEmpty(nickname) && rating > 0) {
@@ -337,36 +308,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         });
 
-        // Attach an observer to fetch a current location from LocationTask, then initiate
-        // StationListTask based on the value unless the parent activity gets started by the geo noti.
-        // BTW, the location task is initiated in the parent activity.
-        locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
-        final Observer<Location> locationObserver = new Observer<Location>() {
-            @Override
-            public void onChanged(Location location) {
-                log.i("Location in onChanged:%s", location);
-            }
-        };
-
-        locationModel.getLocation().observe(getViewLifecycleOwner(), locationObserver);
-        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            final String[] defaults = getResources().getStringArray(R.array.default_district);
-            log.i("Location: %s", location);
-            // Exclude the case that the fragment gets started by GeofenceIntent
-            if(isGeofenceIntent) return;
-
-            // Fetch the current station only if the current location is out of the update distance.
-            if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
-                stnListTask = ThreadManager2.startStationListTask(stnListModel, location, defaults);
-                mPrevLocation = location;
-            } else {
-                binding.pbSearchStation.setVisibility(View.GONE);
-                binding.imgbtnRefresh.setVisibility(View.VISIBLE);
-            }
-        });
-
-        // Check if a fetched current station has registered with Favorite right after a current station
-        // is retrieved by StationListViewModel.
         stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
             log.i("current station");
             if(curStn != null) {

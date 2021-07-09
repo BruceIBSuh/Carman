@@ -79,7 +79,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // Objects
-    protected ThreadManager2 workerThread;
+    protected ThreadManager2 mWorkThread;
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
@@ -100,8 +100,8 @@ public class BaseActivity extends AppCompatActivity {
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
         // Create the Work Thread
-        workerThread = ThreadManager2.getInstance();
-        log.i("ThreadPoolExecutor: %s", workerThread);
+        mWorkThread = ThreadManager2.getInstance();
+        log.i("ThreadPoolExecutor: %s", mWorkThread);
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
@@ -154,7 +154,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
-    protected final String[] getDefaultParams() {
+    public final String[] getDefaultParams() {
         String[] defaultParams = new String[3];
         defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
         defaultParams[1] = mSettings.getString(Constants.SEARCHING_RADIUS, "2500");

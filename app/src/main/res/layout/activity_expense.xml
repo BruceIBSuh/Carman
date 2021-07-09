@@ -23,7 +23,7 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             app:titleEnabled="false" >
             <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar_main"
+                android:id="@+id/toolbar_expense"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
@@ -38,6 +38,7 @@
                 android:alpha="0.5"
                 android:padding="0dp"
                 android:elevation="1dp"
+                app:layout_collapseMode="parallax"
                 app:tabMode="fixed"
                 app:tabMaxWidth="0dp"
                 app:tabGravity="fill"
@@ -46,8 +47,7 @@
                 app:tabIndicatorHeight="3dp"
                 app:tabSelectedTextColor="@android:color/holo_orange_dark"
                 app:tabTextAppearance="@style/CustomTabText"
-                app:tabTextColor="@android:color/background_light"
-                app:layout_collapseMode="parallax" />
+                app:tabTextColor="@android:color/background_light" />
             <!--
             FrameLayout contains the viewpager which shows the 5 recent expenses of gas or service
             management. At the same time, the layout is replaced with the custom graphview when it
@@ -65,12 +65,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="?attr/actionBarSize"
                 android:layout_marginBottom="?attr/actionBarSize"
-                app:layout_collapseMode="parallax" >
+                app:layout_collapseMode="parallax"  />
+                <!--
                 <androidx.viewpager2.widget.ViewPager2
                     android:id="@+id/pager_expense"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="match_parent" />
             </FrameLayout>
+                -->
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -80,7 +82,7 @@
         android:layout_height="match_parent"
         android:scrollbars="vertical"
         android:fillViewport="true"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/pager_tab_fragment"
             android:layout_width="match_parent"
