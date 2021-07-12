@@ -84,8 +84,7 @@ public class DistCodeDownloadRunnable implements Runnable {
             // Save the list of Opinet.DistrictCode in the storage
             if(distCodeList.size() > 0) {
                 boolean isSaved = saveDistCode(distCodeList);
-                if(isSaved) mTask.hasDistCodeSaved(true);
-                else mTask.hasDistCodeSaved(false);
+                mTask.hasDistCodeSaved(isSaved);
             } else mTask.hasDistCodeSaved(false);
 
         } catch(InterruptedException | IOException e) {

@@ -153,7 +153,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Create ExpTabPagerAdapter that containts GasFragment and ServiceFragment in the
         // background, trasferring params to each fragment and return the adapter.
         // Set the initial page number.
-        tabPagerTask = mWorkThread.startExpenseTabPagerTask(this, getSupportFragmentManager(),
+        tabPagerTask = sThreadManager.startExpenseTabPagerTask(this, getSupportFragmentManager(),
                 pagerModel, getDefaultParams(), jsonDistrict, jsonSvcItems);
 
 
@@ -166,13 +166,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Consider this process should be behind the layout to lessen the ram load.
         if(!isGeofencing) {
-            locationTask = mWorkThread.fetchLocationTask(this, locationModel);
+            locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             locationModel.getLocation().observe(this, location -> {
                 if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                     log.i("current location for finding station:%s", location);
                     final String[] defaults = getDefaultParams();
                     defaults[1] = Constants.MIN_RADIUS;
-                    StationListTask = ThreadManager2.startStationListTask(stnListModel, location, defaults);
+                    StationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
                     mPrevLocation = location;
                 }
             });

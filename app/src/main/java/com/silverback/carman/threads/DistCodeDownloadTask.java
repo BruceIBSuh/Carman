@@ -28,7 +28,10 @@ public class DistCodeDownloadTask extends ThreadTask
         return opinetDistCodeRunnable;
     }
 
-    void recycle() {}
+    @Override
+    void recycle() {
+        log.i("override recycler method in child task");
+    }
 
     @Override
     public void setDistCodeDownloadThread(Thread currentThread) {
@@ -47,6 +50,8 @@ public class DistCodeDownloadTask extends ThreadTask
 
     @Override
     public void handleDistCodeDownload(int state) {
+        //handleTaskState(this, state);
+
         int outstate = -1;
         switch(state) {
             case DistCodeDownloadRunnable.DISTRICT_CODE_COMPLETE:
@@ -60,7 +65,4 @@ public class DistCodeDownloadTask extends ThreadTask
 
         sThreadManager.handleState(this, outstate);
     }
-
-
-
 }
