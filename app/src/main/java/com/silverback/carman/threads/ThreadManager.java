@@ -312,7 +312,7 @@ public class ThreadManager {
         return favPriceTask;
     }
 
-
+    /*
     public static ExpenseTabPagerTask startExpenseTabPagerTask(
             Context context, FragmentManager fragmentManager, PagerAdapterViewModel model,
             String[] defaults, String jsonDistrict, String jsonSvcItem){
@@ -320,7 +320,7 @@ public class ThreadManager {
         ExpenseTabPagerTask expenseTabPagerTask = sInstance.mExpenseTabPagerTaskQueue.poll();
 
         if(expenseTabPagerTask == null) {
-            expenseTabPagerTask = new ExpenseTabPagerTask(context);
+            expenseTabPagerTask = new ExpenseTabPagerTask();
         }
 
         expenseTabPagerTask.initPagerTask(fragmentManager, model, defaults, jsonDistrict, jsonSvcItem);
@@ -330,6 +330,8 @@ public class ThreadManager {
 
         return expenseTabPagerTask;
     }
+
+     */
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 

@@ -22,8 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-/**
+/*
  * This Runnable class is to retrieve the price data from the Opinet server and save the district
  * price data in the cache directory and the station data in the internal file directory.
  */
@@ -50,12 +49,12 @@ public class GasPriceRunnable implements Runnable {
     static final int DOWNLOAD_PRICE_FAILED = -1;
 
     // Objects
-    private Context context;
-    private XmlPullParserHandler xmlHandler;
-    private OpinetPriceListMethods task;
+    private final Context context;
+    private final XmlPullParserHandler xmlHandler;
+    private final OpinetPriceListMethods task;
 
     // Fields
-    private int category;
+    private final int category;
 
     /*
      * An interface that defines methods that ThreadTask implements. An instance of
@@ -64,7 +63,7 @@ public class GasPriceRunnable implements Runnable {
      * variables.
      */
     public interface OpinetPriceListMethods {
-        void setPriceDownloadThread(Thread currentThread);
+        void setGasPriceThread(Thread currentThread);
         void handlePriceTaskState(int state);
         String getDistrictCode();
         String getStationId();
@@ -90,8 +89,9 @@ public class GasPriceRunnable implements Runnable {
         try {
             switch(category) {
                 case AVG:
-                    task.setPriceDownloadThread(Thread.currentThread());
+                    task.setGasPriceThread(Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
+
                     URL avgURL = new URL(URLavg);
                     HttpURLConnection avgConn = (HttpURLConnection)avgURL.openConnection();
                     try(InputStream avgIn = avgConn.getInputStream()) {
@@ -102,11 +102,12 @@ public class GasPriceRunnable implements Runnable {
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                     } catch(IOException e) {e.printStackTrace();}
+
                     avgConn.disconnect();
                     break;
 
                 case SIDO:
-                    task.setPriceDownloadThread(Thread.currentThread());
+                    task.setGasPriceThread(Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
 
                     URL sidoURL = new URL(URLsido + sidoCode);
@@ -118,11 +119,12 @@ public class GasPriceRunnable implements Runnable {
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                     } catch(IOException e) {e.printStackTrace();}
+
                     sidoConn.disconnect();
                     break;
 
                 case SIGUN:
-                    task.setPriceDownloadThread(Thread.currentThread());
+                    task.setGasPriceThread(Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
 
                     URL sigunURL = new URL(URLsigun + sidoCode + SigunCode + sigunCode);
@@ -135,26 +137,29 @@ public class GasPriceRunnable implements Runnable {
                             sigunConn.disconnect();
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                     } catch(IOException e) {e.printStackTrace();}
+
                     sigunConn.disconnect();
                     break;
 
                 case STATION:
                     if(stnId != null) {
-                        task.setPriceDownloadThread(Thread.currentThread());
+                        task.setGasPriceThread(Thread.currentThread());
                         if (Thread.interrupted()) throw new InterruptedException();
 
                         URL stnURL = new URL(URLstn + stnId);
                         HttpURLConnection stnConn = (HttpURLConnection) stnURL.openConnection();
                         try (InputStream stnIn = stnConn.getInputStream()) {
-                            Opinet.StationPrice stnprice = xmlHandler.parseStationPrice(stnIn);
-                            if (stnprice != null) {
+                            Opinet.StationPrice stnPrice = xmlHandler.parseStationPrice(stnIn);
+                            if (stnPrice != null) {
                                 // Save the object in the cache with the price difference if the favorite
                                 // gas stqation is left unchanged.
-                                saveStationPriceDiff(stnprice);
+                                saveStationPriceDiff(stnPrice);
                                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                         }catch(IOException e) {e.printStackTrace();}
+
                         stnConn.disconnect();
+
                     } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                     break;
             }

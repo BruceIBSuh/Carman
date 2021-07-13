@@ -4,8 +4,6 @@ import android.content.Context;
 import android.os.Process;
 
 import com.silverback.carman.R;
-import com.silverback.carman.logs.LoggingHelper;
-import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.XmlPullParserHandler;
@@ -29,8 +27,8 @@ public class DistCodeDownloadRunnable implements Runnable {
     // Logging
     //private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadRunnable.class);
 
-    static final int DISTRICT_CODE_COMPLETE = 1;
-    static final int DISTRICT_CODE_FAIL = -1;
+    static final int TASK_COMPLETE = 1;
+    static final int TASK_FAIL = -1;
 
     // Constants. API 29 and higher requires http to be https.
     private static final String API_KEY = "F186170711";
@@ -45,7 +43,7 @@ public class DistCodeDownloadRunnable implements Runnable {
     public interface OpinetDistCodeMethods {
         void setDistCodeDownloadThread(Thread currentThread);
         void hasDistCodeSaved(boolean b);
-        void handleDistCodeDownload(int state);
+        void handleDistCodeTask(int state);
     }
 
     // Constructor
@@ -85,7 +83,12 @@ public class DistCodeDownloadRunnable implements Runnable {
             if(distCodeList.size() > 0) {
                 boolean isSaved = saveDistCode(distCodeList);
                 mTask.hasDistCodeSaved(isSaved);
-            } else mTask.hasDistCodeSaved(false);
+                int state = (isSaved)? TASK_COMPLETE : TASK_FAIL;
+                mTask.handleDistCodeTask(state);
+            } else {
+                mTask.hasDistCodeSaved(false);
+                mTask.handleDistCodeTask(TASK_FAIL);
+            }
 
         } catch(InterruptedException | IOException e) {
             e.printStackTrace();

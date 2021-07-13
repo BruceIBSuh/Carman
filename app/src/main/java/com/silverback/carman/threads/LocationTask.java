@@ -56,7 +56,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     @Override
     public void handleLocationTask(int state) {
-        handleTaskState(this, state);
+        //handleTaskState(this, state);
         int outstate = -1;
         switch(state){
             case LocationRunnable.TASK_COMPLETE:

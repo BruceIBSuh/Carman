@@ -10,9 +10,9 @@ import com.silverback.carman.fragments.GasManagerFragment;
 import com.silverback.carman.fragments.ServiceManagerFragment;
 import com.silverback.carman.fragments.StatStmtsFragment;
 
-public class ExpTabAdapter extends FragmentStateAdapter {
-    //private static final LoggingHelper log = LoggingHelperFactory.create(ExpTabAdapter.class);
-    public ExpTabAdapter(FragmentManager fm, Lifecycle lifecycle) {
+public class ExpContentPagerAdapter extends FragmentStateAdapter {
+    //private static final LoggingHelper log = LoggingHelperFactory.create(ExpContentPagerAdapter.class);
+    public ExpContentPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
 

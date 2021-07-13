@@ -18,7 +18,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
 
     // Objects and Fields
     private OpinetViewModel viewModel;
-    private Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable, mStationPriceRunnable;
+    private final Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable, mStationPriceRunnable;
     private String distCode;
     private String stnId;
     private int index = 0;
@@ -53,7 +53,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
 
     // Callback methods defined in GasPriceRunnable.OpinentPriceListMethods
     @Override
-    public void setPriceDownloadThread(Thread currentThread) {
+    public void setGasPriceThread(Thread currentThread) {
         setCurrentThread(currentThread);
     }
 
@@ -67,6 +67,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         return stnId;
     }
 
+    // Separate the gas price by category and handle it with corresponding viewmodel
     @Override
     public void handlePriceTaskState(int state) {
         index ++;
@@ -92,10 +93,10 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         }
     }
 
-
-    public void recycle(){
-        //stnId = null;
-        //distCode = null;
+    @Override
+    protected void recycle(){
+        stnId = null;
+        distCode = null;
         index = 0;
     }
 

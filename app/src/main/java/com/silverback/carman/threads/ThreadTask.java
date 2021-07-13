@@ -47,14 +47,7 @@ public class ThreadTask {
     }
 
     public void handleTaskState(ThreadTask task, int state) {
-        int outstate = -1;
-        switch(state){
-            case TASK_COMPLETE:
-                break;
-            case TASK_FAIL:
-                break;
-        }
-
+        log.i("Task Name: %s", task.getClass().getName());
         sThreadManager.handleState(task, state);
     }
 
