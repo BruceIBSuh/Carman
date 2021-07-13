@@ -28,7 +28,10 @@ public class DistCodeDownloadTask extends ThreadTask
         return opinetDistCodeRunnable;
     }
 
-    void recycle() {}
+    @Override
+    protected void recycle() {
+        log.i("override recycler method in child task");
+    }
 
     @Override
     public void setDistCodeDownloadThread(Thread currentThread) {
@@ -37,30 +40,26 @@ public class DistCodeDownloadTask extends ThreadTask
 
     @Override
     public void hasDistCodeSaved(boolean b) {
-        int outstate = -1;
-        if(b) model.distCodeComplete().postValue(true);
-        else model.distCodeComplete().postValue(false);
-
-        sThreadManager.handleState(this, outstate);
+        model.distCodeComplete().postValue(b);
     }
 
-
     @Override
-    public void handleDistCodeDownload(int state) {
+    public void handleDistCodeTask(int state) {
+        handleTaskState(this, state);
+        /*
         int outstate = -1;
         switch(state) {
-            case DistCodeDownloadRunnable.DISTRICT_CODE_COMPLETE:
+            case DistCodeDownloadRunnable.TASK_COMPLETE:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLETED;
                 break;
 
-            case DistCodeDownloadRunnable.DISTRICT_CODE_FAIL:
+            case DistCodeDownloadRunnable.TASK_FAIL:
                 outstate = ThreadManager.DOWNLOAD_DISTCODE_FAILED;
                 break;
         }
 
         sThreadManager.handleState(this, outstate);
+
+         */
     }
-
-
-
 }

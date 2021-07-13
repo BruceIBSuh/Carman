@@ -22,7 +22,7 @@ public class ExpenseSvcItemsRunnable implements Runnable {
     public interface ServiceItemsMethods {
         void setServiceItemsThread(Thread thread);
         void setJsonSvcArray(JSONArray jsonArray);
-        void handleRecyclerTask(int state);
+        void handleSvcItemsTask(int state);
         String getJsonServiceItems();
 
     }
@@ -34,7 +34,6 @@ public class ExpenseSvcItemsRunnable implements Runnable {
 
     @Override
     public void run() {
-
         task.setServiceItemsThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         String jsonItemsString = task.getJsonServiceItems();
@@ -42,11 +41,10 @@ public class ExpenseSvcItemsRunnable implements Runnable {
         try {
             JSONArray jsonArray = new JSONArray(jsonItemsString);
             task.setJsonSvcArray(jsonArray);
-            task.handleRecyclerTask(TASK_COMPLETE);
+            task.handleSvcItemsTask(TASK_COMPLETE);
 
         } catch(JSONException e) {
-            //log.i("JSONException: %s", e.getMessage());
-            task.handleRecyclerTask(TASK_FAIL);
+            task.handleSvcItemsTask(TASK_FAIL);
         }
 
     }

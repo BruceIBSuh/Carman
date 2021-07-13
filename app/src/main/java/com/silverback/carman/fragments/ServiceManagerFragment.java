@@ -30,7 +30,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.BaseActivity;
-import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.ExpServiceItemAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -39,14 +38,14 @@ import com.silverback.carman.database.ServiceManagerEntity;
 import com.silverback.carman.database.ServicedItemEntity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.viewmodels.LocationViewModel;
-import com.silverback.carman.viewmodels.PagerAdapterViewModel;
-import com.silverback.carman.viewmodels.ServiceCenterViewModel;
 import com.silverback.carman.threads.ServiceCenterTask;
 import com.silverback.carman.threads.ThreadManager;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
+import com.silverback.carman.viewmodels.LocationViewModel;
+import com.silverback.carman.viewmodels.PagerAdapterViewModel;
+import com.silverback.carman.viewmodels.ServiceCenterViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -156,10 +155,7 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
         pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
-        //pagerAdapterModel = ((ExpenseActivity)getActivity()).getPagerModel();
         locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
-        //locationModel = ((ExpenseActivity) getActivity()).getLocationViewModel();
-
 
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
         df = BaseActivity.getDecimalFormatInstance();
@@ -273,8 +269,8 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
         locationModel.getLocation().observe(requireActivity(), location -> {

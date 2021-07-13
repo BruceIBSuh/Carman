@@ -30,8 +30,11 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
 
     // Constants
     private static final int REQUEST_CHECK_LOCATION_SETTINGS = 1000;
-    static final int CURRENT_LOCATION_COMPLETE = 1;
-    static final int CURRENT_LOCATION_FAIL = -1;
+    //static final int CURRENT_LOCATION_COMPLETE = 1;
+    //static final int CURRENT_LOCATION_FAIL = -1;
+
+    static final int TASK_COMPLETE = 1;
+    static final int TASK_FAIL= -1;
 
     // Objects and Fields
     private final Context context;
@@ -95,18 +98,18 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 if(location != null) {
                     log.i("location fetched:%s", location);
                     task.setCurrentLocation(location);
-                    task.handleLocationTask(CURRENT_LOCATION_COMPLETE);
+                    task.handleLocationTask(TASK_COMPLETE);
 
                 } else {
                     task.notifyLocationException(context.getString(R.string.location_null));
-                    task.handleLocationTask(CURRENT_LOCATION_FAIL);
+                    task.handleLocationTask(TASK_FAIL);
                 }
             });
 
         } catch (SecurityException e) {
             log.e("Location_SecurityException: %s", e.getMessage());
             task.notifyLocationException(context.getString(R.string.location_exception_security));
-            task.handleLocationTask(CURRENT_LOCATION_FAIL);
+            task.handleLocationTask(TASK_FAIL);
 
         } finally {
             log.e("Location finished");
@@ -127,7 +130,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 e.printStackTrace();
             }
 
-            task.handleLocationTask(CURRENT_LOCATION_FAIL);
+            task.handleLocationTask(TASK_FAIL);
         }
     }
 }

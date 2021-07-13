@@ -11,14 +11,15 @@ import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import org.json.JSONArray;
 
 public class ExpenseTabPagerTask extends ThreadTask implements
-        ExpenseTabPagerRunnable.TabPagerMethods, ExpenseSvcItemsRunnable.ServiceItemsMethods {
+        //ExpenseTabPagerRunnable.TabPagerMethods,
+        ExpenseSvcItemsRunnable.ServiceItemsMethods {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseTabPagerTask.class);
 
     // Objects
     private Context context;
-    private ExpenseTabPagerRunnable mExpenseTabPagerRunnable;
-    private ExpenseSvcItemsRunnable mExpenseSvcItemsRunnable;
+    //private final ExpenseTabPagerRunnable mExpenseTabPagerRunnable;
+    private final ExpenseSvcItemsRunnable mExpenseSvcItemsRunnable;
     private FragmentManager fragmentManager;
     private PagerAdapterViewModel pagerModel;
     private String[] defaults;
@@ -26,12 +27,13 @@ public class ExpenseTabPagerTask extends ThreadTask implements
     private String jsonSvcItems;
 
     // Constructor
-    ExpenseTabPagerTask(Context context) {
+    ExpenseTabPagerTask() {
         super();
-        mExpenseTabPagerRunnable = new ExpenseTabPagerRunnable(context, this);
+        //mExpenseTabPagerRunnable = new ExpenseTabPagerRunnable(context, this);
         mExpenseSvcItemsRunnable = new ExpenseSvcItemsRunnable(this);
     }
 
+    /*
     void initPagerTask(FragmentManager fm, PagerAdapterViewModel viewModel,
                        String[] defaults, String jsonDistrict, String jsonSvcItems) {
         fragmentManager = fm;
@@ -41,13 +43,23 @@ public class ExpenseTabPagerTask extends ThreadTask implements
         this.jsonSvcItems = jsonSvcItems;
     }
 
+     */
+
+    void initTask(PagerAdapterViewModel pagerModel, String svcItems) {
+        this.pagerModel = pagerModel;
+        this.jsonSvcItems = svcItems;
+    }
+    /*
     Runnable getTabPagerRunnable() {
         return mExpenseTabPagerRunnable;
     }
+
+     */
     Runnable getServiceItemsRunnable() {
         return mExpenseSvcItemsRunnable;
     }
 
+    /*
     @Override
     public FragmentManager getFragmentManager() {
         return fragmentManager;
@@ -63,16 +75,20 @@ public class ExpenseTabPagerTask extends ThreadTask implements
         return jsonDistrict;
     }
 
+     */
+
     @Override
     public String getJsonServiceItems() {
         return jsonSvcItems;
     }
 
-
+    /*
     @Override
     public void setTabPagerTaskThread(Thread thread) {
         setCurrentThread(thread);
     }
+
+     */
 
     @Override
     public void setServiceItemsThread(Thread thread) {
@@ -92,7 +108,7 @@ public class ExpenseTabPagerTask extends ThreadTask implements
 
 
     @Override
-    public void handleRecyclerTask(int state) {
+    public void handleSvcItemsTask(int state) {
         int outstate = -1;
         switch(state) {
             case ExpenseSvcItemsRunnable.TASK_COMPLETE:

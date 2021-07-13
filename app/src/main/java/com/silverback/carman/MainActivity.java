@@ -67,7 +67,7 @@ public class MainActivity extends BaseActivity implements
     // Fields
     private String[] defaults;
     private String defaultFuel;
-    private boolean isStationOn = false;
+    //private boolean isStationOn;
 
 
     @Override
@@ -114,14 +114,16 @@ public class MainActivity extends BaseActivity implements
         imgResUtil = new ApplyImageResourceUtil(this);
 
         // Event Handlers
+
         binding.imgbtnStation.setOnClickListener(view -> {
+            final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
             // Location permission check
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
-                if(!isStationOn) locationTask = mWorkThread.fetchLocationTask(this, locationModel);
+                if(!isStnViewOn) locationTask = sThreadManager.fetchLocationTask(this, locationModel);
                 else {
                     binding.stationRecyclerView.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.VISIBLE);
-                    isStationOn = !isStationOn;
+                    //isStationOn = !isStationOn;
                 }
             });
         });
@@ -129,13 +131,12 @@ public class MainActivity extends BaseActivity implements
         locationModel.getLocation().observe(this, location -> {
             if(location == null) return;
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
-                log.i("location fetched: %s", location);
                 mPrevLocation = location;
-                ThreadManager2.startStationListTask(stnModel, location, getDefaultParams());
+                sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
             } else {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                isStationOn = !isStationOn;
+                //isStationOn = !isStationOn;
                 Snackbar.make(rootView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
         });
@@ -159,7 +160,7 @@ public class MainActivity extends BaseActivity implements
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.stationRecyclerView.setAdapter(mAdapter);
                 binding.stationRecyclerView.showStationListRecyclerView();
-                isStationOn = !isStationOn;
+                //isStationOn = !isStationOn;
 
             } else {
                 log.i("no station");

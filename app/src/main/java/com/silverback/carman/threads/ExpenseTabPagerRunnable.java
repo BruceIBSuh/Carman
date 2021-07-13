@@ -35,7 +35,7 @@ public class ExpenseTabPagerRunnable implements Runnable {
     }
 
     // Constructor
-    ExpenseTabPagerRunnable(Context context, TabPagerMethods task) {
+    public ExpenseTabPagerRunnable(Context context, TabPagerMethods task) {
         this.context = context;
         this.task = task;
     }
