@@ -18,6 +18,7 @@ import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class ThreadManager2 {
 
     // Determine the threadpool parameters.
     private static final int CORE_POOL_SIZE = 3;// Sets the initial threadpool size to 4
-    private static final int MAXIMUM_POOL_SIZE = 5;// Sets the maximum threadpool size to 4
+    private static final int MAXIMUM_POOL_SIZE = 3;// Sets the maximum threadpool size to 4
     private static final int KEEP_ALIVE_TIME = 1;
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT;// Sets the Time Unit to seconds
 
@@ -59,6 +60,7 @@ public class ThreadManager2 {
 
     // Constructor
     private ThreadManager2() {
+        super();
         mWorkQueue = new LinkedBlockingQueue<>();
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,

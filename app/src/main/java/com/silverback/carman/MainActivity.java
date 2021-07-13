@@ -109,7 +109,8 @@ public class MainActivity extends BaseActivity implements
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        // Instantiate utils
+
+        // Instantiate objects
         imgResUtil = new ApplyImageResourceUtil(this);
 
         // Event Handlers
