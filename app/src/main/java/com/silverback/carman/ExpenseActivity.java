@@ -157,12 +157,26 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         */
         tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
 
+        // ViewPager2 for displaying the last 5 expenses of gas and service.
         pagerRecentExp = new ViewPager2(this);
         pagerRecentExp.setId(View.generateViewId());
         ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         pagerRecentExp.setAdapter(recentAdapter);
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                super.onPageScrolled(position, positionOffset, positionOffsetPixels);
+            }
 
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+            }
         });
 
 
