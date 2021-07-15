@@ -9,9 +9,12 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import com.silverback.carman.fragments.GasManagerFragment;
 import com.silverback.carman.fragments.ServiceManagerFragment;
 import com.silverback.carman.fragments.StatStmtsFragment;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 
 public class ExpContentPagerAdapter extends FragmentStateAdapter {
     //private static final LoggingHelper log = LoggingHelperFactory.create(ExpContentPagerAdapter.class);
+
     public ExpContentPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }

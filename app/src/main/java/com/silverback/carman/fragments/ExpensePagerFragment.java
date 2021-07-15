@@ -23,7 +23,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 /**
- * This fragment i
+ * This fragment displays last gas/service expenses in the ViewPager2.
  */
 public class ExpensePagerFragment extends Fragment {
 
@@ -87,8 +87,8 @@ public class ExpensePagerFragment extends Fragment {
         return localView;
     }
 
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.

@@ -72,7 +72,7 @@
     <string name="exp_title_service">정비/점검 관리</string>
     <string name="exp_title_stat">지출내역 보기</string>
     <string name="exp_label_odometer">주행거리</string>
-    <string name="exp_menuitem_title_save">저장</string>
+    <string name="exp_menu_save">저장</string>
     <string name="exp_snackbar_favorite_limit">즐겨찾기는 10개까지 지정할 수 있습니다</string>
     <!--ExpenseActivity$ExpensPagerFragment-->
     <string name="toast_expense_no_data">최근 데이터가 없습니다</string>
