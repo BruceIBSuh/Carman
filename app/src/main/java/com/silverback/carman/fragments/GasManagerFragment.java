@@ -211,8 +211,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
         binding.tvGasPayment.setText(mSettings.getString(Constants.PAYMENT, "0"));
 
-        // TEST CODING REQUIRED.
-        binding.pbSearchStation.setVisibility(View.VISIBLE);
 
         // Attach the event listeners
         binding.etUnitPrice.addTextChangedListener(new NumberTextWatcher(binding.etUnitPrice));
@@ -286,6 +284,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     //public void onActivityCreated(Bundle savedInstanceState) {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         // Share a value input in NumberPadFragment as the view id passes to NumberPadFragment when
         // clicking, then returns an input value as SparseArray which contains the view id, which
         // may identify the view invoking NumberPadFragment and fill in the value into the view.

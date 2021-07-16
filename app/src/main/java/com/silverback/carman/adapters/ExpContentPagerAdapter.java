@@ -35,4 +35,9 @@ public class ExpContentPagerAdapter extends FragmentStateAdapter {
     public int getItemCount() {
         return fragments.length;
     }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
 }

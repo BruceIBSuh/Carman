@@ -1,12 +1,20 @@
 package com.silverback.carman;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
+import android.app.ActionBar;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
@@ -16,11 +24,13 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.ExpContentPagerAdapter;
 import com.silverback.carman.adapters.ExpRecentAdapter;
 import com.silverback.carman.databinding.ActivityExpenseBinding;
 import com.silverback.carman.fragments.GasManagerFragment;
+import com.silverback.carman.fragments.ServiceManagerFragment;
 import com.silverback.carman.fragments.StatGraphFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -63,7 +73,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
 
     // Constants
-
     private final int MENU_ITEM_SAVE = 1000;
     private final int GAS = 0;
     private final int SVC = 1;
@@ -75,7 +84,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private PagerAdapterViewModel pagerModel;
     private StationListViewModel stnListModel;
     private ExpContentPagerAdapter expContentPagerAdapter;
-    private StatGraphFragment statGraphFragment;
+    //private GasManagerFragment gasManager;
+    //private ServiceManagerFragment svcManager;
+    private StatGraphFragment statFragment;
 
     private ThreadTask tabPagerTask;
     private ThreadTask locationTask;
@@ -89,6 +100,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private int currentPage;
     private int prevHeight;
     private int category;
+    private float tabHeight;
     private String pageTitle;
     private boolean isGeofencing;
     private Location mPrevLocation;
@@ -109,7 +121,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         }
 
         // Create objects
-        statGraphFragment = new StatGraphFragment();
+        //gasManager = (GasManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_gas);
+        //svcManager = (ServiceManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_svc);
+        //statFragment = (StatGraphFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_stat);
+
 
         // Define ViewModels. ViewModelProviders.of(this) is deprecated.
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -142,8 +157,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
             tab.setText(titles[pos]);
             tab.setIcon(icons[pos]);
-            //animSlideTabLayout();
+            animSlideTabLayout();
         }).attach();
+
 
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
@@ -154,10 +170,14 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         pagerRecentExp.setAdapter(recentAdapter);
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
-
+            @Override
+            public void onPageSelected(int position) {
+                log.i("onPageSelected");
+            }
         });
 
         // Consider this process should be behind the layout to lessen the ram load.
+        /*
         if(!isGeofencing) {
             locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             locationModel.getLocation().observe(this, location -> {
@@ -169,6 +189,20 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 }
             });
         }
+        */
+
+        // Get the tab hegiht after the view has drawn.
+        /*
+        binding.frameLayoutExpense.getViewTreeObserver()
+                .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+
+                        binding.frameLayoutExpense.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+        */
+
     }
 
     @Override
@@ -189,9 +223,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     public void onStop(){
         super.onStop();
         log.i("onStop");
-        if(locationTask != null) locationTask = null;
-        if(tabPagerTask != null) tabPagerTask = null;
-        if(stationListTask != null) stationListTask = null;
+        //if(locationTask != null) locationTask = null;
+        //if(tabPagerTask != null) tabPagerTask = null;
+        //if(stationListTask != null) stationListTask = null;
     }
 
     @Override
@@ -209,27 +243,21 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
-                if(isGeofencing) {
+                if (isGeofencing) {
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
                     startActivity(mainIntent);
                 } else finish();
 
-                return true;
+                break;
 
             // menu for saving the gas or service data
             case MENU_ITEM_SAVE:
-                //Fragment fragment = expContentPagerAdapter.createFragment(position);//getItem(position);
-                boolean isSaved = false;
-                //saveExpenseData(GAS);
-                //if(position == Constants.GAS) isSaved = ((GasManagerFragment)fragment).saveGasData();
-                //0else if(position == Constants.SVC) isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
-
-                //if(isSaved) finish();
-                return isSaved;
-
-            default: return false;
+                saveExpenseData(currentPage);
+                break;
         }
+
+        return super.onOptionsItemSelected(item);
     }
 
     // AppBarLayout.OnOffsetChangeListener invokes this method
@@ -253,25 +281,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // Animate TabLayout and the tap-syned viewpager sequentially. As the animation completes,
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.
-    /*
     private void animSlideTabLayout() {
         final float toolbarHeight = getActionbarHeight();
+        log.i("tab height: %s", tabHeight);
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
-        ObjectAnimator slideViewPager = ObjectAnimator.ofFloat(binding.frameLayoutExpense, "translationY", toolbarHeight);
-        slideTab.setDuration(1000);
-        slideViewPager.setDuration(100);
-        animSet.play(slideTab).with(slideViewPager);
+        ObjectAnimator tab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
+        ObjectAnimator frame = ObjectAnimator.ofFloat(binding.frameLayoutExpense, "translationY", toolbarHeight);
+        tab.setDuration(1000);
+        frame.setDuration(1000);
+        animSet.play(tab).before(frame);
 
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
-                if(binding.frameLayoutExpense.getChildCount() > 0) binding.frameLayoutExpense.removeAllViews();
-
-                animSlideTopFrame(0, 150);
-                prevHeight = 150;
-
-                //binding.frameTopFragments.addView(pagerRecentExp);
+                //if(binding.frameLayoutExpense.getChildCount() > 0) binding.frameLayoutExpense.removeAllViews();
+                //animSlideTopFrame(0, 150);
+                //prevHeight = 100;
+                //binding.frameLayoutExpense.addView(pagerRecentExp);
 
                 // In case that this activity is started by the geofence notification, ServiceFragment
                 // must be set to the current page only after the viewpager at the top has added to
@@ -299,12 +325,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             binding.frameLayoutExpense.setLayoutParams(params);
         });
 
-        anim.setDuration(1000);
+        anim.setDuration(500);
         anim.start();
 
         anim.addListener(new AnimatorListenerAdapter() {
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
+
                 //ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
                 //pagerRecentExp.setAdapter(recentAdapter);
                 //if(position != Constants.STAT) pagerRecentExp.setCurrentItem(0);
@@ -312,8 +339,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         });
 
     }
-
-     */
 
 
     private ViewPager2.OnPageChangeCallback onPageChangeCallback() {
@@ -323,29 +348,52 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 super.onPageSelected(position);
                 currentPage = position;
                 log.i("current page: %d", currentPage);
-                binding.frameLayoutExpense.removeAllViews();
+                if(binding.frameLayoutExpense.getChildCount() > 0)
+                    binding.frameLayoutExpense.removeAllViews();
                 //saveMenuItem.setVisible(true);
                 switch (position) {
-                    case Constants.GAS: // GasManagerFragment
+                    case GAS: // GasManagerFragment
                         pageTitle = getString(R.string.exp_title_gas);
                         //saveMenuItem.setVisible(true);
                         binding.frameLayoutExpense.addView(pagerRecentExp);
                         break;
 
-                    case Constants.SVC:
+                    case SVC:
                         pageTitle = getString(R.string.exp_title_service);
                         //saveMenuItem.setVisible(true);
                         binding.frameLayoutExpense.addView(pagerRecentExp);
                         break;
 
-                    case Constants.STAT:
+                    case STAT:
                         pageTitle = getString(R.string.exp_title_stat);
                         //saveMenuItem.setVisible(false);
-                        //StatGraphFragment statGraphFragment = new StatGraphFragment();
+                        StatGraphFragment statGraphFragment = new StatGraphFragment();
+                        //if(statFragment == null) statFragment = new StatGraphFragment();
                         getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.frameLayout_expense, statGraphFragment).commit();
 
                         break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                if(state == 0) {
+                    switch(currentPage) {
+                        case GAS:
+                            animSlideTopFrame(prevHeight, 120);
+                            prevHeight = 120;
+                            break;
+                        case SVC:
+                            animSlideTopFrame(prevHeight, 100);
+                            prevHeight = 100;
+                            break;
+                        case STAT:
+                            animSlideTopFrame(prevHeight, 200);
+                            prevHeight = 200;
+                            break;
+                    }
+
                 }
             }
         };
@@ -353,12 +401,17 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     private void saveExpenseData(int page) {
+        Fragment fragment = expContentPagerAdapter.createFragment(page);
+        boolean isSaved = false;
         switch(page) {
             case GAS:
-                GasManagerFragment gas = (GasManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_gas);
+                isSaved = ((GasManagerFragment)fragment).saveGasData();
                 break;
             case SVC:
+                isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
                 break;
         }
+
+        if(isSaved) finish();
     }
 }
