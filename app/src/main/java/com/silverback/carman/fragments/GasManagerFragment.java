@@ -4,7 +4,6 @@ package com.silverback.carman.fragments;
 import android.Manifest;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -12,11 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
-import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,7 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -34,7 +27,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman.BaseActivity;
-import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
@@ -46,12 +38,10 @@ import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.threads.ThreadManager;
-import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
 import com.silverback.carman.utils.NumberTextWatcher;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
@@ -221,8 +211,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
         binding.tvGasPayment.setText(mSettings.getString(Constants.PAYMENT, "0"));
 
-        // TEST CODING REQUIRED.
-        binding.pbSearchStation.setVisibility(View.VISIBLE);
 
         // Attach the event listeners
         binding.etUnitPrice.addTextChangedListener(new NumberTextWatcher(binding.etUnitPrice));
@@ -296,6 +284,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     //public void onActivityCreated(Bundle savedInstanceState) {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         // Share a value input in NumberPadFragment as the view id passes to NumberPadFragment when
         // clicking, then returns an input value as SparseArray which contains the view id, which
         // may identify the view invoking NumberPadFragment and fill in the value into the view.

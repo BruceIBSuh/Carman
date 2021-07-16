@@ -221,7 +221,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
 
-        parentLayout = localView.findViewById(R.id.constraintLayout_root);
+        parentLayout = localView.findViewById(R.id.fragment_svc);
         recyclerServiceItems = localView.findViewById(R.id.recycler_service);
         tvDate = localView.findViewById(R.id.tv_service_date);
         etServiceName = localView.findViewById(R.id.et_service_provider);

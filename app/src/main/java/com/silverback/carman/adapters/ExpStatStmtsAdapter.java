@@ -21,7 +21,7 @@ public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpStatStmtsAdapte
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpStatStmtsAdapter.class);
 
     // Objects
-    private List<ExpenseBaseDao.ExpenseStatements> expList;
+    private final List<ExpenseBaseDao.ExpenseStatements> expList;
 
     // Constructor
     public ExpStatStmtsAdapter(List<ExpenseBaseDao.ExpenseStatements> list) {
@@ -49,10 +49,13 @@ public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpStatStmtsAdapte
     }
 
     
-    class ExpenseStatHolder extends RecyclerView.ViewHolder {
+    static class ExpenseStatHolder extends RecyclerView.ViewHolder {
         // Objects
-        private String dateFormat;
-        private TextView tvDate, tvMileage, tvExpense, tvLocation;
+        private final String dateFormat;
+        private final TextView tvDate;
+        private final TextView tvMileage;
+        private final TextView tvExpense;
+        private final TextView tvLocation;
 
         // Constructor
         ExpenseStatHolder(CardView cardView) {
