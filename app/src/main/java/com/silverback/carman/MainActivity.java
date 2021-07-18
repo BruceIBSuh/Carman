@@ -49,25 +49,24 @@ public class MainActivity extends BaseActivity implements
 
     // Objects
     private ActivityMainBinding binding;
-
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private ImageViewModel imgModel;
 
     private LocationTask locationTask;
-    private Location mPrevLocation;
+    private StationListTask stationListTask;
 
-    private List<Opinet.GasStnParcelable> mStationList;
     private PricePagerAdapter pricePagerAdapter;
     private StationListAdapter mAdapter;
-    private StationListTask stationListTask;
+
+    private Location mPrevLocation;
+    private List<Opinet.GasStnParcelable> mStationList;
 
     private ApplyImageResourceUtil imgResUtil;
 
     // Fields
     private String[] defaults;
     private String defaultFuel;
-    //private boolean isStationOn;
 
 
     @Override
@@ -114,16 +113,16 @@ public class MainActivity extends BaseActivity implements
         imgResUtil = new ApplyImageResourceUtil(this);
 
         // Event Handlers
-
         binding.imgbtnStation.setOnClickListener(view -> {
             final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
             // Location permission check
-            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
-                if(!isStnViewOn) locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                else {
+            checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+                if(!isStnViewOn) {
+                    locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+                    binding.pbNearStns.setVisibility(View.VISIBLE);
+                } else {
                     binding.stationRecyclerView.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.VISIBLE);
-                    //isStationOn = !isStationOn;
                 }
             });
         });
@@ -136,6 +135,7 @@ public class MainActivity extends BaseActivity implements
             } else {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                binding.pbNearStns.setVisibility(View.GONE);
                 //isStationOn = !isStationOn;
                 Snackbar.make(rootView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
@@ -161,7 +161,6 @@ public class MainActivity extends BaseActivity implements
                 binding.stationRecyclerView.setAdapter(mAdapter);
                 binding.stationRecyclerView.showStationListRecyclerView();
                 //isStationOn = !isStationOn;
-
             } else {
                 log.i("no station");
                 // No near stations post an message that contains the clickable span to link to the
@@ -169,6 +168,7 @@ public class MainActivity extends BaseActivity implements
                 //SpannableString spannableString = handleStationListException();
                 //stationRecyclerView.showTextView(spannableString);
             }
+            binding.pbNearStns.setVisibility(View.GONE);
         });
 
         // Update the carwash info to StationList and notify the data change to Adapter.

@@ -102,7 +102,6 @@
         android:layout_gravity="bottom"
         android:background="#FB8C00"
         app:layout_insetEdge="bottom">
-
         <ImageButton
             android:id="@+id/imgbtn_station"
             android:layout_width="wrap_content"
@@ -113,7 +112,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_gas_station" />
-
         <ImageButton
             android:id="@+id/imgbtn_svc"
             android:layout_width="wrap_content"
@@ -124,6 +122,17 @@
             app:layout_constraintEnd_toStartOf="@+id/imgbtn_station"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_service_center" />
+
+        <ProgressBar
+            android:id="@+id/pb_near_stns"
+            android:visibility="gone"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            app:layout_constraintStart_toStartOf="@id/imgbtn_station"
+            app:layout_constraintTop_toTopOf="@id/imgbtn_station"
+            app:layout_constraintEnd_toEndOf="@id/imgbtn_station"
+            app:layout_constraintBottom_toBottomOf="@id/imgbtn_station"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -1,11 +1,8 @@
 package com.silverback.carman;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.ActionBar;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -24,7 +21,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.ExpContentPagerAdapter;
 import com.silverback.carman.adapters.ExpRecentAdapter;
@@ -86,19 +82,19 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private ExpContentPagerAdapter expContentPagerAdapter;
     //private GasManagerFragment gasManager;
     //private ServiceManagerFragment svcManager;
-    private StatGraphFragment statFragment;
+    private StatGraphFragment statGraphFragment;
 
     private ThreadTask tabPagerTask;
     private ThreadTask locationTask;
     private ThreadTask stationListTask;
 
     private ViewPager2 pagerRecentExp;
-    private MenuItem saveMenuItem;
+    private MenuItem menuSave;
     private ViewTreeObserver vto;
 
     // Fields
     private int currentPage;
-    private int prevHeight;
+    private int prevHeight = 0;
     private int category;
     private float tabHeight;
     private String pageTitle;
@@ -143,7 +139,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         //binding.pagerTabFragment.setCurrentItem(0);
-        binding.pagerTabFragment.registerOnPageChangeCallback(onPageChangeCallback());
+        binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
 
         // Associate TabLayout with ViewPager2 using TabLayoutMediator.
         String[] titles = getResources().getStringArray(R.array.tab_carman_title);
@@ -177,11 +173,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         });
 
         // Consider this process should be behind the layout to lessen the ram load.
-        /*
         if(!isGeofencing) {
             locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             locationModel.getLocation().observe(this, location -> {
-                if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
+                if (mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                     final String[] defaults = getDefaultParams();
                     defaults[1] = Constants.MIN_RADIUS;
                     stationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
@@ -189,26 +184,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 }
             });
         }
-        */
-
-        // Get the tab hegiht after the view has drawn.
-        /*
-        binding.frameLayoutExpense.getViewTreeObserver()
-                .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-
-                        binding.frameLayoutExpense.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                });
-        */
-
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume");
+        log.i("onResume:%s, %s:", binding.frameExpense.getElevation(), binding.tabExpense.getElevation());
     }
 
 
@@ -227,14 +208,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         //if(tabPagerTask != null) tabPagerTask = null;
         //if(stationListTask != null) stationListTask = null;
     }
-
+    
     @Override
     public boolean onCreateOptionsMenu(@NonNull Menu menu) {
         //Menu.add(groupId, itemId, order, title)
-        MenuItem save = menu.add(Menu.NONE, MENU_ITEM_SAVE, Menu.NONE, R.string.exp_menu_save);
-        //saveMenuItem = menu.findItem(MENU_ITEM_ID);
-        save.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        save.setIcon(R.drawable.ic_save_room);
+        menuSave = menu.add(Menu.NONE, MENU_ITEM_SAVE, Menu.NONE, R.string.exp_menu_save);
+        menuSave.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menuSave.setIcon(R.drawable.ic_save_room);
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -243,21 +223,29 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case android.R.id.home:
-                if (isGeofencing) {
+                if(isGeofencing) {
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
                     startActivity(mainIntent);
                 } else finish();
 
-                break;
+                return true;
 
             // menu for saving the gas or service data
             case MENU_ITEM_SAVE:
                 saveExpenseData(currentPage);
-                break;
-        }
+                return true;
 
-        return super.onOptionsItemSelected(item);
+            default: return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Modify the options menu based on events that occur during the activity lifecycle.
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menuSave = menu.findItem(MENU_ITEM_SAVE);
+        menuSave.setVisible(currentPage != STAT);
+        return true;
     }
 
     // AppBarLayout.OnOffsetChangeListener invokes this method
@@ -272,9 +260,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
-
-        //float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
-        //binding.frameLayoutExpense.setAlpha(bgAlpha);
+        float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
+        binding.frameExpense.setAlpha(bgAlpha);
 
     }
 
@@ -283,33 +270,31 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // start LocationTask.
     private void animSlideTabLayout() {
         final float toolbarHeight = getActionbarHeight();
-        log.i("tab height: %s", tabHeight);
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator tab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
-        ObjectAnimator frame = ObjectAnimator.ofFloat(binding.frameLayoutExpense, "translationY", toolbarHeight);
-        tab.setDuration(1000);
-        frame.setDuration(1000);
-        animSet.play(tab).before(frame);
-
+        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
+        ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.frameExpense, "translationY", toolbarHeight);
+        animTab.setDuration(1000);
+        animFrame.setDuration(1000);
+        animSet.play(animTab).before(animFrame);
+        animSet.start();
+        /*
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
-                //if(binding.frameLayoutExpense.getChildCount() > 0) binding.frameLayoutExpense.removeAllViews();
-                //animSlideTopFrame(0, 150);
-                //prevHeight = 100;
-                //binding.frameLayoutExpense.addView(pagerRecentExp);
-
+                log.i("Animate tab and frame");
                 // In case that this activity is started by the geofence notification, ServiceFragment
                 // must be set to the current page only after the viewpager at the top has added to
                 // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
-                if(isGeofencing && category == Constants.SVC) binding.pagerTabFragment.setCurrentItem(category);
+                if(isGeofencing && category == Constants.SVC)
+                    binding.pagerTabFragment.setCurrentItem(category);
             }
         });
-        animSet.start();
+
+         */
+
     }
 
     private void animSlideTopFrame(int oldY, int newY) {
-        log.i("animate top frame");
         // Convert the dp unit to pixels
         int prevHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 oldY, getResources().getDisplayMetrics());
@@ -318,84 +303,61 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
-        ViewGroup.LayoutParams params = binding.frameLayoutExpense.getLayoutParams();
+        ViewGroup.LayoutParams params = binding.frameExpense.getLayoutParams();
+        anim.setDuration(1000);
+        anim.start();
 
         anim.addUpdateListener(valueAnimator -> {
             params.height = (Integer)valueAnimator.getAnimatedValue();;
-            binding.frameLayoutExpense.setLayoutParams(params);
+            binding.frameExpense.setLayoutParams(params);
         });
-
-        anim.setDuration(500);
-        anim.start();
-
-        anim.addListener(new AnimatorListenerAdapter() {
-            public void onAnimationEnd(Animator animator) {
-                super.onAnimationEnd(animator);
-
-                //ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-                //pagerRecentExp.setAdapter(recentAdapter);
-                //if(position != Constants.STAT) pagerRecentExp.setCurrentItem(0);
-            }
-        });
-
     }
 
-
-    private ViewPager2.OnPageChangeCallback onPageChangeCallback() {
+    // ViewPager2 contains OnPageChangeCallback as an abstract class. OnPageChangeCallback of
+    // ViewPager was interface which is required to implement onPageSelected, onPageScrollStateChanged,
+    // and onPageScrolled.
+    private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
         return  new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 currentPage = position;
-                log.i("current page: %d", currentPage);
-                if(binding.frameLayoutExpense.getChildCount() > 0)
-                    binding.frameLayoutExpense.removeAllViews();
-                //saveMenuItem.setVisible(true);
+                if(binding.frameExpense.getChildCount() > 0) binding.frameExpense.removeAllViews();
+                // Invoke onPrepareOptionsMenu(Menu)
+                invalidateOptionsMenu();
+
                 switch (position) {
                     case GAS: // GasManagerFragment
                         pageTitle = getString(R.string.exp_title_gas);
-                        //saveMenuItem.setVisible(true);
-                        binding.frameLayoutExpense.addView(pagerRecentExp);
+                        binding.frameExpense.addView(pagerRecentExp);
+                        pagerRecentExp.setCurrentItem(0);
+                        animSlideTopFrame(prevHeight, 120);
+                        prevHeight = 120;
                         break;
 
                     case SVC:
                         pageTitle = getString(R.string.exp_title_service);
-                        //saveMenuItem.setVisible(true);
-                        binding.frameLayoutExpense.addView(pagerRecentExp);
+                        binding.frameExpense.addView(pagerRecentExp);
+                        pagerRecentExp.setCurrentItem(0);
+                        animSlideTopFrame(prevHeight, 100);
+                        prevHeight = 100;
                         break;
 
                     case STAT:
                         pageTitle = getString(R.string.exp_title_stat);
-                        //saveMenuItem.setVisible(false);
+                        menuSave.setVisible(false);
                         StatGraphFragment statGraphFragment = new StatGraphFragment();
-                        //if(statFragment == null) statFragment = new StatGraphFragment();
+                        //if(statGraphFragment == null) statGraphFragment = new StatGraphFragment();
+                        //which seems not working.
                         getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.frameLayout_expense, statGraphFragment).commit();
+                                .replace(R.id.frame_expense, statGraphFragment).commit();
 
+                        animSlideTopFrame(prevHeight, 200);
+                        prevHeight = 200;
                         break;
                 }
             }
 
-            @Override
-            public void onPageScrollStateChanged(int state) {
-                if(state == 0) {
-                    switch(currentPage) {
-                        case GAS:
-                            animSlideTopFrame(prevHeight, 120);
-                            prevHeight = 120;
-                            break;
-                        case SVC:
-                            animSlideTopFrame(prevHeight, 100);
-                            prevHeight = 100;
-                            break;
-                        case STAT:
-                            animSlideTopFrame(prevHeight, 200);
-                            prevHeight = 200;
-                            break;
-                    }
-
-                }
-            }
         };
 
     }

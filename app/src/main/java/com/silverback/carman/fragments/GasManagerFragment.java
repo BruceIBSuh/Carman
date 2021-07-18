@@ -57,7 +57,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
-
     // Constants
     private static final int REQUEST_PERM_BACKGROUND_LOCATION = 1000;
 
