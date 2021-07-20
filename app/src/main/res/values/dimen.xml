@@ -2,7 +2,9 @@
 <resources>
     <dimen name="borderWidth">1dp</dimen>
     <dimen name="title">18sp</dimen>
-    <dimen name="subtitle">16sp</dimen>
+    <dimen name="subtitle">14sp</dimen>
+    <dimen name="divider">3dp</dimen>
+    <dimen name="content">13sp</dimen>
 
     <!-- Text Size -->
     <dimen name="boardTab">11sp</dimen>
@@ -14,4 +16,6 @@
     <dimen name="extraSmallText">13sp</dimen>
     <dimen name="boxlineWidth">1dp</dimen>
     <dimen name="underlineWidth">1dp</dimen>
+
+
 </resources>

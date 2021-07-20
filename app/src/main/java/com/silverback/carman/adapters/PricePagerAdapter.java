@@ -25,10 +25,9 @@ import com.silverback.carman.logs.LoggingHelperFactory;
  */
 //public class PricePagerAdapter extends FragmentStatePagerAdapter {
 public class PricePagerAdapter extends FragmentStateAdapter {
-    private static final int NUM_PAGES = 2;
-
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(PricePagerAdapter.class);
+    private static final int NUM_PAGES = 2;
 
     // Objects
     private String fuelCode;
@@ -37,36 +36,11 @@ public class PricePagerAdapter extends FragmentStateAdapter {
     public PricePagerAdapter(FragmentActivity fa){
         super(fa);
     }
-    /*
-    // Constructor
-    public PricePagerAdapter(FragmentManager fm) {
-        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-    }
-
-    @NonNull
-    @Override
-    public Fragment getItem(int position) {
-        return PricePagerFragment.getInstance(fuelCode, position);
-    }
-
-    @Override
-    public int getCount() {
-        return NUM_PAGES;
-    }
-
-    @Override
-    public int getItemPosition(@NonNull Object object) {
-        log.i("Viewpager update");
-        return POSITION_NONE;
-    }
-    */
 
     // Invoked when the spinner changes the value or users reset the top priority gas station.
     public void setFuelCode(String fuelCode) {
         this.fuelCode = fuelCode;
-        log.i("Fuel Code: %s", fuelCode);
     }
-
 
     @NonNull
     @Override

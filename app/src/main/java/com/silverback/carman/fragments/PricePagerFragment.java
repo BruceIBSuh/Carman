@@ -63,7 +63,6 @@ public class PricePagerFragment extends Fragment {
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
-
     }
 
     @Override

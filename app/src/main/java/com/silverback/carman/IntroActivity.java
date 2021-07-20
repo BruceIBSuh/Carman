@@ -90,8 +90,8 @@ public class IntroActivity extends BaseActivity  {
     @Override
     public void onPause() {
         super.onPause();
-        if(distCodeTask != null) distCodeTask = null;
-        if(gasPriceTask != null) gasPriceTask = null;
+        //if(distCodeTask != null) distCodeTask = null;
+        //if(gasPriceTask != null) gasPriceTask = null;
     }
 
 
@@ -167,7 +167,6 @@ public class IntroActivity extends BaseActivity  {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
-
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 //JSONArray json = BaseActivity.getDistrictJSONArray();
                 //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
@@ -188,5 +187,7 @@ public class IntroActivity extends BaseActivity  {
             binding.pbIntro.setVisibility(View.GONE);
             finish();
         }
+
+
     }
 }

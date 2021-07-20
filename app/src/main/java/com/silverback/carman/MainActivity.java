@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.TextUtils;
@@ -23,6 +24,7 @@ import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
+import com.silverback.carman.fragments.PricePagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
@@ -35,10 +37,18 @@ import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.views.OpinetPriceView;
+import com.silverback.carman.views.OpinetSidoPriceView;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static java.security.AccessController.getContext;
 
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
@@ -78,13 +88,11 @@ public class MainActivity extends BaseActivity implements
 
         // Set the toolbar
         setSupportActionBar(binding.toolbar);
-        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(true);
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPrice(offset));
-
-        // Price info
-        setSpinnerToDefaultFuel();
-        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);
+        String userName = mSettings.getString(Constants.USER_NAME, null);
+        if(!TextUtils.isEmpty(userName)) getSupportActionBar().setTitle(userName);
 
         // Set the fuel-selecting spinner
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
@@ -93,14 +101,18 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
 
-        // ViewPager2
+        // Display the gas price of average, sido, sigun and station.
+        setSpinnerToDefaultFuel();//set the default fuel.
+        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);
         pricePagerAdapter = new PricePagerAdapter(this);
         pricePagerAdapter.setFuelCode(defaultFuel);
         binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
+        dispPriceCollapsed(Constants.FILE_CACHED_SIDO_PRICE);
+        dispPriceCollapsed(Constants.FILE_CACHED_SIGUN_PRICE);
 
         // MainContent RecyclerView
         MainContentAdapter adapter = new MainContentAdapter();
-        MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(50, 0);
+        MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(this, 35, 0);
         binding.recyclerContents.setAdapter(adapter);
         binding.recyclerContents.addItemDecoration(itemDeco);
 
@@ -198,7 +210,6 @@ public class MainActivity extends BaseActivity implements
         });
 
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        log.i("avgPrice:%s", avgPrice);
         binding.tvCollapsedAvgPrice.setText(avgPrice);
 
     }
@@ -346,8 +357,46 @@ public class MainActivity extends BaseActivity implements
             if(code[i].matches(defaults[0])) {
                 binding.mainTopFrame.spinnerGas.setSelection(i);
                 defaultFuel = defaults[0];
+                break;
             }
         }
+    }
+
+    private void dispPriceCollapsed(String fileName) {
+        File file = new File(getCacheDir(), fileName);
+        Uri uri = Uri.fromFile(file);
+
+        try(InputStream is = getContentResolver().openInputStream(uri);
+            ObjectInputStream ois = new ObjectInputStream(is)){
+
+            Object obj = ois.readObject();
+            Iterable<?> itr = (Iterable<?>)obj;
+
+
+            for(Object x : itr) {
+                switch(fileName) {
+                    case Constants.FILE_CACHED_SIDO_PRICE:
+                        Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
+                        if(sido.getProductCd().matches(defaultFuel)) {
+                            binding.tvCollapsedSido.setText(sido.getSidoName());
+                            binding.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                        }
+                        break;
+                    case Constants.FILE_CACHED_SIGUN_PRICE:
+                        Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
+                        if(sigun.getProductCd().matches(defaultFuel)) {
+                            binding.tvCollapsedSigun.setText(sigun.getSigunName());
+                            binding.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                        }
+                        break;
+                }
+
+            }
+
+
+
+        } catch(IOException | ClassNotFoundException e) { e.printStackTrace();}
+
     }
 
 

@@ -55,6 +55,11 @@
     <string name="general_index_reset">변경</string>
     <string name="general_no_location">현재 위치 정보를 찾을 수 없습니다.\n버튼을 눌려서 현재위치를 업데이트해 주세요.</string>
 
+    <string name="main_subtitle_news">알립니다</string>
+    <string name="main_subtitle_gas">지출 내역(주유)</string>
+    <string name="main_subtitle_svc">지출 내역(서비스)</string>
+    <string name="main_subtitle_collapsed">평균</string>
+
 
     <!--StationMapActivity-->
     <string name="map_toolbar_title">주유소 위치 및 정보</string>

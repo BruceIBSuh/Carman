@@ -64,21 +64,17 @@ public class OpinetSigunPriceView extends OpinetPriceView {
 
     @SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
-
         File sigunFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIGUN_PRICE);
         Uri sigunUri = Uri.fromFile(sigunFile);
-
         try(InputStream is = getContext().getContentResolver().openInputStream(sigunUri);
             ObjectInputStream ois = new ObjectInputStream(is)){
             List<Opinet.SigunPrice> sigunPrice = (List<Opinet.SigunPrice>)ois.readObject();
-
             for (Opinet.SigunPrice opinet : sigunPrice) {
                 if (opinet.getProductCd().matches(fuelCode)) {
                     String sigunName = opinet.getSigunName();
                     float price = opinet.getPrice();
                     float diff = opinet.getDiff();
                     tvSigunName.setText(sigunName);
-                    log.i("SigunPriceView: %s, %s, %s", sigunName, price, diff);
                     setColoredTextView(tvSigunPrice, price, diff);
                     break;
                 }

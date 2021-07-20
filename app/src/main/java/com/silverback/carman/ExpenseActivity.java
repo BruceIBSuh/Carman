@@ -189,7 +189,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume:%s, %s:", binding.frameExpense.getElevation(), binding.tabExpense.getElevation());
+        log.i("onResume:%s, %s, %s:",
+                binding.frameExpense.getElevation(), binding.tabExpense.getElevation(), binding.toolbarExpense.getElevation());
     }
 
 

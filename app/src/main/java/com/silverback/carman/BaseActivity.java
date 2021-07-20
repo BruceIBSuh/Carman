@@ -106,8 +106,7 @@ public class BaseActivity extends AppCompatActivity {
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
-
-        //userId = getUserIdFromStorage(this);
+        userId = getUserIdFromStorage(this);
 
         // Checkk if the network connectivitis ok.
         isNetworkConnected = notifyNetworkConnected(this);

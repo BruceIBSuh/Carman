@@ -103,7 +103,7 @@
                 android:layout_marginTop="16dp"
                 android:background="#FFFFFF"
                 android:scaleType="centerInside"
-                android:src="@drawable/ioniq5"
+                android:src="@drawable/ad_ioniq5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_price_info" />
