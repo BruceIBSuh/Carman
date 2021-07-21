@@ -82,10 +82,11 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         // When using MapView instead, the activity lifecycle should be considered.
         createNaverMap();
 
+        /*
         binding.recyclerComments.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerComments.setItemViewCacheSize(20);
         binding.recyclerComments.setDrawingCacheEnabled(true);
-
+        */
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
         // KakaoNavi as an installed app is first applied.
         /*

@@ -8,7 +8,6 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="1dp"
     cardview:cardElevation="1dp">
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -40,7 +39,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="3dp"
             android:layout_marginEnd="8dp"
-            android:textSize="@dimen/extraLargeText"
+            android:textSize="@dimen/subtitle"
             cardview:layout_constraintEnd_toEndOf="parent"
             cardview:layout_constraintStart_toStartOf="@+id/guideline"
             cardview:layout_constraintTop_toTopOf="parent" />

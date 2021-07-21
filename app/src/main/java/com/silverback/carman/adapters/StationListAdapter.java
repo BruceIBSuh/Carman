@@ -130,7 +130,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     }
 
     // Class for sorting the list by ascending price or descending distance, implementing Comparator<T>
-    private class PriceAscCompare implements Comparator<Opinet.GasStnParcelable> {
+    private static class PriceAscCompare implements Comparator<Opinet.GasStnParcelable> {
         @SuppressWarnings("all")
         @Override
         public int compare(Opinet.GasStnParcelable t1, Opinet.GasStnParcelable t2) {
@@ -147,7 +147,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         }
     }
 
-    private class DistanceDescCompare implements Comparator<Opinet.GasStnParcelable> {
+    private static class DistanceDescCompare implements Comparator<Opinet.GasStnParcelable> {
         @SuppressWarnings("all")
         @Override
         public int compare(Opinet.GasStnParcelable t1, Opinet.GasStnParcelable t2) {

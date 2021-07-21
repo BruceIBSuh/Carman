@@ -2,7 +2,7 @@
 <resources>
     <dimen name="borderWidth">1dp</dimen>
     <dimen name="title">18sp</dimen>
-    <dimen name="subtitle">14sp</dimen>
+    <dimen name="subtitle">15sp</dimen>
     <dimen name="divider">3dp</dimen>
     <dimen name="content">13sp</dimen>
 

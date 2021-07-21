@@ -7,12 +7,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
-
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
+        android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
@@ -20,104 +18,112 @@
             android:layout_height="match_parent"
             app:toolbarId="@id/tb_map"
             app:contentScrim="?attr/colorPrimary"
-            app:expandedTitleMarginEnd="64dp"
-            app:expandedTitleMarginStart="48dp"
+            app:titleEnabled="false"
             app:layout_scrollFlags="scroll|exitUntilCollapsed">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/constraintLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:elevation="15dp"
+                android:layout_marginTop="?attr/actionBarSize"
+                android:background="#DDB0C4DE"
+                app:layout_collapseMode="parallax">
+                <TextView
+                    android:id="@+id/tv_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+                <TextView
+                    android:id="@+id/tv_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/smallText"
+                    app:layout_constraintStart_toStartOf="@id/tv_name"
+                    app:layout_constraintTop_toBottomOf="@id/tv_name"/>
+                <TextView
+                    android:id="@+id/tv_price_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toStartOf="@id/tv_name"
+                    app:layout_constraintTop_toBottomOf="@id/tv_address"/>
+                <TextView
+                    android:id="@+id/tv_carwash"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    app:layout_constraintStart_toStartOf="@id/tv_name"
+                    app:layout_constraintTop_toBottomOf="@id/tv_price_info"/>
+                <TextView
+                    android:id="@+id/tv_service"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toEndOf="@id/tv_carwash"
+                    app:layout_constraintTop_toBottomOf="@id/tv_price_info"/>
+                <TextView
+                    android:id="@+id/tv_cvs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintStart_toEndOf="@id/tv_service"
+                    app:layout_constraintTop_toBottomOf="@id/tv_price_info"/>
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:layout_marginTop="16dp"
+                    android:background="#FFFFFF"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ad_ioniq5"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tv_price_info" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <!--
+            <FrameLayout
+                android:id="@+id/frame_map"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:minHeight="600dp"
+                app:layout_collapseMode="pin" />
+            -->
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/tb_map"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:elevation="5dp"
                 android:background="@color/bgToolbar"
                 app:titleTextColor="#F5F5F5"
                 app:layout_collapseMode="pin"/>
-            <FrameLayout
-                android:id="@+id/frame_map"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_collapseMode="parallax" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+
+    <!--
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
         android:scrollbars="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:behavior_overlapTop="80dp">
-        <!--app:behavior_overlapTop="100dp"-->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#DDB0C4DE">
-            <TextView
-                android:id="@+id/tv_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-            <TextView
-                android:id="@+id/tv_address"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="@dimen/smallText"
-                app:layout_constraintStart_toStartOf="@id/tv_name"
-                app:layout_constraintTop_toBottomOf="@id/tv_name"/>
-            <TextView
-                android:id="@+id/tv_price_info"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="@id/tv_name"
-                app:layout_constraintTop_toBottomOf="@id/tv_address"/>
-            <TextView
-                android:id="@+id/tv_carwash"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                app:layout_constraintStart_toStartOf="@id/tv_name"
-                app:layout_constraintTop_toBottomOf="@id/tv_price_info"/>
+        app:behavior_overlapTop="100dp" >
 
-            <TextView
-                android:id="@+id/tv_service"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/tv_carwash"
-                app:layout_constraintTop_toBottomOf="@id/tv_price_info"/>
-            <TextView
-                android:id="@+id/tv_cvs"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/tv_service"
-                app:layout_constraintTop_toBottomOf="@id/tv_price_info"/>
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:layout_marginTop="16dp"
-                android:background="#FFFFFF"
-                android:scaleType="centerInside"
-                android:src="@drawable/ad_ioniq5"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_price_info" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
-
+    -->
+    <FrameLayout
+        android:id="@+id/frame_map"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="150dp"
+        android:elevation="1dp" />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_comments"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#c8c8c8"
-        app:layout_anchor="@id/nestedScrollView"
-        app:layout_anchorGravity="bottom"
+        android:background="#FF9900"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <!--
@@ -130,4 +136,6 @@
         app:layout_anchor="@+id/vg_constraint"
         app:layout_anchorGravity="end|top"/>
     -->
+
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
