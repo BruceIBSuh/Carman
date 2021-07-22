@@ -116,6 +116,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             }
         }
 
+        String userId = getUserIdFromStorage(this);
+        log.i("user Id: %s", userId);
+
         // Create objects
         //gasManager = (GasManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_gas);
         //svcManager = (ServiceManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_svc);
@@ -135,7 +138,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
 
         // Add the content fragment(gas/service/stat) to the ViewPager
-
         expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         //binding.pagerTabFragment.setCurrentItem(0);
@@ -234,8 +236,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
             // menu for saving the gas or service data
             case MENU_ITEM_SAVE:
-                saveExpenseData(currentPage);
-                return true;
+                return saveExpenseData(currentPage);
 
             default: return super.onOptionsItemSelected(item);
         }
@@ -363,12 +364,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     }
 
-    private void saveExpenseData(int page) {
+    private boolean saveExpenseData(int page) {
         Fragment fragment = expContentPagerAdapter.createFragment(page);
+        String userId = getUserIdFromStorage(this);
         boolean isSaved = false;
         switch(page) {
             case GAS:
-                isSaved = ((GasManagerFragment)fragment).saveGasData();
+                isSaved = ((GasManagerFragment)fragment).saveGasData(userId);
                 break;
             case SVC:
                 isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
@@ -376,5 +378,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         }
 
         if(isSaved) finish();
+        return isSaved;
+
     }
 }

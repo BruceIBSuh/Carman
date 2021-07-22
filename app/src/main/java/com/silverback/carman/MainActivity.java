@@ -130,6 +130,7 @@ public class MainActivity extends BaseActivity implements
             // Location permission check
             checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 if(!isStnViewOn) {
+                    log.i("start fetch location");
                     locationTask = sThreadManager.fetchLocationTask(this, locationModel);
                     binding.pbNearStns.setVisibility(View.VISIBLE);
                 } else {
@@ -172,7 +173,7 @@ public class MainActivity extends BaseActivity implements
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.stationRecyclerView.setAdapter(mAdapter);
                 binding.stationRecyclerView.showStationListRecyclerView();
-                //isStationOn = !isStationOn;
+
             } else {
                 log.i("no station");
                 // No near stations post an message that contains the clickable span to link to the

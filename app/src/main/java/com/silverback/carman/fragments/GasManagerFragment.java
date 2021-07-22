@@ -469,8 +469,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     // Method for inserting data to SQLite database
     @SuppressWarnings("ConstantConditions")
-    public boolean saveGasData(){
-        // Null check for the parent activity
+    public boolean saveGasData(String userId){
         if(!doEmptyCheck()) return false;
 
         fragmentModel.setCurrentFragment(this);
@@ -532,9 +531,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 });
             }
 
-            // Add ranting or comments to the Firestore, if any.
+            // Add rating or comments to the Firestore, if any.
             if(!TextUtils.isEmpty(binding.etServiceComment.getText())) {
-
+                log.i("comment and rating data");
                 Map<String, Object> commentData = new HashMap<>();
                 commentData.put("timestamp", FieldValue.serverTimestamp());
                 commentData.put("name", nickname);
@@ -554,7 +553,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             return true;
 
         } else return false;
-
     }
 
     // Method to make an empty check. When successfully fetching the gas station and the price,

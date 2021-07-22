@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -40,7 +41,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ViewHolder(View view) {
+        public ViewHolder(@Nullable View view) {
             super(view);
             // Define click listener for the ViewHolder's View.
         }
