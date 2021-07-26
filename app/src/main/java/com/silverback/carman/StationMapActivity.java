@@ -63,51 +63,69 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         setContentView(rootView);
         // Intent data from MainActivity
         stnId = getIntent().getStringExtra("gasStationId");
+        log.i("station id: %s", stnId);
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
         setSupportActionBar(binding.tbMap);
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
+        // Call Naver map to MapFragment. Select alternatively either MapFragment or MapView.
+        // When using MapView instead, the activity lifecycle should be considered.
+        createNaverMap();
+
         // Instantiate Objects
         firestore = FirebaseFirestore.getInstance();
         fusedLocationSource = new FusedLocationSource(this, 100);//Naver api for getting the current position
-        // Retrieve the station data from Firestore.
 
+        // Create RecyclerView for displayimg comments
+        binding.recyclerComments.setLayoutManager(new LinearLayoutManager(this));
+        binding.recyclerComments.setItemViewCacheSize(20);
+        binding.recyclerComments.setDrawingCacheEnabled(true);
+
+
+        // Retrieve the station data from Firestore.
         DocumentReference docRef = firestore.collection("gas_station").document(stnId);
         docRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 this.document = task.getResult();
-                if(document.exists()) dispStationInfo();
+                //if(document.exists()) dispStationInfo();
             }
         });
 
+        Query queryComment = firestore.collection("gas_eval").document(stnId).collection("comments")
+                .orderBy("timestamp", Query.Direction.DESCENDING);
+        queryComment.get().addOnCompleteListener(querySnapshot -> {
+            if(querySnapshot.isSuccessful()) {
+                List<DocumentSnapshot> snapshotList = new ArrayList<>();
+                for(DocumentSnapshot document : querySnapshot.getResult()) {
+                    snapshotList.add(document);
+                }
+                log.i("snaplist: %s", snapshotList.size());
+                commentAdapter = new StationCommentAdapter(stnId, snapshotList);
+                binding.recyclerComments.setAdapter(commentAdapter);
+            }
+        });
 
+        /*
         firestore.collection("gas_eval").document(stnId).collection("comments")
                 .orderBy("timestamp", Query.Direction.DESCENDING).get()
                 .addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
+                        log.i("gas evaluation");
                         List<DocumentSnapshot> snapshotList = new ArrayList<>();
                         for(DocumentSnapshot document : task.getResult()) {
                             snapshotList.add(document);
-
                         }
 
                         commentAdapter = new StationCommentAdapter(snapshotList);
                         binding.recyclerComments.setAdapter(commentAdapter);
                     }
                 }).addOnFailureListener(e -> {});
+        */
 
 
 
-        // Call Naver map to MapFragment. Select alternatively either MapFragment or MapView.
-        // When using MapView instead, the activity lifecycle should be considered.
-        createNaverMap();
-
-
-        binding.recyclerComments.setLayoutManager(new LinearLayoutManager(this));
-        binding.recyclerComments.setItemViewCacheSize(20);
-        binding.recyclerComments.setDrawingCacheEnabled(true);
 
         // When the fab is clicked, connect to a navigation which is opted between Tmap and
         // KakaoNavi as an installed app is first applied.
@@ -246,10 +264,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         double x = document.getDouble("katec_x");
         double y = document.getDouble("katec_y");
         if(x != -1 || y != -1)  displayMap(x, y);
-
-        //createNaverMap();
     }
 
+    /*
     @SuppressWarnings("ConstantConditions")
     private void dispStationInfo() throws NullPointerException {
         binding.inclStnInfo.tvStnName.setText(document.get("stn_name", String.class));
@@ -267,7 +284,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         binding.inclStnInfo.tvService.setText(cvs);
         binding.inclStnInfo.tvCvs.setText(svc);
     }
-
+    */
 
     private void createNaverMap() {
         FragmentManager fm = getSupportFragmentManager();
@@ -299,7 +316,4 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         marker.setHeight(80);
         marker.setMap(naverMap);
     }
-
-
-
 }

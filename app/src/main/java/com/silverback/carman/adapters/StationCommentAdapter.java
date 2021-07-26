@@ -1,5 +1,6 @@
 package com.silverback.carman.adapters;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
@@ -31,42 +32,79 @@ import org.w3c.dom.Document;
 
 import java.util.List;
 
-public class StationCommentAdapter extends RecyclerView.Adapter<StationCommentAdapter.CommentListHolder> {
+public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationCommentAdapter.class);
 
+    // Define Types
+    private final int TYPE_HEADER = 0;
+    private final int TYPE_ITEM = 1;
+    private final int TYPE_FOOTER = 2;
+
+
     // Objects
     private Context context;
-    private FirebaseFirestore firestore;
-    private List<DocumentSnapshot> snapshotList;
+    private final DocumentReference docRef;
+    private final List<DocumentSnapshot> snapshotList;
+    private InclStnmapInfoBinding stnBinding;
+    private CardviewCommentsBinding commentBinding;
 
-    // Fields
-    private String stationId;
-
-    // Constructor
-    public StationCommentAdapter(List<DocumentSnapshot> snapshotList) {
-        super();
-        firestore = FirebaseFirestore.getInstance();
+    public StationCommentAdapter(String stnId, List<DocumentSnapshot> snapshotList) {
+        log.i("station id: %s", stnId);
         this.snapshotList = snapshotList;
+        docRef = FirebaseFirestore.getInstance().collection("gas_station").document(stnId);
     }
 
+    // ViewHolder
+    public static class ItemViewHolder extends RecyclerView.ViewHolder {
+        public ItemViewHolder(View itemView) {
+            super(itemView);
+        }
+    }
 
+    public static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        public HeaderViewHolder(View headerView){
+            super(headerView);
+        }
+    }
 
+//    public static class FooterViewHolder extends RecyclerView.ViewHolder {
+//        public FooterViewHolder(View footerView){
+//            super(footerView);
+//        }
+//    }
 
     @NonNull
     @Override
-    public CommentListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
+        LayoutInflater inflater = LayoutInflater.from(context);
+        RecyclerView.ViewHolder holder;
 
-        CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.cardview_comments, parent, false);
+        if(viewType == TYPE_HEADER) {
+            //if(viewType == 0) {
+            log.i("Station Info");
+            stnBinding = InclStnmapInfoBinding.inflate(inflater, parent, false);
+            View headerView = stnBinding.getRoot();
+            holder = new HeaderViewHolder(headerView);
 
-        return new CommentListHolder(cardView);
+        } else {
+            commentBinding = CardviewCommentsBinding.inflate(inflater, parent, false);
+            View commentView = commentBinding.getRoot();
+            holder = new ItemViewHolder(commentView);
+        }
+
+        return holder;
+
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CommentListHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        /*
+        if(position == 0) dispStationInfo();
+        else bindCommentToView(snapshotList.get(position));
+
         final String userId = snapshotList.get(position).getId();
         firestore.collection("users").document(userId).get().addOnSuccessListener(snapshot -> {
             if(snapshot != null && snapshot.exists()) {
@@ -76,29 +114,46 @@ public class StationCommentAdapter extends RecyclerView.Adapter<StationCommentAd
         }).addOnFailureListener(e -> {});
 
         holder.bindToComments(snapshotList.get(position));
+
+         */
+
+        if(holder instanceof HeaderViewHolder) dispStationInfo();
+        //else if(holder instanceof FooterViewHolder) dispStationInfo();
+        else bindCommentToView(snapshotList.get(position - 1));
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CommentListHolder holder, int position, @NonNull List<Object> payloads) {
-        super.onBindViewHolder(holder, position, payloads);
-        if(payloads.isEmpty()) {
-            super.onBindViewHolder(holder, position, payloads);
-
-        }else{
-            for(Object obj : payloads) {
-                log.i("Partial Binding");
-                //drawable = (RoundedBitmapDrawable)obj;
-                //holder.imgProfile.setImageDrawable((RoundedBitmapDrawable)obj);
+    public void onBindViewHolder(
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if(holder instanceof HeaderViewHolder) {
+            dispStationInfo();
+        } else if(holder instanceof ItemViewHolder) {
+            //super.onBindViewHolder(holder, position, payloads);
+            if (payloads.isEmpty()) {
+                super.onBindViewHolder(holder, position, payloads);
+            } else {
+                for (Object obj : payloads) {
+                    //drawable = (RoundedBitmapDrawable)obj;
+                    //holder.imgProfile.setImageDrawable((RoundedBitmapDrawable)obj);
+                }
             }
         }
     }
 
     @Override
     public int getItemCount() {
-        return snapshotList.size();
+        return snapshotList.size() + 1;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if(position == 0) return TYPE_HEADER;
+        //else if(position == snapshotList.size() + 1) return TYPE_FOOTER;
+        else return TYPE_ITEM;
     }
 
     // ViewHolder class
+    /*
     class CommentListHolder extends RecyclerView.ViewHolder {
         TextView tvNickname, tvComments, tvTimestamp;
         ImageView imgProfile;
@@ -138,5 +193,59 @@ public class StationCommentAdapter extends RecyclerView.Adapter<StationCommentAd
                     .into(imgProfile);
 
         }
+    }
+
+     */
+    @SuppressWarnings("ConstantConditions")
+    private void bindCommentToView(DocumentSnapshot doc) {
+        log.i("bind comment");
+        commentBinding.tvNickname.setText(doc.getString("name"));
+        commentBinding.tvComments.setText(doc.getString("comments"));
+        commentBinding.tvCommentTimestamp.setText(doc.getTimestamp("timestamp").toDate().toString());
+        float rating = (float)doc.getLong("rating");
+        commentBinding.rbCommentsRating.setRating(rating);
+        /*
+        final String userId = snapshotList.get(position).getId();
+        firestore.collection("users").document(userId).get().addOnSuccessListener(snapshot -> {
+            if(snapshot != null && snapshot.exists()) {
+                String strUserPic = snapshot.getString("user_pic");
+                if (!TextUtils.isEmpty(strUserPic)) {
+                    Uri imgUri = Uri.parse(strUserPic);
+                    RequestOptions options = new RequestOptions().fitCenter().override(50, 50).circleCrop();
+                    Glide.with(context)
+                            .asBitmap()
+                            .load(imgUri)
+                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                            .apply(options)
+                            .into(commentBinding.imgUserpic);
+                }
+            }
+        }).addOnFailureListener(e -> {});
+
+         */
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void dispStationInfo() throws NullPointerException {
+        docRef.get().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot doc = task.getResult();
+                stnBinding.tvStnName.setText(doc.get("stn_name", String.class));
+                stnBinding.tvStnAddrs.setText(doc.get("new_addrs", String.class));
+                boolean isWash = (boolean)doc.get("carwash");
+                boolean isCvs = (boolean)doc.get("cvs");
+                boolean isSvc = (boolean)doc.get("service");
+                String wash = (isWash)?context.getString(R.string.map_value_ok):context.getString(R.string.map_value_not_ok);
+                String cvs = (isCvs)?context.getString(R.string.map_value_yes):context.getString(R.string.map_value_no);
+                String svc = (isSvc)?context.getString(R.string.map_value_yes):context.getString(R.string.map_value_no);
+                stnBinding.tvWash.setText(wash);
+                stnBinding.tvService.setText(cvs);
+                stnBinding.tvCvs.setText(svc);
+            }
+        });
+
+
+
+
     }
 }
