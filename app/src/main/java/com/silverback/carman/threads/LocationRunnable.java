@@ -98,10 +98,10 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 if(location != null) {
                     log.i("location fetched:%s", location);
                     //TEMP CODE FOR TESTING
-                    /*
+
                     location.setLongitude(126.8991);
                     location.setLatitude(37.5145);
-                    */
+
                     task.setCurrentLocation(location);
                     task.handleLocationTask(TASK_COMPLETE);
 

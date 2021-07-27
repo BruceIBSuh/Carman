@@ -62,11 +62,13 @@ public class OpinetStationPriceView extends OpinetPriceView {
     }
 
     public void addPriceView(String fuelCode) {
-        //File stnFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_STATION_PRICE);
-        File stnFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
+        File stnFile = new File(getContext().getCacheDir(), Constants.FILE_FAVORITE_PRICE);
+        if(!stnFile.exists()) return;
+        //File stnFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
         Float price = null;
         Float diff = null;
+
 
         try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)){

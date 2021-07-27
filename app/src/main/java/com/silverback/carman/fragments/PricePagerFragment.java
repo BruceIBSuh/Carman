@@ -32,8 +32,6 @@ public class PricePagerFragment extends Fragment {
     private static final int DISTRICT_PRICE = 0;
     private static final int STATION_PRICE = 1;
 
-    // Objects
-    private CarmanDatabase mDB;
     private FavoritePriceTask favPriceTask;
     private OpinetViewModel opinetModel;
     private FragmentSharedModel fragmentModel;
@@ -60,7 +58,8 @@ public class PricePagerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        // Objects
+        //CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
     }

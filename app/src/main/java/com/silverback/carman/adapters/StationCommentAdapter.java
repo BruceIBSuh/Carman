@@ -24,7 +24,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.CardviewCommentsBinding;
-import com.silverback.carman.databinding.InclStnmapInfoBinding;
+import com.silverback.carman.databinding.InclMapStninfoBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -47,11 +47,10 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     private Context context;
     private final DocumentReference docRef;
     private final List<DocumentSnapshot> snapshotList;
-    private InclStnmapInfoBinding stnBinding;
+    private InclMapStninfoBinding stnBinding;
     private CardviewCommentsBinding commentBinding;
 
     public StationCommentAdapter(String stnId, List<DocumentSnapshot> snapshotList) {
-        log.i("station id: %s", stnId);
         this.snapshotList = snapshotList;
         docRef = FirebaseFirestore.getInstance().collection("gas_station").document(stnId);
     }
@@ -69,11 +68,14 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
-//    public static class FooterViewHolder extends RecyclerView.ViewHolder {
-//        public FooterViewHolder(View footerView){
-//            super(footerView);
-//        }
-//    }
+    /*
+    public static class FooterViewHolder extends RecyclerView.ViewHolder {
+        public FooterViewHolder(View footerView){
+            super(footerView);
+        }
+    }
+
+     */
 
     @NonNull
     @Override
@@ -85,14 +87,12 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         if(viewType == TYPE_HEADER) {
             //if(viewType == 0) {
             log.i("Station Info");
-            stnBinding = InclStnmapInfoBinding.inflate(inflater, parent, false);
-            View headerView = stnBinding.getRoot();
-            holder = new HeaderViewHolder(headerView);
+            stnBinding = InclMapStninfoBinding.inflate(inflater, parent, false);
+            holder = new HeaderViewHolder(stnBinding.getRoot());
 
         } else {
             commentBinding = CardviewCommentsBinding.inflate(inflater, parent, false);
-            View commentView = commentBinding.getRoot();
-            holder = new ItemViewHolder(commentView);
+            holder = new ItemViewHolder(commentBinding.getRoot());
         }
 
         return holder;

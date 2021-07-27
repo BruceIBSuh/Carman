@@ -2,6 +2,7 @@ package com.silverback.carman;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
@@ -14,6 +15,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -24,7 +27,6 @@ import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
-import com.silverback.carman.fragments.PricePagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
@@ -37,18 +39,13 @@ import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.StationListViewModel;
-import com.silverback.carman.views.OpinetPriceView;
-import com.silverback.carman.views.OpinetSidoPriceView;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static java.security.AccessController.getContext;
 
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
@@ -67,16 +64,18 @@ public class MainActivity extends BaseActivity implements
     private StationListTask stationListTask;
 
     private PricePagerAdapter pricePagerAdapter;
-    private StationListAdapter mAdapter;
+    private StationListAdapter stnListAdapter;
 
     private Location mPrevLocation;
     private List<Opinet.GasStnParcelable> mStationList;
 
     private ApplyImageResourceUtil imgResUtil;
+    private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
     private String[] defaults;
     private String defaultFuel;
+    private boolean hasStationInfo = false;
 
 
     @Override
@@ -86,31 +85,27 @@ public class MainActivity extends BaseActivity implements
         View rootView = binding.getRoot();
         setContentView(rootView);
 
-        // Set the toolbar
+        // Set the toolbar with icon, title and options menu.
         setSupportActionBar(binding.toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(true);
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPrice(offset));
-        String userName = mSettings.getString(Constants.USER_NAME, null);
-        if(!TextUtils.isEmpty(userName)) getSupportActionBar().setTitle(userName);
 
-        // Set the fuel-selecting spinner
+        // Set Spinner for selecting a fuel.
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
                 this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
 
-        // Display the gas price of average, sido, sigun and station.
+        // Display the gas prices of average, sido, sigun and station.
         setSpinnerToDefaultFuel();//set the default fuel.
-        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);
+        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);//
         pricePagerAdapter = new PricePagerAdapter(this);
         pricePagerAdapter.setFuelCode(defaultFuel);
         binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
-        dispPriceCollapsed(Constants.FILE_CACHED_SIDO_PRICE);
-        dispPriceCollapsed(Constants.FILE_CACHED_SIGUN_PRICE);
 
-        // MainContent RecyclerView
+        // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter();
         MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(this, 35, 0);
         binding.recyclerContents.setAdapter(adapter);
@@ -120,7 +115,6 @@ public class MainActivity extends BaseActivity implements
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-
         // Instantiate objects
         imgResUtil = new ApplyImageResourceUtil(this);
 
@@ -143,6 +137,7 @@ public class MainActivity extends BaseActivity implements
         locationModel.getLocation().observe(this, location -> {
             if(location == null) return;
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
+                log.i("fetch location");
                 mPrevLocation = location;
                 sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
             } else {
@@ -168,10 +163,10 @@ public class MainActivity extends BaseActivity implements
         stnModel.getNearStationList().observe(this, stnList -> {
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
-                mAdapter = new StationListAdapter(mStationList, this);
+                stnListAdapter = new StationListAdapter(mStationList, this);
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                binding.stationRecyclerView.setAdapter(mAdapter);
+                binding.stationRecyclerView.setAdapter(stnListAdapter);
                 binding.stationRecyclerView.showStationListRecyclerView();
 
             } else {
@@ -188,11 +183,23 @@ public class MainActivity extends BaseActivity implements
         // Adapter should not assume that the payload will always be passed to onBindViewHolder()
         // e.g. when the view is not attached.
         stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
+            log.i("get carwash");
             for(int i = 0; i < sparseArray.size(); i++) {
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
-                mAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
+                stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
+
+            hasStationInfo = true;
         });
+
+        // Create ActivityResultLauncher to call SettingActiity and get results
+        activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if(result.getResultCode() == Activity.RESULT_OK) {
+                        log.i("activity result");
+                        //pricePagerAdapter.notifyDataSetChanged();
+                    }
+                });
 
     }
 
@@ -202,22 +209,22 @@ public class MainActivity extends BaseActivity implements
         // Set the user name and customizable icon in the toolbar.
         String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) Objects.requireNonNull(getSupportActionBar()).setTitle(title);
-
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
-        String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray" : userImg;
+        String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
 
-        String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        binding.tvCollapsedAvgPrice.setText(avgPrice);
-
+        // Display the price info when collapsed.
+        //String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
+        //binding.tvCollapsedAvgPrice.setText(avgPrice);
+        dispPriceCollapsed();
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public void onStop() {
+        super.onStop();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
     }
@@ -233,46 +240,30 @@ public class MainActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_garage) {
             startActivity(new Intent(this, ExpenseActivity.class));
+
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
+
         } else if(item.getItemId() == R.id.action_login) {
             log.i("login process required");
+
         } else if(item.getItemId() == R.id.action_setting) {
             Intent settingIntent = new Intent(this, SettingPrefActivity.class);
             int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
             settingIntent.putExtra("requestCode", requestCode);
-            startActivityForResult(settingIntent, requestCode);
+            //startActivityForResult(settingIntent, requestCode); // deprecated!!!
+            activityResultLauncher.launch(settingIntent);
         }
 
         return true;
-        /*
-        switch(item.getItemId()) {
-            case R.id.action_garage:
-                startActivity(new Intent(this, ExpenseActivity.class));
-                return true;
-
-            case R.id.action_board:
-                startActivity(new Intent(this, BoardActivity.class));
-                return true;
-
-            case R.id.action_login:
-                return true;
-
-            case R.id.action_setting:
-                // Apply startActivityForresult() to take the price data and the username back from
-                // SettingPreferenceActivity to onActivityResult() if the values have changed.
-                Intent settingIntent = new Intent(this, SettingPrefActivity.class);
-                int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
-                settingIntent.putExtra("requestCode", requestCode);
-                startActivityForResult(settingIntent, requestCode);
-                return true;
-            default: return false;
-        }
-         */
     }
 
     @Override
     public void onItemClicked(final int pos) {
+        if(!hasStationInfo) {
+            log.i("wait a sec"); // Check if necessary!!!
+            return;
+        }
         Intent intent = new Intent(this, StationMapActivity.class);
         intent.putExtra("gasStationId", mStationList.get(pos).getStnId());
         startActivity(intent);
@@ -314,9 +305,7 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
-    }
+    public void onNothingSelected(AdapterView<?> adapterView) { }
 
     // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
     @Override
@@ -363,43 +352,42 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    private void dispPriceCollapsed(String fileName) {
-        File file = new File(getCacheDir(), fileName);
-        Uri uri = Uri.fromFile(file);
+    private void dispPriceCollapsed() {
+        final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
+        String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
 
-        try(InputStream is = getContentResolver().openInputStream(uri);
-            ObjectInputStream ois = new ObjectInputStream(is)){
+        // Set the average price
+        binding.tvCollapsedAvgPrice.setText(avgPrice);
+        // Set the sido and sigun price
+        for(String fName : arrFile) {
+            File file = new File(getCacheDir(), fName);
+            Uri uri = Uri.fromFile(file);
+            try(InputStream is = getContentResolver().openInputStream(uri);
+                ObjectInputStream ois = new ObjectInputStream(is)) {
+                Object obj = ois.readObject();
+                Iterable<?> itr = (Iterable<?>)obj;
+                for(Object x : itr) {
+                    switch(fName) {
+                        case Constants.FILE_CACHED_SIDO_PRICE:
+                            Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
+                            if(sido.getProductCd().matches(defaultFuel)) {
+                                binding.tvCollapsedSido.setText(sido.getSidoName());
+                                binding.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                            }
+                            break;
+                        case Constants.FILE_CACHED_SIGUN_PRICE:
+                            Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
+                            if(sigun.getProductCd().matches(defaultFuel)) {
+                                binding.tvCollapsedSigun.setText(sigun.getSigunName());
+                                binding.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                            }
+                            break;
+                    }
 
-            Object obj = ois.readObject();
-            Iterable<?> itr = (Iterable<?>)obj;
-
-
-            for(Object x : itr) {
-                switch(fileName) {
-                    case Constants.FILE_CACHED_SIDO_PRICE:
-                        Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
-                        if(sido.getProductCd().matches(defaultFuel)) {
-                            binding.tvCollapsedSido.setText(sido.getSidoName());
-                            binding.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
-                        }
-                        break;
-                    case Constants.FILE_CACHED_SIGUN_PRICE:
-                        Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
-                        if(sigun.getProductCd().matches(defaultFuel)) {
-                            binding.tvCollapsedSigun.setText(sigun.getSigunName());
-                            binding.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
-                        }
-                        break;
                 }
 
-            }
-
-
-
-        } catch(IOException | ClassNotFoundException e) { e.printStackTrace();}
-
+            } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
+        }
     }
-
-
 }
 
