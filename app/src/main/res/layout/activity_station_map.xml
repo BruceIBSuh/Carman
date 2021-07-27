@@ -20,8 +20,7 @@
             android:layout_height="match_parent"
             app:toolbarId="@id/tb_map"
             app:contentScrim="@android:color/transparent"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:layout_scrollInterpolator="@android:anim/decelerate_interpolator" >
+            app:layout_scrollFlags="scroll|exitUntilCollapsed" >
             <FrameLayout
                 android:id="@+id/frame_map"
                 android:layout_width="match_parent"
