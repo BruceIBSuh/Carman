@@ -34,7 +34,7 @@ public class FirestoreSetRunnable implements Runnable {
     // Interface
     public interface FireStoreSetMethods {
         void setStationTaskThread(Thread thread);
-        void handleStationTaskState(int state);
+        void handleTaskState(int state);
         String getStationId();
     }
 
@@ -87,7 +87,7 @@ public class FirestoreSetRunnable implements Runnable {
                 DocumentSnapshot snapshot = transaction.get(docRef);
                 if(snapshot.exists()) {
                     transaction.set(docRef, data, SetOptions.merge());
-                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+                    mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                 }
 
                 return null;

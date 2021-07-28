@@ -28,7 +28,7 @@ public class FirestoreGetRunnable implements Runnable {
         void setStationTaskThread(Thread thread);
         void setStationId(String stnId);
         void setCarWashInfo(int position, boolean isCarwash);
-        void handleStationTaskState(int state);
+        void handleTaskState(int state);
     }
 
     // Constructor
@@ -47,24 +47,28 @@ public class FirestoreGetRunnable implements Runnable {
             if(Thread.interrupted()) throw new InterruptedException();
         } catch (InterruptedException e) {
             e.printStackTrace();
-            log.e("InterruptedException: %s", e.getMessage());
         }
 
         // Bugs have occurred many times here. NullPointerException is brought about due to
         for(int i = 0; i < stnList.size(); i++) {
             final int pos = i;
             String stnId = stnList.get(pos).getStnId();
-            log.i("station id:%s", stnId);
             final DocumentReference docRef = firestore.collection("gas_station").document(stnId);
+            /*
+            docRef.get().addOnSuccessListener(doc -> {
+                mCallback.setCarWashInfo(pos, doc.getBoolean("carwash"));
+                mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+            }).addOnFailureListener(Throwable::printStackTrace);
+            */
+            /*
+             * Process for adding new gas stations if no documents exists in FireStore, initiating
+             * FirestoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
+             * to add additional info to FireStore. SnapshotListener notifies the task of being
+             * ready to read newly added fields including the field of "carwash".
+             * On the other hand, if any document exists, directly read "carwash" field.
+             */
             docRef.addSnapshotListener((snapshot, e) -> {
                 if(e != null) return;
-                /*
-                 * Process for adding new gas stations if no documents exists in FireStore, initiating
-                 * FirestoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
-                 * to add additional info to FireStore. SnapshotListener notifies the task of being
-                 * ready to read newly added fields including the field of "carwash".
-                 * On the other hand, if any document exists, directly read "carwash" field.
-                 */
                 // Bugs frequently occurred here maybe b/c snapshot.get("carwash") would sometimes
                 // result in null value. Bugs may be fixed by the following way.
                 // If snapshot data is null, make it false to get it countered in SparseBooleanArray
@@ -73,15 +77,14 @@ public class FirestoreGetRunnable implements Runnable {
                     if(snapshot.get("carwash") != null) {
                         log.i("car wash:%s", snapshot.getBoolean("carwash"));
                         mCallback.setCarWashInfo(pos, snapshot.getBoolean("carwash"));
-                        mCallback.handleStationTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+                        mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                     } else {
                         log.e("carwash value is null:%s", snapshot.getString("stnName"));
                         mCallback.setCarWashInfo(pos, false);
                         setStationData(pos);
                     }
-                } else {
-                    setStationData(pos);
-                }
+
+                } else setStationData(pos);
             });
         }
 
@@ -100,9 +103,8 @@ public class FirestoreGetRunnable implements Runnable {
         firestore.collection("gas_station").document(stnList.get(position).getStnId()).set(stnData)
                 .addOnSuccessListener(documentReference -> {
                     mCallback.setStationId(stnList.get(position).getStnId());
-                    mCallback.handleStationTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
-                })
-                .addOnFailureListener(error -> log.e("failed to add data"));
+                    mCallback.handleTaskState(StationListTask.FIRESTORE_GET_COMPLETE);
+                }).addOnFailureListener(error -> log.e("failed to add data"));
     }
 
 }

@@ -51,7 +51,7 @@ public class ThreadManager2 {
     private final BlockingQueue<Runnable> mWorkQueue;
     private final BlockingQueue<ThreadTask> mTaskQueue;
     private final ThreadPoolExecutor threadPoolExecutor;
-    private final Handler mMainHandler;
+    //private final Handler mMainHandler;
 
     private DistCodeDownloadTask distCodeTask;
     private GasPriceTask gasPriceTask;
@@ -61,8 +61,8 @@ public class ThreadManager2 {
     // Constructor private
     private ThreadManager2() {
         super();
-        mWorkQueue = new LinkedBlockingQueue<>();
         mTaskQueue = new LinkedBlockingQueue<>();
+        mWorkQueue = new LinkedBlockingQueue<>();
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
                 MAXIMUM_POOL_SIZE,
@@ -70,26 +70,28 @@ public class ThreadManager2 {
                 KEEP_ALIVE_TIME_UNIT,
                 mWorkQueue
         );
-
+        /*
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask)msg.obj;
-                log.i("task: %s", task);
                 switch(msg.what) {
                     case TASK_COMPLETE:
-                        recycleTask(task);
+                        //recycleTask(task);
                         break;
                     case TASK_FAIL:
+                        //recycleTask(task);
+                        break;
+                    case FIRESTORE_STATION_SET_COMPLETED:
                         recycleTask(task);
                         break;
-                    default:
-                        recycleTask(task);
-                        super.handleMessage(msg);
+                    default: super.handleMessage(msg);
                 }
 
             }
         };
+
+         */
     }
 
     // Singleton Initialization: LazyHolder type.
@@ -103,7 +105,7 @@ public class ThreadManager2 {
 
     // Handles state messages for a particular task object
     void handleState(ThreadTask task, int state) {
-        Message msg = mMainHandler.obtainMessage(state, task);
+        //Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
             case FETCH_LOCATION_COMPLETED:
                 log.i("Location feched");
@@ -122,6 +124,7 @@ public class ThreadManager2 {
             case DOWNLOAD_NEAR_STATIONS:
                 InnerClazz.sInstance.threadPoolExecutor.execute(
                         ((StationListTask)task).getFireStoreRunnable());
+                //InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getFireStoreRunnable());
                 //msg.sendToTarget();
                 break;
 
@@ -130,12 +133,10 @@ public class ThreadManager2 {
                 // Save basic information of stations in FireStore
                 log.i("upload station data");
                 InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationListTask) task).setFireStoreRunnalbe());
-                //msg.sendToTarget();
+                        ((StationListTask)task).setFireStoreRunnalbe());
                 break;
 
-            default:
-                msg.sendToTarget();
+            case FIRESTORE_STATION_SET_COMPLETED:
                 break;
         }
     }
@@ -180,7 +181,7 @@ public class ThreadManager2 {
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
         InnerClazz.sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
-
+        log.i("Location thread queue: %s", InnerClazz.sInstance.threadPoolExecutor.getQueue());
         return locationTask;
     }
 
@@ -189,17 +190,13 @@ public class ThreadManager2 {
     // by LocationTask and defaut params transferred from OpinetStationListFragment
     public StationListTask startStationListTask(
             StationListViewModel model, Location location, String[] params) {
-
-        //log.i("TaskQueue: %s", InnerClazz.sInstance.mTaskQueue.poll());
+        log.i("TaskQueue: %s", InnerClazz.sInstance.mTaskQueue.poll());
         //StationListTask stnListTask = (StationListTask)InnerClazz.sInstance.mTaskQueue.poll();
+        if(stnListTask == null) stnListTask = new StationListTask();
 
-        if(stnListTask == null) {
-            log.i("create stationlisttask");
-            stnListTask = new StationListTask();
-        }
         stnListTask.initStationTask(model, location, params);
         InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
-
+        log.i("Station thread queue: %s", InnerClazz.sInstance.mWorkQueue.poll());
         return stnListTask;
     }
 

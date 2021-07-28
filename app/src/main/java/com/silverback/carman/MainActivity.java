@@ -163,10 +163,13 @@ public class MainActivity extends BaseActivity implements
         // no stations actually exist within the radius.
         stnModel.getNearStationList().observe(this, stnList -> {
             if (stnList != null && stnList.size() > 0) {
+                log.i("near stations: %s", stnList.size());
                 mStationList = stnList;
                 stnListAdapter = new StationListAdapter(mStationList, this);
+
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
+
                 binding.stationRecyclerView.setAdapter(stnListAdapter);
                 binding.stationRecyclerView.showStationListRecyclerView();
 

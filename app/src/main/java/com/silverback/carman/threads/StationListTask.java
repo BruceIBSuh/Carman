@@ -18,8 +18,8 @@ public class StationListTask extends ThreadTask implements
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
 
     // Constants
-    static final int DOWNLOAD_NEAR_STATIONS_COMPLETE = 1;
-    static final int DOWNLOAD_CURRENT_STATION_COMPLETE = 2;
+    static final int DOWNLOAD_NEAR_STATIONS = 1;
+    static final int DOWNLOAD_CURRENT_STATION = 2;
     static final int FIRESTORE_GET_COMPLETE = 3;
     static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
@@ -43,10 +43,10 @@ public class StationListTask extends ThreadTask implements
     // Constructor
     StationListTask() {
         super();
-        sparseBooleanArray = new SparseBooleanArray();
         mStationListRunnable = new StationListRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
+        sparseBooleanArray = new SparseBooleanArray();
 
     }
 
@@ -62,7 +62,7 @@ public class StationListTask extends ThreadTask implements
     Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
     void recycle() {
-        mStationList = null;
+        //mStationList = null;
     }
 
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
@@ -86,7 +86,7 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public void setCarWashInfo(int position, boolean isWash) {
-        log.i("car wash: %s, %s", position, isWash);
+        log.i("SparseArray: %s, %s", sparseBooleanArray, mStationList);
         sparseBooleanArray.put(position, isWash);
         // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
         // incur a unexpectable result.
@@ -135,16 +135,15 @@ public class StationListTask extends ThreadTask implements
         return mStationList;
     }
 
-
     @Override
-    public void handleStationTaskState(int state) {
+    public void handleTaskState(int state) {
         int outState = -1;
         switch (state) {
-            case DOWNLOAD_NEAR_STATIONS_COMPLETE:
+            case DOWNLOAD_NEAR_STATIONS:
                 outState = ThreadManager2.DOWNLOAD_NEAR_STATIONS;
                 break;
 
-            case DOWNLOAD_CURRENT_STATION_COMPLETE:
+            case DOWNLOAD_CURRENT_STATION:
                 outState = ThreadManager2.DOWNLOAD_CURRENT_STATION;
                 break;
 

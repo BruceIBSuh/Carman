@@ -40,7 +40,7 @@ public class StationListRunnable implements Runnable{
         void setStationList(List<Opinet.GasStnParcelable> list);
         void setCurrentStation(Opinet.GasStnParcelable station);
         //void notifyException(String msg);
-        void handleStationTaskState(int state);
+        void handleTaskState(int state);
     }
 
     // Constructor
@@ -83,41 +83,37 @@ public class StationListRunnable implements Runnable{
         XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
         HttpURLConnection conn = null;
         InputStream is = null;
-
         try {
             if(Thread.interrupted()) throw new InterruptedException();
             final URL url = new URL(OPINET_AROUND);
+
             conn = (HttpURLConnection)url.openConnection();
             conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.connect();
+
             is = new BufferedInputStream(conn.getInputStream());
             mStationList = xmlHandler.parseStationListParcelable(is);
             log.i("mStationList:%d", mStationList.size());
             // Get near stations which may be the current station if MIN_RADIUS is given as param or
             // it should be near stations located within SEARCHING_RADIUS.
             if(mStationList.size() > 0) {
-                // Fetch the current station located within the radius
                 if(radius.matches(Constants.MIN_RADIUS)) {
                     mTask.setCurrentStation(mStationList.get(0));
-                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_COMPLETE);
-                // Fetch near stations within the searching radius.
+                    mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION);
                 } else {
                     mTask.setStationList(mStationList);
-                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_COMPLETE);
+                    mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS);
                 }
             } else {
                 if(radius.matches(Constants.MIN_RADIUS)) {
-                    mTask.handleStationTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
-                } else mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+                    mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
+                } else mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
             }
-
-
         } catch (IOException | InterruptedException e) {
             //mTask.notifyException(e.getMessage());
-            mTask.handleStationTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
-
+            mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
         } finally {
             try { if(is != null) is.close(); }
             catch (IOException e) { e.printStackTrace(); }
