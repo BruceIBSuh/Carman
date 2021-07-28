@@ -19,13 +19,22 @@ import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainContentAdsBinding;
 import com.silverback.carman.databinding.MainContentExpenseGasBinding;
 import com.silverback.carman.databinding.MainContentExpenseSvcBinding;
+import com.silverback.carman.databinding.MainContentFooterBinding;
 import com.silverback.carman.databinding.MainContentNotificationBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
-public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.ViewHolder> {
+public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
+
+    // Define View Types
+    private final int NOTIFICATION = 0;
+    private final int BANNER_AD_1 = 1;
+    private final int EXPENSE_GAS = 2;
+    private final int EXPENSE_SVC = 3;
+    private final int BANNER_AD_2 = 4;
+    private final int COMPANY_INFO = 5;
 
     // Objects
     private MainContentNotificationBinding newsBinding;
@@ -40,12 +49,13 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        public ViewHolder(@Nullable View view) {
-            super(view);
+    public static class ContentViewHolder extends RecyclerView.ViewHolder {
+        public ContentViewHolder(View itemView) {
+            super(itemView);
             // Define click listener for the ViewHolder's View.
         }
     }
+
 
     public static class MainItemDecoration extends RecyclerView.ItemDecoration {
         private final int margin;
@@ -81,32 +91,38 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
         switch(viewType) {
-            case 0:
+            case NOTIFICATION:
                 newsBinding = MainContentNotificationBinding.inflate(inflater, viewGroup, false);
-                return new ViewHolder(newsBinding.getRoot());
+                return new ContentViewHolder(newsBinding.getRoot());
 
-            case 2:
+            case EXPENSE_GAS:
                 gasBinding = MainContentExpenseGasBinding.inflate(inflater);
-                return new ViewHolder(gasBinding.getRoot());
-            case 3:
+                return new ContentViewHolder(gasBinding.getRoot());
+
+            case EXPENSE_SVC:
                 svcBinding = MainContentExpenseSvcBinding.inflate(inflater);
-                return new ViewHolder(svcBinding.getRoot());
+                return new ContentViewHolder(svcBinding.getRoot());
 
-            case 1: case 4:
+            case BANNER_AD_1: case BANNER_AD_2:
                 adsBinding = MainContentAdsBinding.inflate(inflater, viewGroup, false);
-                return new ViewHolder(adsBinding.getRoot());
+                return new ContentViewHolder(adsBinding.getRoot());
 
-            default: return new ViewHolder(null);
+            case COMPANY_INFO:
+                MainContentFooterBinding footerBinding = MainContentFooterBinding.inflate(inflater, viewGroup, false);
+                return new ContentViewHolder(footerBinding.getRoot());
+
+            default: return new ContentViewHolder(null);
         }
     }
 
+
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         switch(position) {
-            case 0:
+            case NOTIFICATION:
                 FirebaseFirestore firestore = FirebaseFirestore.getInstance();
                 firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING).limit(5)
                         .get()
@@ -117,10 +133,11 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
                 break;
 
-            case 1:
+            case BANNER_AD_1:
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_ioniq5);
                 break;
-            case 4:
+
+            case BANNER_AD_2:
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_insurance);
                 break;
         }
@@ -128,11 +145,19 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     @Override
     public int getItemCount() {
-        return 5;
+        return 6;
     }
 
     @Override
     public int getItemViewType(int position) {
-        return position;
+        switch(position) {
+            case 0: return NOTIFICATION;
+            case 1: return BANNER_AD_1;
+            case 2: return EXPENSE_GAS;
+            case 3: return EXPENSE_SVC;
+            case 4: return BANNER_AD_2;
+            case 5: return COMPANY_INFO;
+            default: return -1;
+        }
     }
 }

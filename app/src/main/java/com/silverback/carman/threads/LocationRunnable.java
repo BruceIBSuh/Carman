@@ -23,18 +23,16 @@ import com.silverback.carman.utils.CarmanLocationHelper;
 
 import androidx.annotation.NonNull;
 
-public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
+public class LocationRunnable implements
+        Runnable, OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(LocationRunnable.class);
 
     // Constants
     private static final int REQUEST_CHECK_LOCATION_SETTINGS = 1000;
-    //static final int CURRENT_LOCATION_COMPLETE = 1;
-    //static final int CURRENT_LOCATION_FAIL = -1;
-
-    static final int TASK_COMPLETE = 1;
-    static final int TASK_FAIL= -1;
+    static final int LOCATION_TASK_COMPLETE = 1;
+    static final int LOCATION_TASK_FAIL= -1;
 
     // Objects and Fields
     private final Context context;
@@ -77,7 +75,6 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
     // Check if the Location setting is successful using CarmanLocationHelper
     @Override
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-
         LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         if(locationStates != null && !locationStates.isGpsUsable()) {
             log.i("GPS is not working");
@@ -98,23 +95,21 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 if(location != null) {
                     log.i("location fetched:%s", location);
                     //TEMP CODE FOR TESTING
-
-                    location.setLongitude(126.8991);
-                    location.setLatitude(37.5145);
-
+                    //location.setLongitude(126.8991);
+                    //location.setLatitude(37.5145);
                     task.setCurrentLocation(location);
-                    task.handleLocationTask(TASK_COMPLETE);
+                    task.handleLocationTask(LOCATION_TASK_COMPLETE);
 
                 } else {
                     task.notifyLocationException(context.getString(R.string.location_null));
-                    task.handleLocationTask(TASK_FAIL);
+                    task.handleLocationTask(LOCATION_TASK_FAIL);
                 }
             });
 
         } catch (SecurityException e) {
             log.e("Location_SecurityException: %s", e.getMessage());
             task.notifyLocationException(context.getString(R.string.location_exception_security));
-            task.handleLocationTask(TASK_FAIL);
+            task.handleLocationTask(LOCATION_TASK_FAIL);
 
         } finally {
             log.e("Location finished");
@@ -135,7 +130,7 @@ public class LocationRunnable implements Runnable, OnFailureListener, OnSuccessL
                 e.printStackTrace();
             }
 
-            task.handleLocationTask(TASK_FAIL);
+            task.handleLocationTask(LOCATION_TASK_FAIL);
         }
     }
 }

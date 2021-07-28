@@ -43,16 +43,17 @@ public class StationListTask extends ThreadTask implements
     // Constructor
     StationListTask() {
         super();
+        sparseBooleanArray = new SparseBooleanArray();
         mStationListRunnable = new StationListRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
-        sparseBooleanArray = new SparseBooleanArray();
+
     }
 
-    void initStationTask(StationListViewModel model, Location location, String[] params) {
+    void initStationTask(StationListViewModel viewModel, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
-        viewModel = model;
+        this.viewModel = viewModel;
     }
 
     // Get Runnables to be called in ThreadPool.executor()
@@ -84,8 +85,9 @@ public class StationListTask extends ThreadTask implements
     }
 
     @Override
-    public void setCarWashInfo(int position, boolean isCarwash) {
-        sparseBooleanArray.put(position, isCarwash);
+    public void setCarWashInfo(int position, boolean isWash) {
+        log.i("car wash: %s, %s", position, isWash);
+        sparseBooleanArray.put(position, isWash);
         // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
         // incur a unexpectable result.
         if(sparseBooleanArray.size() == mStationList.size()) {
@@ -143,25 +145,25 @@ public class StationListTask extends ThreadTask implements
                 break;
 
             case DOWNLOAD_CURRENT_STATION_COMPLETE:
-                outState = ThreadManager.DOWNLOAD_CURRENT_STATION_COMPLETED;
+                outState = ThreadManager2.DOWNLOAD_CURRENT_STATION;
                 break;
 
             case FIRESTORE_GET_COMPLETE:
-                outState = ThreadManager.FIRESTORE_STATION_GET_COMPLETED;
+                outState = ThreadManager2.FIRESTORE_STATION_GET_COMPLETED;
                 break;
 
             case FIRESTORE_SET_COMPLETE:
-                outState = ThreadManager.FIRESTORE_STATION_SET_COMPLETED;
+                outState = ThreadManager2.FIRESTORE_STATION_SET_COMPLETED;
                 break;
 
             case DOWNLOAD_NEAR_STATIONS_FAIL:
                 viewModel.getNearStationList().postValue(mStationList);
-                outState = ThreadManager.DOWNLOAD_NEAR_STATIONS_FAILED;
+                outState = ThreadManager2.DOWNLOAD_STATION_FAILED;
                 break;
 
             case DOWNLOAD_CURRENT_STATION_FAIL:
                 viewModel.getCurrentStation().postValue(null);
-                outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
+                outState = ThreadManager2.DOWNLOAD_STATION_FAILED;
                 break;
 
             default: break;

@@ -15,7 +15,7 @@ import java.util.List;
 public class XmlPullParserHandler {
 
     // Logging
-    private static LoggingHelper log = LoggingHelperFactory.create(XmlPullParserHandler.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(XmlPullParserHandler.class);
 
     // Objects
     private Opinet.DistrictCode districtCode;

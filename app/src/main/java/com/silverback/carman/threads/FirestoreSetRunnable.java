@@ -54,7 +54,6 @@ public class FirestoreSetRunnable implements Runnable {
         String OPINET_DETAIL = OPINET + "&id=" + stnId;
         HttpURLConnection conn = null;
         InputStream is = null;
-
         try {
             if(Thread.interrupted()) throw new InterruptedException();
 

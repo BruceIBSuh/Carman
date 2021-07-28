@@ -85,7 +85,8 @@ public class MainActivity extends BaseActivity implements
         View rootView = binding.getRoot();
         setContentView(rootView);
 
-        // Set the toolbar with icon, title and options menu.
+        // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
+        // methods.
         setSupportActionBar(binding.toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(true);
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
@@ -115,16 +116,17 @@ public class MainActivity extends BaseActivity implements
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+
         // Instantiate objects
         imgResUtil = new ApplyImageResourceUtil(this);
+        mPrevLocation = null;
 
         // Event Handlers
         binding.imgbtnStation.setOnClickListener(view -> {
             final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-            // Location permission check
+            // Permission check for location.
             checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 if(!isStnViewOn) {
-                    log.i("start fetch location");
                     locationTask = sThreadManager.fetchLocationTask(this, locationModel);
                     binding.pbNearStns.setVisibility(View.VISIBLE);
                 } else {
@@ -137,14 +139,13 @@ public class MainActivity extends BaseActivity implements
         locationModel.getLocation().observe(this, location -> {
             if(location == null) return;
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
-                log.i("fetch location");
+                log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
                 mPrevLocation = location;
-                sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
+                stationListTask = sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
             } else {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.pbNearStns.setVisibility(View.GONE);
-                //isStationOn = !isStationOn;
                 Snackbar.make(rootView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
         });
@@ -183,8 +184,8 @@ public class MainActivity extends BaseActivity implements
         // Adapter should not assume that the payload will always be passed to onBindViewHolder()
         // e.g. when the view is not attached.
         stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
-            log.i("get carwash");
             for(int i = 0; i < sparseArray.size(); i++) {
+                log.i("Meta data: %s", sparseArray.valueAt(i));
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
@@ -206,9 +207,10 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        // Set the user name and customizable icon in the toolbar.
+        // Set the user name in the toolbar
         String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) Objects.requireNonNull(getSupportActionBar()).setTitle(title);
+        // Set the ion in the toolbar
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
@@ -217,16 +219,14 @@ public class MainActivity extends BaseActivity implements
         });
 
         // Display the price info when collapsed.
-        //String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        //binding.tvCollapsedAvgPrice.setText(avgPrice);
         dispPriceCollapsed();
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        if(locationTask != null) locationTask = null;
-        if(stationListTask != null) stationListTask = null;
+    public void onDestroy() {
+        //if(locationTask != null) locationTask = null;
+        //if(stationListTask != null) stationListTask = null;
+        super.onDestroy();
     }
 
     @Override
@@ -258,6 +258,7 @@ public class MainActivity extends BaseActivity implements
         return true;
     }
 
+    // Implement StationListAdapter.OnRecyclerItemClickListener
     @Override
     public void onItemClicked(final int pos) {
         if(!hasStationInfo) {
@@ -275,9 +276,10 @@ public class MainActivity extends BaseActivity implements
         endDialog.show(getSupportFragmentManager(), "endDialog");
     }
 
-    // The following 2 methods are the fuel spinner event handler.
+    // Implement AdapterView.OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
+        log.i("Spinner:%s", pos);
         switch(pos){
             case 0: defaults[0] = "B027"; break; // gasoline
             case 1: defaults[0] = "D047"; break; // diesel
@@ -300,7 +302,8 @@ public class MainActivity extends BaseActivity implements
             // Retrieve near stations based on a newly selected fuel code if the spinner selection
             // has changed. Temporarily make this not working for preventing excessive access to the
             // server.
-            stationListTask = ThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
+
+            //stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
         }
     }
 
@@ -308,30 +311,24 @@ public class MainActivity extends BaseActivity implements
     public void onNothingSelected(AdapterView<?> adapterView) { }
 
     // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
         File cacheDir = getCacheDir();
         if(cacheDir != null && checkPriceUpdate()) {
-            for(File file : Objects.requireNonNull(cacheDir.listFiles())) {
-                file.delete();
-            }
+            for(File file : Objects.requireNonNull(cacheDir.listFiles())) file.delete();
         }
 
-        ThreadManager2.cancelAllThreads();
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
+        sThreadManager.cancelAllThreads();
     }
 
     @Override
-    public void onDialogNegativeClick(DialogFragment dialog) {
-
-    }
+    public void onDialogNegativeClick(DialogFragment dialog) {}
 
     // Ref: expand the station recyclerview up to wrap_content
     private void showCollapsedPrice(int offset) {
-        //log.i("offset:%s, %s", offset, appbar.getTotalScrollRange());
-        //float value = (float)Math.abs(offset) / appbar.getTotalScrollRange();
-        //priceView.setAlpha(value);
         if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
             binding.viewCollapsedPrice.setVisibility(View.VISIBLE);
             ObjectAnimator objAnim = ObjectAnimator.ofFloat(binding.viewCollapsedPrice, "alpha", 0f, 1f);

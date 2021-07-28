@@ -68,14 +68,13 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
-    /*
+
     public static class FooterViewHolder extends RecyclerView.ViewHolder {
         public FooterViewHolder(View footerView){
             super(footerView);
         }
     }
 
-     */
 
     @NonNull
     @Override
@@ -148,7 +147,7 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public int getItemViewType(int position) {
         if(position == 0) return TYPE_HEADER;
-        //else if(position == snapshotList.size() + 1) return TYPE_FOOTER;
+        else if(position == snapshotList.size() + 1) return TYPE_FOOTER;
         else return TYPE_ITEM;
     }
 

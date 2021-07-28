@@ -178,11 +178,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         if(!isGeofencing) {
             locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             locationModel.getLocation().observe(this, location -> {
+                if(location == null) return;
                 if (mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
-                    final String[] defaults = getDefaultParams();
+                    mPrevLocation = location;
+                    String[] defaults = getDefaultParams();
                     defaults[1] = Constants.MIN_RADIUS;
                     stationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
-                    mPrevLocation = location;
                 }
             });
         }
@@ -191,16 +192,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume:%s, %s, %s:",
-                binding.frameExpense.getElevation(), binding.tabExpense.getElevation(), binding.toolbarExpense.getElevation());
     }
 
 
     @Override
     public void onPause() {
         super.onPause();
-        log.i("onPause");
-
     }
 
     @Override

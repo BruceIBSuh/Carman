@@ -17,10 +17,7 @@ public class LocationViewModel extends ViewModel {
     private MutableLiveData<String> locationException;
 
     public MutableLiveData<Location> getLocation() {
-        if(location == null) {
-            location = new MutableLiveData<>();
-        }
-
+        if(location == null) location = new MutableLiveData<>();
         return location;
     }
 

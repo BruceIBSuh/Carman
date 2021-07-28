@@ -17,10 +17,6 @@ public class FirestoreGetRunnable implements Runnable {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(FirestoreGetRunnable.class);
 
-    // Constants
-    private static final int CARWASH_OK = 1;
-
-
     // Objects
     private final FireStoreGetMethods mCallback;
     private FirebaseFirestore firestore;
@@ -46,6 +42,7 @@ public class FirestoreGetRunnable implements Runnable {
         mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         stnList = mCallback.getStationList();
+
         try {
             if(Thread.interrupted()) throw new InterruptedException();
         } catch (InterruptedException e) {
@@ -56,15 +53,11 @@ public class FirestoreGetRunnable implements Runnable {
         // Bugs have occurred many times here. NullPointerException is brought about due to
         for(int i = 0; i < stnList.size(); i++) {
             final int pos = i;
-            final String stnId = stnList.get(pos).getStnId();
-            log.i("firestore doc id:%s", stnId);
+            String stnId = stnList.get(pos).getStnId();
+            log.i("station id:%s", stnId);
             final DocumentReference docRef = firestore.collection("gas_station").document(stnId);
             docRef.addSnapshotListener((snapshot, e) -> {
-                if(e != null) {
-                    log.e("SnapshotListener failed: %s", e.getMessage());
-                    return;
-                }
-
+                if(e != null) return;
                 /*
                  * Process for adding new gas stations if no documents exists in FireStore, initiating
                  * FirestoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
@@ -76,7 +69,7 @@ public class FirestoreGetRunnable implements Runnable {
                 // result in null value. Bugs may be fixed by the following way.
                 // If snapshot data is null, make it false to get it countered in SparseBooleanArray
                 // to notify when it should send the notification to end up the array.
-                if (snapshot != null && snapshot.exists()){
+                if(snapshot != null && snapshot.exists()){
                     if(snapshot.get("carwash") != null) {
                         log.i("car wash:%s", snapshot.getBoolean("carwash"));
                         mCallback.setCarWashInfo(pos, snapshot.getBoolean("carwash"));
