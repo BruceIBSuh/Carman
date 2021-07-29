@@ -4,6 +4,8 @@ import android.os.Process;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
@@ -42,7 +44,6 @@ public class FirestoreGetRunnable implements Runnable {
         mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         stnList = mCallback.getStationList();
-
         try {
             if(Thread.interrupted()) throw new InterruptedException();
         } catch (InterruptedException e) {
@@ -54,14 +55,7 @@ public class FirestoreGetRunnable implements Runnable {
             final int pos = i;
             String stnId = stnList.get(pos).getStnId();
             final DocumentReference docRef = firestore.collection("gas_station").document(stnId);
-            /*
-            docRef.get().addOnSuccessListener(doc -> {
-                mCallback.setCarWashInfo(pos, doc.getBoolean("carwash"));
-                mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
-            }).addOnFailureListener(Throwable::printStackTrace);
-            */
-            /*
-             * Process for adding new gas stations if no documents exists in FireStore, initiating
+            /* Process for adding new gas stations if no documents exists in FireStore, initiating
              * FirestoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
              * to add additional info to FireStore. SnapshotListener notifies the task of being
              * ready to read newly added fields including the field of "carwash".
@@ -75,32 +69,32 @@ public class FirestoreGetRunnable implements Runnable {
                 // to notify when it should send the notification to end up the array.
                 if(snapshot != null && snapshot.exists()){
                     if(snapshot.get("carwash") != null) {
-                        log.i("car wash:%s", snapshot.getBoolean("carwash"));
-                        mCallback.setCarWashInfo(pos, snapshot.getBoolean("carwash"));
-                        mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+                        log.i("car wash:%s", snapshot.get("carwash"));
+                        Boolean hasCarwash = snapshot.getBoolean("carwash");
+                        if(hasCarwash != null) mCallback.setCarWashInfo(pos, hasCarwash);
+                        //mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                     } else {
-                        log.e("carwash value is null:%s", snapshot.getString("stnName"));
-                        mCallback.setCarWashInfo(pos, false);
+                        mCallback.setCarWashInfo(pos, false); //to match the number w/ the station list.
                         setStationData(pos);
                     }
-
                 } else setStationData(pos);
             });
         }
-
     }
 
     // Upload data of a station which have not been uploaded to Firestore before, notifying
     // FirestoreSetRunnable of station ids to have additional information from Opinet and upload
     // it to Firestore.
     private void setStationData(final int position) {
+        final String stnId = stnList.get(position).getStnId();
         Map<String, Object> stnData = new HashMap<>();
         stnData.put("stn_name", stnList.get(position).getStnName());
         stnData.put("stn_code", stnList.get(position).getStnCode());
         stnData.put("katec_x", stnList.get(position).getLongitude());
         stnData.put("katec_y", stnList.get(position).getLatitude());
 
-        firestore.collection("gas_station").document(stnList.get(position).getStnId()).set(stnData)
+        firestore.collection("gas_station").document(stnId)
+                .set(stnData)
                 .addOnSuccessListener(documentReference -> {
                     mCallback.setStationId(stnList.get(position).getStnId());
                     mCallback.handleTaskState(StationListTask.FIRESTORE_GET_COMPLETE);

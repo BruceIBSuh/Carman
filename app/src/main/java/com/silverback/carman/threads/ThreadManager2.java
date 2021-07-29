@@ -1,6 +1,5 @@
 package com.silverback.carman.threads;
 
-import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
@@ -8,7 +7,6 @@ import android.os.Looper;
 import android.os.Message;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -17,8 +15,8 @@ import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -41,57 +39,50 @@ public class ThreadManager2 {
     static final int DOWNLOAD_STATION_FAILED = -101;
 
     // Determine the threadpool parameters.
-    private static final int CORE_POOL_SIZE = 3;// Sets the initial threadpool size to 4
-    private static final int MAXIMUM_POOL_SIZE = 3;// Sets the maximum threadpool size to 4
+    private static final int CORE_POOL_SIZE = 8;
+    private static final int MAXIMUM_POOL_SIZE = 8;
     private static final int KEEP_ALIVE_TIME = 1;
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;// Sets the Time Unit to seconds
 
     // Objects
     //private static final InnerInstanceClazz sInstance; //Singleton instance of the class
-    private final BlockingQueue<Runnable> mWorkQueue;
-    private final BlockingQueue<ThreadTask> mTaskQueue;
+    private final BlockingQueue<Runnable> mWorkerThreadQueue;
+    private final Queue<ThreadTask> mThreadTaskQueue;
+    private final BlockingQueue<StationListTask> mStnListTaskQueue;
+    private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final ThreadPoolExecutor threadPoolExecutor;
-    //private final Handler mMainHandler;
+    private final Handler mMainHandler;
 
+    private ThreadTask threadTask;
     private DistCodeDownloadTask distCodeTask;
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
     private StationListTask stnListTask;
     private ExpenseTabPagerTask expenseTask;
+
     // Constructor private
     private ThreadManager2() {
         super();
-        mTaskQueue = new LinkedBlockingQueue<>();
-        mWorkQueue = new LinkedBlockingQueue<>();
+        mThreadTaskQueue = new LinkedBlockingQueue<>();
+        mWorkerThreadQueue = new LinkedBlockingQueue<>();
+        mStnListTaskQueue = new LinkedBlockingQueue<>();
+        mLocationTaskQueue = new LinkedBlockingQueue<>();
+
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
                 MAXIMUM_POOL_SIZE,
                 KEEP_ALIVE_TIME,
                 KEEP_ALIVE_TIME_UNIT,
-                mWorkQueue
+                mWorkerThreadQueue
         );
-        /*
+
         mMainHandler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(@NonNull Message msg) {
-                ThreadTask task = (ThreadTask)msg.obj;
-                switch(msg.what) {
-                    case TASK_COMPLETE:
-                        //recycleTask(task);
-                        break;
-                    case TASK_FAIL:
-                        //recycleTask(task);
-                        break;
-                    case FIRESTORE_STATION_SET_COMPLETED:
-                        recycleTask(task);
-                        break;
-                    default: super.handleMessage(msg);
-                }
-
+                ThreadTask task = (ThreadTask) msg.obj;
+                recycleTask(task);
             }
         };
-
-         */
     }
 
     // Singleton Initialization: LazyHolder type.
@@ -105,12 +96,12 @@ public class ThreadManager2 {
 
     // Handles state messages for a particular task object
     void handleState(ThreadTask task, int state) {
-        //Message msg = mMainHandler.obtainMessage(state, task);
+        Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
             case FETCH_LOCATION_COMPLETED:
                 log.i("Location feched");
+                msg.sendToTarget();
                 break;
-
             // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
             // in different URLs. This process will continue until Firetore will complete to hold up
@@ -131,12 +122,12 @@ public class ThreadManager2 {
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                log.i("upload station data");
-                InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationListTask)task).setFireStoreRunnalbe());
+                log.i("upload station data: %s", task);
+                InnerClazz.sInstance.threadPoolExecutor.execute(((StationListTask)task).setFireStoreRunnalbe());
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
+                msg.sendToTarget();
                 break;
         }
     }
@@ -145,12 +136,10 @@ public class ThreadManager2 {
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
     public DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
-
-        //DistCodeDownloadTask distCodeTask = (DistCodeDownloadTask)InnerClazz.sInstance.mTaskQueue.poll();
+        //DistCodeDownloadTask distCodeTask = (DistCodeDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         log.i("DistcodeTask: %s", distCodeTask);
         if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
         InnerClazz.sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
-
         log.i("queue: %s", InnerClazz.sInstance.threadPoolExecutor.getQueue());
 
         return distCodeTask;
@@ -160,8 +149,7 @@ public class ThreadManager2 {
     // file location.
     public GasPriceTask startGasPriceTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
-
-        //GasPriceTask gasPriceTask = (GasPriceTask)InnerClazz.sInstance.mTaskQueue.poll();
+        //GasPriceTask gasPriceTask = (GasPriceTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
         gasPriceTask.initPriceTask(model, distCode, stnId);
 
@@ -176,8 +164,8 @@ public class ThreadManager2 {
     }
 
     public LocationTask fetchLocationTask(Context context, LocationViewModel model){
-        //LocationTask locationTask = (LocationTask)InnerClazz.sInstance.mTaskQueue.poll();
-
+        log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
+        locationTask = (LocationTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
         InnerClazz.sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
@@ -188,15 +176,16 @@ public class ThreadManager2 {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public StationListTask startStationListTask(
-            StationListViewModel model, Location location, String[] params) {
-        log.i("TaskQueue: %s", InnerClazz.sInstance.mTaskQueue.poll());
-        //StationListTask stnListTask = (StationListTask)InnerClazz.sInstance.mTaskQueue.poll();
-        if(stnListTask == null) stnListTask = new StationListTask();
+    public StationListTask startStationListTask(StationListViewModel model, Location location, String[] params) {
 
+        //stnListTask = (StationListTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        stnListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
+        log.i("stnListTask to poll:%s", stnListTask);
+        if(stnListTask == null) stnListTask = new StationListTask();
         stnListTask.initStationTask(model, location, params);
+
         InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
-        log.i("Station thread queue: %s", InnerClazz.sInstance.mWorkQueue.poll());
+        log.i("Station thread queue: %s", InnerClazz.sInstance.mWorkerThreadQueue.poll());
         return stnListTask;
     }
 
@@ -204,8 +193,7 @@ public class ThreadManager2 {
             //Context context, FragmentManager fm, PagerAdapterViewModel model,
             //String[] defaults, String jsonDistrict, String jsonSvcItem){
 
-        //ExpenseTabPagerTask expenseTask = (ExpenseTabPagerTask)InnerClazz.sInstance.mTaskQueue.poll();
-
+        ExpenseTabPagerTask expenseTask = (ExpenseTabPagerTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(expenseTask == null) expenseTask = new ExpenseTabPagerTask();
         //expenseTask.initPagerTask(fm, model, defaults, jsonDistrict, jsonSvcItem);
         expenseTask.initTask(model, svcItems);
@@ -218,11 +206,11 @@ public class ThreadManager2 {
 
     @SuppressWarnings("all")
     public synchronized void cancelAllThreads() {
-        ThreadTask[] taskDownloadArray = new ThreadTask[InnerClazz.sInstance.mWorkQueue.size()];
+        ThreadTask[] taskDownloadArray = new ThreadTask[InnerClazz.sInstance.mWorkerThreadQueue.size()];
         //ThreadTask[] taskDecodeArray = new ThreadTask[sInstance.mDecodeWorkQueue.size()];
 
         // Populates the array with the task objects in the queue
-        InnerClazz.sInstance.mWorkQueue.toArray(taskDownloadArray);
+        InnerClazz.sInstance.mWorkerThreadQueue.toArray(taskDownloadArray);
         //sInstance.mDecodeWorkQueue.toArray(taskDecodeArray);
 
         // Stores the array length in order to iterate over the array
@@ -242,8 +230,18 @@ public class ThreadManager2 {
     }
 
     private void recycleTask(ThreadTask task) {
-        task.recycle();
-        mTaskQueue.offer(task);
+        log.i("recycle task: %s", task);
+        if(task instanceof LocationTask) {
+            locationTask.recycle();
+            mLocationTaskQueue.offer((LocationTask)task);
+        } else if(task instanceof StationListTask) {
+            //stnListTask.recycle();
+            mStnListTaskQueue.offer((StationListTask)task);
+        } else {
+            threadTask.recycle();
+            mThreadTaskQueue.offer(task);
+        }
+
     }
 
 

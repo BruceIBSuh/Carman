@@ -95,7 +95,7 @@ public class StationListRunnable implements Runnable{
 
             is = new BufferedInputStream(conn.getInputStream());
             mStationList = xmlHandler.parseStationListParcelable(is);
-            log.i("mStationList:%d", mStationList.size());
+
             // Get near stations which may be the current station if MIN_RADIUS is given as param or
             // it should be near stations located within SEARCHING_RADIUS.
             if(mStationList.size() > 0) {

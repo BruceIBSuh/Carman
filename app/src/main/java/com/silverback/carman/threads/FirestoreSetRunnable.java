@@ -67,9 +67,9 @@ public class FirestoreSetRunnable implements Runnable {
             is = new BufferedInputStream(conn.getInputStream());
             Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
 
-            final boolean isCarwash = stnInfo.getIsCarWash().equalsIgnoreCase("Y");
-            final boolean isService = stnInfo.getIsService().equalsIgnoreCase("Y");
-            final boolean isCVS = stnInfo.getIsCVS().equalsIgnoreCase("Y");
+            boolean isCarwash = stnInfo.getIsCarWash() != null && stnInfo.getIsCarWash().equalsIgnoreCase("Y");
+            boolean isService = stnInfo.getIsService() != null && stnInfo.getIsService().equalsIgnoreCase("Y");
+            boolean isCVS = stnInfo.getIsCVS() != null && stnInfo.getIsCVS().equalsIgnoreCase("Y");
 
             // Set additional station info to FireStore using Transaction.
             final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
@@ -95,16 +95,8 @@ public class FirestoreSetRunnable implements Runnable {
             }).addOnSuccessListener(aVoid -> log.i("Successfully set data to FireStore"))
             .addOnFailureListener(e -> log.e("Failed to set data to FireStore:%s", e.getMessage()));
 
-        } catch (MalformedURLException e) {
-            log.e("MalformedURLException: %s", e.getMessage());
-
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            log.e("InterruptedException: %s", e.getMessage());
-
+        } catch (IOException | InterruptedException e) {
+            log.e("Exception : %s", e.getMessage());
         } finally {
             if (is != null) {
                 try {

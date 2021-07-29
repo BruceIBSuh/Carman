@@ -34,7 +34,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
 
     // Objects
-    private CardviewGasStationsBinding binding;
     private Context context;
     private List<Opinet.GasStnParcelable> stationList;
     private final OnRecyclerItemClickListener mListener;
@@ -56,7 +55,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     @Override
     public StationListHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        binding = CardviewGasStationsBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        CardviewGasStationsBinding binding = CardviewGasStationsBinding.inflate(
+                LayoutInflater.from(parent.getContext()), parent, false);
         return new StationListHolder(context, binding);
     }
 
@@ -75,9 +75,9 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     @Override
     public void onBindViewHolder(
             @NonNull StationListHolder holder, int position, @NonNull List<Object> payloads) {
-        if(payloads.isEmpty()) {
-            super.onBindViewHolder(holder, position, payloads);
-        } else {
+
+        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
+        else {
             log.i("Carwash: %s", payloads.size());
             // On receiving car wash values, set the progressbar to be View.GONE and set the message
             // to the textview.

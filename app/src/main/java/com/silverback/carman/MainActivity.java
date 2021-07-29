@@ -154,6 +154,8 @@ public class MainActivity extends BaseActivity implements
         locationModel.getLocationException().observe(this, exception -> {
             log.i("Exception occurred while fetching location");
             SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
+            binding.pbNearStns.setVisibility(View.GONE);
+            binding.stationRecyclerView.setVisibility(View.VISIBLE);
             binding.stationRecyclerView.showTextView(spannableString);
 
         });
@@ -324,7 +326,7 @@ public class MainActivity extends BaseActivity implements
 
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
-        sThreadManager.cancelAllThreads();
+        //sThreadManager.cancelAllThreads();
     }
 
     @Override
@@ -389,5 +391,8 @@ public class MainActivity extends BaseActivity implements
             } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
         }
     }
+
+
+
 }
 

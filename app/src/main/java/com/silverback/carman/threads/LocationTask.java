@@ -14,6 +14,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     // Objects
     private LocationViewModel viewModel;
+    private Location mLocation;
     private final Runnable mLocationRunnable;
 
     // Constructor
@@ -31,7 +32,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void recycle() {
-        //if(mLocation != null) mLocation = null;
+        if(mLocation != null) mLocation = null;
     }
 
     @Override
@@ -42,6 +43,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     @Override
     public void setCurrentLocation(Location location) {
         log.i("current location:%s", location);
+        mLocation = location;
         viewModel.getLocation().postValue(location);
     }
 

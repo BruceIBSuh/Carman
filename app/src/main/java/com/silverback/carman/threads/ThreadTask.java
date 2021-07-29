@@ -43,11 +43,9 @@ public class ThreadTask {
      */
     protected void setCurrentThread(Thread thread) {
         mCurrentThread = thread;
-        log.d("ThreadTask current Thread: %s", mCurrentThread);
     }
 
     public void handleTaskState(ThreadTask task, int state) {
-        log.i("Task Name: %s", task.getClass().getName());
         sThreadManager.handleState(task, state);
     }
 

@@ -31,8 +31,7 @@ public class StationListTask extends ThreadTask implements
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
-
-    private final SparseBooleanArray sparseBooleanArray;
+    private SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     //private Opinet.GasStnParcelable mCurrentStation;
@@ -61,6 +60,7 @@ public class StationListTask extends ThreadTask implements
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
     Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
+    // MUST BE careful to recycle variables. Otherwise, the app may break down.
     void recycle() {
         //mStationList = null;
     }
@@ -80,7 +80,6 @@ public class StationListTask extends ThreadTask implements
 
     @Override
     public void setStationId(String stnId) {
-        log.i("StationListThread: %s", stnId);
         this.stnId = stnId;
     }
 
