@@ -38,8 +38,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     // Objects
     private MainContentNotificationBinding newsBinding;
-    private MainContentExpenseGasBinding gasBinding;
-    private MainContentExpenseSvcBinding svcBinding;
     private MainContentAdsBinding adsBinding;
 
 
@@ -56,7 +54,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-
+    /*
     public static class MainItemDecoration extends RecyclerView.ItemDecoration {
         private final int margin;
         private final int columns;
@@ -81,13 +79,15 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         @Override
         public void onDrawOver(
                 @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-            for(int i = 0; i < parent.getChildCount(); i++) {
+            for (int i = 0; i < parent.getChildCount(); i++) {
                 View child = parent.getChildAt(i);
                 ViewGroup.LayoutParams params = parent.getLayoutParams();
                 log.i("onDrawOver: %s, %s:", child, params);
             }
         }
     }
+
+     */
 
     @NonNull
     @Override
@@ -99,11 +99,11 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 return new ContentViewHolder(newsBinding.getRoot());
 
             case EXPENSE_GAS:
-                gasBinding = MainContentExpenseGasBinding.inflate(inflater);
+                MainContentExpenseGasBinding gasBinding = MainContentExpenseGasBinding.inflate(inflater);
                 return new ContentViewHolder(gasBinding.getRoot());
 
             case EXPENSE_SVC:
-                svcBinding = MainContentExpenseSvcBinding.inflate(inflater);
+                MainContentExpenseSvcBinding svcBinding = MainContentExpenseSvcBinding.inflate(inflater);
                 return new ContentViewHolder(svcBinding.getRoot());
 
             case BANNER_AD_1: case BANNER_AD_2:

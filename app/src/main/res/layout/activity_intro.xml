@@ -31,7 +31,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/bg_carman" />
 
-
     <ImageButton
         android:id="@+id/btn_start"
         android:layout_width="90dp"

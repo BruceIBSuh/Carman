@@ -108,9 +108,9 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter();
-        MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(this, 35, 0);
+        //MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(this, 35, 0);
         binding.recyclerContents.setAdapter(adapter);
-        binding.recyclerContents.addItemDecoration(itemDeco);
+        //binding.recyclerContents.addItemDecoration(itemDeco);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);

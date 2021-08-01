@@ -55,7 +55,7 @@
         android:id="@+id/textView17"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="16dp"
         android:text="@string/main_footer_company"
         android:textColor="#827F7F"
         android:textSize="16sp"

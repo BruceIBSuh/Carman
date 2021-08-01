@@ -80,7 +80,7 @@ public class ThreadManager2 {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask) msg.obj;
-                recycleTask(task);
+                if(task != null) recycleTask(task);
             }
         };
     }
@@ -165,7 +165,7 @@ public class ThreadManager2 {
 
     public LocationTask fetchLocationTask(Context context, LocationViewModel model){
         log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
-        locationTask = (LocationTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        //locationTask = (LocationTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
         InnerClazz.sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
@@ -177,9 +177,15 @@ public class ThreadManager2 {
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
     public StationListTask startStationListTask(StationListViewModel model, Location location, String[] params) {
-
+        // TEST Coding
+        log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
+        for(int i = 0; i <  InnerClazz.sInstance.mThreadTaskQueue.size(); i++) {
+            ThreadTask task = InnerClazz.sInstance.mThreadTaskQueue.poll();
+            log.i("current task: %s", task);
+            if(task instanceof StationListTask) break;
+        }
         //stnListTask = (StationListTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        stnListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
+        //stnListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
         log.i("stnListTask to poll:%s", stnListTask);
         if(stnListTask == null) stnListTask = new StationListTask();
         stnListTask.initStationTask(model, location, params);
@@ -193,7 +199,7 @@ public class ThreadManager2 {
             //Context context, FragmentManager fm, PagerAdapterViewModel model,
             //String[] defaults, String jsonDistrict, String jsonSvcItem){
 
-        ExpenseTabPagerTask expenseTask = (ExpenseTabPagerTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        //ExpenseTabPagerTask expenseTask = (ExpenseTabPagerTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(expenseTask == null) expenseTask = new ExpenseTabPagerTask();
         //expenseTask.initPagerTask(fm, model, defaults, jsonDistrict, jsonSvcItem);
         expenseTask.initTask(model, svcItems);
@@ -231,6 +237,7 @@ public class ThreadManager2 {
 
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);
+        mThreadTaskQueue.offer(task); //TEST CODING
         if(task instanceof LocationTask) {
             locationTask.recycle();
             mLocationTaskQueue.offer((LocationTask)task);
