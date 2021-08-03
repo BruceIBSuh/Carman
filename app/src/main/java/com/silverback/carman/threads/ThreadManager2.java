@@ -100,7 +100,7 @@ public class ThreadManager2 {
         switch(state) {
             case FETCH_LOCATION_COMPLETED:
                 log.i("Location feched");
-                msg.sendToTarget();
+                //msg.sendToTarget();
                 break;
             // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
@@ -239,8 +239,8 @@ public class ThreadManager2 {
         log.i("recycle task: %s", task);
         mThreadTaskQueue.offer(task); //TEST CODING
         if(task instanceof LocationTask) {
-            locationTask.recycle();
-            mLocationTaskQueue.offer((LocationTask)task);
+            //locationTask.recycle();
+            //mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
             //stnListTask.recycle();
             mStnListTaskQueue.offer((StationListTask)task);

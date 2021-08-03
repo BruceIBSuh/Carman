@@ -27,29 +27,35 @@ public class CarmanLocationHelper implements
 
     // Objects
     private static CarmanLocationHelper sLocationHelper;
-    private LocationRequest mLocationRequest;
+    private final LocationRequest mLocationRequest;
     private Location mLocation;
 
-
-    // private Constructor
     private CarmanLocationHelper() {
         // Leave this empty for creating a singleton pattern
         mLocationRequest = LocationRequest.create();
         setLocationRequest();
     }
 
-    // Singleton for instantiating this.
+
+    // Instantiate the singleton class using LazyHolder type.
+    private static class CarmanInnerClazz {
+        private static final CarmanLocationHelper sLocationInstance = new CarmanLocationHelper();
+    }
+
     public static CarmanLocationHelper getLocationInstance() {
+        /*
         if(sLocationHelper == null) {
             sLocationHelper = new CarmanLocationHelper();
         }
 
         return sLocationHelper;
+
+         */
+        return CarmanInnerClazz.sLocationInstance;
     }
 
     //private LocationSettingsRequest setLocationRequest() {
     public LocationRequest setLocationRequest() {
-
         mLocationRequest.setInterval(Constants.INTERVAL);
         mLocationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
         mLocationRequest.setMaxWaitTime(Constants.MAX_WAIT);
@@ -73,13 +79,9 @@ public class CarmanLocationHelper implements
     public LocationCallback initLocationCallback() {
         return new LocationCallback() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
-
-                if(locationResult == null) return;
-
+            public void onLocationResult(@NonNull LocationResult locationResult) {
                 for(Location location : locationResult.getLocations())
                     log.i("Locations updated: $s, %s", location, System.currentTimeMillis());
-
                 mLocation = locationResult.getLastLocation();
                 log.i("Location in Callback: %s, %s", mLocation.getLatitude(), mLocation.getLongitude());
             }

@@ -30,7 +30,7 @@ public class Constants {
     public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60 * 3;//Interval for downloading gas prices from Opinet (3 hrs)
     public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
     static final int INTERVAL = 1000 * 10; //Location update interval set by the app
-    static final int FASTEST_INTERVAL = 1000; //Fastest location update interval set by any app.
+    static final int FASTEST_INTERVAL = 1000 * 5; //Fastest location update interval set by any app.
     static final int MAX_WAIT = 1000 * 30; //Mas latency to receive location info.
 
     // ExpensePagerFragment max pages of ExpRecentPagerAdapter
@@ -41,7 +41,7 @@ public class Constants {
     public static final int SNOOZE_DURATION = 1000 * 60 * 60;
 
     // Image and Icon Size
-    public static final int ICON_SIZE_TOOLBAR_USERPIC = 50;
+    public static final int ICON_SIZE_TOOLBAR_USERPIC = 40;
     public static final int ICON_SIZE_PREFERENCE = 40;
     public static final int ICON_SIZE_POSTING_LIST = 35;
     public static final int IMAGESPAN_THUMBNAIL_SIZE = 36;

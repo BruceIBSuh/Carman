@@ -20,6 +20,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
@@ -34,6 +37,7 @@ import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.threads.ThreadManager;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
+import com.silverback.carman.utils.CarmanLocationHelper;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
@@ -124,20 +128,20 @@ public class MainActivity extends BaseActivity implements
         // Event Handlers
         binding.imgbtnStation.setOnClickListener(view -> {
             final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-            // Permission check for location.
-            checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () -> {
-                if(!isStnViewOn) {
-                    locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                    binding.pbNearStns.setVisibility(View.VISIBLE);
-                } else {
-                    binding.stationRecyclerView.setVisibility(View.GONE);
-                    binding.recyclerContents.setVisibility(View.VISIBLE);
-                }
-            });
+            if(!isStnViewOn) {
+               binding.pbNearStns.setVisibility(View.VISIBLE);
+               checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+                   locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+               });
+
+            } else {
+                binding.stationRecyclerView.setVisibility(View.GONE);
+                binding.recyclerContents.setVisibility(View.VISIBLE);
+            }
         });
 
         locationModel.getLocation().observe(this, location -> {
-            if(location == null) return;
+            //if(location == null) return;
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                 log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
                 mPrevLocation = location;
@@ -182,6 +186,7 @@ public class MainActivity extends BaseActivity implements
                 //SpannableString spannableString = handleStationListException();
                 //stationRecyclerView.showTextView(spannableString);
             }
+
             binding.pbNearStns.setVisibility(View.GONE);
         });
 
@@ -215,6 +220,7 @@ public class MainActivity extends BaseActivity implements
         // Set the user name in the toolbar
         String title = mSettings.getString(Constants.USER_NAME, null);
         if(title != null) Objects.requireNonNull(getSupportActionBar()).setTitle(title);
+
         // Set the ion in the toolbar
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
@@ -228,10 +234,10 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public void onDestroy() {
-        //if(locationTask != null) locationTask = null;
-        //if(stationListTask != null) stationListTask = null;
-        super.onDestroy();
+    public void onPause() {
+        super.onPause();
+        if(locationTask != null) locationTask = null;
+        if(stationListTask != null) stationListTask = null;
     }
 
     @Override
@@ -392,7 +398,87 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    private void fetchCurrentLocation() {
+        final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        // Permission check for location.
+        checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+            if(!isStnViewOn) {
+                locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+                binding.pbNearStns.setVisibility(View.VISIBLE);
+            } else {
+                binding.stationRecyclerView.setVisibility(View.GONE);
+                binding.recyclerContents.setVisibility(View.VISIBLE);
+            }
+        });
 
+        locationModel.getLocation().observe(this, location -> {
+            if(location == null) return;
+            if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
+                log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
+                mPrevLocation = location;
+                stationListTask = sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
+            } else {
+                binding.recyclerContents.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                binding.pbNearStns.setVisibility(View.GONE);
+                Snackbar.make(binding.getRoot(), getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
+            }
+        });
+
+        // Location has failed to fetch.
+        locationModel.getLocationException().observe(this, exception -> {
+            log.i("Exception occurred while fetching location");
+            SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
+            binding.pbNearStns.setVisibility(View.GONE);
+            binding.stationRecyclerView.setVisibility(View.VISIBLE);
+            binding.stationRecyclerView.showTextView(spannableString);
+
+        });
+    }
+
+    private void dispNearStatoins() {
+        // Receive station(s) within the radius. If no stations exist, post the message that
+        // indicate why it failed to fetch stations. It would be caused by any network problem or
+        // no stations actually exist within the radius.
+        stnModel.getNearStationList().observe(this, stnList -> {
+            if (stnList != null && stnList.size() > 0) {
+                log.i("near stations: %s", stnList.size());
+                mStationList = stnList;
+                stnListAdapter = new StationListAdapter(mStationList, this);
+
+                binding.recyclerContents.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+
+                binding.stationRecyclerView.setAdapter(stnListAdapter);
+                binding.stationRecyclerView.showStationListRecyclerView();
+
+            } else {
+                log.i("no station");
+                // No near stations post an message that contains the clickable span to link to the
+                // SettingPreferenceActivity for resetting the searching radius.
+                //SpannableString spannableString = handleStationListException();
+                //stationRecyclerView.showTextView(spannableString);
+            }
+            binding.pbNearStns.setVisibility(View.GONE);
+        });
+
+        // Update the carwash info to StationList and notify the data change to Adapter.
+        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+        // e.g. when the view is not attached.
+        stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
+            for(int i = 0; i < sparseArray.size(); i++) {
+                log.i("Meta data: %s", sparseArray.valueAt(i));
+                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
+                stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
+            }
+
+            hasStationInfo = true;
+        });
+    }
+
+   private void switchRecyclerView(boolean b) {
+
+   }
 
 }
 

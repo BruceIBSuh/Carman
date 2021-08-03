@@ -32,7 +32,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void recycle() {
-        if(mLocation != null) mLocation = null;
+        //if(mLocation != null) mLocation = null;
     }
 
     @Override
@@ -44,12 +44,12 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     public void setCurrentLocation(Location location) {
         log.i("current location:%s", location);
         mLocation = location;
-        viewModel.getLocation().postValue(location);
+        if(viewModel != null) viewModel.getLocation().postValue(location);
     }
 
     @Override
     public void notifyLocationException(String msg) {
-        viewModel.getLocationException().postValue(msg);
+        if(viewModel != null) viewModel.getLocationException().postValue(msg);
     }
 
     @Override
