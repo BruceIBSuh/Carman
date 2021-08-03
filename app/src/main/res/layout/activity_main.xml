@@ -167,8 +167,4 @@
             app:layout_constraintEnd_toEndOf="@id/imgbtn_station"
             app:layout_constraintBottom_toBottomOf="@id/imgbtn_station"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

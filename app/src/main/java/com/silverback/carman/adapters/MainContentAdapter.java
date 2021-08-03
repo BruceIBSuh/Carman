@@ -2,14 +2,12 @@ package com.silverback.carman.adapters;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Rect;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,7 +35,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final int COMPANY_INFO = 5;
 
     // Objects
-    private MainContentNotificationBinding newsBinding;
+    private MainContentNotificationBinding contentBinding;
     private MainContentAdsBinding adsBinding;
 
 
@@ -54,7 +52,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-    /*
     public static class MainItemDecoration extends RecyclerView.ItemDecoration {
         private final int margin;
         private final int columns;
@@ -87,16 +84,14 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
-     */
-
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(viewGroup.getContext());
         switch(viewType) {
             case NOTIFICATION:
-                newsBinding = MainContentNotificationBinding.inflate(inflater, viewGroup, false);
-                return new ContentViewHolder(newsBinding.getRoot());
+                contentBinding = MainContentNotificationBinding.inflate(inflater, viewGroup, false);
+                return new ContentViewHolder(contentBinding.getRoot());
 
             case EXPENSE_GAS:
                 MainContentExpenseGasBinding gasBinding = MainContentExpenseGasBinding.inflate(inflater);
@@ -128,7 +123,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         .get()
                         .addOnSuccessListener(querySnapshots -> {
                             RecentPostAdapter recentPostAdapter = new RecentPostAdapter(querySnapshots);
-                            newsBinding.recyclerview.setAdapter(recentPostAdapter);
+                            contentBinding.recyclerview.setAdapter(recentPostAdapter);
                         });
 
                 break;

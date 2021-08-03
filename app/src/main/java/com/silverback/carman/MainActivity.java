@@ -3,7 +3,11 @@ package com.silverback.carman;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,8 +21,12 @@ import android.widget.ArrayAdapter;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -112,9 +120,9 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter();
-        //MainContentAdapter.MainItemDecoration itemDeco = new MainContentAdapter.MainItemDecoration(this, 35, 0);
+        RecyclerDivider divider = new RecyclerDivider(this);
         binding.recyclerContents.setAdapter(adapter);
-        //binding.recyclerContents.addItemDecoration(itemDeco);
+        //binding.recyclerContents.addItemDecoration(divider);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -141,7 +149,6 @@ public class MainActivity extends BaseActivity implements
         });
 
         locationModel.getLocation().observe(this, location -> {
-            //if(location == null) return;
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                 log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
                 mPrevLocation = location;
@@ -195,7 +202,6 @@ public class MainActivity extends BaseActivity implements
         // e.g. when the view is not attached.
         stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
             for(int i = 0; i < sparseArray.size(); i++) {
-                log.i("Meta data: %s", sparseArray.valueAt(i));
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
@@ -398,87 +404,51 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    private void fetchCurrentLocation() {
-        final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        // Permission check for location.
-        checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
-            if(!isStnViewOn) {
-                locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                binding.pbNearStns.setVisibility(View.VISIBLE);
-            } else {
-                binding.stationRecyclerView.setVisibility(View.GONE);
-                binding.recyclerContents.setVisibility(View.VISIBLE);
+    static class RecyclerDivider extends RecyclerView.ItemDecoration {
+        Drawable mDivider;
+        public RecyclerDivider(Context context) {
+            mDivider = ContextCompat.getDrawable(context, R.drawable.shape_itemdivider);
+            /*
+            mDivider = ResourcesCompat.getDrawable(
+                    context.getResources(), R.drawable.shape_itemdivider, null);
+             */
+        }
+
+        @Override
+        public void getItemOffsets(
+                @NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent,
+                @NonNull RecyclerView.State state) {
+
+            super.getItemOffsets(outRect, view, parent, state);
+            outRect.bottom = 100;
+        }
+
+        @Override
+        public void onDraw(
+                @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state){
+            super.onDraw(c, parent, state);
+        }
+
+        @Override
+        public void onDrawOver(
+                @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state){
+
+            super.onDrawOver(c, parent, state);
+            int left = parent.getPaddingLeft();
+            int right = parent.getWidth() - parent.getPaddingRight();
+
+            int childCount = parent.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                View child = parent.getChildAt(i);
+                RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
+
+                int top = child.getBottom() + params.bottomMargin;
+                int bottom = top + mDivider.getIntrinsicHeight();
+
+                mDivider.setBounds(left, top, right, bottom);
+                mDivider.draw(c);
             }
-        });
-
-        locationModel.getLocation().observe(this, location -> {
-            if(location == null) return;
-            if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
-                log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
-                mPrevLocation = location;
-                stationListTask = sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
-            } else {
-                binding.recyclerContents.setVisibility(View.GONE);
-                binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                binding.pbNearStns.setVisibility(View.GONE);
-                Snackbar.make(binding.getRoot(), getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
-            }
-        });
-
-        // Location has failed to fetch.
-        locationModel.getLocationException().observe(this, exception -> {
-            log.i("Exception occurred while fetching location");
-            SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
-            binding.pbNearStns.setVisibility(View.GONE);
-            binding.stationRecyclerView.setVisibility(View.VISIBLE);
-            binding.stationRecyclerView.showTextView(spannableString);
-
-        });
+        }
     }
-
-    private void dispNearStatoins() {
-        // Receive station(s) within the radius. If no stations exist, post the message that
-        // indicate why it failed to fetch stations. It would be caused by any network problem or
-        // no stations actually exist within the radius.
-        stnModel.getNearStationList().observe(this, stnList -> {
-            if (stnList != null && stnList.size() > 0) {
-                log.i("near stations: %s", stnList.size());
-                mStationList = stnList;
-                stnListAdapter = new StationListAdapter(mStationList, this);
-
-                binding.recyclerContents.setVisibility(View.GONE);
-                binding.stationRecyclerView.setVisibility(View.VISIBLE);
-
-                binding.stationRecyclerView.setAdapter(stnListAdapter);
-                binding.stationRecyclerView.showStationListRecyclerView();
-
-            } else {
-                log.i("no station");
-                // No near stations post an message that contains the clickable span to link to the
-                // SettingPreferenceActivity for resetting the searching radius.
-                //SpannableString spannableString = handleStationListException();
-                //stationRecyclerView.showTextView(spannableString);
-            }
-            binding.pbNearStns.setVisibility(View.GONE);
-        });
-
-        // Update the carwash info to StationList and notify the data change to Adapter.
-        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
-        // e.g. when the view is not attached.
-        stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
-            for(int i = 0; i < sparseArray.size(); i++) {
-                log.i("Meta data: %s", sparseArray.valueAt(i));
-                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
-                stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
-            }
-
-            hasStationInfo = true;
-        });
-    }
-
-   private void switchRecyclerView(boolean b) {
-
-   }
-
 }
 
