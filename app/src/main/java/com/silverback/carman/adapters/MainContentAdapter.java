@@ -8,8 +8,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -35,13 +40,19 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final int COMPANY_INFO = 5;
 
     // Objects
+    private final ExpenseListener expenseListener;
     private MainContentNotificationBinding contentBinding;
+    private MainContentExpenseGasBinding gasBinding;
     private MainContentAdsBinding adsBinding;
 
+    public interface ExpenseListener {
+        void notifyExpenseItem(ViewPager2 pager);
+    }
 
     // Constructor
-    public MainContentAdapter() {
+    public MainContentAdapter(ExpenseListener callback) {
         super();
+        expenseListener = callback;
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
@@ -49,8 +60,10 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         public ContentViewHolder(View itemView) {
             super(itemView);
             // Define click listener for the ViewHolder's View.
+
         }
     }
+
 
     public static class MainItemDecoration extends RecyclerView.ItemDecoration {
         private final int margin;
@@ -84,6 +97,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
     }
 
+
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
@@ -94,7 +109,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 return new ContentViewHolder(contentBinding.getRoot());
 
             case EXPENSE_GAS:
-                MainContentExpenseGasBinding gasBinding = MainContentExpenseGasBinding.inflate(inflater);
+                gasBinding = MainContentExpenseGasBinding.inflate(inflater);
                 return new ContentViewHolder(gasBinding.getRoot());
 
             case EXPENSE_SVC:
@@ -109,7 +124,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 MainContentFooterBinding footerBinding = MainContentFooterBinding.inflate(inflater, viewGroup, false);
                 return new ContentViewHolder(footerBinding.getRoot());
 
-            default: return new ContentViewHolder(null);
+            //default: return new ContentViewHolder(null);
+            default: return new ContentViewHolder(contentBinding.getRoot());
         }
     }
 
@@ -128,6 +144,13 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
                 break;
 
+            case EXPENSE_GAS:
+                log.d("expense viewpager: %s", gasBinding.pagerExpense);
+                expenseListener.notifyExpenseItem(gasBinding.pagerExpense);
+                break;
+
+            case EXPENSE_SVC:
+                break;
             case BANNER_AD_1:
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_ioniq5);
                 break;
@@ -153,6 +176,25 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             case 4: return BANNER_AD_2;
             case 5: return COMPANY_INFO;
             default: return -1;
+        }
+    }
+
+
+    private class ExpensePagerAdapter extends FragmentStateAdapter {
+
+        public ExpensePagerAdapter(FragmentActivity fa) {
+            super(fa);
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            return null;
+        }
+
+        @Override
+        public int getItemCount() {
+            return 0;
         }
     }
 }

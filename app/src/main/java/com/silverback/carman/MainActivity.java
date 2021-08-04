@@ -27,12 +27,14 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
+import com.silverback.carman.adapters.MainExpPagerAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -62,7 +64,8 @@ import java.util.Objects;
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener,
+        MainContentAdapter.ExpenseListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
@@ -119,8 +122,8 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
 
         // MainContent RecyclerView to display main contents in the activity
-        MainContentAdapter adapter = new MainContentAdapter();
-        RecyclerDivider divider = new RecyclerDivider(this);
+        MainContentAdapter adapter = new MainContentAdapter(this);
+        //RecyclerDivider divider = new RecyclerDivider(this);
         binding.recyclerContents.setAdapter(adapter);
         //binding.recyclerContents.addItemDecoration(divider);
 
@@ -402,6 +405,11 @@ public class MainActivity extends BaseActivity implements
 
             } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
         }
+    }
+
+    @Override
+    public void notifyExpenseItem(ViewPager2 pager) {
+        log.i("Set Adapter now");
     }
 
     static class RecyclerDivider extends RecyclerView.ItemDecoration {
