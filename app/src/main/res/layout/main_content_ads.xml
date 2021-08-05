@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
-    android:background="#FFFFFF">
+    android:elevation="3dp"
+    android:background="#F3F3F3">
     <View
         android:id="@+id/view6"
         android:layout_width="0dp"

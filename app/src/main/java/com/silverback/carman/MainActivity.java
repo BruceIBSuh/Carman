@@ -23,18 +23,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
-import com.silverback.carman.adapters.MainExpPagerAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -44,10 +38,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
-import com.silverback.carman.threads.ThreadManager;
-import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
-import com.silverback.carman.utils.CarmanLocationHelper;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
@@ -64,8 +55,7 @@ import java.util.Objects;
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
-        AdapterView.OnItemSelectedListener,
-        MainContentAdapter.ExpenseListener {
+        AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
@@ -138,12 +128,11 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.imgbtnStation.setOnClickListener(view -> {
-            final boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+            boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
             if(!isStnViewOn) {
                binding.pbNearStns.setVisibility(View.VISIBLE);
-               checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () -> {
-                   locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-               });
+               checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () ->
+                       locationTask = sThreadManager.fetchLocationTask(this, locationModel));
 
             } else {
                 binding.stationRecyclerView.setVisibility(View.GONE);
@@ -407,10 +396,14 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    // Implement MainContentAdapter.
+    /*
     @Override
     public void notifyExpenseItem(ViewPager2 pager) {
         log.i("Set Adapter now");
     }
+
+     */
 
     static class RecyclerDivider extends RecyclerView.ItemDecoration {
         Drawable mDivider;

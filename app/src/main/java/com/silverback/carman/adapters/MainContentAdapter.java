@@ -8,13 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -34,25 +30,21 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     // Define View Types
     private final int NOTIFICATION = 0;
     private final int BANNER_AD_1 = 1;
-    private final int EXPENSE_GAS = 2;
+    private final int VIEWPAGER_EXPENSE = 2;
     private final int EXPENSE_SVC = 3;
     private final int BANNER_AD_2 = 4;
     private final int COMPANY_INFO = 5;
 
     // Objects
-    private final ExpenseListener expenseListener;
     private MainContentNotificationBinding contentBinding;
     private MainContentExpenseGasBinding gasBinding;
     private MainContentAdsBinding adsBinding;
-
-    public interface ExpenseListener {
-        void notifyExpenseItem(ViewPager2 pager);
-    }
+    private MainExpPagerAdapter expensePagerAdapter;
 
     // Constructor
-    public MainContentAdapter(ExpenseListener callback) {
+    public MainContentAdapter(Context context) {
         super();
-        expenseListener = callback;
+        expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
@@ -108,8 +100,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 contentBinding = MainContentNotificationBinding.inflate(inflater, viewGroup, false);
                 return new ContentViewHolder(contentBinding.getRoot());
 
-            case EXPENSE_GAS:
-                gasBinding = MainContentExpenseGasBinding.inflate(inflater);
+            case VIEWPAGER_EXPENSE:
+                gasBinding = MainContentExpenseGasBinding.inflate(inflater, viewGroup, false);
                 return new ContentViewHolder(gasBinding.getRoot());
 
             case EXPENSE_SVC:
@@ -141,12 +133,10 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                             RecentPostAdapter recentPostAdapter = new RecentPostAdapter(querySnapshots);
                             contentBinding.recyclerview.setAdapter(recentPostAdapter);
                         });
-
                 break;
 
-            case EXPENSE_GAS:
-                log.d("expense viewpager: %s", gasBinding.pagerExpense);
-                expenseListener.notifyExpenseItem(gasBinding.pagerExpense);
+            case VIEWPAGER_EXPENSE:
+                gasBinding.pagerExpense.setAdapter(expensePagerAdapter);
                 break;
 
             case EXPENSE_SVC:
@@ -171,7 +161,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         switch(position) {
             case 0: return NOTIFICATION;
             case 1: return BANNER_AD_1;
-            case 2: return EXPENSE_GAS;
+            case 2: return VIEWPAGER_EXPENSE;
             case 3: return EXPENSE_SVC;
             case 4: return BANNER_AD_2;
             case 5: return COMPANY_INFO;
@@ -180,21 +170,4 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
 
-    private class ExpensePagerAdapter extends FragmentStateAdapter {
-
-        public ExpensePagerAdapter(FragmentActivity fa) {
-            super(fa);
-        }
-
-        @NonNull
-        @Override
-        public Fragment createFragment(int position) {
-            return null;
-        }
-
-        @Override
-        public int getItemCount() {
-            return 0;
-        }
-    }
 }

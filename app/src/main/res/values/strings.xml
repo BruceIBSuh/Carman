@@ -55,7 +55,9 @@
     <string name="general_index_reset">변경</string>
     <string name="general_no_location">현재 위치 정보를 찾을 수 없습니다.\n버튼을 눌려서 현재위치를 업데이트해 주세요.</string>
 
+    <!-- Update version-->
     <string name="main_subtitle_news">알립니다</string>
+    <string name="main_subtitle_expense">8월달 지출</string>
     <string name="main_subtitle_gas">지출 내역(주유)</string>
     <string name="main_subtitle_svc">지출 내역(서비스)</string>
     <string name="main_subtitle_collapsed">평균</string>
@@ -63,6 +65,7 @@
     <string name="main_footer_policy">개인정보보호정책</string>
     <string name="main_footer_services">전체서비스</string>
     <string name="main_footer_company">SILVERBACK TRUST</string>
+
 
 
     <!--StationMapActivity-->

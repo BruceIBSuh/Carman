@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
+import com.silverback.carman.fragments.MainExpPagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -18,6 +19,7 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
         super(fa);
     }
 
+
     @Override
     public int getItemCount() {
         return NUM_PAGES;
@@ -26,6 +28,6 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        return null;
+        return MainExpPagerFragment.newInstance("Hello World", "Hello Bruce");
     }
 }

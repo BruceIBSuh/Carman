@@ -8,7 +8,7 @@
     android:background="#FFFFFF">
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/tv_subtitle_expense"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/main_subtitle_svc"
@@ -26,7 +26,7 @@
         android:background="#E0E0E0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_expense" />
 
     <TextView
         android:id="@+id/textView5"
