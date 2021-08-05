@@ -102,11 +102,11 @@ public class LocationRunnable implements
         } else {
 
             try {
-               mFusedLocationClient.requestLocationUpdates(
+                /*
+                mFusedLocationClient.requestLocationUpdates(
                         locationRequest, locationCallback, Looper.getMainLooper());
-
-               /*
-               mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                */
+                mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
                    if (location != null) {
                         log.i("location fetched:%s", location);
                         mCurrentLocation = location;
@@ -117,9 +117,7 @@ public class LocationRunnable implements
                         mFusedLocationClient.requestLocationUpdates(
                                 locationRequest, locationCallback, Looper.getMainLooper());
                    }
-               });
-
-                */
+                });
 
             } catch (SecurityException e) {
                 log.e("Location_SecurityException: %s", e.getMessage());

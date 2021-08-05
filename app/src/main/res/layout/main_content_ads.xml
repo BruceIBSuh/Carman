@@ -5,27 +5,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:elevation="3dp"
-    android:background="#F3F3F3">
-    <View
-        android:id="@+id/view6"
-        android:layout_width="0dp"
-        android:layout_height="80dp"
-        android:background="@drawable/bg_colored_border"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:minHeight="100dp"
+    android:background="#FFFFFF">
 
     <ImageView
         android:id="@+id/imgview_ad"
         android:layout_width="0dp"
         android:layout_height="70dp"
-        android:contentDescription="@string/main_subtitle_news"
+        android:contentDescription="@null"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/view6"
-        app:layout_constraintTop_toTopOf="@+id/view6" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

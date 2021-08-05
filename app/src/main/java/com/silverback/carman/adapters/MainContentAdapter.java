@@ -39,7 +39,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private MainContentNotificationBinding contentBinding;
     private MainContentExpenseGasBinding gasBinding;
     private MainContentAdsBinding adsBinding;
-    private MainExpPagerAdapter expensePagerAdapter;
+    private final MainExpPagerAdapter expensePagerAdapter;
 
     // Constructor
     public MainContentAdapter(Context context) {
@@ -55,41 +55,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         }
     }
-
-
-    public static class MainItemDecoration extends RecyclerView.ItemDecoration {
-        private final int margin;
-        private final int columns;
-        private final DividerItemDecoration divider;
-
-        public MainItemDecoration(Context context, int margin, int columns) {
-            this.margin = margin;
-            this.columns = columns;
-            divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
-        }
-
-        @Override
-        public void getItemOffsets(
-                @NonNull Rect outRect, @NonNull View view,
-                @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-            //super.getItemOffsets(outRect, view, parent, state);
-            int position = parent.getChildLayoutPosition(view);
-            outRect.bottom = margin;
-            if(position < columns) outRect.top = margin;
-        }
-
-        @Override
-        public void onDrawOver(
-                @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-            for (int i = 0; i < parent.getChildCount(); i++) {
-                View child = parent.getChildAt(i);
-                ViewGroup.LayoutParams params = parent.getLayoutParams();
-                log.i("onDrawOver: %s, %s:", child, params);
-            }
-        }
-    }
-
-
 
     @NonNull
     @Override

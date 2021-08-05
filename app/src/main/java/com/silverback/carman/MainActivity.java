@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -40,6 +41,7 @@ import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
@@ -113,9 +115,9 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter(this);
-        //RecyclerDivider divider = new RecyclerDivider(this);
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(16, 16, Color.parseColor("#F9F9F9"));
         binding.recyclerContents.setAdapter(adapter);
-        //binding.recyclerContents.addItemDecoration(divider);
+        binding.recyclerContents.addItemDecoration(divider);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
