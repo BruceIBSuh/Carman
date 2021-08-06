@@ -77,8 +77,11 @@ public class LocationRunnable implements
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
+                /*
                 for(Location location : locationResult.getLocations())
                     log.i("Locations updated: $s, %s", location, System.currentTimeMillis());
+
+                 */
                 mCurrentLocation = locationResult.getLastLocation();
                 task.setCurrentLocation(mCurrentLocation);
                 task.handleLocationTask(LOCATION_TASK_COMPLETE);
@@ -100,14 +103,9 @@ public class LocationRunnable implements
             log.i("Network location is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_network));
         } else {
-
             try {
-                /*
-                mFusedLocationClient.requestLocationUpdates(
-                        locationRequest, locationCallback, Looper.getMainLooper());
-                */
                 mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-                   if (location != null) {
+                   if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
                         log.i("location fetched:%s", location);
                         mCurrentLocation = location;
                         task.setCurrentLocation(location);
@@ -129,7 +127,6 @@ public class LocationRunnable implements
 
     @Override
     public void onFailure(@NonNull Exception e) {
-
         if (e instanceof ResolvableApiException) {
             // Location Settings are not satisfied, but this can be fixed by showing the user a dialog
             // Show the dialog by calling startResolutionForResult() and check the result in onActivityResult

@@ -13,7 +13,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 
 public class MainExpPagerAdapter extends FragmentStateAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerAdapter.class);
-    private static final int NUM_PAGES = 2;
+    private static final int NUM_PAGES = 3;
 
     public MainExpPagerAdapter(FragmentActivity fa) {
         super(fa);
@@ -28,6 +28,6 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        return MainExpPagerFragment.newInstance("Hello World", "Hello Bruce");
+        return MainExpPagerFragment.newInstance(position);
     }
 }

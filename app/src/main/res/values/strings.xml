@@ -57,9 +57,11 @@
 
     <!-- Update version-->
     <string name="main_subtitle_news">알립니다</string>
-    <string name="main_subtitle_expense">8월달 지출</string>
-    <string name="main_subtitle_gas">지출 내역(주유)</string>
-    <string name="main_subtitle_svc">지출 내역(서비스)</string>
+    <string name="main_subtitle_expense">월 지출</string>
+    <string name="main_subtitle_gas">최근주유내역 </string>
+    <string name="main_subtitle_svc">최근서비스내역</string>
+    <string name="main_subtitle_tip">자동차 생활 \&amp; 팁</string>
+
     <string name="main_subtitle_collapsed">평균</string>
     <string name="main_footer_terms">이용약관</string>
     <string name="main_footer_policy">개인정보보호정책</string>

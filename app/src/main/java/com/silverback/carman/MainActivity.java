@@ -115,9 +115,9 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter(this);
-        RecyclerDividerUtil divider = new RecyclerDividerUtil(16, 16, Color.parseColor("#F9F9F9"));
+        //RecyclerDividerUtil divider = new RecyclerDividerUtil(32, 16, Color.parseColor("#E0E0E0"));
         binding.recyclerContents.setAdapter(adapter);
-        binding.recyclerContents.addItemDecoration(divider);
+        //binding.recyclerContents.addItemDecoration(divider);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -398,60 +398,5 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    // Implement MainContentAdapter.
-    /*
-    @Override
-    public void notifyExpenseItem(ViewPager2 pager) {
-        log.i("Set Adapter now");
-    }
-
-     */
-
-    static class RecyclerDivider extends RecyclerView.ItemDecoration {
-        Drawable mDivider;
-        public RecyclerDivider(Context context) {
-            mDivider = ContextCompat.getDrawable(context, R.drawable.shape_itemdivider);
-            /*
-            mDivider = ResourcesCompat.getDrawable(
-                    context.getResources(), R.drawable.shape_itemdivider, null);
-             */
-        }
-
-        @Override
-        public void getItemOffsets(
-                @NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent,
-                @NonNull RecyclerView.State state) {
-
-            super.getItemOffsets(outRect, view, parent, state);
-            outRect.bottom = 100;
-        }
-
-        @Override
-        public void onDraw(
-                @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state){
-            super.onDraw(c, parent, state);
-        }
-
-        @Override
-        public void onDrawOver(
-                @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state){
-
-            super.onDrawOver(c, parent, state);
-            int left = parent.getPaddingLeft();
-            int right = parent.getWidth() - parent.getPaddingRight();
-
-            int childCount = parent.getChildCount();
-            for (int i = 0; i < childCount; i++) {
-                View child = parent.getChildAt(i);
-                RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
-
-                int top = child.getBottom() + params.bottomMargin;
-                int bottom = top + mDivider.getIntrinsicHeight();
-
-                mDivider.setBounds(left, top, right, bottom);
-                mDivider.draw(c);
-            }
-        }
-    }
 }
 
