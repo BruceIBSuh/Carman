@@ -29,10 +29,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.silverback.carman.adapters.ExpStatStmtsAdapter;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
+import com.silverback.carman.database.ExpenseBaseDao;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
@@ -51,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
 
@@ -211,7 +214,6 @@ public class MainActivity extends BaseActivity implements
                         //pricePagerAdapter.notifyDataSetChanged();
                     }
                 });
-
     }
 
     @Override
@@ -391,9 +393,7 @@ public class MainActivity extends BaseActivity implements
                             }
                             break;
                     }
-
                 }
-
             } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
         }
     }

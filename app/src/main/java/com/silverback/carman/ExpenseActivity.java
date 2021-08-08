@@ -76,8 +76,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     // Objects
     private ActivityExpenseBinding binding;
-    private LocationViewModel locationModel;
-    private PagerAdapterViewModel pagerModel;
+    //private LocationViewModel locationModel;
+    //private PagerAdapterViewModel pagerModel;
     private StationListViewModel stnListModel;
     private ExpContentPagerAdapter expContentPagerAdapter;
     //private GasManagerFragment gasManager;
@@ -101,14 +101,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private boolean isGeofencing;
     private Location mPrevLocation;
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityExpenseBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Check if the activity gets started by tabbing the geofence notification.
+        // Check if the activity has got started by tabbing the geofence notification.
         if(getIntent().getAction() != null) {
             if(getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
                 isGeofencing = true;
@@ -126,19 +125,19 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
 
         // Define ViewModels. ViewModelProviders.of(this) is deprecated.
-        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
+        LocationViewModel locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
         stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
 
         // Set the toolbar as the working action bar
         setSupportActionBar(binding.toolbarExpense);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-
-        binding.appBar.addOnOffsetChangedListener(this);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
+        binding.appBar.addOnOffsetChangedListener(this);
 
         // Add the content fragment(gas/service/stat) to the ViewPager
-        expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
+        //expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
+        expContentPagerAdapter = new ExpContentPagerAdapter(this);
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         //binding.pagerTabFragment.setCurrentItem(0);
         binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());

@@ -49,8 +49,8 @@ public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSel
         if(getActivity() == null) return;
 
         //mSettings = ((ExpenseActivity)getActivity()).getSettings();
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
+        fragmentSharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -78,7 +78,8 @@ public class StatStmtsFragment extends Fragment implements AdapterView.OnItemSel
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         switch(position) {
             case TotalExpense:
-                mDB.expenseBaseModel().loadExpenseByCategory(Constants.GAS, Constants.SVC).observe(getViewLifecycleOwner(),
+                mDB.expenseBaseModel().loadExpenseByCategory(Constants.GAS, Constants.SVC)
+                        .observe(getViewLifecycleOwner(),
                         data -> recyclerExpense.setAdapter(new ExpStatStmtsAdapter(data)));
                 break;
             case GasExpense:

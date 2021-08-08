@@ -15,8 +15,9 @@ import androidx.room.RoomDatabase;
         FavoriteProviderEntity.class},
         version = 1, exportSchema = false)
 
+// The DB class musb be an abstract class and due to its high cost, it should be created in a
+// singleton instance.
 public abstract class CarmanDatabase extends RoomDatabase {
-
     private static CarmanDatabase INSTANCE;
 
     // Abstract methods that has 0 arguments and returns the class that is annotated w/ @Dao.
@@ -27,11 +28,12 @@ public abstract class CarmanDatabase extends RoomDatabase {
     public abstract FavoriteProviderDao favoriteModel();
     public abstract ServicedItemDao servicedItemModel();
 
+
     // Constructor as a Singleton type
     public static CarmanDatabase getDatabaseInstance(Context context) {
         if(INSTANCE == null) {
-            //INSTANCE = Room.inMemoryDatabaseBuilder(context.getApplicationContext(), CarmanDatabase.class)
-            INSTANCE = Room.databaseBuilder(context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
+            INSTANCE = Room.databaseBuilder(
+                    context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
                     .allowMainThreadQueries()
                     .enableMultiInstanceInvalidation()
                     //.fallbackToDestructiveMigration()

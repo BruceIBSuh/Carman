@@ -2,6 +2,7 @@ package com.silverback.carman.adapters;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -14,6 +15,10 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 
 public class ExpContentPagerAdapter extends FragmentStateAdapter {
     //private static final LoggingHelper log = LoggingHelperFactory.create(ExpContentPagerAdapter.class);
+
+    public ExpContentPagerAdapter(FragmentActivity fa) {
+        super(fa);
+    }
 
     public ExpContentPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);

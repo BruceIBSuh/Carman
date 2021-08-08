@@ -46,6 +46,7 @@ import androidx.work.WorkRequest;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.silverback.carman.backgrounds.NetworkStateWorker;
+import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
@@ -75,12 +76,14 @@ public class BaseActivity extends AppCompatActivity {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
+    // Implemented by checkRuntimePermission callback to check a specific permission.
     protected interface PermissionCallback {
         void performAction();
     }
 
     // Objects
     protected ThreadManager2 sThreadManager;
+    protected CarmanDatabase sDB;
     protected String userId;
     protected static SharedPreferences mSettings;
     protected static DecimalFormat df;
@@ -102,7 +105,8 @@ public class BaseActivity extends AppCompatActivity {
 
         // Create the Work Thread
         sThreadManager = ThreadManager2.getInstance();
-        log.i("ThreadPoolExecutor: %s", sThreadManager);
+        sDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
+
 
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);

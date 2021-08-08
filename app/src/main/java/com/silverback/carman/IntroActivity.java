@@ -71,7 +71,7 @@ public class IntroActivity extends BaseActivity  {
         // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
-        mDB = CarmanDatabase.getDatabaseInstance(this);
+        mDB = CarmanDatabase.getDatabaseInstance(this); // going to be replace with sDB in BaseActivity
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Retrieve resources.
@@ -90,8 +90,8 @@ public class IntroActivity extends BaseActivity  {
     @Override
     public void onPause() {
         super.onPause();
-        //if(distCodeTask != null) distCodeTask = null;
-        //if(gasPriceTask != null) gasPriceTask = null;
+        if(distCodeTask != null) distCodeTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
 

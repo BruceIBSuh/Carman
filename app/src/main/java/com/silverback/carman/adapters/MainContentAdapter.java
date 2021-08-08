@@ -107,7 +107,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 firestore.collection("board_general").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
                         .get()
                         .addOnSuccessListener(querySnapshots -> {
-                            log.i("board general: %s", querySnapshots);
                             RecentPostAdapter carlifeAdapter = new RecentPostAdapter(querySnapshots);
                             carlifeBinding.recyclerCarlife.setAdapter(carlifeAdapter);
                         });

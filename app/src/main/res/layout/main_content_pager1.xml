@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/content_expense"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF">
 
     <TextView
         android:id="@+id/tv_subtitle_month"
@@ -33,20 +34,30 @@
 
 
     <TextView
-        android:id="@+id/textView19"
+        android:id="@+id/tv_total_expense"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="28dp"
-        android:text="227,000"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="24dp"
         android:textColor="@android:color/holo_blue_light"
-        android:textSize="34sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView4"
         app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/textView20"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/unit_won"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_total_expense"
+        app:layout_constraintStart_toEndOf="@+id/tv_total_expense"
+        app:layout_constraintTop_toTopOf="@+id/tv_total_expense" />
 
     <ImageView
         android:id="@+id/imageView3"
@@ -82,15 +93,6 @@
         app:layout_constraintTop_toTopOf="@+id/textView4"
         app:srcCompat="@drawable/arrow_pager_right" />
 
-    <TextView
-        android:id="@+id/textView20"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="@string/unit_won"
-        android:textSize="34sp"
-        app:layout_constraintBottom_toBottomOf="@+id/textView19"
-        app:layout_constraintStart_toEndOf="@+id/textView19"
-        app:layout_constraintTop_toTopOf="@+id/textView19" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
