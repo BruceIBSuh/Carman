@@ -33,7 +33,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private final int COMPANY_INFO = 5;
 
     // Objects
-    private FirebaseFirestore firestore;
+    private final FirebaseFirestore firestore;
     private MainContentNotificationBinding notiBinding;
     private MainContentExpenseBinding expBinding;
     private MainContentAdsBinding adsBinding;
@@ -51,8 +51,10 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public static class ContentViewHolder extends RecyclerView.ViewHolder {
         public ContentViewHolder(View itemView) {
             super(itemView);
+            ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
+            params.setMargins(0, 0, 0, 30);
+            itemView.setLayoutParams(params);
             // Define click listener for the ViewHolder's View.
-
         }
     }
 

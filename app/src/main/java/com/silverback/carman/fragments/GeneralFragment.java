@@ -459,7 +459,6 @@ public class GeneralFragment extends Fragment implements
 
     @SuppressWarnings("ConstantConditions")
     private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
-
         File file = new File(getContext().getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
         // Delete the file before saving a new list.
         if(file.exists()) {

@@ -116,14 +116,8 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
             return stationList;
 
-        } catch (FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e.getMessage());
-        } catch (IOException e) {
-            log.e("IOException: %s", e.getMessage());
-        } catch (ClassNotFoundException e) {
-            log.e("ClassNotFoundException: %s", e.getMessage());
-        } catch(ClassCastException e) {
-            log.e("ClassCastException: %s", e.getMessage());
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            log.e("Error occurred while sorting: %s", e.getMessage());
         }
 
         return null;
@@ -136,7 +130,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
         public int compare(Opinet.GasStnParcelable t1, Opinet.GasStnParcelable t2) {
             //Log.d(TAG, "getStnPrice: " + t1.getStnPrice() + ", " + t2.getStnPrice());
             //return Integer.compare((int)t1.getStnPrice(), (int)t2.getStnPrice()) //API 19 or higher
-
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 return Integer.compare((int)t1.getStnPrice(), (int)t2.getStnPrice());
             } else {

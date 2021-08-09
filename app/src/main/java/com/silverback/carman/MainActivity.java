@@ -3,12 +3,8 @@ package com.silverback.carman;
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,18 +19,15 @@ import android.widget.ArrayAdapter;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.silverback.carman.adapters.ExpStatStmtsAdapter;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.PricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
-import com.silverback.carman.database.ExpenseBaseDao;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
@@ -50,10 +43,11 @@ import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.util.Calendar;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Objects;
 
@@ -86,6 +80,7 @@ public class MainActivity extends BaseActivity implements
     private String[] defaults;
     private String defaultFuel;
     private boolean hasStationInfo = false;
+    private boolean bStnOrder = false; // false: distance true:price
 
 
     @Override
@@ -100,7 +95,7 @@ public class MainActivity extends BaseActivity implements
         setSupportActionBar(binding.toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(true);
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
-        binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPrice(offset));
+        binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
 
         // Set Spinner for selecting a fuel.
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
@@ -118,9 +113,9 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter(this);
-        //RecyclerDividerUtil divider = new RecyclerDividerUtil(32, 16, Color.parseColor("#E0E0E0"));
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(32, 0, Color.parseColor("#E0E0E0"));
         binding.recyclerContents.setAdapter(adapter);
-        //binding.recyclerContents.addItemDecoration(divider);
+        binding.recyclerContents.addItemDecoration(divider);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -142,8 +137,12 @@ public class MainActivity extends BaseActivity implements
             } else {
                 binding.stationRecyclerView.setVisibility(View.GONE);
                 binding.recyclerContents.setVisibility(View.VISIBLE);
+                binding.fab.setVisibility(View.GONE);
             }
         });
+
+        binding.stationRecyclerView.addOnScrollListener(stationScrollListener);
+        binding.fab.setOnClickListener(view -> switchNearStationOrder());
 
         locationModel.getLocation().observe(this, location -> {
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
@@ -182,6 +181,7 @@ public class MainActivity extends BaseActivity implements
 
                 binding.stationRecyclerView.setAdapter(stnListAdapter);
                 binding.stationRecyclerView.showStationListRecyclerView();
+                binding.fab.setVisibility(View.VISIBLE);
 
             } else {
                 log.i("no station");
@@ -232,7 +232,7 @@ public class MainActivity extends BaseActivity implements
         });
 
         // Display the price info when collapsed.
-        dispPriceCollapsed();
+        dispCollapsedBarPrice();
     }
 
     @Override
@@ -278,6 +278,7 @@ public class MainActivity extends BaseActivity implements
             log.i("wait a sec"); // Check if necessary!!!
             return;
         }
+
         Intent intent = new Intent(this, StationMapActivity.class);
         intent.putExtra("gasStationId", mStationList.get(pos).getStnId());
         startActivity(intent);
@@ -334,21 +335,11 @@ public class MainActivity extends BaseActivity implements
 
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
-        //sThreadManager.cancelAllThreads();
     }
 
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
-    // Ref: expand the station recyclerview up to wrap_content
-    private void showCollapsedPrice(int offset) {
-        if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
-            binding.viewCollapsedPrice.setVisibility(View.VISIBLE);
-            ObjectAnimator objAnim = ObjectAnimator.ofFloat(binding.viewCollapsedPrice, "alpha", 0f, 1f);
-            objAnim.setDuration(500);
-            objAnim.start();
-        } else binding.viewCollapsedPrice.setVisibility(View.GONE);
-    }
 
     private void setSpinnerToDefaultFuel() {
         String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
@@ -362,13 +353,22 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    private void dispPriceCollapsed() {
+    // Ref: expand the station recyclerview up to wrap_content
+    private void showCollapsedPricebar(int offset) {
+        if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
+            binding.pricebar.getRoot().setVisibility(View.VISIBLE);
+            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0f, 1f);
+            anim.setDuration(500);
+            anim.start();
+        } else binding.pricebar.getRoot().setVisibility(View.INVISIBLE);
+    }
+
+    private void dispCollapsedBarPrice() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-
         // Set the average price
-        binding.tvCollapsedAvgPrice.setText(avgPrice);
-        // Set the sido and sigun price
+        binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
+        // Set the sido and sigun price which are intervally stored in the Cache
         for(String fName : arrFile) {
             File file = new File(getCacheDir(), fName);
             Uri uri = Uri.fromFile(file);
@@ -381,15 +381,15 @@ public class MainActivity extends BaseActivity implements
                         case Constants.FILE_CACHED_SIDO_PRICE:
                             Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
                             if(sido.getProductCd().matches(defaultFuel)) {
-                                binding.tvCollapsedSido.setText(sido.getSidoName());
-                                binding.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                                binding.pricebar.tvCollapsedSido.setText(sido.getSidoName());
+                                binding.pricebar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
                             }
                             break;
                         case Constants.FILE_CACHED_SIGUN_PRICE:
                             Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
                             if(sigun.getProductCd().matches(defaultFuel)) {
-                                binding.tvCollapsedSigun.setText(sigun.getSigunName());
-                                binding.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                                binding.pricebar.tvCollapsedSigun.setText(sigun.getSigunName());
+                                binding.pricebar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
                             }
                             break;
                     }
@@ -398,5 +398,43 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    // Scale the size of the fab as the station recyclerview scrolls up and down.
+    private final RecyclerView.OnScrollListener stationScrollListener = new RecyclerView.OnScrollListener(){
+        @Override
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            //if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
+        }
+
+        @Override
+        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) binding.fab.show();
+            super.onScrollStateChanged(recyclerView, newState);
+        }
+    };
+
+    private void switchNearStationOrder() {
+        bStnOrder = !bStnOrder;
+        Uri uri = saveNearStationList(mStationList);
+        if(uri == null) return;
+
+        mStationList = stnListAdapter.sortStationList(bStnOrder);
+    }
+
+    private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
+        File file = new File(getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+        // Delete the file before saving a new list.
+        if(file.exists()) {
+            boolean delete = file.delete();
+            if(delete) log.i("cache cleared");
+        }
+
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(list);
+            return Uri.fromFile(file);
+        } catch (IOException e) { e.printStackTrace();}
+
+        return null;
+    }
 }
 

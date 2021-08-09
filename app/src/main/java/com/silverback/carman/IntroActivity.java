@@ -57,7 +57,6 @@ public class IntroActivity extends BaseActivity  {
     private FirebaseFirestore firestore;
     private CarmanDatabase mDB;
     private GasPriceTask gasPriceTask;
-    //private AutoDataResourceTask autoDataResourceTask;
     private DistCodeDownloadTask distCodeTask;
     private OpinetViewModel opinetModel;
     private String[] defaultDistrict;
@@ -90,8 +89,8 @@ public class IntroActivity extends BaseActivity  {
     @Override
     public void onPause() {
         super.onPause();
-        if(distCodeTask != null) distCodeTask = null;
-        if(gasPriceTask != null) gasPriceTask = null;
+        //if(distCodeTask != null) distCodeTask = null;
+        //if(gasPriceTask != null) gasPriceTask = null;
     }
 
 
@@ -160,7 +159,6 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-        binding.pbIntro.setVisibility(View.VISIBLE);
         // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
         // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().
         if(checkPriceUpdate()) {

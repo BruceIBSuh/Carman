@@ -6,25 +6,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center_vertical"
-    android:padding="3dp"
+    android:padding="5dp"
     tools:showIn="@layout/activity_main">
     <com.silverback.carman.views.OpinetAvgPriceView
         android:id="@+id/avgPriceView"
         android:layout_width="120dp"
         android:layout_height="0dp"
-        android:background="#A5D6A7"
+        android:background="@drawable/bg_colored_border"
         app:avgPriceDown="@color/priceDown"
         app:avgPriceUp="@color/priceUp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+    <!-- android:background="#A5D6A7" -->
     <TextView
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:text="@string/general_subtitle_region"
-        android:textSize="16sp"
+        android:textSize="@dimen/subtitle"
         android:textStyle="bold"
         app:layout_constraintStart_toEndOf="@+id/avgPriceView"
         app:layout_constraintTop_toTopOf="parent" />
@@ -40,7 +41,7 @@
         android:layout_width="0dp"
         android:layout_height="1dp"
         android:layout_marginTop="2dp"
-        android:background="#E0E0E0"
+        android:background="#C8C8C8"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/textView3"
         app:layout_constraintTop_toBottomOf="@+id/textView3" />
@@ -49,11 +50,12 @@
         android:layout_width="0dp"
         android:layout_height="65dp"
         android:layout_marginTop="8dp"
-        android:background="#C5E1A5"
-        android:padding="3dp"
+        android:background="@drawable/bg_colored_border"
+        android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="@+id/textView3"
         app:layout_constraintTop_toBottomOf="@+id/view3" />
+        <!--android:background="#C5E1A5" -->
 </androidx.constraintlayout.widget.ConstraintLayout>

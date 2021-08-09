@@ -59,65 +59,18 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
     </FrameLayout>
 
-    <!--
     <include
-        android:id="@+id/include_collapsed_price"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
-        layout="@layout/include_main_collapsed_price" />
-    -->
-    <LinearLayout
-        android:id="@+id/view_collapsed_price"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:background="@android:color/holo_blue_light"
-        android:orientation="horizontal"
-        android:padding="8dp" >
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/main_subtitle_collapsed"
-            android:textStyle="bold" />
-        <TextView
-            android:id="@+id/tv_collapsed_avg_price"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"/>
-        <TextView
-            android:id="@+id/tv_collapsed_sido"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textStyle="bold"/>
-        <TextView
-            android:id="@+id/tv_collapsed_sido_price"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"/>
-        <TextView
-            android:id="@+id/tv_collapsed_sigun"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:textStyle="bold"/>
-        <TextView
-            android:id="@+id/tv_collapsed_sigun_price"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"/>
-    </LinearLayout>
+        android:id="@+id/pricebar"
+        layout="@layout/main_collapsed_pricebar" />
 
-    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:contentDescription="@string/app_name"
+        android:layout_margin="8dp"
+        android:alpha="0.5"
+        android:contentDescription="@null"
         android:src="@android:drawable/ic_menu_mylocation"
         app:backgroundTint="@color/colorAccent"
         app:rippleColor="@color/colorPrimary"
@@ -125,7 +78,6 @@
         app:elevation="6dp"
         app:layout_anchor="@id/stationRecyclerView"
         app:layout_anchorGravity="right|bottom" />
-    -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/view4"
@@ -166,4 +118,5 @@
             app:layout_constraintEnd_toEndOf="@id/imgbtn_station"
             app:layout_constraintBottom_toBottomOf="@id/imgbtn_station"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

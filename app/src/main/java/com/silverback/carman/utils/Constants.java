@@ -27,7 +27,7 @@ public class Constants {
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 30; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final int GEOFENCE_RESPONSE_TIME = 1000 * 30;
 
-    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60 * 3;//Interval for downloading gas prices from Opinet (3 hrs)
+    public static final long OPINET_UPDATE_INTERVAL = 1000 * 60;//Interval for downloading gas prices from Opinet (3 hrs)
     public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
     static final int INTERVAL = 1000 * 10; //Location update interval set by the app
     static final int FASTEST_INTERVAL = 1000 * 5; //Fastest location update interval set by any app.
