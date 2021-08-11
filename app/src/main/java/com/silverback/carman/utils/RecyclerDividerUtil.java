@@ -9,7 +9,13 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
+
 public class RecyclerDividerUtil extends RecyclerView.ItemDecoration{
+
+    public static LoggingHelper log = LoggingHelperFactory.create(RecyclerDividerUtil.class);
+
     private final float height;
     private final float padding;
     private final Paint paint;
@@ -40,12 +46,13 @@ public class RecyclerDividerUtil extends RecyclerView.ItemDecoration{
 
         float left = parent.getPaddingLeft() + padding;
         float right = parent.getWidth() - parent.getPaddingEnd() - padding;
+        log.i("onDrawOver left and right: %s, %s", left, right);
         for(int i = 0; i < parent.getChildCount(); i++) {
             View child = parent.getChildAt(i);
             RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)child.getLayoutParams();
-            float top = child.getBottom() + params.bottomMargin;
+            float top = child.getBottom();// + params.bottomMargin;
             float bottom = top + height;
-
+            log.i("top and bottom: %s, %s", top, bottom);
             c.drawRect(left, top, right, bottom, paint);
 
         }

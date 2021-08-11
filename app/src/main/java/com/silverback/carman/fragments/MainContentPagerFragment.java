@@ -7,16 +7,15 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.DecelerateInterpolator;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseDao;
+import com.silverback.carman.database.GasManagerDao;
 import com.silverback.carman.databinding.MainContentPager1Binding;
 import com.silverback.carman.databinding.MainContentPager2Binding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -27,40 +26,35 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link MainExpPagerFragment#newInstance} factory method to
+ * Use the {@link MainContentPagerFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MainExpPagerFragment extends Fragment {
-    private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerFragment.class);
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
+public class MainContentPagerFragment extends Fragment {
+    private static final LoggingHelper log = LoggingHelperFactory.create(MainContentPagerFragment.class);
 
     // TODO: Rename and change types of parameters
     private Calendar calendar;
     private DecimalFormat df;
+    private SimpleDateFormat sdf;
     private CarmanDatabase mDB;
     private MainContentPager1Binding firstBinding;
     private MainContentPager2Binding expStmtsBinding;
 
     private int position;
-    private int year, month;
-    private int totalExpense;
+    private int totalExpense, gasExpense, svcExpense;
 
-    private MainExpPagerFragment() {
+    private MainContentPagerFragment() {
         // Required empty public constructor
     }
 
-    public static MainExpPagerFragment newInstance(int position) {
-        MainExpPagerFragment fragment = new MainExpPagerFragment();
+    public static MainContentPagerFragment newInstance(int position) {
+        MainContentPagerFragment fragment = new MainContentPagerFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_PARAM1, position);
+        args.putInt("position", position);
         fragment.setArguments(args);
         return fragment;
     }
@@ -68,12 +62,13 @@ public class MainExpPagerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) position = getArguments().getInt(ARG_PARAM1);
+        if (getArguments() != null) position = getArguments().getInt("position");
 
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
-        calendar = Calendar.getInstance();
-
+        calendar = Calendar.getInstance(Locale.getDefault());
+        sdf = new SimpleDateFormat();
         df = (DecimalFormat)NumberFormat.getInstance();
+        df.applyPattern("#,###");
     }
 
     @Override
@@ -89,6 +84,17 @@ public class MainExpPagerFragment extends Fragment {
             case 1:
                 expStmtsBinding = MainContentPager2Binding.inflate(inflater, container, false);
                 expStmtsBinding.tvSubtitleExpense.setText(R.string.main_subtitle_gas);
+                mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), gasData -> {
+                    expStmtsBinding.tvGasExpense.setText(df.format(gasData.gasPayment));
+
+                    calendar.setTimeInMillis(gasData.dateTime);
+                    sdf.applyPattern(getString(R.string.date_format_1));
+                    expStmtsBinding.tvGasDate.setText(sdf.format(calendar.getTime()));
+
+                    expStmtsBinding.tvGasStation.setText(gasData.stnName);
+                    expStmtsBinding.tvAmount.setText(String.valueOf(gasData.gasAmount));
+                });
+
                 return expStmtsBinding.getRoot();
             case 2:
                 expStmtsBinding = MainContentPager2Binding.inflate(inflater, container, false);
@@ -118,14 +124,13 @@ public class MainExpPagerFragment extends Fragment {
                     for(ExpenseBaseDao.ExpenseByMonth expense : expList)
                         totalExpense += expense.totalExpense;
 
-                    df.applyPattern("#,###");
                     df.setDecimalSeparatorAlwaysShown(false);
-
-                    //String total = String.valueOf(totalExpense);
-
-                    //firstBinding.tvTotalExpense.setText(total);
                     animateExpenseCount(totalExpense);
                 });
+    }
+
+    private void dispGasExpense() {
+
     }
 
     private void animateExpenseCount(int end) {

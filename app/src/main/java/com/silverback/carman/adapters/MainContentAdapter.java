@@ -52,7 +52,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         public ContentViewHolder(View itemView) {
             super(itemView);
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
-            params.setMargins(0, 0, 0, 30);
+            params.setMargins(0, 0, 0, 35);
             itemView.setLayoutParams(params);
             // Define click listener for the ViewHolder's View.
         }
