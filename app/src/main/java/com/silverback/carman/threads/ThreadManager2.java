@@ -100,7 +100,7 @@ public class ThreadManager2 {
         switch(state) {
             case FETCH_LOCATION_COMPLETED:
                 log.i("Location feched");
-                //msg.sendToTarget();
+                msg.sendToTarget();
                 break;
             // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
@@ -116,7 +116,7 @@ public class ThreadManager2 {
                 InnerClazz.sInstance.threadPoolExecutor.execute(
                         ((StationListTask)task).getFireStoreRunnable());
                 //InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getFireStoreRunnable());
-                //msg.sendToTarget();
+                msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
@@ -127,8 +127,10 @@ public class ThreadManager2 {
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
-                msg.sendToTarget();
+                //msg.sendToTarget();
                 break;
+
+            default: msg.sendToTarget();
         }
     }
 
@@ -178,14 +180,18 @@ public class ThreadManager2 {
     // by LocationTask and defaut params transferred from OpinetStationListFragment
     public StationListTask startStationListTask(StationListViewModel model, Location location, String[] params) {
         // TEST Coding
+        /*
         log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
         for(int i = 0; i <  InnerClazz.sInstance.mThreadTaskQueue.size(); i++) {
             ThreadTask task = InnerClazz.sInstance.mThreadTaskQueue.poll();
             log.i("current task: %s", task);
             if(task instanceof StationListTask) break;
         }
+
+         */
+
         //stnListTask = (StationListTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        //stnListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
+        stnListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
         log.i("stnListTask to poll:%s", stnListTask);
         if(stnListTask == null) stnListTask = new StationListTask();
         stnListTask.initStationTask(model, location, params);
@@ -239,10 +245,10 @@ public class ThreadManager2 {
         log.i("recycle task: %s", task);
         mThreadTaskQueue.offer(task); //TEST CODING
         if(task instanceof LocationTask) {
-            //locationTask.recycle();
-            //mLocationTaskQueue.offer((LocationTask)task);
+            locationTask.recycle();
+            mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
-            //stnListTask.recycle();
+            stnListTask.recycle();
             mStnListTaskQueue.offer((StationListTask)task);
         } else {
             threadTask.recycle();

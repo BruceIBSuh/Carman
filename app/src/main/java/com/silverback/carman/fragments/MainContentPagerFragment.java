@@ -7,17 +7,17 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseDao;
-import com.silverback.carman.database.GasManagerDao;
 import com.silverback.carman.databinding.MainContentPager1Binding;
 import com.silverback.carman.databinding.MainContentPager2Binding;
+import com.silverback.carman.databinding.MainContentPager3Binding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -41,8 +41,9 @@ public class MainContentPagerFragment extends Fragment {
     private DecimalFormat df;
     private SimpleDateFormat sdf;
     private CarmanDatabase mDB;
-    private MainContentPager1Binding firstBinding;
-    private MainContentPager2Binding expStmtsBinding;
+    private MainContentPager1Binding firstPageBinding;
+    private MainContentPager2Binding secondPageBinding;
+    private MainContentPager3Binding thirdPageBinding;
 
     private int position;
     private int totalExpense, gasExpense, svcExpense;
@@ -66,7 +67,7 @@ public class MainContentPagerFragment extends Fragment {
 
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         calendar = Calendar.getInstance(Locale.getDefault());
-        sdf = new SimpleDateFormat();
+        sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
     }
@@ -76,30 +77,19 @@ public class MainContentPagerFragment extends Fragment {
                              Bundle savedInstanceState) {
         switch(position){
             case 0:
-                firstBinding = MainContentPager1Binding.inflate(inflater, container,false);
+                firstPageBinding = MainContentPager1Binding.inflate(inflater, container,false);
                 String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
-                firstBinding.tvSubtitleMonth.setText(month);
+                firstPageBinding.tvSubtitleMonth.setText(month);
                 displayTotalExpense();
-                return firstBinding.getRoot();
+                return firstPageBinding.getRoot();
             case 1:
-                expStmtsBinding = MainContentPager2Binding.inflate(inflater, container, false);
-                expStmtsBinding.tvSubtitleExpense.setText(R.string.main_subtitle_gas);
-                mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), gasData -> {
-                    expStmtsBinding.tvGasExpense.setText(df.format(gasData.gasPayment));
-
-                    calendar.setTimeInMillis(gasData.dateTime);
-                    sdf.applyPattern(getString(R.string.date_format_1));
-                    expStmtsBinding.tvGasDate.setText(sdf.format(calendar.getTime()));
-
-                    expStmtsBinding.tvGasStation.setText(gasData.stnName);
-                    expStmtsBinding.tvAmount.setText(String.valueOf(gasData.gasAmount));
-                });
-
-                return expStmtsBinding.getRoot();
+                secondPageBinding = MainContentPager2Binding.inflate(inflater, container, false);
+                displayGasExpense();
+                return secondPageBinding.getRoot();
             case 2:
-                expStmtsBinding = MainContentPager2Binding.inflate(inflater, container, false);
-                expStmtsBinding.tvSubtitleExpense.setText(R.string.main_subtitle_svc);
-                return expStmtsBinding.getRoot();
+                thirdPageBinding = MainContentPager3Binding.inflate(inflater, container, false);
+                displayServiceExpense();
+                return thirdPageBinding.getRoot();
         }
 
         return null;
@@ -129,19 +119,37 @@ public class MainContentPagerFragment extends Fragment {
                 });
     }
 
-    private void dispGasExpense() {
+    private void displayGasExpense() {
+        mDB.gasManagerModel().loadLatestGasData().observe(getViewLifecycleOwner(), gasData -> {
+            secondPageBinding.tvGasExpense.setText(df.format(gasData.gasPayment));
 
+            calendar.setTimeInMillis(gasData.dateTime);
+            secondPageBinding.tvGasDate.setText(sdf.format(calendar.getTime()));
+
+            secondPageBinding.tvGasStation.setText(gasData.stnName);
+            secondPageBinding.tvAmount.setText(df.format(gasData.gasAmount));
+            secondPageBinding.tvGasMileage.setText(df.format(gasData.mileage));
+        });
+    }
+
+    private void displayServiceExpense() {
+        mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), svcData -> {
+            thirdPageBinding.tvSvcDate.setText(sdf.format(calendar.getTime()));
+            thirdPageBinding.tvSvcStation.setText(svcData.svcName);
+            thirdPageBinding.tvSvcExpense.setText(df.format(svcData.totalExpense));
+            thirdPageBinding.tvSvcMileage.setText(df.format(svcData.mileage));
+        });
     }
 
     private void animateExpenseCount(int end) {
         log.i("animate expense");
         ValueAnimator animator = ValueAnimator.ofInt(0, end);
-        animator.setDuration(1000);
+        animator.setDuration(2000);
         //animator.setInterpolator(new DecelerateInterpolator());
         animator.addUpdateListener(animation -> {
             int currentNum = (int)animation.getAnimatedValue();
             String total = df.format(currentNum);
-            firstBinding.tvTotalExpense.setText(total);
+            firstPageBinding.tvTotalExpense.setText(total);
         });
 
         animator.addListener(new AnimatorListenerAdapter() {

@@ -56,8 +56,6 @@ public class LocationRunnable implements
     LocationRunnable(Context context, LocationMethods task) {
         this.task = task;
         this.context = context;
-
-
     }
 
     @Override
@@ -77,11 +75,9 @@ public class LocationRunnable implements
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                /*
+
                 for(Location location : locationResult.getLocations())
                     log.i("Locations updated: $s, %s", location, System.currentTimeMillis());
-
-                 */
                 mCurrentLocation = locationResult.getLastLocation();
                 task.setCurrentLocation(mCurrentLocation);
                 task.handleLocationTask(LOCATION_TASK_COMPLETE);

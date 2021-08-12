@@ -32,7 +32,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void recycle() {
-        //if(mLocation != null) mLocation = null;
+        if(mLocation != null) mLocation = null;
     }
 
     @Override

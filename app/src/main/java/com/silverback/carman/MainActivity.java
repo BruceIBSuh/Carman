@@ -104,13 +104,6 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
 
-        // Display the gas prices of average, sido, sigun and station.
-        setSpinnerToDefaultFuel();//set the default fuel.
-        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);//
-        pricePagerAdapter = new PricePagerAdapter(this);
-        pricePagerAdapter.setFuelCode(defaultFuel);
-        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
-
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter(this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(35, 0, Color.parseColor("#F3F3F3"));
@@ -125,6 +118,9 @@ public class MainActivity extends BaseActivity implements
         // Instantiate objects
         imgResUtil = new ApplyImageResourceUtil(this);
         mPrevLocation = null;
+        // Display the gas prices of average, sido, sigun and station.
+        setSpinnerToDefaultFuel();//set the default fuel.
+
 
         // Event Handlers
         binding.imgbtnStation.setOnClickListener(view -> {
@@ -145,11 +141,15 @@ public class MainActivity extends BaseActivity implements
         binding.fab.setOnClickListener(view -> switchNearStationOrder());
 
         locationModel.getLocation().observe(this, location -> {
+            if(location == null) return;
+
             if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                 log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
                 mPrevLocation = location;
-                stationListTask = sThreadManager.startStationListTask(stnModel, location, getDefaultParams());
+                defaults[0] = defaultFuel;
+                stationListTask = sThreadManager.startStationListTask(stnModel, location, defaults);
             } else {
+                log.i("same place");
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.pbNearStns.setVisibility(View.GONE);
@@ -231,15 +231,14 @@ public class MainActivity extends BaseActivity implements
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
 
-        // Display the price info when collapsed.
-        dispCollapsedBarPrice();
+
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        if(locationTask != null) locationTask = null;
-        if(stationListTask != null) stationListTask = null;
+    public void onStop() {
+        super.onStop();
+        //if(locationTask != null) locationTask = null;
+        //if(stationListTask != null) stationListTask = null;
     }
 
     @Override
@@ -271,6 +270,12 @@ public class MainActivity extends BaseActivity implements
         return true;
     }
 
+    @Override
+    public void onBackPressed() {
+        FinishAppDialogFragment endDialog = new FinishAppDialogFragment();
+        endDialog.show(getSupportFragmentManager(), "endDialog");
+    }
+
     // Implement StationListAdapter.OnRecyclerItemClickListener
     @Override
     public void onItemClicked(final int pos) {
@@ -284,16 +289,11 @@ public class MainActivity extends BaseActivity implements
         startActivity(intent);
     }
 
-    @Override
-    public void onBackPressed() {
-        FinishAppDialogFragment endDialog = new FinishAppDialogFragment();
-        endDialog.show(getSupportFragmentManager(), "endDialog");
-    }
+
 
     // Implement AdapterView.OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-        log.i("Spinner:%s", pos);
         switch(pos){
             case 0: defaults[0] = "B027"; break; // gasoline
             case 1: defaults[0] = "D047"; break; // diesel
@@ -302,22 +302,23 @@ public class MainActivity extends BaseActivity implements
             default: break;
         }
 
-        if(!defaultFuel.matches(defaults[0])) {
-            defaultFuel = defaults[0];
-            log.i("onItemSelected:%s", defaultFuel);
-            // Retrives the price data respectively saved in the cache directory with a fuel selected
-            // by the spinner.
-            binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);
+        defaultFuel = defaults[0];
 
-            // Attach the viewpager adatepr with a fuel code selected by the spinner.
-            pricePagerAdapter.setFuelCode(defaultFuel);
-            binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
+        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);//
+        pricePagerAdapter = new PricePagerAdapter(this);
+        pricePagerAdapter.setFuelCode(defaultFuel);
+        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
 
-            // Retrieve near stations based on a newly selected fuel code if the spinner selection
-            // has changed. Temporarily make this not working for preventing excessive access to the
-            // server.
+        // Display the price info when collapsed.
+        dispCollapsedBarPrice();
 
-            //stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
+        // Retrieve near stations based on a newly selected fuel code if the spinner selection
+        // has changed. Temporarily make this not working for preventing excessive access to the
+        // server.
+        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        if(isStnViewOn) {
+            log.i("refetch stations");
+            stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
         }
     }
 
@@ -366,8 +367,7 @@ public class MainActivity extends BaseActivity implements
     private void dispCollapsedBarPrice() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        // Set the average price
-        binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
+        binding.pricebar.tvCollapsedAvgPrice.setText(String.valueOf(avgPrice));
         // Set the sido and sigun price which are intervally stored in the Cache
         for(String fName : arrFile) {
             File file = new File(getCacheDir(), fName);

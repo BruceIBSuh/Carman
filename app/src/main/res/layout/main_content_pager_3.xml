@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,12 +8,12 @@
     android:background="#FFFFFF">
 
     <TextView
-        android:id="@+id/tv_gas_subtitle"
+        android:id="@+id/tv_svc_subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:text="@string/main_subtitle_gas"
+        android:text="@string/main_subtitle_svc"
         android:textColor="@android:color/holo_blue_light"
         android:textSize="@dimen/subtitle"
         android:textStyle="bold"
@@ -20,7 +21,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_gas_expense"
+        android:id="@+id/tv_svc_expense"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
@@ -43,28 +44,28 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_gas_date"
+        android:id="@+id/tv_svc_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:textSize="@dimen/content"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_gas_mileage"
-        app:layout_constraintStart_toStartOf="@+id/tv_gas_subtitle"
-        app:layout_constraintTop_toBottomOf="@+id/tv_gas_subtitle" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_svc_mileage"
+        app:layout_constraintStart_toStartOf="@+id/tv_svc_subtitle"
+        app:layout_constraintTop_toBottomOf="@+id/tv_svc_subtitle" />
 
     <TextView
-        android:id="@+id/tv_gas_station"
+        android:id="@+id/tv_svc_station"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp"
         android:textSize="@dimen/content"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/tv_gas_date"
-        app:layout_constraintTop_toBottomOf="@+id/tv_gas_date" />
+        app:layout_constraintStart_toStartOf="@+id/tv_svc_date"
+        app:layout_constraintTop_toBottomOf="@+id/tv_svc_date" />
 
     <TextView
-        android:id="@+id/tv_gas_mileage"
+        android:id="@+id/tv_svc_mileage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="12dp"
@@ -73,32 +74,12 @@
         app:layout_constraintTop_toTopOf="@+id/textView5" />
 
     <TextView
-        android:id="@+id/tv_amount"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:textSize="@dimen/content"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_gas_station"
-        app:layout_constraintEnd_toStartOf="@+id/textView21"
-        app:layout_constraintTop_toTopOf="@+id/tv_gas_station" />
-
-    <TextView
-        android:id="@+id/textView21"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/unit_liter"
-        android:textSize="@dimen/content"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_amount"
-        app:layout_constraintEnd_toEndOf="@+id/textView5"
-        app:layout_constraintTop_toTopOf="@+id/tv_amount" />
-
-    <TextView
         android:id="@+id/textView5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/unit_km"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_gas_date"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_svc_date"
         app:layout_constraintEnd_toEndOf="@+id/textview19"
-        app:layout_constraintTop_toTopOf="@+id/tv_gas_date" />
+        app:layout_constraintTop_toTopOf="@+id/tv_svc_date" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
