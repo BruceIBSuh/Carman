@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
@@ -29,6 +30,7 @@ import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.silverback.carman.databinding.ActivityGeneralSettingBinding;
 import com.silverback.carman.fragments.CropImageDialogFragment;
 import com.silverback.carman.fragments.PermRationaleFragment;
 import com.silverback.carman.fragments.ProgbarDialogFragment;
@@ -106,31 +108,31 @@ public class SettingPrefActivity extends BaseActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_general_setting);
+        ActivityGeneralSettingBinding binding = ActivityGeneralSettingBinding.inflate(getLayoutInflater());
+        View rootView = binding.getRoot();
+        setContentView(rootView);
 
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
 
         // Permission check for CAMERA to get the user image.
         //checkPermissions(this, Manifest.permission.CAMERA);
-
-        settingToolbar = findViewById(R.id.toolbar_setting);
-        setSupportActionBar(settingToolbar);
-        // Get a support ActionBar corresponding to this toolbar
-        //ActionBar ab = getSupportActionBar();
-        // Enable the Up button which enables it as an action button such that when the user presses
-        // it, the parent activity receives a call to onOptionsItemSelected().
+        //settingToolbar = findViewById(R.id.setting_toolbar);
+        setSupportActionBar(binding.settingToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
 
-        frameLayout = findViewById(R.id.frame_setting);
+        //frameLayout = findViewById(R.id.frame_setting);
+        frameLayout = binding.frameSetting;
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
+        uploadData = new HashMap<>();
+
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         //opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
-        uploadData = new HashMap<>();
+
 
         // Get the user id which is saved in the internal storage
         if(TextUtils.isEmpty(userId)) userId = getUserIdFromStorage(this);
@@ -209,15 +211,29 @@ public class SettingPrefActivity extends BaseActivity implements
      * value is false, it may check that the menu id is identical and trace down to the callback
      * overrided in other fragments until it should be consumed.
      */
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Check which fragment the parent activity contains, then if the fragment is SettingPreferenceFragment,
         // send back to MainActivity an intent holding preference changes when clicking the Up button.
         // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
         // just pop the fragment off the back stack, which works like the Back command.
-        Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        if(item.getItemId() == android.R.id.home) {
+            uploadUserDataToFirebase(uploadData);
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("district", distCode);
+            resultIntent.putExtra("userName", userName);
+            resultIntent.putExtra("fuelCode", fuelCode);
+            resultIntent.putExtra("radius", radius);
+            resultIntent.putExtra("userImage", userImage);
+            setResult(RESULT_OK, resultIntent);
+            finish();
+            return true;
+        } else return false;
 
+
+        /*
+        Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
         if(item.getItemId() == android.R.id.home) {
             // The activity contains SettingPrefFragment
             if (targetFragment instanceof SettingPrefFragment) {
@@ -268,6 +284,8 @@ public class SettingPrefActivity extends BaseActivity implements
         // The return value should be false when it comes to the menu that adds a new service item,
         // which means this method will be handled in the SettingSvcItemFragment.
         } else return item.getItemId() != R.id.menu_add_service_item;
+
+         */
 
     }
 
@@ -617,7 +635,7 @@ public class SettingPrefActivity extends BaseActivity implements
             ActivityCompat.requestPermissions(this, new String[]{permCamera}, REQUEST_CODE_CAMERA);
         }
     }
-
+    /*
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permission, @NonNull int[] grantResults) {
@@ -633,4 +651,6 @@ public class SettingPrefActivity extends BaseActivity implements
             }
         }
     }
+
+     */
 }

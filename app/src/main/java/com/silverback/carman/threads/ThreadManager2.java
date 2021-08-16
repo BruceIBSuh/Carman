@@ -65,7 +65,7 @@ public class ThreadManager2 {
         super();
         mThreadTaskQueue = new LinkedBlockingQueue<>();
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
-        mStnListTaskQueue = new LinkedBlockingQueue<>();
+        mStnListTaskQueue = new LinkedBlockingQueue<>(3);
         mLocationTaskQueue = new LinkedBlockingQueue<>();
 
         threadPoolExecutor = new ThreadPoolExecutor(
@@ -99,7 +99,6 @@ public class ThreadManager2 {
         Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
             case FETCH_LOCATION_COMPLETED:
-                log.i("Location feched");
                 msg.sendToTarget();
                 break;
             // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
@@ -116,7 +115,7 @@ public class ThreadManager2 {
                 InnerClazz.sInstance.threadPoolExecutor.execute(
                         ((StationListTask)task).getFireStoreRunnable());
                 //InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getFireStoreRunnable());
-                msg.sendToTarget();
+                //msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
@@ -127,10 +126,10 @@ public class ThreadManager2 {
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
-                //msg.sendToTarget();
+                msg.sendToTarget();
                 break;
 
-            default: msg.sendToTarget();
+            //default: msg.sendToTarget();
         }
     }
 
@@ -180,24 +179,25 @@ public class ThreadManager2 {
     // by LocationTask and defaut params transferred from OpinetStationListFragment
     public StationListTask startStationListTask(StationListViewModel model, Location location, String[] params) {
         // TEST Coding
-        /*
         log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
+        /*
         for(int i = 0; i <  InnerClazz.sInstance.mThreadTaskQueue.size(); i++) {
             ThreadTask task = InnerClazz.sInstance.mThreadTaskQueue.poll();
             log.i("current task: %s", task);
-            if(task instanceof StationListTask) break;
+            if(task instanceof StationListTask) {
+                stnListTask = (StationListTask)task;
+                break;
+            }
         }
-
          */
 
         //stnListTask = (StationListTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        stnListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
-        log.i("stnListTask to poll:%s", stnListTask);
-        if(stnListTask == null) stnListTask = new StationListTask();
+        if(stnListTask == null) {
+            log.i("craete stationListTask");
+            stnListTask = new StationListTask();
+        }
         stnListTask.initStationTask(model, location, params);
-
         InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
-        log.i("Station thread queue: %s", InnerClazz.sInstance.mWorkerThreadQueue.poll());
         return stnListTask;
     }
 
@@ -243,16 +243,13 @@ public class ThreadManager2 {
 
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);
-        mThreadTaskQueue.offer(task); //TEST CODING
         if(task instanceof LocationTask) {
             locationTask.recycle();
             mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
             stnListTask.recycle();
-            mStnListTaskQueue.offer((StationListTask)task);
-        } else {
-            threadTask.recycle();
-            mThreadTaskQueue.offer(task);
+            stnListTask = null;
+            //mStnListTaskQueue.offer((StationListTask)task);
         }
 
     }

@@ -142,9 +142,8 @@ public class MainContentPagerFragment extends Fragment {
     }
 
     private void animateExpenseCount(int end) {
-        log.i("animate expense");
         ValueAnimator animator = ValueAnimator.ofInt(0, end);
-        animator.setDuration(2000);
+        animator.setDuration(1000);
         //animator.setInterpolator(new DecelerateInterpolator());
         animator.addUpdateListener(animation -> {
             int currentNum = (int)animation.getAnimatedValue();

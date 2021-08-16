@@ -4,7 +4,7 @@
     android:id="@+id/spinner_fuels"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:minWidth="60dp"
+    android:minWidth="40dp"
     android:padding='3dp'
     android:gravity="center"
     android:textSize="@dimen/smallText"

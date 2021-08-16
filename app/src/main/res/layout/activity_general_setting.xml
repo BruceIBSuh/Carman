@@ -8,12 +8,12 @@
     tools:context=".SettingPrefActivity" >
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar_setting"
+        android:id="@+id/setting_toolbar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/bgToolbar"
         android:minHeight="?attr/actionBarSize"
-        android:theme="?attr/actionBarTheme"
+        android:theme="@style/CustomToolbarStyle"
         app:titleTextColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -26,7 +26,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar_setting">
+        app:layout_constraintTop_toBottomOf="@+id/setting_toolbar">
 
     </FrameLayout>
 

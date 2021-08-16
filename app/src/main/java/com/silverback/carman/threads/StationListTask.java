@@ -31,7 +31,7 @@ public class StationListTask extends ThreadTask implements
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
-    private final SparseBooleanArray sparseBooleanArray;
+    private SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     //private Opinet.GasStnParcelable mCurrentStation;
@@ -63,6 +63,7 @@ public class StationListTask extends ThreadTask implements
     // MUST BE careful to recycle variables. Otherwise, the app may break down.
     void recycle() {
         mStationList = null;
+        defaultParams = null;
     }
 
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current

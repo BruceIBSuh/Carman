@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
         android:textSize="@dimen/title"
+        android:textColor="#FEFEFE"
         android:textStyle="bold" />
 
     <TextView

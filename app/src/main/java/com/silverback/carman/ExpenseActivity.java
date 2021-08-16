@@ -116,8 +116,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         }
 
         String userId = getUserIdFromStorage(this);
-        log.i("user Id: %s", userId);
-
         // Create objects
         //gasManager = (GasManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_gas);
         //svcManager = (ServiceManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_svc);
@@ -180,7 +178,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 if(location == null) return;
                 if (mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                     mPrevLocation = location;
-                    String[] defaults = getDefaultParams();
+                    String[] defaults = getNearStationParams();
                     defaults[1] = Constants.MIN_RADIUS;
                     stationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
                 }

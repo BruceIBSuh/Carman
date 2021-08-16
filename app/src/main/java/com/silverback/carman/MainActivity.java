@@ -4,7 +4,6 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -66,9 +66,8 @@ public class MainActivity extends BaseActivity implements
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
-
-    private PricePagerAdapter pricePagerAdapter;
     private StationListAdapter stnListAdapter;
+    private PricePagerAdapter pricePagerAdapter;
 
     private Location mPrevLocation;
     private List<Opinet.GasStnParcelable> mStationList;
@@ -77,8 +76,8 @@ public class MainActivity extends BaseActivity implements
     private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
-    private String[] defaults;
-    private String defaultFuel;
+    private String[] stnParams;
+    private String gasCode;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
 
@@ -106,7 +105,7 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter(this);
-        RecyclerDividerUtil divider = new RecyclerDividerUtil(35, 0, Color.parseColor("#F3F3F3"));
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(40, 0, getColor(R.color.recyclerDivider));
         binding.recyclerContents.setAdapter(adapter);
         binding.recyclerContents.addItemDecoration(divider);
 
@@ -117,37 +116,23 @@ public class MainActivity extends BaseActivity implements
 
         // Instantiate objects
         imgResUtil = new ApplyImageResourceUtil(this);
-        mPrevLocation = null;
-        // Display the gas prices of average, sido, sigun and station.
-        setSpinnerToDefaultFuel();//set the default fuel.
 
+
+        // Set initial values
+        stnParams = getNearStationParams();
+        setSpinnerToDefaultFuel();
+        dispCollapsedBarPrice();
+        mPrevLocation = null;
 
         // Event Handlers
-        binding.imgbtnStation.setOnClickListener(view -> {
-            boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-            if(!isStnViewOn) {
-               binding.pbNearStns.setVisibility(View.VISIBLE);
-               checkRuntimePermission(rootView, Manifest.permission.ACCESS_FINE_LOCATION, () ->
-                       locationTask = sThreadManager.fetchLocationTask(this, locationModel));
-
-            } else {
-                binding.stationRecyclerView.setVisibility(View.GONE);
-                binding.recyclerContents.setVisibility(View.VISIBLE);
-                binding.fab.setVisibility(View.GONE);
-            }
-        });
-
+        binding.imgbtnStation.setOnClickListener(view -> dispNearStations());
         binding.stationRecyclerView.addOnScrollListener(stationScrollListener);
         binding.fab.setOnClickListener(view -> switchNearStationOrder());
 
         locationModel.getLocation().observe(this, location -> {
-            if(location == null) return;
-
-            if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
-                log.i("fetch location:%s, %s", location.getLatitude(), location.getLongitude());
+            if(mPrevLocation == null||(mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                 mPrevLocation = location;
-                defaults[0] = defaultFuel;
-                stationListTask = sThreadManager.startStationListTask(stnModel, location, defaults);
+                //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
             } else {
                 log.i("same place");
                 binding.recyclerContents.setVisibility(View.GONE);
@@ -155,6 +140,8 @@ public class MainActivity extends BaseActivity implements
                 binding.pbNearStns.setVisibility(View.GONE);
                 Snackbar.make(rootView, getString(R.string.general_snackkbar_inbounds), Snackbar.LENGTH_SHORT).show();
             }
+
+            stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
         });
 
         // Location has failed to fetch.
@@ -202,7 +189,6 @@ public class MainActivity extends BaseActivity implements
                 mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                 stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
             }
-
             hasStationInfo = true;
         });
 
@@ -210,8 +196,10 @@ public class MainActivity extends BaseActivity implements
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
                     if(result.getResultCode() == Activity.RESULT_OK) {
-                        log.i("activity result");
-                        //pricePagerAdapter.notifyDataSetChanged();
+                        log.i("activity result: %s", result.getData());
+                        if(result.getData() != null) {
+                            updateSettingResult();
+                        }
                     }
                 });
     }
@@ -230,15 +218,13 @@ public class MainActivity extends BaseActivity implements
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
-
-
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        //if(locationTask != null) locationTask = null;
-        //if(stationListTask != null) stationListTask = null;
+        if(locationTask != null) locationTask = null;
+        if(stationListTask != null) stationListTask = null;
     }
 
     @Override
@@ -295,30 +281,21 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
         switch(pos){
-            case 0: defaults[0] = "B027"; break; // gasoline
-            case 1: defaults[0] = "D047"; break; // diesel
-            case 2: defaults[0] = "K015"; break; // LPG
-            case 3: defaults[0] = "B034"; break; // premium gasoline
+            case 0: stnParams[0] = "B027"; break; // gasoline
+            case 1: stnParams[0] = "D047"; break; // diesel
+            case 2: stnParams[0] = "K015"; break; // LPG
+            case 3: stnParams[0] = "B034"; break; // premium gasoline
             default: break;
         }
 
-        defaultFuel = defaults[0];
+        if(!stnParams[0].matches(gasCode)) {
+            setSpinnerToDefaultFuel();
+            dispCollapsedBarPrice();
 
-        binding.mainTopFrame.avgPriceView.addPriceView(defaultFuel);//
-        pricePagerAdapter = new PricePagerAdapter(this);
-        pricePagerAdapter.setFuelCode(defaultFuel);
-        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
-
-        // Display the price info when collapsed.
-        dispCollapsedBarPrice();
-
-        // Retrieve near stations based on a newly selected fuel code if the spinner selection
-        // has changed. Temporarily make this not working for preventing excessive access to the
-        // server.
-        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        if(isStnViewOn) {
-            log.i("refetch stations");
-            stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, defaults);
+            boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+            if(isStnViewOn) {
+                stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
+            }
         }
     }
 
@@ -341,17 +318,21 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
-
+    // Get the default fuel value
     private void setSpinnerToDefaultFuel() {
-        String[] code = getResources().getStringArray(R.array.spinner_fuel_code);
-        defaults = getDefaultParams();
-        for(int i = 0; i < code.length; i++) {
-            if(code[i].matches(defaults[0])) {
+        String[] arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
+        for(int i = 0; i < arrGasCode.length; i++) {
+            if(arrGasCode[i].matches(stnParams[0])) {
                 binding.mainTopFrame.spinnerGas.setSelection(i);
-                defaultFuel = defaults[0];
+                gasCode = stnParams[0];
                 break;
             }
         }
+        // Display the avg, sido, and sigun price based on the selected gas.
+        binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
+        pricePagerAdapter = new PricePagerAdapter(this);
+        pricePagerAdapter.setFuelCode(gasCode);
+        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
     }
 
     // Ref: expand the station recyclerview up to wrap_content
@@ -367,7 +348,7 @@ public class MainActivity extends BaseActivity implements
     private void dispCollapsedBarPrice() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        binding.pricebar.tvCollapsedAvgPrice.setText(String.valueOf(avgPrice));
+        binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
         // Set the sido and sigun price which are intervally stored in the Cache
         for(String fName : arrFile) {
             File file = new File(getCacheDir(), fName);
@@ -380,14 +361,14 @@ public class MainActivity extends BaseActivity implements
                     switch(fName) {
                         case Constants.FILE_CACHED_SIDO_PRICE:
                             Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
-                            if(sido.getProductCd().matches(defaultFuel)) {
+                            if(sido.getProductCd().matches(gasCode)) {
                                 binding.pricebar.tvCollapsedSido.setText(sido.getSidoName());
                                 binding.pricebar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
                             }
                             break;
                         case Constants.FILE_CACHED_SIGUN_PRICE:
                             Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
-                            if(sigun.getProductCd().matches(defaultFuel)) {
+                            if(sigun.getProductCd().matches(gasCode)) {
                                 binding.pricebar.tvCollapsedSigun.setText(sigun.getSigunName());
                                 binding.pricebar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
                             }
@@ -412,6 +393,21 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
+    // Callback for the station button click listener
+    private void dispNearStations() {
+        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        if(!isStnViewOn) {
+            binding.pbNearStns.setVisibility(View.VISIBLE);
+            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () ->
+                    locationTask = sThreadManager.fetchLocationTask(this, locationModel));
+
+        } else {
+            binding.stationRecyclerView.setVisibility(View.GONE);
+            binding.fab.setVisibility(View.GONE);
+            binding.recyclerContents.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void switchNearStationOrder() {
         bStnOrder = !bStnOrder;
         Uri uri = saveNearStationList(mStationList);
@@ -435,6 +431,10 @@ public class MainActivity extends BaseActivity implements
         } catch (IOException e) { e.printStackTrace();}
 
         return null;
+    }
+
+    private void updateSettingResult() {
+
     }
 }
 

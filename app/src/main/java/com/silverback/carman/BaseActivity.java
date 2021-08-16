@@ -158,7 +158,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     // DefaultParams: fuelCode, radius to locate, sorting radius
-    public final String[] getDefaultParams() {
+    public final String[] getNearStationParams() {
         String[] defaultParams = new String[3];
         defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
         defaultParams[1] = mSettings.getString(Constants.SEARCHING_RADIUS, "2500");

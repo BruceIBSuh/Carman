@@ -7,6 +7,8 @@
     <color name="primaryColor">#778899</color>
     <color name="secondaryColor">#B0C4DE</color>
 
+    <color name="recyclerDivider">#F9F9F9</color>
+
     <!-- ExpenseActivity -->
     <color name="gasThemeColor">#FF9900</color>
     <color name="serviceThemeColor">#808000</color>

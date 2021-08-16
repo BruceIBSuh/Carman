@@ -14,7 +14,7 @@
 
     <!--MainActivity$GeneralFragment-->
     <string name="general_subtitle_stations">주변 주유소</string>
-    <string name="general_subtitle_region">[관심 지역 / 주유소]</string>
+    <string name="general_subtitle_region">관심 지역 / 주유소</string>
     <string name="general_subtitle_expense">최근 지출 내역</string>
     <string name="general_spinner_gasoline">휘발유</string>
     <string name="general_spinner_diesel">경유</string>

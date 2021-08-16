@@ -17,7 +17,6 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
         super(fa);
     }
 
-
     @Override
     public int getItemCount() {
         return NUM_PAGES;
