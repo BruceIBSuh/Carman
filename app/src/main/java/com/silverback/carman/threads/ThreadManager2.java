@@ -245,7 +245,8 @@ public class ThreadManager2 {
         log.i("recycle task: %s", task);
         if(task instanceof LocationTask) {
             locationTask.recycle();
-            mLocationTaskQueue.offer((LocationTask)task);
+            locationTask = null;
+            //mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
             stnListTask.recycle();
             stnListTask = null;

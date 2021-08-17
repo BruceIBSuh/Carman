@@ -89,8 +89,8 @@ public class IntroActivity extends BaseActivity  {
     @Override
     public void onPause() {
         super.onPause();
-        //if(distCodeTask != null) distCodeTask = null;
-        //if(gasPriceTask != null) gasPriceTask = null;
+        if(distCodeTask != null) distCodeTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
 

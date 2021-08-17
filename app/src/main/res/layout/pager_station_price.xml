@@ -8,7 +8,7 @@
     tools:context=".fragments.GeneralFragment">
 
     <com.silverback.carman.views.OpinetStationPriceView
-        android:id="@+id/stationPriceView"
+        android:id="@+id/stnPriceView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"

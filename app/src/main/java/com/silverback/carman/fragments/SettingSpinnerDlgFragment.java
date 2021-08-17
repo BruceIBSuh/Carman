@@ -2,6 +2,7 @@ package com.silverback.carman.fragments;
 
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -66,7 +67,6 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     @Override
     protected void onBindDialogView(View view) {
         super.onBindDialogView(view);
-
         sidoSpinner = view.findViewById(R.id.spinner_sido);
         sigunSpinner = view.findViewById(R.id.spinner_sigun);
         sidoSpinner.setOnItemSelectedListener(this);
@@ -106,6 +106,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
                     position++;
                 }
             }
+
             sigunSpinner.setAdapter(sigunAdapter);
             sigunSpinner.setSelection(mSigunItemPos, true);
         });

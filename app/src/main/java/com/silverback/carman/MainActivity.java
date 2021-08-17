@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -195,12 +196,8 @@ public class MainActivity extends BaseActivity implements
         // Create ActivityResultLauncher to call SettingActiity and get results
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
-                    if(result.getResultCode() == Activity.RESULT_OK) {
-                        log.i("activity result: %s", result.getData());
-                        if(result.getData() != null) {
-                            updateSettingResult();
-                        }
-                    }
+                    if(result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
+                    updateSettingResult(result);
                 });
     }
 
@@ -218,6 +215,9 @@ public class MainActivity extends BaseActivity implements
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
+
+        String distCode = mSettings.getString(Constants.DISTRICT, null);
+        log.i("district Code: %s", distCode);
     }
 
     @Override
@@ -247,8 +247,8 @@ public class MainActivity extends BaseActivity implements
 
         } else if(item.getItemId() == R.id.action_setting) {
             Intent settingIntent = new Intent(this, SettingPrefActivity.class);
-            int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
-            settingIntent.putExtra("requestCode", requestCode);
+            //int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
+            //settingIntent.putExtra("requestCode", requestCode);
             //startActivityForResult(settingIntent, requestCode); // deprecated!!!
             activityResultLauncher.launch(settingIntent);
         }
@@ -287,6 +287,8 @@ public class MainActivity extends BaseActivity implements
             case 3: stnParams[0] = "B034"; break; // premium gasoline
             default: break;
         }
+
+        log.i("Gas code: %s, %s", stnParams[0], gasCode);
 
         if(!stnParams[0].matches(gasCode)) {
             setSpinnerToDefaultFuel();
@@ -336,6 +338,7 @@ public class MainActivity extends BaseActivity implements
     }
 
     // Ref: expand the station recyclerview up to wrap_content
+    // Animate the visibility of the collapsed price bar.
     private void showCollapsedPricebar(int offset) {
         if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
             binding.pricebar.getRoot().setVisibility(View.VISIBLE);
@@ -433,8 +436,25 @@ public class MainActivity extends BaseActivity implements
         return null;
     }
 
-    private void updateSettingResult() {
+    // Update
+    private void updateSettingResult(ActivityResult result) {
+        Intent resultIntent = result.getData();
+        if(resultIntent == null) return;
 
+        if(!TextUtils.isEmpty(resultIntent.getStringExtra("userName"))) {
+            log.i("user name changed");
+        }
+
+        if(!TextUtils.isEmpty(resultIntent.getStringExtra("distCode"))) {
+            log.i("district code changed:%s", resultIntent.getStringExtra("distCode"));
+
+        }
+
+        if(!TextUtils.isEmpty(resultIntent.getStringExtra("gasCode"))) {
+            log.i("gas code changed");
+            stnParams[0] = resultIntent.getStringExtra("gasCode");;
+            setSpinnerToDefaultFuel();
+        }
     }
 }
 

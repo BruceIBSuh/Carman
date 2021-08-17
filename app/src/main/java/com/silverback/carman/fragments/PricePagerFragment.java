@@ -11,6 +11,8 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
+import com.silverback.carman.databinding.PagerDistrictPriceBinding;
+import com.silverback.carman.databinding.PagerStationPriceBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -76,25 +78,21 @@ public class PricePagerFragment extends Fragment {
         switch(page) {
             case DISTRICT_PRICE:
                 log.i("DISTRICT_PRICE");
-                View firstPage = inflater.inflate(R.layout.pager_district_price, container,false);
-                OpinetSidoPriceView sidoView = firstPage.findViewById(R.id.sidoPriceView);
-                OpinetSigunPriceView sigunView = firstPage.findViewById(R.id.sigunPriceView);
+                PagerDistrictPriceBinding distBinding = PagerDistrictPriceBinding.inflate(inflater);
+                distBinding.sidoPriceView.addPriceView(fuelCode);
+                distBinding.sigunPriceView.addPriceView(fuelCode);
 
-                sidoView.addPriceView(fuelCode);
-                sigunView.addPriceView(fuelCode);
-
-                return firstPage;
+                return distBinding.getRoot();
 
             case STATION_PRICE:
-                View secondPage = inflater.inflate(R.layout.pager_station_price, container, false);
-                OpinetStationPriceView stnPriceView = secondPage.findViewById(R.id.stationPriceView);
-                stnPriceView.addPriceView(fuelCode);
+                PagerStationPriceBinding stnBinding = PagerStationPriceBinding.inflate(inflater);
+                stnBinding.stnPriceView.addPriceView(fuelCode);
 
                 fragmentModel.getFirstPlaceholderId().observe(getViewLifecycleOwner(), stnId -> {
                     if(stnId != null) {
                         favPriceTask = ThreadManager.startFavoritePriceTask(getContext(), opinetModel, stnId, true);
                     } else {
-                        stnPriceView.removePriceView(getString(R.string.general_opinet_stn_reset));
+                        stnBinding.stnPriceView.removePriceView(getString(R.string.general_opinet_stn_reset));
                         /*
                         mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
                             if(id == null) stnPriceView.removePriceView();
@@ -110,10 +108,10 @@ public class PricePagerFragment extends Fragment {
 
                 opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
                     log.i("favoritePriceComplete() done");
-                    stnPriceView.addPriceView(fuelCode);
+                    stnBinding.stnPriceView.addPriceView(fuelCode);
                 });
 
-                return secondPage;
+                return stnBinding.getRoot();
         }
 
 

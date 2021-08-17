@@ -77,6 +77,8 @@ public class SettingPrefActivity extends BaseActivity implements
     private static final int REQUEST_PERM_CAMERA = 1000;
 
     // Objects
+    private Intent resultIntent;
+
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
     private ApplyImageResourceUtil applyImageResourceUtil;
@@ -87,6 +89,7 @@ public class SettingPrefActivity extends BaseActivity implements
     private GasPriceTask gasPriceTask;
     private Map<String, Object> uploadData;
 
+
     // UIs
     public Toolbar settingToolbar;
     private FrameLayout frameLayout;
@@ -95,7 +98,7 @@ public class SettingPrefActivity extends BaseActivity implements
     private String userId;
     private String distCode;
     private String userName;
-    private String fuelCode;
+    private String gasCode;
     private String radius;
     private String userImage;
     private String jsonAutoData;
@@ -124,6 +127,7 @@ public class SettingPrefActivity extends BaseActivity implements
         //frameLayout = findViewById(R.id.frame_setting);
         frameLayout = binding.frameSetting;
 
+        resultIntent = new Intent();
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
@@ -220,12 +224,14 @@ public class SettingPrefActivity extends BaseActivity implements
         // just pop the fragment off the back stack, which works like the Back command.
         if(item.getItemId() == android.R.id.home) {
             uploadUserDataToFirebase(uploadData);
-            Intent resultIntent = new Intent();
+            //Intent resultIntent = new Intent();
+            /*
             resultIntent.putExtra("district", distCode);
             resultIntent.putExtra("userName", userName);
-            resultIntent.putExtra("fuelCode", fuelCode);
+            resultIntent.putExtra("fuelCode", gasCode);
             resultIntent.putExtra("radius", radius);
             resultIntent.putExtra("userImage", userImage);
+             */
             setResult(RESULT_OK, resultIntent);
             finish();
             return true;
@@ -305,6 +311,7 @@ public class SettingPrefActivity extends BaseActivity implements
         fragment.setArguments(args);
         fragment.setTargetFragment(caller, 0);
 
+
         // Chagne the toolbar title according to the fragment the parent activity contains. When
         // returning to the SettingPrefFragment, the title
         String title = null;
@@ -323,8 +330,7 @@ public class SettingPrefActivity extends BaseActivity implements
         return true;
     }
 
-    // SharedPreferences.OnSharedPreferenceChangeListener invokes this callback method if and only if
-    // any preference has changed.
+    // Implement SharedPreferences.OnSharedPreferenceChangeListener
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
@@ -336,7 +342,10 @@ public class SettingPrefActivity extends BaseActivity implements
                 // data, otherwise.
                 //if(userName != null) {
                 // TextUtils.isEmpty(str) indicates str == null || str.length = 0;
-                if(!TextUtils.isEmpty(userName)) uploadData.put("user_name", userName);
+                if(!TextUtils.isEmpty(userName)) {
+                    uploadData.put("user_name", userName);
+                    resultIntent.putExtra("userName", userName);
+                }
                 break;
 
             case Constants.AUTO_DATA:
@@ -358,19 +367,23 @@ public class SettingPrefActivity extends BaseActivity implements
                 break;
 
             case Constants.FUEL:
-                fuelCode = mSettings.getString(key, null);
+                log.i("gas code changed");
+                gasCode = mSettings.getString(key, null);
+                resultIntent.putExtra("gasCode", gasCode);
                 break;
 
             case Constants.DISTRICT:
+                log.i("district code changed");
                 try {
                     String jsonDist = mSettings.getString(key, null);
                     JSONArray jsonDistArray = new JSONArray(jsonDist);
                     distCode = jsonDistArray.optString(2);
-
+                    resultIntent.putExtra("distCode", distCode);
                 } catch(JSONException e) {e.printStackTrace();}
                 break;
 
             case Constants.SEARCHING_RADIUS:
+                log.i("searching radius changed");
                 radius = mSettings.getString(key, null);
                 break;
 
