@@ -134,6 +134,7 @@ public class MainContentPagerFragment extends Fragment {
 
     private void displayServiceExpense() {
         mDB.serviceManagerModel().loadLatestSvcData().observe(getViewLifecycleOwner(), svcData -> {
+            if(svcData == null) return;
             thirdPageBinding.tvSvcDate.setText(sdf.format(calendar.getTime()));
             thirdPageBinding.tvSvcStation.setText(svcData.svcName);
             thirdPageBinding.tvSvcExpense.setText(df.format(svcData.totalExpense));
