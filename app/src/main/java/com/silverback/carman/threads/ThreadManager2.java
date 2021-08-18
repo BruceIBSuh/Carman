@@ -50,6 +50,7 @@ public class ThreadManager2 {
     private final Queue<ThreadTask> mThreadTaskQueue;
     private final BlockingQueue<StationListTask> mStnListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
+    private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
@@ -65,8 +66,10 @@ public class ThreadManager2 {
         super();
         mThreadTaskQueue = new LinkedBlockingQueue<>();
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
-        mStnListTaskQueue = new LinkedBlockingQueue<>(3);
+        mStnListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mGasPriceTaskQueue = new LinkedBlockingQueue<>();
+
 
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
@@ -126,6 +129,7 @@ public class ThreadManager2 {
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
+                log.i("upload station info to Firestore");
                 msg.sendToTarget();
                 break;
 
@@ -150,10 +154,10 @@ public class ThreadManager2 {
     // file location.
     public GasPriceTask startGasPriceTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
-        //GasPriceTask gasPriceTask = (GasPriceTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        GasPriceTask gasPriceTask = InnerClazz.sInstance.mGasPriceTaskQueue.poll();
+
         if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
         gasPriceTask.initPriceTask(model, distCode, stnId);
-
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getAvgPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSidoPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSigunPriceRunnable());
@@ -243,7 +247,10 @@ public class ThreadManager2 {
 
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);
-        if(task instanceof LocationTask) {
+        if(task instanceof GasPriceTask) {
+            //gasPriceTask.recycle();
+            //mGasPriceTaskQueue.offer(gasPriceTask);
+        } else if(task instanceof LocationTask) {
             locationTask.recycle();
             locationTask = null;
             //mLocationTaskQueue.offer((LocationTask)task);

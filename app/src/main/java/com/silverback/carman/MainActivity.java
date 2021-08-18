@@ -33,6 +33,7 @@ import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -41,6 +42,7 @@ import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
+import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.io.File;
@@ -63,6 +65,7 @@ public class MainActivity extends BaseActivity implements
     private ActivityMainBinding binding;
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
+    private OpinetViewModel opinetModel;
     private ImageViewModel imgModel;
 
     private LocationTask locationTask;
@@ -95,9 +98,11 @@ public class MainActivity extends BaseActivity implements
         setSupportActionBar(binding.toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(true);
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
+        String title = mSettings.getString(Constants.USER_NAME, "Carman");
+        Objects.requireNonNull(getSupportActionBar()).setTitle(title);
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
 
-        // Set Spinner for selecting a fuel.
+        // AdapterView(Spinner) to select a gas type.
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
                 this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
@@ -115,9 +120,9 @@ public class MainActivity extends BaseActivity implements
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
+
         // Instantiate objects
         imgResUtil = new ApplyImageResourceUtil(this);
-
 
         // Set initial values
         stnParams = getNearStationParams();
@@ -205,8 +210,8 @@ public class MainActivity extends BaseActivity implements
     public void onResume() {
         super.onResume();
         // Set the user name in the toolbar
-        String title = mSettings.getString(Constants.USER_NAME, null);
-        if(title != null) Objects.requireNonNull(getSupportActionBar()).setTitle(title);
+        String title = mSettings.getString(Constants.USER_NAME, "Carman");
+        Objects.requireNonNull(getSupportActionBar()).setTitle(title);
 
         // Set the ion in the toolbar
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
@@ -440,20 +445,34 @@ public class MainActivity extends BaseActivity implements
     private void updateSettingResult(ActivityResult result) {
         Intent resultIntent = result.getData();
         if(resultIntent == null) return;
-
+        
         if(!TextUtils.isEmpty(resultIntent.getStringExtra("userName"))) {
             log.i("user name changed");
         }
 
         if(!TextUtils.isEmpty(resultIntent.getStringExtra("distCode"))) {
-            log.i("district code changed:%s", resultIntent.getStringExtra("distCode"));
+            String distCode = resultIntent.getStringExtra("distCode");
+            opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+            GasPriceTask gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, distCode, null);
+            opinetModel.distPriceComplete().observe(this, isDone -> {
+                log.i("update districe price info:");
+                pricePagerAdapter.notifyDataSetChanged();
+                //binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
+            });
 
         }
 
         if(!TextUtils.isEmpty(resultIntent.getStringExtra("gasCode"))) {
             log.i("gas code changed");
-            stnParams[0] = resultIntent.getStringExtra("gasCode");;
-            setSpinnerToDefaultFuel();
+            gasCode = resultIntent.getStringExtra("gasCode");;
+            String[] arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
+            for(int i = 0; i < arrGasCode.length; i++) {
+                if(arrGasCode[i].matches(gasCode)) {
+                    binding.mainTopFrame.spinnerGas.setSelection(i);
+                    //gasCode = stnParams[0];
+                    break;
+                }
+            }
         }
     }
 }

@@ -157,9 +157,7 @@ public class GasPriceRunnable implements Runnable {
                                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                         }catch(IOException e) {e.printStackTrace();}
-
                         stnConn.disconnect();
-
                     } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                     break;
             }

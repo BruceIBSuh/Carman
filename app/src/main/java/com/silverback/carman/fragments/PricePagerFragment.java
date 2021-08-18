@@ -34,6 +34,8 @@ public class PricePagerFragment extends Fragment {
     private static final int DISTRICT_PRICE = 0;
     private static final int STATION_PRICE = 1;
 
+    private PagerDistrictPriceBinding distBinding;
+    private PagerStationPriceBinding stnBinding;
     private FavoritePriceTask favPriceTask;
     private OpinetViewModel opinetModel;
     private FragmentSharedModel fragmentModel;
@@ -70,6 +72,7 @@ public class PricePagerFragment extends Fragment {
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedStateInstance) {
 
+        log.i("onCreateView of PricePagerFragment");
         if(getArguments() != null) {
             page = getArguments().getInt("page");
             fuelCode = getArguments().getString("fuelCode");
@@ -78,14 +81,15 @@ public class PricePagerFragment extends Fragment {
         switch(page) {
             case DISTRICT_PRICE:
                 log.i("DISTRICT_PRICE");
-                PagerDistrictPriceBinding distBinding = PagerDistrictPriceBinding.inflate(inflater);
+                this.distBinding = PagerDistrictPriceBinding.inflate(inflater);
                 distBinding.sidoPriceView.addPriceView(fuelCode);
                 distBinding.sigunPriceView.addPriceView(fuelCode);
 
                 return distBinding.getRoot();
 
             case STATION_PRICE:
-                PagerStationPriceBinding stnBinding = PagerStationPriceBinding.inflate(inflater);
+                log.i("STATION_PRICE");
+                stnBinding = PagerStationPriceBinding.inflate(inflater);
                 stnBinding.stnPriceView.addPriceView(fuelCode);
 
                 fragmentModel.getFirstPlaceholderId().observe(getViewLifecycleOwner(), stnId -> {
@@ -116,6 +120,16 @@ public class PricePagerFragment extends Fragment {
 
 
         return null;
+    }
+
+    public void reload(int position) {
+        if(position == 0 && distBinding != null) {
+            log.i("update district view");
+            distBinding.sidoPriceView.addPriceView(fuelCode);
+            distBinding.sigunPriceView.addPriceView(fuelCode);
+        } else if(position == 1 && stnBinding != null) {
+            log.i("favorite station update required");
+        }
     }
 
 }
