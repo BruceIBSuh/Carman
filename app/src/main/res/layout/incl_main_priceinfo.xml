@@ -39,6 +39,7 @@
         android:layout_marginStart="8dp"
         android:text="@string/general_subtitle_region"
         android:textStyle="bold"
+        android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_spinner"
         app:layout_constraintStart_toStartOf="@+id/view_subtitle_spinner"
         app:layout_constraintTop_toTopOf="@+id/view_subtitle_spinner" />

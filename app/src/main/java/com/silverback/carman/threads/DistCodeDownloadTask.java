@@ -45,21 +45,18 @@ public class DistCodeDownloadTask extends ThreadTask
 
     @Override
     public void handleDistCodeTask(int state) {
-        handleTaskState(this, state);
-        /*
+        //handleTaskState(this, state);
         int outstate = -1;
         switch(state) {
             case DistCodeDownloadRunnable.TASK_COMPLETE:
-                outstate = ThreadManager.DOWNLOAD_DISTCODE_COMPLETED;
+                outstate = ThreadManager2.DISTCODE_COMPLETED;
                 break;
 
             case DistCodeDownloadRunnable.TASK_FAIL:
-                outstate = ThreadManager.DOWNLOAD_DISTCODE_FAILED;
+                outstate = ThreadManager2.DISTCODE_FAILED;
                 break;
         }
 
         sThreadManager.handleState(this, outstate);
-
-         */
     }
 }

@@ -7,6 +7,5 @@
     android:minWidth="40dp"
     android:padding='3dp'
     android:gravity="center"
-    android:textSize="@dimen/smallText"
-    android:textStyle="bold"
-    android:textColor="@color/white" />
+    android:textSize="13sp"
+    android:textStyle="bold" />

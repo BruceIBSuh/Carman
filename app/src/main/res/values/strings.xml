@@ -58,9 +58,12 @@
     <!-- Update version-->
     <string name="main_subtitle_news">알립니다</string>
     <string name="main_subtitle_expense">월 지출</string>
-    <string name="main_subtitle_gas">최근주유내역 </string>
-    <string name="main_subtitle_svc">최근서비스내역</string>
+    <string name="main_subtitle_gas">주유내역 </string>
+    <string name="main_subtitle_wash">세차내역</string>
+    <string name="main_subtitle_extra">기타지출</string>
+    <string name="main_subtitle_svc">서비스내역</string>
     <string name="main_subtitle_tip">오토라이프 \&amp;</string>
+
 
     <string name="main_subtitle_collapsed">평균</string>
     <string name="main_footer_terms">이용약관</string>

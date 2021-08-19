@@ -64,7 +64,7 @@ public class DistCodeDownloadRunnable implements Runnable {
         List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
         XmlPullParserHandler xmlHandler = new XmlPullParserHandler(distCodeList);
 
-        try {
+        try{
             for(String sidoCode : sido) {
                 if (Thread.interrupted()) throw new InterruptedException();
                 final URL url = new URL(OPINET_AREA + sidoCode);

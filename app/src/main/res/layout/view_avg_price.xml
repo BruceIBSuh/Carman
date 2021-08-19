@@ -12,8 +12,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
         android:textSize="@dimen/title"
-        android:textColor="#FEFEFE"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:textColor="@android:color/white"/>
 
     <TextView
         android:id="@+id/tv_avg_price"

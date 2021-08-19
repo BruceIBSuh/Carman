@@ -34,9 +34,11 @@ public class ThreadManager2 {
     static final int DOWNLOAD_CURRENT_STATION = 102;
     static final int FIRESTORE_STATION_GET_COMPLETED = 103;
     static final int FIRESTORE_STATION_SET_COMPLETED = 104;
+    static final int DISTCODE_COMPLETED = 105;
 
     static final int FETCH_LOCATION_FAILED = -100;
     static final int DOWNLOAD_STATION_FAILED = -101;
+    static final int DISTCODE_FAILED = -102;
 
     // Determine the threadpool parameters.
     private static final int CORE_POOL_SIZE = 8;
@@ -142,11 +144,8 @@ public class ThreadManager2 {
     // time.
     public DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
         //DistCodeDownloadTask distCodeTask = (DistCodeDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        log.i("DistcodeTask: %s", distCodeTask);
         if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
         InnerClazz.sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
-        log.i("queue: %s", InnerClazz.sInstance.threadPoolExecutor.getQueue());
-
         return distCodeTask;
     }
 

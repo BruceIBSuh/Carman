@@ -93,7 +93,6 @@ public class IntroActivity extends BaseActivity  {
         if(gasPriceTask != null) gasPriceTask = null;
     }
 
-
     // Invoked when and only when the application runs for the first time, authenticating the user
     // in Firebase.Auth. Once authenticated, upload the user to the "user" collection with data null
     // at the moment, then have the document id saved in the internal storage. The user document ID
