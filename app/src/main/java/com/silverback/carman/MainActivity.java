@@ -16,7 +16,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -70,6 +69,7 @@ public class MainActivity extends BaseActivity implements
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
+    private GasPriceTask gasPriceTask;
     private StationListAdapter stnListAdapter;
     private PricePagerAdapter pricePagerAdapter;
 
@@ -93,6 +93,10 @@ public class MainActivity extends BaseActivity implements
         View rootView = binding.getRoot();
         setContentView(rootView);
 
+        // Set initial values
+        stnParams = getNearStationParams();// 0: gas 1:district 2:order(distance or price)
+        mPrevLocation = null;
+
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
         // methods.
         setSupportActionBar(binding.toolbar);
@@ -107,7 +111,6 @@ public class MainActivity extends BaseActivity implements
                 this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
-        binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
 
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter adapter = new MainContentAdapter(this);
@@ -120,27 +123,24 @@ public class MainActivity extends BaseActivity implements
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
 
+        // Create PricePagerAdapter and set it to the viewpager.
+        pricePagerAdapter = new PricePagerAdapter(this);
+        pricePagerAdapter.setFuelCode(stnParams[0]);
+        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
 
-        // Instantiate objects
-        imgResUtil = new ApplyImageResourceUtil(this);
-
-        // Set initial values
-        stnParams = getNearStationParams();
-        setSpinnerToDefaultFuel();
-        dispCollapsedBarPrice();
-        mPrevLocation = null;
 
         // Event Handlers
+        binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         binding.imgbtnStation.setOnClickListener(view -> dispNearStations());
         binding.stationRecyclerView.addOnScrollListener(stationScrollListener);
         binding.fab.setOnClickListener(view -> switchNearStationOrder());
+
 
         locationModel.getLocation().observe(this, location -> {
             if(mPrevLocation == null||(mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                 mPrevLocation = location;
                 //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
             } else {
-                log.i("same place");
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.pbNearStns.setVisibility(View.GONE);
@@ -201,9 +201,11 @@ public class MainActivity extends BaseActivity implements
         // Create ActivityResultLauncher to call SettingActiity and get results
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
-                    if(result.getResultCode() != Activity.RESULT_OK || result.getData() == null) return;
-                    updateSettingResult(result);
+                    if(result.getResultCode() == Activity.RESULT_OK) updateSettingResult(result);
                 });
+
+        // Instantiate objects
+        imgResUtil = new ApplyImageResourceUtil(this);
     }
 
     @Override
@@ -221,8 +223,8 @@ public class MainActivity extends BaseActivity implements
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
 
-        String distCode = mSettings.getString(Constants.DISTRICT, null);
-        log.i("district Code: %s", distCode);
+        //String distCode = mSettings.getString(Constants.DISTRICT, null);
+        //log.i("district Code: %s", distCode);
     }
 
     @Override
@@ -230,6 +232,7 @@ public class MainActivity extends BaseActivity implements
         super.onStop();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
     @Override
@@ -252,9 +255,6 @@ public class MainActivity extends BaseActivity implements
 
         } else if(item.getItemId() == R.id.action_setting) {
             Intent settingIntent = new Intent(this, SettingPrefActivity.class);
-            //int requestCode = Constants.REQUEST_MAIN_SETTING_GENERAL;
-            //settingIntent.putExtra("requestCode", requestCode);
-            //startActivityForResult(settingIntent, requestCode); // deprecated!!!
             activityResultLauncher.launch(settingIntent);
         }
 
@@ -280,8 +280,6 @@ public class MainActivity extends BaseActivity implements
         startActivity(intent);
     }
 
-
-
     // Implement AdapterView.OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
@@ -290,24 +288,28 @@ public class MainActivity extends BaseActivity implements
             case 1: stnParams[0] = "D047"; break; // diesel
             case 2: stnParams[0] = "K015"; break; // LPG
             case 3: stnParams[0] = "B034"; break; // premium gasoline
-            default: break;
         }
 
         log.i("Gas code: %s, %s", stnParams[0], gasCode);
+        if(gasCode == null) gasCode = stnParams[0];
+        else setGasSpinner();
 
-        if(!stnParams[0].matches(gasCode)) {
-            setSpinnerToDefaultFuel();
-            dispCollapsedBarPrice();
+        // Display the avg, sido, and sigun price based on the selected gas.
+        binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
+        setCollapsedPriceBar();
 
-            boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-            if(isStnViewOn) {
-                stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
-            }
+        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        if(isStnViewOn) {
+            stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
         }
+
+
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> adapterView) { }
+    public void onNothingSelected(AdapterView<?> adapterView) {
+        log.i("gas code: ", gasCode);
+    }
 
     // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -326,7 +328,8 @@ public class MainActivity extends BaseActivity implements
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
     // Get the default fuel value
-    private void setSpinnerToDefaultFuel() {
+    private void setGasSpinner() {
+        log.i("setGasSpnner");
         String[] arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         for(int i = 0; i < arrGasCode.length; i++) {
             if(arrGasCode[i].matches(stnParams[0])) {
@@ -335,29 +338,18 @@ public class MainActivity extends BaseActivity implements
                 break;
             }
         }
-        // Display the avg, sido, and sigun price based on the selected gas.
-        binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
-        pricePagerAdapter = new PricePagerAdapter(this);
+
+        //pricePagerAdapter = new PricePagerAdapter(this);
         pricePagerAdapter.setFuelCode(gasCode);
-        binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
+        pricePagerAdapter.notifyDataSetChanged();
     }
 
-    // Ref: expand the station recyclerview up to wrap_content
-    // Animate the visibility of the collapsed price bar.
-    private void showCollapsedPricebar(int offset) {
-        if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
-            binding.pricebar.getRoot().setVisibility(View.VISIBLE);
-            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0f, 1f);
-            anim.setDuration(500);
-            anim.start();
-        } else binding.pricebar.getRoot().setVisibility(View.INVISIBLE);
-    }
-
-    private void dispCollapsedBarPrice() {
+    private void setCollapsedPriceBar() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
         binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
-        // Set the sido and sigun price which are intervally stored in the Cache
+
+        // Set the sido and sigun price which have been intervally stored in the Cache
         for(String fName : arrFile) {
             File file = new File(getCacheDir(), fName);
             Uri uri = Uri.fromFile(file);
@@ -386,6 +378,18 @@ public class MainActivity extends BaseActivity implements
             } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
         }
     }
+
+    // Ref: expand the station recyclerview up to wrap_content
+    // Animate the visibility of the collapsed price bar.
+    private void showCollapsedPricebar(int offset) {
+        if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
+            binding.pricebar.getRoot().setVisibility(View.VISIBLE);
+            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0f, 1f);
+            anim.setDuration(500);
+            anim.start();
+        } else binding.pricebar.getRoot().setVisibility(View.INVISIBLE);
+    }
+
 
     // Scale the size of the fab as the station recyclerview scrolls up and down.
     private final RecyclerView.OnScrollListener stationScrollListener = new RecyclerView.OnScrollListener(){
@@ -445,7 +449,7 @@ public class MainActivity extends BaseActivity implements
     private void updateSettingResult(ActivityResult result) {
         Intent resultIntent = result.getData();
         if(resultIntent == null) return;
-        
+
         if(!TextUtils.isEmpty(resultIntent.getStringExtra("userName"))) {
             log.i("user name changed");
         }
@@ -453,26 +457,26 @@ public class MainActivity extends BaseActivity implements
         if(!TextUtils.isEmpty(resultIntent.getStringExtra("distCode"))) {
             String distCode = resultIntent.getStringExtra("distCode");
             opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-            GasPriceTask gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, distCode, null);
+            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, distCode, null);
             opinetModel.distPriceComplete().observe(this, isDone -> {
                 log.i("update districe price info:");
+                //pricePagerAdapter.setFuelCode(gasCode);
                 pricePagerAdapter.notifyDataSetChanged();
+                setCollapsedPriceBar();
                 //binding.mainTopFrame.viewpagerPrice.setAdapter(pricePagerAdapter);
             });
 
         }
 
         if(!TextUtils.isEmpty(resultIntent.getStringExtra("gasCode"))) {
-            log.i("gas code changed");
-            gasCode = resultIntent.getStringExtra("gasCode");;
             String[] arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
             for(int i = 0; i < arrGasCode.length; i++) {
-                if(arrGasCode[i].matches(gasCode)) {
+                if(arrGasCode[i].matches(Objects.requireNonNull(resultIntent.getStringExtra("gasCode")))) {
                     binding.mainTopFrame.spinnerGas.setSelection(i);
-                    //gasCode = stnParams[0];
                     break;
                 }
             }
+
         }
     }
 }

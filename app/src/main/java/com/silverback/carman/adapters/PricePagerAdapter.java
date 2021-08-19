@@ -66,8 +66,8 @@ public class PricePagerAdapter extends FragmentStateAdapter {
         super.onBindViewHolder(holder, position, payloads);
         log.i("pricepageradapter onbindviewholder:%s, %s", holder, payloads.size());
 
-        if(position == 0) distFragment.reload(0);
-        else if(position == 1) stnFragment.reload(1);
+        if(position == 0) distFragment.reload(0, fuelCode);
+        else if(position == 1) stnFragment.reload(1, fuelCode);
     }
 
     @Override

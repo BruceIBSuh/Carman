@@ -9,4 +9,4 @@
     android:gravity="center"
     android:textSize="@dimen/smallText"
     android:textStyle="bold"
-    android:textColor="@color/bgToolbar" />
+    android:textColor="@color/white" />

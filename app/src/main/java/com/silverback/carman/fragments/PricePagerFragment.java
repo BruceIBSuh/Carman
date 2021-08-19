@@ -81,7 +81,7 @@ public class PricePagerFragment extends Fragment {
         switch(page) {
             case DISTRICT_PRICE:
                 log.i("DISTRICT_PRICE");
-                this.distBinding = PagerDistrictPriceBinding.inflate(inflater);
+                distBinding = PagerDistrictPriceBinding.inflate(inflater);
                 distBinding.sidoPriceView.addPriceView(fuelCode);
                 distBinding.sigunPriceView.addPriceView(fuelCode);
 
@@ -122,11 +122,11 @@ public class PricePagerFragment extends Fragment {
         return null;
     }
 
-    public void reload(int position) {
+    public void reload(int position, String gasCode) {
         if(position == 0 && distBinding != null) {
-            log.i("update district view");
-            distBinding.sidoPriceView.addPriceView(fuelCode);
-            distBinding.sigunPriceView.addPriceView(fuelCode);
+            log.i("update district view: %s", gasCode);
+            distBinding.sidoPriceView.addPriceView(gasCode);
+            distBinding.sigunPriceView.addPriceView(gasCode);
         } else if(position == 1 && stnBinding != null) {
             log.i("favorite station update required");
         }
