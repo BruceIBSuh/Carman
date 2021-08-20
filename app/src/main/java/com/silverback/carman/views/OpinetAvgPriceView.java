@@ -73,7 +73,7 @@ public class OpinetAvgPriceView extends OpinetPriceView {
 
 
     @SuppressWarnings("unchecked")
-    public void addPriceView(String fuelCode){
+    public void addPriceView(String gasCode){
         File avgFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_AVG_PRICE);
         Uri avgUri = Uri.fromFile(avgFile);
 
@@ -81,13 +81,12 @@ public class OpinetAvgPriceView extends OpinetPriceView {
             ObjectInputStream ois = new ObjectInputStream(is)){
             List<Opinet.OilPrice> avgPrice = (List<Opinet.OilPrice>)ois.readObject();
             for (Opinet.OilPrice opinet : avgPrice) {
-                if (opinet.getProductCode().matches(fuelCode)) {
+                if (opinet.getProductCode().matches(gasCode)) {
                     this.price = opinet.getPrice();
                     this.diff = opinet.getDiff();
-                    log.i("AvgPriceView: %s, %s, %s", opinet.getProductCode(), price, diff);
                     setColoredTextView(tvAvgPrice, price, diff);
                     break;
-                }
+                } else tvAvgPrice.setText(R.string.main_no_data);
             }
 
         } catch(IOException | ClassNotFoundException e) {

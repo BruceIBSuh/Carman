@@ -41,7 +41,7 @@ import java.util.Objects;
 /*
  * This activity is largely compolsed of two viewpagers. The viewpager which is synced w/ the tab
  * is at the bottom for holding such fragments as GasManagerFragment, ServiceManagerFragment, and
- * StatStmtsFragment. The other is at the top to hold PricePagerFragment w/ PricePagerAdapter which,
+ * StatStmtsFragment. The other is at the top to hold MainPricePagerFragment w/ MainPricePagerAdapter which,
  * as a single fragment with multiple pages, shows the recent 5 expense statements of the first 2
  * tab-synced fragments and a single page of StatGraphFragment of the last tab-synced one, which
  * may extend to multi pages at a later time.

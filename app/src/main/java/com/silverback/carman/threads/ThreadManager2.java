@@ -254,8 +254,8 @@ public class ThreadManager2 {
             locationTask = null;
             //mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
-            stnListTask.recycle();
-            stnListTask = null;
+            //stnListTask.recycle();
+            //stnListTask = null;
             //mStnListTaskQueue.offer((StationListTask)task);
         }
 

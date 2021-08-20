@@ -1,6 +1,8 @@
 package com.silverback.carman;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -229,6 +231,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
+            setResult(Activity.RESULT_CANCELED);
             finish();
             return true;
         }

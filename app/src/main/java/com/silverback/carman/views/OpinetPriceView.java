@@ -57,4 +57,8 @@ public abstract class OpinetPriceView extends LinearLayout {
 
         textView.setText(ssb);
     }
+
+    protected void setEmptyTextView(TextView textView, String msg) {
+
+    }
 }

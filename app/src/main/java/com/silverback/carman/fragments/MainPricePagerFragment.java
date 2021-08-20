@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.silverback.carman.R;
-import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.PagerDistrictPriceBinding;
 import com.silverback.carman.databinding.PagerStationPriceBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -19,16 +18,13 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.ThreadManager;
-import com.silverback.carman.views.OpinetSidoPriceView;
-import com.silverback.carman.views.OpinetSigunPriceView;
-import com.silverback.carman.views.OpinetStationPriceView;
 
 /**
  * This fragment is to display the gas prices of the favorite district and the favorite station.
  */
-public class PricePagerFragment extends Fragment {
+public class MainPricePagerFragment extends Fragment {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(PricePagerFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(MainPricePagerFragment.class);
 
     // Constants
     private static final int DISTRICT_PRICE = 0;
@@ -44,12 +40,12 @@ public class PricePagerFragment extends Fragment {
 
 
     // Constructor
-    private PricePagerFragment() {
+    private MainPricePagerFragment() {
         // Default private construcotr leaving empty.
     }
 
-    public static PricePagerFragment getInstance(String fuelCode, int position) {
-        PricePagerFragment pagerFragment = new PricePagerFragment();
+    public static MainPricePagerFragment getInstance(String fuelCode, int position) {
+        MainPricePagerFragment pagerFragment = new MainPricePagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", position);
         args.putString("fuelCode", fuelCode);
@@ -72,7 +68,7 @@ public class PricePagerFragment extends Fragment {
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedStateInstance) {
 
-        log.i("onCreateView of PricePagerFragment");
+        log.i("onCreateView of MainPricePagerFragment");
         if(getArguments() != null) {
             page = getArguments().getInt("page");
             fuelCode = getArguments().getString("fuelCode");

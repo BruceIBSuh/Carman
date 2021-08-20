@@ -187,7 +187,7 @@ public class FragmentSharedModel extends ViewModel {
 
 
 
-    // Commnumcate b/w GeneralFragment and PricePagerFragment in MainActivity to pass the station id
+    // Commnumcate b/w GeneralFragment and MainPricePagerFragment in MainActivity to pass the station id
     // of the first placeholder.
     public MutableLiveData<String> getFirstPlaceholderId() {
         if(firstPlaceholderId == null) firstPlaceholderId = new MutableLiveData<>();

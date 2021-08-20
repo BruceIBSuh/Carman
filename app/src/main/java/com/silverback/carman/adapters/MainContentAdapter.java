@@ -19,6 +19,7 @@ import com.silverback.carman.databinding.MainContentFooterBinding;
 import com.silverback.carman.databinding.MainContentNotificationBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.utils.Constants;
 
 public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -52,7 +53,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         public ContentViewHolder(View itemView) {
             super(itemView);
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
-            params.setMargins(0, 0, 0, 40);
+            params.setMargins(0, 0, 0, Constants.dividerHeight);
             itemView.setLayoutParams(params);
             // Define click listener for the ViewHolder's View.
         }

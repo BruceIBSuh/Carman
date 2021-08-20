@@ -55,7 +55,7 @@
     <string name="general_index_reset">변경</string>
     <string name="general_no_location">현재 위치 정보를 찾을 수 없습니다.\n버튼을 눌려서 현재위치를 업데이트해 주세요.</string>
 
-    <!-- Update version-->
+    <!-- MainActivity updated version-->
     <string name="main_subtitle_news">알립니다</string>
     <string name="main_subtitle_expense">월 지출</string>
     <string name="main_subtitle_gas">주유내역 </string>
@@ -63,6 +63,8 @@
     <string name="main_subtitle_extra">기타지출</string>
     <string name="main_subtitle_svc">서비스내역</string>
     <string name="main_subtitle_tip">오토라이프 \&amp;</string>
+
+    <string name="main_no_data">n/a</string>
 
 
     <string name="main_subtitle_collapsed">평균</string>
@@ -376,4 +378,5 @@
     <string name="errror_no_network">네트워크 연결에 실패하였습니다\n확인 후 다시 연결해 주세요</string>
     <string name="error_no_network_upload_fail">네트워크를 찾을 수 없습니다</string>
     <string name="error_index_retry">확인</string>
+
 </resources>

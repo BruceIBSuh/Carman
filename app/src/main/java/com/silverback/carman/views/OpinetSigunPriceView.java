@@ -41,7 +41,7 @@ public class OpinetSigunPriceView extends OpinetPriceView {
         getAttributes(context, attrs);
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     protected void getAttributes(Context context, AttributeSet attrs) {
 
         //LayoutInflater inflater = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -69,15 +69,17 @@ public class OpinetSigunPriceView extends OpinetPriceView {
         try(InputStream is = getContext().getContentResolver().openInputStream(sigunUri);
             ObjectInputStream ois = new ObjectInputStream(is)){
             List<Opinet.SigunPrice> sigunPrice = (List<Opinet.SigunPrice>)ois.readObject();
+            log.i("add Sigun Price: %s", sigunPrice.size());
             for (Opinet.SigunPrice opinet : sigunPrice) {
                 if (opinet.getProductCd().matches(fuelCode)) {
                     String sigunName = opinet.getSigunName();
                     float price = opinet.getPrice();
                     float diff = opinet.getDiff();
+                    log.i("sigun price: %s, %s", sigunName, price);
                     tvSigunName.setText(sigunName);
                     setColoredTextView(tvSigunPrice, price, diff);
                     break;
-                }
+                } else tvSigunPrice.setText(R.string.main_no_data);
             }
 
         } catch(FileNotFoundException e) {

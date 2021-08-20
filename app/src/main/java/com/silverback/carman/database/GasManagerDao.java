@@ -32,6 +32,12 @@ public abstract class GasManagerDao {
     public abstract LiveData<RecentGasData> loadLatestGasData();
 
 
+    @Query("SELECT date_time, mileage, stn_name, wash_payment FROM GasManagerEntity " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "WHERE date_time >= :from AND date_time <= :to")
+
+    public abstract LiveData<List<CarWashData>> loadCarWashData(long from, long to);
+
 
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
     public abstract GasManagerEntity findGasManagerByNameOrId(String stnName, String stnId);
@@ -68,6 +74,18 @@ public abstract class GasManagerDao {
         public int gasPayment;
         @ColumnInfo(name = "gas_amount")
         public int gasAmount;
+    }
+
+    public static class CarWashData {
+        @ColumnInfo(name = "date_time")
+        public long dateTime;
+        @ColumnInfo(name = "mileage")
+        public int mileage;
+        @ColumnInfo(name = "stn_name")
+        public String stnName;
+        @ColumnInfo(name = "wash_payment")
+        public int washPayment;
+
     }
 
 }

@@ -40,7 +40,7 @@ import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingPrefActivity;
 import com.silverback.carman.StationMapActivity;
-import com.silverback.carman.adapters.PricePagerAdapter;
+import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.GasManagerDao;
@@ -104,7 +104,7 @@ public class GeneralFragment extends Fragment implements
     private OpinetAvgPriceView opinetAvgPriceView;
     private StationRecyclerView stationRecyclerView;
     private StationListAdapter mAdapter;
-    private PricePagerAdapter pricePagerAdapter;
+    private MainPricePagerAdapter pricePagerAdapter;
     private List<Opinet.GasStnParcelable> mStationList;
     private Location mPrevLocation;
 
@@ -144,7 +144,7 @@ public class GeneralFragment extends Fragment implements
         // To nest a fragment,  like the viewpager containing fragmgents, call getChildFragmentManager()
         // on the container fragment. Viewpager
 
-        //pricePagerAdapter = new PricePagerAdapter(getChildFragmentManager());
+        //pricePagerAdapter = new MainPricePagerAdapter(getChildFragmentManager());
 
         // Create ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -235,7 +235,7 @@ public class GeneralFragment extends Fragment implements
 
         // Get the first placeholder id from the local db and if it is different from the id previously
         // saved as the first placeholder in the file, which means the first favorite has changed,
-        // pass the id to PricePagerFragment by FramentSharedModel and update the adapter.
+        // pass the id to MainPricePagerFragment by FramentSharedModel and update the adapter.
         mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), stnId -> {
             savedId = getSavedFirstFavorite(getContext());
             // A new station is reset to the first favroite list.

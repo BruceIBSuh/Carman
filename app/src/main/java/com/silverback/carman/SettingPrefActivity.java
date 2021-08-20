@@ -333,9 +333,7 @@ public class SettingPrefActivity extends BaseActivity implements
     // Implement SharedPreferences.OnSharedPreferenceChangeListener
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-
         switch(key) {
-
             case Constants.USER_NAME:
                 userName = mSettings.getString(key, null);
                 // Check first if the user id file exists. If so, set the user data or update the
