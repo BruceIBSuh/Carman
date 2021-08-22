@@ -53,7 +53,6 @@ public class DistCodeSpinnerRunnable implements Runnable {
         Uri uri = Uri.fromFile(file);
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
-
             // To prevent ObjectInputStream.readObject() from incurring unchecked cast when the object
             // is directly cast to List<Opinet.DistrictCode>, the object should be deserialized first.
             Object objList = ois.readObject();

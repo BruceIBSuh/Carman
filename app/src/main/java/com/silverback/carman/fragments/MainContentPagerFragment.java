@@ -74,7 +74,6 @@ public class MainContentPagerFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) position = getArguments().getInt("position");
 
-
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
@@ -88,7 +87,7 @@ public class MainContentPagerFragment extends Fragment {
                              Bundle savedInstanceState) {
         switch(position){
             case 0:
-                totalBinding = MainContentPagerTotalBinding.inflate(inflater, container,false);
+                totalBinding = MainContentPagerTotalBinding.inflate(inflater, container, false);
                 String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
                 totalBinding.tvSubtitleMonth.setText(month);
                 displayTotalExpense();
@@ -119,13 +118,20 @@ public class MainContentPagerFragment extends Fragment {
     }
 
     private void displayTotalExpense() {
+
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        long start = calendar.getTimeInMillis();
+        long end = System.currentTimeMillis();
+        log.i("query period: %s, %s", start, end);
+
+        /*
         final int year = calendar.get(Calendar.YEAR);
         final int month = calendar.get(Calendar.MONTH);
-
         calendar.set(year, month, 1, 0, 0);
         long start = calendar.getTimeInMillis();
         calendar.set(year, month, 31, 23, 59, 59);
         long end = calendar.getTimeInMillis();
+        */
 
         mDB.expenseBaseModel().loadMonthlyExpense(Constants.GAS, Constants.SVC, start, end)
                 .observe(getViewLifecycleOwner(), expList -> {
@@ -157,7 +163,7 @@ public class MainContentPagerFragment extends Fragment {
         log.i("query period: %s, %s", start, end);
 
         mDB.gasManagerModel().loadCarWashData(start, end).observe(getViewLifecycleOwner(), results -> {
-            log.i("car wash: %s", results);
+            if(results.size() == 0) return;
             int total = 0;
 
             for(GasManagerDao.CarWashData carwash : results) {
@@ -239,7 +245,7 @@ public class MainContentPagerFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return 3;
+            return carwash.size();
         }
     }
 }

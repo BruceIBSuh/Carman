@@ -30,15 +30,13 @@ public class StatGraphView extends View {
 
     private static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
 
-    private Context context;
+    private final Context context;
 
     private ArrayList<Float> percentList;
     private ArrayList<Float> targetPercentList;
     private int[] monthlyExpense;
 
-    private Paint textPaint;
-    private Paint fgPaint;
-    private Paint axisPaint, expenseNumPaint;
+    private Paint textPaint, fgPaint, axisPaint, expenseNumPaint;
     private Rect rect;
     private int topMargin;
     private int barWidth;
@@ -56,7 +54,7 @@ public class StatGraphView extends View {
 
     private int graphAxisColor, graphLabelColor;
 
-    private Runnable animator = new Runnable() {
+    private final Runnable animator = new Runnable() {
         @Override
         public void run() {
             boolean needNewFrame = false;
@@ -76,7 +74,7 @@ public class StatGraphView extends View {
 
             }
 
-            if (needNewFrame) postDelayed(this, 5);
+            if(needNewFrame) postDelayed(this, 5);
             invalidate();
         }
     };
@@ -194,6 +192,7 @@ public class StatGraphView extends View {
                 bottomTextDescent = Math.abs(r.bottom);
             }
         }
+
         setMinimumWidth(2);
         postInvalidate(); // call Draw() on non-UI thread
     }
@@ -226,7 +225,6 @@ public class StatGraphView extends View {
         setMinimumWidth(2);
         removeCallbacks(animator);
         post(animator);
-
     }
 
     @Override
@@ -251,7 +249,6 @@ public class StatGraphView extends View {
         // Draw the graph bar
         int index = 0;
         if(percentList != null && !percentList.isEmpty()) {
-
             for(Float f : percentList) {
                 rect.set(GRAPH_SIDE_MARGIN + (interval * index) + interval / 2 - barWidth / 2, // Left
                         topMargin + (int)((getHeight() - topMargin - bottomTextHeight - TEXT_TOP_MARGIN - axisStroke) * percentList.get(index)), // Top
@@ -290,7 +287,6 @@ public class StatGraphView extends View {
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mViewWidth = measureWidth(widthMeasureSpec);
-        // TEST CODE : add 100
         int mViewHeight = measureHeight(heightMeasureSpec);
 
         setMeasuredDimension(mViewWidth, mViewHeight);
@@ -318,17 +314,11 @@ public class StatGraphView extends View {
         int measurement;
 
         switch(MeasureSpec.getMode(measureSpec)){
-            case MeasureSpec.EXACTLY:
+            case MeasureSpec.EXACTLY: case MeasureSpec.UNSPECIFIED:
                 measurement = specSize;
-                //Log.d(TAG, "Mode: EXACTLY");
                 break;
             case MeasureSpec.AT_MOST:
                 measurement = Math.min(preferred, specSize);
-                //Log.d(TAG, "Mode: AT_MOST");
-                break;
-            case MeasureSpec.UNSPECIFIED:
-                measurement = specSize;
-                //Log.d(TAG, "Mode: UNSPECIFIED");
                 break;
             default:
                 measurement = preferred;
