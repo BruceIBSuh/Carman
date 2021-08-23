@@ -94,7 +94,8 @@ public class StatGraphView extends View {
 
     // Get Attributes
     private void getAttributes(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.StatGraphView);
+        TypedArray typedArray =
+                context.getTheme().obtainStyledAttributes(attrs, R.styleable.StatGraphView, 0, 0);
         try {
             graphAxisColor = typedArray.getColor(R.styleable.StatGraphView_graphAxisColor, 0);
             graphLabelColor = typedArray.getColor(R.styleable.StatGraphView_graphLabelColor, 0);

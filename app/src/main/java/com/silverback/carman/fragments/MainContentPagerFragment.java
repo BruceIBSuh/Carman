@@ -8,6 +8,7 @@ import android.util.MonthDisplayHelper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -190,7 +191,7 @@ public class MainContentPagerFragment extends Fragment {
     private void animateExpenseCount(int end) {
         ValueAnimator animator = ValueAnimator.ofInt(0, end);
         animator.setDuration(1000);
-        //animator.setInterpolator(new DecelerateInterpolator());
+        animator.setInterpolator(new DecelerateInterpolator());
         animator.addUpdateListener(animation -> {
             int currentNum = (int)animation.getAnimatedValue();
             String total = df.format(currentNum);
