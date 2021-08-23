@@ -88,7 +88,7 @@ public class RecentMontlyExpenses extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         this.setBackgroundColor(ContextCompat.getColor(context, android.R.color.holo_blue_bright));
-        
+
 
     }
 
