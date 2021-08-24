@@ -186,7 +186,8 @@ public class MainActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_garage) {
-            startActivity(new Intent(this, ExpenseActivity.class));
+            //startActivity(new Intent(this, ExpenseActivity.class));
+            activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
 
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
@@ -226,7 +227,6 @@ public class MainActivity extends BaseActivity implements
     // Implement AdapterView.OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-        log.i("onItemSelected: %s", pos);
         switch(pos){
             case 0: stnParams[0] = "B027"; break; // gasoline
             case 1: stnParams[0] = "D047"; break; // diesel
@@ -245,7 +245,6 @@ public class MainActivity extends BaseActivity implements
         gasCode = stnParams[0];
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
-
 
         boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {

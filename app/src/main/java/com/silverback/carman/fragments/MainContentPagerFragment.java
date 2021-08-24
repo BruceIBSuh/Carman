@@ -138,18 +138,17 @@ public class MainContentPagerFragment extends Fragment {
                 });
     }
 
-    private int[] compareRecentExpense(int recent) {
+    private int[] compareRecentExpense() {
+        int[] arrExpense = new int[3];
 
-        int[] arrMonthlyTotal = new int[recent];
-
-        for(int i = 0; i < recent; i++) {
+        for(int i = 2; i >= 0; i --) {
             final int index = i;
-            log.i("index: %s", index);
-            calendar.set(Calendar.DAY_OF_MONTH - (index * -1), 1);
+            calendar.set(Calendar.MONTH, -1);
+            log.i("start: %s, %s", calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR));
             long start = calendar.getTimeInMillis();
 
-            calendar.set(Calendar.MONTH, (index * -1));
-            calendar.getActualMinimum(Calendar.DAY_OF_MONTH);
+            int date = calendar.getActualMaximum(Calendar.MONTH);
+            calendar.set(Calendar.DAY_OF_MONTH, date);
             long end = calendar.getTimeInMillis();
 
             log.i("calendar: %s, %s", calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
@@ -157,14 +156,14 @@ public class MainContentPagerFragment extends Fragment {
             mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end)
                     .observe(getViewLifecycleOwner(), expenses -> {
                         for(Integer expense : expenses) totalExpense += expense;
-                        arrMonthlyTotal[index] = totalExpense;
-                        log.i("arrMonthlyTotal:%s", arrMonthlyTotal[index]);
+                        arrExpense[index] = totalExpense;
+                        log.i("arrExpense:%s", arrExpense[index]);
                         totalExpense = 0;
                     });
 
         }
 
-        return arrMonthlyTotal;
+        return arrExpense;
     }
 
     private void displayGasExpense() {
@@ -226,8 +225,9 @@ public class MainContentPagerFragment extends Fragment {
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 log.i("animation ended");
-                //TEST CODING
-                int[] data = {200000, 350000, 380000};
+
+                int[] data = compareRecentExpense();
+                //int[] data = {200000, 350000, 380000};
                 totalBinding.recentGraphView.setExpenseData(data);
 
             }

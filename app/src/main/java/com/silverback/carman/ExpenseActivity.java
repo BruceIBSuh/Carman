@@ -224,7 +224,11 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
                     startActivity(mainIntent);
-                } else finish();
+
+                }
+
+                setResult(RESULT_CANCELED);
+                finish();
 
                 return true;
 
@@ -371,7 +375,11 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 break;
         }
 
-        if(isSaved) finish();
+        if(isSaved) {
+            setResult(RESULT_CANCELED);
+            finish();
+        }
+
         return isSaved;
 
     }

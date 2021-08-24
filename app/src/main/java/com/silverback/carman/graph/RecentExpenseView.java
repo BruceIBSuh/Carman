@@ -24,11 +24,9 @@ public class RecentExpenseView extends View {
 
     private static final float ACCELERATOR = 0.02f;
     private final Context context;
-
-    private Rect rect;
     private Paint fgPaint;
-    private Paint dividerPaint, bar1Paint, bar2Paint, bar3Paint;
-    private ArrayList<Paint> barPaintList;
+    private Paint textPaint;
+    private Paint dividerPaint;
 
     private ArrayList<Float> targetPercentList;
     private ArrayList<Float> percentList;
@@ -39,12 +37,11 @@ public class RecentExpenseView extends View {
     private int topMargin;
 
     private Paint[] arrPaint = new Paint[3];
-    private int[] arrBarColor = new int[3];
+    private final int[] arrBarColor = new int[3];
 
     private final Runnable animator = new Runnable() {
         @Override
         public void run() {
-            log.i("animator started");
             boolean needNewFrame = false;
             for(int i = 0; i < targetPercentList.size(); i++) {
                 if (percentList.get(i) < targetPercentList.get(i)) {
@@ -62,7 +59,7 @@ public class RecentExpenseView extends View {
 
             }
 
-            if(needNewFrame) postDelayed(this, 5);
+            if(needNewFrame) postDelayed(this, 3);
             invalidate();
         }
     };
@@ -86,7 +83,6 @@ public class RecentExpenseView extends View {
         TypedArray typedArray =
                 context.getTheme().obtainStyledAttributes(attrs, R.styleable.RecentExpenseView, 0, 0);
         try {
-            log.i("TypedArray");
             arrBarColor[0] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor1, 0);
             arrBarColor[1] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor2, 0);
             arrBarColor[2] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor3, 0);
@@ -98,7 +94,7 @@ public class RecentExpenseView extends View {
 
     private void init() {
         percentList = new ArrayList<>();
-        rect = new Rect();
+        Rect rect = new Rect();
         arrPaint = new Paint[3];
         for(int i = 0; i < 3; i++) {
             arrPaint[i] = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -108,6 +104,7 @@ public class RecentExpenseView extends View {
         // Set the graph bar width
         barWidth = DisplayResolutionUtils.dip2px(context, 10);
         topMargin = DisplayResolutionUtils.dip2px(context, 15);
+        int textSize = DisplayResolutionUtils.dip2px(context, 12);
 
         // Set the background color of the graph
         Paint bgPaint = new Paint();
@@ -117,6 +114,10 @@ public class RecentExpenseView extends View {
         // Foreground color of the graph
         fgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         fgPaint.setColor(ContextCompat.getColor(context, android.R.color.white));
+
+        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(ContextCompat.getColor(context, android.R.color.white));
+        textPaint.setTextSize(textSize);
 
         dividerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         dividerPaint.setColor(ContextCompat.getColor(context, android.R.color.white));
@@ -141,13 +142,11 @@ public class RecentExpenseView extends View {
         // Make the ArrayList size equal to be sure percetList.size() == targetPerentList.size()
         if(percentList.isEmpty() || percentList.size() < targetPercentList.size()) {
             int temp = targetPercentList.size() - percentList.size();
-            log.i("temp: %s", temp);
             for(int i = 0; i < temp; i++) {
                 percentList.add(1f);
             }
         } else if(percentList.size() > targetPercentList.size()) {
             int temp = percentList.size() - targetPercentList.size();
-            log.i("temp: %s", temp);
             for(int i = 0; i < temp; i++) {
                 percentList.remove(percentList.size() - 1);
             }
@@ -171,28 +170,17 @@ public class RecentExpenseView extends View {
         if(percentList != null && percentList.size() > 0) {
             for(int i = 0; i < 3; i++) {
                 final float offset = (barOffset * i) + barOffset / 2;
-                log.i("percentList: %s", percentList.get(i));
                 final int top = topMargin + (int)((mViewHeight - topMargin) * percentList.get(i));
                 canvas.drawRect(offset - barWidth, top, offset + barWidth, mViewHeight, arrPaint[i]);
-
-
-                canvas.drawText("month", 0, 4, offset - 10, 30, fgPaint);
+                canvas.drawText("month", offset - 50, 25, textPaint);
             }
         }
 
     }
 
-    /*
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        log.i("onSizechanged: %s, %s, %s, %s", w, h, oldw, oldh);
-    }
-     */
-
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        log.i("onMeasure: %s, %s", widthMeasureSpec, heightMeasureSpec);
         int minWidth = getPaddingLeft() + getPaddingRight() + getSuggestedMinimumWidth();
         mViewWidth = resolveSizeAndState(minWidth, widthMeasureSpec, 1);
 
