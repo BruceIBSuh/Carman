@@ -59,4 +59,9 @@
     <color name="bgRecentExp">#999900</color>
     <color name="pbSafe">#66CC00</color>
     <color name="pbWarning">#FF3333</color>
+
+    <!-- MainActivity$MainContentFragment$RecentExpenseView -->
+    <color name="barColor1">#66FFB2</color>
+    <color name="barColor2">#FFFF66</color>
+    <color name="barColor3">#FF3333</color>
 </resources>

@@ -30,8 +30,10 @@
         <attr name="pagerAdapter" format="reference" />
     </declare-styleable>
 
-    <declare-styleable name="RecentMontlyExpenses">
-
+    <declare-styleable name="RecentExpenseView">
+        <attr name="graphBarColor1" format="color|reference" />
+        <attr name="graphBarColor2" format="color|reference" />
+        <attr name="graphBarColor3" format="color|reference" />
     </declare-styleable>
 
     <declare-styleable name="StatGraphView" >

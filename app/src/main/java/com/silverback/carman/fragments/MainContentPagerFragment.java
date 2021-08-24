@@ -119,12 +119,9 @@ public class MainContentPagerFragment extends Fragment {
     }
 
     private void displayTotalExpense() {
-
         calendar.set(Calendar.DAY_OF_MONTH, 1);
         long start = calendar.getTimeInMillis();
         long end = System.currentTimeMillis();
-        log.i("query period: %s, %s", start, end);
-
         /*
         final int year = calendar.get(Calendar.YEAR);
         final int month = calendar.get(Calendar.MONTH);
@@ -133,15 +130,41 @@ public class MainContentPagerFragment extends Fragment {
         calendar.set(year, month, 31, 23, 59, 59);
         long end = calendar.getTimeInMillis();
         */
-
-        mDB.expenseBaseModel().loadMonthlyExpense(Constants.GAS, Constants.SVC, start, end)
-                .observe(getViewLifecycleOwner(), expList -> {
-                    for(ExpenseBaseDao.ExpenseByMonth expense : expList)
-                        totalExpense += expense.totalExpense;
-
+        mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end)
+                .observe(getViewLifecycleOwner(), expenses -> {
+                    for(Integer expense : expenses) totalExpense += expense;
                     df.setDecimalSeparatorAlwaysShown(false);
                     animateExpenseCount(totalExpense);
                 });
+    }
+
+    private int[] compareRecentExpense(int recent) {
+
+        int[] arrMonthlyTotal = new int[recent];
+
+        for(int i = 0; i < recent; i++) {
+            final int index = i;
+            log.i("index: %s", index);
+            calendar.set(Calendar.DAY_OF_MONTH - (index * -1), 1);
+            long start = calendar.getTimeInMillis();
+
+            calendar.set(Calendar.MONTH, (index * -1));
+            calendar.getActualMinimum(Calendar.DAY_OF_MONTH);
+            long end = calendar.getTimeInMillis();
+
+            log.i("calendar: %s, %s", calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+
+            mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end)
+                    .observe(getViewLifecycleOwner(), expenses -> {
+                        for(Integer expense : expenses) totalExpense += expense;
+                        arrMonthlyTotal[index] = totalExpense;
+                        log.i("arrMonthlyTotal:%s", arrMonthlyTotal[index]);
+                        totalExpense = 0;
+                    });
+
+        }
+
+        return arrMonthlyTotal;
     }
 
     private void displayGasExpense() {
@@ -203,6 +226,10 @@ public class MainContentPagerFragment extends Fragment {
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 log.i("animation ended");
+                //TEST CODING
+                int[] data = {200000, 350000, 380000};
+                totalBinding.recentGraphView.setExpenseData(data);
+
             }
         });
 

@@ -3,6 +3,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:id="@+id/content_expense"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -96,15 +97,17 @@
         app:srcCompat="@drawable/sample_chart" />
     -->
 
-    <com.silverback.carman.graph.RecentMontlyExpenses
+    <com.silverback.carman.graph.RecentExpenseView
+        android:id="@+id/recentGraphView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="8dp"
-        android:background="@android:color/holo_blue_light"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/guideline2"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        custom:graphBarColor1="@color/barColor1"
+        custom:graphBarColor2="@color/barColor2"
+        custom:graphBarColor3="@color/barColor3"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

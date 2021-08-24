@@ -80,11 +80,15 @@ public class StatGraphView extends View {
     };
 
     // Constructor
+    /*
     public StatGraphView(Context context) {
         super(context);
         this.context = context;
         init();
     }
+
+     */
+
     public StatGraphView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
@@ -99,9 +103,10 @@ public class StatGraphView extends View {
         try {
             graphAxisColor = typedArray.getColor(R.styleable.StatGraphView_graphAxisColor, 0);
             graphLabelColor = typedArray.getColor(R.styleable.StatGraphView_graphLabelColor, 0);
+            log.i("typedarray: %s", graphAxisColor);
         } finally {
             // init() cannot get started until the color attrs are obtained.
-            if(graphAxisColor != 0 && graphLabelColor != 0) init();
+            //if(graphAxisColor != 0 && graphLabelColor != 0) init();
             typedArray.recycle();
         }
 
@@ -203,7 +208,6 @@ public class StatGraphView extends View {
     public void setDataList(int[] expense, int max) {
         targetPercentList = new ArrayList<>();
         monthlyExpense = expense;
-
         if(max == 0) max = 1; //prevents the possibility to be divided by zero
 
         for(Integer integer : expense) {
