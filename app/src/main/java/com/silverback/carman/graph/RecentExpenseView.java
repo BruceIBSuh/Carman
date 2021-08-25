@@ -10,20 +10,32 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
+import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.DisplayResolutionUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class RecentExpenseView extends View {
 
     public static LoggingHelper log = LoggingHelperFactory.create(RecentExpenseView.class);
 
     private static final float ACCELERATOR = 0.02f;
+
     private final Context context;
+
+    private CarmanDatabase mDB;
+    private Calendar calendar;
+    private SimpleDateFormat sdf;
+
     private Paint fgPaint;
     private Paint textPaint;
     private Paint dividerPaint;
@@ -31,13 +43,19 @@ public class RecentExpenseView extends View {
     private ArrayList<Float> targetPercentList;
     private ArrayList<Float> percentList;
 
+
+
     private int mViewWidth;
     private int mViewHeight;
     private int barWidth;
     private int topMargin;
 
+    private int maxExpense;
+
     private Paint[] arrPaint = new Paint[3];
     private final int[] arrBarColor = new int[3];
+    private final int[] arrExpense = new int[3];
+    private final String[] arrMonthName = new String[3];
 
     private final Runnable animator = new Runnable() {
         @Override
@@ -93,6 +111,10 @@ public class RecentExpenseView extends View {
     }
 
     private void init() {
+        mDB = CarmanDatabase.getDatabaseInstance(context);
+        calendar = Calendar.getInstance();
+        sdf = new SimpleDateFormat("MMM", Locale.ENGLISH);
+
         percentList = new ArrayList<>();
         Rect rect = new Rect();
         arrPaint = new Paint[3];
@@ -104,7 +126,7 @@ public class RecentExpenseView extends View {
         // Set the graph bar width
         barWidth = DisplayResolutionUtils.dip2px(context, 10);
         topMargin = DisplayResolutionUtils.dip2px(context, 15);
-        int textSize = DisplayResolutionUtils.dip2px(context, 12);
+        int textSize = DisplayResolutionUtils.dip2px(context, 11);
 
         // Set the background color of the graph
         Paint bgPaint = new Paint();
@@ -123,13 +145,37 @@ public class RecentExpenseView extends View {
         dividerPaint.setColor(ContextCompat.getColor(context, android.R.color.white));
     }
 
-    public void setExpenseData(int[] arrExpense) {
-        // Get the max value out of the expenses.
-        int maxExpense = arrExpense[0];
-        for(int expense : arrExpense) if(expense > maxExpense) maxExpense = expense;
+    //public void setExpenseData(ArrayList<Integer> expList) {
+    public void setExpenseData(int expense, LifecycleOwner lifecycleOwner) {
+        arrExpense[2] = expense;
+        maxExpense = arrExpense[2];
+        arrMonthName[2] = sdf.format(calendar.getTime());
 
-        setGraphBarHeight(arrExpense, maxExpense);
+        for(int i = 1; i >= 0; i--) {
+            calendar.add(Calendar.MONTH, -1);
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            final long start = calendar.getTimeInMillis();
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+            final long end = calendar.getTimeInMillis();
+
+            arrMonthName[i] = sdf.format(calendar.getTime());
+            queryMonthlyExpense(i, start, end, lifecycleOwner);
+        }
+
     }
+
+   private void queryMonthlyExpense(final int index, long start, long end, LifecycleOwner lifecycleOwner) {
+       synchronized (this) {
+           mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end).observe(lifecycleOwner, expenses -> {
+               int totalExpense = 0;
+               for(Integer value : expenses) totalExpense += value;
+               arrExpense[index] = totalExpense;
+               if(maxExpense < totalExpense) maxExpense = totalExpense;
+               if(index == 0) setGraphBarHeight(arrExpense, maxExpense);
+           });
+       }
+
+   }
 
     private void setGraphBarHeight(int[] expenses, int max) {
         targetPercentList = new ArrayList<>();
@@ -165,14 +211,13 @@ public class RecentExpenseView extends View {
         // Draw the column divider
         canvas.drawRect(barOffset - 1, 0, barOffset + 1, mViewHeight, dividerPaint);
         canvas.drawRect(barOffset * 2 - 1, 0, barOffset * 2 + 1, mViewHeight, dividerPaint);
-
         // Draw each graph bar for last 3 months
         if(percentList != null && percentList.size() > 0) {
             for(int i = 0; i < 3; i++) {
                 final float offset = (barOffset * i) + barOffset / 2;
                 final int top = topMargin + (int)((mViewHeight - topMargin) * percentList.get(i));
                 canvas.drawRect(offset - barWidth, top, offset + barWidth, mViewHeight, arrPaint[i]);
-                canvas.drawText("month", offset - 50, 25, textPaint);
+                canvas.drawText(arrMonthName[i], offset - 25, 30, textPaint);
             }
         }
 

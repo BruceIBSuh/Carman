@@ -4,7 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.os.Bundle;
-import android.util.MonthDisplayHelper;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
-import com.silverback.carman.database.ExpenseBaseDao;
 import com.silverback.carman.database.GasManagerDao;
 import com.silverback.carman.databinding.MainContentExpenseRecyclerBinding;
 import com.silverback.carman.databinding.MainContentPagerCarwashBinding;
@@ -26,11 +25,11 @@ import com.silverback.carman.databinding.MainContentPagerSvcBinding;
 import com.silverback.carman.databinding.MainContentPagerTotalBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -43,7 +42,6 @@ import java.util.Locale;
 public class MainContentPagerFragment extends Fragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentPagerFragment.class);
 
-    // TODO: Rename and change types of parameters
     private Calendar calendar;
     private DecimalFormat df;
     private SimpleDateFormat sdf, sdf2;
@@ -122,14 +120,7 @@ public class MainContentPagerFragment extends Fragment {
         calendar.set(Calendar.DAY_OF_MONTH, 1);
         long start = calendar.getTimeInMillis();
         long end = System.currentTimeMillis();
-        /*
-        final int year = calendar.get(Calendar.YEAR);
-        final int month = calendar.get(Calendar.MONTH);
-        calendar.set(year, month, 1, 0, 0);
-        long start = calendar.getTimeInMillis();
-        calendar.set(year, month, 31, 23, 59, 59);
-        long end = calendar.getTimeInMillis();
-        */
+
         mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end)
                 .observe(getViewLifecycleOwner(), expenses -> {
                     for(Integer expense : expenses) totalExpense += expense;
@@ -138,32 +129,10 @@ public class MainContentPagerFragment extends Fragment {
                 });
     }
 
-    private int[] compareRecentExpense() {
-        int[] arrExpense = new int[3];
+    private void getRecentExpenseByMonth(int month) {
 
-        for(int i = 2; i >= 0; i --) {
-            final int index = i;
-            calendar.set(Calendar.MONTH, -1);
-            log.i("start: %s, %s", calendar.get(Calendar.MONTH), calendar.get(Calendar.YEAR));
-            long start = calendar.getTimeInMillis();
 
-            int date = calendar.getActualMaximum(Calendar.MONTH);
-            calendar.set(Calendar.DAY_OF_MONTH, date);
-            long end = calendar.getTimeInMillis();
 
-            log.i("calendar: %s, %s", calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
-
-            mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end)
-                    .observe(getViewLifecycleOwner(), expenses -> {
-                        for(Integer expense : expenses) totalExpense += expense;
-                        arrExpense[index] = totalExpense;
-                        log.i("arrExpense:%s", arrExpense[index]);
-                        totalExpense = 0;
-                    });
-
-        }
-
-        return arrExpense;
     }
 
     private void displayGasExpense() {
@@ -210,10 +179,11 @@ public class MainContentPagerFragment extends Fragment {
         });
     }
 
-    private void animateExpenseCount(int end) {
-        ValueAnimator animator = ValueAnimator.ofInt(0, end);
+    private void animateExpenseCount(int totalExpense) {
+        ValueAnimator animator = ValueAnimator.ofInt(0, totalExpense);
         animator.setDuration(1000);
         animator.setInterpolator(new DecelerateInterpolator());
+
         animator.addUpdateListener(animation -> {
             int currentNum = (int)animation.getAnimatedValue();
             String total = df.format(currentNum);
@@ -225,11 +195,9 @@ public class MainContentPagerFragment extends Fragment {
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 log.i("animation ended");
-
-                int[] data = compareRecentExpense();
-                //int[] data = {200000, 350000, 380000};
-                totalBinding.recentGraphView.setExpenseData(data);
-
+                // Get the last 2 month expense
+                int[] data = {200000, 350000, 380000};
+                totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
             }
         });
 
