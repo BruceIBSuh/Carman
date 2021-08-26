@@ -37,7 +37,6 @@ public interface ExpenseBaseDao {
         public int totalExpense;
     }
 
-
     // Subset of columns to return from loaddExpenseByCategory, which is used in StatStmtsFragment
     class ExpenseStatements {
         @ColumnInfo(name = "date_time")

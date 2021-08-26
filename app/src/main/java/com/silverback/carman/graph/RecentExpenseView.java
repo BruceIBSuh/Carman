@@ -171,6 +171,7 @@ public class RecentExpenseView extends View {
                for(Integer value : expenses) totalExpense += value;
                arrExpense[index] = totalExpense;
                if(maxExpense < totalExpense) maxExpense = totalExpense;
+               log.i("index and value: %s, %s", index, totalExpense);
                if(index == 0) setGraphBarHeight(arrExpense, maxExpense);
            });
        }

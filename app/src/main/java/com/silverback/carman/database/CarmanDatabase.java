@@ -28,7 +28,6 @@ public abstract class CarmanDatabase extends RoomDatabase {
     public abstract FavoriteProviderDao favoriteModel();
     public abstract ServicedItemDao servicedItemModel();
 
-
     // Constructor as a Singleton type
     public static CarmanDatabase getDatabaseInstance(Context context) {
         if(INSTANCE == null) {
