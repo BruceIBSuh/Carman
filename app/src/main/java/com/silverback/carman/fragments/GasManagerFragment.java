@@ -219,6 +219,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         binding.tvExtraPayment.setOnClickListener(this);
         binding.btnResetRatingbar.setOnClickListener(view -> binding.ratingBar.setRating(0f));
 
+        binding.btnChangeTime.setOnClickListener(view -> setCustomTime());
+
         // Check Geofencing permission(Background Location permission) first, then add a provider
         // not only to Geofencing list but alos favorite provider in the room.
         binding.btnGasFavorite.setOnClickListener(view -> {
@@ -631,5 +633,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
             }
         }
+    }
+
+    private void setCustomTime() {
+
     }
 }

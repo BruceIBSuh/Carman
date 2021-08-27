@@ -25,8 +25,8 @@ public interface ExpenseBaseDao {
             "WHERE category = :category1 OR category = :category2 ORDER BY mileage DESC")
     LiveData<List<ExpenseStatements>> loadExpenseByCategory(int category1, int category2);
 
-    @Query("SELECT total_expense FROM ExpenseBaseEntity WHERE date_time BETWEEN :start AND :end")
-    LiveData<List<Integer>> loadTotalExpenseByMonth(long start, long end);
+    @Query("SELECT date_time, total_expense FROM ExpenseBaseEntity WHERE date_time BETWEEN :start AND :end")
+    LiveData<List<ExpenseByMonth>> loadTotalExpenseByMonth(long start, long end);
 
     // Subset of columns to return from loadMonthlyExpense, which is used in StatGraphFragment.
     class ExpenseByMonth {

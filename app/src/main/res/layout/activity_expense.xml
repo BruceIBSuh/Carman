@@ -38,10 +38,10 @@
                 app:tabMode="fixed"
                 app:tabMaxWidth="0dp"
                 app:tabGravity="fill"
-                app:tabBackground="@android:color/background_dark"
+                app:tabBackground="@android:color/darker_gray"
                 app:tabIndicatorColor="@android:color/holo_orange_dark"
                 app:tabIndicatorHeight="3dp"
-                app:tabSelectedTextColor="@android:color/holo_orange_dark"
+                app:tabSelectedTextColor="@android:color/background_light"
                 app:tabTextAppearance="@style/CustomTabText"
                 app:tabTextColor="@android:color/background_light" />
             <androidx.appcompat.widget.Toolbar
