@@ -147,6 +147,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 AppCompatResources.getDrawable(this, R.drawable.ic_service),
                 AppCompatResources.getDrawable(this, R.drawable.ic_stats)
         };
+
         // A mediator to link TabLayout w/ ViewPager2. TabLayoutMediator listens to ViewPager2
         // OnPageChangeCallback, TabLayout OnTabSelectedListener and RecyclerView AdapterDataObserver.
         new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
@@ -167,7 +168,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
             @Override
             public void onPageSelected(int position) {
-                log.i("onPageSelected");
+                log.i("onPageSelected: %s", position);
             }
         });
 
@@ -190,7 +191,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     public void onResume() {
         super.onResume();
     }
-
 
     @Override
     public void onPause() {
@@ -227,9 +227,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
                 }
 
-                setResult(RESULT_CANCELED);
+                setResult(RESULT_CANCELED); //to make StationRecyclerView gone if it is visible
                 finish();
-
                 return true;
 
             // menu for saving the gas or service data

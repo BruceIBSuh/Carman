@@ -12,26 +12,26 @@ import android.view.animation.DecelerateInterpolator;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
+import com.silverback.carman.database.ExpenseBaseDao;
 import com.silverback.carman.database.GasManagerDao;
+import com.silverback.carman.databinding.MainContentExpenseBinding;
 import com.silverback.carman.databinding.MainContentExpenseRecyclerBinding;
 import com.silverback.carman.databinding.MainContentPagerCarwashBinding;
+import com.silverback.carman.databinding.MainContentPagerConfigBinding;
 import com.silverback.carman.databinding.MainContentPagerExtraBinding;
 import com.silverback.carman.databinding.MainContentPagerGasBinding;
 import com.silverback.carman.databinding.MainContentPagerSvcBinding;
 import com.silverback.carman.databinding.MainContentPagerTotalBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.QueryExpenseViewModel;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -49,22 +49,18 @@ public class MainContentPagerFragment extends Fragment {
 
     private Calendar calendar;
     private DecimalFormat df;
-    private SimpleDateFormat sdf, sdf2, sdf3;
+    private SimpleDateFormat sdf, sdf2;
     private CarmanDatabase mDB;
     private MonthlyExpenseRecyclerAdapter monthlyAdapter;
     private MainContentPagerTotalBinding totalBinding;
+    private MainContentPagerConfigBinding expConfigBinding;
     private MainContentPagerGasBinding gasBinding;
     private MainContentPagerSvcBinding svcBinding;
     private MainContentPagerCarwashBinding washBinding;
     private MainContentPagerExtraBinding extraBinding;
 
-    private QueryExpenseViewModel queryViewModel;
-
-    private ArrayList<Integer> totalExpenseList;
-    private final int[] arrExpense = new int[NumOfPrevMonths];
     private int position;
-    private int totalExpense, gasExpense, svcExpense;
-    private int count = 0;
+    //private int totalExpense, gasExpense, svcExpense;
 
     private MainContentPagerFragment() {
         // Required empty public constructor
@@ -91,16 +87,7 @@ public class MainContentPagerFragment extends Fragment {
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
 
-        // Instantiate RecentMontlyExpense class which queris previous expenses up to now.
-        RecentMonthlyExpense monthlyExpense = new RecentMonthlyExpense(NumOfPrevMonths);
-        monthlyExpense.getTotalExpenseByMonth();
-
-        // Create the viewmodel that stores data queried from the database.
-        queryViewModel = new ViewModelProvider(requireActivity()).get(QueryExpenseViewModel.class);
-        queryViewModel.getMonthlyExpense().observe(requireActivity(), index -> {
-            log.i("queried index: %s", index);
-            count++;
-        });
+        monthlyExpense = new RecentMonthlyExpense();
     }
 
     @Override
@@ -109,14 +96,23 @@ public class MainContentPagerFragment extends Fragment {
         switch(position){
             case 0:
                 totalBinding = MainContentPagerTotalBinding.inflate(inflater, container, false);
-                String month = String.valueOf(Calendar.getInstance(Locale.getDefault()).get(Calendar.MONTH) + 1);
+                String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
                 totalBinding.tvSubtitleMonth.setText(month);
-                animateExpenseCount(arrExpense[0]);
+                //dispThisMonthExpense();
+                monthlyExpense.queryThisMonthExpense();
                 return totalBinding.getRoot();
+            /*
             case 1:
                 gasBinding = MainContentPagerGasBinding.inflate(inflater, container, false);
                 displayGasExpense();
                 return gasBinding.getRoot();
+
+             */
+
+            case 1:
+                expConfigBinding = MainContentPagerConfigBinding.inflate(inflater, container, false);
+                return expConfigBinding.getRoot();
+
             case 2:
                 washBinding = MainContentPagerCarwashBinding.inflate(inflater, container, false);
                 displayWashExpense();
@@ -182,8 +178,8 @@ public class MainContentPagerFragment extends Fragment {
         });
     }
 
-    private void animateExpenseCount(int totalExpense) {
-        ValueAnimator animator = ValueAnimator.ofInt(0, totalExpense);
+    private void animateExpenseCount(int targetExpense) {
+        ValueAnimator animator = ValueAnimator.ofInt(0, targetExpense);
         animator.setDuration(1000);
         animator.setInterpolator(new DecelerateInterpolator());
 
@@ -197,7 +193,10 @@ public class MainContentPagerFragment extends Fragment {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                totalBinding.recentGraphView.setMontlyDataList(arrExpense);
+                log.i("animation ended");
+
+                monthlyExpense.queryPreviousMonthExpense();
+                //totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
             }
         });
 
@@ -205,7 +204,7 @@ public class MainContentPagerFragment extends Fragment {
     }
 
 
-
+    // Show the expense statements of a category in the expense viewpager
     private class MonthlyExpenseRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
         private MainContentExpenseRecyclerBinding recyclerBinding;
@@ -244,21 +243,24 @@ public class MainContentPagerFragment extends Fragment {
         }
     }
 
+    // Inner class to reset the calendar and retrieve expense data for previous months.
     private class RecentMonthlyExpense {
-        final int period;
-        public RecentMonthlyExpense(int period) {
-            this.period = period;
+
+
+        int[] arrExpense;
+        int totalExpense, count;
+
+        public RecentMonthlyExpense() {
+            arrExpense = new int[NumOfPrevMonths];
+            count = 1;
         }
 
-        private long setThisMonth(boolean isStart) {
-            if(isStart){
-                calendar.set(Calendar.DAY_OF_MONTH, 1);
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.SECOND, 0);
-                return calendar.getTimeInMillis();
-
-            } else return System.currentTimeMillis();
+        private long setThisMonth() {
+            calendar.set(Calendar.DAY_OF_MONTH, 1);
+            calendar.set(Calendar.HOUR_OF_DAY, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+            return calendar.getTimeInMillis();
         }
 
         private long setPreviousMonth(boolean isStart) {
@@ -278,31 +280,47 @@ public class MainContentPagerFragment extends Fragment {
             return calendar.getTimeInMillis();
         }
 
-
-        LiveData<List<Integer>> queryMonthlyExpense(long start, long end) {
+        LiveData<List<ExpenseBaseDao.ExpenseByMonth>> queryMonthlyExpense(long start, long end) {
             return mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end);
         }
 
-        LiveData<List<Integer>> getThisMonthExpense() {
-            long start = setThisMonth(true);
-            long end = setThisMonth(false);
-            return queryMonthlyExpense(start, end);
+        void queryThisMonthExpense() {
+            //calendar.set(Calendar.DAY_OF_MONTH, 1);
+            long start = setThisMonth();
+            long end = System.currentTimeMillis();
+            queryMonthlyExpense(start, end).observe(requireActivity(), results -> {
+                this.totalExpense = 0;
+                for(ExpenseBaseDao.ExpenseByMonth expense : results) totalExpense += expense.totalExpense;
+                arrExpense[0] = totalExpense;
+                df.setDecimalSeparatorAlwaysShown(false);
+                animateExpenseCount(totalExpense);
+            });
         }
 
-        void getTotalExpenseByMonth(){
-            long start, end;
-            for(int i = 0; i < period; i++) {
+        void queryPreviousMonthExpense() {
+            for(int i = 1; i < NumOfPrevMonths; i++) {
                 final int index = i;
-                start = (i == 0) ? setThisMonth(true) : setPreviousMonth(true);
-                end = (i == 0) ? setThisMonth(false) : setPreviousMonth(false);
-
-                queryMonthlyExpense(start, end).observe(requireActivity(), results -> {
-                    int total = 0;
-                    for(Integer expense : results) total += expense;
-                    arrExpense[index] = total;
-                    queryViewModel.getMonthlyExpense().setValue(index);
-                });
+                long start = setPreviousMonth(true);
+                long end = setPreviousMonth(false);
+                queryMonthlyExpense(start, end).observe(
+                        requireActivity(), data -> calcPrevExpense(index, data));
             }
+        }
+
+        void calcPrevExpense(final int index, List<ExpenseBaseDao.ExpenseByMonth> data) {
+            log.i("previous data: %s", data);
+            log.i("arrExpense[0] is this month expense: %s", arrExpense[0]);
+            count++;
+            for(ExpenseBaseDao.ExpenseByMonth expense : data) {
+                switch(index) {
+                    case 1: arrExpense[1] += expense.totalExpense;break;
+                    case 2: arrExpense[2] += expense.totalExpense;break;
+                    default: break;
+                }
+            }
+
+            if(count == NumOfPrevMonths)
+                totalBinding.recentGraphView.setGraphData(arrExpense);
         }
     }
 }

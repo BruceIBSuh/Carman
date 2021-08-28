@@ -58,6 +58,7 @@
     <!-- MainActivity updated version-->
     <string name="main_subtitle_news">알립니다</string>
     <string name="main_subtitle_expense">월 지출</string>
+    <string name="main_subtitle_exp_config">지출 구성</string>
     <string name="main_subtitle_gas">주유내역 </string>
     <string name="main_subtitle_wash">세차내역</string>
     <string name="main_subtitle_extra">기타지출</string>
