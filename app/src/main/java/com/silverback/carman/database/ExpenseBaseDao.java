@@ -9,7 +9,6 @@ import java.util.List;
 
 @Dao
 public interface ExpenseBaseDao {
-
     // Retrieve monthly total expense used in gas and service as well, which is used in StatGraphFragment.
     @Query("SELECT date_time, total_expense FROM ExpenseBaseEntity " +
             "WHERE (category = :category1 OR category = :category2) " +

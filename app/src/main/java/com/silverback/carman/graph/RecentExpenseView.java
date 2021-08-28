@@ -22,6 +22,7 @@ import com.silverback.carman.utils.DisplayResolutionUtils;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class RecentExpenseView extends View {
@@ -50,11 +51,9 @@ public class RecentExpenseView extends View {
     private int barWidth;
     private int topMargin;
 
-    private int maxExpense;
-
     private Paint[] arrPaint = new Paint[3];
     private final int[] arrBarColor = new int[3];
-    private final int[] arrExpense = new int[3];
+    private int[] arrExpense;
     private final String[] arrMonthName = new String[3];
 
     private final Runnable animator = new Runnable() {
@@ -116,8 +115,8 @@ public class RecentExpenseView extends View {
         sdf = new SimpleDateFormat("MMM", Locale.ENGLISH);
 
         percentList = new ArrayList<>();
-        Rect rect = new Rect();
         arrPaint = new Paint[3];
+
         for(int i = 0; i < 3; i++) {
             arrPaint[i] = new Paint(Paint.ANTI_ALIAS_FLAG);
             arrPaint[i].setColor(arrBarColor[i]);
@@ -145,46 +144,22 @@ public class RecentExpenseView extends View {
         dividerPaint.setColor(ContextCompat.getColor(context, android.R.color.white));
     }
 
-    //public void setExpenseData(ArrayList<Integer> expList) {
-    public void setExpenseData(int expense, LifecycleOwner lifecycleOwner) {
-        arrExpense[2] = expense;
-        maxExpense = arrExpense[2];
-        arrMonthName[2] = sdf.format(calendar.getTime());
-
-        for(int i = 1; i >= 0; i--) {
-            calendar.add(Calendar.MONTH, -1);
-            calendar.set(Calendar.DAY_OF_MONTH, 1);
-            final long start = calendar.getTimeInMillis();
-            calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-            final long end = calendar.getTimeInMillis();
-
-            arrMonthName[i] = sdf.format(calendar.getTime());
-            queryMonthlyExpense(i, start, end, lifecycleOwner);
-        }
-
-    }
-
-   private void queryMonthlyExpense(final int index, long start, long end, LifecycleOwner lifecycleOwner) {
-       synchronized (this) {
-           mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end).observe(lifecycleOwner, expenses -> {
-               int totalExpense = 0;
-               for(Integer value : expenses) totalExpense += value;
-               arrExpense[index] = totalExpense;
-               if(maxExpense < totalExpense) maxExpense = totalExpense;
-               log.i("index and value: %s, %s", index, totalExpense);
-               if(index == 0) setGraphBarHeight(arrExpense, maxExpense);
-           });
-       }
-
-   }
-
-    private void setGraphBarHeight(int[] expenses, int max) {
+    public void setMontlyDataList(int[] expenses) {
+        this.arrExpense = expenses;
+        int max = 0;
         targetPercentList = new ArrayList<>();
-        if(max == 0) max = 1;//prevents the possibility to be divided by zero
 
-        for(Integer value : expenses) {
-            targetPercentList.add(1f - (float)value / (float)max);
+        for(int i = expenses.length - 1; i >= 0; i--) {
+            arrMonthName[i] = sdf.format(calendar.getTime());
+            calendar.add(Calendar.MONTH, -1);
+            log.i("month: %s", sdf.format(calendar.getTime()));
+
         }
+
+        for(Integer expense : expenses) if(expense > max) max = expense;
+        if(max == 0) max = 1;
+
+        for(Integer expense : expenses) targetPercentList.add(1 - (float)expense / (float)max);
 
         // Make the ArrayList size equal to be sure percetList.size() == targetPerentList.size()
         if(percentList.isEmpty() || percentList.size() < targetPercentList.size()) {
@@ -216,7 +191,7 @@ public class RecentExpenseView extends View {
         if(percentList != null && percentList.size() > 0) {
             for(int i = 0; i < 3; i++) {
                 final float offset = (barOffset * i) + barOffset / 2;
-                final int top = topMargin + (int)((mViewHeight - topMargin) * percentList.get(i));
+                final int top = topMargin + (int)((mViewHeight - topMargin) * percentList.get(2 - i));
                 canvas.drawRect(offset - barWidth, top, offset + barWidth, mViewHeight, arrPaint[i]);
                 canvas.drawText(arrMonthName[i], offset - 25, 30, textPaint);
             }
