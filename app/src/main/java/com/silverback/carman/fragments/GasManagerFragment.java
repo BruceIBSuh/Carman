@@ -17,6 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -39,6 +40,7 @@ import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.threads.ThreadManager;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.DatePickerFragment;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
 import com.silverback.carman.utils.NumberTextWatcher;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -47,7 +49,9 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -59,8 +63,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
     // Constants
     private static final int REQUEST_PERM_BACKGROUND_LOCATION = 1000;
-
-
     // Objects
     private FragmentGasManagerBinding binding;
     private CarmanDatabase mDB;
@@ -74,6 +76,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     private StationListTask stnListTask;
     private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
+    private SimpleDateFormat sdf;
     private DecimalFormat df;
     private NumberPadFragment numPad;
 
@@ -107,8 +110,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             userId = getArguments().getString("userId");
         }
 
-        // The parent activity gets started by tabbing the Geofence notification w/ a PendingIntent
-        // that contains the station id, name, geofencing time, and category. The data fill out
+        // The parent activity gets started by tabbing the Geofence notification w/ the pendingintent
+        // that contains the station id, name, geofencing time, and category. The data will fill out
         // the gas or service form acoording to the transferred category.
         String action = getActivity().getIntent().getAction();
         if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
@@ -123,6 +126,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
+        sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
 
         // ViewModels: reconsider why the models references the ones defined in the parent activity;
         // it would rather  be better to redefine them here.
@@ -133,17 +137,16 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         // Create FavoriteGeofenceHelper instance to add or remove a station to Favorte and
         // Geofence list when the favorite button clicks.
         geofenceHelper = new FavoriteGeofenceHelper(getContext());
+        numPad = new NumberPadFragment();
 
         // Instantiate other miscellanies
         //df = BaseActivity.getDecimalFormatInstance();
         df = ((BaseActivity)getActivity()).getDecimalFormat();
-        numPad = new NumberPadFragment();
+
 
         // Get the time that you have visited to the station. In case the parent activity gets started
         // by the stack builder, which means isGeofence is true, the PendingIntent contains the time.
         dateFormat = getString(R.string.date_format_1);
-        //Calendar calendar = Calendar.getInstance(Locale.getDefault());
-        //SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.getDefault());
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         date = BaseActivity.formatMilliseconds(dateFormat, visitTime);
 
@@ -220,6 +223,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         binding.btnResetRatingbar.setOnClickListener(view -> binding.ratingBar.setRating(0f));
 
         binding.btnChangeTime.setOnClickListener(view -> setCustomTime());
+
 
         // Check Geofencing permission(Background Location permission) first, then add a provider
         // not only to Geofencing list but alos favorite provider in the room.
@@ -342,6 +346,11 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             log.i("rational dialog clicked");
             if(isPermitted) requestPermissions(new String[]{permBackLocation}, REQUEST_PERM_BACKGROUND_LOCATION);
             else log.i("DENIED");
+        });
+
+        fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
+            long customTime = calendar.getTimeInMillis();
+            binding.tvDateTime.setText(sdf.format(customTime));
         });
 
 
@@ -469,7 +478,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
 
     }
 
-    // Method for inserting data to SQLite database
+    // Save the gas-related data in Room database, which is called from the parent activity.
     @SuppressWarnings("ConstantConditions")
     public boolean saveGasData(String userId){
         if(!doEmptyCheck()) return false;
@@ -635,7 +644,9 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         }
     }
 
+    // Implement change time button onClickListener
     private void setCustomTime() {
-
+        DialogFragment newFragment = new DatePickerFragment();
+        newFragment.show(requireActivity().getSupportFragmentManager(), "datePicker");
     }
 }

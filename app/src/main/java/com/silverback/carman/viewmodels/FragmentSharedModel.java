@@ -13,6 +13,7 @@ import com.silverback.carman.database.FavoriteProviderEntity;
 
 import org.json.JSONObject;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class FragmentSharedModel extends ViewModel {
@@ -28,14 +29,11 @@ public class FragmentSharedModel extends ViewModel {
     // SettingSvcItemDlgFragment and SettingServiceItemFragment
     private MutableLiveData<JSONObject> jsonServiceItemObj;
 
-    //
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
     private MutableLiveData<String> removedPosting;
     private MutableLiveData<String> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
-
-
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
@@ -45,6 +43,9 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> strData;
     private MutableLiveData<String> firstPlaceholderId;
     private MutableLiveData<Integer> totalExpense;
+
+    // DatePicker, TimePickerFragment
+    private MutableLiveData<Calendar> customDateAndTime;
 
     // AutoData used in SettingPreferenceActivity which is shared b/w SettingPrefereneFragment and
     // SettingAutoFragment
@@ -223,5 +224,10 @@ public class FragmentSharedModel extends ViewModel {
         return permission;
     }
 
-
+    // Communicate b/w GasManagerFragment/ServiceManagerFragment and
+    // DatePickerFragment/TimePickerFragment
+    public MutableLiveData<Calendar> getCustomDateAndTime() {
+        if(customDateAndTime == null) customDateAndTime = new MutableLiveData<>();
+        return customDateAndTime;
+    }
 }

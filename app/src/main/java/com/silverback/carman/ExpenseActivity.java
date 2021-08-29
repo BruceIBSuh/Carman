@@ -134,10 +134,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         binding.appBar.addOnOffsetChangedListener(this);
 
         // Add the content fragment(gas/service/stat) to the ViewPager
-        //expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
         expContentPagerAdapter = new ExpContentPagerAdapter(this);
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
-        //binding.pagerTabFragment.setCurrentItem(0);
         binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
 
         // Associate TabLayout with ViewPager2 using TabLayoutMediator.
@@ -147,7 +145,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 AppCompatResources.getDrawable(this, R.drawable.ic_service),
                 AppCompatResources.getDrawable(this, R.drawable.ic_stats)
         };
-
         // A mediator to link TabLayout w/ ViewPager2. TabLayoutMediator listens to ViewPager2
         // OnPageChangeCallback, TabLayout OnTabSelectedListener and RecyclerView AdapterDataObserver.
         new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {

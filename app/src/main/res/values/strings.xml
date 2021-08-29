@@ -75,7 +75,6 @@
     <string name="main_footer_company">SILVERBACK TRUST</string>
 
 
-
     <!--StationMapActivity-->
     <string name="map_toolbar_title">주유소 위치 및 정보</string>
     <string name="map_cardview_cvs">편의점:</string>

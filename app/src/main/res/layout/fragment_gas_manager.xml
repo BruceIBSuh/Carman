@@ -1,62 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="8dp"
     android:fillViewport="true"
     android:scrollbars="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/fragment_gas"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/fragment_gas"
         tools:context="com.silverback.carman.fragments.GasManagerFragment">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline5"
+            android:layout_width="wrap_content"
+            android:layout_height="200dp"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.2" />
+
         <TextView
             android:id="@+id/tv_subtitle_gas_expense"
             android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:background="@drawable/bg_colored_border"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:gravity="start|center"
-            android:padding="5dp"
+            android:padding="0dp"
             android:text="@string/gas_subtitle_expense"
             android:textSize="@dimen/subtitle"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/view"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@android:color/holo_blue_bright"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_gas_expense" />
+
         <TextView
             android:id="@+id/tv_label_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
-            android:minWidth="80dp"
             android:text="@string/gas_label_date"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_gas_expense" />
+            app:layout_constraintTop_toBottomOf="@+id/view" />
 
         <TextView
             android:id="@+id/tv_date_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:minWidth="100dp"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/content"
+            app:layout_constraintStart_toStartOf="@id/guideline5"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_date"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_date"
             app:layout_constraintTop_toTopOf="@+id/tv_label_date" />
 
         <Button
             android:id="@+id/btn_change_time"
             android:layout_width="40dp"
             android:layout_height="30dp"
-            android:layout_marginStart="16dp"
-            android:text="Button"
+            android:layout_marginStart="8dp"
             app:layout_constraintBottom_toBottomOf="@+id/tv_date_time"
             app:layout_constraintStart_toEndOf="@+id/tv_date_time"
             app:layout_constraintTop_toTopOf="@+id/tv_date_time" />
@@ -68,10 +84,11 @@
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_station_name"
             android:text="@string/gas_label_station"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/content"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />
+
         <ImageButton
             android:id="@+id/btn_gas_favorite"
             android:layout_width="20dp"
@@ -83,82 +100,87 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
             app:layout_constraintStart_toEndOf="@+id/tv_label_name"
             app:layout_constraintTop_toTopOf="@+id/tv_label_name" />
+
         <TextView
             android:id="@+id/tv_station_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:padding="5dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/state_view_focus"
-            android:padding="5dp"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
             app:layout_constraintEnd_toStartOf="@+id/et_unit_price"
             app:layout_constraintStart_toStartOf="@+id/tv_date_time"
             app:layout_constraintTop_toTopOf="@+id/tv_label_name"
             tools:ignore="AutoFill" />
+
         <ProgressBar
-            style="?android:attr/progressBarStyle"
             android:id="@+id/pb_search_station"
-            android:visibility="gone"
+            style="?android:attr/progressBarStyle"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:layout_marginEnd="3dp"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
             app:layout_constraintEnd_toStartOf="@+id/imgbtn_refresh"
             app:layout_constraintTop_toTopOf="@+id/tv_station_name" />
+
         <ImageButton
             android:id="@+id/imgbtn_refresh"
-            android:visibility="gone"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_marginEnd="3dp"
-            android:contentDescription="@null"
+            android:layout_margin="8dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/btn_rotate"
+            android:contentDescription="@null"
             android:scaleType="fitCenter"
-            app:layout_constraintTop_toTopOf="@+id/tv_station_name"
+            android:src="@drawable/btn_rotate"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@id/tv_station_name"
             app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
-            app:layout_constraintEnd_toEndOf="@+id/tv_station_name" />
+            app:layout_constraintTop_toTopOf="@+id/tv_station_name"
+            tools:layout_editor_absoluteX="332dp" />
+
         <EditText
             android:id="@+id/et_unit_price"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="3dp"
             android:background="@drawable/state_view_focus"
             android:hint="@string/liter_price"
             android:inputType="number"
             android:padding="5dp"
             android:textAlignment="viewEnd"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/tv_station_name"
             tools:ignore="Autofill" />
+
         <TextView
             android:id="@+id/tv_label_mileage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:minWidth="80dp"
-            android:text="@string/exp_label_odometer"
             android:labelFor="@id/tv_mileage"
-            android:textSize="@dimen/largeText"
+            android:text="@string/exp_label_odometer"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+            app:layout_constraintStart_toStartOf="@+id/tv_label_name"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
+
         <TextView
             android:id="@+id/tv_mileage"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:background="@drawable/state_view_focus"
-            android:padding="5dp"
             android:gravity="end|center_vertical"
-            android:textSize="@dimen/smallText"
+            android:padding="5dp"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_mileage"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_mileage"
+            app:layout_constraintStart_toStartOf="@+id/tv_station_name"
             app:layout_constraintTop_toTopOf="@+id/tv_label_mileage"
             tools:ignore="AutoFill" />
+
         <TextView
             android:id="@+id/tv_unit_km"
             android:layout_width="wrap_content"
@@ -168,31 +190,32 @@
             android:text="@string/unit_km"
             app:layout_constraintStart_toEndOf="@+id/tv_mileage"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
+
         <TextView
             android:id="@+id/tv_label_payment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:minWidth="80dp"
             android:labelFor="@id/tv_gas_payment"
             android:text="@string/gas_label_expense"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+            app:layout_constraintStart_toStartOf="@+id/tv_label_mileage"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_mileage" />
+
         <TextView
             android:id="@+id/tv_gas_payment"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:padding="5dp"
             android:background="@drawable/state_view_focus"
             android:gravity="end|center_vertical"
             android:hint="@string/gas_value_null"
-            android:textSize="13sp"
+            android:padding="5dp"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_payment"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_payment"
+            app:layout_constraintStart_toStartOf="@+id/tv_mileage"
             app:layout_constraintTop_toTopOf="@+id/tv_label_payment" />
+
         <TextView
             android:id="@+id/tv_unit_won"
             android:layout_width="12dp"
@@ -202,31 +225,32 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_gas_payment"
             app:layout_constraintStart_toEndOf="@+id/tv_gas_payment"
             app:layout_constraintTop_toTopOf="@+id/tv_gas_payment" />
+
         <TextView
             android:id="@+id/tv_label_amount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_gas_amount"
-            android:minWidth="80dp"
             android:text="@string/gas_label_amount"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/tv_label_date"
+            app:layout_constraintStart_toStartOf="@+id/tv_label_payment"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_payment" />
+
         <TextView
             android:id="@+id/tv_gas_amount"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:background="@drawable/state_view_focus"
-            android:padding="5dp"
             android:gravity="end|center_vertical"
             android:hint="@string/gas_value_null"
-            android:textSize="@dimen/smallText"
+            android:padding="5dp"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_amount"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_amount"
+            app:layout_constraintStart_toStartOf="@+id/tv_gas_payment"
             app:layout_constraintTop_toTopOf="@+id/tv_label_amount" />
+
         <TextView
             android:id="@+id/tv_unit_liter"
             android:layout_width="wrap_content"
@@ -236,47 +260,57 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_gas_amount"
             app:layout_constraintStart_toEndOf="@+id/tv_gas_amount"
             app:layout_constraintTop_toTopOf="@+id/tv_gas_amount" />
+
         <TextView
             android:id="@+id/tv_subtitle_extra"
             android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_colored_border"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
             android:gravity="start|center_vertical"
-            android:padding="5dp"
             android:text="@string/gas_subtitle_extra_expense"
             android:textSize="@dimen/subtitle"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_amount" />
+
+        <View
+            android:id="@+id/view2"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@android:color/holo_blue_bright"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_extra" />
+
         <TextView
             android:id="@+id/tv_label_carwash"
             android:layout_width="wrap_content"
             android:layout_height="21dp"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_carwash"
-            android:minWidth="80dp"
             android:text="@string/gas_label_expense_wash"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_extra" />
+            app:layout_constraintTop_toBottomOf="@id/view2" />
+
         <TextView
             android:id="@+id/tv_carwash"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:padding="5dp"
             android:background="@drawable/state_view_focus"
             android:gravity="end|center_vertical"
             android:hint="@string/gas_value_null"
-            android:textSize="@dimen/smallText"
+            android:padding="5dp"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_carwash"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_carwash"
+            app:layout_constraintStart_toStartOf="@+id/guideline5"
             app:layout_constraintTop_toTopOf="@+id/tv_label_carwash"
+            app:layout_constraintVertical_bias="0.0"
             tools:ignore="AutoFill" />
+
         <TextView
             android:id="@+id/tv_wash_unit"
             android:layout_width="wrap_content"
@@ -286,32 +320,33 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_carwash"
             app:layout_constraintStart_toEndOf="@+id/tv_carwash"
             app:layout_constraintTop_toTopOf="@+id/tv_carwash" />
+
         <TextView
             android:id="@+id/tv_label_extra"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_extra_payment"
-            android:minWidth="80dp"
             android:text="@string/gas_label_expense_misc"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="@+id/tv_label_carwash"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_carwash" />
+
         <TextView
             android:id="@+id/tv_extra_payment"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:padding="5dp"
             android:background="@drawable/state_view_focus"
             android:hint="@string/gas_value_null"
+            android:padding="5dp"
             android:textAlignment="viewEnd"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/content"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_extra"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_extra"
+            app:layout_constraintStart_toStartOf="@+id/tv_carwash"
             app:layout_constraintTop_toTopOf="@+id/tv_label_extra"
             tools:ignore="AutoFill" />
+
         <TextView
             android:id="@+id/tv_extra_unit"
             android:layout_width="wrap_content"
@@ -320,30 +355,29 @@
             android:text="@string/unit_won"
             app:layout_constraintBottom_toBottomOf="@+id/tv_extra_payment"
             app:layout_constraintStart_toEndOf="@+id/tv_extra_payment"
-            app:layout_constraintTop_toTopOf="@+id/tv_extra_payment"
-            tools:text="@string/unit_won" />
+            app:layout_constraintTop_toTopOf="@+id/tv_extra_payment" />
+
         <EditText
             android:id="@+id/et_extra_expense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginEnd="3dp"
             android:background="@drawable/state_view_focus"
             android:ems="10"
             android:hint="@string/gas_hint_extra_expense"
             android:inputType="textMultiLine"
             android:padding="5dp"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/tv_extra_payment"
             app:layout_constraintTop_toBottomOf="@+id/tv_extra_payment"
             tools:ignore="Autofill" />
+
         <TextView
             android:id="@+id/tv_subtitle_evaluation"
             android:layout_width="0dp"
-            android:layout_height="35dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_colored_border"
             android:padding="5dp"
             android:text="@string/gas_subtitle_evaluation"
             android:textSize="@dimen/subtitle"
@@ -352,34 +386,45 @@
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/et_extra_expense" />
+
+        <View
+            android:id="@+id/view3"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="8dp"
+            android:background="@android:color/holo_blue_bright"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_evaluation" />
+
         <TextView
             android:id="@+id/tv_label_rating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
-            android:minWidth="80dp"
             android:text="@string/gas_label_evaluation"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_subtitle_evaluation" />
+            app:layout_constraintTop_toBottomOf="@+id/view3" />
+
         <RatingBar
             android:id="@+id/ratingBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:padding="0dp"
-            android:numStars="5"
-            android:rating="0"
-            android:stepSize="1"
             android:isIndicator="false"
+            android:numStars="5"
+            android:padding="0dp"
+            android:rating="0"
             android:scaleX=".5"
             android:scaleY=".5"
+            android:stepSize="1"
             android:translationX="-50dp"
             app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_rating"
+            app:layout_constraintEnd_toStartOf="@+id/btn_reset_ratingbar"
+            app:layout_constraintStart_toStartOf="@id/guideline5"
             app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
+
         <Button
             android:id="@+id/btn_reset_ratingbar"
             android:layout_width="40dp"
@@ -391,6 +436,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/ratingBar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/ratingBar" />
+
         <TextView
             android:id="@+id/tv_comment"
             android:layout_width="wrap_content"
@@ -399,26 +445,27 @@
             android:layout_marginBottom="8dp"
             android:labelFor="@id/et_service_comment"
             android:text="@string/tv_label_comment"
-            android:textSize="@dimen/largeText"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="@+id/tv_label_rating"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_rating" />
+
         <EditText
             android:id="@+id/et_service_comment"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:minHeight="50dp"
-            android:layout_margin="8dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/state_view_focus"
             android:gravity="start|top"
             android:inputType="textMultiLine"
+            android:minHeight="50dp"
             android:padding="5dp"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_comment"
             tools:ignore="AutoFill" />
 
-
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.core.widget.NestedScrollView>

@@ -125,7 +125,7 @@ public class RecentExpenseView extends View {
         // Set the graph bar width
         barWidth = DisplayResolutionUtils.dip2px(context, 15);
         topMargin = DisplayResolutionUtils.dip2px(context, 15);
-        int textSize = DisplayResolutionUtils.dip2px(context, 11);
+        int textSize = DisplayResolutionUtils.dip2px(context, 13);
 
         // Set the background color of the graph
         Paint bgPaint = new Paint();
@@ -203,7 +203,7 @@ public class RecentExpenseView extends View {
                 final float offset = (barOffset * i) + barOffset / 2;
                 final int top = topMargin + (int)((mViewHeight - topMargin) * percentList.get(reverse));
                 canvas.drawRect(offset - barWidth, top, offset + barWidth, mViewHeight, arrPaint[i]);
-                canvas.drawText(arrMonthName[reverse], offset - 25, mViewHeight - 15, textPaint);
+                canvas.drawText(arrMonthName[reverse], offset - 35, mViewHeight - 15, textPaint);
             }
         }
 

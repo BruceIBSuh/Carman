@@ -134,6 +134,8 @@ public class BaseActivity extends AppCompatActivity {
         } else requestPermissionLaucher.launch(perm);
     }
 
+
+
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
