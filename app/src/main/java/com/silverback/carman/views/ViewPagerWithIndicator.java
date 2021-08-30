@@ -25,33 +25,49 @@ public class ViewPagerWithIndicator extends ViewGroup {
 
     public ViewPagerWithIndicator(Context context) {
         super(context);
+        log.i("create ViewPagerWithIndicator");
         LayoutInflater inflater = LayoutInflater.from(context);
+
         binding = ViewPagerIndicatorBinding.inflate(inflater);
         viewpager = binding.pagerPrevExpense;
         tabLayout = binding.tabPrevExpense;
+        log.i("view : %s, %s", viewpager, tabLayout);
     }
-
 
     public ViewPagerWithIndicator(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
     }
 
-
-    @Override
-    protected void onLayout(boolean b, int i, int i1, int i2, int i3) {
-        viewpager.layout(0,0, viewpager.getMeasuredWidth(), viewpager.getMeasuredHeight());
-    }
-
     protected void getAttributes(Context context, AttributeSet attrs) {
         LayoutInflater.from(context).inflate(R.layout.view_pager_indicator, this, true);
-
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ViewPagerWithIndicator);
         try {
             log.i("typedArray");
         } finally {
             typedArray.recycle();
         }
+    }
+
+    @Override
+    public boolean shouldDelayChildPressedState() {
+        return false;
+    }
+
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        int leftPos = getPaddingLeft();
+        int rightPos = right - left - getPaddingRight();
+
+        final int parentTop = getPaddingTop();
+        final int parentBottom = bottom - top - getPaddingBottom();
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int count = getChildCount();
+        log.i("child count: %s", count);
     }
 
     public ViewPager2 getViewPager() {

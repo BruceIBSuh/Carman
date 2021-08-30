@@ -9,7 +9,8 @@
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager_prev_expense"
         android:layout_width="0dp"
-        android:layout_height="108dp"
+        android:layout_height="150dp"
+        android:background="#43A047"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -17,7 +18,7 @@
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_prev_expense"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pager_prev_expense">

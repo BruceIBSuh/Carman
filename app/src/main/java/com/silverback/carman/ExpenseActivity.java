@@ -136,9 +136,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         createLastExpenseViewPager();
 
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
-
 
         // Consider this process should be behind the layout to lessen the ram load.
         if(!isGeofencing) {
@@ -254,9 +252,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 switch (position) {
                     case GAS: // GasManagerFragment
                         pageTitle = getString(R.string.exp_title_gas);
-                        //binding.frameExpense.addView(pagerRecentExp);
-                        binding.frameExpense.addView(pagerIndicator);
-                        //pagerRecentExp.setCurrentItem(0);
+                        binding.frameExpense.addView(pagerRecentExp);
+                        //binding.frameExpense.addView(pagerIndicator);
+                        pagerRecentExp.setCurrentItem(0);
+                        //pagerIndicator.getViewPager().setCurrentItem(0);
                         animSlideTopFrame(prevHeight, 120);
                         prevHeight = 120;
                         break;
@@ -313,7 +312,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // Create the viewpager2 to show the last 5 month expenses of gas and service whic the framelayout
     // contain.
     private void createLastExpenseViewPager() {
-        /*
         pagerRecentExp = new ViewPager2(this);
         pagerRecentExp.setId(View.generateViewId());
         ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
@@ -325,13 +323,21 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             }
         });
 
-         */
-
+        /*
         //TEST CODING
         pagerIndicator = new ViewPagerWithIndicator(this);
+        pagerIndicator.setId(View.generateViewId());
         ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        pagerIndicator.getViewPager().setAdapter(recentAdapter);
-
+        ViewPager2 pager = pagerIndicator.getViewPager();
+        log.i("ViewPager: %s", pager);
+        pager.setAdapter(recentAdapter);
+        pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                log.i("onPageSelected; %s", position);
+            }
+        });
+        */
     }
 
 
@@ -343,8 +349,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
         ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.frameExpense, "translationY", toolbarHeight);
-        animTab.setDuration(1000);
-        animFrame.setDuration(1000);
+        animTab.setDuration(2000);
+        animFrame.setDuration(2000);
         animSet.play(animTab).before(animFrame);
         animSet.start();
         /*
@@ -359,7 +365,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     binding.pagerTabFragment.setCurrentItem(category);
             }
         });
-
          */
 
     }
