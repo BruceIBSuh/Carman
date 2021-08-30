@@ -1,5 +1,7 @@
 package com.silverback.carman;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -35,6 +37,7 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.views.ViewPagerWithIndicator;
 
 import java.util.Objects;
 
@@ -93,13 +96,16 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private ViewTreeObserver vto;
 
     // Fields
+    private Location mPrevLocation;
     private int currentPage;
     private int prevHeight = 0;
     private int category;
     private float tabHeight;
     private String pageTitle;
     private boolean isGeofencing;
-    private Location mPrevLocation;
+
+    private ViewPagerWithIndicator pagerIndicator;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -116,58 +122,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         }
 
         String userId = getUserIdFromStorage(this);
-        // Create objects
-        //gasManager = (GasManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_gas);
-        //svcManager = (ServiceManagerFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_svc);
-        //statFragment = (StatGraphFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_stat);
-
 
         // Define ViewModels. ViewModelProviders.of(this) is deprecated.
         LocationViewModel locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
         stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
 
-        // Set the toolbar as the working action bar
-        setSupportActionBar(binding.toolbarExpense);
-        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
-        binding.appBar.addOnOffsetChangedListener(this);
-
-        // Add the content fragment(gas/service/stat) to the ViewPager
-        expContentPagerAdapter = new ExpContentPagerAdapter(this);
+        expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
 
-        // Associate TabLayout with ViewPager2 using TabLayoutMediator.
-        String[] titles = getResources().getStringArray(R.array.tab_carman_title);
-        Drawable[] icons = {
-                AppCompatResources.getDrawable(this, R.drawable.ic_gas),
-                AppCompatResources.getDrawable(this, R.drawable.ic_service),
-                AppCompatResources.getDrawable(this, R.drawable.ic_stats)
-        };
-        // A mediator to link TabLayout w/ ViewPager2. TabLayoutMediator listens to ViewPager2
-        // OnPageChangeCallback, TabLayout OnTabSelectedListener and RecyclerView AdapterDataObserver.
-        new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
-            tab.setText(titles[pos]);
-            tab.setIcon(icons[pos]);
-            animSlideTabLayout();
-        }).attach();
-
+        createAppbarLayout();
+        createLastExpenseViewPager();
 
         String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
 
-        pagerRecentExp = new ViewPager2(this);
-        pagerRecentExp.setId(View.generateViewId());
-        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        pagerRecentExp.setAdapter(recentAdapter);
-        pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
-            @Override
-            public void onPageSelected(int position) {
-                log.i("onPageSelected: %s", position);
-            }
-        });
 
         // Consider this process should be behind the layout to lessen the ram load.
         if(!isGeofencing) {
@@ -182,6 +153,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 }
             });
         }
+
+        //TEST CODING
+        pagerIndicator = new ViewPagerWithIndicator(this);
     }
 
     @Override
@@ -256,10 +230,110 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
-        float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
-        binding.frameExpense.setAlpha(bgAlpha);
+        if(binding.appBar.getTotalScrollRange() != 0) {
+            float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
+            binding.frameExpense.setAlpha(bgAlpha);
+        }
+
 
     }
+
+    // ViewPager2 contains OnPageChangeCallback as an abstract class. OnPageChangeCallback of
+    // ViewPager was interface which is required to implement onPageSelected, onPageScrollStateChanged,
+    // and onPageScrolled.
+    private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
+        return  new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                currentPage = position;
+                if(binding.frameExpense.getChildCount() > 0) binding.frameExpense.removeAllViews();
+                // Invoke onPrepareOptionsMenu(Menu)
+                invalidateOptionsMenu();
+
+                switch (position) {
+                    case GAS: // GasManagerFragment
+                        pageTitle = getString(R.string.exp_title_gas);
+                        //binding.frameExpense.addView(pagerRecentExp);
+                        binding.frameExpense.addView(pagerIndicator);
+                        //pagerRecentExp.setCurrentItem(0);
+                        animSlideTopFrame(prevHeight, 120);
+                        prevHeight = 120;
+                        break;
+
+                    case SVC:
+                        pageTitle = getString(R.string.exp_title_service);
+                        binding.frameExpense.addView(pagerRecentExp);
+                        pagerRecentExp.setCurrentItem(0);
+                        animSlideTopFrame(prevHeight, 100);
+                        prevHeight = 100;
+                        break;
+
+                    case STAT:
+                        pageTitle = getString(R.string.exp_title_stat);
+                        menuSave.setVisible(false);
+                        StatGraphFragment statGraphFragment = new StatGraphFragment();
+                        //if(statGraphFragment == null) statGraphFragment = new StatGraphFragment();
+                        //which seems not working.
+                        getSupportFragmentManager().beginTransaction()
+                                .replace(R.id.frame_expense, statGraphFragment).commit();
+
+                        animSlideTopFrame(prevHeight, 200);
+                        prevHeight = 200;
+                        break;
+                }
+            }
+
+        };
+
+    }
+
+    // Create the appbarlayout
+    private void createAppbarLayout() {
+        setSupportActionBar(binding.toolbarExpense);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
+        binding.appBar.addOnOffsetChangedListener(this);
+
+        String[] titles = getResources().getStringArray(R.array.tab_carman_title);
+        Drawable[] icons = {
+                AppCompatResources.getDrawable(this, R.drawable.ic_gas),
+                AppCompatResources.getDrawable(this, R.drawable.ic_service),
+                AppCompatResources.getDrawable(this, R.drawable.ic_stats)
+        };
+        // A mediator to link TabLayout w/ ViewPager2. TabLayoutMediator listens to ViewPager2
+        // OnPageChangeCallback, TabLayout OnTabSelectedListener and RecyclerView AdapterDataObserver.
+        new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
+            tab.setText(titles[pos]);
+            tab.setIcon(icons[pos]);
+            animSlideTabLayout();
+        }).attach();
+    }
+
+    // Create the viewpager2 to show the last 5 month expenses of gas and service whic the framelayout
+    // contain.
+    private void createLastExpenseViewPager() {
+        /*
+        pagerRecentExp = new ViewPager2(this);
+        pagerRecentExp.setId(View.generateViewId());
+        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        pagerRecentExp.setAdapter(recentAdapter);
+        pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
+            @Override
+            public void onPageSelected(int position) {
+                log.i("onPageSelected: %s", position);
+            }
+        });
+
+         */
+
+        //TEST CODING
+        pagerIndicator = new ViewPagerWithIndicator(this);
+        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        pagerIndicator.getViewPager().setAdapter(recentAdapter);
+
+    }
+
 
     // Animate TabLayout and the tap-syned viewpager sequentially. As the animation completes,
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
@@ -309,54 +383,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         });
     }
 
-    // ViewPager2 contains OnPageChangeCallback as an abstract class. OnPageChangeCallback of
-    // ViewPager was interface which is required to implement onPageSelected, onPageScrollStateChanged,
-    // and onPageScrolled.
-    private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
-        return  new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                currentPage = position;
-                if(binding.frameExpense.getChildCount() > 0) binding.frameExpense.removeAllViews();
-                // Invoke onPrepareOptionsMenu(Menu)
-                invalidateOptionsMenu();
 
-                switch (position) {
-                    case GAS: // GasManagerFragment
-                        pageTitle = getString(R.string.exp_title_gas);
-                        binding.frameExpense.addView(pagerRecentExp);
-                        pagerRecentExp.setCurrentItem(0);
-                        animSlideTopFrame(prevHeight, 120);
-                        prevHeight = 120;
-                        break;
-
-                    case SVC:
-                        pageTitle = getString(R.string.exp_title_service);
-                        binding.frameExpense.addView(pagerRecentExp);
-                        pagerRecentExp.setCurrentItem(0);
-                        animSlideTopFrame(prevHeight, 100);
-                        prevHeight = 100;
-                        break;
-
-                    case STAT:
-                        pageTitle = getString(R.string.exp_title_stat);
-                        menuSave.setVisible(false);
-                        StatGraphFragment statGraphFragment = new StatGraphFragment();
-                        //if(statGraphFragment == null) statGraphFragment = new StatGraphFragment();
-                        //which seems not working.
-                        getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.frame_expense, statGraphFragment).commit();
-
-                        animSlideTopFrame(prevHeight, 200);
-                        prevHeight = 200;
-                        break;
-                }
-            }
-
-        };
-
-    }
 
     private boolean saveExpenseData(int page) {
         Fragment fragment = expContentPagerAdapter.createFragment(page);

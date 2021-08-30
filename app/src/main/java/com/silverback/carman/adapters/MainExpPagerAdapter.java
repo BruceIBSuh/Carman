@@ -35,5 +35,6 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
         super.onBindViewHolder(holder, position, payloads);
+        log.i("payloads: %s", payloads);
     }
 }

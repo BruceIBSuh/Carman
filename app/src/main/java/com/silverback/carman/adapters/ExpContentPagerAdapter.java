@@ -19,7 +19,6 @@ public class ExpContentPagerAdapter extends FragmentStateAdapter {
     public ExpContentPagerAdapter(FragmentActivity fa) {
         super(fa);
     }
-
     public ExpContentPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }

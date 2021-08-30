@@ -1,11 +1,8 @@
 package com.silverback.carman.adapters;
 
-import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
@@ -14,7 +11,6 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 
-//public class ExpRecentAdapter extends FragmentStatePagerAdapter {
 public class ExpRecentAdapter extends FragmentStateAdapter {
 
     // Logging
@@ -23,7 +19,6 @@ public class ExpRecentAdapter extends FragmentStateAdapter {
     // Constants
     //private static final int NUM_PAGES = 5;
     public ExpRecentAdapter(FragmentManager fm, Lifecycle lifecycle) {
-        //super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
         super(fm, lifecycle);
     }
 

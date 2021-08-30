@@ -15,6 +15,7 @@ import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.GasManagerDao;
 import com.silverback.carman.database.ServiceManagerDao;
+import com.silverback.carman.databinding.FragmentPagerExpenseBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -32,6 +33,7 @@ public class ExpensePagerFragment extends Fragment {
     private final static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
 
     // Objects
+    private FragmentPagerExpenseBinding binding;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentModel;
     private Fragment currentFragment;
@@ -79,12 +81,9 @@ public class ExpensePagerFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        //ViewGroup rootView = (ViewGroup)inflater.inflate(R.layout.fragment_pager_expense, container, false);
-        View localView = inflater.inflate(R.layout.fragment_pager_expense, container, false);
-        tvLastInfo = localView.findViewById(R.id.tv_lastInfo);
-        tvPage = localView.findViewById(R.id.tv_page);
+        binding = FragmentPagerExpenseBinding.inflate(inflater);
 
-        return localView;
+        return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -100,8 +99,8 @@ public class ExpensePagerFragment extends Fragment {
                 mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
                     gasDataList = data;
                     lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
-                    tvLastInfo.setText(lastInfo);
-                    tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+                    binding.tvLastInfo.setText(lastInfo);
+                    binding.tvPageNum.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
             } else if(currentFragment instanceof ServiceManagerFragment) {
@@ -109,8 +108,8 @@ public class ExpensePagerFragment extends Fragment {
                 mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
                     serviceList = data;
                     lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
-                    tvLastInfo.setText(lastInfo);
-                    tvPage.setText(String.valueOf(Math.abs(numPage) + 1));
+                    binding.tvLastInfo.setText(lastInfo);
+                    binding.tvPageNum.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
             }

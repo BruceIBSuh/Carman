@@ -45,7 +45,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public MainContentAdapter(Context context) {
         super();
         firestore= FirebaseFirestore.getInstance();
-        expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
+        expensePagerAdapter  = new MainExpPagerAdapter((FragmentActivity)context);
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack

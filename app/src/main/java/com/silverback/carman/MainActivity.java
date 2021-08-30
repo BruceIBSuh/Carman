@@ -116,10 +116,10 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
 
         // MainContent RecyclerView to display main contents in the activity
-        MainContentAdapter adapter = new MainContentAdapter(this);
+        MainContentAdapter mainContentAdapter = new MainContentAdapter(this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(
                 Constants.dividerHeight, 0, getColor(R.color.recyclerDivider));
-        binding.recyclerContents.setAdapter(adapter);
+        binding.recyclerContents.setAdapter(mainContentAdapter);
         binding.recyclerContents.addItemDecoration(divider);
 
         // ViewModels
@@ -146,8 +146,10 @@ public class MainActivity extends BaseActivity implements
         // Create ActivityResultLauncher to call SettingActiity and get results
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
+                    log.i("activity result");
                     if(result.getResultCode() == Activity.RESULT_OK) updateSettingResult(result);
                     else if(result.getResultCode() == Activity.RESULT_CANCELED) {
+                        log.i("from which activity: %s", result);
                         binding.stationRecyclerView.setVisibility(View.GONE);
                         binding.fab.setVisibility(View.GONE);
                         binding.recyclerContents.setVisibility(View.VISIBLE);
@@ -188,7 +190,6 @@ public class MainActivity extends BaseActivity implements
         if(item.getItemId() == R.id.action_garage) {
             //startActivity(new Intent(this, ExpenseActivity.class));
             activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
-
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
 

@@ -88,6 +88,7 @@ public class MainContentPagerFragment extends Fragment {
         df.applyPattern("#,###");
 
         monthlyExpense = new RecentMonthlyExpense();
+
     }
 
     @Override
@@ -132,6 +133,7 @@ public class MainContentPagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
     }
 
     private void displayGasExpense() {
@@ -245,8 +247,6 @@ public class MainContentPagerFragment extends Fragment {
 
     // Inner class to reset the calendar and retrieve expense data for previous months.
     private class RecentMonthlyExpense {
-
-
         int[] arrExpense;
         int totalExpense, count;
 
@@ -297,13 +297,14 @@ public class MainContentPagerFragment extends Fragment {
             });
         }
 
+        // Query the expense data of previous months except the current one.
         void queryPreviousMonthExpense() {
             for(int i = 1; i < NumOfPrevMonths; i++) {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
                 queryMonthlyExpense(start, end).observe(
-                        requireActivity(), data -> calcPrevExpense(index, data));
+                        getViewLifecycleOwner(), data -> calcPrevExpense(index, data));
             }
         }
 

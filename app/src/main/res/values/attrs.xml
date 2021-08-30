@@ -64,4 +64,8 @@
         <attr name="pbAutoData" format="reference" />
     </declare-styleable>
 
+    <declare-styleable name="ViewPagerWithIndicator">
+
+    </declare-styleable>
+
 </resources>

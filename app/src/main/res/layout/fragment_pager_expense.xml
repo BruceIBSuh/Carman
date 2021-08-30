@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:padding="8dp"
     tools:context=".fragments.ExpensePagerFragment">
 
@@ -12,17 +12,16 @@
         android:id="@+id/tv_lastInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toStartOf="@+id/tv_page"
+        app:layout_constraintEnd_toStartOf="@id/tv_page_num"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <TextView
-        android:id="@+id/tv_page"
+        android:id="@+id/tv_page_num"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="3dp"
         android:background="@drawable/bg_colored_border"
+        android:padding="3dp"
         android:textColor="@android:color/holo_orange_dark"
         android:textSize="@dimen/smallText"
         android:textStyle="bold"
