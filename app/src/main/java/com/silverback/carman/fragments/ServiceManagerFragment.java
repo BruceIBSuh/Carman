@@ -36,6 +36,7 @@ import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
 import com.silverback.carman.database.ServiceManagerEntity;
 import com.silverback.carman.database.ServicedItemEntity;
+import com.silverback.carman.databinding.ViewpagerServiceManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ServiceCenterTask;
@@ -69,6 +70,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Objects
     //private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
+    private ViewpagerServiceManagerBinding binding;
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
@@ -218,23 +220,23 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
+        binding = ViewpagerServiceManagerBinding.inflate(inflater);
         View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
 
         parentLayout = localView.findViewById(R.id.fragment_svc);
-        recyclerServiceItems = localView.findViewById(R.id.recycler_service);
-        tvDate = localView.findViewById(R.id.tv_service_date);
-        etServiceName = localView.findViewById(R.id.et_service_provider);
-        tvMileage = localView.findViewById(R.id.tv_mileage);
-        Button btnDate = localView.findViewById(R.id.btn_svc_date);
-        Button btnReg = localView.findViewById(R.id.btn_register_service);
-        btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
-        tvTotalCost = localView.findViewById(R.id.tv_svc_payment);
-        TextView tvPeriod = localView.findViewById(R.id.tv_period);
+        //recyclerServiceItems = localView.findViewById(R.id.recycler_service);
+//        tvDate = localView.findViewById(R.id.tv_service_date);
+//        etServiceName = localView.findViewById(R.id.et_service_provider);
+//        tvMileage = localView.findViewById(R.id.tv_mileage);
+//        Button btnDate = localView.findViewById(R.id.btn_svc_date);
+//        Button btnReg = localView.findViewById(R.id.btn_register_service);
+//        btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
+//        tvTotalCost = localView.findViewById(R.id.tv_svc_payment);
+//        TextView tvPeriod = localView.findViewById(R.id.tv_period);
 
         tvMileage.setOnClickListener(this);
-        btnDate.setOnClickListener(this);
-        btnReg.setOnClickListener(this);
+        binding.btnServiceDate.setOnClickListener(this);
+        binding.btnRegisterServiceProvider.setOnClickListener(this);
         btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
 
         svcName = etServiceName.getText().toString();
@@ -245,12 +247,13 @@ public class ServiceManagerFragment extends Fragment implements
         tvTotalCost.setText("0");
         // Set the mileage value retrieved from SharedPreferences first
         tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
-        tvPeriod.setText(mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_month)));
+        binding.tvServiceMileage.setText(mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_month)));
         btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
-        recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerServiceItems.setHasFixedSize(true);
+        binding.recyclerServiceItem.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerServiceItem.setHasFixedSize(true);
         //recyclerServiceItems.setAdapter(mAdapter);
+
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -262,10 +265,12 @@ public class ServiceManagerFragment extends Fragment implements
             isSvcFavorite = true;
 
             btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            btnDate.setVisibility(View.GONE);
+            //btnDate.setVisibility(View.GONE);
+            binding.btnServiceDate.setVisibility(View.GONE);
         }
 
-        return localView;
+        //return localView;
+        return binding.getRoot();
     }
 
     @Override
@@ -385,7 +390,7 @@ public class ServiceManagerFragment extends Fragment implements
                     numPad.show(getActivity().getSupportFragmentManager(), null);
                 break;
 
-            case R.id.btn_register_service:
+            case R.id.btn_register_service_provider:
                 svcName = etServiceName.getText().toString();
                 if(etServiceName.getText().toString().isEmpty()) {
                     Snackbar.make(parentLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
@@ -401,7 +406,7 @@ public class ServiceManagerFragment extends Fragment implements
 
                 break;
 
-            case R.id.btn_svc_date:
+            case R.id.btn_service_date:
                 break;
 
         }

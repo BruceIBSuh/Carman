@@ -8,12 +8,14 @@
     android:padding="3dp"
     android:fillViewport="true"
     android:scrollbars="vertical"
+    android:background="@android:color/white"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/fragment_gas"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="16dp"
         tools:context="com.silverback.carman.fragments.GasManagerFragment">
 
         <androidx.constraintlayout.widget.Guideline
@@ -27,7 +29,6 @@
             android:id="@+id/tv_subtitle_gas_expense"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:gravity="start|center"
             android:padding="0dp"
             android:text="@string/gas_subtitle_expense"
@@ -84,7 +85,7 @@
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_station_name"
             android:text="@string/gas_label_station"
-            android:textSize="@dimen/content"
+            android:textSize="@dimen/label"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="@+id/tv_label_date"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_date" />

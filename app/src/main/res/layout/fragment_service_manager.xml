@@ -4,37 +4,43 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragment_svc"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    android:padding="3dp">
+    <!--
+
     <View
         android:id="@+id/view_boxing"
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:layout_margin="1dp"
+        android:layout_marginTop="24dp"
         android:background="@drawable/bg_service_boxing"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true" />
+
     <TextView
         android:id="@+id/tv_label_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="34dp"
         android:minWidth="80dp"
         android:text="@string/svc_label_date"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/label"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         tools:ignore="RelativeOverlap"/>
+
     <TextView
         android:id="@+id/tv_service_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/content"
         android:layout_toEndOf="@id/tv_label_date"
         android:layout_alignBaseline="@id/tv_label_date"
         tools:ignore="RelativeOverlap"/>
+
     <Button
         android:id="@+id/btn_svc_date"
         android:visibility="gone"
@@ -48,6 +54,7 @@
         android:background="@color/bgToolbar"
         android:layout_toEndOf="@id/tv_service_date"
         android:layout_alignBottom="@id/tv_label_date" />
+
     <TextView
         android:id="@+id/tv_label_provider"
         android:layout_width="wrap_content"
@@ -55,7 +62,7 @@
         android:layout_marginTop="16dp"
         android:labelFor="@id/et_service_provider"
         android:text="@string/svc_label_provider"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/label"
         android:layout_below="@id/tv_label_date"
         android:layout_alignStart="@id/tv_label_date" />
 
@@ -76,7 +83,7 @@
         android:padding="3dp"
         android:background="@drawable/state_view_focus"
         android:inputType="textMultiLine"
-        android:textSize="@dimen/smallText"
+        android:textSize="@dimen/content"
         android:layout_toEndOf="@id/btn_svc_favorite"
         android:layout_alignStart="@id/tv_service_date"
         android:layout_alignParentEnd="true"
@@ -90,7 +97,7 @@
         android:layout_marginEnd="12dp"
         android:padding="0dp"
         android:text="@string/svc_btn_eval"
-        android:textSize="@dimen/extraSmallText"
+        android:textSize="@dimen/content"
         android:textColor="@android:color/white"
         android:background="@color/bgToolbar"
         android:layout_alignParentEnd="true"
@@ -104,7 +111,7 @@
         android:labelFor="@id/tv_mileage"
         android:minWidth="80dp"
         android:text="@string/svc_label_mileage"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/label"
         android:layout_below="@id/tv_label_provider"
         android:layout_alignStart="@id/tv_label_provider" />
 
@@ -127,6 +134,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/unit_km"
+        android:textSize="@dimen/content"
         android:layout_toEndOf="@id/tv_mileage"
         android:layout_alignBaseline="@id/tv_mileage"/>
 
@@ -138,7 +146,7 @@
         android:labelFor="@id/tv_gas_payment"
         android:minWidth="80dp"
         android:text="@string/svc_label_payment"
-        android:textSize="@dimen/largeText"
+        android:textSize="@dimen/label"
         android:layout_below="@id/tv_label_mileage"
         android:layout_alignStart="@id/tv_label_mileage"/>
 
@@ -149,7 +157,7 @@
         android:padding="5dp"
         android:background="@drawable/state_view_focus"
         android:ems="10"
-        android:textSize="13sp"
+        android:textSize="@dimen/content"
         android:textAlignment="viewEnd"
         android:layout_toEndOf="@id/tv_label_payment"
         android:layout_alignStart="@id/tv_service_date"
@@ -162,6 +170,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/unit_won"
+        android:textSize="@dimen/content"
         android:layout_toEndOf="@id/tv_svc_payment"
         android:layout_alignBaseline="@id/tv_svc_payment"/>
 
@@ -209,8 +218,10 @@
         android:layout_below="@id/view_subtitle_outline"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true" />
-
+-->
 </RelativeLayout>
+
+
 
 <!--
 The last item of RecyclerView will be cut off when ConstraintLayout is used as the root layout.

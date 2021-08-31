@@ -1,7 +1,5 @@
 package com.silverback.carman;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -37,7 +35,6 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
-import com.silverback.carman.views.ViewPagerWithIndicator;
 
 import java.util.Objects;
 
@@ -104,9 +101,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private String pageTitle;
     private boolean isGeofencing;
 
-    private ViewPagerWithIndicator pagerIndicator;
-
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -153,9 +147,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 }
             });
         }
-
-        //TEST CODING
-        pagerIndicator = new ViewPagerWithIndicator(this);
     }
 
     @Override
@@ -232,7 +223,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
         if(binding.appBar.getTotalScrollRange() != 0) {
             float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
-            binding.frameExpense.setAlpha(bgAlpha);
+            binding.topFrame.setAlpha(bgAlpha);
         }
 
 
@@ -247,23 +238,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 currentPage = position;
-                if(binding.frameExpense.getChildCount() > 0) binding.frameExpense.removeAllViews();
+                if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
+                binding.topframeTabIndicator.setVisibility(View.VISIBLE);
 
                 switch (position) {
                     case GAS: // GasManagerFragment
                         pageTitle = getString(R.string.exp_title_gas);
-                        //binding.frameExpense.addView(pagerRecentExp);
-                        binding.frameExpense.addView(pagerIndicator);
-                        //pagerRecentExp.setCurrentItem(0);
+                        binding.topframeViewpager.addView(pagerRecentExp);
+                        pagerRecentExp.setCurrentItem(0);
                         animSlideTopFrame(prevHeight, 120);
                         prevHeight = 120;
                         break;
 
                     case SVC:
                         pageTitle = getString(R.string.exp_title_service);
-                        binding.frameExpense.addView(pagerRecentExp);
+                        binding.topframeViewpager.addView(pagerRecentExp);
                         pagerRecentExp.setCurrentItem(0);
                         animSlideTopFrame(prevHeight, 100);
                         prevHeight = 100;
@@ -272,11 +263,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     case STAT:
                         pageTitle = getString(R.string.exp_title_stat);
                         menuSave.setVisible(false);
+                        binding.topframeTabIndicator.setVisibility(View.GONE);
                         StatGraphFragment statGraphFragment = new StatGraphFragment();
                         //if(statGraphFragment == null) statGraphFragment = new StatGraphFragment();
                         //which seems not working.
                         getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.frame_expense, statGraphFragment).commit();
+                                .replace(R.id.topframe_viewpager, statGraphFragment).commit();
 
                         animSlideTopFrame(prevHeight, 200);
                         prevHeight = 200;
@@ -310,12 +302,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         }).attach();
     }
 
-    // Create the viewpager2 to show the last 5 month expenses of gas and service whic the framelayout
-    // contain.
+    // Create the viewpager2 programmatically to show the last 5 month expenses of gas and service
+    // which the framelayout contain.
     private void createLastExpenseViewPager() {
-        /*
         pagerRecentExp = new ViewPager2(this);
-        pagerRecentExp.setId(View.generateViewId());
         ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         pagerRecentExp.setAdapter(recentAdapter);
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
@@ -325,13 +315,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             }
         });
 
-         */
-
-        //TEST CODING
-        pagerIndicator = new ViewPagerWithIndicator(this);
-        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        pagerIndicator.getViewPager().setAdapter(recentAdapter);
-
+        new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
+                (tab, pos) -> {}).attach();
     }
 
 
@@ -342,7 +327,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         final float toolbarHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
-        ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.frameExpense, "translationY", toolbarHeight);
+        ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", toolbarHeight);
         animTab.setDuration(1000);
         animFrame.setDuration(1000);
         animSet.play(animTab).before(animFrame);
@@ -373,13 +358,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
-        ViewGroup.LayoutParams params = binding.frameExpense.getLayoutParams();
+        ViewGroup.LayoutParams params = binding.topframeViewpager.getLayoutParams();
         anim.setDuration(1000);
         anim.start();
 
         anim.addUpdateListener(valueAnimator -> {
             params.height = (Integer)valueAnimator.getAnimatedValue();;
-            binding.frameExpense.setLayoutParams(params);
+            binding.topframeViewpager.setLayoutParams(params);
         });
     }
 
