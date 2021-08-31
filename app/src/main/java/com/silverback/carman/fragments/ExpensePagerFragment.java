@@ -1,6 +1,7 @@
 package com.silverback.carman.fragments;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,13 +83,11 @@ public class ExpensePagerFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         binding = FragmentPagerExpenseBinding.inflate(inflater);
-
         return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
         fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
@@ -100,7 +99,6 @@ public class ExpensePagerFragment extends Fragment {
                     gasDataList = data;
                     lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
                     binding.tvLastInfo.setText(lastInfo);
-                    binding.tvPageNum.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
             } else if(currentFragment instanceof ServiceManagerFragment) {
@@ -109,7 +107,6 @@ public class ExpensePagerFragment extends Fragment {
                     serviceList = data;
                     lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
                     binding.tvLastInfo.setText(lastInfo);
-                    binding.tvPageNum.setText(String.valueOf(Math.abs(numPage) + 1));
                 });
 
             }
