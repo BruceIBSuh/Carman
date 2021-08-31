@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp">
+    android:background="@android:color/white"
+    android:padding="3dp">
 
     <View
         android:id="@+id/view6"
@@ -79,6 +80,7 @@
         android:importantForAutofill="no"
         android:inputType="text"
         android:minWidth="250dp"
+        android:padding="5dp"
         android:textSize="@dimen/content"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_service_provider"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
@@ -113,6 +115,7 @@
         android:background="@drawable/state_view_focus"
         android:ems="10"
         android:importantForAutofill="no"
+        android:padding="5dp"
         android:textSize="@dimen/content"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_service_mileage"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
@@ -143,6 +146,7 @@
         android:layout_width="100dp"
         android:layout_height="wrap_content"
         android:background="@drawable/state_view_focus"
+        android:padding="5dp"
         android:textSize="@dimen/content"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_total_cost"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
@@ -192,7 +196,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_service_item"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

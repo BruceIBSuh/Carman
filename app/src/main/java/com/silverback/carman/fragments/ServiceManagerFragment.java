@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
@@ -36,7 +35,8 @@ import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
 import com.silverback.carman.database.ServiceManagerEntity;
 import com.silverback.carman.database.ServicedItemEntity;
-import com.silverback.carman.databinding.ViewpagerServiceManagerBinding;
+import com.silverback.carman.databinding.FragmentServiceManagerBinding;
+import com.silverback.carman.databinding.PagerServiceManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ServiceCenterTask;
@@ -70,7 +70,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Objects
     //private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
-    private ViewpagerServiceManagerBinding binding;
+    private FragmentServiceManagerBinding binding;
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
@@ -220,10 +220,11 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        binding = ViewpagerServiceManagerBinding.inflate(inflater);
-        View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
 
-        parentLayout = localView.findViewById(R.id.fragment_svc);
+        binding = FragmentServiceManagerBinding.inflate(inflater);
+        //View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
+
+        //parentLayout = localView.findViewById(R.id.fragment_svc);
         //recyclerServiceItems = localView.findViewById(R.id.recycler_service);
 //        tvDate = localView.findViewById(R.id.tv_service_date);
 //        etServiceName = localView.findViewById(R.id.et_service_provider);
@@ -234,39 +235,41 @@ public class ServiceManagerFragment extends Fragment implements
 //        tvTotalCost = localView.findViewById(R.id.tv_svc_payment);
 //        TextView tvPeriod = localView.findViewById(R.id.tv_period);
 
-        tvMileage.setOnClickListener(this);
-        binding.btnServiceDate.setOnClickListener(this);
-        binding.btnRegisterServiceProvider.setOnClickListener(this);
-        btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
+        binding.tvMileage.setOnClickListener(this);
+        binding.btnSvcDate.setOnClickListener(this);
 
-        svcName = etServiceName.getText().toString();
+
+        binding.btnRegisterService.setOnClickListener(this);
+        binding.btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
+
+        svcName = binding.etServiceProvider.getText().toString();
 
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), visitTime);
-        tvDate.setText(date);
-        tvTotalCost.setText("0");
+        binding.tvServiceDate.setText(date);
+        binding.tvSvcPayment.setText("0");
         // Set the mileage value retrieved from SharedPreferences first
-        tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
-        binding.tvServiceMileage.setText(mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_month)));
-        btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
+        binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
+        binding.tvMileage.setText(mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_month)));
+        binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
-        binding.recyclerServiceItem.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerServiceItem.setHasFixedSize(true);
-        //recyclerServiceItems.setAdapter(mAdapter);
-
+        binding.recyclerService.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerService.setHasFixedSize(true);
+        binding.recyclerService.setAdapter(mAdapter);
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
         // Constants.SVC
         if(isGeofenceIntent && category == Constants.SVC) {
             log.i("Handling isGeofenceIntent");
-            etServiceName.setText(geoSvcName);
-            etServiceName.clearFocus();
+            binding.etServiceProvider.setText(geoSvcName);
+            binding.etServiceProvider.setText(geoSvcName);
+            binding.etServiceProvider.clearFocus();
             isSvcFavorite = true;
 
-            btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            //btnDate.setVisibility(View.GONE);
-            binding.btnServiceDate.setVisibility(View.GONE);
+            binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            binding.btnSvcDate.setVisibility(View.GONE);
+            binding.btnSvcDate.setVisibility(View.GONE);
         }
 
         //return localView;
@@ -288,7 +291,7 @@ public class ServiceManagerFragment extends Fragment implements
         pagerAdapterModel.getJsonServiceArray().observe(requireActivity(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
-            if(recyclerServiceItems != null) recyclerServiceItems.setAdapter(mAdapter);
+            binding.recyclerService.setAdapter(mAdapter);
 
             // Query the latest service history from ServiceManagerEntity and update the adapter, making
             // partial bindings to RecycerView.
@@ -319,12 +322,14 @@ public class ServiceManagerFragment extends Fragment implements
             final int value = data.valueAt(0);
             switch(viewId) {
                 case R.id.tv_mileage:
-                    tvMileage.setText(df.format(value));
+                    //tvMileage.setText(df.format(value));
+                    binding.tvMileage.setText(df.format(value));
                     break;
                 case R.id.tv_value_cost:
                     mAdapter.notifyItemChanged(itemPos, data);
                     totalExpense += data.valueAt(0);
-                    tvTotalCost.setText(df.format(totalExpense));
+                    //tvTotalCost.setText(df.format(totalExpense));
+                    binding.tvSvcPayment.setText(df.format(totalExpense));
                     break;
             }
         });
@@ -337,7 +342,8 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
             svcName = entity.providerName;
             svcId = entity.providerId;
-            etServiceName.setText(svcName);
+            //etServiceName.setText(svcName);
+            binding.etServiceProvider.setText(svcName);
             btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             isSvcFavorite = true;
         });
@@ -380,7 +386,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
         // via FragmentViewModel in the textview.
         switch(v.getId()) {
-            case R.id.tv_mileage:
+            case R.id.tv_service_mileage:
                 Bundle args = new Bundle();
                 //args.putString("itemLabel", getString(R.string.svc_label_mileage));
                 args.putString("initValue", tvMileage.getText().toString());
@@ -445,7 +451,8 @@ public class ServiceManagerFragment extends Fragment implements
     public void subtractCost(int value) {
         log.i("Calculate Total Cost");
         totalExpense -= value;
-        tvTotalCost.setText(df.format(totalExpense));
+        //tvTotalCost.setText(df.format(totalExpense));
+        binding.tvSvcPayment.setText(df.format(totalExpense));
     }
 
 
@@ -453,9 +460,10 @@ public class ServiceManagerFragment extends Fragment implements
     public int getCurrentMileage() {
         try {
             //return df.parse(tvMileage.getText().toString()).intValue();
-            Number num = df.parse(tvMileage.getText().toString());
+            Number num = df.parse(binding.tvMileage.getText().toString());
             if(num != null) return num.intValue();
         } catch(ParseException e) { e.printStackTrace();}
+
         return -1;
     }
 
@@ -465,17 +473,17 @@ public class ServiceManagerFragment extends Fragment implements
         // if(isGeofenceIntent) return;
         // Retrieve a service center from the favorite list, the value of which is sent via
         // fragmentSharedModel.getFavoriteName()
-        if(TextUtils.isEmpty(etServiceName.getText())) {
+        if(TextUtils.isEmpty(binding.etServiceProvider.getText())) {
             String title = "Favorite Service Center";
             FavoriteListFragment.newInstance(title, Constants.SVC).show(getActivity().getSupportFragmentManager(), null);
 
         // Remove the center out of the favorite list and the geofence
         } else if(isSvcFavorite) {
             Snackbar snackbar = Snackbar.make(
-                    parentLayout, getString(R.string.svc_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
+                    binding.getRoot(), getString(R.string.svc_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
                 geofenceHelper.removeFavoriteGeofence(svcName, svcId, Constants.SVC);
-                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                //btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
             });
 
             snackbar.show();
@@ -488,14 +496,14 @@ public class ServiceManagerFragment extends Fragment implements
             if (TextUtils.isEmpty(svcId)) {
                 InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(etServiceName.getWindowToken(), 0);
-                etServiceName.clearFocus();
-                Snackbar.make(parentLayout, R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
+                binding.etServiceProvider.clearFocus();
+                Snackbar.make(binding.getRoot(), R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
 
             } else {
                 // Check if the totla number of the service favorites are out of the max limit.
                 final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
                 if (placeholder == Constants.MAX_FAVORITE) {
-                    Snackbar.make(parentLayout, getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(binding.getRoot(), getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
                 } else {
                     // Query the data of a station from Firestore and pass the data to FavoriteGeofenceHelper
                     // for adding the favoirte list to the local db and Firestore as well.
@@ -503,7 +511,7 @@ public class ServiceManagerFragment extends Fragment implements
                         if (task.isSuccessful()) {
                             DocumentSnapshot snapshot = task.getResult();
                             if (snapshot != null && snapshot.exists()) {
-                                btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                                //btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                                 geofenceHelper.addFavoriteGeofence(snapshot, placeholder, Constants.SVC);
                             }
                         }
@@ -573,18 +581,18 @@ public class ServiceManagerFragment extends Fragment implements
         if(TextUtils.isEmpty(etServiceName.getText())) {
             String msg = getString(R.string.svc_snackbar_stnname);
             Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-            etServiceName.requestFocus();
+            binding.etServiceProvider.requestFocus();
             return false;
         }
 
-        if(TextUtils.isEmpty(tvMileage.getText())) {
-            Snackbar.make(parentLayout, R.string.svc_snackbar_mileage, Snackbar.LENGTH_SHORT).show();
-            tvMileage.requestFocus();
+        if(TextUtils.isEmpty(binding.tvMileage.getText())) {
+            Snackbar.make(binding.getRoot(), R.string.svc_snackbar_mileage, Snackbar.LENGTH_SHORT).show();
+            binding.tvMileage.requestFocus();
             return false;
         }
 
-        if(tvTotalCost.getText().toString().equals("0")) {
-            Snackbar.make(parentLayout, R.string.svc_snackbar_cost, Snackbar.LENGTH_SHORT).show();
+        if(binding.tvSvcPayment.getText().toString().equals("0")) {
+            Snackbar.make(binding.getRoot(), R.string.svc_snackbar_cost, Snackbar.LENGTH_SHORT).show();
 
         }
 
