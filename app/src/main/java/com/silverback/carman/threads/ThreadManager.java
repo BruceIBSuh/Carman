@@ -330,8 +330,8 @@ public class ThreadManager {
 
         return expenseTabPagerTask;
     }
+    */
 
-     */
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
@@ -364,6 +364,7 @@ public class ThreadManager {
 
         return stationListTask;
     }
+
 
     // Locate a service center within a specific area with the current location and a geofence
     // matched.

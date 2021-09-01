@@ -11,13 +11,11 @@ public class ServiceCenterTask extends ThreadTask implements ServiceCenterRunnab
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceCenterTask.class);
 
-    private Context context;
-    private Runnable mServiceCenterRunnable;
+    private final Runnable mServiceCenterRunnable;
     private Location mLocation;
     private ServiceCenterViewModel model;
 
     public ServiceCenterTask(Context context) {
-        this.context = context;
         mServiceCenterRunnable = new ServiceCenterRunnable(context, this);
     }
 

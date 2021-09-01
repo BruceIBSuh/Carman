@@ -117,24 +117,20 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         String userId = getUserIdFromStorage(this);
 
-        // Define ViewModels. ViewModelProviders.of(this) is deprecated.
-        LocationViewModel locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
-        stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
-
-        expContentPagerAdapter = new ExpContentPagerAdapter(this);
-        binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
-        binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
-
+        // Create initial basic layouts
         createAppbarLayout();
+        createTabLayout();
         createLastExpenseViewPager();
 
-        String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        //String jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
-        tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
+        // Define ViewModels
+        LocationViewModel locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        //PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
 
 
-        // Consider this process should be behind the layout to lessen the ram load.
+        // Worker Thread for getting service items and the current gas station.
+        //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
+
         if(!isGeofencing) {
             locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             locationModel.getLocation().observe(this, location -> {
@@ -143,6 +139,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     mPrevLocation = location;
                     String[] defaults = getNearStationParams();
                     defaults[1] = Constants.MIN_RADIUS;
+                    stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
                     stationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
                 }
             });
@@ -157,15 +154,16 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     @Override
     public void onPause() {
         super.onPause();
+        binding.pagerTabFragment.unregisterOnPageChangeCallback(addPageChangeCallback());
     }
 
     @Override
     public void onStop(){
         super.onStop();
         log.i("onStop");
-        //if(locationTask != null) locationTask = null;
-        //if(tabPagerTask != null) tabPagerTask = null;
-        //if(stationListTask != null) stationListTask = null;
+        if(locationTask != null) locationTask = null;
+        if(tabPagerTask != null) tabPagerTask = null;
+        if(stationListTask != null) stationListTask = null;
     }
     
     @Override
@@ -209,7 +207,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         return true;
     }
 
-    // AppBarLayout.OnOffsetChangeListener invokes this method
+    // Implement AppBarLayout.OnOffsetChangeListener
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
@@ -225,8 +223,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
             binding.topFrame.setAlpha(bgAlpha);
         }
-
-
     }
 
     // ViewPager2 contains OnPageChangeCallback as an abstract class. OnPageChangeCallback of
@@ -286,6 +282,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         pageTitle = getString(R.string.exp_title_gas); //default title when the appbar scrolls up.
         binding.appBar.addOnOffsetChangedListener(this);
+    }
+
+    private void createTabLayout() {
+        expContentPagerAdapter = new ExpContentPagerAdapter(this);
+        binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
+        binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
 
         String[] titles = getResources().getStringArray(R.array.tab_carman_title);
         Drawable[] icons = {
@@ -325,13 +327,14 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // start LocationTask.
     private void animSlideTabLayout() {
         final float toolbarHeight = getActionbarHeight();
-        AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
+        //AnimatorSet animSet = new AnimatorSet();
+        //ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
         ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", toolbarHeight);
-        animTab.setDuration(1000);
-        animFrame.setDuration(1000);
-        animSet.play(animTab).before(animFrame);
-        animSet.start();
+        //animTab.setDuration(500);
+        animFrame.setDuration(1500);
+        //animSet.play(animTab).before(animFrame);
+        //animSet.start();
+        animFrame.start();
         /*
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {

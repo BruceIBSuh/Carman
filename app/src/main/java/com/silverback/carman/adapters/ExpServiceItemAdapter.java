@@ -239,7 +239,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
             tvItemCost.setOnClickListener(this);
             tvItemMemo.setOnClickListener(this);
-            //cbServiceItem.setOnCheckedChangeListener(this);
+            cbServiceItem.setOnCheckedChangeListener(this);
             //binding.chkbox.setOnCheckedChangeListener(this);
 
         }
@@ -273,10 +273,10 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
             if(isChecked) {
                 layout.setVisibility(View.VISIBLE);
-                animSlideUpAndDown(layout, 0, 75);
+                animSlideUpAndDown(layout, 0, 80);
 
             } else {
-                animSlideUpAndDown(layout, 75, 0);
+                animSlideUpAndDown(layout, 80, 0);
                 // Substract the item cost input at the moment out of the total cost.
                 //if(arrItemCost[pos] != 0) mListener.subtractCost(arrItemCost[pos]);
                 //arrItemCost[pos] = 0;

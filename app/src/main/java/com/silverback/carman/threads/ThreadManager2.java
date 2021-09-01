@@ -15,6 +15,9 @@ import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,6 +56,7 @@ public class ThreadManager2 {
     private final BlockingQueue<StationListTask> mStnListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
+    private final BlockingQueue<ServiceItemTask> mServiceItemTaskQueue;
     private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
@@ -62,6 +66,7 @@ public class ThreadManager2 {
     private LocationTask locationTask;
     private StationListTask stnListTask;
     private ExpenseTabPagerTask expenseTask;
+    private ServiceItemTask serviceItemTask;
 
     // Constructor private
     private ThreadManager2() {
@@ -71,6 +76,7 @@ public class ThreadManager2 {
         mStnListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
+        mServiceItemTaskQueue = new LinkedBlockingQueue<>();
 
 
         threadPoolExecutor = new ThreadPoolExecutor(
@@ -204,6 +210,13 @@ public class ThreadManager2 {
         return stnListTask;
     }
 
+    public ServiceItemTask createServiceItems(Context context, String jsonServiceItems) {
+        if(serviceItemTask == null) serviceItemTask = new ServiceItemTask(context);
+        serviceItemTask.init(jsonServiceItems);
+        InnerClazz.sInstance.threadPoolExecutor.execute(serviceItemTask.getServiceItemRunnable());
+        return serviceItemTask;
+    }
+
     public ExpenseTabPagerTask startExpenseTabPagerTask(PagerAdapterViewModel model, String svcItems){
             //Context context, FragmentManager fm, PagerAdapterViewModel model,
             //String[] defaults, String jsonDistrict, String jsonSvcItem){
@@ -218,6 +231,7 @@ public class ThreadManager2 {
 
         return expenseTask;
     }
+
 
     @SuppressWarnings("all")
     public synchronized void cancelAllThreads() {

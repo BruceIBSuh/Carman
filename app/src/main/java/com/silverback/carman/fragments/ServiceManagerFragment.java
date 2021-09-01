@@ -39,8 +39,10 @@ import com.silverback.carman.databinding.FragmentServiceManagerBinding;
 import com.silverback.carman.databinding.PagerServiceManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.ExpenseTabPagerTask;
 import com.silverback.carman.threads.ServiceCenterTask;
 import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -164,6 +166,15 @@ public class ServiceManagerFragment extends Fragment implements
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
+        // Attach an observer to fetch a current location from LocationTask, then initiate
+        // StationListTask based on the value.
+        /*
+        locationModel.getLocation().observe(getActivity(), location -> {
+            this.location = location;
+            //serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
+        });
+         */
+
         // The service items are saved in SharedPreferences as JSONString type, which should be
         // converted to JSONArray. The service period retrieved from SharedPrefernces is passed to
         // the adapter as well.
@@ -194,7 +205,6 @@ public class ServiceManagerFragment extends Fragment implements
             }
         }
          */
-
 
         // Attach the listener which invokes the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
@@ -238,7 +248,6 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvMileage.setOnClickListener(this);
         binding.btnSvcDate.setOnClickListener(this);
 
-
         binding.btnRegisterService.setOnClickListener(this);
         binding.btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
 
@@ -255,7 +264,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerServiceItems.setHasFixedSize(true);
-        binding.recyclerServiceItems.setAdapter(mAdapter);
+        //binding.recyclerServiceItems.setAdapter(mAdapter);
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -279,21 +288,24 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Attach an observer to fetch a current location from LocationTask, then initiate
-        // StationListTask based on the value.
-        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
-            this.location = location;
-            serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
-        });
-
         // ExpenseTabPagerTask initiated in the parent activity runs ExpenseSvcItemsRunnable which
         // notifies this of receiving the livedata JSONArray containing the service items.
+        String jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        try {
+            JSONArray jsonArray = new JSONArray(jsonServiceItems);
+            mAdapter = new ExpServiceItemAdapter(jsonArray, svcPeriod, this);
+            binding.recyclerServiceItems.setAdapter(mAdapter);
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e);
+        }
+        /*
+        ExpenseTabPagerTask tabPagerTask =
+                ThreadManager2.getInstance().startExpenseTabPagerTask(pagerAdapterModel, jsonSvcItems);
+
         pagerAdapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
             binding.recyclerServiceItems.setAdapter(mAdapter);
-
             // Query the latest service history from ServiceManagerEntity and update the adapter, making
             // partial bindings to RecycerView.
             for(int i = 0; i < jsonServiceArray.length(); i++) {
@@ -309,30 +321,29 @@ public class ServiceManagerFragment extends Fragment implements
                 } catch(JSONException e) { e.printStackTrace(); }
             }
         });
-
+        */
 
         // Codes should be added in accordance to the progress of the service centre database as like
         // in the gas station db.
+        /*
         svcCenterModel.getCurrentSVC().observe(getViewLifecycleOwner(), svcData -> {
             //checkSvcFavorite(svcData, Constants.SVC);
         });
+        */
+
+
 
         // Communcate w/ NumberPadFragment to put a number selected in the num pad into the textview
         // in this fragment.
         fragmentModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
-            switch(viewId) {
-                case R.id.tv_mileage:
-                    //tvMileage.setText(df.format(value));
-                    binding.tvMileage.setText(df.format(value));
-                    break;
-                case R.id.tv_value_cost:
-                    mAdapter.notifyItemChanged(itemPos, data);
-                    totalExpense += data.valueAt(0);
-                    //tvTotalCost.setText(df.format(totalExpense));
-                    binding.tvSvcPayment.setText(df.format(totalExpense));
-                    break;
+            if(viewId == R.id.tv_mileage) {
+                binding.tvMileage.setText(df.format(value));
+            } else if(viewId == R.id.tv_value_cost) {
+                mAdapter.notifyItemChanged(itemPos, data);
+                totalExpense += data.valueAt(0);
+                binding.tvSvcPayment.setText(df.format(totalExpense));
             }
         });
 
