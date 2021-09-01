@@ -14,7 +14,7 @@ import java.util.List;
 
 public class MainExpPagerAdapter extends FragmentStateAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerAdapter.class);
-    private static final int NUM_PAGES = 5;
+    private static final int NUM_PAGES = 2;
 
     public MainExpPagerAdapter(FragmentActivity fa) {
         super(fa);
@@ -34,6 +34,7 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
+
         super.onBindViewHolder(holder, position, payloads);
         log.i("payloads: %s", payloads);
     }

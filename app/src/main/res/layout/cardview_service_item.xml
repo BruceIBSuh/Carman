@@ -85,7 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="50dp"
-            android:background="@color/svcItemExpense"
+            android:background="@android:color/background_light"
             android:padding="8dp" >
             <!--
             <TextView
@@ -178,7 +178,6 @@
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_info"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_label_info"
                 tools:ignore="Autofill" />
-
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

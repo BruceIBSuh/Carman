@@ -190,6 +190,7 @@ public class MainActivity extends BaseActivity implements
         if(item.getItemId() == R.id.action_garage) {
             //startActivity(new Intent(this, ExpenseActivity.class));
             activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
+
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
 

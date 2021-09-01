@@ -221,10 +221,10 @@
         android:background="@android:color/holo_blue_light" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_service"
+        android:id="@+id/recycler_service_items"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_below="@id/view_underline_stmts"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true" />

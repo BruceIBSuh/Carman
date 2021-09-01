@@ -193,8 +193,8 @@ public class ServiceManagerFragment extends Fragment implements
                 e.printStackTrace();
             }
         }
-
          */
+
 
         // Attach the listener which invokes the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
@@ -253,9 +253,9 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvMileage.setText(mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_month)));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
-        binding.recyclerService.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerService.setHasFixedSize(true);
-        binding.recyclerService.setAdapter(mAdapter);
+        binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerServiceItems.setHasFixedSize(true);
+        binding.recyclerServiceItems.setAdapter(mAdapter);
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -279,19 +279,20 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
-        locationModel.getLocation().observe(requireActivity(), location -> {
+        locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             this.location = location;
             serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
 
         // ExpenseTabPagerTask initiated in the parent activity runs ExpenseSvcItemsRunnable which
         // notifies this of receiving the livedata JSONArray containing the service items.
-        pagerAdapterModel.getJsonServiceArray().observe(requireActivity(), jsonServiceArray -> {
+        pagerAdapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
             this.jsonServiceArray = jsonServiceArray;
             mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
-            binding.recyclerService.setAdapter(mAdapter);
+            binding.recyclerServiceItems.setAdapter(mAdapter);
 
             // Query the latest service history from ServiceManagerEntity and update the adapter, making
             // partial bindings to RecycerView.
@@ -308,6 +309,7 @@ public class ServiceManagerFragment extends Fragment implements
                 } catch(JSONException e) { e.printStackTrace(); }
             }
         });
+
 
         // Codes should be added in accordance to the progress of the service centre database as like
         // in the gas station db.
@@ -352,7 +354,7 @@ public class ServiceManagerFragment extends Fragment implements
         // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
         // update the data in Firestore.
         // Retrieving the evaluation and the comment, set or update the data with the passed id.
-        fragmentModel.getServiceLocation().observe(requireActivity(), sparseArray -> {
+        fragmentModel.getServiceLocation().observe(getViewLifecycleOwner(), sparseArray -> {
             svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
             svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
             svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);

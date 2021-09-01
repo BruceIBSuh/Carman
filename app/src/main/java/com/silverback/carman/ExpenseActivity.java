@@ -122,7 +122,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
         stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
 
-        expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
+        expContentPagerAdapter = new ExpContentPagerAdapter(this);
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
 
@@ -328,8 +328,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
         ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", toolbarHeight);
-        animTab.setDuration(1500);
-        animFrame.setDuration(1500);
+        animTab.setDuration(1000);
+        animFrame.setDuration(1000);
         animSet.play(animTab).before(animFrame);
         animSet.start();
         /*
@@ -359,7 +359,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
         ViewGroup.LayoutParams params = binding.topframeViewpager.getLayoutParams();
-        anim.setDuration(1500);
+        anim.setDuration(1000);
         anim.start();
 
         anim.addUpdateListener(valueAnimator -> {

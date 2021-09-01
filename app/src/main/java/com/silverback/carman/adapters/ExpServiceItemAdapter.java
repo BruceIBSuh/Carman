@@ -59,6 +59,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     private int curMileage;
     private int safeColor, warningColor, progressColor;
     private int svcCheckPeriod;
+    private int itemPos;
 
     // Listener to communicate b/w the parent fragment and the RecyclerView.Adapter therein
     // to get the values from the service item recyclerview.
@@ -109,6 +110,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         long lastTime = 0;
         int maxValue = 0;
         int lapse = 0;
+
+        log.i("Position: %s", position);
 
         holder.tvItemName.setText(jsonObject.optString("name"));
         holder.cbServiceItem.setChecked(arrCheckedState[position]);
@@ -210,8 +213,10 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     }
 
     // RecyclerView.ViewHolder
-    class ServiceItemViewHolder extends RecyclerView.ViewHolder implements
-            View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+    static class ServiceItemViewHolder extends RecyclerView.ViewHolder implements
+            View.OnClickListener,
+            CompoundButton.OnCheckedChangeListener {
+
         ConstraintLayout layout;
         TextView tvItemName;
         TextView tvLastService;
@@ -223,7 +228,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
         ServiceItemViewHolder(CardView view){
             super(view);
-
             layout = view.findViewById(R.id.constraint_stmts);
             tvItemName = view.findViewById(R.id.tv_name);
             tvLastService = view.findViewById(R.id.tv_last_service);
@@ -235,7 +239,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
             tvItemCost.setOnClickListener(this);
             tvItemMemo.setOnClickListener(this);
-            cbServiceItem.setOnCheckedChangeListener(this);
+            //cbServiceItem.setOnCheckedChangeListener(this);
+            //binding.chkbox.setOnCheckedChangeListener(this);
 
         }
 
@@ -248,14 +253,14 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
                     // to subtract a ready-input number from the total cost.
                     if(!TextUtils.equals(tvItemCost.getText(), "0")) {
                         //tvItemCost.setText("0");
-                        mListener.subtractCost(arrItemCost[getAdapterPosition()]);
+                        //mListener.subtractCost(arrItemCost[getAdapterPosition()]);
                     }
 
-                    mListener.inputItemCost(title, tvItemCost, getAdapterPosition());
+                    //mListener.inputItemCost(title, tvItemCost, getAdapterPosition());
                     break;
 
                 case R.id.tv_item_info:
-                    mListener.inputItemMemo(title, tvItemMemo, getAdapterPosition());
+                    //mListener.inputItemMemo(title, tvItemMemo, getAdapterPosition());
                     break;
             }
         }
@@ -264,7 +269,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
             final int pos = getAdapterPosition(); // get the position of a checked item.
-            arrCheckedState[pos] = isChecked; // update checked items in the entire list.
+            //arrCheckedState[pos] = isChecked; // update checked items in the entire list.
 
             if(isChecked) {
                 layout.setVisibility(View.VISIBLE);
@@ -273,8 +278,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             } else {
                 animSlideUpAndDown(layout, 75, 0);
                 // Substract the item cost input at the moment out of the total cost.
-                if(arrItemCost[pos] != 0) mListener.subtractCost(arrItemCost[pos]);
-                arrItemCost[pos] = 0;
+                //if(arrItemCost[pos] != 0) mListener.subtractCost(arrItemCost[pos]);
+                //arrItemCost[pos] = 0;
                 tvItemCost.setText("0");
                 tvItemMemo.setText("");
             }
