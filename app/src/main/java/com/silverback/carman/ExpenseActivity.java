@@ -1,5 +1,7 @@
 package com.silverback.carman;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -16,7 +18,9 @@ import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -30,10 +34,12 @@ import com.silverback.carman.fragments.ServiceManagerFragment;
 import com.silverback.carman.fragments.StatGraphFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.LocationTask;
+import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.threads.ThreadTask;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.DatePickerFragment;
 import com.silverback.carman.viewmodels.LocationViewModel;
-import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.Objects;
@@ -76,7 +82,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     // Objects
     private ActivityExpenseBinding binding;
-    //private LocationViewModel locationModel;
+    private LocationViewModel locationModel;
     //private PagerAdapterViewModel pagerModel;
     private StationListViewModel stnListModel;
     private ExpContentPagerAdapter expContentPagerAdapter;
@@ -85,8 +91,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private StatGraphFragment statGraphFragment;
 
     private ThreadTask tabPagerTask;
-    private ThreadTask locationTask;
-    private ThreadTask stationListTask;
+    private LocationTask locationTask;
+    private StationListTask stationListTask;
 
     private ViewPager2 pagerRecentExp;
     private MenuItem menuSave;
@@ -95,7 +101,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // Fields
     private Location mPrevLocation;
     private int currentPage;
-    private int prevHeight = 0;
+    private int prevHeight;
     private int category;
     private float tabHeight;
     private String pageTitle;
@@ -123,27 +129,15 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         createLastExpenseViewPager();
 
         // Define ViewModels
-        LocationViewModel locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         //PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
-
+        locationTask = sThreadManager.fetchLocationTask(this, locationModel);
 
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
 
-        if(!isGeofencing) {
-            locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-            locationModel.getLocation().observe(this, location -> {
-                if(location == null) return;
-                if (mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
-                    mPrevLocation = location;
-                    String[] defaults = getNearStationParams();
-                    defaults[1] = Constants.MIN_RADIUS;
-                    stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
-                    stationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
-                }
-            });
-        }
+
     }
 
     @Override
@@ -301,6 +295,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             tab.setText(titles[pos]);
             tab.setIcon(icons[pos]);
             animSlideTabLayout();
+            prevHeight = 0;
         }).attach();
     }
 
@@ -327,36 +322,34 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // start LocationTask.
     private void animSlideTabLayout() {
         final float toolbarHeight = getActionbarHeight();
-        //AnimatorSet animSet = new AnimatorSet();
-        //ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
+        AnimatorSet animSet = new AnimatorSet();
+        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
         ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", toolbarHeight);
-        //animTab.setDuration(500);
-        animFrame.setDuration(1500);
-        //animSet.play(animTab).before(animFrame);
-        //animSet.start();
-        animFrame.start();
-        /*
+        animTab.setDuration(1000);
+        animFrame.setDuration(1000);
+        animSet.play(animTab).before(animFrame);
+        animSet.start();
+
+        // In case the app gets inititated by Geofence notification, ServiceFragent must be set to
+        // the current page only after the topframe viewpager has added. Otherwise, an error occurs
+        // for the reason of no child view in the viewpager.
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
-                log.i("Animate tab and frame");
-                // In case that this activity is started by the geofence notification, ServiceFragment
-                // must be set to the current page only after the viewpager at the top has added to
-                // the framelayout. Otherwise, an error occurs due to no child view in the viewpager.
                 if(isGeofencing && category == Constants.SVC)
                     binding.pagerTabFragment.setCurrentItem(category);
+                // Fetch the current loaction and visiting gas station based on it only after this
+                // animation ends to lessen the main thread load.
+                fetchCurrentStation(ExpenseActivity.this);
             }
         });
-
-         */
-
     }
 
     private void animSlideTopFrame(int oldY, int newY) {
         // Convert the dp unit to pixels
-        int prevHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+        int prevHeight = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 oldY, getResources().getDisplayMetrics());
-        int newHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+        int newHeight = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 newY, getResources().getDisplayMetrics());
 
         // Animate to slide the top frame down to the measured height.
@@ -366,12 +359,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         anim.start();
 
         anim.addUpdateListener(valueAnimator -> {
-            params.height = (Integer)valueAnimator.getAnimatedValue();;
+            params.height = (int)valueAnimator.getAnimatedValue();
             binding.topframeViewpager.setLayoutParams(params);
         });
     }
-
-
 
     private boolean saveExpenseData(int page) {
         Fragment fragment = expContentPagerAdapter.createFragment(page);
@@ -394,4 +385,26 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         return isSaved;
 
     }
+
+    // Once a current location is fetched, get the current gas station based on it. This method
+    // will be referenced in ServiceManagerFragment in the ViewCreate lifecycle.
+    private void fetchCurrentStation(LifecycleOwner lifeCycleOwner) {
+        locationModel.getLocation().observe(lifeCycleOwner, location -> {
+            if(location == null) return;
+            if (mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
+                mPrevLocation = location;
+                String[] defaults = getNearStationParams();
+                defaults[1] = Constants.MIN_RADIUS;
+                StationListViewModel stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
+                stationListTask = sThreadManager.startStationListTask(stnListModel, location, defaults);
+            }
+        });
+    }
+
+    // Implement change time button onClickListener
+    public void setCustomTime() {
+        DialogFragment newFragment = new DatePickerFragment();
+        newFragment.show(getSupportFragmentManager(), "datePicker");
+    }
+
 }

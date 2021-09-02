@@ -42,6 +42,15 @@
         tools:ignore="RelativeOverlap"/>
 
     <Button
+        android:id="@+id/btn_reset_time"
+        android:layout_width="45dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_toEndOf="@id/tv_service_date"
+        android:layout_alignBaseline="@id/tv_label_date" />
+
+    <Button
         android:id="@+id/btn_svc_date"
         android:visibility="gone"
         android:layout_width="35dp"

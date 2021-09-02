@@ -29,6 +29,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.BaseActivity;
+import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.ExpServiceItemAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -36,28 +37,27 @@ import com.silverback.carman.database.ExpenseBaseEntity;
 import com.silverback.carman.database.ServiceManagerEntity;
 import com.silverback.carman.database.ServicedItemEntity;
 import com.silverback.carman.databinding.FragmentServiceManagerBinding;
-import com.silverback.carman.databinding.PagerServiceManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.ExpenseTabPagerTask;
 import com.silverback.carman.threads.ServiceCenterTask;
-import com.silverback.carman.threads.ThreadManager;
-import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.ServiceCenterViewModel;
+import com.silverback.carman.viewmodels.StationListViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -76,10 +76,13 @@ public class ServiceManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
+
     private FragmentSharedModel fragmentModel;
     private PagerAdapterViewModel pagerAdapterModel;
     private LocationViewModel locationModel;
     private ServiceCenterViewModel svcCenterModel;
+    private StationListViewModel stationModel;
+
     private ServiceCenterTask serviceCenterTask;
     private Location location;
     private NumberPadFragment numPad;
@@ -88,6 +91,7 @@ public class ServiceManagerFragment extends Fragment implements
     private FavoriteGeofenceHelper geofenceHelper;
     private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
+    private SimpleDateFormat sdf;
     private JSONArray jsonServiceArray;
     private Location svcLocation;
     private String svcAddress;
@@ -118,6 +122,7 @@ public class ServiceManagerFragment extends Fragment implements
     private float svcRating;
     private long geoTime;
     private int category;
+    private Location mPrevLocation;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -150,21 +155,24 @@ public class ServiceManagerFragment extends Fragment implements
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
+        sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
+        numPad = new NumberPadFragment();
+        memoPad = new MemoPadFragment();
+        df = BaseActivity.getDecimalFormatInstance();
+        if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
 
         // Get the service periond unit from SharedPreferences and pass it to the adapter as int type.
         String period = mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_mileage));
         if(period.equals(getString(R.string.pref_svc_period_mileage))) svcPeriod = 0;
         else if(period.equals(getString(R.string.pref_svc_period_month))) svcPeriod = 1;
 
+        // ViewModels
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
         pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
         locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
+        stationModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
 
-        if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
-        df = BaseActivity.getDecimalFormatInstance();
-        numPad = new NumberPadFragment();
-        memoPad = new MemoPadFragment();
 
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
@@ -175,36 +183,6 @@ public class ServiceManagerFragment extends Fragment implements
         });
          */
 
-        // The service items are saved in SharedPreferences as JSONString type, which should be
-        // converted to JSONArray. The service period retrieved from SharedPrefernces is passed to
-        // the adapter as well.
-        /*
-        try {
-            String json = mSettings.getString(Constants.SERVICE_ITEMS, null);
-            jsonServiceArray = new JSONArray(json);
-            svcPeriod = mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_mileage));
-            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
-        } catch(JSONException e) {e.printStackTrace();}
-
-        for(int i = 0; i < jsonServiceArray.length(); i++) {
-            try {
-                final int pos = i;
-                final String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                mDB.serviceManagerModel().loadServiceData(name).observe(this, data -> {
-                    if(data != null) {
-                        mAdapter.setServiceData(pos, data);
-                        mAdapter.notifyItemChanged(pos, data);
-                    } else {
-                        log.i("No service data: %s, %s", pos, name);
-                        mAdapter.setServiceData(pos, null);
-                    }
-                });
-            } catch(JSONException e) {
-                //log.e("JSONException: %s", e.getMessage());
-                e.printStackTrace();
-            }
-        }
-         */
 
         // Attach the listener which invokes the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
@@ -232,39 +210,18 @@ public class ServiceManagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         binding = FragmentServiceManagerBinding.inflate(inflater);
-        //View localView = inflater.inflate(R.layout.fragment_service_manager, container, false);
-
-        //parentLayout = localView.findViewById(R.id.fragment_svc);
-        //recyclerServiceItems = localView.findViewById(R.id.recycler_service);
-//        tvDate = localView.findViewById(R.id.tv_service_date);
-//        etServiceName = localView.findViewById(R.id.et_service_provider);
-//        tvMileage = localView.findViewById(R.id.tv_mileage);
-//        Button btnDate = localView.findViewById(R.id.btn_svc_date);
-//        Button btnReg = localView.findViewById(R.id.btn_register_service);
-//        btnSvcFavorite = localView.findViewById(R.id.btn_svc_favorite);
-//        tvTotalCost = localView.findViewById(R.id.tv_svc_payment);
-//        TextView tvPeriod = localView.findViewById(R.id.tv_period);
-
-        binding.tvMileage.setOnClickListener(this);
-        binding.btnSvcDate.setOnClickListener(this);
-
-        binding.btnRegisterService.setOnClickListener(this);
-        binding.btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
-
-        svcName = binding.etServiceProvider.getText().toString();
 
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
-        String date = BaseActivity.formatMilliseconds(getString(R.string.date_format_1), visitTime);
-        binding.tvServiceDate.setText(date);
+        binding.tvServiceDate.setText(sdf.format(visitTime));
         binding.tvSvcPayment.setText("0");
-        // Set the mileage value retrieved from SharedPreferences first
-        binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, ""));
-        binding.tvMileage.setText(mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_month)));
+        binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
-        binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerServiceItems.setHasFixedSize(true);
-        //binding.recyclerServiceItems.setAdapter(mAdapter);
+        // Set event listeners.
+        binding.tvMileage.setOnClickListener(this);
+        //binding.btnSvcDate.setOnClickListener(view -> ((ExpenseActivity)getActivity()).setCustomTime());
+        binding.btnRegisterService.setOnClickListener(this);
+        binding.btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -281,57 +238,15 @@ public class ServiceManagerFragment extends Fragment implements
             binding.btnSvcDate.setVisibility(View.GONE);
         }
 
-        //return localView;
         return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // ExpenseTabPagerTask initiated in the parent activity runs ExpenseSvcItemsRunnable which
-        // notifies this of receiving the livedata JSONArray containing the service items.
-        String jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        try {
-            JSONArray jsonArray = new JSONArray(jsonServiceItems);
-            mAdapter = new ExpServiceItemAdapter(jsonArray, svcPeriod, this);
-            binding.recyclerServiceItems.setAdapter(mAdapter);
-        } catch(JSONException e) {
-            log.e("JSONException: %s", e);
-        }
-        /*
-        ExpenseTabPagerTask tabPagerTask =
-                ThreadManager2.getInstance().startExpenseTabPagerTask(pagerAdapterModel, jsonSvcItems);
 
-        pagerAdapterModel.getJsonServiceArray().observe(getViewLifecycleOwner(), jsonServiceArray -> {
-            this.jsonServiceArray = jsonServiceArray;
-            mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
-            binding.recyclerServiceItems.setAdapter(mAdapter);
-            // Query the latest service history from ServiceManagerEntity and update the adapter, making
-            // partial bindings to RecycerView.
-            for(int i = 0; i < jsonServiceArray.length(); i++) {
-                try {
-                    final int pos = i;
-                    final String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                    mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
-                        if(data != null) {
-                            mAdapter.setServiceData(pos, data);
-                            mAdapter.notifyItemChanged(pos, data);
-                        } else mAdapter.setServiceData(pos, null);
-                    });
-                } catch(JSONException e) { e.printStackTrace(); }
-            }
-        });
-        */
-
-        // Codes should be added in accordance to the progress of the service centre database as like
-        // in the gas station db.
-        /*
-        svcCenterModel.getCurrentSVC().observe(getViewLifecycleOwner(), svcData -> {
-            //checkSvcFavorite(svcData, Constants.SVC);
-        });
-        */
-
-
+        try { createRecyclerServicItemView(); }
+        catch(JSONException e) { e.printStackTrace(); }
 
         // Communcate w/ NumberPadFragment to put a number selected in the num pad into the textview
         // in this fragment.
@@ -471,14 +386,43 @@ public class ServiceManagerFragment extends Fragment implements
 
     @Override
     public int getCurrentMileage() {
+        /*
         try {
             //return df.parse(tvMileage.getText().toString()).intValue();
+            // BUG !!!
             Number num = df.parse(binding.tvMileage.getText().toString());
             if(num != null) return num.intValue();
         } catch(ParseException e) { e.printStackTrace();}
-
+        */
         return -1;
     }
+
+    private void createRecyclerServicItemView() throws JSONException {
+        binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerServiceItems.setHasFixedSize(true);
+
+        String jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
+        jsonServiceArray = new JSONArray(jsonServiceItems);
+        mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
+        binding.recyclerServiceItems.setAdapter(mAdapter);
+
+        for(int i = 0; i < jsonServiceArray.length(); i++) {
+            final int pos = i;
+            final String name = jsonServiceArray.optJSONObject(pos).getString("name");
+            mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
+                if(data != null) {
+                    mAdapter.setServiceData(pos, data);
+                    mAdapter.notifyItemChanged(pos, data);
+                } //else mAdapter.setServiceData(pos, null);
+            });
+        }
+    }
+
+    private void notifyServiceItemData() throws JSONException {
+
+    }
+
+
 
     // Register the service center with the favorite list and the geofence.
     @SuppressWarnings("ConstantConditions")
@@ -648,6 +592,10 @@ public class ServiceManagerFragment extends Fragment implements
                         }
                     });
         }
+    }
+
+    private void setVisitingTime() {
+
     }
 
 

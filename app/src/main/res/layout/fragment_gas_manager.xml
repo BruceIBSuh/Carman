@@ -262,18 +262,28 @@
             app:layout_constraintStart_toEndOf="@+id/tv_gas_amount"
             app:layout_constraintTop_toTopOf="@+id/tv_gas_amount" />
 
+        <View
+            android:id="@+id/view8"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:background="#F3F3F3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_label_amount" />
+
         <TextView
             android:id="@+id/tv_subtitle_extra"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="16dp"
             android:gravity="start|center_vertical"
             android:text="@string/gas_subtitle_extra_expense"
             android:textSize="@dimen/subtitle"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_label_amount" />
+            app:layout_constraintTop_toBottomOf="@+id/view8" />
 
         <View
             android:id="@+id/view2"
@@ -374,6 +384,16 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_extra_payment"
             tools:ignore="Autofill" />
 
+        <View
+            android:id="@+id/view9"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_marginTop="16dp"
+            android:background="#F3F3F3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/et_extra_expense" />
+
         <TextView
             android:id="@+id/tv_subtitle_evaluation"
             android:layout_width="0dp"
@@ -386,7 +406,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/et_extra_expense" />
+            app:layout_constraintTop_toBottomOf="@+id/view9" />
 
         <View
             android:id="@+id/view3"

@@ -111,8 +111,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         int maxValue = 0;
         int lapse = 0;
 
-        log.i("Position: %s", position);
-
         holder.tvItemName.setText(jsonObject.optString("name"));
         holder.cbServiceItem.setChecked(arrCheckedState[position]);
         // Retain the values of service cost and memo when rebound.
@@ -166,6 +164,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     public void onBindViewHolder(@NonNull ServiceItemViewHolder holder, int pos, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, pos, payloads);
+
         } else {
             for(Object payload: payloads) {
                 if(payload instanceof SparseIntArray) {

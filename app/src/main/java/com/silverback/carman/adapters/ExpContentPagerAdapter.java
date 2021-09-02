@@ -13,6 +13,9 @@ import com.silverback.carman.fragments.StatStmtsFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
+// Adapter for ViewPager2 placed below the top frame, which displays GasManagerFragment,
+// ServiceManagerFragment, and StatGraphFragment in order.
+
 public class ExpContentPagerAdapter extends FragmentStateAdapter {
     //private static final LoggingHelper log = LoggingHelperFactory.create(ExpContentPagerAdapter.class);
 

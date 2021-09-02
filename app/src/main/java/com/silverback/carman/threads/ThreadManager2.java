@@ -7,6 +7,8 @@ import android.os.Looper;
 import android.os.Message;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -56,7 +58,6 @@ public class ThreadManager2 {
     private final BlockingQueue<StationListTask> mStnListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
-    private final BlockingQueue<ServiceItemTask> mServiceItemTaskQueue;
     private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
@@ -66,7 +67,6 @@ public class ThreadManager2 {
     private LocationTask locationTask;
     private StationListTask stnListTask;
     private ExpenseTabPagerTask expenseTask;
-    private ServiceItemTask serviceItemTask;
 
     // Constructor private
     private ThreadManager2() {
@@ -76,8 +76,6 @@ public class ThreadManager2 {
         mStnListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
-        mServiceItemTaskQueue = new LinkedBlockingQueue<>();
-
 
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
@@ -210,12 +208,6 @@ public class ThreadManager2 {
         return stnListTask;
     }
 
-    public ServiceItemTask createServiceItems(Context context, String jsonServiceItems) {
-        if(serviceItemTask == null) serviceItemTask = new ServiceItemTask(context);
-        serviceItemTask.init(jsonServiceItems);
-        InnerClazz.sInstance.threadPoolExecutor.execute(serviceItemTask.getServiceItemRunnable());
-        return serviceItemTask;
-    }
 
     public ExpenseTabPagerTask startExpenseTabPagerTask(PagerAdapterViewModel model, String svcItems){
             //Context context, FragmentManager fm, PagerAdapterViewModel model,

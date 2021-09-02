@@ -28,6 +28,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman.BaseActivity;
+import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
@@ -53,6 +54,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This fragment provides the form to fill in the gas expense.
@@ -222,9 +224,8 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         binding.tvExtraPayment.setOnClickListener(this);
         binding.btnResetRatingbar.setOnClickListener(view -> binding.ratingBar.setRating(0f));
 
-        binding.btnChangeTime.setOnClickListener(view -> setCustomTime());
-
-
+        // Set event listeners
+        binding.btnChangeTime.setOnClickListener(view -> ((ExpenseActivity)getActivity()).setCustomTime());
         // Check Geofencing permission(Background Location permission) first, then add a provider
         // not only to Geofencing list but alos favorite provider in the room.
         binding.btnGasFavorite.setOnClickListener(view -> {
@@ -233,7 +234,6 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
                 checkBackgroundLocationPermission();
             } else addGasFavorite();
         });
-
         binding.imgbtnRefresh.setOnClickListener(view -> {
 //            locationTask = ThreadManager2.fetchLocationTask(getContext(), locationModel);
 //            binding.pbSearchStation.setVisibility(View.VISIBLE);
@@ -290,6 +290,7 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        setCurrentStation();
         // Share a value input in NumberPadFragment as the view id passes to NumberPadFragment when
         // clicking, then returns an input value as SparseArray which contains the view id, which
         // may identify the view invoking NumberPadFragment and fill in the value into the view.
@@ -302,37 +303,20 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             }
         });
 
-        stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
-            log.i("current station");
-            if(curStn != null) {
-                stnName = curStn.getStnName();
-                stnId = curStn.getStnId();
-                binding.tvStationName.setText(stnName);
-                binding.etUnitPrice.setText(String.valueOf(curStn.getStnPrice()));
-                binding.etUnitPrice.setCursorVisible(false);
-
-                // Query Favorite with the fetched station name or station id to tell whether the station
-                // has registered with Favorite.
-                checkGasFavorite(stnName, stnId);
-            }
-
-            binding.pbSearchStation.setVisibility(View.GONE);
-            binding.imgbtnRefresh.setVisibility(View.VISIBLE);
-        });
 
         // Under the condition that no currnet station is fetched because of not within GEOFENCE_RADIUS,
         // the user can have the favorite station list when clicking the favorite button.
         // In doing so, this fragment communicates w/ FavoriteListFragment to retrieve a favorite
         // station picked out of FavoriteListFragment using FragmentSharedModel. With the station id,
         // FavoritePriceTask gets started to have the gas price.
-        fragmentModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), entity -> {
-            binding.tvStationName.setText(entity.providerName);
+        fragmentModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), data -> {
+            binding.tvStationName.setText(data.providerName);
             binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            stnId = entity.providerId;
+            stnId = data.providerId;
             isFavoriteGas = true;
 
             favPriceTask = ThreadManager.startFavoritePriceTask(
-                    getActivity(), opinetViewModel, entity.providerId, false);
+                    getActivity(), opinetViewModel, data.providerId, false);
         });
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
@@ -342,11 +326,13 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
             binding.etUnitPrice.setCursorVisible(false);
         });
 
+        /*
         fragmentModel.getPermission().observe(getViewLifecycleOwner(), isPermitted -> {
             log.i("rational dialog clicked");
             if(isPermitted) requestPermissions(new String[]{permBackLocation}, REQUEST_PERM_BACKGROUND_LOCATION);
             else log.i("DENIED");
         });
+        */
 
         fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
             long customTime = calendar.getTimeInMillis();
@@ -413,6 +399,28 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         numPad.setArguments(args);
 
         if(getActivity() != null) numPad.show(getActivity().getSupportFragmentManager(), "numberPad");
+    }
+
+    private void setCurrentStation() {
+        if(isGeofenceIntent) return;
+        stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
+            log.i("current station");
+            if(curStn != null) {
+                stnName = curStn.getStnName();
+                stnId = curStn.getStnId();
+                binding.tvStationName.setText(stnName);
+                binding.etUnitPrice.setText(String.valueOf(curStn.getStnPrice()));
+                binding.etUnitPrice.setCursorVisible(false);
+
+                // Query Favorite with the fetched station name or station id to tell whether the station
+                // has registered with Favorite.
+                checkGasFavorite(stnName, stnId);
+            }
+
+            binding.pbSearchStation.setVisibility(View.GONE);
+            binding.imgbtnRefresh.setVisibility(View.VISIBLE);
+        });
+
     }
 
     // Query FavoriteProviderEntity with the fetched station name or station id to tell whether the
@@ -644,9 +652,5 @@ public class GasManagerFragment extends Fragment implements View.OnClickListener
         }
     }
 
-    // Implement change time button onClickListener
-    private void setCustomTime() {
-        DialogFragment newFragment = new DatePickerFragment();
-        newFragment.show(requireActivity().getSupportFragmentManager(), "datePicker");
-    }
+
 }
