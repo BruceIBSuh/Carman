@@ -19,7 +19,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_title"
+        android:id="@+id/tv_numpad_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -41,8 +41,8 @@
         android:textColor="@android:color/white"
         android:textSize="@dimen/smallText"
         android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="@+id/tv_title"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_title"
+        app:layout_constraintTop_toTopOf="@+id/tv_numpad_title"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_numpad_title"
         app:layout_constraintEnd_toStartOf="@+id/btn_current_location" />
 
     <ImageButton
@@ -187,7 +187,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_label_company" />
 
     <TextView
-        android:id="@+id/tv_label_rating"
+        android:id="@+id/expense_tv_label_rating"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -211,12 +211,12 @@
         android:scaleY=".5"
         android:stepSize="1"
         android:translationX="-50dp"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_rating"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
+        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_rating"
+        app:layout_constraintStart_toEndOf="@+id/expense_tv_label_rating"
+        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_rating" />
 
     <Button
-        android:id="@+id/btn_reset_ratingbar"
+        android:id="@+id/expense_btn_reset_ratingbar"
         android:layout_width="40dp"
         android:layout_height="30dp"
         android:layout_marginEnd="8dp"
@@ -228,19 +228,19 @@
         app:layout_constraintTop_toTopOf="@+id/rb_service" />
 
     <TextView
-        android:id="@+id/tv_comment"
+        android:id="@+id/expense_tv_comment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:labelFor="@id/et_service_comment"
+        android:labelFor="@id/expense_et_service_comment"
         android:text="@string/tv_label_comment"
         android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/tv_label_region"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_rating" />
+        app:layout_constraintTop_toBottomOf="@+id/expense_tv_label_rating" />
 
     <EditText
-        android:id="@+id/et_service_comment"
+        android:id="@+id/expense_et_service_comment"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
@@ -252,7 +252,7 @@
         android:textSize="@dimen/smallText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_comment"
+        app:layout_constraintTop_toBottomOf="@+id/expense_tv_comment"
         tools:ignore="AutoFill" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

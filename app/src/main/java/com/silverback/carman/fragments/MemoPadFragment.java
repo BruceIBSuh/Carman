@@ -29,6 +29,8 @@ public class MemoPadFragment extends DialogFragment {
 
     // Objects
     private FragmentSharedModel fragmentModel;
+    private int viewId;
+
 
     public MemoPadFragment() {
         // Required empty public constructor
@@ -37,8 +39,11 @@ public class MemoPadFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null)
-            fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        if(getArguments() != null) {
+            viewId = getArguments().getInt("viewId");
+
+        }
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -65,7 +70,7 @@ public class MemoPadFragment extends DialogFragment {
         builder.setView(localView)
                 .setPositiveButton(R.string.dialog_btn_confirm, (dialog, which) -> {
                     String memo = etMemo.getText().toString();
-                    fragmentModel.setSelectedMemo(viewId, memo);
+                    fragmentModel.setMemoPadValue(viewId, memo);
                     dismiss();
                 })
                 .setNegativeButton(R.string.dialog_btn_cancel, (dialog, which) -> dismiss());

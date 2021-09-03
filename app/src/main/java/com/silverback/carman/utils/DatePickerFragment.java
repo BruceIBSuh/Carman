@@ -47,10 +47,11 @@ public class DatePickerFragment extends DialogFragment implements DatePickerDial
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        model = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        //model = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     // Implement DatePickerDialog.onDateSetListener
+    @Override
     public void onDateSet(DatePicker view, int year, int month, int day) {
         // Do something with the date chosen by the user
         log.i("DataPicker: %s, $s, %s", year, month, day);

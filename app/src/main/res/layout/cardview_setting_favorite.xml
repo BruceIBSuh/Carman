@@ -63,7 +63,7 @@
             app:layout_constraintTop_toTopOf="@+id/tv_label_register" />
 
         <TextView
-            android:id="@+id/tv_label_rating"
+            android:id="@+id/expense_tv_label_rating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="3dp"
@@ -80,9 +80,9 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:textSize="@dimen/smallText"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
+            app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_rating"
             app:layout_constraintEnd_toStartOf="@+id/rb_favorite"
-            app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
+            app:layout_constraintTop_toTopOf="@+id/expense_tv_label_rating" />
 
         <RatingBar
             android:id="@+id/rb_favorite"
@@ -93,9 +93,9 @@
             android:isIndicator="true"
             android:numStars="5"
             android:rating="0"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_label_rating"
+            app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_rating"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_label_rating" />
+            app:layout_constraintTop_toTopOf="@+id/expense_tv_label_rating" />
 
         <TextView
             android:id="@+id/tv_providerAddrs"

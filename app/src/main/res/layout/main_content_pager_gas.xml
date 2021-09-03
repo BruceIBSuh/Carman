@@ -47,7 +47,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_gas_mileage"
         app:layout_constraintStart_toStartOf="@+id/tv_gas_subtitle"
         app:layout_constraintTop_toBottomOf="@+id/tv_gas_subtitle" />
@@ -58,7 +58,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tv_gas_date"
         app:layout_constraintTop_toBottomOf="@+id/tv_gas_date" />
@@ -77,7 +77,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_gas_station"
         app:layout_constraintEnd_toStartOf="@+id/textView21"
         app:layout_constraintTop_toTopOf="@+id/tv_gas_station" />
@@ -87,7 +87,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/unit_liter"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_amount"
         app:layout_constraintEnd_toEndOf="@+id/textView5"
         app:layout_constraintTop_toTopOf="@+id/tv_amount" />

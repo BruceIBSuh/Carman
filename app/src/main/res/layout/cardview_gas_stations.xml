@@ -33,7 +33,7 @@
             cardview:layout_constraintGuide_begin="55dp" />
 
         <TextView
-            android:id="@+id/tv_station_name"
+            android:id="@+id/cardview_gas_stn_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -53,8 +53,8 @@
             cardview:layout_constraintEnd_toStartOf="@+id/tv_value_price"
             cardview:layout_constraintHorizontal_bias="0.5"
             cardview:layout_constraintStart_toEndOf="@+id/img_logo"
-            cardview:layout_constraintStart_toStartOf="@+id/tv_station_name"
-            cardview:layout_constraintTop_toBottomOf="@+id/tv_station_name" />
+            cardview:layout_constraintStart_toStartOf="@+id/cardview_gas_stn_name"
+            cardview:layout_constraintTop_toBottomOf="@+id/cardview_gas_stn_name" />
 
         <TextView
             android:id="@+id/tv_value_price"
@@ -85,12 +85,12 @@
             android:layout_marginStart="8dp"
             android:minWidth="40dp"
             cardview:layout_constraintBaseline_toBaselineOf="@+id/tv_label_distance"
-            cardview:layout_constraintEnd_toStartOf="@+id/tv_label_carwash"
+            cardview:layout_constraintEnd_toStartOf="@+id/expense_tv_label_carwash"
             cardview:layout_constraintHorizontal_bias="0.5"
             cardview:layout_constraintStart_toEndOf="@+id/tv_label_distance" />
 
         <TextView
-            android:id="@+id/tv_label_carwash"
+            android:id="@+id/expense_tv_label_carwash"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
@@ -106,10 +106,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:minWidth="40dp"
-            cardview:layout_constraintBaseline_toBaselineOf="@+id/tv_label_carwash"
+            cardview:layout_constraintBaseline_toBaselineOf="@+id/expense_tv_label_carwash"
             cardview:layout_constraintEnd_toEndOf="parent"
             cardview:layout_constraintHorizontal_bias="0.5"
-            cardview:layout_constraintStart_toEndOf="@+id/tv_label_carwash" />
+            cardview:layout_constraintStart_toEndOf="@+id/expense_tv_label_carwash" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

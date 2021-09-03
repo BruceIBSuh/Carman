@@ -23,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_label_name"
+        android:id="@+id/expense_tv_label_name"
         android:layout_width="wrap_content"
         android:layout_height="30dp"
         android:layout_marginStart="8dp"
@@ -45,8 +45,8 @@
         android:textSize="@dimen/largeText"
         android:labelFor="@id/et_item_name"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/tv_label_name"
-        app:layout_constraintTop_toBottomOf="@+id/tv_label_name" />
+        app:layout_constraintStart_toStartOf="@+id/expense_tv_label_name"
+        app:layout_constraintTop_toBottomOf="@+id/expense_tv_label_name" />
 
     <EditText
         android:id="@+id/et_item_name"
@@ -58,10 +58,10 @@
         android:ems="10"
         android:padding="5dp"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_name"
+        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_name"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_name"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_name"
+        app:layout_constraintStart_toEndOf="@+id/expense_tv_label_name"
+        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_name"
         tools:ignore="AutoFill" />
 
     <EditText

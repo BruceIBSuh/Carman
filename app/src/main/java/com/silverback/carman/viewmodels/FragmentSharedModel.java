@@ -19,12 +19,14 @@ import java.util.List;
 public class FragmentSharedModel extends ViewModel {
 
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
-    private final MutableLiveData<SparseIntArray> selectedValue = new MutableLiveData<>();
+    private final MutableLiveData<SparseIntArray> numpadValue = new MutableLiveData<>();
+    private final MutableLiveData<SparseArray<String>> memopadValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray<String>> selectedMemo = new MutableLiveData<>();
     private final MutableLiveData<SparseArray<Object>> svcLocation = new MutableLiveData<>();
 
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
+    
 
     // SettingSvcItemDlgFragment and SettingServiceItemFragment
     private MutableLiveData<JSONObject> jsonServiceItemObj;
@@ -74,25 +76,28 @@ public class FragmentSharedModel extends ViewModel {
         return expenseSvcFragment;
     }
      */
+    
 
-    public void setSelectedValue(int key, int value) {
+    // NumberPadFragment
+    public void setNumPadValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.
         sparsesArray.put(key, value);
-        selectedValue.setValue(sparsesArray);
+        numpadValue.setValue(sparsesArray);
     }
+    public LiveData<SparseIntArray> getNumpadValue() {
+        return numpadValue;
+    }
+    
 
-    public LiveData<SparseIntArray> getSelectedValue() {
-        return selectedValue;
-    }
 
     // Pass a String value in MemoPadFragment to ServiceManagerFragment
-    public void setSelectedMemo(int key, String value) {
+    public void setMemoPadValue(int key, String value) {
         SparseArray<String> sparseArray = new SparseArray<>(1);
         sparseArray.put(key, value);
-        selectedMemo.setValue(sparseArray);
+        memopadValue.setValue(sparseArray);
     }
-    public LiveData<SparseArray<String>> getSelectedMenu() {
-        return selectedMemo;
+    public LiveData<SparseArray<String>> getMemoPadValue() {
+        return memopadValue;
     }
 
 

@@ -142,7 +142,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         View localView = View.inflate(getContext(), R.layout.dialog_register_provider, null);
         setCancelable(false);
 
-        TextView tvTitle = localView.findViewById(R.id.tv_title);
+        TextView tvTitle = localView.findViewById(R.id.tv_numpad_title);
         ImageButton btnLocation = localView.findViewById(R.id.btn_current_location);
         //pbRegister = localView.findViewById(R.id.pb_register);
         tvSido = localView.findViewById(R.id.tv_sido);
@@ -153,8 +153,8 @@ public class RegisterDialogFragment extends DialogFragment implements
         etPhone = localView.findViewById(R.id.et_phone);
         companySpinner = localView.findViewById(R.id.spinner_company);
         ratingBar = localView.findViewById(R.id.rb_service);
-        Button resetRating = localView.findViewById(R.id.btn_reset_ratingbar);
-        etServiceComment = localView.findViewById(R.id.et_service_comment);
+        Button resetRating = localView.findViewById(R.id.expense_btn_reset_ratingbar);
+        etServiceComment = localView.findViewById(R.id.expense_et_service_comment);
 
         // Create ProgressBar
         ConstraintLayout layout = localView.findViewById(R.id.rootview_register);

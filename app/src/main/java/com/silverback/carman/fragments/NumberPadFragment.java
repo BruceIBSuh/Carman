@@ -10,18 +10,21 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
+import com.silverback.carman.databinding.DialogNumberPadBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -38,6 +41,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     private final String[] arrCurrency = { "5만", "1만", "5천", "1천" };
 
     // Objects
+    private DialogNumberPadBinding binding;
     private FragmentSharedModel fragmentModel;
     private DecimalFormat df;
 
@@ -46,7 +50,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     private Button btnSign, btn1, btn2, btn3, btn4;
 
     // Fields
-    private int textViewId;
+    private int viewId;
     private int selectedValue;
     private String initValue, itemLabel;
     private boolean isCurrency;
@@ -55,16 +59,13 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() != null)
-            fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-
         if(getArguments() != null) {
-            itemLabel = getArguments().getString("itemLabel");
-            textViewId = getArguments().getInt("viewId");
+            viewId = getArguments().getInt("viewId");
             initValue = getArguments().getString("initValue");
-            log.i("Dialog: %s, %s, %s", itemLabel, textViewId, initValue);
+            log.i("args: %s, %s", viewId, initValue);
         }
 
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         df = BaseActivity.getDecimalFormatInstance();
         selectedValue = 0;
         isPlus = true;
@@ -75,30 +76,55 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        View localView = View.inflate(getContext(), R.layout.dialog_number_pad, null);
+        //View localView = View.inflate(getContext(), R.layout.dialog_number_pad, null);
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        binding = DialogNumberPadBinding.inflate(inflater);
 
-        TextView tvTitle = localView.findViewById(R.id.tv_title);
-        tvValue = localView.findViewById(R.id.defaultValue);
-        tvUnit = localView.findViewById(R.id.unit);
-        btnSign = localView.findViewById(R.id.btn_sign);
-        btn1 = localView.findViewById(R.id.padButton1);
-        btn2 = localView.findViewById(R.id.padButton2);
-        btn3 = localView.findViewById(R.id.padButton3);
-        btn4 = localView.findViewById(R.id.padButton4);
 
-        tvValue.setText(initValue);
-        tvValue.setOnClickListener(event -> tvValue.setText(initValue));
 
-        btnSign.setOnClickListener(this);
-        btn1.setOnClickListener(this);
-        btn2.setOnClickListener(this);
-        btn3.setOnClickListener(this);
-        btn4.setOnClickListener(this);
 
-        // Get arguments from the parent activity as to dialog title, unit name, and button numbers.
-        switch(textViewId) {
+//        TextView tvTitle = localView.findViewById(R.id.tv_numpad_title);
+//        tvValue = localView.findViewById(R.id.tv_numpad_default);
+//        tvUnit = localView.findViewById(R.id.tv_numpad_unit);
+//        btnSign = localView.findViewById(R.id.btn_numpad_sign);
+//        btn1 = localView.findViewById(R.id.btn_numpad_btn1);
+//        btn2 = localView.findViewById(R.id.btn_numpad_btn2);
+//        btn3 = localView.findViewById(R.id.btn_numpad_btn3);
+//        btn4 = localView.findViewById(R.id.btn_numpad_btn4);
+
+        // Attach event listeners.
+        //numberPadBinding.tvNumpadDefault.setOnClickListener(click -> numberPadBinding.tvNumpadDefault.setText(initValue));
+        binding.btnNumpadSign.setOnClickListener(this);
+        binding.btnNumpadBtn1.setOnClickListener(this);
+        binding.btnNumpadBtn2.setOnClickListener(this);
+        binding.btnNumpadBtn3.setOnClickListener(this);
+        binding.btnNumpadBtn4.setOnClickListener(this);
+
+        // Resource IDs will be non-final in Android Gradle Plugin version 7.0, avoid using them
+        // in switch case statements
+        if(viewId == R.id.expense_tv_gas_mileage || viewId == R.id.tv_exp_svc_mileage) {
+            itemLabel = getString(R.string.exp_label_odometer);
+            isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
+        } else if(viewId == R.id.expense_tv_gas_payment) {
+            itemLabel = getString(R.string.gas_label_expense);
+            isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
+        } else if(viewId == R.id.expense_tv_gas_amount) {
+            itemLabel = getString(R.string.gas_label_amount);
+            isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_liter));
+        } else if(viewId == R.id.expense_tv_carwash) {
+            itemLabel = getString(R.string.gas_label_expense_wash);
+            isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
+        } else if(viewId == R.id.expense_tv_extra_payment) {
+            itemLabel = getString(R.string.gas_label_expense_misc);
+            isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
+        } else if(viewId == R.id.tv_value_cost) {
+            isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
+        }
+
+        /*
+        switch(viewId) {
             // This case is shared by Gas and Service in common.
-            case R.id.tv_mileage:
+            case R.id.tv_exp_gas_mileage: case R.id.tv_exp_svc_mileage:
                 itemLabel = getString(R.string.exp_label_odometer);
                 isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
                 break;
@@ -131,18 +157,17 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
 
             default: break;
         }
+        */
 
-
-        tvTitle.setText(itemLabel);
-        tvValue.setText(initValue);
+        binding.tvNumpadTitle.setText(itemLabel);
+        binding.tvNumpadDefault.setText(initValue);
 
         // Set texts and values of the buttons on the pad in InputBtnPadView.
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(localView)
+        builder.setView(binding.getRoot())
                 .setPositiveButton("confirm", (dialog, which) ->
-                    fragmentModel.setSelectedValue(textViewId, selectedValue))
+                    fragmentModel.setNumPadValue(viewId, selectedValue))
                 .setNegativeButton("cancel", (dialog, which) -> {});
-
 
         return builder.create();
 
@@ -150,37 +175,26 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
 
     @Override
     public void onClick(View v) {
-
         int number = 0;
-
         try {
-            selectedValue = df.parse(tvValue.getText().toString()).intValue();
+            selectedValue = Objects.requireNonNull(
+                    df.parse(binding.tvNumpadDefault.getText().toString())).intValue();
         } catch (ParseException e) {
             log.e("ParseException: %s", e.getMessage());
         }
 
-        switch(v.getId()) {
-            case R.id.btn_sign:
-                isPlus = !isPlus;
-                String sign = (isPlus)? getString(R.string.sign_plus) : getString(R.string.sign_minus);
-                btnSign.setText(sign);
-                break;
-
-            case R.id.padButton1:
-                number = (isCurrency) ? 50000 : 100;
-                break;
-
-            case R.id.padButton2:
-                number = (isCurrency) ? 10000 : 50;
-                break;
-
-            case R.id.padButton3:
-                number = (isCurrency) ? 5000 : 10;
-                break;
-
-            case R.id.padButton4:
-                number = (isCurrency) ? 1000 : 1;
-                break;
+        if(v.getId() == R.id.btn_numpad_sign) {
+            isPlus = !isPlus;
+            String sign = (isPlus)? getString(R.string.sign_plus) : getString(R.string.sign_minus);
+            binding.btnNumpadSign.setText(sign);
+        } else if(v.getId() == R.id.btn_numpad_btn1) {
+            number = (isCurrency) ? 50000 : 100;
+        } else if(v.getId() == R.id.btn_numpad_btn2) {
+            number = (isCurrency) ? 10000 : 50;
+        } else if(v.getId() == R.id.btn_numpad_btn3) {
+            number = (isCurrency) ? 5000 : 10;
+        } else if(v.getId() == R.id.btn_numpad_btn4) {
+            number = (isCurrency) ? 1000 : 1;
         }
 
         // Check if the sign is set to plus or minus and adds or substract a number unless the number
@@ -188,21 +202,21 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         if((selectedValue = (isPlus)? selectedValue + number : selectedValue - number) < 0) {
             selectedValue = 0;
             isPlus = !isPlus;
-            btnSign.setText((isPlus)?getString(R.string.sign_plus) : getString(R.string.sign_minus));
+            binding.btnNumpadSign.setText((isPlus)?getString(R.string.sign_plus) : getString(R.string.sign_minus));
         }
 
-        tvValue.setText(df.format(selectedValue));
+        binding.tvNumpadDefault.setText(df.format(selectedValue));
 
     }
 
     // Set the button name and unit accroding to whether the unit is currency or amount
     private boolean setInputNumberPad(String[] name, String unit) {
-        btn1.setText(name[0]);
-        btn2.setText(name[1]);
-        btn3.setText(name[2]);
-        btn4.setText(name[3]);
+        binding.btnNumpadBtn1.setText(name[0]);
+        binding.btnNumpadBtn2.setText(name[1]);
+        binding.btnNumpadBtn3.setText(name[2]);
+        binding.btnNumpadBtn4.setText(name[3]);
 
-        tvUnit.setText(unit);
+        binding.tvNumpadUnit.setText(unit);
 
         return unit.equals(getString(R.string.unit_won));
 

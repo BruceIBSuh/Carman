@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         android:minWidth="200dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/expense_service_date"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
         app:layout_constraintTop_toTopOf="@+id/expense_service_date" />
@@ -54,7 +54,7 @@
         android:layout_marginStart="8dp"
         android:padding="0dp"
         android:text="@string/svc_btn_modify"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_pager_service_date"
         app:layout_constraintStart_toEndOf="@+id/tv_pager_service_date"
         app:layout_constraintTop_toTopOf="@+id/tv_pager_service_date"
@@ -81,7 +81,7 @@
         android:inputType="text"
         android:minWidth="250dp"
         android:padding="5dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_service_provider"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
         app:layout_constraintTop_toTopOf="@+id/tv_label_service_provider" />
@@ -93,7 +93,7 @@
         android:layout_marginStart="8dp"
         android:padding="0dp"
         android:text="@string/svc_btn_eval"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/et_expense_service_provider"
         app:layout_constraintStart_toEndOf="@+id/et_expense_service_provider"
         app:layout_constraintTop_toTopOf="@+id/et_expense_service_provider" />
@@ -116,7 +116,7 @@
         android:ems="10"
         android:importantForAutofill="no"
         android:padding="5dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_service_mileage"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
         app:layout_constraintTop_toTopOf="@+id/tv_label_service_mileage" />
@@ -147,7 +147,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/state_view_focus"
         android:padding="5dp"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_total_cost"
         app:layout_constraintStart_toStartOf="@+id/guideline6"
         app:layout_constraintTop_toTopOf="@+id/tv_label_total_cost" />
@@ -178,7 +178,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TextView"
-        android:textSize="@dimen/content"
+        android:textSize="@dimen/contentNormal"
         app:layout_constraintBottom_toBottomOf="@+id/textView25"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/textView25" />

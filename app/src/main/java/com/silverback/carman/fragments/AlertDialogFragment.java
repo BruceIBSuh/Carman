@@ -69,7 +69,7 @@ public class AlertDialogFragment extends DialogFragment {
         //View localView = inflater.inflate(R.layout.dialog_alert_general, null);
         View localView = View.inflate(getContext(), R.layout.dialog_alert_general, null);
 
-        TextView tvTitle = localView.findViewById(R.id.tv_title);
+        TextView tvTitle = localView.findViewById(R.id.tv_numpad_title);
         TextView tvMessage = localView.findViewById(R.id.tv_message);
 
         tvTitle.setText(title);

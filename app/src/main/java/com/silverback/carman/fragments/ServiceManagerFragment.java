@@ -29,7 +29,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.BaseActivity;
-import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.ExpServiceItemAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -55,16 +54,19 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class ServiceManagerFragment extends Fragment implements
-        View.OnClickListener, ExpServiceItemAdapter.OnParentFragmentListener {
+        //View.OnClickListener,
+        ExpServiceItemAdapter.OnParentFragmentListener {
 
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
@@ -87,6 +89,7 @@ public class ServiceManagerFragment extends Fragment implements
     private Location location;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
+    private Calendar calendar;
 
     private FavoriteGeofenceHelper geofenceHelper;
     private ExpServiceItemAdapter mAdapter;
@@ -158,6 +161,7 @@ public class ServiceManagerFragment extends Fragment implements
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
+        calendar = Calendar.getInstance(Locale.getDefault());
         df = BaseActivity.getDecimalFormatInstance();
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
 
@@ -214,14 +218,19 @@ public class ServiceManagerFragment extends Fragment implements
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         binding.tvServiceDate.setText(sdf.format(visitTime));
         binding.tvSvcPayment.setText("0");
-        binding.tvMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
+        binding.tvExpSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
         // Set event listeners.
-        binding.tvMileage.setOnClickListener(this);
-        //binding.btnSvcDate.setOnClickListener(view -> ((ExpenseActivity)getActivity()).setCustomTime());
-        binding.btnRegisterService.setOnClickListener(this);
-        binding.btnSvcFavorite.setOnClickListener(view -> addServiceFavorite());
+        //binding.tvExpSvcMileage.setOnClickListener(this);
+        /*
+        binding.btnResetDatetime.setOnClickListener(view -> {
+            log.i("Parent Activity: %s", requireActivity());
+            ((ExpenseActivity)requireActivity()).setCustomTime();
+        });
+        */
+        binding.btnRegisterService.setOnClickListener(v -> registerFavoriteServiceProvider());
+        binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -234,8 +243,8 @@ public class ServiceManagerFragment extends Fragment implements
             isSvcFavorite = true;
 
             binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            binding.btnSvcDate.setVisibility(View.GONE);
-            binding.btnSvcDate.setVisibility(View.GONE);
+            binding.btnResetDatetime.setVisibility(View.GONE);
+            binding.btnResetDatetime.setVisibility(View.GONE);
         }
 
         return binding.getRoot();
@@ -248,13 +257,20 @@ public class ServiceManagerFragment extends Fragment implements
         try { createRecyclerServicItemView(); }
         catch(JSONException e) { e.printStackTrace(); }
 
+        // LiveData custom time from Date and Time picker DialogFragment
+        fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
+            long customTime = calendar.getTimeInMillis();
+            binding.tvServiceDate.setText(sdf.format(customTime));
+        });
+
+
         // Communcate w/ NumberPadFragment to put a number selected in the num pad into the textview
         // in this fragment.
-        fragmentModel.getSelectedValue().observe(getViewLifecycleOwner(), data -> {
+        fragmentModel.getNumpadValue().observe(getViewLifecycleOwner(), data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
-            if(viewId == R.id.tv_mileage) {
-                binding.tvMileage.setText(df.format(value));
+            if(viewId == R.id.tv_exp_svc_mileage) {
+                binding.tvExpSvcMileage.setText(df.format(value));
             } else if(viewId == R.id.tv_value_cost) {
                 mAdapter.notifyItemChanged(itemPos, data);
                 totalExpense += data.valueAt(0);
@@ -262,9 +278,10 @@ public class ServiceManagerFragment extends Fragment implements
             }
         });
 
-        // Communicate b/w RecyclerView.ViewHolder and MemoPadFragment
-        fragmentModel.getSelectedMenu().observe(getViewLifecycleOwner(),
-                data -> mAdapter.notifyItemChanged(itemPos, data));
+        // Communicate b/w  RecyclerView.ViewHolder and MemoPadFragment
+        fragmentModel.getMemoPadValue().observe(getViewLifecycleOwner(), data -> {
+            mAdapter.notifyItemChanged(itemPos, data);
+        });
 
         // Get the params for removeGeofence() which are passed from FavroiteListFragment
         fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
@@ -293,6 +310,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         });
 
+
     }
 
     @Override
@@ -302,19 +320,22 @@ public class ServiceManagerFragment extends Fragment implements
         // Must define FragmentSharedModel.setCurrentFragment() in onCreate, not onActivityCreated()
         // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        log.i("servicemanagerfragment");
         fragmentModel.setCurrentFragment(this);
         //fragmentModel.getExpenseSvcFragment().setValue(this);
 
-    }
+        // Update the time to the current time.
+        binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
 
+    }
+    /*
     @SuppressWarnings("ConstantConditions")
     @Override
     public void onClick(View v) {
         // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
         // via FragmentViewModel in the textview.
         switch(v.getId()) {
-            case R.id.tv_service_mileage:
+
+            case R.id.tv_exp_svc_mileage:
                 Bundle args = new Bundle();
                 //args.putString("itemLabel", getString(R.string.svc_label_mileage));
                 args.putString("initValue", tvMileage.getText().toString());
@@ -343,14 +364,19 @@ public class ServiceManagerFragment extends Fragment implements
             case R.id.btn_service_date:
                 break;
 
+
+
         }
 
     }
+
+     */
 
     // ExpServiceItemAdapter.OnParentFragmentListener invokes the following 4 methods
     // to pop up NumberPadFragment and input the amount of expense in a service item.
     @Override
     public void inputItemCost(String label, TextView targetView, int position) {
+        /*
         itemPos = position;
 
         Bundle args = new Bundle();
@@ -361,12 +387,13 @@ public class ServiceManagerFragment extends Fragment implements
 
         if(getActivity() != null) numPad.show(getActivity().getSupportFragmentManager(), null);
 
+         */
+
     }
 
     @Override
     public void inputItemMemo(String title, TextView targetView, int position) {
         itemPos = position;
-
         Bundle args = new Bundle();
         args.putString("itemLabel", title);
         args.putInt("viewId", targetView.getId());
@@ -397,6 +424,8 @@ public class ServiceManagerFragment extends Fragment implements
         return -1;
     }
 
+
+
     private void createRecyclerServicItemView() throws JSONException {
         binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerServiceItems.setHasFixedSize(true);
@@ -418,10 +447,21 @@ public class ServiceManagerFragment extends Fragment implements
         }
     }
 
-    private void notifyServiceItemData() throws JSONException {
+    private void registerFavoriteServiceProvider() {
+        svcName = etServiceName.getText().toString();
+        if(etServiceName.getText().toString().isEmpty()) {
+            Snackbar.make(parentLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+
+        if(isSvcFavorite || svcLocation != null) {
+            Snackbar.make(parentLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
+        } else {
+            RegisterDialogFragment.newInstance(svcName, distCode).show(
+                    Objects.requireNonNull(requireActivity()).getSupportFragmentManager(), null);
+        }
 
     }
-
 
 
     // Register the service center with the favorite list and the geofence.
@@ -542,9 +582,9 @@ public class ServiceManagerFragment extends Fragment implements
             return false;
         }
 
-        if(TextUtils.isEmpty(binding.tvMileage.getText())) {
+        if(TextUtils.isEmpty(binding.tvExpSvcMileage.getText())) {
             Snackbar.make(binding.getRoot(), R.string.svc_snackbar_mileage, Snackbar.LENGTH_SHORT).show();
-            binding.tvMileage.requestFocus();
+            binding.tvExpSvcMileage.requestFocus();
             return false;
         }
 

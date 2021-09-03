@@ -45,7 +45,7 @@ public class StationListHolder extends RecyclerView.ViewHolder {
         int resLogo = getGasStationImage(data.getStnCode());
 
         binding.imgLogo.setImageResource(resLogo);
-        binding.tvStationName.setText(data.getStnName());
+        binding.cardviewGasStnName.setText(data.getStnName());
         binding.tvValuePrice.setText(String.format(
                 "%s%2s", df.format(data.getStnPrice()), context.getString(R.string.unit_won)));
         binding.tvValueDistance.setText(String.format(

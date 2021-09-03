@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -30,6 +31,8 @@ import com.silverback.carman.adapters.ExpContentPagerAdapter;
 import com.silverback.carman.adapters.ExpRecentAdapter;
 import com.silverback.carman.databinding.ActivityExpenseBinding;
 import com.silverback.carman.fragments.GasManagerFragment;
+import com.silverback.carman.fragments.MemoPadFragment;
+import com.silverback.carman.fragments.NumberPadFragment;
 import com.silverback.carman.fragments.ServiceManagerFragment;
 import com.silverback.carman.fragments.StatGraphFragment;
 import com.silverback.carman.logs.LoggingHelper;
@@ -89,6 +92,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     //private GasManagerFragment gasManager;
     //private ServiceManagerFragment svcManager;
     private StatGraphFragment statGraphFragment;
+    private NumberPadFragment numPad;
+    private MemoPadFragment memoPad;
 
     private ThreadTask tabPagerTask;
     private LocationTask locationTask;
@@ -130,13 +135,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Define ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        //PagerAdapterViewModel pagerModel = new ViewModelProvider(this).get(PagerAdapterViewModel.class);
         locationTask = sThreadManager.fetchLocationTask(this, locationModel);
 
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
-
+        numPad = new NumberPadFragment();
+        memoPad = new MemoPadFragment();
 
     }
 
@@ -228,7 +233,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 currentPage = position;
-                if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
+                if(binding.topframeViewpager.getChildCount() > 0)
+                    binding.topframeViewpager.removeAllViews();
+
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframeTabIndicator.setVisibility(View.VISIBLE);
@@ -402,9 +409,30 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     // Implement change time button onClickListener
-    public void setCustomTime() {
-        DialogFragment newFragment = new DatePickerFragment();
-        newFragment.show(getSupportFragmentManager(), "datePicker");
+    public void setCustomTime(View view) {
+        log.i("set custom time");
+        DialogFragment datePickerFragment = new DatePickerFragment();
+        datePickerFragment.show(getSupportFragmentManager(), "datePicker");
     }
 
+    // Pop up the number pad which is referenced in GasManagerFragment and ServiceManagerFragment
+    // in common and defined in each xml layou files as onClick.
+    public void showNumPad(View view) {
+        Bundle args = new Bundle();
+        String value = ((TextView)view).getText().toString();
+        args.putInt("viewId", view.getId());
+        args.putString("initValue", value);
+
+        numPad.setArguments(args);
+        numPad.show(getSupportFragmentManager(), "numberPad");
+    }
+
+    public void showServiceItemMemo(View view) {
+        Bundle args = new Bundle();
+        String value = ((TextView)view).getText().toString();
+        args.putInt("viewId", view.getId());
+        args.putString("memo", value);
+        memoPad.setArguments(args);
+        memoPad.show(getSupportFragmentManager(), "memoPad");
+    }
 }

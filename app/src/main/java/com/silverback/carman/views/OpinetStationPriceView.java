@@ -46,7 +46,7 @@ public class OpinetStationPriceView extends OpinetPriceView {
 
     protected void getAttributes(Context context, AttributeSet attrs) {
         LayoutInflater.from(context).inflate(R.layout.view_station_price, this, true);
-        tvStnName = findViewById(R.id.tv_station_name);
+        tvStnName = findViewById(R.id.expense_tv_station_name);
         tvStnPrice = findViewById(R.id.tv_station_price);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetStationPriceView);

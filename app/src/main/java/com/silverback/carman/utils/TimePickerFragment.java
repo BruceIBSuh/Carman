@@ -41,7 +41,6 @@ public class TimePickerFragment extends DialogFragment implements TimePickerDial
         // Use the current time as the default values for the picker
         calendar = model.getCustomDateAndTime().getValue();
         if(calendar == null) calendar = Calendar.getInstance(Locale.getDefault());
-
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 

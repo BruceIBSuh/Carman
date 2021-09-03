@@ -81,7 +81,6 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         arrCheckedState = new boolean[jsonArray.length()];
         arrItemCost = new int[jsonArray.length()];
         arrItemMemo = new String[jsonArray.length()];
-
         sparseArray = new SparseArray<>();
     }
 
@@ -213,7 +212,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
 
     // RecyclerView.ViewHolder
     static class ServiceItemViewHolder extends RecyclerView.ViewHolder implements
-            View.OnClickListener,
+            //View.OnClickListener,
             CompoundButton.OnCheckedChangeListener {
 
         ConstraintLayout layout;
@@ -236,13 +235,13 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
             cbServiceItem = view.findViewById(R.id.chkbox);
             pb = view.findViewById(R.id.progbar_service_period);
 
-            tvItemCost.setOnClickListener(this);
-            tvItemMemo.setOnClickListener(this);
+            //tvItemCost.setOnClickListener(this);
+            //tvItemMemo.setOnClickListener(this);
             cbServiceItem.setOnCheckedChangeListener(this);
             //binding.chkbox.setOnCheckedChangeListener(this);
 
         }
-
+        /*
         @Override
         public void onClick(View v) {
             final String title = tvItemName.getText().toString();
@@ -263,7 +262,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
                     break;
             }
         }
-
+        */
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 

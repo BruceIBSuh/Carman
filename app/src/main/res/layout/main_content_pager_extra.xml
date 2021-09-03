@@ -8,7 +8,7 @@
     android:background="#FFFFFF">
 
     <TextView
-        android:id="@+id/tv_subtitle_extra"
+        android:id="@+id/expense_tv_subtitle_extra"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
