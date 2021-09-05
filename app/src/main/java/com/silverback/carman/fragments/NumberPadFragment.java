@@ -80,18 +80,6 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         LayoutInflater inflater = LayoutInflater.from(getContext());
         binding = DialogNumberPadBinding.inflate(inflater);
 
-
-
-
-//        TextView tvTitle = localView.findViewById(R.id.tv_numpad_title);
-//        tvValue = localView.findViewById(R.id.tv_numpad_default);
-//        tvUnit = localView.findViewById(R.id.tv_numpad_unit);
-//        btnSign = localView.findViewById(R.id.btn_numpad_sign);
-//        btn1 = localView.findViewById(R.id.btn_numpad_btn1);
-//        btn2 = localView.findViewById(R.id.btn_numpad_btn2);
-//        btn3 = localView.findViewById(R.id.btn_numpad_btn3);
-//        btn4 = localView.findViewById(R.id.btn_numpad_btn4);
-
         // Attach event listeners.
         //numberPadBinding.tvNumpadDefault.setOnClickListener(click -> numberPadBinding.tvNumpadDefault.setText(initValue));
         binding.btnNumpadSign.setOnClickListener(this);
@@ -102,62 +90,24 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
 
         // Resource IDs will be non-final in Android Gradle Plugin version 7.0, avoid using them
         // in switch case statements
-        if(viewId == R.id.expense_tv_gas_mileage || viewId == R.id.tv_exp_svc_mileage) {
+        if(viewId == R.id.tv_gas_mileage || viewId == R.id.tv_svc_mileage) {
             itemLabel = getString(R.string.exp_label_odometer);
             isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
-        } else if(viewId == R.id.expense_tv_gas_payment) {
+        } else if(viewId == R.id.tv_gas_payment) {
             itemLabel = getString(R.string.gas_label_expense);
             isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-        } else if(viewId == R.id.expense_tv_gas_amount) {
+        } else if(viewId == R.id.tv_gas_amount) {
             itemLabel = getString(R.string.gas_label_amount);
             isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_liter));
-        } else if(viewId == R.id.expense_tv_carwash) {
+        } else if(viewId == R.id.tv_carwash) {
             itemLabel = getString(R.string.gas_label_expense_wash);
             isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-        } else if(viewId == R.id.expense_tv_extra_payment) {
+        } else if(viewId == R.id.tv_extra_payment) {
             itemLabel = getString(R.string.gas_label_expense_misc);
             isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
         } else if(viewId == R.id.tv_value_cost) {
             isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
         }
-
-        /*
-        switch(viewId) {
-            // This case is shared by Gas and Service in common.
-            case R.id.tv_exp_gas_mileage: case R.id.tv_exp_svc_mileage:
-                itemLabel = getString(R.string.exp_label_odometer);
-                isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_km));
-                break;
-
-            case R.id.tv_gas_payment:
-                itemLabel = getString(R.string.gas_label_expense);
-                isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-                break;
-
-            case R.id.tv_gas_amount:
-                itemLabel = getString(R.string.gas_label_amount);
-                isCurrency = setInputNumberPad(arrNumber, getString(R.string.unit_liter));
-                break;
-
-            case R.id.tv_carwash:
-                itemLabel = getString(R.string.gas_label_expense_wash);
-                isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-                break;
-
-            case R.id.tv_extra_payment:
-                itemLabel = getString(R.string.gas_label_expense_misc);
-                isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-                break;
-
-            // This case is only applied to Service Items, the name of which is passed by
-            // the argument under the name of "itemLabel"
-            case R.id.tv_value_cost:
-                isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-                break;
-
-            default: break;
-        }
-        */
 
         binding.tvNumpadTitle.setText(itemLabel);
         binding.tvNumpadDefault.setText(initValue);

@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -86,11 +85,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // Objects
     private ActivityExpenseBinding binding;
     private LocationViewModel locationModel;
-    //private PagerAdapterViewModel pagerModel;
-    private StationListViewModel stnListModel;
+
     private ExpContentPagerAdapter expContentPagerAdapter;
-    //private GasManagerFragment gasManager;
-    //private ServiceManagerFragment svcManager;
+    private ExpRecentAdapter recentAdapter;
     private StatGraphFragment statGraphFragment;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
@@ -101,14 +98,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     private ViewPager2 pagerRecentExp;
     private MenuItem menuSave;
-    private ViewTreeObserver vto;
 
     // Fields
     private Location mPrevLocation;
     private int currentPage;
     private int prevHeight;
     private int category;
-    private float tabHeight;
     private String pageTitle;
     private boolean isGeofencing;
 
@@ -126,7 +121,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             }
         }
 
-        String userId = getUserIdFromStorage(this);
+        statGraphFragment = new StatGraphFragment();
+        numPad = new NumberPadFragment();
+        memoPad = new MemoPadFragment();
 
         // Create initial basic layouts
         createAppbarLayout();
@@ -140,8 +137,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
-        numPad = new NumberPadFragment();
-        memoPad = new MemoPadFragment();
+
 
     }
 
@@ -159,7 +155,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     @Override
     public void onStop(){
         super.onStop();
-        log.i("onStop");
         if(locationTask != null) locationTask = null;
         if(tabPagerTask != null) tabPagerTask = null;
         if(stationListTask != null) stationListTask = null;
@@ -167,7 +162,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     
     @Override
     public boolean onCreateOptionsMenu(@NonNull Menu menu) {
-        //Menu.add(groupId, itemId, order, title)
         menuSave = menu.add(Menu.NONE, MENU_ITEM_SAVE, Menu.NONE, R.string.exp_menu_save);
         menuSave.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         menuSave.setIcon(R.drawable.ic_save_room);
@@ -183,7 +177,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
                     startActivity(mainIntent);
-
                 }
 
                 setResult(RESULT_CANCELED); //to make StationRecyclerView gone if it is visible
@@ -207,13 +200,12 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     // Implement AppBarLayout.OnOffsetChangeListener
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
         binding.appBar.post(() -> {
-            if(Math.abs(scroll) == 0) getSupportActionBar().setTitle(getString(R.string.exp_toolbar_title));
+            if(Math.abs(scroll) == 0) Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.exp_toolbar_title));
             else if(Math.abs(scroll) == binding.appBar.getTotalScrollRange())
-                getSupportActionBar().setTitle(pageTitle);
+                Objects.requireNonNull(getSupportActionBar()).setTitle(pageTitle);
         });
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
@@ -233,15 +225,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 currentPage = position;
-                if(binding.topframeViewpager.getChildCount() > 0)
-                    binding.topframeViewpager.removeAllViews();
-
+                if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframeTabIndicator.setVisibility(View.VISIBLE);
 
                 switch (position) {
-                    case GAS: // GasManagerFragment
+                    case GAS:
                         pageTitle = getString(R.string.exp_title_gas);
                         binding.topframeViewpager.addView(pagerRecentExp);
                         pagerRecentExp.setCurrentItem(0);
@@ -261,9 +251,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         pageTitle = getString(R.string.exp_title_stat);
                         menuSave.setVisible(false);
                         binding.topframeTabIndicator.setVisibility(View.GONE);
-                        StatGraphFragment statGraphFragment = new StatGraphFragment();
-                        //if(statGraphFragment == null) statGraphFragment = new StatGraphFragment();
-                        //which seems not working.
+                        statGraphFragment = new StatGraphFragment();
                         getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.topframe_viewpager, statGraphFragment).commit();
 
@@ -286,7 +274,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     private void createTabLayout() {
-        expContentPagerAdapter = new ExpContentPagerAdapter(this);
+        //expContentPagerAdapter = new ExpContentPagerAdapter(this);
+        expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());
 
@@ -310,7 +299,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // which the framelayout contain.
     private void createLastExpenseViewPager() {
         pagerRecentExp = new ViewPager2(this);
-        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         pagerRecentExp.setAdapter(recentAdapter);
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
             @Override
@@ -328,10 +317,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.
     private void animSlideTabLayout() {
-        final float toolbarHeight = getActionbarHeight();
+        final float tbHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
-        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", toolbarHeight);
-        ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", toolbarHeight);
+        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", tbHeight);
+        ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", tbHeight);
         animTab.setDuration(1000);
         animFrame.setDuration(1000);
         animSet.play(animTab).before(animFrame);
@@ -345,6 +334,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 super.onAnimationEnd(animator);
                 if(isGeofencing && category == Constants.SVC)
                     binding.pagerTabFragment.setCurrentItem(category);
+
                 // Fetch the current loaction and visiting gas station based on it only after this
                 // animation ends to lessen the main thread load.
                 fetchCurrentStation(ExpenseActivity.this);
@@ -362,35 +352,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
         ViewGroup.LayoutParams params = binding.topframeViewpager.getLayoutParams();
-        anim.setDuration(1000);
+        anim.setDuration(2000);
         anim.start();
 
         anim.addUpdateListener(valueAnimator -> {
             params.height = (int)valueAnimator.getAnimatedValue();
             binding.topframeViewpager.setLayoutParams(params);
         });
-    }
-
-    private boolean saveExpenseData(int page) {
-        Fragment fragment = expContentPagerAdapter.createFragment(page);
-        String userId = getUserIdFromStorage(this);
-        boolean isSaved = false;
-        switch(page) {
-            case GAS:
-                isSaved = ((GasManagerFragment)fragment).saveGasData(userId);
-                break;
-            case SVC:
-                isSaved = ((ServiceManagerFragment)fragment).saveServiceData();
-                break;
-        }
-
-        if(isSaved) {
-            setResult(RESULT_CANCELED);
-            finish();
-        }
-
-        return isSaved;
-
     }
 
     // Once a current location is fetched, get the current gas station based on it. This method
@@ -428,11 +396,35 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     public void showServiceItemMemo(View view) {
+        log.i("service item memo: %s", view.getId());
         Bundle args = new Bundle();
         String value = ((TextView)view).getText().toString();
         args.putInt("viewId", view.getId());
         args.putString("memo", value);
+
         memoPad.setArguments(args);
         memoPad.show(getSupportFragmentManager(), "memoPad");
+    }
+
+    // Save data in the Room based on which framgnet the activity contains. The data should be
+    // uploaded to Firestore at the same time only if the user is logged in. The method to save data
+    // is defined in each fragment.
+    private boolean saveExpenseData(int page) {
+        Fragment fragment = expContentPagerAdapter.createFragment(page);
+        //Fragment currentFragment = expContentPagerAdapter.getCurrentFragment(page);
+        String userId = getUserIdFromStorage(this);
+        boolean isSaved = false;
+        switch(page) {
+            case GAS: isSaved = ((GasManagerFragment)fragment).saveGasData(userId); break;
+            case SVC: isSaved = ((ServiceManagerFragment)fragment).saveServiceData(); break;
+        }
+
+        if(isSaved) {
+            setResult(RESULT_CANCELED);
+            finish();
+        }
+
+        return isSaved;
+
     }
 }

@@ -118,7 +118,7 @@ public class MainActivity extends BaseActivity implements
         // MainContent RecyclerView to display main contents in the activity
         MainContentAdapter mainContentAdapter = new MainContentAdapter(this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(
-                Constants.dividerHeight, 0, getColor(R.color.recyclerDivider));
+                Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
         binding.recyclerContents.setAdapter(mainContentAdapter);
         binding.recyclerContents.addItemDecoration(divider);
 

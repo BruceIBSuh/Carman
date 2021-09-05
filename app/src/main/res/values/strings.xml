@@ -156,7 +156,7 @@
     <string name="graph_y_axis_unit">천원</string>
     <string name="stat_subtitle">지출 내역</string>
     <string name="stat_header_date">날짜</string>
-    <string name="stat_header_milegae">누적거리(km)</string>
+    <string name="stat_header_milegae">거리(km)</string>
     <string name="stat_header_payment">금액(원)</string>
     <string name="stat_header_provider">장 소</string>
     <string name="stat_spinner_all">전체</string>

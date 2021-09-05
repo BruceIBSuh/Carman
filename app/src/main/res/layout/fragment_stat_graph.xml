@@ -7,17 +7,7 @@
     android:layout_height="match_parent"
     android:padding="5dp">
 
-    <!--
-    <com.jjoe64.graphview.GraphView
-        android:id="@+id/graphView"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:layout_margin="20dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    -->
-    <com.silverback.carman.views.StatGraphView
+    <com.silverback.carman.graph.StatGraphView
         android:id="@+id/graphView"
         android:layout_width="match_parent"
         android:layout_height="150dp"

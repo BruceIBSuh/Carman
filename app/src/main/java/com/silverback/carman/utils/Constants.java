@@ -49,7 +49,8 @@ public class Constants {
     public static final int MAX_IMAGE_SIZE = 1024 * 100;
 
     // RecyclerView.ItemDecorator: divider
-    public static final int dividerHeight = 80;
+    public static final int DIVIDER_HEIGHT_MAIN = 80;
+    public static final int DIVIDER_HEIGHT_EXPENSE = 16;
 
     // Board
     public static final int PAGINATION = 20;

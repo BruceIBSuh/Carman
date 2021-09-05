@@ -82,7 +82,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
             // On receiving car wash values, set the progressbar to be View.GONE and set the message
             // to the textview.
             for(Object obj : payloads) {
-                String msg = ((boolean)obj) ?
+                String msg = ((boolean)obj)?
                         context.getString(R.string.general_carwash_yes):
                         context.getString(R.string.general_carwash_no);
                 // Update the car wash value.

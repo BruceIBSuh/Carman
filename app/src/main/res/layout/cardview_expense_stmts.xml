@@ -6,14 +6,14 @@
     android:layout_height="wrap_content">
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="30dp" >
+        android:layout_height="match_parent"
+        android:padding="3dp">
         <TextView
             android:id="@+id/tv_stat_date"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/contentNormal"
             cardview:layout_constraintHorizontal_weight="1"
             cardview:layout_constraintBottom_toBottomOf="parent"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_stat_mileage"
@@ -25,7 +25,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/contentNormal"
             cardview:layout_constraintHorizontal_weight="1.3"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_date"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_stat_expense"
@@ -37,7 +37,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="end|center_vertical"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/contentNormal"
             cardview:layout_constraintHorizontal_weight="1"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_mileage"
             cardview:layout_constraintEnd_toStartOf="@+id/tv_stat_location"
@@ -48,9 +48,9 @@
             android:id="@+id/tv_stat_location"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="16dp"
             android:gravity="start"
-            android:textSize="@dimen/smallText"
+            android:textSize="@dimen/contentNormal"
             cardview:layout_constraintBottom_toBottomOf="@+id/tv_stat_expense"
             cardview:layout_constraintEnd_toEndOf="parent"
             cardview:layout_constraintHorizontal_weight="3"

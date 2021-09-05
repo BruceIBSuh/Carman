@@ -1,4 +1,4 @@
-package com.silverback.carman.views;
+package com.silverback.carman.graph;
 
 import android.content.Context;
 import android.content.res.TypedArray;

@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -14,11 +13,11 @@ import androidx.lifecycle.ViewModelProvider;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseDao;
+import com.silverback.carman.databinding.FragmentStatGraphBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.utils.Constants;
-import com.silverback.carman.views.StatGraphView;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,13 +30,14 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     private static final LoggingHelper log = LoggingHelperFactory.create(StatGraphFragment.class);
 
     // Object References
+    private FragmentStatGraphBinding binding;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentSharedModel;
     private Calendar calendar;
     private SimpleDateFormat sdf;
 
     // GraphView
-    private StatGraphView graph;
+    //private StatGraphView graph;
     //private static BarGraphSeries<DataPoint> series;
     //private static DataPoint[] dataPoint;
     //private static int[] monthlyTotalExpense;
@@ -54,22 +54,19 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle bundle) {
-
         super.onCreate(bundle);
-
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
-        fragmentSharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        calendar = Calendar.getInstance();
+        mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
+        fragmentSharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat("MM", Locale.getDefault());
 
         //dataPoint = new DataPoint[12];
         //series = new BarGraphSeries<>(dataPoint);
         //monthlyTotalExpense = new int[12];
-
         currentYear = calendar.get(Calendar.YEAR);
+        log.i("current year: %s", currentYear);
         targetYear = currentYear;
     }
 
@@ -77,40 +74,36 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_stat_graph, container, false);
+        //View view = inflater.inflate(R.layout.fragment_stat_graph, container, false);
+        binding = FragmentStatGraphBinding.inflate(inflater);
 
         // GraphView
-        graph = view.findViewById(R.id.graphView);
+        //graph = view.findViewById(R.id.graphView);
         //graph.getViewport().setXAxisBoundsManual(true);
         //graph.getViewport().setMaxX(12);
         //series.setDrawValuesOnTop(true);
 
         // UI's
-        tvYear = view.findViewById(R.id.tv_year);
-        tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
+        binding.tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
 
         // ImageButton
-        Button leftArrow = view.findViewById(R.id.btn_arrow_left);
-        Button rightArrow = view.findViewById(R.id.btn_arrow_right);
-        leftArrow.setOnClickListener(this);
-        rightArrow.setOnClickListener(this);
+        binding.btnArrowLeft.setOnClickListener(this);
+        binding.btnArrowRight.setOnClickListener(this);
 
-        //loadTotalExpense(currentYear, 0);
+        loadTotalExpense(currentYear, Constants.GAS, Constants.SVC);
 
         // Creates an instance of AsyncTaskk with this year given as params for doInBackground.
         //new StatGraphViewTask(mDB, graph, calendar).execute(calendar.get(Calendar.YEAR));
-        return view;
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstancestate) {
         super.onViewCreated(view, savedInstancestate);
-
         // Get the selected item position of the spinner defined in StatStmtsFragment for querying
         // the expense by category
-        fragmentSharedModel.getExpenseCategory().observe(getViewLifecycleOwner(), position -> {
-            log.i("position: %s", position);
-            switch(position) {
+        fragmentSharedModel.getTotalExpenseByCategory().observe(getViewLifecycleOwner(), pos -> {
+            switch(pos) {
                 case 0:
                     gasCategory = Constants.GAS;
                     svcCategory = Constants.SVC;
@@ -126,35 +119,27 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
             }
 
             loadTotalExpense(targetYear, gasCategory, svcCategory);
-
         });
+
     }
 
 
     @Override
     public void onClick(View view) {
-        switch(view.getId()) {
+        if(view.getId() == R.id.btn_arrow_left) {
+            calendar.add(Calendar.YEAR, -1);
+            binding.tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
 
-            case R.id.btn_arrow_left:
-                calendar.add(Calendar.YEAR, -1);
-                tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
-
-                break;
-
-            case R.id.btn_arrow_right:
-                if(calendar.get(Calendar.YEAR) < currentYear) {
-                    calendar.add(Calendar.YEAR, 1);
-                    tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
-                }
-
-                break;
-
+        } else if(view.getId() == R.id.btn_arrow_right) {
+            if(calendar.get(Calendar.YEAR) < currentYear) {
+                calendar.add(Calendar.YEAR, 1);
+                binding.tvYear.setText(String.valueOf(calendar.get(Calendar.YEAR)));
+            }
         }
 
         targetYear = calendar.get(Calendar.YEAR);
         loadTotalExpense(targetYear, gasCategory, svcCategory);
     }
-
 
     private void loadTotalExpense(int year, int gas, int service) {
         calendar.set(year, 0, 1, 0, 0);
@@ -162,16 +147,17 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
         calendar.set(year, 11, 31, 23, 59, 59);
         long end = calendar.getTimeInMillis();
 
-        mDB.expenseBaseModel().loadMonthlyExpense(gas, service, start, end)
-                .observe(getViewLifecycleOwner(), data -> graph.setGraphData(calcMonthlyExpense(data)));
+        mDB.expenseBaseModel().loadMonthlyExpense(gas, service, start, end).observe(
+                getViewLifecycleOwner(), data -> {
+                    log.i("monthly data: %s", data);
+                    binding.graphView.setGraphData(calcMonthlyExpense(data));
+                });
     }
 
     private int[] calcMonthlyExpense(List<ExpenseBaseDao.ExpenseByMonth> data) {
-
         int[] monthlyTotal = new int[12];
         for (ExpenseBaseDao.ExpenseByMonth monthlyExpense : data) {
-            int month = Integer.valueOf(sdf.format(monthlyExpense.dateTime));
-            log.i("Month: %s", month);
+            int month = Integer.parseInt(sdf.format(monthlyExpense.dateTime));
             switch (month) {
                 case 1: monthlyTotal[0] += monthlyExpense.totalExpense; break;
                 case 2: monthlyTotal[1] += monthlyExpense.totalExpense; break;

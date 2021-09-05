@@ -21,7 +21,6 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
     private final MutableLiveData<SparseIntArray> numpadValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray<String>> memopadValue = new MutableLiveData<>();
-    private final MutableLiveData<SparseArray<String>> selectedMemo = new MutableLiveData<>();
     private final MutableLiveData<SparseArray<Object>> svcLocation = new MutableLiveData<>();
 
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
@@ -209,7 +208,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // Shared the selected spinner item position in StatStmtsFragment with StatGraphFragment to set
     // data queried by category.
-    public MutableLiveData<Integer> getExpenseCategory() {
+    public MutableLiveData<Integer> getTotalExpenseByCategory() {
         if(totalExpense == null)  totalExpense = new MutableLiveData<>();
         return totalExpense;
     }

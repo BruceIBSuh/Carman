@@ -78,6 +78,7 @@ public class ServiceManagerFragment extends Fragment implements
     private SharedPreferences mSettings;
     private CarmanDatabase mDB;
     private FirebaseFirestore firestore;
+    private Calendar calendar;
 
     private FragmentSharedModel fragmentModel;
     private PagerAdapterViewModel pagerAdapterModel;
@@ -87,9 +88,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     private ServiceCenterTask serviceCenterTask;
     private Location location;
-    private NumberPadFragment numPad;
-    private MemoPadFragment memoPad;
-    private Calendar calendar;
+
 
     private FavoriteGeofenceHelper geofenceHelper;
     private ExpServiceItemAdapter mAdapter;
@@ -99,16 +98,6 @@ public class ServiceManagerFragment extends Fragment implements
     private Location svcLocation;
     private String svcAddress;
     private String svcCompany;
-
-    // UIs
-    private RelativeLayout parentLayout;
-    private RecyclerView recyclerServiceItems;
-    private ProgressBar progbar;
-    private EditText etServiceName;
-    private TextView tvDate, tvMileage, tvTotalCost;
-    private ImageButton btnSvcFavorite;
-    private TextView targetView;
-
 
     // Fields
     private String distCode;
@@ -158,10 +147,8 @@ public class ServiceManagerFragment extends Fragment implements
         mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
-        sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
-        numPad = new NumberPadFragment();
-        memoPad = new MemoPadFragment();
         calendar = Calendar.getInstance(Locale.getDefault());
+        sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
         df = BaseActivity.getDecimalFormatInstance();
         if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
 
@@ -194,12 +181,12 @@ public class ServiceManagerFragment extends Fragment implements
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
                 isSvcFavorite = true;
-                Snackbar.make(parentLayout, getString(R.string.svc_msg_add_favorite), Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(), getString(R.string.svc_msg_add_favorite), Snackbar.LENGTH_SHORT).show();
             }
             @Override
             public void notifyRemoveGeofenceCompleted(int placeholder) {
                 isSvcFavorite = false;
-                Snackbar.make(parentLayout, R.string.svc_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(), R.string.svc_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
             }
             @Override
             public void notifyAddGeofenceFailed() {
@@ -218,17 +205,10 @@ public class ServiceManagerFragment extends Fragment implements
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         binding.tvServiceDate.setText(sdf.format(visitTime));
         binding.tvSvcPayment.setText("0");
-        binding.tvExpSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
+        binding.tvSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
         // Set event listeners.
-        //binding.tvExpSvcMileage.setOnClickListener(this);
-        /*
-        binding.btnResetDatetime.setOnClickListener(view -> {
-            log.i("Parent Activity: %s", requireActivity());
-            ((ExpenseActivity)requireActivity()).setCustomTime();
-        });
-        */
         binding.btnRegisterService.setOnClickListener(v -> registerFavoriteServiceProvider());
         binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
 
@@ -254,13 +234,14 @@ public class ServiceManagerFragment extends Fragment implements
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        try { createRecyclerServicItemView(); }
+        try { createRecyclerServiceItemView(); }
         catch(JSONException e) { e.printStackTrace(); }
 
         // LiveData custom time from Date and Time picker DialogFragment
         fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
-            long customTime = calendar.getTimeInMillis();
-            binding.tvServiceDate.setText(sdf.format(customTime));
+            this.calendar = calendar;
+            //long customTime = calendar.getTimeInMillis();
+            binding.tvServiceDate.setText(sdf.format(calendar.getTimeInMillis()));
         });
 
 
@@ -269,8 +250,8 @@ public class ServiceManagerFragment extends Fragment implements
         fragmentModel.getNumpadValue().observe(getViewLifecycleOwner(), data -> {
             final int viewId = data.keyAt(0);
             final int value = data.valueAt(0);
-            if(viewId == R.id.tv_exp_svc_mileage) {
-                binding.tvExpSvcMileage.setText(df.format(value));
+            if(viewId == R.id.tv_svc_mileage) {
+                binding.tvSvcMileage.setText(df.format(value));
             } else if(viewId == R.id.tv_value_cost) {
                 mAdapter.notifyItemChanged(itemPos, data);
                 totalExpense += data.valueAt(0);
@@ -289,7 +270,7 @@ public class ServiceManagerFragment extends Fragment implements
             svcId = entity.providerId;
             //etServiceName.setText(svcName);
             binding.etServiceProvider.setText(svcName);
-            btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+            binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             isSvcFavorite = true;
         });
 
@@ -327,106 +308,27 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
 
     }
-    /*
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onClick(View v) {
-        // Indicate which TextView is clicked, then put a value retrieved from InputNumberPad
-        // via FragmentViewModel in the textview.
-        switch(v.getId()) {
-
-            case R.id.tv_exp_svc_mileage:
-                Bundle args = new Bundle();
-                //args.putString("itemLabel", getString(R.string.svc_label_mileage));
-                args.putString("initValue", tvMileage.getText().toString());
-                args.putInt("viewId", v.getId());
-                numPad.setArguments(args);
-                if(getActivity().getSupportFragmentManager() != null)
-                    numPad.show(getActivity().getSupportFragmentManager(), null);
-                break;
-
-            case R.id.btn_register_service_provider:
-                svcName = etServiceName.getText().toString();
-                if(etServiceName.getText().toString().isEmpty()) {
-                    Snackbar.make(parentLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-
-                if(isSvcFavorite || svcLocation != null) {
-                    Snackbar.make(parentLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
-                    return;
-                } else {
-                    RegisterDialogFragment.newInstance(svcName, distCode).show(getActivity().getSupportFragmentManager(), null);
-                }
-
-                break;
-
-            case R.id.btn_service_date:
-                break;
-
-
-
-        }
-
-    }
-
-     */
 
     // ExpServiceItemAdapter.OnParentFragmentListener invokes the following 4 methods
     // to pop up NumberPadFragment and input the amount of expense in a service item.
     @Override
-    public void inputItemCost(String label, TextView targetView, int position) {
-        /*
+    public void setItemPosition(int position) {
         itemPos = position;
-
-        Bundle args = new Bundle();
-        args.putString("itemLabel", label);
-        args.putString("initValue", targetView.getText().toString());
-        args.putInt("viewId", targetView.getId());
-        numPad.setArguments(args);
-
-        if(getActivity() != null) numPad.show(getActivity().getSupportFragmentManager(), null);
-
-         */
-
     }
 
     @Override
-    public void inputItemMemo(String title, TextView targetView, int position) {
-        itemPos = position;
-        Bundle args = new Bundle();
-        args.putString("itemLabel", title);
-        args.putInt("viewId", targetView.getId());
-        memoPad.setArguments(args);
-
-        if(getActivity() != null) memoPad.show(getActivity().getSupportFragmentManager(), null);
+    public int getCurrentMileage() {
+        return 0;
     }
 
     @Override
     public void subtractCost(int value) {
-        log.i("Calculate Total Cost");
         totalExpense -= value;
-        //tvTotalCost.setText(df.format(totalExpense));
         binding.tvSvcPayment.setText(df.format(totalExpense));
     }
 
 
-    @Override
-    public int getCurrentMileage() {
-        /*
-        try {
-            //return df.parse(tvMileage.getText().toString()).intValue();
-            // BUG !!!
-            Number num = df.parse(binding.tvMileage.getText().toString());
-            if(num != null) return num.intValue();
-        } catch(ParseException e) { e.printStackTrace();}
-        */
-        return -1;
-    }
-
-
-
-    private void createRecyclerServicItemView() throws JSONException {
+    private void createRecyclerServiceItemView() throws JSONException {
         binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerServiceItems.setHasFixedSize(true);
 
@@ -442,20 +344,20 @@ public class ServiceManagerFragment extends Fragment implements
                 if(data != null) {
                     mAdapter.setServiceData(pos, data);
                     mAdapter.notifyItemChanged(pos, data);
-                } //else mAdapter.setServiceData(pos, null);
+                } else mAdapter.setServiceData(pos, null);
             });
         }
     }
 
     private void registerFavoriteServiceProvider() {
-        svcName = etServiceName.getText().toString();
-        if(etServiceName.getText().toString().isEmpty()) {
-            Snackbar.make(parentLayout, R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
+        svcName = binding.etServiceProvider.getText().toString();
+        if(svcName.isEmpty()) {
+            Snackbar.make(binding.getRoot(), R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
             return;
         }
 
         if(isSvcFavorite || svcLocation != null) {
-            Snackbar.make(parentLayout, "Already Registered", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(binding.getRoot(), "Already Registered", Snackbar.LENGTH_SHORT).show();
         } else {
             RegisterDialogFragment.newInstance(svcName, distCode).show(
                     Objects.requireNonNull(requireActivity()).getSupportFragmentManager(), null);
@@ -492,7 +394,7 @@ public class ServiceManagerFragment extends Fragment implements
         } else {
             if (TextUtils.isEmpty(svcId)) {
                 InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(etServiceName.getWindowToken(), 0);
+                imm.hideSoftInputFromWindow(binding.etServiceProvider.getWindowToken(), 0);
                 binding.etServiceProvider.clearFocus();
                 Snackbar.make(binding.getRoot(), R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
 
@@ -525,13 +427,14 @@ public class ServiceManagerFragment extends Fragment implements
 
         if(!doEmptyCheck()) return false;
 
-        String dateFormat = getString(R.string.date_format_1);
-        long milliseconds = BaseActivity.parseDateTime(dateFormat, tvDate.getText().toString());
-        log.i("service data saved: %s", milliseconds);
-        int mileage;
+        //String dateFormat = getString(R.string.date_format_1);
+        //long milliseconds = BaseActivity.parseDateTime(dateFormat, binding.tvServiceDate.getText().toString());
+        //log.i("service data saved: %s", milliseconds);
+        int mileage = 0;
 
         try {
-            mileage = df.parse(tvMileage.getText().toString()).intValue();
+            mileage = df.parse(binding.tvSvcMileage.getText().toString()).intValue();
+            log.i("mileage: %s", mileage);
         } catch(ParseException e) {
             log.e("ParseException: %s", e.getMessage());
             return false;
@@ -542,12 +445,12 @@ public class ServiceManagerFragment extends Fragment implements
         ServicedItemEntity checkedItem;
         List<ServicedItemEntity> itemEntityList = new ArrayList<>();
 
-        basicEntity.dateTime = milliseconds;
+        basicEntity.dateTime = calendar.getTimeInMillis();
         basicEntity.mileage = mileage;
         basicEntity.category = Constants.SVC;
         basicEntity.totalExpense = totalExpense;
 
-        serviceEntity.serviceCenter = etServiceName.getText().toString();
+        serviceEntity.serviceCenter = binding.etServiceProvider.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea";
 
         for(int i = 0; i < mAdapter.arrCheckedState.length; i++) {
@@ -566,7 +469,7 @@ public class ServiceManagerFragment extends Fragment implements
         // using @Transaction in ServiceManagerDao.
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
-            mSettings.edit().putString(Constants.ODOMETER, tvMileage.getText().toString()).apply();
+            mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
             return true;
 
@@ -575,16 +478,16 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     private boolean doEmptyCheck() {
-        if(TextUtils.isEmpty(etServiceName.getText())) {
+        if(TextUtils.isEmpty(binding.etServiceProvider.getText())) {
             String msg = getString(R.string.svc_snackbar_stnname);
             Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
             binding.etServiceProvider.requestFocus();
             return false;
         }
 
-        if(TextUtils.isEmpty(binding.tvExpSvcMileage.getText())) {
+        if(TextUtils.isEmpty(binding.tvSvcMileage.getText())) {
             Snackbar.make(binding.getRoot(), R.string.svc_snackbar_mileage, Snackbar.LENGTH_SHORT).show();
-            binding.tvExpSvcMileage.requestFocus();
+            binding.tvSvcMileage.requestFocus();
             return false;
         }
 
@@ -633,10 +536,4 @@ public class ServiceManagerFragment extends Fragment implements
                     });
         }
     }
-
-    private void setVisitingTime() {
-
-    }
-
-
 }

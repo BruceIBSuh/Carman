@@ -84,7 +84,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraint_stmts"
+            android:id="@+id/layout_cost"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="50dp"
@@ -126,7 +126,7 @@
                 android:layout_marginTop="5dp"
                 android:text="@string/svc_label_cost"
                 android:textSize="@dimen/extraSmallText"
-                cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
+                cardview:layout_constraintStart_toStartOf="@+id/root_service_item"
                 cardview:layout_constraintTop_toTopOf="parent" />
 
             <TextView
@@ -164,7 +164,7 @@
                 android:labelFor="@id/tv_item_info"
                 android:text="@string/svc_label_info"
                 android:textSize="@dimen/extraSmallText"
-                cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
+                cardview:layout_constraintStart_toStartOf="@+id/root_service_item"
                 cardview:layout_constraintTop_toBottomOf="@+id/tv_label_cost" />
 
             <TextView

@@ -78,6 +78,4 @@ public class StationListHolder extends RecyclerView.ViewHolder {
 
         return resId;
     }
-
-
 }
