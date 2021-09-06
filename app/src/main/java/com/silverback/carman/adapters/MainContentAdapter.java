@@ -21,17 +21,11 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 
+import java.util.List;
+
 public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
-
-    // Define View Types
-    private final int NOTIFICATION = 0;
-    private final int BANNER_AD_1 = 1;
-    private final int VIEWPAGER_EXPENSE = 2;
-    private final int CARLIFE = 3;
-    private final int BANNER_AD_2 = 4;
-    private final int COMPANY_INFO = 5;
 
     // Objects
     private final FirebaseFirestore firestore;
@@ -45,7 +39,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public MainContentAdapter(Context context) {
         super();
         firestore= FirebaseFirestore.getInstance();
-        expensePagerAdapter  = new MainExpPagerAdapter((FragmentActivity)context);
+        expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
@@ -64,23 +58,23 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         switch(viewType) {
-            case NOTIFICATION:
+            case Constants.NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
                 return new ContentViewHolder(notiBinding.getRoot());
 
-            case VIEWPAGER_EXPENSE:
+            case Constants.VIEWPAGER_EXPENSE:
                 expBinding = MainContentExpenseBinding.inflate(inflater, parent, false);
                 return new ContentViewHolder(expBinding.getRoot());
 
-            case CARLIFE:
+            case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
                 return new ContentViewHolder(carlifeBinding.getRoot());
 
-            case BANNER_AD_1: case BANNER_AD_2:
+            case Constants.BANNER_AD_1: case Constants.BANNER_AD_2:
                 adsBinding = MainContentAdsBinding.inflate(inflater, parent, false);
                 return new ContentViewHolder(adsBinding.getRoot());
 
-            case COMPANY_INFO:
+            case Constants.COMPANY_INFO:
                 MainContentFooterBinding footerBinding = MainContentFooterBinding.inflate(inflater, parent, false);
                 return new ContentViewHolder(footerBinding.getRoot());
 
@@ -93,7 +87,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         switch(position) {
-            case NOTIFICATION:
+            case Constants.NOTIFICATION:
                 firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
                         .get()
                         .addOnSuccessListener(querySnapshots -> {
@@ -102,11 +96,12 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         });
                 break;
 
-            case VIEWPAGER_EXPENSE:
+            case Constants.VIEWPAGER_EXPENSE:
+                log.i("viewpager expense");
                 expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
                 break;
 
-            case CARLIFE:
+            case Constants.CARLIFE:
                 firestore.collection("board_general").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
                         .get()
                         .addOnSuccessListener(querySnapshots -> {
@@ -115,13 +110,28 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         });
                 break;
 
-            case BANNER_AD_1:
+            case Constants.BANNER_AD_1:
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_ioniq5);
                 break;
 
-            case BANNER_AD_2:
+            case Constants.BANNER_AD_2:
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_insurance);
                 break;
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+        } else {
+            if(position == Constants.VIEWPAGER_EXPENSE) {
+                log.i("expense viewpager: %s", payloads.get(0));
+                expensePagerAdapter.notifyItemChanged(0, payloads.get(0));
+
+            }
         }
     }
 
@@ -133,12 +143,12 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public int getItemViewType(int position) {
         switch(position) {
-            case 0: return NOTIFICATION;
-            case 1: return BANNER_AD_1;
-            case 2: return VIEWPAGER_EXPENSE;
-            case 3: return CARLIFE;
-            case 4: return BANNER_AD_2;
-            case 5: return COMPANY_INFO;
+            case 0: return Constants.NOTIFICATION;
+            case 1: return Constants.BANNER_AD_1;
+            case 2: return Constants.VIEWPAGER_EXPENSE;
+            case 3: return Constants.CARLIFE;
+            case 4: return Constants.BANNER_AD_2;
+            case 5: return Constants.COMPANY_INFO;
             default: return -1;
         }
     }

@@ -18,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -413,11 +415,13 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
 
     // Save the gas-related data in Room database, which is called from the parent activity.
     //@SuppressWarnings("ConstantConditions")
-    public boolean saveGasData(String userId){
-        if(!doEmptyCheck()) return false;
+    public LiveData<Integer> saveGasData(String userId){
+
+        MutableLiveData<Integer> liveTotalData = new MutableLiveData<>();
+        if(!doEmptyCheck())  liveTotalData.setValue(-1);
+
 
         fragmentModel.setCurrentFragment(this);
-
         // Create Entity instances both of which are correlated by Foreinkey
         ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
         GasManagerEntity gasEntity = new GasManagerEntity();
@@ -446,12 +450,16 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         }
 
         basicEntity.totalExpense = gasEntity.gasPayment + gasEntity.washPayment + gasEntity.extraPayment;
+        log.i("gas manaager: %s" , basicEntity.totalExpense);
+        liveTotalData.setValue(basicEntity.totalExpense);;
+
 
         // Insert the data to the local db.
         int rowId = mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+
 
             // FireStore Process to upload the rating and comments with Station ID.
             if(binding.rbGasStation.getRating() > 0) {
@@ -493,9 +501,10 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                         });
             }
 
-            return true;
+            return liveTotalData;
+        }
 
-        } else return false;
+        return null;
     }
 
     // Method to make an empty check. When successfully fetching the gas station and the price,

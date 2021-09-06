@@ -19,6 +19,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -423,9 +425,9 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Invoked by OnOptions
-    public boolean saveServiceData() {
-
-        if(!doEmptyCheck()) return false;
+    public LiveData<Integer> saveServiceData() {
+        MutableLiveData<Integer> liveServiceTotal = new MutableLiveData<>();
+        if(!doEmptyCheck()) liveServiceTotal.setValue(-1);
 
         //String dateFormat = getString(R.string.date_format_1);
         //long milliseconds = BaseActivity.parseDateTime(dateFormat, binding.tvServiceDate.getText().toString());
@@ -433,11 +435,9 @@ public class ServiceManagerFragment extends Fragment implements
         int mileage = 0;
 
         try {
-            mileage = df.parse(binding.tvSvcMileage.getText().toString()).intValue();
-            log.i("mileage: %s", mileage);
+            mileage = Objects.requireNonNull(df.parse(binding.tvSvcMileage.getText().toString())).intValue();
         } catch(ParseException e) {
             log.e("ParseException: %s", e.getMessage());
-            return false;
         }
 
         ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
@@ -449,6 +449,8 @@ public class ServiceManagerFragment extends Fragment implements
         basicEntity.mileage = mileage;
         basicEntity.category = Constants.SVC;
         basicEntity.totalExpense = totalExpense;
+
+        liveServiceTotal.setValue(totalExpense);
 
         serviceEntity.serviceCenter = binding.etServiceProvider.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea";
@@ -471,10 +473,10 @@ public class ServiceManagerFragment extends Fragment implements
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
             Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-            return true;
 
-        } else return false;
+        }
 
+        return liveServiceTotal;
     }
 
     private boolean doEmptyCheck() {

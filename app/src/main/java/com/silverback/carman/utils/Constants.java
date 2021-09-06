@@ -20,6 +20,14 @@ public class Constants {
     public static final int GALLERY = 1;
     public static final int CAMERA = 2;
 
+    // MainActivity Content Category
+    public static final int NOTIFICATION = 0;
+    public static final int BANNER_AD_1 = 1;
+    public static final int VIEWPAGER_EXPENSE = 2;
+    public static final int CARLIFE = 3;
+    public static final int BANNER_AD_2 = 4;
+    public static final int COMPANY_INFO = 5;
+
     // Geofences
     public static final int MAX_FAVORITE = 10;
     public static final String MIN_RADIUS = "200"; //Current station locating radius

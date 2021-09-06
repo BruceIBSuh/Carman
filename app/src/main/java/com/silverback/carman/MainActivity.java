@@ -20,12 +20,14 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
+import com.silverback.carman.adapters.MainExpPagerAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -39,6 +41,7 @@ import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.RecyclerDividerUtil;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
@@ -66,6 +69,7 @@ public class MainActivity extends BaseActivity implements
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private ImageViewModel imgModel;
+    private FragmentSharedModel fragmentModel;
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
@@ -149,7 +153,16 @@ public class MainActivity extends BaseActivity implements
                     log.i("activity result");
                     if(result.getResultCode() == Activity.RESULT_OK) updateSettingResult(result);
                     else if(result.getResultCode() == Activity.RESULT_CANCELED) {
-                        log.i("from which activity: %s", result);
+                        log.i("from which activity: %s", result.getData());
+                        Intent resultIntent = result.getData();
+                        if(resultIntent != null) {
+                            int totalSum = resultIntent.getIntExtra("expenseTotal", 0);
+                            log.i("expense total: %s", totalSum);
+                            MainExpPagerAdapter adapter = new MainExpPagerAdapter(this);
+                            mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
+
+                        }
+
                         binding.stationRecyclerView.setVisibility(View.GONE);
                         binding.fab.setVisibility(View.GONE);
                         binding.recyclerContents.setVisibility(View.VISIBLE);
@@ -400,7 +413,6 @@ public class MainActivity extends BaseActivity implements
         String gasType = resultIntent.getStringExtra("gasCode");
 
         if(!TextUtils.isEmpty(userName)) Objects.requireNonNull(getSupportActionBar()).setTitle(userName);
-
         if(!TextUtils.isEmpty(district) && !TextUtils.isEmpty(gasType)) {
             log.i("both changed");
             OpinetViewModel opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
