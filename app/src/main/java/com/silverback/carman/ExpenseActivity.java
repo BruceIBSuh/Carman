@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.ExpContentPagerAdapter;
 import com.silverback.carman.adapters.ExpRecentAdapter;
@@ -102,6 +103,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private MenuItem menuSave;
 
     // Fields
+    private LiveData<Integer> liveSaveData;
     private Location mPrevLocation;
     private int currentPage;
     private int prevHeight;
@@ -355,7 +357,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
         ViewGroup.LayoutParams params = binding.topframeViewpager.getLayoutParams();
-        anim.setDuration(2000);
+        anim.setDuration(1000);
         anim.start();
 
         anim.addUpdateListener(valueAnimator -> {
@@ -419,32 +421,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         Intent resultIntent = new Intent();
 
         switch(page) {
-
             case GAS:
                 ((GasManagerFragment)fragment).saveGasData(userId).observe(this, gasTotal -> {
                     log.i("total sum: %s", gasTotal);
-                    resultIntent.putExtra("expenseTotal", gasTotal);
+                    resultIntent.putExtra("totalsum", gasTotal);
                     setResult(RESULT_CANCELED, resultIntent);
+                    //Snackbar.make(binding.getRoot(), R.string.toast_save_success, Snackbar.LENGTH_LONG).show();
+                    finish();
                 });
                 break;
+
             case SVC:
                 ((ServiceManagerFragment)fragment).saveServiceData().observe(this, svcTotal -> {
-                    resultIntent.putExtra("expenseTotal", svcTotal);
+                    resultIntent.putExtra("totalsum", svcTotal);
                     setResult(RESULT_CANCELED, resultIntent);
+                    finish();
                 });
-
                 break;
         }
-
-        finish();
-
-        /*
-        if(isSaved) {
-            setResult(RESULT_CANCELED);
-            finish();
-        }
-
-        return isSaved;
-        */
     }
 }

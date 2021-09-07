@@ -134,7 +134,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else {
             if(position == Constants.VIEWPAGER_EXPENSE) {
                 log.i("expense viewpager: %s", payloads.get(0));
-                holder.itemView.requestLayout();
+                expensePagerAdapter.notifyDataSetChanged();
+                expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
             }
         }
     }

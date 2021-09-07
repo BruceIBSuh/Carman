@@ -195,7 +195,8 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         binding = FragmentGasManagerBinding.inflate(inflater, container, false);
 
         // Check if it's possible to change the soft input mode on the fragment basis. Seems not work.
-        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+        Objects.requireNonNull(requireActivity()).getWindow()
+                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         binding.tvGasDatetime.setText(sdf.format(visitTime));
@@ -430,7 +431,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         basicEntity.category = Constants.GAS;
 
         gasEntity.stnName = binding.tvStationName.getText().toString();
-        //gasEntity.stnAddrs = stnAddrs;
         gasEntity.stnId = stnId;
         gasEntity.extraExpense = binding.tvExtraPayment.getText().toString();
 
@@ -440,9 +440,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
             gasEntity.gasPayment = Objects.requireNonNull(df.parse(binding.tvGasPayment.getText().toString())).intValue();
             gasEntity.gasAmount = Objects.requireNonNull(df.parse(binding.tvGasAmount.getText().toString())).intValue();
             gasEntity.unitPrice = Objects.requireNonNull(df.parse(binding.etGasUnitPrice.getText().toString())).intValue();
-            // BUG!!
-            // W/System.err:     at java.text.NumberFormat.parse(NumberFormat.java:351)
-            // at com.silverback.carman2.fragments.GasManagerFragment.saveGasData(GasManagerFragment.java:546)
             gasEntity.washPayment = Objects.requireNonNull(df.parse(binding.tvCarwash.getText().toString())).intValue();
             gasEntity.extraPayment = Objects.requireNonNull(df.parse(binding.tvExtraPayment.getText().toString())).intValue();
 
@@ -451,65 +448,54 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         }
 
         basicEntity.totalExpense = gasEntity.gasPayment + gasEntity.washPayment + gasEntity.extraPayment;
-        log.i("gas manaager: %s" , basicEntity.totalExpense);
+        log.i("gas payment: %s" , basicEntity.totalExpense);
+        mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
 
-        new Thread(() -> {
-            mDB.gasManagerModel().insertTotalAndGasExpense(basicEntity, gasEntity);
-        }).start();
+        mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
+        //Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+        liveTotalData.postValue(basicEntity.totalExpense);
 
-                // Insert the data to the local db.
-        //long rowId = mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
-        //if(rowId > 0) {
+        // FireStore Process to upload the rating and comments with Station ID.
+        if(binding.rbGasStation.getRating() > 0) {
+            log.i("RatingBar: %s", binding.rbGasStation.getRating());
+            Map<String, Object> ratingData = new HashMap<>();
+            ratingData.put("eval_num", FieldValue.increment(1));
+            ratingData.put("eval_sum", FieldValue.increment(binding.rbGasStation.getRating()));
 
-            mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
-            Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-            //setResult param value.
-            liveTotalData.setValue(basicEntity.totalExpense);;
+            DocumentReference docRef = firestore.collection("gas_eval").document(stnId);
+            docRef.get().addOnSuccessListener(snapshot -> {
+                if(snapshot.exists() && snapshot.get("eval_num") != null) {
+                    log.i("update rating");
+                    docRef.update(ratingData);
 
-            // FireStore Process to upload the rating and comments with Station ID.
-            if(binding.rbGasStation.getRating() > 0) {
-                log.i("RatingBar: %s", binding.rbGasStation.getRating());
-                Map<String, Object> ratingData = new HashMap<>();
-                ratingData.put("eval_num", FieldValue.increment(1));
-                ratingData.put("eval_sum", FieldValue.increment(binding.rbGasStation.getRating()));
+                } else {
+                    // In case of the favorite_num field existing, must set the option of
+                    // SetOPtions.merge(). Otherwise, it may remove the existing field.
+                    docRef.set(ratingData, SetOptions.merge());
+                }
+            });
+        }
 
-                DocumentReference docRef = firestore.collection("gas_eval").document(stnId);
-                docRef.get().addOnSuccessListener(snapshot -> {
-                    if(snapshot.exists() && snapshot.get("eval_num") != null) {
-                        log.i("update rating");
-                        docRef.update(ratingData);
+        // Add rating or comments to the Firestore, if any.
+        if(!TextUtils.isEmpty(binding.etGasComment.getText())) {
+            log.i("comment and rating data");
+            Map<String, Object> commentData = new HashMap<>();
+            commentData.put("timestamp", FieldValue.serverTimestamp());
+            commentData.put("name", nickname);
+            commentData.put("comments", binding.etGasComment.getText().toString());
+            commentData.put("rating", binding.rbGasStation.getRating());
 
-                    } else {
-                        // In case of the favorite_num field existing, must set the option of
-                        // SetOPtions.merge(). Otherwise, it may remove the existing field.
-                        docRef.set(ratingData, SetOptions.merge());
-                    }
-                });
-            }
+            firestore.collection("gas_eval").document(stnId).collection("comments").document(userId)
+                    .set(commentData).addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    log.e("Commments successfully uploaded");
+                } else {
+                    log.e("Comments upload failed: %s", task.getException());
+                }
+            });
+        }
 
-            // Add rating or comments to the Firestore, if any.
-            if(!TextUtils.isEmpty(binding.etGasComment.getText())) {
-                log.i("comment and rating data");
-                Map<String, Object> commentData = new HashMap<>();
-                commentData.put("timestamp", FieldValue.serverTimestamp());
-                commentData.put("name", nickname);
-                commentData.put("comments", binding.etGasComment.getText().toString());
-                commentData.put("rating", binding.rbGasStation.getRating());
-
-                firestore.collection("gas_eval").document(stnId).collection("comments").document(userId)
-                        .set(commentData).addOnCompleteListener(task -> {
-                            if(task.isSuccessful()) {
-                                log.e("Commments successfully uploaded");
-                            } else {
-                                log.e("Comments upload failed: %s", task.getException());
-                            }
-                        });
-            }
-
-            return liveTotalData;
-        //}
-
-        //return null;
+        return liveTotalData;
     }
 
     // Method to make an empty check. When successfully fetching the gas station and the price,

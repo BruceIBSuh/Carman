@@ -209,12 +209,6 @@ public class MainContentPagerFragment extends Fragment {
         animator.start();
     }
 
-    public void updateTotalExpense(int expense) {
-        log.i("set expense: %s", expense);
-        monthlyExpense.setInitialExpense(expense);
-        monthlyExpense.queryThisMonthExpense();
-    }
-
     // Inner class to reset the calendar and retrieve expense data for previous months.
     private class RecentMonthlyExpense {
 
@@ -256,10 +250,6 @@ public class MainContentPagerFragment extends Fragment {
             return mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end);
         }
 
-        void setInitialExpense(int expense) {
-            log.i("set expense: %s", expense);
-            totalExpense = expense;
-        }
 
         void queryThisMonthExpense() {
             //calendar.set(Calendar.DAY_OF_MONTH, 1);
@@ -269,7 +259,6 @@ public class MainContentPagerFragment extends Fragment {
             queryMonthlyExpense(start, end).observe(getViewLifecycleOwner(), results -> {
                 totalExpense = 0;
                 for(ExpenseBaseDao.ExpenseByMonth expense : results) totalExpense += expense.totalExpense;
-                log.i("Total Expense: %s", totalExpense);
                 arrExpense[0] = totalExpense;
                 df.setDecimalSeparatorAlwaysShown(false);
                 animateExpenseCount(totalExpense);
@@ -282,7 +271,8 @@ public class MainContentPagerFragment extends Fragment {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
-                queryMonthlyExpense(start, end).observe(requireActivity(), data -> calcPrevExpense(index, data));
+                queryMonthlyExpense(start, end).observe(
+                        requireActivity(), data -> calcPrevExpense(index, data));
             }
         }
 
@@ -298,8 +288,7 @@ public class MainContentPagerFragment extends Fragment {
                 }
             }
 
-            if(count == NumOfPrevMonths)
-                totalBinding.recentGraphView.setGraphData(arrExpense);
+            if(count == NumOfPrevMonths) totalBinding.recentGraphView.setGraphData(arrExpense);
         }
 
     }

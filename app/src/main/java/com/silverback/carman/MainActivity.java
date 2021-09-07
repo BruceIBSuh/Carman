@@ -156,7 +156,7 @@ public class MainActivity extends BaseActivity implements
                         log.i("from which activity: %s", result.getData());
                         Intent resultIntent = result.getData();
                         if(resultIntent != null) {
-                            int totalSum = resultIntent.getIntExtra("expenseTotal", 0);
+                            int totalSum = resultIntent.getIntExtra("totalsum", 0);
                             log.i("expense total: %s", totalSum);
                             mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
                         }
