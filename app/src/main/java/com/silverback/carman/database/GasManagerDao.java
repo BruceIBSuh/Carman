@@ -1,12 +1,17 @@
 package com.silverback.carman.database;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Delete;
+import androidx.room.Embedded;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.Relation;
 import androidx.room.Transaction;
 
 import com.silverback.carman.logs.LoggingHelper;
@@ -49,17 +54,32 @@ public abstract class GasManagerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract long insert(GasManagerEntity gasManagerEntity);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    public abstract LiveData<Integer> insert(ExpenseBaseEntity totalExpense);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    public abstract LiveData<Integer> insertGasExpense(GasManagerEntity gasExpense);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    public void insertTotalAndGasExpense(ExpenseBaseEntity baseEntity, GasManagerEntity gasEntity){
+        gasEntity.basicId = baseEntity._id;
+        insertGasExpense(gasEntity);
+    }
+
+
     @Delete
     abstract void deleteGasRecord(GasManagerEntity gasManger);
 
     @Query("DELETE FROM GasManagerEntity WHERE stn_name = :stnName OR stn_id = :stnId")
     abstract int deleteGasManager(String stnName, String stnId);
 
-    @Transaction
-    public int insertBoth(ExpenseBaseEntity basicEntity, GasManagerEntity gasEntity) {
-        gasEntity.basicId = (int)insertParent(basicEntity);
-        long gasId = insert(gasEntity);
-        return (int)gasId;
+    private static class InsertViewModel extends ViewModel {
+        private MutableLiveData<Integer> insertId;
+
+        public MutableLiveData<Integer> getInsertId() {
+            if(insertId == null) insertId = new MutableLiveData<>();
+            return insertId;
+        }
     }
 
     // Static nested class for returning subsets of columns with the joined tables.
@@ -87,5 +107,7 @@ public abstract class GasManagerDao {
         public int washPayment;
 
     }
+
+
 
 }

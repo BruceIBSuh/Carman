@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
@@ -29,6 +30,7 @@ import com.silverback.carman.databinding.MainContentPagerSvcBinding;
 import com.silverback.carman.databinding.MainContentPagerTotalBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -60,7 +62,7 @@ public class MainContentPagerFragment extends Fragment {
     private MainContentPagerCarwashBinding washBinding;
     private MainContentPagerExtraBinding extraBinding;
 
-    private int position;
+    private int position;;
     //private int totalExpense, gasExpense, svcExpense;
 
     private MainContentPagerFragment() {
@@ -89,7 +91,6 @@ public class MainContentPagerFragment extends Fragment {
         df.applyPattern("#,###");
 
         monthlyExpense = new RecentMonthlyExpense();
-
     }
 
     @Override
@@ -138,10 +139,6 @@ public class MainContentPagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-    }
-
-    public void reload(int expense) {
-        monthlyExpense.setExpense(expense);
     }
 
     private void displayGasExpense() {
@@ -212,6 +209,12 @@ public class MainContentPagerFragment extends Fragment {
         animator.start();
     }
 
+    public void updateTotalExpense(int expense) {
+        log.i("set expense: %s", expense);
+        monthlyExpense.setInitialExpense(expense);
+        monthlyExpense.queryThisMonthExpense();
+    }
+
     // Inner class to reset the calendar and retrieve expense data for previous months.
     private class RecentMonthlyExpense {
 
@@ -220,6 +223,7 @@ public class MainContentPagerFragment extends Fragment {
 
         public RecentMonthlyExpense() {
             arrExpense = new int[NumOfPrevMonths];
+            totalExpense = 0;
             count = 1;
         }
 
@@ -252,17 +256,18 @@ public class MainContentPagerFragment extends Fragment {
             return mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end);
         }
 
-        void setExpense(int expense) {
-            this.totalExpense = expense;
-            //animateExpenseCount(totalExpense);
+        void setInitialExpense(int expense) {
+            log.i("set expense: %s", expense);
+            totalExpense = expense;
         }
 
         void queryThisMonthExpense() {
             //calendar.set(Calendar.DAY_OF_MONTH, 1);
+            log.i("queryThisMonthExpense");
             long start = setThisMonth();
             long end = System.currentTimeMillis();
-            queryMonthlyExpense(start, end).observe(requireActivity(), results -> {
-                this.totalExpense = 0;
+            queryMonthlyExpense(start, end).observe(getViewLifecycleOwner(), results -> {
+                totalExpense = 0;
                 for(ExpenseBaseDao.ExpenseByMonth expense : results) totalExpense += expense.totalExpense;
                 log.i("Total Expense: %s", totalExpense);
                 arrExpense[0] = totalExpense;
@@ -277,14 +282,13 @@ public class MainContentPagerFragment extends Fragment {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
-                queryMonthlyExpense(start, end).observe(
-                        requireActivity(), data -> calcPrevExpense(index, data));
+                queryMonthlyExpense(start, end).observe(requireActivity(), data -> calcPrevExpense(index, data));
             }
         }
 
         void calcPrevExpense(final int index, List<ExpenseBaseDao.ExpenseByMonth> data) {
-            log.i("previous data: %s", data);
-            log.i("arrExpense[0] is this month expense: %s", arrExpense[0]);
+            //log.i("previous data: %s", data);
+            //log.i("arrExpense[0] is this month expense: %s", arrExpense[0]);
             count++;
             for(ExpenseBaseDao.ExpenseByMonth expense : data) {
                 switch(index) {

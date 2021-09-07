@@ -158,9 +158,7 @@ public class MainActivity extends BaseActivity implements
                         if(resultIntent != null) {
                             int totalSum = resultIntent.getIntExtra("expenseTotal", 0);
                             log.i("expense total: %s", totalSum);
-                            MainExpPagerAdapter adapter = new MainExpPagerAdapter(this);
                             mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
-
                         }
 
                         binding.stationRecyclerView.setVisibility(View.GONE);

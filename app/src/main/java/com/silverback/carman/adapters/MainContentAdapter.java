@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -20,6 +21,7 @@ import com.silverback.carman.databinding.MainContentNotificationBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.util.List;
 
@@ -35,11 +37,14 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private MainContentCarlifeBinding carlifeBinding;
     private final MainExpPagerAdapter expensePagerAdapter;
 
+    private FragmentSharedModel fragmentModel;
+
     // Constructor
     public MainContentAdapter(Context context) {
         super();
         firestore= FirebaseFirestore.getInstance();
         expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
+        fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
@@ -129,8 +134,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else {
             if(position == Constants.VIEWPAGER_EXPENSE) {
                 log.i("expense viewpager: %s", payloads.get(0));
-                expensePagerAdapter.notifyItemChanged(0, payloads.get(0));
-
+                holder.itemView.requestLayout();
             }
         }
     }

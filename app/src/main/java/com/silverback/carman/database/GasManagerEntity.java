@@ -45,6 +45,5 @@ public class GasManagerEntity {
 
     @ColumnInfo(name = "extra_payment")
     public int extraPayment;
-
-
 }
+

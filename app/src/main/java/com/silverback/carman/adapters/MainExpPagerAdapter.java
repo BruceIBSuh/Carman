@@ -45,10 +45,8 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
         else {
             if(position == 0) {
                 log.i("MainExpPagerAdapter payloads: %s, %s", payloads.get(0), targetFragment);
-                targetFragment.reload((int)payloads.get(0));
-                notifyItemChanged(0);
-                //notifyDataSetChanged();
-                /*
+                targetFragment.updateTotalExpense((int)payloads.get(0));
+                notifyDataSetChanged();
                 holder.itemView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                     @Override
                     public void onViewAttachedToWindow(View view) {
@@ -60,9 +58,6 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
 
                     }
                 });
-
-                 */
-
             }
 
 
