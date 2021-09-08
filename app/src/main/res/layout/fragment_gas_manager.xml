@@ -125,22 +125,20 @@
             android:layout_marginEnd="3dp"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@id/tv_station_name"
-            app:layout_constraintEnd_toStartOf="@id/imgbtn_gas_refresh"
+            app:layout_constraintEnd_toStartOf="@id/imgbtn_gas_search"
             app:layout_constraintTop_toTopOf="@id/tv_station_name" />
 
         <ImageButton
-            android:id="@+id/imgbtn_gas_refresh"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_margin="8dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="@null"
+            android:id="@+id/imgbtn_gas_search"
+            android:layout_width="25dp"
+            android:layout_height="0dp"
+            android:background="@android:color/holo_blue_light"
             android:scaleType="fitCenter"
-            android:src="@drawable/btn_rotate"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="@id/tv_station_name"
-            app:layout_constraintBottom_toBottomOf="@id/tv_station_name"
-            app:layout_constraintTop_toTopOf="@id/tv_station_name" />
+            android:contentDescription="@null"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"
+            app:layout_constraintEnd_toEndOf="@+id/tv_station_name"
+            app:layout_constraintTop_toTopOf="@+id/tv_station_name"
+            app:srcCompat="@android:drawable/ic_menu_search" />
 
         <EditText
             android:id="@+id/et_gas_unit_price"

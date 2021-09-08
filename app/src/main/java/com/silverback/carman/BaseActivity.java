@@ -23,6 +23,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -51,6 +52,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.viewmodels.StationListViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;

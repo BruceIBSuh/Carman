@@ -1,5 +1,6 @@
 package com.silverback.carman;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -117,7 +118,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         binding = ActivityExpenseBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Check if the activity has got started by tabbing the geofence notification.
+        // Check if the activity getstarted by tabbing the geofence notification.
         if(getIntent().getAction() != null) {
             if(getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
                 isGeofencing = true;
@@ -178,6 +179,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         switch(item.getItemId()) {
             case android.R.id.home:
                 if(isGeofencing) {
+                    // Refactor required to refresh MainActivity as like setResult() or something.
                     Intent mainIntent = new Intent(this, MainActivity.class);
                     mainIntent.putExtra("isGeofencing", true);
                     startActivity(mainIntent);
@@ -411,6 +413,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         memoPad.show(getSupportFragmentManager(), "memoPad");
     }
 
+
+
     // Save data in the Room based on which framgnet the activity contains. The data should be
     // uploaded to Firestore at the same time only if the user is logged in. The method to save data
     // is defined in each fragment.
@@ -440,4 +444,5 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 break;
         }
     }
+
 }
