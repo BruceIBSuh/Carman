@@ -122,42 +122,36 @@ public class ServiceManagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action and extras for the geofance data.
-        String action = getActivity().getIntent().getAction();
-        if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
-            if(getActivity().getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
-                isGeofenceIntent = true;
-                geoSvcName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
-                geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
-                category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
-            }
-        }
+        setGeofenceIntent();
 
         // userId will be used when svc_eval is prepared.
+        /*
         if(getArguments() != null) {
             distCode = getArguments().getString("distCode");
             userId = getArguments().getString("userId");
         }
+         */
 
         // Instantiate objects.
-        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
         df = BaseActivity.getDecimalFormatInstance();
-        if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(getContext());
+        if(geofenceHelper == null) geofenceHelper = new FavoriteGeofenceHelper(requireContext());
 
         // Get the service periond unit from SharedPreferences and pass it to the adapter as int type.
         String period = mSettings.getString(Constants.SERVICE_PERIOD, getString(R.string.pref_svc_period_mileage));
-        if(period.equals(getString(R.string.pref_svc_period_mileage))) svcPeriod = 0;
-        else if(period.equals(getString(R.string.pref_svc_period_month))) svcPeriod = 1;
+        //if(period.equals(getString(R.string.pref_svc_period_mileage))) svcPeriod = 0;
+        //else if(period.equals(getString(R.string.pref_svc_period_month))) svcPeriod = 1;
+        svcPeriod = (Objects.equals(period, getString(R.string.pref_svc_period_mileage)))? 0 : 1;
 
         // ViewModels
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -175,7 +169,6 @@ public class ServiceManagerFragment extends Fragment implements
             //serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
         });
          */
-
 
         // Attach the listener which invokes the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
@@ -218,7 +211,6 @@ public class ServiceManagerFragment extends Fragment implements
         // only if the parent activity gets started by the notification and its category should be
         // Constants.SVC
         if(isGeofenceIntent && category == Constants.SVC) {
-            log.i("Handling isGeofenceIntent");
             binding.etServiceProvider.setText(geoSvcName);
             binding.etServiceProvider.setText(geoSvcName);
             binding.etServiceProvider.clearFocus();
@@ -242,7 +234,6 @@ public class ServiceManagerFragment extends Fragment implements
         // LiveData custom time from Date and Time picker DialogFragment
         fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
             this.calendar = calendar;
-            //long customTime = calendar.getTimeInMillis();
             binding.tvServiceDate.setText(sdf.format(calendar.getTimeInMillis()));
         });
 
@@ -311,8 +302,8 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    // ExpServiceItemAdapter.OnParentFragmentListener invokes the following 4 methods
-    // to pop up NumberPadFragment and input the amount of expense in a service item.
+    // Implement ExpServiceItemAdapter.OnParentFragmentListener to pop up NumberPadFragmnet and
+    // intput the amount of expense in each service item.
     @Override
     public void setItemPosition(int position) {
         itemPos = position;
@@ -329,6 +320,18 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvSvcPayment.setText(df.format(totalExpense));
     }
 
+    // Check if the parent activity gets started by the geofence intent and get extras.
+    private void setGeofenceIntent(){
+        String action = requireActivity().getIntent().getAction();
+        if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
+            //if(getActivity().getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
+            isGeofenceIntent = true;
+            geoSvcName = requireActivity().getIntent().getStringExtra(Constants.GEO_NAME);
+            geoTime = requireActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
+            category = requireActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
+            //}
+        }
+    }
 
     private void createRecyclerServiceItemView() throws JSONException {
         binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));

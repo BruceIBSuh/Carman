@@ -89,8 +89,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     @NonNull
     @Override
     public ServiceItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        CardviewServiceItemBinding binding = CardviewServiceItemBinding.inflate(
-                LayoutInflater.from(parent.getContext()), parent, false);
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        binding = CardviewServiceItemBinding.inflate(inflater, parent, false);
         // Set initial values.
         format = parent.getResources().getString(R.string.date_format_2);
         unit = parent.getResources().getString(R.string.unit_km);
@@ -112,8 +112,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
         int maxValue = 0;
         int lapse = 0;
 
-        holder.tvItemName.setText(jsonObject.optString("name"));
-        holder.cbServiceItem.setChecked(arrCheckedState[position]);
+        holder.binding.tvName.setText(jsonObject.optString("name"));
+        holder.binding.chkbox.setChecked(arrCheckedState[position]);
 
         holder.cbServiceItem.setOnCheckedChangeListener((buttion, isChecked) -> {
             arrCheckedState[position] = isChecked;
@@ -187,8 +187,8 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
                     holder.tvItemCost.setText(df.format(data.valueAt(0)));
                     arrItemCost[pos] = data.valueAt(0);
 
-                } else if(payload instanceof SparseArray) {
-                    SparseArray data = (SparseArray)payload;
+                } else if(payload instanceof SparseArray<?>) {
+                    SparseArray<?> data = (SparseArray<?>)payload;
                     holder.tvItemMemo.setText(data.valueAt(0).toString());
                     arrItemMemo[pos] = data.valueAt(0).toString();
 

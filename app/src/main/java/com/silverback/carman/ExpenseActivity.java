@@ -1,6 +1,5 @@
 package com.silverback.carman;
 
-import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -23,12 +22,10 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.ExpContentPagerAdapter;
 import com.silverback.carman.adapters.ExpRecentAdapter;
@@ -91,7 +88,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private LocationViewModel locationModel;
 
     private ExpContentPagerAdapter expContentPagerAdapter;
-    private ExpRecentAdapter recentAdapter;
     private StatGraphFragment statGraphFragment;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
@@ -104,7 +100,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private MenuItem menuSave;
 
     // Fields
-    private LiveData<Integer> liveSaveData;
     private Location mPrevLocation;
     private int currentPage;
     private int prevHeight;
@@ -237,6 +232,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 log.i("onPageScrollStateChanged: %s", state);
                 this.state = state;
             }
+
             /*
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -252,7 +248,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 if(state == 0 && position == Constants.SVC) return;
-
                 currentPage = position;
                 if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
 
@@ -329,7 +324,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // which the framelayout contain.
     private void createLastExpenseViewPager() {
         pagerRecentExp = new ViewPager2(this);
-        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         pagerRecentExp.setAdapter(recentAdapter);
         /*
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){

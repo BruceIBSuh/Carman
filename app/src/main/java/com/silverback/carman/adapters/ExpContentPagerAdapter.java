@@ -48,7 +48,10 @@ public class ExpContentPagerAdapter extends FragmentStateAdapter {
         return position;
     }
 
+    /*
     public Fragment getCurrentFragment(int position) {
         return fragments[position];
     }
+
+     */
 }
