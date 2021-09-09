@@ -143,6 +143,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
 
+        // Initialize the field values
+        prevHeight = 0;
 
     }
 
@@ -228,11 +230,32 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // and onPageScrolled.
     private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
         return  new ViewPager2.OnPageChangeCallback() {
+            int state; // 0 -> idle, 1 -> dragging 2 -> settling
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+                log.i("onPageScrollStateChanged: %s", state);
+                this.state = state;
+            }
+            /*
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+                log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
+            }
+
+             */
+
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
+
+                // To prevent the ServiceManagerFragment from being called twice. Not sure why it
+                // is called twice. Seems a bug in ViewPager2.
+                if(state == 0 && position == Constants.SVC) return;
+
                 currentPage = position;
                 if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
+
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframeTabIndicator.setVisibility(View.VISIBLE);
@@ -240,17 +263,17 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 switch (position) {
                     case GAS:
                         pageTitle = getString(R.string.exp_title_gas);
-                        binding.topframeViewpager.addView(pagerRecentExp);
                         pagerRecentExp.setCurrentItem(0);
                         animSlideTopFrame(prevHeight, 120);
+                        binding.topframeViewpager.addView(pagerRecentExp);
                         prevHeight = 120;
                         break;
 
                     case SVC:
                         pageTitle = getString(R.string.exp_title_service);
-                        binding.topframeViewpager.addView(pagerRecentExp);
                         pagerRecentExp.setCurrentItem(0);
                         animSlideTopFrame(prevHeight, 100);
+                        binding.topframeViewpager.addView(pagerRecentExp);
                         prevHeight = 100;
                         break;
 
@@ -297,9 +320,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
             tab.setText(titles[pos]);
             tab.setIcon(icons[pos]);
-            animSlideTabLayout();
-            prevHeight = 0;
         }).attach();
+
+        animSlideTabLayout();
     }
 
     // Create the viewpager2 programmatically to show the last 5 month expenses of gas and service
@@ -308,15 +331,18 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         pagerRecentExp = new ViewPager2(this);
         recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         pagerRecentExp.setAdapter(recentAdapter);
+        /*
         pagerRecentExp.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
             @Override
             public void onPageSelected(int position) {
                 log.i("onPageSelected: %s", position);
             }
         });
-
+        */
+        // Link the tablayout(dot indicator) to the last 5 expense displaying viewpager.
         new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
                 (tab, pos) -> {}).attach();
+
     }
 
 
@@ -324,6 +350,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.
     private void animSlideTabLayout() {
+        log.i("animSlideTabLayout");
         final float tbHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", tbHeight);

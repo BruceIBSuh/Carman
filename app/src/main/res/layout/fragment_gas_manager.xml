@@ -71,10 +71,15 @@
 
         <Button
             android:id="@+id/btn_gas_datetime"
-            android:layout_width="40dp"
-            android:layout_height="30dp"
+            android:layout_width="35dp"
+            android:layout_height="18dp"
             android:layout_marginStart="8dp"
             android:onClick="setCustomTime"
+            android:padding="0dp"
+            android:text="@string/svc_btn_modify"
+            android:textSize="@dimen/contentSmall"
+            android:textColor="@android:color/white"
+            android:background="@color/bgToolbar"
             app:layout_constraintBottom_toBottomOf="@+id/tv_gas_datetime"
             app:layout_constraintStart_toEndOf="@+id/tv_gas_datetime"
             app:layout_constraintTop_toTopOf="@+id/tv_gas_datetime" />
@@ -132,7 +137,7 @@
             android:id="@+id/imgbtn_gas_search"
             android:layout_width="25dp"
             android:layout_height="0dp"
-            android:background="@android:color/holo_blue_light"
+            android:background="@color/bgToolbar"
             android:scaleType="fitCenter"
             android:contentDescription="@null"
             app:layout_constraintBottom_toBottomOf="@+id/tv_station_name"

@@ -73,6 +73,7 @@ public class ExpensePagerFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if(getActivity() == null) return;
         if(getArguments() != null) numPage = getArguments().getInt("page");
+
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
