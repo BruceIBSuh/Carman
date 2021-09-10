@@ -78,7 +78,6 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
 
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-            log.i("Carwash: %s", payloads.size());
             // On receiving car wash values, set the progressbar to be View.GONE and set the message
             // to the textview.
             for(Object obj : payloads) {

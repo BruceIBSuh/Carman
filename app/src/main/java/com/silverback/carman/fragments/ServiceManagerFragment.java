@@ -10,14 +10,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -35,6 +38,7 @@ import com.silverback.carman.R;
 import com.silverback.carman.adapters.ExpServiceItemAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
+import com.silverback.carman.database.ServiceManagerDao;
 import com.silverback.carman.database.ServiceManagerEntity;
 import com.silverback.carman.database.ServicedItemEntity;
 import com.silverback.carman.databinding.FragmentServiceManagerBinding;
@@ -43,6 +47,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ServiceCenterTask;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
+import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
@@ -207,6 +212,11 @@ public class ServiceManagerFragment extends Fragment implements
         binding.btnRegisterService.setOnClickListener(v -> registerFavoriteServiceProvider());
         binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
 
+        // Create the RecyclerView to show the default service items.
+        try { createRecyclerServiceItemView();
+        } catch(JSONException e) {e.printStackTrace();}
+
+
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
         // Constants.SVC
@@ -227,8 +237,8 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        try { createRecyclerServiceItemView(); }
+        // Show the service data and animate the progressbar to indicate when to check.
+        try { showServiceData(); }
         catch(JSONException e) { e.printStackTrace(); }
 
         // LiveData custom time from Date and Time picker DialogFragment
@@ -237,7 +247,6 @@ public class ServiceManagerFragment extends Fragment implements
             binding.tvServiceDate.setText(sdf.format(calendar.getTimeInMillis()));
         });
 
-
         // Communcate w/ NumberPadFragment to put a number selected in the num pad into the textview
         // in this fragment.
         fragmentModel.getNumpadValue().observe(getViewLifecycleOwner(), data -> {
@@ -245,7 +254,7 @@ public class ServiceManagerFragment extends Fragment implements
             final int value = data.valueAt(0);
             if(viewId == R.id.tv_svc_mileage) {
                 binding.tvSvcMileage.setText(df.format(value));
-            } else if(viewId == R.id.tv_value_cost) {
+            } else if(viewId == R.id.tv_item_cost) {
                 mAdapter.notifyItemChanged(itemPos, data);
                 totalExpense += data.valueAt(0);
                 binding.tvSvcPayment.setText(df.format(totalExpense));
@@ -281,7 +290,6 @@ public class ServiceManagerFragment extends Fragment implements
             log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
 
             uploadServiceEvaluation(svcId);
-
         });
 
 
@@ -308,12 +316,15 @@ public class ServiceManagerFragment extends Fragment implements
     public void setItemPosition(int position) {
         itemPos = position;
     }
-
     @Override
     public int getCurrentMileage() {
+        try {
+            Number num = df.parse(binding.tvSvcMileage.getText().toString());
+            if(num != null) return num.intValue();
+        } catch(ParseException e) { e.printStackTrace();}
+
         return 0;
     }
-
     @Override
     public void subtractCost(int value) {
         totalExpense -= value;
@@ -334,22 +345,29 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     private void createRecyclerServiceItemView() throws JSONException {
-        binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerServiceItems.setHasFixedSize(true);
-
         String jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         jsonServiceArray = new JSONArray(jsonServiceItems);
+
+        binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.recyclerServiceItems.setHasFixedSize(true);
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_EXPENSE, 0,
+                ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
+
+        binding.recyclerServiceItems.addItemDecoration(divider);
         mAdapter = new ExpServiceItemAdapter(jsonServiceArray, svcPeriod, this);
         binding.recyclerServiceItems.setAdapter(mAdapter);
+    }
 
+    private void showServiceData() throws JSONException {
         for(int i = 0; i < jsonServiceArray.length(); i++) {
             final int pos = i;
             final String name = jsonServiceArray.optJSONObject(pos).getString("name");
+            // Sync issue!!!!
             mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
                 if(data != null) {
-                    mAdapter.setServiceData(pos, data);
+                    log.i("queried: %s, %s", pos, data.jsonItemName);
                     mAdapter.notifyItemChanged(pos, data);
-                } else mAdapter.setServiceData(pos, null);
+                }
             });
         }
     }

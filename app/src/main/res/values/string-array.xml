@@ -66,6 +66,11 @@
         <item>5000</item>
     </string-array>
 
+    <string-array name="spinner_expense_period" >
+        <item>@string/svc_spinner_mileage</item>
+        <item>@string/svc_spinner_date</item>
+    </string-array>
+
     <string-array name="spinner_expense_stmts">
         <item>@string/stat_spinner_all</item>
         <item>@string/stat_spinner_gas</item>

@@ -56,6 +56,7 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -312,9 +313,41 @@ public class BaseActivity extends AppCompatActivity {
         return resId;
     }
 
+    public static JSONObject createJsonItemObject(String name, int mileage, int period) throws JSONException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("name", name);
+        jsonObject.put("mileage", mileage);
+        jsonObject.put("month", period);
+
+        return jsonObject;
+    }
+
     public static JSONArray getJsonServiceItemArray() {
+        JSONArray jsonArray = new JSONArray();
+        try {
+            jsonArray.put(0, createJsonItemObject("엔진오일 및 오일필터", 8000, 6));
+            jsonArray.put(1, createJsonItemObject("에어클리너", 5000, 6));
+            jsonArray.put(2, createJsonItemObject("에어컨 필터", 5000, 6));
+            jsonArray.put(3, createJsonItemObject("에어컨 가스", 5000, 6));
+            jsonArray.put(4, createJsonItemObject("냉각수", 5000, 6));
+            jsonArray.put(5, createJsonItemObject("얼라인먼트", 5000, 6));
+            jsonArray.put(6, createJsonItemObject("타이어 위치 교환", 5000, 6));
+            jsonArray.put(7, createJsonItemObject("타이어 교체", 5000, 6));
+            jsonArray.put(8, createJsonItemObject("브레이크 패드", 5000, 6));
+            jsonArray.put(9, createJsonItemObject("브레이크 라이닝", 5000, 6));
+            jsonArray.put(10, createJsonItemObject("배터리 교체", 5000, 6));
+            jsonArray.put(11, createJsonItemObject("트랜스미션오일 교체", 5000, 6));
+            jsonArray.put(12, createJsonItemObject("타이밍벨트 없애기", 5000, 6));
+
+            return jsonArray;
+        } catch(JSONException e) {
+            log.e("JSONException: %s", e.getMessage());
+        }
+
+        return null;
+        /*
         String jsonServiceItem =
-                "[{\"name\":\"엔진오일 및 오일필터\",\"mileage\":8000,\"month\":6}," +
+                "[{name:\"엔진오일 및 오일필터\",\"mileage\":8000,\"month\":6}," +
                 "{\"name\":\"에어클리너\",\"mileage\":5000,\"month\":6}," +
                 "{\"name\":\"에어컨 필터\",\"mileage\":5000,\"month\":6}," +
                 "{\"name\":\"에어컨 가스\",\"mileage\":5000,\"month\":6}," +
@@ -335,6 +368,8 @@ public class BaseActivity extends AppCompatActivity {
         }
 
         return null;
+
+         */
     }
 
     // The document id with which user data is uploaded to Firestore is used as USER ID. The Firebase

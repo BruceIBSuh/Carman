@@ -187,16 +187,26 @@
         android:layout_alignParentStart="true"
         android:layout_below="@id/view_boxing" />
 
+    <Spinner
+        android:id="@+id/spinner_period"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/view_boxing" />
+
+    <!--
     <TextView
         android:id="@+id/tv_period"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="5dp"
         android:layout_marginTop="8dp"
+        android:text="주행거리"
         android:textSize="@dimen/subtitle"
         android:layout_alignParentEnd="true"
         android:layout_below="@id/view_boxing"
         tools:ignore="RelativeOverlap" />
+    -->
 
     <View
         android:id="@+id/view_underline_stmts"

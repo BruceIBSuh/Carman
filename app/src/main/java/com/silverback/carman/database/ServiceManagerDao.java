@@ -40,8 +40,7 @@ public abstract class ServiceManagerDao {
             "INNER JOIN ServiceManagerEntity ON ServiceManagerEntity.service_id = ServicedItemEntity.svc_id " +
             "INNER JOIN ExpenseBaseEntity ON  ExpenseBaseEntity._id = ServiceManagerEntity.basic_id " +
             "WHERE item_name = :itemName ORDER BY date_time DESC LIMIT 1")
-
-    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+    //@SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     public abstract LiveData<LatestServiceData> loadServiceData(String itemName);
 
 

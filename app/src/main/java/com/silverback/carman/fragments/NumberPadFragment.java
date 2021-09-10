@@ -105,7 +105,7 @@ public class NumberPadFragment extends DialogFragment implements View.OnClickLis
         } else if(viewId == R.id.tv_extra_payment) {
             itemLabel = getString(R.string.gas_label_expense_misc);
             isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
-        } else if(viewId == R.id.tv_value_cost) {
+        } else if(viewId == R.id.tv_item_cost) {
             isCurrency = setInputNumberPad(arrCurrency, getString(R.string.unit_won));
         }
 
