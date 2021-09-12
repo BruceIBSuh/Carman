@@ -22,6 +22,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -435,35 +436,29 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         memoPad.show(getSupportFragmentManager(), "memoPad");
     }
 
-
-
     // Save data in the Room based on which framgnet the activity contains. The data should be
     // uploaded to Firestore at the same time only if the user is logged in. The method to save data
     // is defined in each fragment.
-    private void saveExpenseData(int page) {
-        Fragment fragment = expContentPagerAdapter.createFragment(page);
-        //Fragment currentFragment = expContentPagerAdapter.getCurrentFragment(page);
+    public void saveExpenseData(int page) {
+        Fragment fragment = expContentPagerAdapter.getCurrentFragment(page);
         String userId = getUserIdFromStorage(this);
         Intent resultIntent = new Intent();
 
-        switch(page) {
-            case GAS:
-                ((GasManagerFragment)fragment).saveGasData(userId).observe(this, gasTotal -> {
-                    log.i("total sum: %s", gasTotal);
-                    resultIntent.putExtra("totalsum", gasTotal);
-                    setResult(RESULT_CANCELED, resultIntent);
-                    //Snackbar.make(binding.getRoot(), R.string.toast_save_success, Snackbar.LENGTH_LONG).show();
-                    finish();
-                });
-                break;
+        if(fragment instanceof GasManagerFragment) {
+            ((GasManagerFragment)fragment).saveGasData(userId).observe(this, gasTotal -> {
+                if(gasTotal == 0) return;
+                resultIntent.putExtra("totalsum", gasTotal);
+                setResult(RESULT_CANCELED, resultIntent);
+                finish();
+            });
 
-            case SVC:
-                ((ServiceManagerFragment)fragment).saveServiceData().observe(this, svcTotal -> {
-                    resultIntent.putExtra("totalsum", svcTotal);
-                    setResult(RESULT_CANCELED, resultIntent);
-                    finish();
-                });
-                break;
+        } else if(fragment instanceof ServiceManagerFragment) {
+            ((ServiceManagerFragment)fragment).saveServiceData(userId).observe(this, svcTotal -> {
+                if(svcTotal == 0) return;
+                resultIntent.putExtra("totalsum", svcTotal);
+                setResult(RESULT_CANCELED, resultIntent);
+                finish();
+            });
         }
     }
 

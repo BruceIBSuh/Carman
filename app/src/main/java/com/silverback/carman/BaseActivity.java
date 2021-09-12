@@ -127,7 +127,6 @@ public class BaseActivity extends AppCompatActivity {
                 if(isGranted) log.i("Granted");
                 else log.i("Denied");
             });
-
     protected void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
@@ -192,6 +191,15 @@ public class BaseActivity extends AppCompatActivity {
         return df;
     }
 
+    public static DecimalFormat getDecimalFormatInstance() {
+        if(df == null) {
+            df = (DecimalFormat) NumberFormat.getInstance(Locale.KOREAN);
+            df.applyPattern("#,###");
+            df.setDecimalSeparatorAlwaysShown(false);
+        }
+        return df;
+    }
+
 
     // Formats date and time with milliseconds
     public static String formatMilliseconds(String format, long milliseconds) {
@@ -249,14 +257,7 @@ public class BaseActivity extends AppCompatActivity {
     */
 
 
-    public static DecimalFormat getDecimalFormatInstance() {
-        if(df == null) {
-            df = (DecimalFormat) NumberFormat.getInstance(Locale.KOREAN);
-            df.applyPattern("#,###");
-            df.setDecimalSeparatorAlwaysShown(false);
-        }
-        return df;
-    }
+
 
 
     // Programatically, add titles and icons on the TabLayout, which must be invoked after
@@ -322,24 +323,25 @@ public class BaseActivity extends AppCompatActivity {
         return jsonObject;
     }
 
-    public static JSONArray getJsonServiceItemArray() {
+    public JSONArray setDefaultServiceItems() {
         JSONArray jsonArray = new JSONArray();
+
         try {
             jsonArray.put(0, createJsonItemObject("엔진오일 및 오일필터", 8000, 6));
             jsonArray.put(1, createJsonItemObject("에어클리너", 5000, 6));
-            jsonArray.put(2, createJsonItemObject("에어컨 필터", 5000, 6));
+            jsonArray.put(2, createJsonItemObject("에어컨 필터", 3000, 6));
             jsonArray.put(3, createJsonItemObject("에어컨 가스", 5000, 6));
-            jsonArray.put(4, createJsonItemObject("냉각수", 5000, 6));
+            jsonArray.put(4, createJsonItemObject("냉각수", 10000, 6));
             jsonArray.put(5, createJsonItemObject("얼라인먼트", 5000, 6));
-            jsonArray.put(6, createJsonItemObject("타이어 위치 교환", 5000, 6));
-            jsonArray.put(7, createJsonItemObject("타이어 교체", 5000, 6));
-            jsonArray.put(8, createJsonItemObject("브레이크 패드", 5000, 6));
-            jsonArray.put(9, createJsonItemObject("브레이크 라이닝", 5000, 6));
-            jsonArray.put(10, createJsonItemObject("배터리 교체", 5000, 6));
-            jsonArray.put(11, createJsonItemObject("트랜스미션오일 교체", 5000, 6));
-            jsonArray.put(12, createJsonItemObject("타이밍벨트 없애기", 5000, 6));
-
+            jsonArray.put(6, createJsonItemObject("타이어 위치 교환", 25000, 12));
+            jsonArray.put(7, createJsonItemObject("타이어 교체", 50000, 36));
+            jsonArray.put(8, createJsonItemObject("브레이크 패드", 10000, 12));
+            jsonArray.put(9, createJsonItemObject("브레이크 라이닝", 10000, 12));
+            jsonArray.put(10, createJsonItemObject("배터리 교체", 75000, 48));
+            jsonArray.put(11, createJsonItemObject("트랜스미션오일 교체", 50000, 36));
+            jsonArray.put(12, createJsonItemObject("타이밍벨트 없애기", 75000, 48));
             return jsonArray;
+
         } catch(JSONException e) {
             log.e("JSONException: %s", e.getMessage());
         }

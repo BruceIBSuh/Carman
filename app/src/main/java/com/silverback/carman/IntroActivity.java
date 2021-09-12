@@ -131,7 +131,7 @@ public class IntroActivity extends BaseActivity  {
 
                 // Retrive the default service items as JSONArray defined in BaseActvitiy and save
                 // them in SharedPreferences. It may be also replaced by downloading from the server
-                JSONArray jsonServiceItemArray = BaseActivity.getJsonServiceItemArray();
+                JSONArray jsonServiceItemArray = setDefaultServiceItems();
                 mSettings.edit().putString(Constants.SERVICE_ITEMS, jsonServiceItemArray.toString()).apply();
 
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save

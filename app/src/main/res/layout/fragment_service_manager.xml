@@ -187,14 +187,39 @@
         android:layout_alignParentStart="true"
         android:layout_below="@id/view_boxing" />
 
+    <RadioGroup
+        android:id="@+id/radio_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="5dp"
+        android:orientation="horizontal"
+        android:layout_below="@+id/view_boxing"
+        android:layout_alignParentEnd="true"
+        tools:ignore="RelativeOverlap" >
+
+        <RadioButton
+            android:id="@+id/radio1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/svc_radiobtn_mileage"
+            android:textSize="@dimen/contentSmall"/>
+        <RadioButton
+            android:id="@+id/radio2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/svc_radiobtn_period"
+            android:textSize="@dimen/contentSmall"/>
+    </RadioGroup>
+    <!--
     <Spinner
         android:id="@+id/spinner_period"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_below="@id/view_boxing" />
-
-    <!--
     <TextView
         android:id="@+id/tv_period"
         android:layout_width="wrap_content"

@@ -10,13 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
-import android.widget.SpinnerAdapter;
-import android.widget.TextView;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -26,7 +20,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
@@ -38,7 +31,6 @@ import com.silverback.carman.R;
 import com.silverback.carman.adapters.ExpServiceItemAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
-import com.silverback.carman.database.ServiceManagerDao;
 import com.silverback.carman.database.ServiceManagerEntity;
 import com.silverback.carman.database.ServicedItemEntity;
 import com.silverback.carman.databinding.FragmentServiceManagerBinding;
@@ -165,7 +157,6 @@ public class ServiceManagerFragment extends Fragment implements
         locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
         stationModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
 
-
         // Attach an observer to fetch a current location from LocationTask, then initiate
         // StationListTask based on the value.
         /*
@@ -208,14 +199,12 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
 
+        try { createRecyclerServiceItemView(); } catch(JSONException e) {e.printStackTrace();}
+
         // Set event listeners.
         binding.btnRegisterService.setOnClickListener(v -> registerFavoriteServiceProvider());
         binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
-
-        // Create the RecyclerView to show the default service items.
-        try { createRecyclerServiceItemView();
-        } catch(JSONException e) {e.printStackTrace();}
-
+        binding.radioGroup.setOnCheckedChangeListener(this::switchServiceSpanType);
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -238,7 +227,7 @@ public class ServiceManagerFragment extends Fragment implements
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         // Show the service data and animate the progressbar to indicate when to check.
-        try { showServiceData(); }
+        try { showServiceDataWithBar(); }
         catch(JSONException e) { e.printStackTrace(); }
 
         // LiveData custom time from Date and Time picker DialogFragment
@@ -303,6 +292,7 @@ public class ServiceManagerFragment extends Fragment implements
         // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
         // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
         fragmentModel.setCurrentFragment(this);
+
         //fragmentModel.getExpenseSvcFragment().setValue(this);
 
         // Update the time to the current time.
@@ -316,6 +306,7 @@ public class ServiceManagerFragment extends Fragment implements
     public void setItemPosition(int position) {
         itemPos = position;
     }
+
     @Override
     public int getCurrentMileage() {
         try {
@@ -358,15 +349,16 @@ public class ServiceManagerFragment extends Fragment implements
         binding.recyclerServiceItems.setAdapter(mAdapter);
     }
 
-    private void showServiceData() throws JSONException {
+    // Show the lastest service and and animate the progress bar with it
+    private void showServiceDataWithBar() throws JSONException {
         for(int i = 0; i < jsonServiceArray.length(); i++) {
             final int pos = i;
             final String name = jsonServiceArray.optJSONObject(pos).getString("name");
             // Sync issue!!!!
             mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
                 if(data != null) {
-                    log.i("queried: %s, %s", pos, data.jsonItemName);
-                    mAdapter.notifyItemChanged(pos, data);
+                    mAdapter.setServiceData(pos, data);
+                    //mAdapter.notifyItemChanged(pos, data);
                 }
             });
         }
@@ -390,14 +382,15 @@ public class ServiceManagerFragment extends Fragment implements
 
 
     // Register the service center with the favorite list and the geofence.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void addServiceFavorite() {
         // if(isGeofenceIntent) return;
         // Retrieve a service center from the favorite list, the value of which is sent via
         // fragmentSharedModel.getFavoriteName()
         if(TextUtils.isEmpty(binding.etServiceProvider.getText())) {
             String title = "Favorite Service Center";
-            FavoriteListFragment.newInstance(title, Constants.SVC).show(getActivity().getSupportFragmentManager(), null);
+            FavoriteListFragment.newInstance(title, Constants.SVC)
+                    .show(requireActivity().getSupportFragmentManager(), null);
 
         // Remove the center out of the favorite list and the geofence
         } else if(isSvcFavorite) {
@@ -416,7 +409,8 @@ public class ServiceManagerFragment extends Fragment implements
         // already registered in RegisterDialogFragment.
         } else {
             if (TextUtils.isEmpty(svcId)) {
-                InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                InputMethodManager imm = (InputMethodManager)requireActivity()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(binding.etServiceProvider.getWindowToken(), 0);
                 binding.etServiceProvider.clearFocus();
                 Snackbar.make(binding.getRoot(), R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
@@ -444,17 +438,24 @@ public class ServiceManagerFragment extends Fragment implements
         }
 
     }
+    // Implement RadioGroup.setOnCheckedChangeListener.
+    private void switchServiceSpanType(RadioGroup group, int checkedId) {
+        if(checkedId == R.id.radio1) mAdapter.setServiceOption(0);
+        else if(checkedId == R.id.radio2) mAdapter.setServiceOption(1);
+    }
 
     // Invoked by OnOptions
-    public LiveData<Integer> saveServiceData() {
-        MutableLiveData<Integer> liveServiceTotal = new MutableLiveData<>();
-        if(!doEmptyCheck()) liveServiceTotal.setValue(-1);
+    public MutableLiveData<Integer> saveServiceData(String userId) {
+        MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
+        if(!doEmptyCheck()) {
+            totalExpenseLive.setValue(0);
+            return totalExpenseLive;
+        }
 
         //String dateFormat = getString(R.string.date_format_1);
         //long milliseconds = BaseActivity.parseDateTime(dateFormat, binding.tvServiceDate.getText().toString());
         //log.i("service data saved: %s", milliseconds);
         int mileage = 0;
-
         try {
             mileage = Objects.requireNonNull(df.parse(binding.tvSvcMileage.getText().toString())).intValue();
         } catch(ParseException e) {
@@ -471,19 +472,15 @@ public class ServiceManagerFragment extends Fragment implements
         basicEntity.category = Constants.SVC;
         basicEntity.totalExpense = totalExpense;
 
-        liveServiceTotal.setValue(totalExpense);
-
         serviceEntity.serviceCenter = binding.etServiceProvider.getText().toString();
-        serviceEntity.serviceAddrs = "seoul, korea";
+        serviceEntity.serviceAddrs = "seoul, korea"; //temp coding
 
         for(int i = 0; i < mAdapter.arrCheckedState.length; i++) {
             if(mAdapter.arrCheckedState[i]) {
                 checkedItem = new ServicedItemEntity();
                 checkedItem.itemName = jsonServiceArray.optJSONObject(i).optString("name");
-                //checkedItem.itemName = serviceItemList.get(i);
                 checkedItem.itemPrice = mAdapter.arrItemCost[i];
                 checkedItem.itemMemo = mAdapter.arrItemMemo[i];
-                log.i("Serviced Item: %s", checkedItem.itemName);
                 itemEntityList.add(checkedItem);
             }
         }
@@ -493,11 +490,10 @@ public class ServiceManagerFragment extends Fragment implements
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
-            Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
+            totalExpenseLive.setValue(totalExpense);
+        } else totalExpenseLive.setValue(0);
 
-        }
-
-        return liveServiceTotal;
+        return totalExpenseLive;
     }
 
     private boolean doEmptyCheck() {

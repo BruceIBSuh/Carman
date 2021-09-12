@@ -10,12 +10,16 @@
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="3dp" >
+        android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/layout_show_data"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:paddingStart="3dp"
+            android:paddingEnd="3dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
             cardview:layout_dodgeInsetEdges="top">
 
             <TextView
@@ -50,9 +54,10 @@
                 android:id="@+id/tv_label_period"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/svc_label_period"
                 android:textSize="@dimen/contentNormal"
+                android:textStyle="bold"
                 cardview:layout_constraintStart_toStartOf="@+id/tv_item_name"
                 cardview:layout_constraintTop_toBottomOf="@+id/tv_item_name" />
 
@@ -83,41 +88,13 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layout_data_input"
+            android:id="@+id/layout_input_data"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="50dp"
-            android:background="#F3F3F3"
+            android:background="@drawable/bg_outline_service"
+            android:layout_marginBottom="8dp"
             android:padding="8dp" >
-            <!--
-            <TextView
-                android:id="@+id/tv_label_period"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/svc_label_period"
-                cardview:layout_constraintStart_toStartOf="@+id/constraint_stmts"
-                cardview:layout_constraintTop_toTopOf="parent" />
 
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="0dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="16dp"
-                cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_period"
-                cardview:layout_constraintEnd_toEndOf="parent"
-                cardview:layout_constraintStart_toEndOf="@+id/tv_label_period"
-                cardview:layout_constraintTop_toTopOf="@+id/tv_label_period" />
-
-            <TextView
-                android:id="@+id/tv_max_period"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:textSize="@dimen/extraSmallText"
-                cardview:layout_constraintTop_toTopOf="parent"
-                cardview:layout_constraintEnd_toEndOf="parent" />
-            -->
             <TextView
                 android:id="@+id/tv_label_cost"
                 android:layout_width="wrap_content"

@@ -123,12 +123,13 @@
     <string name="gas_snackbar_alert_remove_favorite">즐겨찾는 주유소에서 제외합니다</string>
     <string name="gas_snackbar_favorite_removed">즐겨찾는 주유소에서 제외되었습니다</string>
     <string name="gas_snackbar_action_confirm">확인</string>
+
     <!--ExpenseActivity$ServiceManagerFragment-->
     <string name="svc_label_date">정비 일자</string>
     <string name="svc_label_provider">정비 업체</string>
     <string name="svc_label_mileage">운행 거리</string>
     <string name="svc_label_payment">전체 비용</string>
-    <string name="svc_subtitle_stmts">상세 내역</string>
+    <string name="svc_subtitle_stmts">서비스 체크리스트</string>
     <string name="svc_label_period">교체 주기:</string>
     <string name="svc_spinner_mileage">운행거리</string>
     <string name="svc_spinner_date">경과기간</string>
@@ -146,6 +147,8 @@
     <string name="svc_msg_registration">서비스센터를 먼저 등록해 주세요</string>
     <string name="svc_btn_eval">등록</string>
     <string name="svc_register_title">즐겨찾는 서비스센터</string>
+    <string name="svc_radiobtn_period">기간</string>
+    <string name="svc_radiobtn_mileage">거리</string>
 
     <!--ExpenseActivity$RegisterDialogFragment-->
     <string name="dialog_label_location">현재위치</string>

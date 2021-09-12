@@ -70,7 +70,6 @@ public abstract class ServiceManagerDao {
         }
 
         return serviceId;
-
     }
 
     /*

@@ -23,12 +23,15 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.ExpenseActivity;
 import com.silverback.carman.R;
@@ -420,12 +423,12 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
 
     // Save the gas-related data in Room database, which is called from the parent activity.
     //@SuppressWarnings("ConstantConditions")
-    public LiveData<Integer> saveGasData(String userId){
-
-        MutableLiveData<Integer> liveTotalData = new MutableLiveData<>();
-        if(!doEmptyCheck())  liveTotalData.setValue(-1);
-
-        fragmentModel.setCurrentFragment(this);
+    public MutableLiveData<Integer> saveGasData(String userId){
+        MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
+        if(!doEmptyCheck()) {
+            totalExpenseLive.setValue(0);
+            return totalExpenseLive;
+        }
 
         // Create Entity instances both of which are correlated by Foreinkey
         ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
@@ -452,30 +455,36 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         }
 
         basicEntity.totalExpense = gasEntity.gasPayment + gasEntity.washPayment + gasEntity.extraPayment;
-        log.i("gas payment: %s" , basicEntity.totalExpense);
-        mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
 
-        mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
-        //Toast.makeText(getActivity(), getString(R.string.toast_save_success), Toast.LENGTH_SHORT).show();
-        liveTotalData.postValue(basicEntity.totalExpense);
+        // Insert the data to the db.
+        long rowId = mDB.gasManagerModel().insertBoth(basicEntity, gasEntity);
+        if(rowId > 0) {
+            mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
+            totalExpenseLive.setValue(basicEntity.totalExpense);
+            uploadDataToFirestore(userId);
+        } else totalExpenseLive.setValue(0);
 
-        // FireStore Process to upload the rating and comments with Station ID.
+        return totalExpenseLive;
+    }
+
+    // Batch to upload the data of rating and comment to Firestore.
+    private void uploadDataToFirestore(String userId) {
+        WriteBatch svcBatch = firestore.batch();
         if(binding.rbGasStation.getRating() > 0) {
-            log.i("RatingBar: %s", binding.rbGasStation.getRating());
             Map<String, Object> ratingData = new HashMap<>();
             ratingData.put("eval_num", FieldValue.increment(1));
             ratingData.put("eval_sum", FieldValue.increment(binding.rbGasStation.getRating()));
 
-            DocumentReference docRef = firestore.collection("gas_eval").document(stnId);
-            docRef.get().addOnSuccessListener(snapshot -> {
+            DocumentReference ratingRef = firestore.collection("gas_eval").document(stnId);
+            ratingRef.get().addOnSuccessListener(snapshot -> {
                 if(snapshot.exists() && snapshot.get("eval_num") != null) {
-                    log.i("update rating");
-                    docRef.update(ratingData);
-
+                    svcBatch.update(ratingRef, "eval_num", ratingData);
+                    //docRef.update(ratingData);
                 } else {
                     // In case of the favorite_num field existing, must set the option of
                     // SetOPtions.merge(). Otherwise, it may remove the existing field.
-                    docRef.set(ratingData, SetOptions.merge());
+                    svcBatch.set(ratingRef, ratingData, SetOptions.merge());
+                    //docRef.set(ratingData, SetOptions.merge());
                 }
             });
         }
@@ -489,6 +498,14 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
             commentData.put("comments", binding.etGasComment.getText().toString());
             commentData.put("rating", binding.rbGasStation.getRating());
 
+            DocumentReference commentRef = firestore.collection("gas_eval").document(stnId)
+                    .collection("comments").document(userId);
+            svcBatch.set(commentRef, commentData);
+
+            svcBatch.commit().addOnCompleteListener(task -> {
+
+            });
+            /*
             firestore.collection("gas_eval").document(stnId).collection("comments").document(userId)
                     .set(commentData).addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
@@ -497,9 +514,9 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                     log.e("Comments upload failed: %s", task.getException());
                 }
             });
-        }
 
-        return liveTotalData;
+             */
+        }
     }
 
     // Method to make an empty check. When successfully fetching the gas station and the price,
