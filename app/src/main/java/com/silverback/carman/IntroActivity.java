@@ -101,7 +101,6 @@ public class IntroActivity extends BaseActivity  {
     //
     // Refactor requried: JSONARray as to the sido code and the service items currently defined as
     // resources and saved in SharedPreferences should be refactored to download directly from the server.
-    @SuppressWarnings("ConstantConditions")
     private void firstInitProcess() {
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
@@ -158,15 +157,12 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-        // Check if the price updating interval set in Constants.OPINET_UPDATE_INTERVAL, has elapsed.
-        // As GasPriceTask completes, updated prices is notified by calling OpinetViewModel.distPriceComplete().
+
         if(checkPriceUpdate()) {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                //JSONArray json = BaseActivity.getDistrictJSONArray();
-                //String distCode = (json != null) ? json.optString(2) : defaultDistrict[2];
                 gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
@@ -184,7 +180,5 @@ public class IntroActivity extends BaseActivity  {
             binding.pbIntro.setVisibility(View.GONE);
             finish();
         }
-
-
     }
 }

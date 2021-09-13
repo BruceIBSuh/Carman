@@ -36,8 +36,8 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     @Override
-    public void setDownloadThread(Thread thread) {
-        setCurrentThread(thread);
+    public void setLocationThread(Thread thread) {
+        setCurrentLocation(thread);
     }
 
     @Override

@@ -41,7 +41,7 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
 
     @Override
     public void setUploadPostThread(Thread thread) {
-        setCurrentThread(thread);
+        setCurrentLocation(thread);
     }
 
     @Override

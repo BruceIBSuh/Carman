@@ -45,7 +45,7 @@ public class DownloadImageTask extends ThreadTask implements
 
     @Override
     public void setDownloadImageThread(Thread thread) {
-        setCurrentThread(thread);
+        setCurrentLocation(thread);
     }
 
     @Override

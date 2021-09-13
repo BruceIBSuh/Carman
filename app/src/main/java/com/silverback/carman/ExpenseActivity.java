@@ -133,7 +133,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Define ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+        //locationTask = sThreadManager.fetchLocationTask(this, locationModel);
 
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);

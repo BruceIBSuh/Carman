@@ -224,8 +224,21 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        //fragmentModel.getExpenseSvcFragment().setValue(this);
+        // Update the time to the current time.
+        binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
+
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // To notify ExpensePagerFragment of the current fragment to show the corresponding viewpager.
+        fragmentModel.setCurrentFragment(this);
+
         // Show the service data and animate the progressbar to indicate when to check.
         try { showServiceDataWithBar(); }
         catch(JSONException e) { e.printStackTrace(); }
@@ -284,21 +297,8 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        // ******** MORE RESEARCH REQUIRED ********
-        // Must define FragmentSharedModel.setCurrentFragment() in onCreate, not onActivityCreated()
-        // because the value of fragmentSharedModel.getCurrentFragment() is retrieved in onCreateView()
-        // in ExpensePagerFragment. Otherwise, an error occurs due to asyncronous lifecycle.
-        fragmentModel.setCurrentFragment(this);
 
-        //fragmentModel.getExpenseSvcFragment().setValue(this);
 
-        // Update the time to the current time.
-        binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
-
-    }
 
     // Implement ExpServiceItemAdapter.OnParentFragmentListener to pop up NumberPadFragmnet and
     // intput the amount of expense in each service item.

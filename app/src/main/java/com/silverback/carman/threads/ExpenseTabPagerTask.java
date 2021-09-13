@@ -92,7 +92,7 @@ public class ExpenseTabPagerTask extends ThreadTask implements
 
     @Override
     public void setServiceItemsThread(Thread thread) {
-        setCurrentThread(thread);
+        setCurrentLocation(thread);
     }
 
 

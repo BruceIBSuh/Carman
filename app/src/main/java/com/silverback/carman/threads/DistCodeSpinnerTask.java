@@ -40,7 +40,7 @@ public class DistCodeSpinnerTask extends ThreadTask implements
 
     @Override
     public void setSpinnerDistCodeThread(Thread currentThread) {
-        setCurrentThread(currentThread);
+        setCurrentLocation(currentThread);
     }
 
     @Override

@@ -54,7 +54,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     // Callback methods defined in GasPriceRunnable.OpinentPriceListMethods
     @Override
     public void setGasPriceThread(Thread currentThread) {
-        setCurrentThread(currentThread);
+        setCurrentLocation(currentThread);
     }
 
     @Override

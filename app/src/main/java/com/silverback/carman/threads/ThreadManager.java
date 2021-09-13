@@ -333,6 +333,7 @@ public class ThreadManager {
     */
 
 
+    /*
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
 
         LocationTask locationTask = sInstance.mLocationTaskQueue.poll();
@@ -347,6 +348,7 @@ public class ThreadManager {
         return locationTask;
 
     }
+
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
@@ -380,7 +382,7 @@ public class ThreadManager {
         return serviceCenterTask;
 
     }
-
+    */
     public static GeocoderReverseTask startReverseGeocoderTask(
             Context context, LocationViewModel model, Location location) {
 

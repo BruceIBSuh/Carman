@@ -36,6 +36,7 @@ import com.silverback.carman.threads.DistCodeSpinnerTask;
 import com.silverback.carman.threads.GeocoderReverseTask;
 import com.silverback.carman.threads.GeocoderTask;
 import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.threads.ThreadTask;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -174,7 +175,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         sigunSpinner.setOnItemSelectedListener(this);
         btnLocation.setOnClickListener(view -> {
             isCurrentLocation = true;
-            locationTask = ThreadManager.fetchLocationTask(getContext(), locationModel);
+            locationTask = ThreadManager2.getInstance().fetchLocationTask(getContext(), locationModel);
         });
 
         // RatingBar and Comment are required to have a nickname set in SettingPreferenceActivity.

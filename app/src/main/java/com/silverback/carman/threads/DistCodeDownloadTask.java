@@ -35,7 +35,7 @@ public class DistCodeDownloadTask extends ThreadTask
 
     @Override
     public void setDistCodeDownloadThread(Thread currentThread) {
-        setCurrentThread(currentThread);
+        setCurrentLocation(currentThread);
     }
 
     @Override

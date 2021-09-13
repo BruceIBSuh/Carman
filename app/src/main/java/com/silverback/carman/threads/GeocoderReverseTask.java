@@ -40,7 +40,7 @@ public class GeocoderReverseTask extends ThreadTask implements GeocoderReverseRu
 
     @Override
     public void setGeocoderThread(Thread thread) {
-        setCurrentThread(thread);
+        setCurrentLocation(thread);
     }
 
     @Override

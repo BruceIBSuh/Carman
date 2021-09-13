@@ -33,7 +33,7 @@ public class CarmanLocationHelper implements
     private CarmanLocationHelper() {
         // Leave this empty for creating a singleton pattern
         mLocationRequest = LocationRequest.create();
-        setLocationRequest();
+        createLocationRequest();
     }
 
 
@@ -55,7 +55,7 @@ public class CarmanLocationHelper implements
     }
 
     //private LocationSettingsRequest setLocationRequest() {
-    public LocationRequest setLocationRequest() {
+    public LocationRequest createLocationRequest() {
         mLocationRequest.setInterval(Constants.INTERVAL);
         mLocationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
         mLocationRequest.setMaxWaitTime(Constants.MAX_WAIT);
@@ -64,13 +64,13 @@ public class CarmanLocationHelper implements
         return mLocationRequest;
     }
 
-    public Task<LocationSettingsResponse> checkLocationSetting(final Context context) {
+    public Task<LocationSettingsResponse> createLocationSetting(Context context, LocationRequest locationRequest) {
         //Log.i(LOG_TAG, "Check Location setting");
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
-        builder.addLocationRequest(mLocationRequest);
+        builder.addLocationRequest(locationRequest);
 
-        SettingsClient mSettingsClient = LocationServices.getSettingsClient(context);
-        return mSettingsClient.checkLocationSettings(builder.build());
+        SettingsClient settingClient = LocationServices.getSettingsClient(context);
+        return settingClient.checkLocationSettings(builder.build());
         //.addOnSuccessListener(this)
         //.addOnFailureListener(this);
     }

@@ -69,8 +69,8 @@ public class StationListTask extends ThreadTask implements
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
     // thread of each Runnables.
     @Override
-    public synchronized void setStationTaskThread(Thread thread) {
-        setCurrentThread(thread);
+    public void setStationTaskThread(Thread thread) {
+        setCurrentLocation(thread);
     }
 
     @Override

@@ -93,7 +93,7 @@ public class FirestoreSetRunnable implements Runnable {
                 return null;
 
             }).addOnSuccessListener(aVoid -> log.i("Successfully set data to FireStore"))
-            .addOnFailureListener(e -> log.e("Failed to set data to FireStore:%s", e.getMessage()));
+                    .addOnFailureListener(e -> log.e("Failed to set data to FireStore:%s", e.getMessage()));
 
         } catch (IOException | InterruptedException e) {
             log.e("Exception : %s", e.getMessage());

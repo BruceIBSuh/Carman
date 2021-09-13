@@ -80,6 +80,7 @@
         android:alpha="0.5"
         android:contentDescription="@null"
         android:src="@android:drawable/ic_menu_mylocation"
+        android:onClick="switchNearStationOrder"
         app:backgroundTint="@color/colorAccent"
         app:rippleColor="@color/colorPrimary"
         app:borderWidth="0dp"
@@ -95,16 +96,32 @@
         android:layout_gravity="bottom"
         android:background="@android:color/holo_orange_dark"
         app:layout_insetEdge="bottom">
+
         <ImageButton
             android:id="@+id/imgbtn_station"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:contentDescription="@string/app_name"
+            android:onClick="dispNearStations"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_gas_station" />
+
+        <!--
+        <ToggleButton
+            android:id="@+id/imgbtn_station"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/ic_gas_station"
+            android:textSize="@dimen/contentSmall"
+            android:textColor="@android:color/holo_red_light"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        -->
         <ImageButton
             android:id="@+id/imgbtn_svc"
             android:layout_width="wrap_content"

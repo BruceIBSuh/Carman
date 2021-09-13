@@ -20,14 +20,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
-import com.silverback.carman.adapters.MainExpPagerAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -94,8 +92,7 @@ public class MainActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-        View rootView = binding.getRoot();
-        setContentView(rootView);
+        setContentView(binding.getRoot());
 
         // Create objects
         imgResUtil = new ApplyImageResourceUtil(this);
@@ -138,19 +135,16 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        binding.imgbtnStation.setOnClickListener(view -> dispNearStations());
         binding.stationRecyclerView.addOnScrollListener(stationScrollListener);
-        binding.fab.setOnClickListener(view -> switchNearStationOrder());
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
         // the location.
-        performViewModelCallback(locationModel);
-        performViewModelCallback(stnModel);
+        observeViewModelCallback(locationModel);
+        observeViewModelCallback(stnModel);
 
         // Create ActivityResultLauncher to call SettingActiity and get results
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
-                    log.i("activity result");
                     if(result.getResultCode() == Activity.RESULT_OK) updateSettingResult(result);
                     else if(result.getResultCode() == Activity.RESULT_CANCELED) {
                         log.i("from which activity: %s", result.getData());
@@ -201,13 +195,10 @@ public class MainActivity extends BaseActivity implements
         if(item.getItemId() == R.id.action_garage) {
             //startActivity(new Intent(this, ExpenseActivity.class));
             activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
-
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
-
         } else if(item.getItemId() == R.id.action_login) {
             log.i("login process required");
-
         } else if(item.getItemId() == R.id.action_setting) {
             Intent settingIntent = new Intent(this, SettingPrefActivity.class);
             activityResultLauncher.launch(settingIntent);
@@ -359,13 +350,14 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    // Callback for the station button click listener
-    private void dispNearStations() {
+    // Callback for the station button click listener defined in the layout file
+    public void dispNearStations(View view) {
         boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
             binding.pbNearStns.setVisibility(View.VISIBLE);
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () ->
                     locationTask = sThreadManager.fetchLocationTask(this, locationModel));
+                    //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams));
 
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
@@ -374,7 +366,9 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    private void switchNearStationOrder() {
+    // Reorder near station list according to the distance/price, which is called from the layout
+    // file as well.
+    public void switchNearStationOrder(View view) {
         bStnOrder = !bStnOrder;
         Uri uri = saveNearStationList(mStationList);
         if(uri == null) return;
@@ -439,21 +433,25 @@ public class MainActivity extends BaseActivity implements
 
     // Method for implementing ViewModel callbacks to fetch a location and station list around
     // the location.
-    private void performViewModelCallback(ViewModel model) {
+    private void observeViewModelCallback(ViewModel model) {
         if(model instanceof LocationViewModel) {
             locationModel.getLocation().observe(this, location -> {
+                log.i("Location compared: %s, %s", mPrevLocation, location);
                 if(mPrevLocation == null||(mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
                     mPrevLocation = location;
-                    //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
                 } else {
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
                     binding.pbNearStns.setVisibility(View.GONE);
+                    /*
                     Snackbar.make(binding.getRoot(), getString(R.string.general_snackkbar_inbounds),
                             Snackbar.LENGTH_SHORT).show();
+
+                     */
                 }
 
-                stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+                //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
             });
 
             locationModel.getLocationException().observe(this, exception -> {
@@ -501,6 +499,7 @@ public class MainActivity extends BaseActivity implements
                     mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                     stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
                 }
+                // To notify that fetching station list has completed.
                 hasStationInfo = true;
             });
         }

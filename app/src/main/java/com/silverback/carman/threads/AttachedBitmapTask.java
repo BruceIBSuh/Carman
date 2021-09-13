@@ -46,7 +46,7 @@ public class AttachedBitmapTask extends ThreadTask implements
 
     @Override
     public void setDownloadBitmapThread(Thread thread) {
-        setCurrentThread(thread);
+        setCurrentLocation(thread);
     }
 
 

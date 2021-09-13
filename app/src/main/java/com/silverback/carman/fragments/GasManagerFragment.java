@@ -263,13 +263,14 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setCurrentStation();
+        fragmentModel.setCurrentFragment(this);
 
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             if(isGeofenceIntent) return;
             if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                 String[] defaultParams = ((BaseActivity)requireActivity()).getNearStationParams();
                 defaultParams[1] = Constants.MIN_RADIUS;
-                stnListTask = ThreadManager.startStationListTask(stnListModel, location, defaultParams);
+                stnListTask = ThreadManager2.getInstance().startStationListTask(stnListModel, location, defaultParams);
                 mPrevLocation = location;
             } else {
                 binding.pbSearchStation.setVisibility(View.GONE);

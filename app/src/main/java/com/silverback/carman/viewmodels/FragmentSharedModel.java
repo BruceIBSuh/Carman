@@ -60,16 +60,19 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<Boolean> permission;
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
-    public void setCurrentFragment(Fragment fm) { fragment.postValue(fm); }
-    public LiveData<Fragment> getCurrentFragment() { return fragment; }
+    public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
+    public LiveData<Fragment> getCurrentFragment() {
+        return fragment;
+    }
 
 
-    // NumberPadFragment
+    // Share GasManagerFragment and ServiceManagerFragment with NumPadFragment
     public void setNumPadValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.
         sparsesArray.put(key, value);
         numpadValue.setValue(sparsesArray);
     }
+
     public LiveData<SparseIntArray> getNumpadValue() {
         return numpadValue;
     }

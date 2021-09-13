@@ -15,6 +15,8 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.tasks.CancellationToken;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.silverback.carman.R;
@@ -46,7 +48,7 @@ public class LocationRunnable implements
 
     // Interface
     public interface LocationMethods {
-        void setDownloadThread(Thread thread);
+        void setLocationThread(Thread thread);
         void setCurrentLocation(Location location);
         void notifyLocationException(String msg);
         void handleLocationTask(int state);
@@ -60,22 +62,21 @@ public class LocationRunnable implements
 
     @Override
     public void run() {
-        task.setDownloadThread(Thread.currentThread());
+        task.setLocationThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-        locationRequest = CarmanLocationHelper.getLocationInstance().setLocationRequest();
-
+        locationRequest = CarmanLocationHelper.getLocationInstance().createLocationRequest();
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
-        CarmanLocationHelper.getLocationInstance().checkLocationSetting(context)
+        CarmanLocationHelper.getLocationInstance().createLocationSetting(context, locationRequest)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this);
 
+        // Request location updates which should be handled by the Setting option.
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-
                 for(Location location : locationResult.getLocations())
                     log.i("Locations updated: $s, %s", location, System.currentTimeMillis());
                 mCurrentLocation = locationResult.getLastLocation();
@@ -90,7 +91,6 @@ public class LocationRunnable implements
     // Check if the Location setting is successful using CarmanLocationHelper
     @Override
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-        log.d("location setting");
         LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         if(locationStates != null && !locationStates.isGpsUsable()) {
             log.i("GPS is not working");
@@ -100,17 +100,20 @@ public class LocationRunnable implements
             task.notifyLocationException(context.getString(R.string.location_notify_network));
         } else {
             try {
-                mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-                   if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
+                final int priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+                final CancellationToken token = new CancellationTokenSource().getToken();
+
+                mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
+                    if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
                         log.i("location fetched:%s", location);
                         mCurrentLocation = location;
                         task.setCurrentLocation(location);
                         task.handleLocationTask(LOCATION_TASK_COMPLETE);
-                   } else {
+                    } else {
                         log.i("location null");
                         mFusedLocationClient.requestLocationUpdates(
                                 locationRequest, locationCallback, Looper.getMainLooper());
-                   }
+                    }
                 });
 
             } catch (SecurityException e) {

@@ -41,7 +41,7 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
 
     @Override
     public void setStnPriceThread(Thread thread) {
-        setCurrentThread(thread);
+        setCurrentLocation(thread);
     }
 
     // OpinetViewModel LiveData having price data of a favroite gas station in the favorite list

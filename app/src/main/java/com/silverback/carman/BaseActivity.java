@@ -162,16 +162,6 @@ public class BaseActivity extends AppCompatActivity {
                 .build();
     }
 
-    // DefaultParams: fuelCode, radius to locate, sorting radius
-    public final String[] getNearStationParams() {
-        String[] defaultParams = new String[3];
-        defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
-        defaultParams[1] = mSettings.getString(Constants.SEARCHING_RADIUS, "2500");
-        defaultParams[2] = mSettings.getString(Constants.ORDER, "2");
-
-        return defaultParams;
-    }
-
     // Get the district name and code from SharedPreferences which saves them as type of JSONString
     // because it cannot contain any array generics.
     public JSONArray getDistrictJSONArray() {
@@ -183,6 +173,18 @@ public class BaseActivity extends AppCompatActivity {
             return null;
         }
     }
+
+    // DefaultParams: fuelCode, radius to locate, sorting radius
+    public final String[] getNearStationParams() {
+        String[] defaultParams = new String[3];
+        defaultParams[0] = mSettings.getString(Constants.FUEL, "B027");
+        defaultParams[1] = mSettings.getString(Constants.SEARCHING_RADIUS, "2500");
+        defaultParams[2] = mSettings.getString(Constants.ORDER, "2");
+
+        return defaultParams;
+    }
+
+
 
     public DecimalFormat getDecimalFormat() {
         DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(Locale.getDefault());
@@ -323,23 +325,23 @@ public class BaseActivity extends AppCompatActivity {
         return jsonObject;
     }
 
+    // Default service items and check period and time span(premise: 10000 km / year)
     public JSONArray setDefaultServiceItems() {
         JSONArray jsonArray = new JSONArray();
-
         try {
-            jsonArray.put(0, createJsonItemObject("엔진오일 및 오일필터", 8000, 6));
+            jsonArray.put(0, createJsonItemObject("엔진오일 및 오일필터", 5000, 6));
             jsonArray.put(1, createJsonItemObject("에어클리너", 5000, 6));
             jsonArray.put(2, createJsonItemObject("에어컨 필터", 3000, 6));
             jsonArray.put(3, createJsonItemObject("에어컨 가스", 5000, 6));
-            jsonArray.put(4, createJsonItemObject("냉각수", 10000, 6));
-            jsonArray.put(5, createJsonItemObject("얼라인먼트", 5000, 6));
-            jsonArray.put(6, createJsonItemObject("타이어 위치 교환", 25000, 12));
-            jsonArray.put(7, createJsonItemObject("타이어 교체", 50000, 36));
-            jsonArray.put(8, createJsonItemObject("브레이크 패드", 10000, 12));
+            jsonArray.put(4, createJsonItemObject("냉각수", 10000, 12));
+            jsonArray.put(5, createJsonItemObject("얼라인먼트", 10000, 12));
+            jsonArray.put(6, createJsonItemObject("타이어 위치 교환", 25000, 30));
+            jsonArray.put(7, createJsonItemObject("타이어 교체", 50000, 60));
+            jsonArray.put(8, createJsonItemObject("브레이크 패드", 20000, 24));
             jsonArray.put(9, createJsonItemObject("브레이크 라이닝", 10000, 12));
-            jsonArray.put(10, createJsonItemObject("배터리 교체", 75000, 48));
-            jsonArray.put(11, createJsonItemObject("트랜스미션오일 교체", 50000, 36));
-            jsonArray.put(12, createJsonItemObject("타이밍벨트 없애기", 75000, 48));
+            jsonArray.put(10, createJsonItemObject("배터리 교체", 70000, 84));
+            jsonArray.put(11, createJsonItemObject("트랜스미션오일 교체", 50000, 60));
+            jsonArray.put(12, createJsonItemObject("타이밍벨트", 70000, 84));
             return jsonArray;
 
         } catch(JSONException e) {
