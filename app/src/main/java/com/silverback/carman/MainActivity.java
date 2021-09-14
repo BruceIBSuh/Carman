@@ -24,7 +24,6 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
@@ -39,7 +38,6 @@ import com.silverback.carman.threads.StationListTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.RecyclerDividerUtil;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
@@ -67,7 +65,6 @@ public class MainActivity extends BaseActivity implements
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private ImageViewModel imgModel;
-    private FragmentSharedModel fragmentModel;
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
@@ -79,11 +76,13 @@ public class MainActivity extends BaseActivity implements
     private List<Opinet.GasStnParcelable> mStationList;
 
     private ApplyImageResourceUtil imgResUtil;
+    private MainContentAdapter mainContentAdapter;
     private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
     private String[] stnParams;
     private String gasCode;
+    private boolean isRadiusChanged;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
 
@@ -117,7 +116,7 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
 
         // MainContent RecyclerView to display main contents in the activity
-        MainContentAdapter mainContentAdapter = new MainContentAdapter(this);
+        mainContentAdapter = new MainContentAdapter(this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(
                 Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
         binding.recyclerContents.setAdapter(mainContentAdapter);
@@ -139,29 +138,15 @@ public class MainActivity extends BaseActivity implements
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
         // the location.
-        observeViewModelCallback(locationModel);
-        observeViewModelCallback(stnModel);
+        callbackViewModel(locationModel);
+        callbackViewModel(stnModel);
 
         // Create ActivityResultLauncher to call SettingActiity and get results
         activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), result -> {
-                    if(result.getResultCode() == Activity.RESULT_OK) updateSettingResult(result);
-                    else if(result.getResultCode() == Activity.RESULT_CANCELED) {
-                        log.i("from which activity: %s", result.getData());
-                        Intent resultIntent = result.getData();
-                        if(resultIntent != null) {
-                            int totalSum = resultIntent.getIntExtra("totalsum", 0);
-                            log.i("expense total: %s", totalSum);
-                            mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
-                        }
-
-                        binding.stationRecyclerView.setVisibility(View.GONE);
-                        binding.fab.setVisibility(View.GONE);
-                        binding.recyclerContents.setVisibility(View.VISIBLE);
-                    }
-                });
-
+                new ActivityResultContracts.StartActivityForResult(), this::callActivityResult);
     }
+
+
 
     @Override
     public void onResume() {
@@ -289,6 +274,28 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
+    private void callActivityResult(ActivityResult result) {
+        switch(result.getResultCode()) {
+            case Activity.RESULT_OK:
+                updateSettingResult(result);
+                break;
+            case Activity.RESULT_CANCELED:
+                log.i("from which activity: %s", result.getData());
+                Intent resultIntent = result.getData();
+                if(resultIntent != null) {
+                    int totalSum = resultIntent.getIntExtra("totalsum", 0);
+                    log.i("expense total: %s", totalSum);
+                    mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
+                }
+
+                binding.stationRecyclerView.setVisibility(View.GONE);
+                binding.fab.setVisibility(View.GONE);
+                binding.recyclerContents.setVisibility(View.VISIBLE);
+                break;
+        }
+    }
+
     private void setCollapsedPriceBar() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
@@ -354,11 +361,10 @@ public class MainActivity extends BaseActivity implements
     public void dispNearStations(View view) {
         boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
-            binding.pbNearStns.setVisibility(View.VISIBLE);
-            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () ->
-                    locationTask = sThreadManager.fetchLocationTask(this, locationModel));
-                    //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams));
-
+            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+                locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+                //binding.pbNearStns.setVisibility(View.VISIBLE);
+            });
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
@@ -403,6 +409,8 @@ public class MainActivity extends BaseActivity implements
         String userName = resultIntent.getStringExtra("userName");
         String district = resultIntent.getStringExtra("distCode");
         String gasType = resultIntent.getStringExtra("gasCode");
+        String searchRadius = resultIntent.getStringExtra("searchRadius");
+        log.i("searchRadius: %s", searchRadius);
 
         if(!TextUtils.isEmpty(userName)) Objects.requireNonNull(getSupportActionBar()).setTitle(userName);
         if(!TextUtils.isEmpty(district) && !TextUtils.isEmpty(gasType)) {
@@ -428,30 +436,28 @@ public class MainActivity extends BaseActivity implements
 
         } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
             setGasSpinnerSelection(gasType);
+
+        } else if(!TextUtils.isEmpty(searchRadius)) {
+            isRadiusChanged = true;
+            stnParams[1] = searchRadius;
         }
     }
 
     // Method for implementing ViewModel callbacks to fetch a location and station list around
     // the location.
-    private void observeViewModelCallback(ViewModel model) {
+    private void callbackViewModel(ViewModel model) {
         if(model instanceof LocationViewModel) {
             locationModel.getLocation().observe(this, location -> {
-                log.i("Location compared: %s, %s", mPrevLocation, location);
-                if(mPrevLocation == null||(mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
+                log.i("Location compared: %s, %s, %s", stnParams[1], mPrevLocation, location);
+                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE || isRadiusChanged) {
+                    binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
                     stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
                 } else {
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                    binding.pbNearStns.setVisibility(View.GONE);
-                    /*
-                    Snackbar.make(binding.getRoot(), getString(R.string.general_snackkbar_inbounds),
-                            Snackbar.LENGTH_SHORT).show();
-
-                     */
+                    //binding.pbNearStns.setVisibility(View.GONE);
                 }
-
-                //stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
             });
 
             locationModel.getLocationException().observe(this, exception -> {
@@ -488,6 +494,7 @@ public class MainActivity extends BaseActivity implements
                     //stationRecyclerView.showTextView(spannableString);
                 }
 
+                isRadiusChanged = false;
                 binding.pbNearStns.setVisibility(View.GONE);
             });
 

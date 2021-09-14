@@ -31,7 +31,7 @@ public class StationListTask extends ThreadTask implements
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
     private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
-    private SparseBooleanArray sparseBooleanArray;
+    private final SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
     //private Opinet.GasStnParcelable mCurrentStation;

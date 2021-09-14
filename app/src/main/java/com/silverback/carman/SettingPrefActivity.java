@@ -116,7 +116,6 @@ public class SettingPrefActivity extends BaseActivity implements
         setContentView(rootView);
 
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
-
         // Permission check for CAMERA to get the user image.
         //checkPermissions(this, Manifest.permission.CAMERA);
         //settingToolbar = findViewById(R.id.setting_toolbar);
@@ -124,7 +123,6 @@ public class SettingPrefActivity extends BaseActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
 
-        //frameLayout = findViewById(R.id.frame_setting);
         frameLayout = binding.frameSetting;
 
         resultIntent = new Intent();
@@ -381,8 +379,9 @@ public class SettingPrefActivity extends BaseActivity implements
                 break;
 
             case Constants.SEARCHING_RADIUS:
-                log.i("searching radius changed");
                 radius = mSettings.getString(key, null);
+                log.i("searching radius changed: %s", radius);
+                resultIntent.putExtra("searchRadius", radius);
                 break;
 
             case Constants.USER_IMAGE:

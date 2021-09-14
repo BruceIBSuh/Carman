@@ -133,7 +133,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Define ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        //locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+        locationTask = sThreadManager.fetchLocationTask(this, locationModel);
 
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
@@ -245,7 +245,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
-
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 if(state == 0 && position == Constants.SVC) return;
@@ -286,9 +285,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         break;
                 }
             }
-
         };
-
     }
 
     // Create the appbarlayout
