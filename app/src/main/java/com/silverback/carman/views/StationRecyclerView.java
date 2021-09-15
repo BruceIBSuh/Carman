@@ -7,6 +7,7 @@ import android.text.method.LinkMovementMethod;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -21,14 +22,14 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 
 import java.lang.ref.WeakReference;
 
-public class StationRecyclerView extends RecyclerView {
+public class StationRecyclerView extends CoordinatorLayout {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationRecyclerView.class);
 
     // Objects
+    public MainContentStationsBinding childBinding;
     private WeakReference<View> mThisView;
-    public MainContentStationsBinding binding;
     private int mTextViewResId;
     private int mRecyclerViewResId;
 
@@ -46,15 +47,20 @@ public class StationRecyclerView extends RecyclerView {
     }
 
     public void getAttributes(Context context, AttributeSet attrs) {
-        //LayoutInflater.from(context).inflate(R.layout.main_content_stations, this, true);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        childBinding = MainContentStationsBinding.inflate(inflater, this, true);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
-        setHasFixedSize(true);
-        setLayoutManager(layoutManager);
+        childBinding.recyclerviewStations.setHasFixedSize(true);
+        childBinding.recyclerviewStations.setLayoutManager(layoutManager);
+
+        TextView tvMessage = childBinding.tvNoStations;
+        mTextViewResId = tvMessage.getId();
+        log.i("textview id: %s", mTextViewResId);
 
         TypedArray typedArray = context.getTheme()
                 .obtainStyledAttributes(attrs, R.styleable.StationRecyclerView, 0, 0);
         try {
-            mRecyclerViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_recyclerview, -1);
+            mRecyclerViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
             mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
             log.i("custom view:%s, %s", mRecyclerViewResId, mTextViewResId);
         } finally {
@@ -65,7 +71,7 @@ public class StationRecyclerView extends RecyclerView {
     // This callback is invoked when the system attaches this view to a Window. It is invoked before
     // onDraw(), but may be invoked after onMeasure().
     @Override
-    protected void onAttachedToWindow() {
+    public void onAttachedToWindow() {
         // Always call the super method first
         super.onAttachedToWindow();
         /*
@@ -83,7 +89,7 @@ public class StationRecyclerView extends RecyclerView {
     // This callback is invoked when the view is removed from a Window. It "unsets" variables
     // to prevent memory leaks.
     @Override
-    protected void onDetachedFromWindow() {
+    public void onDetachedFromWindow() {
         // If this View still exists, clears the weak reference, then sets the reference to null.
         if(mThisView != null) {
             mThisView.clear();
@@ -106,14 +112,14 @@ public class StationRecyclerView extends RecyclerView {
     // within a givene radius or the network connection failed to make.
     public void showTextView(SpannableString message){
         log.i("TextView ID: %s", mTextViewResId);
-        if(mTextViewResId != -2 && getParent() instanceof View) {
-            this.setVisibility(View.GONE);
-            View localView = ((View)getParent()).findViewById(mTextViewResId);
-            if(localView != null) mThisView = new WeakReference<>(localView);
+        //if(mTextViewResId != -2 && getParent() instanceof View) {
+            childBinding.recyclerviewStations.setVisibility(View.GONE);
+            View localView = childBinding.tvNoStations;
+            mThisView = new WeakReference<>(localView);
 
             ((TextView)mThisView.get()).setText(message, TextView.BufferType.SPANNABLE);
             ((TextView)mThisView.get()).setMovementMethod(LinkMovementMethod.getInstance());
-        }
+        //}
 
 
         /*

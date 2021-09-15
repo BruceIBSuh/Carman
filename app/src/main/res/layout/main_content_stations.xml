@@ -7,24 +7,25 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content" >
 
-    <com.silverback.carman.views.StationRecyclerView
-        android:id="@+id/stationRecyclerView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview_stations"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:textview="@id/tv_no_stations"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
-    <!--
+
     <ProgressBar
         android:id="@+id/progbar_stnlist"
         android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_insetEdge="top"/>
-    -->
+
     <TextView
         android:id="@+id/tv_no_stations"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
         android:layout_gravity="center"
         android:clickable="true"
         android:focusable="true"

@@ -1,6 +1,8 @@
 package com.silverback.carman;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
@@ -86,7 +88,7 @@ public class MainActivity extends BaseActivity implements
     private String[] arrGasCode;
     private String[] stnParams;
     private String gasCode;
-    private boolean isRadiusChanged, isGastypeChanged;
+    private boolean isRadiusChanged, isGasTypeChanged;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
 
@@ -139,7 +141,7 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        binding.stationRecyclerView.addOnScrollListener(stationScrollListener);
+        binding.stationRecyclerView.childBinding.recyclerviewStations.addOnScrollListener(stationScrollListener);
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
         // the location.
@@ -216,36 +218,32 @@ public class MainActivity extends BaseActivity implements
         Intent intent = new Intent(this, StationMapActivity.class);
         intent.putExtra("gasStationId", mStationList.get(pos).getStnId());
         activityResultLauncher.launch(intent);
-        //startActivity(intent);
     }
 
     // Implement AdapterView.OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-        // Set the default fuel code.
-        stnParams[0] = arrGasCode[pos];
-//        if(gasCode == null) {
-//            setGasSpinnerSelection(stnParams[0]);
-//            return;
-//        }
+        if(gasCode == null) setGasSpinnerSelection(stnParams[0]);
+        else gasCode = arrGasCode[pos];
+
         // Reset the price info in the viewpager.
-        mainPricePagerAdapter.setFuelCode(stnParams[0]);
+        mainPricePagerAdapter.setFuelCode(gasCode);
         mainPricePagerAdapter.notifyDataSetChanged();
+
         // Show the average price and create the price bar as hidden.
-        gasCode = stnParams[0];
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
 
+        // In case the station recyclerview is in the visible state
         boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
+            stnParams[0] = gasCode;
             stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
         }
     }
 
     @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-        log.i("gas code: ", gasCode);
-    }
+    public void onNothingSelected(AdapterView<?> adapterView) {}
 
     // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -265,7 +263,6 @@ public class MainActivity extends BaseActivity implements
 
     // Reset the default fuel code
     private void setGasSpinnerSelection(String gasCode) {
-        String[] arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         for(int i = 0; i < arrGasCode.length; i++) {
             if(arrGasCode[i].matches(gasCode)) {
                 binding.mainTopFrame.spinnerGas.setSelection(i);
@@ -277,23 +274,27 @@ public class MainActivity extends BaseActivity implements
 
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
     private void callActivityResult(ActivityResult result) {
+        // In case the station reyelcerview is in the visible state, it should be gone to the initlal
+        // state.
+        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        if(isStnViewOn) {
+            binding.stationRecyclerView.setVisibility(View.GONE);
+            binding.fab.setVisibility(View.GONE);
+            binding.recyclerContents.setVisibility(View.VISIBLE);
+            binding.btnToggleStation.setChecked(false);
+        }
+
         switch(result.getResultCode()) {
-            // SettingPrefActivity result
-            case Activity.RESULT_OK:
+            case Activity.RESULT_OK: // SettingPrefActivity result
                 updateSettingResult(result);
                 break;
-            // ExpenseActivity result
-            case Activity.RESULT_CANCELED:
-                log.i("from which activity: %s", result.getData());
+
+            case Activity.RESULT_CANCELED: // ExpenseActivity result
                 Intent resultIntent = result.getData();
                 if(resultIntent != null) {
                     int totalSum = resultIntent.getIntExtra("totalsum", 0);
                     mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
                 }
-
-                binding.stationRecyclerView.setVisibility(View.GONE);
-                binding.fab.setVisibility(View.GONE);
-                binding.recyclerContents.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -320,6 +321,7 @@ public class MainActivity extends BaseActivity implements
                                 binding.pricebar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
                             }
                             break;
+
                         case Constants.FILE_CACHED_SIGUN_PRICE:
                             Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
                             if(sigun.getProductCd().matches(gasCode)) {
@@ -336,9 +338,10 @@ public class MainActivity extends BaseActivity implements
     // Ref: expand the station recyclerview up to wrap_content
     // Animate the visibility of the collapsed price bar.
     private void showCollapsedPricebar(int offset) {
+        log.i("price bar offset: %s, %s", offset, binding.appbar.getTotalScrollRange());
         if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
             binding.pricebar.getRoot().setVisibility(View.VISIBLE);
-            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0f, 1f);
+            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0, 1);
             anim.setDuration(500);
             anim.start();
         } else binding.pricebar.getRoot().setVisibility(View.INVISIBLE);
@@ -365,7 +368,7 @@ public class MainActivity extends BaseActivity implements
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                //binding.pbNearStns.setVisibility(View.VISIBLE);
+                binding.pbNearStns.setVisibility(View.VISIBLE);
             });
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
@@ -436,7 +439,7 @@ public class MainActivity extends BaseActivity implements
             });
 
         } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
-            isGastypeChanged = true;
+            isGasTypeChanged = true;
             setGasSpinnerSelection(gasType);
             stnParams[0] = gasType;
 
@@ -452,19 +455,18 @@ public class MainActivity extends BaseActivity implements
         if(model instanceof LocationViewModel) {
             locationModel.getLocation().observe(this, location -> {
                 // Location fetched or changed at a preset distance.
-                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ) {
-                    binding.pbNearStns.setVisibility(View.VISIBLE);
+                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
+                    //binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
                     stnParams[0] = gasCode;
                     stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
                 // Station default params changed from SettingPrefActivity.
-                } else if(isRadiusChanged || isGastypeChanged) {
-                    log.i("param changed");
+                } else if(isRadiusChanged || isGasTypeChanged) {
                     stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
                 } else {
+                    binding.pbNearStns.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                    //binding.pbNearStns.setVisibility(View.GONE);
                 }
             });
 
@@ -490,12 +492,11 @@ public class MainActivity extends BaseActivity implements
                     mStationList = stnList;
                     stnListAdapter = new StationListAdapter(mStationList, this);
 
-                    binding.stationRecyclerView.setAdapter(stnListAdapter);
+                    binding.stationRecyclerView.childBinding.recyclerviewStations.setAdapter(stnListAdapter);
                     binding.stationRecyclerView.showStationListRecyclerView();
                     binding.fab.setVisibility(View.VISIBLE);
 
                 } else {
-                    log.i("no station");
                     // No near stations post an message that contains the clickable span to link to the
                     // SettingPreferenceActivity for resetting the searching radius.
                     SpannableString spannableString = handleStationListException();
@@ -503,7 +504,7 @@ public class MainActivity extends BaseActivity implements
                 }
 
                 isRadiusChanged = false;
-                isGastypeChanged = false;
+                isGasTypeChanged = false;
                 binding.pbNearStns.setVisibility(View.GONE);
             });
 
