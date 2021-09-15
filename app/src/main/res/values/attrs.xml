@@ -21,9 +21,10 @@
     </declare-styleable>
 
     <declare-styleable name="StationRecyclerView">
-        <attr name="progressbar" format="reference" />
+        <!--<attr name="progressbar" format="reference" />-->
+        <attr name="recyclerview" format="reference" />
         <attr name="textview" format="reference" />
-        <attr name="fab" format="reference" />
+        <!--<attr name="fab" format="reference" />-->
     </declare-styleable>
 
     <declare-styleable name="ExpenseViewPager">

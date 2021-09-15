@@ -10,10 +10,12 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
+import com.silverback.carman.databinding.MainContentStationsBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -26,10 +28,9 @@ public class StationRecyclerView extends RecyclerView {
 
     // Objects
     private WeakReference<View> mThisView;
-    //private StationListTask stationListTask;
-    private int mPBResId;
+    public MainContentStationsBinding binding;
     private int mTextViewResId;
-    private int mFabResId;
+    private int mRecyclerViewResId;
 
     // Default constructors
     public StationRecyclerView(Context context) {
@@ -44,17 +45,18 @@ public class StationRecyclerView extends RecyclerView {
         getAttributes(context, attrs);
     }
 
-    protected void getAttributes(Context context, AttributeSet attrs) {
+    public void getAttributes(Context context, AttributeSet attrs) {
+        //LayoutInflater.from(context).inflate(R.layout.main_content_stations, this, true);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
         setHasFixedSize(true);
         setLayoutManager(layoutManager);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.StationRecyclerView);
+        TypedArray typedArray = context.getTheme()
+                .obtainStyledAttributes(attrs, R.styleable.StationRecyclerView, 0, 0);
         try {
-            mPBResId = typedArray.getResourceId(R.styleable.StationRecyclerView_progressbar, -1);
+            mRecyclerViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_recyclerview, -1);
             mTextViewResId = typedArray.getResourceId(R.styleable.StationRecyclerView_textview, -2);
-            mFabResId = typedArray.getResourceId(R.styleable.StationRecyclerView_fab, -3);
-            log.i("custom view:%s %s %s", mPBResId, mTextViewResId, mFabResId);
+            log.i("custom view:%s, %s", mRecyclerViewResId, mTextViewResId);
         } finally {
             typedArray.recycle();
         }
@@ -66,12 +68,15 @@ public class StationRecyclerView extends RecyclerView {
     protected void onAttachedToWindow() {
         // Always call the super method first
         super.onAttachedToWindow();
+        /*
         if (mPBResId != -1 && getParent() instanceof View) {
             // Gets a handle to the sibling View
             View localView = ((View)getParent()).findViewById(mPBResId);
             // If the sibling View contains something, make it the weak reference for this View
             if (localView != null) mThisView = new WeakReference<>(localView);
         }
+
+         */
     }
 
 
@@ -94,24 +99,29 @@ public class StationRecyclerView extends RecyclerView {
     public void showStationListRecyclerView() {
         mThisView = new WeakReference<>(this);
         View localView = mThisView.get();
-
-        if(localView != null) {
-            log.i("localview");
-            //((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
-            //((View)getParent()).findViewById(mTextViewResId).setVisibility(View.GONE);
-            //((View)getParent()).findViewById(mFabResId).setVisibility(View.VISIBLE);
-            localView.setVisibility(View.VISIBLE);
-        }
+        if(localView != null) localView.setVisibility(View.VISIBLE);
     }
 
     // Invoked from the parent GeneralFragment when StationListTask failed to fetch any station
     // within a givene radius or the network connection failed to make.
     public void showTextView(SpannableString message){
+        log.i("TextView ID: %s", mTextViewResId);
+        if(mTextViewResId != -2 && getParent() instanceof View) {
+            this.setVisibility(View.GONE);
+            View localView = ((View)getParent()).findViewById(mTextViewResId);
+            if(localView != null) mThisView = new WeakReference<>(localView);
+
+            ((TextView)mThisView.get()).setText(message, TextView.BufferType.SPANNABLE);
+            ((TextView)mThisView.get()).setMovementMethod(LinkMovementMethod.getInstance());
+        }
+
+
+        /*
         if((mTextViewResId != -2) && getParent() instanceof View) {
             TextView localView = ((View)getParent()).findViewById(mTextViewResId);
             // If the sibling View contains something, make it the weak reference for this View
-            if (localView != null) {
-                ((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
+            if(localView != null) {
+                //((View)getParent()).findViewById(mPBResId).setVisibility(View.GONE);
                 // Hide RecyclerView if no stations failed to fetch in order for ClickableSpan to work.
                 // Otherwise, RecyclerView covers the TextView which causes ClickSpannable to be untouchable.
                 this.setVisibility(View.GONE);
@@ -121,5 +131,7 @@ public class StationRecyclerView extends RecyclerView {
 
             }
         }
+
+         */
     }
 }

@@ -26,7 +26,7 @@ public class CarmanLocationHelper implements
     private static final LoggingHelper log = LoggingHelperFactory.create(CarmanLocationHelper.class);
 
     // Objects
-    private static CarmanLocationHelper sLocationHelper;
+    //private static CarmanLocationHelper sLocationHelper;
     private final LocationRequest mLocationRequest;
     private Location mLocation;
 

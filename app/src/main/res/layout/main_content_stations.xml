@@ -5,24 +5,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/frame_recyclerview"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    tools:viewBindingIgnore="true">
+    android:layout_height="wrap_content" >
 
     <com.silverback.carman.views.StationRecyclerView
         android:id="@+id/stationRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:fab="@id/fab_relocation"
-        app:progressbar="@id/progbar_stnlist"
-        app:textview="@id/tv_no_stations" />
-
+        app:textview="@id/tv_no_stations"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+    <!--
     <ProgressBar
         android:id="@+id/progbar_stnlist"
         android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_insetEdge="top"/>
-
+    -->
     <TextView
         android:id="@+id/tv_no_stations"
         android:layout_width="wrap_content"
@@ -31,7 +29,7 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center" />
-
+    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_relocation"
         android:layout_width="wrap_content"
@@ -46,5 +44,5 @@
         app:layout_anchor="@id/stationRecyclerView"
         app:layout_anchorGravity="right|bottom"
         app:rippleColor="@color/colorPrimary" />
-
+    -->
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

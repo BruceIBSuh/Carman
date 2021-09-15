@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.ClickableSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -80,9 +83,10 @@ public class MainActivity extends BaseActivity implements
     private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
+    private String[] arrGasCode;
     private String[] stnParams;
     private String gasCode;
-    private boolean isRadiusChanged;
+    private boolean isRadiusChanged, isGastypeChanged;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
 
@@ -97,7 +101,8 @@ public class MainActivity extends BaseActivity implements
         imgResUtil = new ApplyImageResourceUtil(this);
 
         // Set initial values
-        stnParams = getNearStationParams();// 0: gas 1:district 2:order(distance or price)
+        stnParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
+        arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         mPrevLocation = null;
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
@@ -154,6 +159,7 @@ public class MainActivity extends BaseActivity implements
         // Set the ion in the toolbar
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
+
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
@@ -216,20 +222,15 @@ public class MainActivity extends BaseActivity implements
     // Implement AdapterView.OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-        switch(pos){
-            case 0: stnParams[0] = "B027"; break; // gasoline
-            case 1: stnParams[0] = "D047"; break; // diesel
-            case 2: stnParams[0] = "K015"; break; // LPG
-            case 3: stnParams[0] = "B034"; break; // premium gasoline
-        }
-
-        // Prevent this callback from auto implementing at the first initiation.
-        if(gasCode != null) {
-            log.i("stnparams: %s", stnParams[0]);
-            mainPricePagerAdapter.setFuelCode(stnParams[0]);
-            mainPricePagerAdapter.notifyDataSetChanged();
-        }
-
+        // Set the default fuel code.
+        stnParams[0] = arrGasCode[pos];
+//        if(gasCode == null) {
+//            setGasSpinnerSelection(stnParams[0]);
+//            return;
+//        }
+        // Reset the price info in the viewpager.
+        mainPricePagerAdapter.setFuelCode(stnParams[0]);
+        mainPricePagerAdapter.notifyDataSetChanged();
         // Show the average price and create the price bar as hidden.
         gasCode = stnParams[0];
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
@@ -262,13 +263,13 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onDialogNegativeClick(DialogFragment dialog) {}
 
-    // Get the default fuel value
+    // Reset the default fuel code
     private void setGasSpinnerSelection(String gasCode) {
         String[] arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         for(int i = 0; i < arrGasCode.length; i++) {
             if(arrGasCode[i].matches(gasCode)) {
                 binding.mainTopFrame.spinnerGas.setSelection(i);
-                //this.gasCode = gasCode;
+                this.gasCode = arrGasCode[i];
                 break;
             }
         }
@@ -277,15 +278,16 @@ public class MainActivity extends BaseActivity implements
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
     private void callActivityResult(ActivityResult result) {
         switch(result.getResultCode()) {
+            // SettingPrefActivity result
             case Activity.RESULT_OK:
                 updateSettingResult(result);
                 break;
+            // ExpenseActivity result
             case Activity.RESULT_CANCELED:
                 log.i("from which activity: %s", result.getData());
                 Intent resultIntent = result.getData();
                 if(resultIntent != null) {
                     int totalSum = resultIntent.getIntExtra("totalsum", 0);
-                    log.i("expense total: %s", totalSum);
                     mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
                 }
 
@@ -358,7 +360,7 @@ public class MainActivity extends BaseActivity implements
     };
 
     // Callback for the station button click listener defined in the layout file
-    public void dispNearStations(View view) {
+    public void locateNearStations(View view) {
         boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
@@ -400,8 +402,7 @@ public class MainActivity extends BaseActivity implements
     }
 
 
-    // Method for implementing the ActivityResult callback the result of which is sent from
-    // SettingPrefActivity.
+    // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
     private void updateSettingResult(ActivityResult result) {
         Intent resultIntent = result.getData();
         if(resultIntent == null) return;
@@ -435,7 +436,9 @@ public class MainActivity extends BaseActivity implements
             });
 
         } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
+            isGastypeChanged = true;
             setGasSpinnerSelection(gasType);
+            stnParams[0] = gasType;
 
         } else if(!TextUtils.isEmpty(searchRadius)) {
             isRadiusChanged = true;
@@ -448,10 +451,15 @@ public class MainActivity extends BaseActivity implements
     private void callbackViewModel(ViewModel model) {
         if(model instanceof LocationViewModel) {
             locationModel.getLocation().observe(this, location -> {
-                log.i("Location compared: %s, %s, %s", stnParams[1], mPrevLocation, location);
-                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE || isRadiusChanged) {
+                // Location fetched or changed at a preset distance.
+                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ) {
                     binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
+                    stnParams[0] = gasCode;
+                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+                // Station default params changed from SettingPrefActivity.
+                } else if(isRadiusChanged || isGastypeChanged) {
+                    log.i("param changed");
                     stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
                 } else {
                     binding.recyclerContents.setVisibility(View.GONE);
@@ -474,13 +482,13 @@ public class MainActivity extends BaseActivity implements
             // indicate why it failed to fetch stations. It would be caused by any network problem or
             // no stations actually exist within the radius.
             stnModel.getNearStationList().observe(this, stnList -> {
+                binding.recyclerContents.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+
                 if (stnList != null && stnList.size() > 0) {
                     log.i("near stations: %s", stnList.size());
                     mStationList = stnList;
                     stnListAdapter = new StationListAdapter(mStationList, this);
-
-                    binding.recyclerContents.setVisibility(View.GONE);
-                    binding.stationRecyclerView.setVisibility(View.VISIBLE);
 
                     binding.stationRecyclerView.setAdapter(stnListAdapter);
                     binding.stationRecyclerView.showStationListRecyclerView();
@@ -490,11 +498,12 @@ public class MainActivity extends BaseActivity implements
                     log.i("no station");
                     // No near stations post an message that contains the clickable span to link to the
                     // SettingPreferenceActivity for resetting the searching radius.
-                    //SpannableString spannableString = handleStationListException();
-                    //stationRecyclerView.showTextView(spannableString);
+                    SpannableString spannableString = handleStationListException();
+                    binding.stationRecyclerView.showTextView(spannableString);
                 }
 
                 isRadiusChanged = false;
+                isGastypeChanged = false;
                 binding.pbNearStns.setVisibility(View.GONE);
             });
 
@@ -510,6 +519,57 @@ public class MainActivity extends BaseActivity implements
                 hasStationInfo = true;
             });
         }
+    }
+
+    private SpannableString handleStationListException(){
+        SpannableString spannableString;
+        if(isNetworkConnected) {
+            String msg = getString(R.string.general_no_station_fetched);
+            String radius = stnParams[1];
+            // In case the radius is already set to the maximum value(5000m), no need to change the value.
+            if(radius != null && radius.matches("5000")) {
+                msg = msg.substring(0, msg.indexOf("\n"));
+                return new SpannableString(stnParams[1] + msg);
+            }
+
+            String format = String.format("%s%s", radius, msg);
+            spannableString = new SpannableString(format);
+            log.i("spannable string: %s", spannableString);
+
+            // Set the ClickableSpan range
+            String spanned = getString(R.string.general_index_reset);
+            int start = format.indexOf(spanned);
+            int end = start + spanned.length();
+
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    Intent settingIntent = new Intent(MainActivity.this, SettingPrefActivity.class);
+                    activityResultLauncher.launch(settingIntent);
+                }
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+
+        } else {
+            String message = getString(R.string.errror_no_network);
+            spannableString = new SpannableString(message);
+
+            // Set the ClickableSpan range.
+            String spanned = getString(R.string.error_index_retry);
+            int start = message.indexOf(spanned);
+            int end = start + spanned.length();
+
+            // Refactor required: move to network setting to check if it turns on.
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    Intent networkIntent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
+                    activityResultLauncher.launch(networkIntent);
+                }
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return spannableString;
     }
 }
 

@@ -101,7 +101,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:text="@string/svc_label_cost"
-                android:textSize="@dimen/extraSmallText"
+                android:textSize="@dimen/contentNormal"
+                android:textStyle="bold"
                 cardview:layout_constraintStart_toStartOf="parent"
                 cardview:layout_constraintTop_toTopOf="parent" />
 
@@ -127,7 +128,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="@string/unit_won"
-                android:textSize="@dimen/extraSmallText"
+                android:textSize="@dimen/contentSmall"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_item_cost"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_item_cost"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_item_cost" />
@@ -139,7 +140,8 @@
                 android:layout_marginTop="16dp"
                 android:labelFor="@id/tv_item_memo"
                 android:text="@string/svc_label_info"
-                android:textSize="@dimen/extraSmallText"
+                android:textSize="@dimen/contentNormal"
+                android:textStyle="bold"
                 cardview:layout_constraintStart_toStartOf="parent"
                 cardview:layout_constraintTop_toBottomOf="@+id/tv_label_cost" />
 
@@ -152,16 +154,14 @@
                 android:background="@drawable/state_view_focus"
                 android:ems="10"
                 android:padding="3dp"
-                android:textSize="@dimen/extraSmallText"
+                android:textSize="@dimen/contentSmall"
                 android:onClick="showServiceItemMemo"
                 cardview:layout_constraintBottom_toBottomOf="@+id/tv_label_memo"
                 cardview:layout_constraintEnd_toEndOf="parent"
                 cardview:layout_constraintStart_toEndOf="@+id/tv_label_memo"
                 cardview:layout_constraintTop_toTopOf="@+id/tv_label_memo"
                 tools:ignore="Autofill" />
-
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
 </androidx.cardview.widget.CardView>
