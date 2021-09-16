@@ -298,6 +298,7 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    // Get the price info saved in the cache and show them in the price bar.
     private void setCollapsedPriceBar() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
@@ -359,7 +360,7 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    // Callback for the station button click listener defined in the layout file
+    // Implement onClickListener of the toggle button which is defined in the xml file
     public void locateNearStations(View view) {
         boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
