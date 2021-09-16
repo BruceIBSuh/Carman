@@ -45,7 +45,6 @@ public abstract class OpinetPriceView extends LinearLayout {
 
     // Methods to switch the text color according to whether the price gets higher or lower.
     protected void setColoredTextView(TextView textView, float price, float diff) {
-
         int colorDiff = (diff > 0)? priceUpColor : priceDownColor;
         // Create SpannableStringBuilder to change the text color in the spanned price difference.
         SpannableStringBuilder ssb = new SpannableStringBuilder();
