@@ -1,19 +1,20 @@
 package com.silverback.carman;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -88,7 +89,7 @@ public class MainActivity extends BaseActivity implements
     private String[] arrGasCode;
     private String[] stnParams;
     private String gasCode;
-    private boolean isRadiusChanged, isGasTypeChanged;
+    private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
 
@@ -141,12 +142,13 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        binding.stationRecyclerView.childBinding.recyclerviewStations.addOnScrollListener(stationScrollListener);
+        binding.stationRecyclerView.getRecyclerView().addOnScrollListener(stationScrollListener);
+
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
         // the location.
-        callbackViewModel(locationModel);
-        callbackViewModel(stnModel);
+        observeViewModel(locationModel);
+        observeViewModel(stnModel);
 
         // Create ActivityResultLauncher to call SettingActiity and get results
         activityResultLauncher = registerForActivityResult(
@@ -234,8 +236,8 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
 
-        // In case the station recyclerview is in the visible state
-        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        // In case the station recyclerview is in the foreground.
+        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             stnParams[0] = gasCode;
             stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
@@ -276,7 +278,7 @@ public class MainActivity extends BaseActivity implements
     private void callActivityResult(ActivityResult result) {
         // In case the station reyelcerview is in the visible state, it should be gone to the initlal
         // state.
-        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
@@ -339,7 +341,6 @@ public class MainActivity extends BaseActivity implements
     // Ref: expand the station recyclerview up to wrap_content
     // Animate the visibility of the collapsed price bar.
     private void showCollapsedPricebar(int offset) {
-        log.i("price bar offset: %s, %s", offset, binding.appbar.getTotalScrollRange());
         if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
             binding.pricebar.getRoot().setVisibility(View.VISIBLE);
             ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0, 1);
@@ -353,19 +354,21 @@ public class MainActivity extends BaseActivity implements
     private final RecyclerView.OnScrollListener stationScrollListener = new RecyclerView.OnScrollListener(){
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-            //if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
+            if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
         }
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-            if (newState == RecyclerView.SCROLL_STATE_IDLE) binding.fab.show();
+            if (newState == RecyclerView.SCROLL_STATE_IDLE){
+                binding.fab.show();
+            }
             super.onScrollStateChanged(recyclerView, newState);
         }
     };
 
-    // Implement onClickListener of the toggle button which is defined in the xml file
+    // Implement the onClickListener of the toggle button which is defined in the xml file
     public void locateNearStations(View view) {
-        boolean isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
@@ -405,6 +408,139 @@ public class MainActivity extends BaseActivity implements
         return null;
     }
 
+
+
+
+    // Method for implementing ViewModel callbacks to fetch a location and station list around
+    // the location.
+    private void observeViewModel(ViewModel model) {
+        if(model instanceof LocationViewModel) {
+            locationModel.getLocation().observe(this, location -> {
+                // Location fetched or changed at a preset distance.
+                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
+                    //binding.pbNearStns.setVisibility(View.VISIBLE);
+                    mPrevLocation = location;
+                    stnParams[0] = gasCode;
+                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+
+                // Station default params changed from SettingPrefActivity.
+                } else if(isRadiusChanged || isGasTypeChanged) {
+                    log.i("params changed: %s, %s", stnParams[0], stnParams[1]);
+                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+
+                } else {
+                    binding.pbNearStns.setVisibility(View.GONE);
+                    binding.recyclerContents.setVisibility(View.GONE);
+                    binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                }
+            });
+
+            locationModel.getLocationException().observe(this, exception -> {
+                log.i("Exception occurred while fetching location");
+                SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
+                binding.pbNearStns.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                binding.stationRecyclerView.showSpannableTextView(spannableString);
+
+            });
+
+        } else if(model instanceof StationListViewModel) {
+            stnModel.getNearStationList().observe(this, stnList -> {
+                binding.recyclerContents.setVisibility(View.GONE);
+                binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                binding.btnToggleStation.setChecked(true);
+
+                if (stnList != null && stnList.size() > 0) {
+                    log.i("near stations: %s", stnList.size());
+                    mStationList = stnList;
+                    stnListAdapter = new StationListAdapter(mStationList, this);
+                    binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
+                    binding.stationRecyclerView.showStationRecyclerView();
+                    binding.fab.setVisibility(View.VISIBLE);
+
+                } else {
+                    // No near stations post an message that contains the clickable span to link to the
+                    // SettingPreferenceActivity for resetting the searching radius.
+                    SpannableString spannableString = handleStationListException();
+                    binding.stationRecyclerView.showSpannableTextView(spannableString);
+                }
+
+                isRadiusChanged = false;
+                isGasTypeChanged = false;
+                binding.pbNearStns.setVisibility(View.GONE);
+            });
+
+            // Update the carwash info to StationList and notify the data change to Adapter.
+            // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+            // e.g. when the view is not attached.
+            stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
+                for(int i = 0; i < sparseArray.size(); i++) {
+                    mStationList.get(i).setIsWash(sparseArray.valueAt(i));
+                    stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
+                }
+                // To notify that fetching station list has completed.
+                hasStationInfo = true;
+            });
+        }
+    }
+
+    private SpannableString handleStationListException(){
+        SpannableString spannableString;
+        if(isNetworkConnected) {
+            String msg = getString(R.string.main_no_station_fetched);
+            String radius = stnParams[1];
+            // In case the radius is already set to the maximum value(5000m), no need to change the value.
+            if(radius != null && radius.matches("5000")) {
+                msg = msg.substring(0, msg.indexOf("\n"));
+                return new SpannableString(stnParams[1] + msg);
+            }
+
+            String format = String.format("%s%s", radius, msg);
+
+            spannableString = new SpannableString(format);
+            log.i("spannable string: %s", spannableString);
+            spannableString.setSpan(
+                    new ForegroundColorSpan(Color.RED), 0,
+                    Objects.requireNonNull(radius).length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Set the ClickableSpan range
+            String spanned = getString(R.string.main_index_reset);
+            int start = format.indexOf(spanned);
+            int end = start + spanned.length();
+
+
+
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    Intent settingIntent = new Intent(MainActivity.this, SettingPrefActivity.class);
+                    activityResultLauncher.launch(settingIntent);
+                }
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+
+        } else {
+            String message = getString(R.string.errror_no_network);
+            spannableString = new SpannableString(message);
+
+            // Set the ClickableSpan range.
+            String spanned = getString(R.string.error_index_retry);
+            int start = message.indexOf(spanned);
+            int end = start + spanned.length();
+
+            // Refactor required: move to network setting to check if it turns on.
+            spannableString.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    Intent networkIntent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
+                    activityResultLauncher.launch(networkIntent);
+                }
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return spannableString;
+    }
 
     // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
     private void updateSettingResult(ActivityResult result) {
@@ -450,128 +586,6 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    // Method for implementing ViewModel callbacks to fetch a location and station list around
-    // the location.
-    private void callbackViewModel(ViewModel model) {
-        if(model instanceof LocationViewModel) {
-            locationModel.getLocation().observe(this, location -> {
-                // Location fetched or changed at a preset distance.
-                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
-                    //binding.pbNearStns.setVisibility(View.VISIBLE);
-                    mPrevLocation = location;
-                    stnParams[0] = gasCode;
-                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
-                // Station default params changed from SettingPrefActivity.
-                } else if(isRadiusChanged || isGasTypeChanged) {
-                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
-                } else {
-                    binding.pbNearStns.setVisibility(View.GONE);
-                    binding.recyclerContents.setVisibility(View.GONE);
-                    binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                }
-            });
 
-            locationModel.getLocationException().observe(this, exception -> {
-                log.i("Exception occurred while fetching location");
-                SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
-                binding.pbNearStns.setVisibility(View.GONE);
-                binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                binding.stationRecyclerView.showTextView(spannableString);
-
-            });
-
-        } else if(model instanceof StationListViewModel) {
-            // Receive station(s) within the radius. If no stations exist, post the message that
-            // indicate why it failed to fetch stations. It would be caused by any network problem or
-            // no stations actually exist within the radius.
-            stnModel.getNearStationList().observe(this, stnList -> {
-                binding.recyclerContents.setVisibility(View.GONE);
-                binding.stationRecyclerView.setVisibility(View.VISIBLE);
-
-                if (stnList != null && stnList.size() > 0) {
-                    log.i("near stations: %s", stnList.size());
-                    mStationList = stnList;
-                    stnListAdapter = new StationListAdapter(mStationList, this);
-
-                    binding.stationRecyclerView.childBinding.recyclerviewStations.setAdapter(stnListAdapter);
-                    binding.stationRecyclerView.showStationListRecyclerView();
-                    binding.fab.setVisibility(View.VISIBLE);
-
-                } else {
-                    // No near stations post an message that contains the clickable span to link to the
-                    // SettingPreferenceActivity for resetting the searching radius.
-                    SpannableString spannableString = handleStationListException();
-                    binding.stationRecyclerView.showTextView(spannableString);
-                }
-
-                isRadiusChanged = false;
-                isGasTypeChanged = false;
-                binding.pbNearStns.setVisibility(View.GONE);
-            });
-
-            // Update the carwash info to StationList and notify the data change to Adapter.
-            // Adapter should not assume that the payload will always be passed to onBindViewHolder()
-            // e.g. when the view is not attached.
-            stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
-                for(int i = 0; i < sparseArray.size(); i++) {
-                    mStationList.get(i).setIsWash(sparseArray.valueAt(i));
-                    stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
-                }
-                // To notify that fetching station list has completed.
-                hasStationInfo = true;
-            });
-        }
-    }
-
-    private SpannableString handleStationListException(){
-        SpannableString spannableString;
-        if(isNetworkConnected) {
-            String msg = getString(R.string.general_no_station_fetched);
-            String radius = stnParams[1];
-            // In case the radius is already set to the maximum value(5000m), no need to change the value.
-            if(radius != null && radius.matches("5000")) {
-                msg = msg.substring(0, msg.indexOf("\n"));
-                return new SpannableString(stnParams[1] + msg);
-            }
-
-            String format = String.format("%s%s", radius, msg);
-            spannableString = new SpannableString(format);
-            log.i("spannable string: %s", spannableString);
-
-            // Set the ClickableSpan range
-            String spanned = getString(R.string.general_index_reset);
-            int start = format.indexOf(spanned);
-            int end = start + spanned.length();
-
-            spannableString.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    Intent settingIntent = new Intent(MainActivity.this, SettingPrefActivity.class);
-                    activityResultLauncher.launch(settingIntent);
-                }
-            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-
-        } else {
-            String message = getString(R.string.errror_no_network);
-            spannableString = new SpannableString(message);
-
-            // Set the ClickableSpan range.
-            String spanned = getString(R.string.error_index_retry);
-            int start = message.indexOf(spanned);
-            int end = start + spanned.length();
-
-            // Refactor required: move to network setting to check if it turns on.
-            spannableString.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    Intent networkIntent = new Intent(Settings.ACTION_NETWORK_OPERATOR_SETTINGS);
-                    activityResultLauncher.launch(networkIntent);
-                }
-            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        return spannableString;
-    }
 }
 

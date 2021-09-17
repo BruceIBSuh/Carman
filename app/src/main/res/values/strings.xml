@@ -51,8 +51,8 @@
     <string name="general_snackkbar_inbounds">같은 구역입니다. 잠시 후 다시 확인하여 주세요</string>
     <string name="general_carwash_yes">가능</string>
     <string name="general_carwash_no">불가</string>
-    <string name="general_no_station_fetched">미터 반경에서 주유소를 찾을 수 없습니다\n 탐색 반경을 변경해 주세요</string>
-    <string name="general_index_reset">변경</string>
+    <string name="main_no_station_fetched">미터 반경에서 주유소를 찾을 수 없습니다\n 탐색 반경을 변경해 주세요</string>
+    <string name="main_index_reset">변경</string>
     <string name="general_no_location">현재 위치 정보를 찾을 수 없습니다.\n버튼을 눌려서 현재위치를 업데이트해 주세요.</string>
 
     <!-- MainActivity updated version-->

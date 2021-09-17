@@ -183,7 +183,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     startActivity(mainIntent);
                 }
 
-                setResult(RESULT_CANCELED); //to make StationRecyclerView gone if it is visible
+                setResult(RESULT_CANCELED); //to make NearGasStationsView gone if it is visible
                 finish();
                 return true;
 

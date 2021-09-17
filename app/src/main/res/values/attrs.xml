@@ -20,10 +20,9 @@
         <attr name="stnPriceDown" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="StationRecyclerView">
-        <attr name="progressbar" format="reference" />
+    <declare-styleable name="NearGasStationsView">
+        <attr name="recyclerview" format="reference" />
         <attr name="textview" format="reference" />
-        <!--<attr name="fab" format="reference" />-->
     </declare-styleable>
 
     <declare-styleable name="ExpenseViewPager">

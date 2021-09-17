@@ -41,7 +41,7 @@
                 android:background="@color/bgToolbar"
                 app:layout_collapseMode="pin"
                 app:titleMarginStart="24dp"
-                app:titleTextColor="#FFFFFF"/>
+                app:titleTextColor="#FFFFFF" />
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
@@ -59,16 +59,68 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-        <com.silverback.carman.views.StationRecyclerView
+        <com.silverback.carman.views.NearGasStationsView
             android:id="@+id/stationRecyclerView"
             android:visibility="gone"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            app:recyclerview="@id/recycler_gas_stations"
+            app:textview="@id/tv_no_station"/>
     </FrameLayout>
 
     <include
         android:id="@+id/pricebar"
         layout="@layout/main_collapsed_pricebar" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/view4"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#CCF3F3F3"
+        app:layout_insetEdge="bottom">
+
+        <ToggleButton
+            android:id="@+id/btn_toggle_station"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginEnd="8dp"
+            android:textOff=""
+            android:textOn=""
+            android:background="@drawable/selector_toggle_gas"
+            android:onClick="locateNearStations"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!--
+        <ToggleButton
+            android:id="@+id/imgbtn_svc"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="16dp"
+            android:textOff=""
+            android:textOn=""
+            android:background="@drawable/ic_service_center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btn_toggle_station"
+            app:layout_constraintTop_toTopOf="parent" />
+        -->
+        <ProgressBar
+            android:id="@+id/pb_near_stns"
+            android:visibility="gone"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginBottom="3dp"
+            android:elevation="3dp"
+            app:layout_constraintStart_toStartOf="@id/btn_toggle_station"
+            app:layout_constraintTop_toTopOf="@id/btn_toggle_station"
+            app:layout_constraintEnd_toEndOf="@id/btn_toggle_station"
+            app:layout_constraintBottom_toBottomOf="@id/btn_toggle_station"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
@@ -86,64 +138,5 @@
         app:elevation="6dp"
         app:layout_anchor="@id/stationRecyclerView"
         app:layout_anchorGravity="right|bottom" />
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/view4"
-        style="@style/Widget.AppCompat.Button.Borderless"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@android:color/holo_orange_dark"
-        app:layout_insetEdge="bottom">
-        <!--
-        <ImageButton
-            android:id="@+id/imgbtn_station"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:contentDescription="@string/app_name"
-            android:onClick="dispNearStations"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_gas_station" />
-        -->
-        <ToggleButton
-            android:id="@+id/btn_toggle_station"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="8dp"
-            android:textOff=""
-            android:textOn=""
-            android:background="@drawable/selector_toggle_main"
-            android:onClick="locateNearStations"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-        <!--
-        <ImageButton
-            android:id="@+id/imgbtn_svc"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@string/app_name"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/imgbtn_station"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_service_center" />
-        -->
-        <ProgressBar
-            android:id="@+id/pb_near_stns"
-            android:visibility="gone"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginBottom="3dp"
-            android:elevation="3dp"
-            app:layout_constraintStart_toStartOf="@id/btn_toggle_station"
-            app:layout_constraintTop_toTopOf="@id/btn_toggle_station"
-            app:layout_constraintEnd_toEndOf="@id/btn_toggle_station"
-            app:layout_constraintBottom_toBottomOf="@id/btn_toggle_station"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
