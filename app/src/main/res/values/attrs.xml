@@ -20,6 +20,10 @@
         <attr name="stnPriceDown" format="color|reference" />
     </declare-styleable>
 
+    <declare-styleable name="ProgressToggleButton">
+
+    </declare-styleable>
+
     <declare-styleable name="NearGasStationsView">
         <attr name="recyclerview" format="reference" />
         <attr name="textview" format="reference" />

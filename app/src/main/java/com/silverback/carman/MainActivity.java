@@ -25,6 +25,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
@@ -142,7 +143,7 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        binding.stationRecyclerView.getRecyclerView().addOnScrollListener(stationScrollListener);
+        binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
@@ -284,6 +285,7 @@ public class MainActivity extends BaseActivity implements
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.btnToggleStation.setChecked(false);
+            //binding.btnToggleStation.setVisibility(View.GONE);
         }
 
         switch(result.getResultCode()) {
@@ -351,16 +353,17 @@ public class MainActivity extends BaseActivity implements
 
 
     // Scale the size of the fab as the station recyclerview scrolls up and down.
-    private final RecyclerView.OnScrollListener stationScrollListener = new RecyclerView.OnScrollListener(){
+    private final RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-            if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
+            //if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
+            super.onScrolled(recyclerView, dx, dy);
         }
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
             if (newState == RecyclerView.SCROLL_STATE_IDLE){
-                binding.fab.show();
+                //binding.fab.show();
             }
             super.onScrollStateChanged(recyclerView, newState);
         }
@@ -387,6 +390,9 @@ public class MainActivity extends BaseActivity implements
         bStnOrder = !bStnOrder;
         Uri uri = saveNearStationList(mStationList);
         if(uri == null) return;
+        // Switch the FAB background.
+        if(bStnOrder) binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_location));
+        else binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_currency_won));
 
         mStationList = stnListAdapter.sortStationList(bStnOrder);
     }
@@ -432,6 +438,7 @@ public class MainActivity extends BaseActivity implements
                     binding.pbNearStns.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                    binding.fab.setVisibility(View.VISIBLE);
                 }
             });
 
@@ -448,7 +455,7 @@ public class MainActivity extends BaseActivity implements
             stnModel.getNearStationList().observe(this, stnList -> {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                binding.btnToggleStation.setChecked(true);
+                //binding.btnToggleStation.setChecked(true);
 
                 if (stnList != null && stnList.size() > 0) {
                     log.i("near stations: %s", stnList.size());

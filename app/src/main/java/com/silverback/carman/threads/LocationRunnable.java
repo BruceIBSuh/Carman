@@ -4,14 +4,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.IntentSender;
 import android.location.Location;
-import android.os.Looper;
 import android.os.Process;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
@@ -23,8 +22,6 @@ import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.CarmanLocationHelper;
-
-import androidx.annotation.NonNull;
 
 public class LocationRunnable implements
         Runnable, OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
@@ -41,9 +38,8 @@ public class LocationRunnable implements
     private final Context context;
     private final LocationMethods task;
     private FusedLocationProviderClient mFusedLocationClient;
-    private LocationRequest locationRequest; //store the Location setting params
-    private LocationCallback locationCallback;
-    private Location mCurrentLocation;
+    //private LocationCallback locationCallback;
+    //private Location mCurrentLocation;
 
 
     // Interface
@@ -66,7 +62,7 @@ public class LocationRunnable implements
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-        locationRequest = CarmanLocationHelper.getLocationInstance().createLocationRequest();
+        LocationRequest locationRequest = CarmanLocationHelper.getLocationInstance().createLocationRequest();
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
         CarmanLocationHelper.getLocationInstance().createLocationSetting(context, locationRequest)
@@ -74,6 +70,7 @@ public class LocationRunnable implements
                 .addOnFailureListener(this);
 
         // Request location updates which should be handled by the Setting option.
+        /*
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
@@ -85,6 +82,7 @@ public class LocationRunnable implements
                 mFusedLocationClient.removeLocationUpdates(locationCallback);
             }
         };
+      */
 
     }
 
@@ -102,17 +100,16 @@ public class LocationRunnable implements
             try {
                 final int priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
                 final CancellationToken token = new CancellationTokenSource().getToken();
-
                 mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
-                    if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
-                        log.i("location fetched:%s", location);
-                        mCurrentLocation = location;
+                    //if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
+                    if(location != null) {
+                        //mCurrentLocation = location;
                         task.setCurrentLocation(location);
                         task.handleLocationTask(LOCATION_TASK_COMPLETE);
                     } else {
                         log.i("location null");
-                        mFusedLocationClient.requestLocationUpdates(
-                                locationRequest, locationCallback, Looper.getMainLooper());
+                        //mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                        task.handleLocationTask(LOCATION_TASK_FAIL);
                     }
                 });
 
@@ -135,8 +132,6 @@ public class LocationRunnable implements
             } catch (IntentSender.SendIntentException sendEx) {
                 e.printStackTrace();
             }
-
-            task.handleLocationTask(LOCATION_TASK_FAIL);
         }
     }
 }

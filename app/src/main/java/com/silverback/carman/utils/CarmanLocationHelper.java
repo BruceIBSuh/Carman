@@ -27,13 +27,12 @@ public class CarmanLocationHelper implements
 
     // Objects
     //private static CarmanLocationHelper sLocationHelper;
-    private final LocationRequest mLocationRequest;
     private Location mLocation;
 
     private CarmanLocationHelper() {
         // Leave this empty for creating a singleton pattern
-        mLocationRequest = LocationRequest.create();
-        createLocationRequest();
+        //mLocationRequest = LocationRequest.create();
+        //createLocationRequest();
     }
 
 
@@ -54,29 +53,30 @@ public class CarmanLocationHelper implements
         return CarmanInnerClazz.sLocationInstance;
     }
 
-    //private LocationSettingsRequest setLocationRequest() {
     public LocationRequest createLocationRequest() {
-        mLocationRequest.setInterval(Constants.INTERVAL);
-        mLocationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
-        mLocationRequest.setMaxWaitTime(Constants.MAX_WAIT);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        return mLocationRequest;
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setInterval(Constants.INTERVAL);
+        locationRequest.setFastestInterval(Constants.FASTEST_INTERVAL);
+        locationRequest.setMaxWaitTime(Constants.MAX_WAIT);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        return locationRequest;
     }
 
-    public Task<LocationSettingsResponse> createLocationSetting(Context context, LocationRequest locationRequest) {
-        //Log.i(LOG_TAG, "Check Location setting");
+    public Task<LocationSettingsResponse> createLocationSetting(
+            Context context, LocationRequest locationRequest) {
+
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(locationRequest);
 
         SettingsClient settingClient = LocationServices.getSettingsClient(context);
         return settingClient.checkLocationSettings(builder.build());
-        //.addOnSuccessListener(this)
-        //.addOnFailureListener(this);
     }
 
 
     public LocationCallback initLocationCallback() {
+
         return new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
