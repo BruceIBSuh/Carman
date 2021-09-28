@@ -284,8 +284,7 @@ public class MainActivity extends BaseActivity implements
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
-            binding.btnToggleStation.setChecked(false);
-            //binding.btnToggleStation.setVisibility(View.GONE);
+            //binding.btnToggleStation.setChecked(false);
         }
 
         switch(result.getResultCode()) {
@@ -372,16 +371,20 @@ public class MainActivity extends BaseActivity implements
     // Implement the onClickListener of the toggle button which is defined in the xml file
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        binding.progressToggle.setProgressColor(isStnViewOn);
+
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                binding.pbNearStns.setVisibility(View.VISIBLE);
+                //binding.pbNearStns.setVisibility(View.VISIBLE);
             });
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
         }
+
+
     }
 
     // Reorder near station list according to the distance/price, which is called from the layout
@@ -435,7 +438,7 @@ public class MainActivity extends BaseActivity implements
                     stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
 
                 } else {
-                    binding.pbNearStns.setVisibility(View.GONE);
+                    //binding.pbNearStns.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
                     binding.fab.setVisibility(View.VISIBLE);
@@ -445,7 +448,7 @@ public class MainActivity extends BaseActivity implements
             locationModel.getLocationException().observe(this, exception -> {
                 log.i("Exception occurred while fetching location");
                 SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
-                binding.pbNearStns.setVisibility(View.GONE);
+                //binding.pbNearStns.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.stationRecyclerView.showSpannableTextView(spannableString);
 
@@ -474,7 +477,8 @@ public class MainActivity extends BaseActivity implements
 
                 isRadiusChanged = false;
                 isGasTypeChanged = false;
-                binding.pbNearStns.setVisibility(View.GONE);
+                //binding.pbNearStns.setVisibility(View.GONE);
+                binding.progressToggle.setProgressColor(true);
             });
 
             // Update the carwash info to StationList and notify the data change to Adapter.

@@ -77,21 +77,21 @@
         style="@style/Widget.AppCompat.Button.Borderless"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
         android:background="@color/recyclerDivider"
+        android:layout_gravity="bottom"
         app:layout_insetEdge="bottom">
-        <!--
+
         <com.silverback.carman.views.ProgressToggleButton
-            android:id="@+id/btn_toggle_station"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="3dp"
+            android:id="@+id/progressToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:onClick="locateNearStations"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-        -->
+            app:layout_constraintTop_toTopOf="parent"
+            app:pbBackground="#FF9900" />
+
+        <!--
         <ToggleButton
             android:id="@+id/btn_toggle_station"
             android:layout_width="40dp"
@@ -105,7 +105,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        <!--
+
         <ToggleButton
             android:id="@+id/imgbtn_svc"
             android:layout_width="30dp"
@@ -117,7 +117,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btn_toggle_station"
             app:layout_constraintTop_toTopOf="parent" />
-        -->
+
         <ProgressBar
             android:id="@+id/pb_near_stns"
             android:visibility="gone"
@@ -130,6 +130,9 @@
             app:layout_constraintTop_toTopOf="@id/btn_toggle_station"
             app:layout_constraintEnd_toEndOf="@id/btn_toggle_station"
             app:layout_constraintBottom_toBottomOf="@id/btn_toggle_station"/>
+        -->
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
