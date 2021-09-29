@@ -368,10 +368,10 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    // Implement the onClickListener of the toggle button which is defined in the xml file
+    // Implement the onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        binding.progressToggle.setProgressColor(isStnViewOn);
+        binding.progbtnGas.setProgressColor(isStnViewOn);
 
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
@@ -383,8 +383,10 @@ public class MainActivity extends BaseActivity implements
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
         }
+    }
 
-
+    public void locateNearServices(View view) {
+        log.i("method for locating near servce centers");
     }
 
     // Reorder near station list according to the distance/price, which is called from the layout
@@ -442,6 +444,7 @@ public class MainActivity extends BaseActivity implements
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
                     binding.fab.setVisibility(View.VISIBLE);
+                    binding.progbtnGas.setProgressColor(true);
                 }
             });
 
@@ -478,7 +481,7 @@ public class MainActivity extends BaseActivity implements
                 isRadiusChanged = false;
                 isGasTypeChanged = false;
                 //binding.pbNearStns.setVisibility(View.GONE);
-                binding.progressToggle.setProgressColor(true);
+                binding.progbtnGas.setProgressColor(true);
             });
 
             // Update the carwash info to StationList and notify the data change to Adapter.
@@ -509,7 +512,6 @@ public class MainActivity extends BaseActivity implements
             String format = String.format("%s%s", radius, msg);
 
             spannableString = new SpannableString(format);
-            log.i("spannable string: %s", spannableString);
             spannableString.setSpan(
                     new ForegroundColorSpan(Color.RED), 0,
                     Objects.requireNonNull(radius).length(),
@@ -519,8 +521,6 @@ public class MainActivity extends BaseActivity implements
             String spanned = getString(R.string.main_index_reset);
             int start = format.indexOf(spanned);
             int end = start + spanned.length();
-
-
 
             spannableString.setSpan(new ClickableSpan() {
                 @Override

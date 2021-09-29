@@ -20,9 +20,13 @@
         <attr name="stnPriceDown" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="ProgressToggleButton">
-        <attr name="pbBackground" format="color|reference" />
-        <attr name="pbProgress"  format="color|reference" />
+    <declare-styleable name="ProgressButton">
+        <attr name="bgToggle" format="reference" />
+        <attr name="progBgColor" format="color|reference" />
+        <attr name="onEvent" format="enum">
+            <enum name="gas" value="0" />
+            <enum name="svc" value="1" />
+        </attr>
     </declare-styleable>
 
     <declare-styleable name="NearGasStationsView">

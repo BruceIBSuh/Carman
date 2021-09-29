@@ -257,7 +257,7 @@ public class ThreadManager2 {
             //mGasPriceTaskQueue.offer(gasPriceTask);
         } else if(task instanceof LocationTask) {
             locationTask.recycle();
-            locationTask = null;
+            //locationTask = null;
             mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
             //stnListTask.recycle();

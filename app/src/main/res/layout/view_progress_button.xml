@@ -4,25 +4,25 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:layout_marginTop="3dp"
     android:gravity="center"
     android:orientation="vertical" >
 
-    <ToggleButton
-        android:id="@+id/toggleButton"
+    <Button
+        android:id="@+id/button"
         android:layout_width="20dp"
         android:layout_height="20dp"
-        android:background="@drawable/bg_gas_station"
-        android:padding="0dp"
-        android:textOff=""
-        android:textOn=""
-        android:onClick="locateNearStations"/>
+        android:layout_marginTop="8dp" />
+
 
     <ProgressBar
-        android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleHorizontal"
+        android:id="@+id/progressBar"
         android:layout_width="30dp"
-        android:layout_height="10dp"
-        android:scaleY="2"
-        android:progressBackgroundTint="@android:color/holo_blue_dark" />
+        android:layout_height="5dp"
+        android:layout_marginTop="3dp"
+        android:indeterminateOnly="false"
+        android:indeterminateTint="@android:color/holo_red_light"
+        android:indeterminateTintMode="src_in"/>
 
 </LinearLayout>
