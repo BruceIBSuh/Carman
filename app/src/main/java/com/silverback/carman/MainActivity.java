@@ -284,7 +284,7 @@ public class MainActivity extends BaseActivity implements
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
-            //binding.btnToggleStation.setChecked(false);
+            binding.progbtnGas.setProgressColor(isStnViewOn);
         }
 
         switch(result.getResultCode()) {

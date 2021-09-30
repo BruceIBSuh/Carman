@@ -25,7 +25,7 @@ public class ProgressButton extends LinearLayout {
 
     private ViewProgressButtonBinding binding;
     private Context context;
-    private int progBgColor;
+    private int pbColorRef;
     private int eventRef;
     private int offColor, onColor;
 
@@ -52,14 +52,14 @@ public class ProgressButton extends LinearLayout {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ProgressButton);
 
         try {
-            progBgColor = a.getColor(R.styleable.ProgressButton_progBgColor, 0);
+            pbColorRef = a.getColor(R.styleable.ProgressButton_progBgColor, 0);
             bgButtonRef = a.getDrawable(R.styleable.ProgressButton_bgToggle);
             eventRef = a.getInt(R.styleable.ProgressButton_onEvent, -1);
         } finally {
             a.recycle();
         }
 
-        binding.progressBar.setBackgroundColor(progBgColor);
+        binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(bgButtonRef);
         binding.button.setOnClickListener(view -> setEvent(context, view));
 
@@ -82,8 +82,8 @@ public class ProgressButton extends LinearLayout {
             binding.progressBar.setScaleY(5f);
         } else {
             binding.progressBar.setIndeterminate(false);
-            progBgColor = (progBgColor == 0)? ContextCompat.getColor(context, android.R.color.holo_red_light) : 0;
-            binding.progressBar.setBackgroundColor(progBgColor);
+            pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
+            binding.progressBar.setBackgroundColor(pbColorRef);
             binding.progressBar.setScaleY(1f);
         }
     }
