@@ -38,6 +38,7 @@ public class LocationRunnable implements
     static final int LOCATION_TASK_FAIL= -1;
 
     // Objects and Fields
+    private static CarmanLocationHelper locationHelper;
     private final Context context;
     private final LocationMethods task;
     private FusedLocationProviderClient mFusedLocationClient;
@@ -54,6 +55,9 @@ public class LocationRunnable implements
         void handleLocationTask(int state);
     }
 
+    static {
+        locationHelper = CarmanLocationHelper.getLocationInstance();
+    }
     // Constructor
     LocationRunnable(Context context, LocationMethods task) {
         this.task = task;
@@ -66,14 +70,16 @@ public class LocationRunnable implements
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-        locationRequest = CarmanLocationHelper.getLocationInstance().createLocationRequest();
+        locationRequest = locationHelper.createLocationRequest();
+        locationCallback = locationHelper.initLocationCallback();
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
-        CarmanLocationHelper.getLocationInstance().createLocationSetting(context, locationRequest)
+        locationHelper.createLocationSetting(context, locationRequest)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this);
 
         // Request location updates which should be handled by the Setting option.
+        /*
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
@@ -86,6 +92,8 @@ public class LocationRunnable implements
             }
         };
 
+         */
+
     }
 
     // Check if the Location setting is successful using CarmanLocationHelper
@@ -93,26 +101,28 @@ public class LocationRunnable implements
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
         LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         if(locationStates != null && !locationStates.isGpsUsable()) {
-            log.i("GPS is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_gps));
         } else if(locationStates != null && !locationStates.isNetworkLocationUsable()) {
-            log.i("Network location is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_network));
         } else {
             try {
                 final int priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
                 final CancellationToken token = new CancellationTokenSource().getToken();
-
-                mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
-                    if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
+                //mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
+                mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                    if (location != null){
                         log.i("location fetched:%s", location);
-                        mCurrentLocation = location;
+                        //mCurrentLocation = location;
                         task.setCurrentLocation(location);
                         task.handleLocationTask(LOCATION_TASK_COMPLETE);
                     } else {
                         log.i("location null");
+                        /*
                         mFusedLocationClient.requestLocationUpdates(
                                 locationRequest, locationCallback, Looper.getMainLooper());
+
+                         */
                     }
                 });
 
@@ -120,6 +130,8 @@ public class LocationRunnable implements
                 log.e("Location_SecurityException: %s", e.getMessage());
                 task.notifyLocationException(context.getString(R.string.location_exception_security));
                 task.handleLocationTask(LOCATION_TASK_FAIL);
+            } finally {
+                mFusedLocationClient.removeLocationUpdates(locationCallback);
             }
         }
     }

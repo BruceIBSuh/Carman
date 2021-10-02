@@ -354,7 +354,7 @@ public class MainActivity extends BaseActivity implements
     private final RecyclerView.OnScrollListener stationScrollListener = new RecyclerView.OnScrollListener(){
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-            if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
+            //if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
         }
 
         @Override

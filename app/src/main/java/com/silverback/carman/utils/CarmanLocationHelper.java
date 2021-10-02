@@ -47,9 +47,7 @@ public class CarmanLocationHelper implements
         if(sLocationHelper == null) {
             sLocationHelper = new CarmanLocationHelper();
         }
-
         return sLocationHelper;
-
          */
         return CarmanInnerClazz.sLocationInstance;
     }
