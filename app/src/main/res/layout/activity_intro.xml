@@ -12,8 +12,8 @@
         android:id="@+id/pb_intro"
         android:visibility="invisible"
         android:indeterminateDrawable="@drawable/layerlist_progbar_start"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
         android:layout_centerInParent="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -22,9 +22,9 @@
 
     <ImageView
         android:id="@+id/imgview_title_main"
-        android:layout_width="120dp"
-        android:layout_height="70dp"
-        android:layout_marginTop="64dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="65dp"
         android:contentDescription="@null"
         android:scaleType="fitCenter"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,11 +34,11 @@
 
     <ImageButton
         android:id="@+id/btn_start"
-        android:layout_width="90dp"
-        android:layout_height="90dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:src="@drawable/bg_imgbtn_start"
         android:background="@android:color/transparent"
-        android:scaleType="fitCenter"
+        android:scaleType="centerInside"
         android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -5,7 +5,8 @@
 
     <uses-feature android:name="android.hardware,camera" android:required="false" />
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- ACCESS_BACKGROUND_LOCATION is required for Android 10(API 29) or above -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- ACCESS_BACKGROUND_LOCATION is required for Android 10(API 29) or above -->
     <!-- tools:remove="android:maxSdkVersion" might be required to show a permission dialog -->
     <uses-permission-sdk-23 android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission-sdk-23 android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

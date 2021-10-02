@@ -78,61 +78,84 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="#F9F9F9"
+        android:background="@color/recyclerDivider"
         app:layout_insetEdge="bottom">
 
-        <ToggleButton
-            android:id="@+id/btn_toggle_station"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="8dp"
-            android:textOff=""
-            android:textOn=""
-            android:background="@drawable/selector_toggle_gas"
-            android:onClick="locateNearStations"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!--
-        <ToggleButton
-            android:id="@+id/imgbtn_svc"
+        <View
+            android:id="@+id/bottom_view1"
+            android:visibility="invisible"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:layout_marginEnd="16dp"
-            android:textOff=""
-            android:textOn=""
-            android:background="@drawable/ic_service_center"
+            android:layout_marginStart="8dp"
+            android:background="@android:color/darker_gray"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btn_toggle_station"
+            app:layout_constraintEnd_toStartOf="@+id/bottom_view2"
+            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-        -->
-        <ProgressBar
-            android:id="@+id/pb_near_stns"
-            android:visibility="gone"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginBottom="3dp"
-            android:elevation="3dp"
-            app:layout_constraintStart_toStartOf="@id/btn_toggle_station"
-            app:layout_constraintTop_toTopOf="@id/btn_toggle_station"
-            app:layout_constraintEnd_toEndOf="@id/btn_toggle_station"
-            app:layout_constraintBottom_toBottomOf="@id/btn_toggle_station"/>
+
+        <View
+            android:id="@+id/bottom_view2"
+            android:visibility="invisible"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@android:color/darker_gray"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/bottom_view3"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/bottom_view1"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/bottom_view3"
+            android:visibility="invisible"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@android:color/darker_gray"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/progbtn_svc"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/bottom_view2"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.silverback.carman.views.ProgressButton
+            android:id="@+id/progbtn_gas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            app:bgToggle="@drawable/bg_gas_station"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/progbtn_svc"
+            app:layout_constraintTop_toTopOf="parent"
+            app:onEvent="gas" />
+
+        <com.silverback.carman.views.ProgressButton
+            android:id="@+id/progbtn_svc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:bgToggle="@drawable/bg_svc_station"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/progbtn_gas"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toEndOf="@+id/bottom_view3"
+            app:layout_constraintTop_toTopOf="parent"
+            app:onEvent="svc" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
-        android:visibility="gone"
+        android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:alpha="0.5"
         android:contentDescription="@null"
-        android:src="@android:drawable/ic_menu_mylocation"
+        android:src="@drawable/bg_currency_won"
         android:onClick="switchNearStationOrder"
-        app:backgroundTint="@color/colorAccent"
+        app:backgroundTint="@android:color/holo_blue_dark"
         app:rippleColor="@color/colorPrimary"
         app:borderWidth="0dp"
         app:elevation="6dp"

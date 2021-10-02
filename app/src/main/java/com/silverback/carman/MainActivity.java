@@ -25,6 +25,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
@@ -142,7 +143,7 @@ public class MainActivity extends BaseActivity implements
 
         // Event Handlers
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        binding.stationRecyclerView.getRecyclerView().addOnScrollListener(stationScrollListener);
+        binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
@@ -283,7 +284,7 @@ public class MainActivity extends BaseActivity implements
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
-            binding.btnToggleStation.setChecked(false);
+            binding.progbtnGas.setProgressColor(isStnViewOn);
         }
 
         switch(result.getResultCode()) {
@@ -351,28 +352,31 @@ public class MainActivity extends BaseActivity implements
 
 
     // Scale the size of the fab as the station recyclerview scrolls up and down.
-    private final RecyclerView.OnScrollListener stationScrollListener = new RecyclerView.OnScrollListener(){
+    private final RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             //if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
+            super.onScrolled(recyclerView, dx, dy);
         }
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
             if (newState == RecyclerView.SCROLL_STATE_IDLE){
-                binding.fab.show();
+                //binding.fab.show();
             }
             super.onScrollStateChanged(recyclerView, newState);
         }
     };
 
-    // Implement the onClickListener of the toggle button which is defined in the xml file
+    // Implement the onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        binding.progbtnGas.setProgressColor(isStnViewOn);
+
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                binding.pbNearStns.setVisibility(View.VISIBLE);
+                //binding.pbNearStns.setVisibility(View.VISIBLE);
             });
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
@@ -381,12 +385,19 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    public void locateNearServices(View view) {
+        log.i("method for locating near servce centers");
+    }
+
     // Reorder near station list according to the distance/price, which is called from the layout
     // file as well.
     public void switchNearStationOrder(View view) {
         bStnOrder = !bStnOrder;
         Uri uri = saveNearStationList(mStationList);
         if(uri == null) return;
+        // Switch the FAB background.
+        if(bStnOrder) binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_location));
+        else binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_currency_won));
 
         mStationList = stnListAdapter.sortStationList(bStnOrder);
     }
@@ -429,16 +440,18 @@ public class MainActivity extends BaseActivity implements
                     stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
 
                 } else {
-                    binding.pbNearStns.setVisibility(View.GONE);
+                    //binding.pbNearStns.setVisibility(View.GONE);
                     binding.recyclerContents.setVisibility(View.GONE);
                     binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                    binding.fab.setVisibility(View.VISIBLE);
+                    binding.progbtnGas.setProgressColor(true);
                 }
             });
 
             locationModel.getLocationException().observe(this, exception -> {
                 log.i("Exception occurred while fetching location");
                 SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
-                binding.pbNearStns.setVisibility(View.GONE);
+                //binding.pbNearStns.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 binding.stationRecyclerView.showSpannableTextView(spannableString);
 
@@ -448,7 +461,7 @@ public class MainActivity extends BaseActivity implements
             stnModel.getNearStationList().observe(this, stnList -> {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                binding.btnToggleStation.setChecked(true);
+                //binding.btnToggleStation.setChecked(true);
 
                 if (stnList != null && stnList.size() > 0) {
                     log.i("near stations: %s", stnList.size());
@@ -467,7 +480,8 @@ public class MainActivity extends BaseActivity implements
 
                 isRadiusChanged = false;
                 isGasTypeChanged = false;
-                binding.pbNearStns.setVisibility(View.GONE);
+                //binding.pbNearStns.setVisibility(View.GONE);
+                binding.progbtnGas.setProgressColor(true);
             });
 
             // Update the carwash info to StationList and notify the data change to Adapter.
@@ -498,7 +512,6 @@ public class MainActivity extends BaseActivity implements
             String format = String.format("%s%s", radius, msg);
 
             spannableString = new SpannableString(format);
-            log.i("spannable string: %s", spannableString);
             spannableString.setSpan(
                     new ForegroundColorSpan(Color.RED), 0,
                     Objects.requireNonNull(radius).length(),
@@ -508,8 +521,6 @@ public class MainActivity extends BaseActivity implements
             String spanned = getString(R.string.main_index_reset);
             int start = format.indexOf(spanned);
             int end = start + spanned.length();
-
-
 
             spannableString.setSpan(new ClickableSpan() {
                 @Override

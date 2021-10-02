@@ -21,7 +21,6 @@
         app:layout_constraintTop_toTopOf="parent">
     </com.silverback.carman.views.OpinetAvgPriceView>
     <!-- android:background="#A5D6A7" -->
-
     <View
         android:id="@+id/view_subtitle_spinner"
         android:layout_width="0dp"

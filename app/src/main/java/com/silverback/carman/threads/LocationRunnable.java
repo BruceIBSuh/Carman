@@ -4,14 +4,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.IntentSender;
 import android.location.Location;
-import android.os.Looper;
 import android.os.Process;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
@@ -23,8 +22,6 @@ import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.CarmanLocationHelper;
-
-import androidx.annotation.NonNull;
 
 public class LocationRunnable implements
         Runnable, OnFailureListener, OnSuccessListener<LocationSettingsResponse> {
@@ -38,13 +35,11 @@ public class LocationRunnable implements
     static final int LOCATION_TASK_FAIL= -1;
 
     // Objects and Fields
-    private static CarmanLocationHelper locationHelper;
     private final Context context;
     private final LocationMethods task;
     private FusedLocationProviderClient mFusedLocationClient;
-    private LocationRequest locationRequest; //store the Location setting params
-    private LocationCallback locationCallback;
-    private Location mCurrentLocation;
+    //private LocationCallback locationCallback;
+    //private Location mCurrentLocation;
 
 
     // Interface
@@ -55,9 +50,6 @@ public class LocationRunnable implements
         void handleLocationTask(int state);
     }
 
-    static {
-        locationHelper = CarmanLocationHelper.getLocationInstance();
-    }
     // Constructor
     LocationRunnable(Context context, LocationMethods task) {
         this.task = task;
@@ -70,11 +62,10 @@ public class LocationRunnable implements
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
-        locationRequest = locationHelper.createLocationRequest();
-        locationCallback = locationHelper.initLocationCallback();
+        LocationRequest locationRequest = CarmanLocationHelper.getLocationInstance().createLocationRequest();
         // LocationCallback should be initiated as long as LocationSettingsRequest has been
         // successfully accepted.
-        locationHelper.createLocationSetting(context, locationRequest)
+        CarmanLocationHelper.getLocationInstance().createLocationSetting(context, locationRequest)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this);
 
@@ -91,8 +82,7 @@ public class LocationRunnable implements
                 mFusedLocationClient.removeLocationUpdates(locationCallback);
             }
         };
-
-         */
+      */
 
     }
 
@@ -101,28 +91,25 @@ public class LocationRunnable implements
     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
         LocationSettingsStates locationStates = locationSettingsResponse.getLocationSettingsStates();
         if(locationStates != null && !locationStates.isGpsUsable()) {
+            log.i("GPS is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_gps));
         } else if(locationStates != null && !locationStates.isNetworkLocationUsable()) {
+            log.i("Network location is not working");
             task.notifyLocationException(context.getString(R.string.location_notify_network));
         } else {
             try {
                 final int priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
                 final CancellationToken token = new CancellationTokenSource().getToken();
-                //mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
-                mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
-                mFusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
-                    if (location != null){
-                        log.i("location fetched:%s", location);
+                mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
+                    //if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
+                    if(location != null) {
                         //mCurrentLocation = location;
                         task.setCurrentLocation(location);
                         task.handleLocationTask(LOCATION_TASK_COMPLETE);
                     } else {
                         log.i("location null");
-                        /*
-                        mFusedLocationClient.requestLocationUpdates(
-                                locationRequest, locationCallback, Looper.getMainLooper());
-
-                         */
+                        //mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
+                        task.handleLocationTask(LOCATION_TASK_FAIL);
                     }
                 });
 
@@ -130,8 +117,6 @@ public class LocationRunnable implements
                 log.e("Location_SecurityException: %s", e.getMessage());
                 task.notifyLocationException(context.getString(R.string.location_exception_security));
                 task.handleLocationTask(LOCATION_TASK_FAIL);
-            } finally {
-                mFusedLocationClient.removeLocationUpdates(locationCallback);
             }
         }
     }
@@ -147,8 +132,6 @@ public class LocationRunnable implements
             } catch (IntentSender.SendIntentException sendEx) {
                 e.printStackTrace();
             }
-
-            task.handleLocationTask(LOCATION_TASK_FAIL);
         }
     }
 }

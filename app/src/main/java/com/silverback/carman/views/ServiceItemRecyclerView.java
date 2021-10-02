@@ -12,7 +12,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 public class ServiceItemRecyclerView extends RecyclerView {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemRecyclerView.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(ServiceItemRecyclerView.class);
 
     // Constructor
     public ServiceItemRecyclerView(Context context) {
@@ -30,10 +30,8 @@ public class ServiceItemRecyclerView extends RecyclerView {
     }
 
     private void getAttribute(Context context, AttributeSet attrs) {
-
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(context);
         setLayoutManager(layoutManager);
-
     }
 
     @Override
