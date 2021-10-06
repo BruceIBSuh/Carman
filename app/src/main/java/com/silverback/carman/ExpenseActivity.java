@@ -1,5 +1,6 @@
 package com.silverback.carman;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -8,6 +9,7 @@ import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -21,8 +23,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -46,6 +46,7 @@ import com.silverback.carman.utils.DatePickerFragment;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 /*
@@ -139,7 +140,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
 
-        // Initialize the field values
+        // Initialize field values
         prevHeight = 0;
 
     }
@@ -189,7 +190,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
             // menu for saving the gas or service data
             case MENU_ITEM_SAVE:
-                saveExpenseData(currentPage);
+                saveExpenseData();
                 return true;
 
             default: return super.onOptionsItemSelected(item);
@@ -233,14 +234,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 log.i("onPageScrollStateChanged: %s", state);
                 this.state = state;
             }
-
-            /*
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                log.i("onPageScrolled: %s, %s, %s", position, positionOffset, positionOffsetPixels);
-            }
-
-             */
 
             @Override
             public void onPageSelected(int position) {
@@ -436,26 +429,44 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // Save data in the Room based on which framgnet the activity contains. The data should be
     // uploaded to Firestore at the same time only if the user is logged in. The method to save data
     // is defined in each fragment.
-    public void saveExpenseData(int page) {
-        Fragment fragment = expContentPagerAdapter.getCurrentFragment(page);
+    public void saveExpenseData() {
+        WeakReference<Fragment> weakFragment = expContentPagerAdapter.weakFragmentReference(currentPage);
         String userId = getUserIdFromStorage(this);
-        Intent resultIntent = new Intent();
 
-        if(fragment instanceof GasManagerFragment) {
-            ((GasManagerFragment)fragment).saveGasData(userId).observe(this, gasTotal -> {
-                if(gasTotal == 0) return;
-                resultIntent.putExtra("totalsum", gasTotal);
-                setResult(RESULT_CANCELED, resultIntent);
-                finish();
-            });
+        if(weakFragment.get() instanceof GasManagerFragment) {
+            ((GasManagerFragment)weakFragment.get()).saveGasData(userId);
 
-        } else if(fragment instanceof ServiceManagerFragment) {
-            ((ServiceManagerFragment)fragment).saveServiceData(userId).observe(this, svcTotal -> {
+        } else if(weakFragment.get() instanceof ServiceManagerFragment) {
+            ((ServiceManagerFragment)weakFragment.get()).saveServiceData(userId).observe(this, svcTotal -> {
                 if(svcTotal == 0) return;
+                Intent resultIntent = new Intent();
                 resultIntent.putExtra("totalsum", svcTotal);
                 setResult(RESULT_CANCELED, resultIntent);
                 finish();
             });
+        }
+    }
+
+    // Invoked when the favorite image button clicks, which is defined in android:onClick in its
+    // xml file.
+    public void checkBackgroundLocationPermission(View view) {
+        WeakReference<Fragment> weakFragment = expContentPagerAdapter.weakFragmentReference(currentPage);
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            String permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+            checkRuntimePermission(binding.getRoot(), permission, () -> {
+                if(weakFragment.get() instanceof GasManagerFragment) {
+                    ((GasManagerFragment)weakFragment.get()).addGasFavorite();
+                } else if(weakFragment.get() instanceof ServiceManagerFragment) {
+                    ((ServiceManagerFragment)weakFragment.get()).addServiceFavorite();
+                }
+            });
+        } else {
+            if(weakFragment.get() instanceof GasManagerFragment) {
+                ((GasManagerFragment)weakFragment.get()).addGasFavorite();
+            } else if(weakFragment.get() instanceof ServiceManagerFragment) {
+                ((ServiceManagerFragment)weakFragment.get()).addServiceFavorite();
+            }
         }
     }
 

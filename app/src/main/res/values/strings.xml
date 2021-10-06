@@ -40,7 +40,7 @@
     <string name="general_label_gas_amount">주유량:</string>
     <string name="general_label_gas_payment">주유금액:</string>
     <string name="general_label_svc_items">서비스내역:</string>
-    <string name="general_label_svc_payment">서비스비용:</string>
+    <string name="general_label_svc_payment">서비스비용:</string>셋
     <string name="general_no_gas_history">최근 주유 이력이 없습니다</string>
     <string name="general_no_svc_history">최근 정비 이력이 없습니다</string>
     <!--MainActivity$GeneralFragment$StatonRecyclerView-->
@@ -93,6 +93,7 @@
     <string name="exp_label_odometer">주행거리</string>
     <string name="exp_menu_save">저장</string>
     <string name="exp_snackbar_favorite_limit">즐겨찾기는 10개까지 지정할 수 있습니다</string>
+    <string name="exp_ratingbar_reset">취소</string>
     <!--ExpenseActivity$ExpensPagerFragment-->
     <string name="toast_expense_no_data">최근 데이터가 없습니다</string>
     <!--ExpenseActivity$GasMangerFragment-->
@@ -108,7 +109,7 @@
     <string name="gas_label_evaluation">주유소 평점</string>
     <string name="tv_label_comment">평가 한마디</string>
     <string name="gas_btn_change">수정</string>
-    <string name="gas_btn_reset">리셋</string>
+
     <string name="gas_value_null">0</string>
     <string name="toast_station_name">주유소 이름을 입력해 주세요</string>
     <string name="toast_payment">주유 금액을 입력해 주세요</string>

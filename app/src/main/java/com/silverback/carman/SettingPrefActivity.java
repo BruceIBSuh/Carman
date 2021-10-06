@@ -33,7 +33,7 @@ import com.google.firebase.storage.UploadTask;
 import com.silverback.carman.databinding.ActivityGeneralSettingBinding;
 import com.silverback.carman.fragments.CropImageDialogFragment;
 import com.silverback.carman.fragments.PermRationaleFragment;
-import com.silverback.carman.fragments.ProgbarDialogFragment;
+import com.silverback.carman.fragments.ProgressBarDialogFragment;
 import com.silverback.carman.fragments.SettingAutoFragment;
 import com.silverback.carman.fragments.SettingFavorGasFragment;
 import com.silverback.carman.fragments.SettingFavorSvcFragment;
@@ -535,7 +535,7 @@ public class SettingPrefActivity extends BaseActivity implements
     private void uploadUserImageToFirebase(Uri uri) {
         log.i("user id of Image upaloading: %s", userId);
         // Popup the progressbar displaying dialogfragment.
-        ProgbarDialogFragment progbarFragment = new ProgbarDialogFragment();
+        ProgressBarDialogFragment progbarFragment = new ProgressBarDialogFragment();
         String msg = (uri == null)?
                 getString(R.string.setting_msg_remove_image):
                 getString(R.string.setting_msg_upload_image);

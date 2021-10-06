@@ -81,7 +81,7 @@ public class BaseActivity extends AppCompatActivity {
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
     // Implemented by checkRuntimePermission callback to check a specific permission.
-    protected interface PermissionCallback {
+    public interface PermissionCallback {
         void performAction();
     }
 
@@ -127,7 +127,7 @@ public class BaseActivity extends AppCompatActivity {
                 if(isGranted) log.i("Granted");
                 else log.i("Denied");
             });
-    protected void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
+    public void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
         } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {

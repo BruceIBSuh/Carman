@@ -65,7 +65,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
     // Objects
     private BoardImageSpanHandler spanHandler;
-    private ProgbarDialogFragment pbFragment;
+    private ProgressBarDialogFragment pbFragment;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
@@ -283,7 +283,7 @@ public class BoardWriteFragment extends DialogFragment implements
         */
 
 
-        // On completion of uploading a post to Firestore, dismiss ProgbarDialogFragment and add the
+        // On completion of uploading a post to Firestore, dismiss ProgressBarDialogFragment and add the
         // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
         // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
         /*
@@ -367,7 +367,7 @@ public class BoardWriteFragment extends DialogFragment implements
         if(TextUtils.isEmpty(userId) || !doEmptyCheck()) return;
 
         // Instantiate the fragment for displaying the progressbar.
-        pbFragment = new ProgbarDialogFragment();
+        pbFragment = new ProgressBarDialogFragment();
         getActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, pbFragment).commit();
 

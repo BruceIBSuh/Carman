@@ -271,14 +271,11 @@ public class MainContentPagerFragment extends Fragment {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
-                queryMonthlyExpense(start, end).observe(
-                        requireActivity(), data -> calcPrevExpense(index, data));
+                queryMonthlyExpense(start, end).observe(requireActivity(), data -> calcPrevExpense(index, data));
             }
         }
 
         void calcPrevExpense(final int index, List<ExpenseBaseDao.ExpenseByMonth> data) {
-            //log.i("previous data: %s", data);
-            //log.i("arrExpense[0] is this month expense: %s", arrExpense[0]);
             count++;
             for(ExpenseBaseDao.ExpenseByMonth expense : data) {
                 switch(index) {
