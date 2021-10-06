@@ -8,6 +8,18 @@
     android:background="@color/primaryColor"
     tools:context=".IntroActivity">
 
+    <ImageView
+        android:id="@+id/imgview_title_main"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_marginTop="65dp"
+        android:contentDescription="@null"
+        android:scaleType="fitCenter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/bg_main_maintitle" />
+
     <ProgressBar
         android:id="@+id/pb_intro"
         android:visibility="invisible"
@@ -19,18 +31,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/imgview_title_main"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_marginTop="65dp"
-        android:contentDescription="@null"
-        android:scaleType="fitCenter"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bg_carman" />
 
     <ImageButton
         android:id="@+id/btn_start"
@@ -55,7 +55,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/bg_under_title" />
+        app:srcCompat="@drawable/bg_main_subtitle" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

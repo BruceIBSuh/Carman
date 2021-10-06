@@ -372,7 +372,6 @@ public class MainActivity extends BaseActivity implements
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         binding.progbtnGas.setProgressColor(isStnViewOn);
-
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);

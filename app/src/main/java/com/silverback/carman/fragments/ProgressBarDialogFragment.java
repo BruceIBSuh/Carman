@@ -13,14 +13,13 @@ import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
-public class ProgbarDialogFragment extends DialogFragment {
+public class ProgressBarDialogFragment extends DialogFragment {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(ProgbarDialogFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ProgressBarDialogFragment.class);
 
     // Fields
     private String progressMsg;
-
-    public ProgbarDialogFragment() {}
+    public ProgressBarDialogFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,7 +36,6 @@ public class ProgbarDialogFragment extends DialogFragment {
 
         return childView;
     }
-
 
     public void setProgressMsg(final String msg) {
         progressMsg = msg;

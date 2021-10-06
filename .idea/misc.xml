@@ -5,6 +5,16 @@
       <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
     </configurations>
   </component>
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="app/src/main/res/layout/dialog_progbar_general.xml" value="0.29074074074074074" />
+        <entry key="app/src/main/res/layout/dialog_register_provider.xml" value="0.25885416666666666" />
+        <entry key="app/src/main/res/layout/fragment_gas_manager.xml" value="0.29907407407407405" />
+        <entry key="app/src/main/res/layout/fragment_service_manager.xml" value="0.5" />
+      </map>
+    </option>
+  </component>
   <component name="NullableNotNullManager">
     <option name="myDefaultNullable" value="org.jetbrains.annotations.Nullable" />
     <option name="myDefaultNotNull" value="androidx.annotation.NonNull" />

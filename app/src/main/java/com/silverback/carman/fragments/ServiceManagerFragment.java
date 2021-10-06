@@ -60,9 +60,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class ServiceManagerFragment extends Fragment implements
         //View.OnClickListener,
         ExpServiceItemAdapter.OnParentFragmentListener {
@@ -128,12 +125,12 @@ public class ServiceManagerFragment extends Fragment implements
         setGeofenceIntent();
 
         // userId will be used when svc_eval is prepared.
-        /*
         if(getArguments() != null) {
             distCode = getArguments().getString("distCode");
             userId = getArguments().getString("userId");
-        }
-         */
+            log.i("distcode: %s", distCode);
+        } else log.i("arguments null");
+
 
         // Instantiate objects.
         mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
@@ -166,7 +163,7 @@ public class ServiceManagerFragment extends Fragment implements
         });
          */
 
-        // Attach the listener which invokes the following callback methods when a location is added
+        // Attach the listener which implements the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
         geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
             @Override
@@ -202,7 +199,7 @@ public class ServiceManagerFragment extends Fragment implements
         try { createRecyclerServiceItemView(); } catch(JSONException e) {e.printStackTrace();}
 
         // Set event listeners.
-        binding.btnRegisterService.setOnClickListener(v -> registerFavoriteServiceProvider());
+        binding.btnRegisterService.setOnClickListener(v -> registerFavorite());
         binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
         binding.radioGroup.setOnCheckedChangeListener(this::switchServiceSpanType);
 
@@ -227,6 +224,7 @@ public class ServiceManagerFragment extends Fragment implements
     public void onResume() {
         super.onResume();
         //fragmentModel.getExpenseSvcFragment().setValue(this);
+
         // Update the time to the current time.
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
 
@@ -293,8 +291,6 @@ public class ServiceManagerFragment extends Fragment implements
 
             uploadServiceEvaluation(svcId);
         });
-
-
     }
 
 
@@ -364,18 +360,19 @@ public class ServiceManagerFragment extends Fragment implements
         }
     }
 
-    private void registerFavoriteServiceProvider() {
+    private void registerFavorite() {
         svcName = binding.etServiceProvider.getText().toString();
         if(svcName.isEmpty()) {
             Snackbar.make(binding.getRoot(), R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
             return;
         }
 
+
         if(isSvcFavorite || svcLocation != null) {
             Snackbar.make(binding.getRoot(), "Already Registered", Snackbar.LENGTH_SHORT).show();
         } else {
-            RegisterDialogFragment.newInstance(svcName, distCode).show(
-                    Objects.requireNonNull(requireActivity()).getSupportFragmentManager(), null);
+            RegisterDialogFragment.newInstance(svcName, distCode)
+                    .show(getChildFragmentManager(), "registerDialog");
         }
 
     }
@@ -383,7 +380,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Register the service center with the favorite list and the geofence.
     //@SuppressWarnings("ConstantConditions")
-    private void addServiceFavorite() {
+    public void addServiceFavorite() {
         // if(isGeofenceIntent) return;
         // Retrieve a service center from the favorite list, the value of which is sent via
         // fragmentSharedModel.getFavoriteName()

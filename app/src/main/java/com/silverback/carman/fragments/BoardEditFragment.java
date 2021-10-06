@@ -87,7 +87,7 @@ public class BoardEditFragment extends Fragment implements
     // UIs
     private View localView;
     private EditText etPostTitle, etPostContent;
-    private ProgbarDialogFragment pbFragment;
+    private ProgressBarDialogFragment pbFragment;
 
     // Fields
     private String title, content;
@@ -387,12 +387,11 @@ public class BoardEditFragment extends Fragment implements
         if(!doEmptyCheck()) return;
 
         // Instantiate the fragment to display the progressbar.
-        pbFragment = new ProgbarDialogFragment();
+        pbFragment = new ProgressBarDialogFragment();
         getActivity().getSupportFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
 
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
-        log.i("New Images: %s", uriEditImageList.size());
         if(uriEditImageList.size() == 0) updatePost(); // The post originally contains no images.
         else {
             pbFragment.setProgressMsg(getString(R.string.board_msg_downsize_image));

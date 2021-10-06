@@ -7,6 +7,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.SparseArray;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -32,6 +33,9 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.SigunSpinnerAdapter;
+import com.silverback.carman.databinding.DialogRegisterProviderBinding;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.DistCodeSpinnerTask;
 import com.silverback.carman.threads.GeocoderReverseTask;
 import com.silverback.carman.threads.GeocoderTask;
@@ -45,6 +49,7 @@ import com.silverback.carman.viewmodels.OpinetViewModel;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -53,7 +58,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         AdapterView.OnItemSelectedListener {
 
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(RegisterDialogFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(RegisterDialogFragment.class);
 
     // Constants
     static final int SVC_ID = 0;
@@ -65,6 +70,7 @@ public class RegisterDialogFragment extends DialogFragment implements
 
 
     // Objects
+    private DialogRegisterProviderBinding binding;
     private SharedPreferences mSettings;
     private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentModel;
@@ -99,20 +105,22 @@ public class RegisterDialogFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
+
     // Instantiate DialogFragment as a SingleTon
     static RegisterDialogFragment newInstance(String name, String distCode) {
-
-        RegisterDialogFragment favoriteDialog = new RegisterDialogFragment();
+        RegisterDialogFragment dialogFragment = new RegisterDialogFragment();
         Bundle args = new Bundle();
         args.putString("favoriteName", name);
         args.putString("distCode", distCode);
+        log.i("distCode: %s", distCode);
         //args.putInt("category", category);
-        favoriteDialog.setArguments(args);
+        dialogFragment.setArguments(args);
 
-        return favoriteDialog;
+        return dialogFragment;
     }
 
-    @SuppressWarnings("ConstantConditions")
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,107 +128,87 @@ public class RegisterDialogFragment extends DialogFragment implements
         providerName = getArguments().getString("favoriteName");
         distCode = getArguments().getString("distCode");
         //category = getArguments().getInt("category");
-        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
+        mSettings = ((BaseActivity)Objects.requireNonNull(requireActivity())).getSharedPreferernces();
 
         // Instantiate FirebaseFirestore
         firestore = FirebaseFirestore.getInstance();
 
         // ViewModel to fetch the sigun list of a given sido name
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
         //distModel = new ViewModelProvider(this).get(SpinnerDistrictModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-
-
     }
 
-    @SuppressWarnings("ConstantConditions")
+
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        //LayoutInflater inflater = requireActivity().getLayoutInflater();
-        //View localView = inflater.inflate(R.layout.dialog_register_provider, null);
-        View localView = View.inflate(getContext(), R.layout.dialog_register_provider, null);
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        binding = DialogRegisterProviderBinding.inflate(inflater);
         setCancelable(false);
 
-        TextView tvTitle = localView.findViewById(R.id.tv_numpad_title);
-        ImageButton btnLocation = localView.findViewById(R.id.btn_current_location);
-        //pbRegister = localView.findViewById(R.id.pb_register);
-        tvSido = localView.findViewById(R.id.tv_sido);
-        tvSigun = localView.findViewById(R.id.tv_sigun);
-        sidoSpinner = localView.findViewById(R.id.spinner_sido);
-        sigunSpinner= localView.findViewById(R.id.spinner_sigun);
-        etAddrs = localView.findViewById(R.id.et_addrs_detail);
-        etPhone = localView.findViewById(R.id.et_phone);
-        companySpinner = localView.findViewById(R.id.spinner_company);
-        ratingBar = localView.findViewById(R.id.rb_service);
-        Button resetRating = localView.findViewById(R.id.expense_btn_reset_ratingbar);
-        etServiceComment = localView.findViewById(R.id.expense_et_service_comment);
-
-        // Create ProgressBar
-        ConstraintLayout layout = localView.findViewById(R.id.rootview_register);
-        ProgressBar pbRegister = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleSmall);
-        pbRegister.setIndeterminate(true);
-        pbRegister.setVisibility(View.VISIBLE);
-        ConstraintLayout.LayoutParams  params = new ConstraintLayout.LayoutParams(20, 20);
-        params.horizontalBias = 0.5f;
-        params.verticalBias = 0.5f;
-        layout.addView(pbRegister, params);
-
-
-        tvTitle.setText(providerName);
+        binding.tvNumpadTitle.setText(providerName);
 
         // Event Handlers
-        sidoSpinner.setOnItemSelectedListener(this);
-        sigunSpinner.setOnItemSelectedListener(this);
-        btnLocation.setOnClickListener(view -> {
+        binding.spinnerSido.setOnItemSelectedListener(this);
+        binding.spinnerSigun.setOnItemSelectedListener(this);
+        binding.btnCurrentLocation.setOnClickListener(view -> {
             isCurrentLocation = true;
             locationTask = ThreadManager2.getInstance().fetchLocationTask(getContext(), locationModel);
         });
 
-        // RatingBar and Comment are required to have a nickname set in SettingPreferenceActivity.
+        binding.btnCurrentLocation.setOnClickListener(view -> {
+            isCurrentLocation = true;
+            locationTask = ThreadManager2.getInstance().fetchLocationTask(requireContext(), locationModel);
+        });
+
         nickname = mSettings.getString(Constants.USER_NAME, null);
-        resetRating.setOnClickListener(view -> ratingBar.setRating(0f));
-        ratingBar.setOnRatingBarChangeListener((rb, rating, user) -> {
-            //log.i("Nickname required: %s", nickname);
+        binding.expenseBtnResetRatingbar.setOnClickListener(view -> binding.rbService.setRating(0f));
+        binding.rbService.setOnRatingBarChangeListener((rb, rating, user) -> {
             if(TextUtils.isEmpty(nickname) && rating > 0) {
-                ratingBar.setRating(0f);
-                Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
+                binding.rbService.setRating(0f);
+                Snackbar.make(binding.getRoot(), "Nickname required", Snackbar.LENGTH_SHORT).show();
             }
         });
 
-        etServiceComment.setOnFocusChangeListener((view, b) -> {
+        binding.expenseEtServiceComment.setOnFocusChangeListener((view, b) -> {
             if(b && TextUtils.isEmpty(nickname)) {
-                Snackbar.make(localView, "Nickname required", Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(), "Nickname required", Snackbar.LENGTH_SHORT).show();
                 view.clearFocus();
             }
         });
 
-
-        String sidoCode = distCode.substring(0, 2);
-        String sigunCode = distCode.substring(2, 4);
-
-        mSidoItemPos = Integer.parseInt(sidoCode) - 1; // "01" is translated into 1 as Integer.
-        mSigunItemPos = Integer.parseInt(sigunCode) -1;
+        // Create ProgressBar dynamically
+        createRegisterProgressBar();
 
 
-        // Create the spinners for sido and sigun name.
-        ArrayAdapter<CharSequence> sidoAdapter = ArrayAdapter.createFromResource(
-                getContext(), R.array.sido_name, R.layout.spinner_district_entry);
-        sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
-        sidoSpinner.setAdapter(sidoAdapter);
-        sidoSpinner.setSelection(mSidoItemPos);
 
-        sigunAdapter = new SigunSpinnerAdapter(getContext());
+//        String sidoCode = distCode.substring(0, 2);
+//        String sigunCode = distCode.substring(2, 4);
+//        mSidoItemPos = Integer.parseInt(sidoCode) - 1; // "01" is translated into 1 as Integer.
+//        mSigunItemPos = Integer.parseInt(sigunCode) -1;
+//
+//        // Create the spinners for sido and sigun name.
+//        ArrayAdapter<CharSequence> sidoAdapter = ArrayAdapter.createFromResource(
+//                getContext(), R.array.sido_name, R.layout.spinner_district_entry);
+//        sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
+//        sidoSpinner.setAdapter(sidoAdapter);
+//        sidoSpinner.setSelection(mSidoItemPos);
+//
+//        sigunAdapter = new SigunSpinnerAdapter(getContext());
+//
+//        // Create the spinner for Comany list.
+//        ArrayAdapter<CharSequence> companyAdapter = ArrayAdapter.createFromResource(
+//                getContext(), R.array.svc_company, R.layout.spinner_district_entry);
+//        companyAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
+//        companySpinner.setAdapter(companyAdapter);
 
-        // Create the spinner for Comany list.
-        ArrayAdapter<CharSequence> companyAdapter = ArrayAdapter.createFromResource(
-                getContext(), R.array.svc_company, R.layout.spinner_district_entry);
-        companyAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
-        companySpinner.setAdapter(companyAdapter);
 
-        dialog = new AlertDialog.Builder(getActivity())
-                .setView(localView)
+        //createDistrictSpinners();
+
+        dialog = new AlertDialog.Builder(requireContext())
+                .setView(binding.getRoot())
                 .setPositiveButton(R.string.dialog_btn_confirm, null)
                 .setNegativeButton(R.string.dialog_btn_cancel, null)
                 .create();
@@ -251,21 +239,23 @@ public class RegisterDialogFragment extends DialogFragment implements
         });
 
         return dialog;
+
     }
 
+
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         // Enlist the sigun names in SigunSpinner based upon a given sigun name.
         opinetModel.getSpinnerDataList().observe(this, dataList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             sigunAdapter.addSigunList(dataList);
-            /*
-            for(Opinet.DistrictCode obj : dataList) {
-                //sigunAdapter.addItem(obj);
-            }
-             */
+
+//            for(Opinet.DistrictCode obj : dataList) {
+//                //sigunAdapter.addItem(obj);
+//            }
+
             sigunSpinner.setAdapter(sigunAdapter);
             sigunSpinner.setSelection(mSigunItemPos);
         });
@@ -289,14 +279,14 @@ public class RegisterDialogFragment extends DialogFragment implements
             final StringBuilder strbldr = new StringBuilder();
             for(int i = 2; i < arrAddrs.length; i++) strbldr.append(arrAddrs[i]).append(" ");
 
-            tvSido.setText(arrAddrs[0]);
-            tvSigun.setText(arrAddrs[1]);
-            etAddrs.setText(strbldr.toString());
+            binding.tvSido.setText(arrAddrs[0]);
+            binding.tvSigun.setText(arrAddrs[1]);
+            binding.etAddrsDetail.setText(strbldr.toString());
 
-            tvSido.setVisibility(View.VISIBLE);
-            tvSigun.setVisibility(View.VISIBLE);
-            sidoSpinner.setVisibility(View.GONE);
-            sigunSpinner.setVisibility(View.GONE);
+            binding.tvSido.setVisibility(View.VISIBLE);
+            binding.tvSigun.setVisibility(View.VISIBLE);
+            binding.spinnerSido.setVisibility(View.GONE);
+            binding.spinnerSigun.setVisibility(View.GONE);
         });
 
         // Fetch the Location based on a given address name by using Geocoder, then pass the value
@@ -311,6 +301,7 @@ public class RegisterDialogFragment extends DialogFragment implements
 
 
     }
+
 
     @Override
     public void onPause() {
@@ -338,7 +329,6 @@ public class RegisterDialogFragment extends DialogFragment implements
 
     // Share the data of the dialog with ServiceManagerFragment via FragmentSharedModel;
     private void registerService() {
-
         Map<String, Object> svcData = new HashMap<>();
         svcData.put("svc_name", providerName);
         svcData.put("svc_code", companySpinner.getSelectedItem().toString());
@@ -383,6 +373,40 @@ public class RegisterDialogFragment extends DialogFragment implements
                         }).addOnFailureListener(Exception::printStackTrace);
                     }
                 }).addOnFailureListener(Exception::printStackTrace);
+    }
+
+    private void createRegisterProgressBar() {
+        ProgressBar pbRegister = new ProgressBar(requireContext(), null, android.R.attr.progressBarStyleSmall);
+        pbRegister.setIndeterminate(true);
+        pbRegister.setVisibility(View.VISIBLE);
+        ConstraintLayout.LayoutParams  params = new ConstraintLayout.LayoutParams(20, 20);
+        params.horizontalBias = 0.5f;
+        params.verticalBias = 0.5f;
+        binding.rootviewRegister.addView(pbRegister, params);
+
+    }
+
+    // Create the spinners
+    private void createDistrictSpinners() {
+        String sidoCode = distCode.substring(0, 2);
+        String sigunCode = distCode.substring(2, 4);
+        mSidoItemPos = Integer.parseInt(sidoCode) - 1; // "01" is translated into 1 as Integer.
+        mSigunItemPos = Integer.parseInt(sigunCode) -1;
+
+        // Create the spinners for sido and sigun name.
+        ArrayAdapter<CharSequence> sidoAdapter = ArrayAdapter.createFromResource(
+                requireContext(), R.array.sido_name, R.layout.spinner_district_entry);
+        sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
+        sidoSpinner.setAdapter(sidoAdapter);
+        sidoSpinner.setSelection(mSidoItemPos);
+
+        sigunAdapter = new SigunSpinnerAdapter(getContext());
+
+        // Create the spinner for Comany list.
+        ArrayAdapter<CharSequence> companyAdapter = ArrayAdapter.createFromResource(
+                requireContext(), R.array.svc_company, R.layout.spinner_district_entry);
+        companyAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
+        companySpinner.setAdapter(companyAdapter);
     }
 
     // After querying the document with a service name, retrieve the geopoint to compare the current

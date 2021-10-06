@@ -217,12 +217,14 @@
 
     <Button
         android:id="@+id/expense_btn_reset_ratingbar"
-        android:layout_width="40dp"
-        android:layout_height="30dp"
+        android:layout_width="35dp"
+        android:layout_height="18dp"
         android:layout_marginEnd="8dp"
         android:padding="0dp"
-        android:text="@string/gas_btn_reset"
-        android:textSize="@dimen/smallText"
+        android:text="@string/exp_ratingbar_reset"
+        android:textSize="@dimen/contentSmall"
+        android:textColor="@android:color/white"
+        android:background="@color/bgToolbar"
         app:layout_constraintBottom_toBottomOf="@+id/rb_service"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/rb_service" />
