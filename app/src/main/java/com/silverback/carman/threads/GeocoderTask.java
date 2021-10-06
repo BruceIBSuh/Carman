@@ -28,7 +28,7 @@ public class GeocoderTask extends ThreadTask implements GeocoderRunnable.Geocode
 
     @Override
     public void setGeocoderThread(Thread thread) {
-        setCurrentLocation(thread);
+        setCurrentThread(thread);
     }
 
     @Override

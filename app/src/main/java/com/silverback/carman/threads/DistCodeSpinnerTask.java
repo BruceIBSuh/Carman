@@ -17,7 +17,7 @@ public class DistCodeSpinnerTask extends ThreadTask implements
 
     // Objects
     private OpinetViewModel model;
-    private DistCodeSpinnerRunnable distCodeSpinnerRunnable;
+    private final DistCodeSpinnerRunnable distCodeSpinnerRunnable;
     private int sidoCode;
 
     // Constructor
@@ -25,9 +25,10 @@ public class DistCodeSpinnerTask extends ThreadTask implements
         distCodeSpinnerRunnable = new DistCodeSpinnerRunnable(context, this);
     }
 
-    void initSpinnerDistCodeTask(OpinetViewModel model, int position) {
-        sidoCode = position;
+    void initSpinnerDistCodeTask(OpinetViewModel model, int sidoCode) {
+        this.sidoCode = sidoCode;
         this.model = model;
+        log.i("sido code in task: %s", sidoCode);
     }
 
     Runnable getDistCodeSpinnerRunnable() {
@@ -40,7 +41,7 @@ public class DistCodeSpinnerTask extends ThreadTask implements
 
     @Override
     public void setSpinnerDistCodeThread(Thread currentThread) {
-        setCurrentLocation(currentThread);
+        setCurrentThread(currentThread);
     }
 
     @Override
@@ -52,6 +53,7 @@ public class DistCodeSpinnerTask extends ThreadTask implements
     // SettingSpinnerDlgFragment as LiveData.
     @Override
     public void setSigunCode(List<Opinet.DistrictCode> distCode) {
+        log.i("Dist Code: %s", distCode.size());
         model.getSpinnerDataList().postValue(distCode);
     }
 

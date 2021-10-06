@@ -41,7 +41,7 @@ public class ThreadTask {
      * Sets the identifier for the current Thread. This must be a synchronized operation; see the
      * notes for getCurrentThread()
      */
-    protected void setCurrentLocation(Thread thread) {
+    protected void setCurrentThread(Thread thread) {
         mCurrentThread = thread;
     }
 

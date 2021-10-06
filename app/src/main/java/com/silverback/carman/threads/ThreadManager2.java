@@ -63,6 +63,7 @@ public class ThreadManager2 {
 
     private ThreadTask threadTask;
     private DistCodeDownloadTask distCodeTask;
+    private DistCodeSpinnerTask distSpinnerTak;
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
     private StationListTask stnListTask;
@@ -151,6 +152,13 @@ public class ThreadManager2 {
         if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
         InnerClazz.sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
         return distCodeTask;
+    }
+
+    public DistCodeSpinnerTask loadDistSpinnerTask(Context context, OpinetViewModel model, int code) {
+        if(distSpinnerTak == null) distSpinnerTak = new DistCodeSpinnerTask(context);
+        distSpinnerTak.initSpinnerDistCodeTask(model, code);
+        InnerClazz.sInstance.threadPoolExecutor.execute(distSpinnerTak.getDistCodeSpinnerRunnable());
+        return distSpinnerTak;
     }
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified

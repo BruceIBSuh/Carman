@@ -30,7 +30,7 @@ public class ServiceCenterTask extends ThreadTask implements ServiceCenterRunnab
 
     @Override
     public void setServiceCenterThread(Thread thread) {
-        setCurrentLocation(thread);
+        setCurrentThread(thread);
     }
 
     @Override

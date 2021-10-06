@@ -129,7 +129,7 @@ public class ServiceManagerFragment extends Fragment implements
             distCode = getArguments().getString("distCode");
             userId = getArguments().getString("userId");
             log.i("distcode: %s", distCode);
-        } else log.i("arguments null");
+        } else distCode = "0101";
 
 
         // Instantiate objects.
@@ -224,7 +224,6 @@ public class ServiceManagerFragment extends Fragment implements
     public void onResume() {
         super.onResume();
         //fragmentModel.getExpenseSvcFragment().setValue(this);
-
         // Update the time to the current time.
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
 
@@ -366,7 +365,6 @@ public class ServiceManagerFragment extends Fragment implements
             Snackbar.make(binding.getRoot(), R.string.svc_msg_empty_name, Snackbar.LENGTH_SHORT).show();
             return;
         }
-
 
         if(isSvcFavorite || svcLocation != null) {
             Snackbar.make(binding.getRoot(), "Already Registered", Snackbar.LENGTH_SHORT).show();

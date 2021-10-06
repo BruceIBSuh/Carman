@@ -115,7 +115,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         binding = ActivityExpenseBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Check if the activity getstarted by tabbing the geofence notification.
+        // Check if the activity gets tarted by tabbing the geofence notification.
         if(getIntent().getAction() != null) {
             if(getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
                 isGeofencing = true;
@@ -271,7 +271,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         binding.topframeTabIndicator.setVisibility(View.GONE);
                         statGraphFragment = new StatGraphFragment();
                         getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.topframe_viewpager, statGraphFragment).commit();
+                                .replace(R.id.topframe_viewpager, statGraphFragment)
+                                .commit();
 
                         animSlideTopFrame(prevHeight, 200);
                         prevHeight = 200;
@@ -290,7 +291,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     private void createTabLayout() {
-        //expContentPagerAdapter = new ExpContentPagerAdapter(this);
         expContentPagerAdapter = new ExpContentPagerAdapter(getSupportFragmentManager(), getLifecycle());
         binding.pagerTabFragment.setAdapter(expContentPagerAdapter);
         binding.pagerTabFragment.registerOnPageChangeCallback(addPageChangeCallback());

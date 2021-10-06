@@ -10,8 +10,8 @@
 
     <ImageView
         android:id="@+id/imgview_title_main"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_marginTop="65dp"
         android:contentDescription="@null"
         android:scaleType="fitCenter"

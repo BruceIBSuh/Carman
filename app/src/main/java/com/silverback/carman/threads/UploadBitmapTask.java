@@ -56,7 +56,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
 
     @Override
     public void setBitmapTaskThread(Thread thread) {
-        setCurrentLocation(thread);
+        setCurrentThread(thread);
     }
 
     @Override

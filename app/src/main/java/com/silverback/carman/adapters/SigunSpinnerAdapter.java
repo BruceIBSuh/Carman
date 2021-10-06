@@ -8,6 +8,8 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.silverback.carman.R;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
 
 import java.util.ArrayList;
@@ -16,18 +18,16 @@ import java.util.List;
 /**
  * This apdater extends BaseAdapter that implements not only ListAdapter for ListView but also
  * SpinnerAdapter for Spinner, used in RegisterDialogFragment and SettingSpinnerDlgFragment as well
- * in order to enlist Sido names based on a selected Sido.
+ * in order to enlist Sigun names based on a selected Sido.
  */
 public class SigunSpinnerAdapter extends BaseAdapter {
     // Logging
-    //private static final LoggingHelper log = LoggingHelperFactory.create(DistrictSpinnerAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SigunSpinnerAdapter.class);
 
     // Object references
     private List<Opinet.DistrictCode> mDistrictCodeList;
-    private LayoutInflater inflater;
+    private final LayoutInflater inflater;
     private SpinnerViewHolder viewHolder;
-
-
 
     // Constructor
     public SigunSpinnerAdapter(Context context){
@@ -43,6 +43,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
 
     @Override
     public Opinet.DistrictCode getItem(int position) {
+        log.i("dDistrictCode : %s", mDistrictCodeList.get(position));
         return mDistrictCodeList.get(position);
     }
 
@@ -53,8 +54,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup viewGroup) {
-
-        if (convertView == null) {
+        if(convertView == null) {
             viewHolder = new SpinnerViewHolder();
             convertView = inflater.inflate(R.layout.spinner_district_entry, viewGroup, false);
             viewHolder.distName = convertView.findViewById(R.id.tv_spinner_entry);
@@ -68,7 +68,6 @@ public class SigunSpinnerAdapter extends BaseAdapter {
 
     @Override
     public View getDropDownView(int position, View dropdownView, ViewGroup parent) {
-
         if(dropdownView == null) {
             viewHolder = new SpinnerViewHolder();
             dropdownView = inflater.inflate(R.layout.spinner_district_dropdown, parent, false);

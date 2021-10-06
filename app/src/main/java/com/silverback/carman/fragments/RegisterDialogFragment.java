@@ -181,7 +181,7 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         // Create ProgressBar dynamically
         createRegisterProgressBar();
-
+        createDistrictSpinners();
 
 
 //        String sidoCode = distCode.substring(0, 2);
@@ -246,16 +246,14 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        log.i("onViewCreated invoked?");
         // Enlist the sigun names in SigunSpinner based upon a given sigun name.
         opinetModel.getSpinnerDataList().observe(this, dataList -> {
             if(sigunAdapter.getCount() > 0) sigunAdapter.removeAll();
             sigunAdapter.addSigunList(dataList);
-
 //            for(Opinet.DistrictCode obj : dataList) {
 //                //sigunAdapter.addItem(obj);
 //            }
-
             sigunSpinner.setAdapter(sigunAdapter);
             sigunSpinner.setSelection(mSigunItemPos);
         });
@@ -315,8 +313,10 @@ public class RegisterDialogFragment extends DialogFragment implements
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if(parent == sidoSpinner) {
-            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), opinetModel, position);
+        if(parent == binding.spinnerSido) {
+            log.i("onItemSelected");
+            //spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), opinetModel, position);
+            spinnerTask = ThreadManager2.getInstance().loadDistSpinnerTask(getContext(), opinetModel, position);
             if(position != mSidoItemPos) mSigunItemPos = 0;
             //int tmpSidoPos = position;
         } else {
@@ -397,8 +397,8 @@ public class RegisterDialogFragment extends DialogFragment implements
         ArrayAdapter<CharSequence> sidoAdapter = ArrayAdapter.createFromResource(
                 requireContext(), R.array.sido_name, R.layout.spinner_district_entry);
         sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
-        sidoSpinner.setAdapter(sidoAdapter);
-        sidoSpinner.setSelection(mSidoItemPos);
+        binding.spinnerSido.setAdapter(sidoAdapter);
+        binding.spinnerSido.setSelection(mSidoItemPos);
 
         sigunAdapter = new SigunSpinnerAdapter(getContext());
 
@@ -406,7 +406,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         ArrayAdapter<CharSequence> companyAdapter = ArrayAdapter.createFromResource(
                 requireContext(), R.array.svc_company, R.layout.spinner_district_entry);
         companyAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
-        companySpinner.setAdapter(companyAdapter);
+        binding.spinnerCompany.setAdapter(companyAdapter);
     }
 
     // After querying the document with a service name, retrieve the geopoint to compare the current

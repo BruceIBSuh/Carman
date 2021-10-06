@@ -25,8 +25,8 @@ public class DistCodeSpinnerRunnable implements Runnable {
     static final int SPINNER_DIST_CODE_FAIL = -1;
 
     // Objects
-    private Context context;
-    private DistCodeMethods task;
+    private final Context context;
+    private final DistCodeMethods task;
 
     public interface DistCodeMethods {
         int getSidoCode();
@@ -66,6 +66,7 @@ public class DistCodeSpinnerRunnable implements Runnable {
                 }
             }
 
+            log.i("distcodelist: %s", distCodeList.size());
             task.setSigunCode(distCodeList);
             task.handleDistCodeSpinnerTask(SPINNER_DIST_CODE_COMPLETE);
 

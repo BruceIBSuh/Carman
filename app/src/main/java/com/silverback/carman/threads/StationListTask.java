@@ -70,7 +70,7 @@ public class StationListTask extends ThreadTask implements
     // thread of each Runnables.
     @Override
     public void setStationTaskThread(Thread thread) {
-        setCurrentLocation(thread);
+        setCurrentThread(thread);
     }
 
     @Override
