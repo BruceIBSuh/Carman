@@ -25,7 +25,9 @@ public class FragmentSharedModel extends ViewModel {
 
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
-    
+
+    // ServiceManagerFragment and RegisterDialogFragment
+    private MutableLiveData<SparseArray<Object>> serviceLocation;
 
     // SettingSvcItemDlgFragment and SettingServiceItemFragment
     private MutableLiveData<JSONObject> jsonServiceItemObj;
@@ -108,8 +110,13 @@ public class FragmentSharedModel extends ViewModel {
     public void setServiceLocation(SparseArray<Object> sparseArray) {
         svcLocation.setValue(sparseArray);
     }
-    public LiveData<SparseArray<Object>> getServiceLocation() {
-        return svcLocation;
+//    public LiveData<SparseArray<Object>> getServiceLocation() {
+//        return svcLocation;
+//    }
+
+    public MutableLiveData<SparseArray<Object>> getServiceLocation(){
+        if(serviceLocation == null) serviceLocation = new MutableLiveData<>();
+        return serviceLocation;
     }
 
 

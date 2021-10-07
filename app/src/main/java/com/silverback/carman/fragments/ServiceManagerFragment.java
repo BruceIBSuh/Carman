@@ -308,6 +308,7 @@ public class ServiceManagerFragment extends Fragment implements
             // update the data in Firestore.
             // Retrieving the evaluation and the comment, set or update the data with the passed id.
             fragmentModel.getServiceLocation().observe(getViewLifecycleOwner(), sparseArray -> {
+                log.i("Service Location: %s", sparseArray.size());
                 svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
                 svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
                 svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
@@ -316,7 +317,7 @@ public class ServiceManagerFragment extends Fragment implements
                 svcComment = (String)sparseArray.get(RegisterDialogFragment.COMMENT);
                 log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
 
-                uploadServiceEvaluation(svcId);
+                //uploadServiceEvaluation(svcId);
             });
         }
     }
@@ -388,7 +389,6 @@ public class ServiceManagerFragment extends Fragment implements
 
 
     // Register the service center with the favorite list and the geofence.
-    //@SuppressWarnings("ConstantConditions")
     public void addServiceFavorite() {
         // if(isGeofenceIntent) return;
         // Retrieve a service center from the favorite list, the value of which is sent via
@@ -524,43 +524,43 @@ public class ServiceManagerFragment extends Fragment implements
         return true;
     }
 
-    private void uploadServiceEvaluation(String svcId) {
-        if(svcRating > 0) {
-            Map<String, Object> ratingData = new HashMap<>();
-            ratingData.put("eval_num", FieldValue.increment(1));
-            ratingData.put("eval_sum", FieldValue.increment(svcRating));
-
-            DocumentReference docRef = firestore.collection("svc_eval").document(svcId);
-            docRef.get().addOnSuccessListener(snapshot -> {
-                if(snapshot.exists() && snapshot.get("eval_num") != null) {
-                    log.i("update rating");
-                    docRef.update(ratingData);
-
-                } else {
-                    log.i("set rating if no rating field exists");
-                    docRef.set(ratingData);
-                }
-            });
-        }
-
-        if(!svcComment.isEmpty()) {
-            Map<String, Object> commentData = new HashMap<>();
-            commentData.put("timestamp", FieldValue.serverTimestamp());
-            commentData.put("name", mSettings.getString(Constants.USER_NAME, null));
-            commentData.put("comments", svcComment);
-            commentData.put("rating", svcRating);
-
-            firestore.collection("svc_eval").document(svcId).collection("comments").add(commentData)
-                    .addOnCompleteListener(task -> {
-                        if(task.isSuccessful()) {
-                            log.e("Commments successfully uploaded");
-                            //isCommentUploaded = true;
-                        } else {
-                            log.e("Comments upload failed: %s", task.getException());
-                        }
-                    });
-        }
-    }
+//    private void uploadServiceEvaluation(String svcId) {
+//        if(svcRating > 0) {
+//            Map<String, Object> ratingData = new HashMap<>();
+//            ratingData.put("eval_num", FieldValue.increment(1));
+//            ratingData.put("eval_sum", FieldValue.increment(svcRating));
+//
+//            DocumentReference docRef = firestore.collection("svc_eval").document(svcId);
+//            docRef.get().addOnSuccessListener(snapshot -> {
+//                if(snapshot.exists() && snapshot.get("eval_num") != null) {
+//                    log.i("update rating");
+//                    docRef.update(ratingData);
+//
+//                } else {
+//                    log.i("set rating if no rating field exists");
+//                    docRef.set(ratingData);
+//                }
+//            });
+//        }
+//
+//        if(!svcComment.isEmpty()) {
+//            Map<String, Object> commentData = new HashMap<>();
+//            commentData.put("timestamp", FieldValue.serverTimestamp());
+//            commentData.put("name", mSettings.getString(Constants.USER_NAME, null));
+//            commentData.put("comments", svcComment);
+//            commentData.put("rating", svcRating);
+//
+//            firestore.collection("svc_eval").document(svcId).collection("comments").add(commentData)
+//                    .addOnCompleteListener(task -> {
+//                        if(task.isSuccessful()) {
+//                            log.e("Commments successfully uploaded");
+//                            //isCommentUploaded = true;
+//                        } else {
+//                            log.e("Comments upload failed: %s", task.getException());
+//                        }
+//                    });
+//        }
+//    }
 
 
 }
