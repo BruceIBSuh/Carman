@@ -21,9 +21,8 @@ public class GeocoderReverseRunnable implements Runnable {
     static final int GEOCODER_REVERSE_FAIL = -1;
 
     // Objects
-    private Context context;
-    private GeocoderMethods geocoderTask;
-    private Location location;
+    private final Context context;
+    private final GeocoderMethods geocoderTask;
 
     interface GeocoderMethods {
         Location getLocation();
@@ -42,7 +41,7 @@ public class GeocoderReverseRunnable implements Runnable {
         log.i("GeocoderReverseRunnable");
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         geocoderTask.setGeocoderThread(Thread.currentThread());
-        location = geocoderTask.getLocation();
+        Location location = geocoderTask.getLocation();
 
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addressList;
@@ -57,11 +56,8 @@ public class GeocoderReverseRunnable implements Runnable {
                     break;
                 }
             }
-
-        } catch(IOException e) {
-            log.e("IOException: %s", e.getMessage());
-        } catch(IllegalArgumentException e) {
-            log.e("IllegalArgumentException: %s", e.getMessage());
+        } catch(IOException  | IllegalArgumentException e) {
+            log.e("Reverse Geocoder error: %s", e.getMessage());
         }
 
 

@@ -1,5 +1,7 @@
 package com.silverback.carman.threads;
 
+import static com.google.firebase.storage.StorageTaskScheduler.sInstance;
+
 import android.content.Context;
 import android.location.Location;
 import android.os.Handler;
@@ -63,6 +65,8 @@ public class ThreadManager2 {
 
     private ThreadTask threadTask;
     private DistCodeDownloadTask distCodeTask;
+    private GeocoderTask geocoderTask;
+    private GeocoderReverseTask geocoderReverseTask;
     private DistCodeSpinnerTask distSpinnerTak;
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
@@ -145,6 +149,33 @@ public class ThreadManager2 {
     }
 
 
+    @SuppressWarnings("all")
+    public synchronized void cancelAllThreads() {
+        ThreadTask[] taskDownloadArray = new ThreadTask[InnerClazz.sInstance.mWorkerThreadQueue.size()];
+        //ThreadTask[] taskDecodeArray = new ThreadTask[sInstance.mDecodeWorkQueue.size()];
+
+        // Populates the array with the task objects in the queue
+        InnerClazz.sInstance.mWorkerThreadQueue.toArray(taskDownloadArray);
+        //sInstance.mDecodeWorkQueue.toArray(taskDecodeArray);
+
+        // Stores the array length in order to iterate over the array
+        int taskDownloadArrayLen = taskDownloadArray.length;
+        //int taskDecodeArrayLen = taskDecodeArray.length;
+
+        //synchronized (sInstance) {
+        // Iterates over the array of tasks
+        for (int taskArrayIndex = 0; taskArrayIndex < taskDownloadArrayLen; taskArrayIndex++) {
+            // Gets the task's current thread
+            Thread thread = taskDownloadArray[taskArrayIndex].mThreadThis;
+            // if the Thread exists, post an interrupt to it
+            if (null != thread) {
+                thread.interrupt();
+            }
+        }
+    }
+
+
+
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
     public DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
@@ -152,6 +183,23 @@ public class ThreadManager2 {
         if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
         InnerClazz.sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
         return distCodeTask;
+    }
+
+    public GeocoderTask startGeocoderTask(Context context, LocationViewModel model, String addrs) {
+        //GeocoderTask geocoderTask = (GeocoderTask)sInstance.mTaskWorkQueue.poll();
+        if(geocoderTask == null) geocoderTask = new GeocoderTask(context);
+        geocoderTask.initGeocoderTask(model, addrs);
+        InnerClazz.sInstance.threadPoolExecutor.execute(geocoderTask.getGeocoderRunnable());
+        return geocoderTask;
+    }
+
+    public GeocoderReverseTask startReverseGeocoderTask (
+            Context context, LocationViewModel model, Location location) {
+        //GeocoderReverseTask geocoderReverseTask = (GeocoderReverseTask)sInstance.mTaskWorkQueue.poll();
+        if(geocoderReverseTask == null) geocoderReverseTask = new GeocoderReverseTask(context);
+        geocoderReverseTask.initGeocoderReverseTask(model, location);
+        InnerClazz.sInstance.threadPoolExecutor.execute(geocoderReverseTask.getGeocoderRunnable());
+        return geocoderReverseTask;
     }
 
     public DistCodeSpinnerTask loadDistSpinnerTask(Context context, OpinetViewModel model, int code) {
@@ -232,31 +280,6 @@ public class ThreadManager2 {
         return expenseTask;
     }
 
-
-    @SuppressWarnings("all")
-    public synchronized void cancelAllThreads() {
-        ThreadTask[] taskDownloadArray = new ThreadTask[InnerClazz.sInstance.mWorkerThreadQueue.size()];
-        //ThreadTask[] taskDecodeArray = new ThreadTask[sInstance.mDecodeWorkQueue.size()];
-
-        // Populates the array with the task objects in the queue
-        InnerClazz.sInstance.mWorkerThreadQueue.toArray(taskDownloadArray);
-        //sInstance.mDecodeWorkQueue.toArray(taskDecodeArray);
-
-        // Stores the array length in order to iterate over the array
-        int taskDownloadArrayLen = taskDownloadArray.length;
-        //int taskDecodeArrayLen = taskDecodeArray.length;
-
-        //synchronized (sInstance) {
-        // Iterates over the array of tasks
-        for (int taskArrayIndex = 0; taskArrayIndex < taskDownloadArrayLen; taskArrayIndex++) {
-            // Gets the task's current thread
-            Thread thread = taskDownloadArray[taskArrayIndex].mThreadThis;
-            // if the Thread exists, post an interrupt to it
-            if (null != thread) {
-                thread.interrupt();
-            }
-        }
-    }
 
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);

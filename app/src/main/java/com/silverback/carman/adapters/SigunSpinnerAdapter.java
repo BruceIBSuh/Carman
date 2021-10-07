@@ -35,7 +35,6 @@ public class SigunSpinnerAdapter extends BaseAdapter {
         inflater = LayoutInflater.from(context);
     }
 
-
     @Override
     public int getCount() {
         return mDistrictCodeList.size();
@@ -43,7 +42,6 @@ public class SigunSpinnerAdapter extends BaseAdapter {
 
     @Override
     public Opinet.DistrictCode getItem(int position) {
-        log.i("dDistrictCode : %s", mDistrictCodeList.get(position));
         return mDistrictCodeList.get(position);
     }
 
@@ -59,8 +57,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.spinner_district_entry, viewGroup, false);
             viewHolder.distName = convertView.findViewById(R.id.tv_spinner_entry);
             convertView.setTag(viewHolder);
-
-        } else viewHolder = (SpinnerViewHolder) convertView.getTag();
+        } else viewHolder = (SpinnerViewHolder)convertView.getTag();
 
         viewHolder.distName.setText(mDistrictCodeList.get(position).getDistrictName());
         return convertView;
@@ -73,7 +70,6 @@ public class SigunSpinnerAdapter extends BaseAdapter {
             dropdownView = inflater.inflate(R.layout.spinner_district_dropdown, parent, false);
             viewHolder.distName = dropdownView.findViewById(R.id.tv_spinner_dropdown);
             dropdownView.setTag(viewHolder);
-
         } else viewHolder = (SpinnerViewHolder)dropdownView.getTag();
 
         viewHolder.distName.setText(mDistrictCodeList.get(position).getDistrictName());

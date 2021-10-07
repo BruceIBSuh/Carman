@@ -12,11 +12,11 @@
     <!-- Text Size -->
     <dimen name="boardTab">11sp</dimen>
     <dimen name="tableHeader">14dp</dimen>
-    <dimen name="extraLargeText">17sp</dimen>
-    <dimen name="largeText">16sp</dimen>
-    <dimen name="mediumText">15sp</dimen>
-    <dimen name="smallText">14sp</dimen>
-    <dimen name="extraSmallText">13sp</dimen>
+    <dimen name="extraLargeText">15sp</dimen>
+    <dimen name="largeText">15sp</dimen>
+    <dimen name="mediumText">14sp</dimen>
+    <dimen name="smallText">13sp</dimen>
+    <dimen name="extraSmallText">12sp</dimen>
     <dimen name="boxlineWidth">1dp</dimen>
     <dimen name="underlineWidth">1dp</dimen>
 

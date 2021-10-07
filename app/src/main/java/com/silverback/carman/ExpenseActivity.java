@@ -241,6 +241,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 if(state == 0 && position == Constants.SVC) return;
+
                 currentPage = position;
                 if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
 

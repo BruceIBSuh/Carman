@@ -16,9 +16,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -122,18 +123,18 @@ public class ServiceManagerFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         // In case the activity is initiated by tabbing the notification, which sent the intent w/
         // action and extras for the geofance data.
-        setGeofenceIntent();
+        getGeofenceIntent();
 
         // userId will be used when svc_eval is prepared.
-        if(getArguments() != null) {
-            distCode = getArguments().getString("distCode");
-            userId = getArguments().getString("userId");
-            log.i("distcode: %s", distCode);
-        } else distCode = "0101";
+//        if(getArguments() != null) {
+//            distCode = getArguments().getString("distCode");
+//            userId = getArguments().getString("userId");
+//        } else distCode = "0101";
 
 
         // Instantiate objects.
-        mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        //mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         firestore = FirebaseFirestore.getInstance();
         calendar = Calendar.getInstance(Locale.getDefault());
@@ -153,15 +154,6 @@ public class ServiceManagerFragment extends Fragment implements
         pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
         locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
         stationModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
-
-        // Attach an observer to fetch a current location from LocationTask, then initiate
-        // StationListTask based on the value.
-        /*
-        locationModel.getLocation().observe(getActivity(), location -> {
-            this.location = location;
-            //serviceCenterTask = ThreadManager.startServiceCenterTask(getContext(), svcCenterModel, location);
-        });
-         */
 
         // Attach the listener which implements the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
@@ -195,8 +187,7 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvSvcPayment.setText("0");
         binding.tvSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
-
-        try { createRecyclerServiceItemView(); } catch(JSONException e) {e.printStackTrace();}
+        createRecyclerServiceItemView();
 
         // Set event listeners.
         binding.btnRegisterService.setOnClickListener(v -> registerFavorite());
@@ -206,24 +197,13 @@ public class ServiceManagerFragment extends Fragment implements
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
         // Constants.SVC
-        if(isGeofenceIntent && category == Constants.SVC) {
-            binding.etServiceProvider.setText(geoSvcName);
-            binding.etServiceProvider.setText(geoSvcName);
-            binding.etServiceProvider.clearFocus();
-            isSvcFavorite = true;
-
-            binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            binding.btnResetDatetime.setVisibility(View.GONE);
-            binding.btnResetDatetime.setVisibility(View.GONE);
-        }
-
+        if(isGeofenceIntent && category == Constants.SVC) setGeofenceIntent();
         return binding.getRoot();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        //fragmentModel.getExpenseSvcFragment().setValue(this);
         // Update the time to the current time.
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
 
@@ -232,68 +212,11 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        addViewModelObserver(fragmentModel);
 
-        // To notify ExpensePagerFragment of the current fragment to show the corresponding viewpager.
-        fragmentModel.setCurrentFragment(this);
-
-        // Show the service data and animate the progressbar to indicate when to check.
-        try { showServiceDataWithBar(); }
-        catch(JSONException e) { e.printStackTrace(); }
-
-        // LiveData custom time from Date and Time picker DialogFragment
-        fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
-            this.calendar = calendar;
-            binding.tvServiceDate.setText(sdf.format(calendar.getTimeInMillis()));
-        });
-
-        // Communcate w/ NumberPadFragment to put a number selected in the num pad into the textview
-        // in this fragment.
-        fragmentModel.getNumpadValue().observe(getViewLifecycleOwner(), data -> {
-            final int viewId = data.keyAt(0);
-            final int value = data.valueAt(0);
-            if(viewId == R.id.tv_svc_mileage) {
-                binding.tvSvcMileage.setText(df.format(value));
-            } else if(viewId == R.id.tv_item_cost) {
-                mAdapter.notifyItemChanged(itemPos, data);
-                totalExpense += data.valueAt(0);
-                binding.tvSvcPayment.setText(df.format(totalExpense));
-            }
-        });
-
-        // Communicate b/w  RecyclerView.ViewHolder and MemoPadFragment
-        fragmentModel.getMemoPadValue().observe(getViewLifecycleOwner(), data -> {
-            mAdapter.notifyItemChanged(itemPos, data);
-        });
-
-        // Get the params for removeGeofence() which are passed from FavroiteListFragment
-        fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
-            svcName = entity.providerName;
-            svcId = entity.providerId;
-            //etServiceName.setText(svcName);
-            binding.etServiceProvider.setText(svcName);
-            binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
-            isSvcFavorite = true;
-        });
-
-
-        // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
-        // update the data in Firestore.
-        // Retrieving the evaluation and the comment, set or update the data with the passed id.
-        fragmentModel.getServiceLocation().observe(getViewLifecycleOwner(), sparseArray -> {
-            svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
-            svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
-            svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
-            svcCompany = (String)sparseArray.get(RegisterDialogFragment.COMPANY);
-            svcRating = (Float)sparseArray.get(RegisterDialogFragment.RATING);
-            svcComment = (String)sparseArray.get(RegisterDialogFragment.COMMENT);
-            log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
-
-            uploadServiceEvaluation(svcId);
-        });
+        // Show the service data and animate the progressbar to indicate when to check an service item.
+        showServiceDataWithBar();
     }
-
-
-
 
     // Implement ExpServiceItemAdapter.OnParentFragmentListener to pop up NumberPadFragmnet and
     // intput the amount of expense in each service item.
@@ -318,7 +241,7 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Check if the parent activity gets started by the geofence intent and get extras.
-    private void setGeofenceIntent(){
+    private void getGeofenceIntent(){
         String action = requireActivity().getIntent().getAction();
         if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
             //if(getActivity().getIntent().getAction().equals(Constants.NOTI_GEOFENCE)) {
@@ -330,9 +253,81 @@ public class ServiceManagerFragment extends Fragment implements
         }
     }
 
-    private void createRecyclerServiceItemView() throws JSONException {
+    private void setGeofenceIntent() {
+        binding.etServiceProvider.setText(geoSvcName);
+        binding.etServiceProvider.clearFocus();
+        isSvcFavorite = true;
+
+        binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+        binding.btnResetDatetime.setVisibility(View.GONE);
+        binding.btnResetDatetime.setVisibility(View.GONE);
+    }
+
+    private void addViewModelObserver(ViewModel model) {
+        if(model instanceof FragmentSharedModel) {
+            // To notify ExpensePagerFragment of the current fragment to show the corresponding
+            // viewpager in the top frame
+            fragmentModel.setCurrentFragment(this);
+
+            // LiveData custom time from Date and Time picker DialogFragment
+            fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
+                this.calendar = calendar;
+                binding.tvServiceDate.setText(sdf.format(calendar.getTimeInMillis()));
+            });
+
+            // Communcate w/ NumberPadFragment to put a number selected in the num pad into the
+            // textview in this fragment.
+            fragmentModel.getNumpadValue().observe(getViewLifecycleOwner(), data -> {
+                final int viewId = data.keyAt(0);
+                final int value = data.valueAt(0);
+                if(viewId == R.id.tv_svc_mileage) {
+                    binding.tvSvcMileage.setText(df.format(value));
+                }else if(viewId == R.id.tv_item_cost) {
+                    mAdapter.notifyItemChanged(itemPos, data);
+                    totalExpense += data.valueAt(0);
+                    binding.tvSvcPayment.setText(df.format(totalExpense));
+                }
+            });
+
+            // Communicate b/w  RecyclerView.ViewHolder and MemoPadFragment
+            fragmentModel.getMemoPadValue().observe(getViewLifecycleOwner(), data -> {
+                mAdapter.notifyItemChanged(itemPos, data);
+            });
+
+            // Get the params for removeGeofence() which are passed from FavroiteListFragment
+            fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
+                svcName = entity.providerName;
+                svcId = entity.providerId;
+                //etServiceName.setText(svcName);
+                binding.etServiceProvider.setText(svcName);
+                binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                isSvcFavorite = true;
+            });
+
+            // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
+            // update the data in Firestore.
+            // Retrieving the evaluation and the comment, set or update the data with the passed id.
+            fragmentModel.getServiceLocation().observe(getViewLifecycleOwner(), sparseArray -> {
+                svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
+                svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
+                svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
+                svcCompany = (String)sparseArray.get(RegisterDialogFragment.COMPANY);
+                svcRating = (Float)sparseArray.get(RegisterDialogFragment.RATING);
+                svcComment = (String)sparseArray.get(RegisterDialogFragment.COMMENT);
+                log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
+
+                uploadServiceEvaluation(svcId);
+            });
+        }
+    }
+
+    private void createRecyclerServiceItemView() {
         String jsonServiceItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
-        jsonServiceArray = new JSONArray(jsonServiceItems);
+        try {
+            jsonServiceArray = new JSONArray(jsonServiceItems);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         binding.recyclerServiceItems.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerServiceItems.setHasFixedSize(true);
@@ -345,17 +340,21 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Show the lastest service and and animate the progress bar with it
-    private void showServiceDataWithBar() throws JSONException {
+    private void showServiceDataWithBar() {
         for(int i = 0; i < jsonServiceArray.length(); i++) {
-            final int pos = i;
-            final String name = jsonServiceArray.optJSONObject(pos).getString("name");
-            // Sync issue!!!!
-            mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
-                if(data != null) {
-                    mAdapter.setServiceData(pos, data);
-                    //mAdapter.notifyItemChanged(pos, data);
-                }
-            });
+            try {
+                final int pos = i;
+                final String name = jsonServiceArray.optJSONObject(pos).getString("name");
+                // Sync issue!!!!
+                mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
+                    if (data != null) {
+                        mAdapter.setServiceData(pos, data);
+                        //mAdapter.notifyItemChanged(pos, data);
+                    }
+                });
+            } catch(JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -368,7 +367,19 @@ public class ServiceManagerFragment extends Fragment implements
 
         if(isSvcFavorite || svcLocation != null) {
             Snackbar.make(binding.getRoot(), "Already Registered", Snackbar.LENGTH_SHORT).show();
+
         } else {
+            String district = mSettings.getString(Constants.DISTRICT, null);
+            String distCode;
+            try {
+                JSONArray jsonArray = new JSONArray(district);
+                distCode = (String)jsonArray.get(2);
+
+            } catch(JSONException e) {
+                log.e("JSONException: %s", e.getMessage());
+                distCode = "0101";
+            }
+
             RegisterDialogFragment.newInstance(svcName, distCode)
                     .show(getChildFragmentManager(), "registerDialog");
         }
@@ -550,4 +561,6 @@ public class ServiceManagerFragment extends Fragment implements
                     });
         }
     }
+
+
 }
