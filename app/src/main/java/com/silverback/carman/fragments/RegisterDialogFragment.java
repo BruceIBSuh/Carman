@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,7 +14,6 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
@@ -26,14 +24,11 @@ import androidx.preference.PreferenceManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.firestore.Transaction;
 import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.SigunSpinnerAdapter;
@@ -77,7 +72,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentModel;
     private DistCodeSpinnerTask spinnerTask;
-    private GeocoderReverseTask geocoderReverseTask;
+    private GeocoderReverseTask geoReverseTask;
     private GeocoderTask geocoderTask;
     private ThreadTask locationTask;
     //private SpinnerDistrictModel distModel;
@@ -91,9 +86,12 @@ public class RegisterDialogFragment extends DialogFragment implements
     private String distCode;
     private String nickname;
 
+    // Widgets
+    private ProgressBar progressBar;
+
     // Fields
     private int mSidoItemPos, mSigunItemPos, tmpSigunPos;
-    private boolean isCurrentLocation;
+    private boolean isLocationFetched;
     private boolean isRegistered;
 
     // Default constructor
@@ -106,7 +104,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     static RegisterDialogFragment newInstance(String name, String distCode) {
         RegisterDialogFragment dialogFragment = new RegisterDialogFragment();
         Bundle args = new Bundle();
-        args.putString("favoriteName", name);
+        args.putString("serviceProvider", name);
         args.putString("distCode", distCode);
 
         //args.putInt("category", category);
@@ -120,7 +118,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        svcName = requireArguments().getString("favoriteName");
+        svcName = requireArguments().getString("serviceProvider");
         distCode = requireArguments().getString("distCode");
         //category = getArguments().getInt("category");
         //mSettings = ((BaseActivity)Objects.requireNonNull(requireActivity())).getSharedPreferernces();
@@ -130,7 +128,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
 
         // ViewModel to fetch the sigun list of a given sido name
-        fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
     }
@@ -143,11 +141,11 @@ public class RegisterDialogFragment extends DialogFragment implements
         binding = DialogRegisterProviderBinding.inflate(inflater);
         setCancelable(false);
 
-        createRegisterProgressBar();
-        createDistrictSpinners();
-
         nickname = mSettings.getString(Constants.USER_NAME, null);
         binding.tvRegisterTitle.setText(svcName);
+
+        // Create Spinners for Sido, Sigun and entity name
+        createDistrictSpinners();
 
         // Event Handlers
         binding.spinnerSido.setOnItemSelectedListener(this);
@@ -169,7 +167,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         });
 
 
-        // Create AlertDialog with a custom view.
+        // Create AlertDialog with a custom view
         dialog = new AlertDialog.Builder(requireContext())
                 .setView(binding.getRoot())
                 .setPositiveButton(R.string.dialog_btn_confirm, null)
@@ -198,7 +196,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     public void onPause() {
         if(spinnerTask != null) spinnerTask = null;
         if(locationTask != null) locationTask = null;
-        if(geocoderReverseTask != null) geocoderReverseTask = null;
+        if(geoReverseTask != null) geoReverseTask = null;
         if(geocoderTask != null) geocoderTask = null;
 
         super.onPause();
@@ -215,16 +213,17 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
-
-    private void createRegisterProgressBar() {
-        ProgressBar pbRegister = new ProgressBar(requireContext(), null, android.R.attr.progressBarStyleSmall);
-        pbRegister.setIndeterminate(true);
-        pbRegister.setVisibility(View.VISIBLE);
-        ConstraintLayout.LayoutParams  params = new ConstraintLayout.LayoutParams(20, 20);
+    private void setRegisterProgressBar() {
+        progressBar = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleSmall);
+        progressBar.setIndeterminate(true);
+        ConstraintLayout.LayoutParams  params = new ConstraintLayout.LayoutParams(100, 100);
+        params.topToTop = binding.getRoot().getId();
+        params.bottomToBottom = binding.getRoot().getId();
+        params.leftToLeft = binding.getRoot().getId();
+        params.rightToRight = binding.getRoot().getId();
         params.horizontalBias = 0.5f;
         params.verticalBias = 0.5f;
-        binding.rootviewRegister.addView(pbRegister, params);
-
+        binding.rootviewRegister.addView(progressBar, params);
     }
 
     // Create the spinners which display the sido, sigun and company names respectively. The sigun
@@ -255,15 +254,16 @@ public class RegisterDialogFragment extends DialogFragment implements
         binding.spinnerCompany.setAdapter(companyAdapter);
     }
 
+    // Make te reverse geocoding process to get the official address of an service station based on
+    // the current geo-location (latitude and longitude)
     private void setReverseGeocoderAddress() {
-        isCurrentLocation = true;
+        //setRegisterProgressBar(true);
+        isLocationFetched = true;
         locationTask = ThreadManager2.getInstance().fetchLocationTask(getContext(), locationModel);
-
         locationModel.getLocation().observe(this, location -> {
             log.i("Current Location: %s", location);
             mLocation = location;
-            geocoderReverseTask = ThreadManager2.getInstance()
-                    .startReverseGeocoderTask(getContext(), locationModel, location);
+            geoReverseTask = ThreadManager2.getInstance().startReverseGeocoderTask(getContext(), locationModel, location);
         });
 
         // Fetch the current address and split it for inputting sido and sigun name respectively into
@@ -284,16 +284,18 @@ public class RegisterDialogFragment extends DialogFragment implements
             binding.tvSigun.setVisibility(View.VISIBLE);
             binding.spinnerSido.setVisibility(View.GONE);
             binding.spinnerSigun.setVisibility(View.GONE);
+            //setRegisterProgressBar(false);
         });
 
 
     }
 
+    // Make the geocoding process to get a location based on the address.
     private void setGeocoderLocation() {
-        if(isCurrentLocation && mLocation != null && mAddress != null) {
+        setRegisterProgressBar();
+        if(isLocationFetched && mLocation != null && mAddress != null) {
             log.i("Current Location process: %s, %s", mLocation, mAddress);
             registerService();
-            //dialog.dismiss();
         } else {
             mAddress = binding.spinnerSido.getSelectedItem() + " "
                     + sigunAdapter.getItem(tmpSigunPos).getDistrictName() + " "
@@ -302,24 +304,24 @@ public class RegisterDialogFragment extends DialogFragment implements
             // of which is to be sent to getGeocoderLocation of LocationViewModel as a LiveData.
             geocoderTask = ThreadManager2.getInstance().startGeocoderTask(getContext(), locationModel, mAddress);
 
-        }
+            // Fetch the Location based on a given address name by using Geocoder, then pass the value
+            // to ServiceManagerFragment and close the dialog.
+            locationModel.getGeocoderLocation().observe(this, location -> {
+                mLocation = location;
+                // Pass the location and address of an service provider to ServiceManagerFragment
+                // using FragmentSharedModel which enables Fragments to communicate each other.
+                log.i("Geocoder Location: %s, %s", mLocation, mAddress);
+                registerService();
+            });
 
-        // Fetch the Location based on a given address name by using Geocoder, then pass the value
-        // to ServiceManagerFragment and close the dialog.
-        locationModel.getGeocoderLocation().observe(this, location -> {
-            mLocation = location;
-            // Pass the location and address of an service provider to ServiceManagerFragment
-            // using FragmentSharedModel which enables Fragments to communicate each other.
-            log.i("Geocoder Location: %s, %s", mLocation, mAddress);
-            registerService();
-        });
+        }
     }
 
     // After querying the document with a service name, retrieve the geopoint to compare the current
     // location, whatever it gets from the reverse geocoder or LocationServices, with the geopoint
     // location. Then, if the distance is out of the preset distance, set the data to Firestore.
-    private boolean checkNearArea(Location location, GeoPoint geoPoint) {
-        if(location == null || geoPoint == null) {
+    private boolean checkNearArea(GeoPoint geoPoint) {
+        if(mLocation == null || geoPoint == null) {
             log.e("Incorrect address or location data");
             return false;
         }
@@ -327,67 +329,79 @@ public class RegisterDialogFragment extends DialogFragment implements
         Location geoLocation = new Location("geopoint");
         geoLocation.setLatitude(geoPoint.getLatitude());
         geoLocation.setLongitude(geoPoint.getLongitude());
-        return location.distanceTo(geoLocation) < Constants.UPDATE_DISTANCE;
+        return mLocation.distanceTo(geoLocation) < Constants.UPDATE_DISTANCE;
     }
 
     // Share the data of the dialog with ServiceManagerFragment via FragmentSharedModel;
     private void registerService() {
-        Map<String, Object> svcData = new HashMap<>();
-        svcData.put("svc_name", svcName);
-        svcData.put("svc_code", binding.spinnerCompany.getSelectedItem().toString());
-        svcData.put("address", mAddress);
-        svcData.put("phone", binding.etPhone.getText().toString());
-        svcData.put("geopoint", new GeoPoint(mLocation.getLatitude(), mLocation.getLongitude()));
-
-        if(binding.rbService.getRating() > 0) {
-            svcData.put("eval_num", FieldValue.increment(1));
-            svcData.put("eval_sum", FieldValue.increment(binding.rbService.getRating()));
+        // Do empty check.
+        isRegistered = false;
+        if(TextUtils.isEmpty(binding.etAddrsDetail.getText())) {
+            Snackbar.make(binding.getRoot(), "Empty address", Snackbar.LENGTH_SHORT).show();
+            return;
         }
 
-        final CollectionReference colRef = firestore.collection("svc_center");
-        colRef.whereEqualTo("svc_name", svcName).get().addOnSuccessListener(snapshot -> {
-            if(snapshot != null && snapshot.size() > 0) {
-                for(int i = 0; i < snapshot.size(); i++) {
-                    QueryDocumentSnapshot doc = (QueryDocumentSnapshot)snapshot.getDocuments().get(i);
-                    // If a service center with the same name is queried and its location is within
-                    // Constants.UPDATE_DISTANCE. isRegistered is set to true, and if no service
-                    // center is queried or the same name is queried but the location is out of
-                    // Constant.UPDATE_DISTANCE, isRegistered is set to false.
-                    isRegistered = checkNearArea(mLocation, doc.getGeoPoint("location"));
+        // Query the Service Station with service name. If the same name exists, check if the station
+        // is within the preset distance(50m), it should be regarded as the same one.
+        // Pay attention to the usage of whereGreaterThanOrEqualTo w/ String query.
+        final CollectionReference colRef = firestore.collection("svc_station");
+        colRef.whereGreaterThanOrEqualTo("svc_name", svcName).get().addOnSuccessListener(snapshot -> {
+            if(snapshot.size() > 0) {
+                for(QueryDocumentSnapshot doc : snapshot) {
+                    GeoPoint geoPoint = (GeoPoint)doc.get("geopoint");
+                    isRegistered = checkNearArea(geoPoint);
+                    uploadServiceComment(doc.getId());
+                    break;
                 }
-            } else isRegistered = false;
 
-            log.d("isRegistered: %s", isRegistered);
-            // In case isRegistered is set to false, add the service data, then pass the evaluation
-            // data including the id as SparseArray to ServiceManagerFragment to upload.
+            } //else {
+
             if(!isRegistered) {
-               colRef.add(svcData).addOnSuccessListener(docRef -> {
-                    //uploadServiceComment(docRef.getId());
-                    dialog.dismiss();
-                }).addOnFailureListener(Exception::printStackTrace);
+                Map<String, Object> svcData = new HashMap<>();
+                svcData.put("svc_name", svcName);
+                svcData.put("svc_entity", binding.spinnerCompany.getSelectedItem().toString());
+                svcData.put("address", mAddress);
+                svcData.put("phone", binding.etPhone.getText().toString());
+                svcData.put("geopoint", new GeoPoint(mLocation.getLatitude(), mLocation.getLongitude()));
+
+                firestore.collection("svc_station").add(svcData).addOnCompleteListener(docRef -> {
+                    String docId = docRef.getResult().getId();
+                    uploadServiceComment(docId);
+                });
             }
-        }).addOnFailureListener(Exception::printStackTrace);
+
+        }).addOnFailureListener(Throwable::printStackTrace);
+
     }
 
+    // On having queried or set a service station, upload any rating or comments to the difference
+    // collection by WriteBatch.
     private void uploadServiceComment(String docId) {
+        WriteBatch batch = firestore.batch();
+        DocumentReference docRef = firestore.collection("svc_eval").document(docId);
+
+        if(binding.rbService.getRating() > 0) {
+            Map<String, Object> ratingData = new HashMap<>();
+            ratingData.put("eval_num", FieldValue.increment(1));
+            ratingData.put("eval_sum", FieldValue.increment(binding.rbService.getRating()));
+            batch.set(docRef, ratingData, SetOptions.merge());
+        }
+
         if(!binding.etServiceComment.getText().toString().isEmpty()) {
+            DocumentReference commentRef = docRef.collection("comment").document();
             Map<String, Object> commentData = new HashMap<>();
             commentData.put("timestamp", FieldValue.serverTimestamp());
             commentData.put("name", mSettings.getString(Constants.USER_NAME, null));
             commentData.put("comments", binding.etServiceComment.getText().toString());
             commentData.put("rating", binding.rbService.getRating());
-
-            final CollectionReference colRef = firestore.collection("svc_eval")
-                    .document(docId).collection("comments");
-//            firestore.collection("svc_eval").document(docId).collection("comments").add(commentData)
-//                    .addOnCompleteListener(task -> {
-//                        if(task.isSuccessful()) {
-//                            log.e("Commments successfully uploaded");
-//                            //isCommentUploaded = true;
-//                        } else {
-//                            log.e("Comments upload failed: %s", task.getException());
-//                        }
-//                    });
+            batch.set(commentRef, commentData);
         }
+
+        batch.commit().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                fragmentModel.getRegisteredServiceId().setValue(docId);
+                dialog.dismiss();
+            } else Snackbar.make(binding.getRoot(), "Fail to upload", Snackbar.LENGTH_SHORT).show();
+        });
     }
 }

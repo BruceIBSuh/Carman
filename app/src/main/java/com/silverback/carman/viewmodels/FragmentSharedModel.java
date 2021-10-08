@@ -28,6 +28,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // ServiceManagerFragment and RegisterDialogFragment
     private MutableLiveData<SparseArray<Object>> serviceLocation;
+    private MutableLiveData<String> registeredServiceId;
 
     // SettingSvcItemDlgFragment and SettingServiceItemFragment
     private MutableLiveData<JSONObject> jsonServiceItemObj;
@@ -67,7 +68,6 @@ public class FragmentSharedModel extends ViewModel {
         return fragment;
     }
 
-
     // Share GasManagerFragment and ServiceManagerFragment with NumPadFragment
     public void setNumPadValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.
@@ -77,6 +77,11 @@ public class FragmentSharedModel extends ViewModel {
 
     public LiveData<SparseIntArray> getNumpadValue() {
         return numpadValue;
+    }
+
+    public MutableLiveData<String> getRegisteredServiceId() {
+        if(registeredServiceId == null) registeredServiceId = new MutableLiveData<>();
+        return registeredServiceId;
     }
     
 

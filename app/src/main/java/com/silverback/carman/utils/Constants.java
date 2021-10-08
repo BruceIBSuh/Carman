@@ -29,7 +29,7 @@ public class Constants {
     public static final int COMPANY_INFO = 5;
 
     public static final long OPINET_UPDATE_INTERVAL = 1000 * 60;//Interval for downloading gas prices from Opinet (3 hrs)
-    public static final float UPDATE_DISTANCE = 50f; //Distance difference to update near stations
+    public static final float UPDATE_DISTANCE = 50; //Distance difference to update near stations
 
     // Geofences
     public static final int MAX_FAVORITE = 10;

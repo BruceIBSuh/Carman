@@ -307,6 +307,7 @@ public class ServiceManagerFragment extends Fragment implements
             // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
             // update the data in Firestore.
             // Retrieving the evaluation and the comment, set or update the data with the passed id.
+            /*
             fragmentModel.getServiceLocation().observe(getViewLifecycleOwner(), sparseArray -> {
                 log.i("Service Location: %s", sparseArray.size());
                 svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
@@ -318,6 +319,14 @@ public class ServiceManagerFragment extends Fragment implements
                 log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
 
                 //uploadServiceEvaluation(svcId);
+            });
+
+             */
+
+            fragmentModel.getRegisteredServiceId().observe(getViewLifecycleOwner(), svcId -> {
+                log.i("Registered: %s", svcId);
+                this.svcId = svcId;
+
             });
         }
     }
