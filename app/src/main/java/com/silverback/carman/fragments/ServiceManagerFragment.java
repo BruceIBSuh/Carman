@@ -23,9 +23,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
@@ -55,14 +53,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 
 public class ServiceManagerFragment extends Fragment implements
-        //View.OnClickListener,
         ExpServiceItemAdapter.OnParentFragmentListener {
 
     // Constants
@@ -78,10 +73,10 @@ public class ServiceManagerFragment extends Fragment implements
     private Calendar calendar;
 
     private FragmentSharedModel fragmentModel;
-    private PagerAdapterViewModel pagerAdapterModel;
-    private LocationViewModel locationModel;
-    private ServiceCenterViewModel svcCenterModel;
-    private StationListViewModel stationModel;
+    //private PagerAdapterViewModel pagerAdapterModel;
+    //private LocationViewModel locationModel;
+    //private ServiceCenterViewModel svcCenterModel;
+    //private StationListViewModel stationModel;
 
     private ServiceCenterTask serviceCenterTask;
     private Location location;
@@ -125,13 +120,6 @@ public class ServiceManagerFragment extends Fragment implements
         // action and extras for the geofance data.
         getGeofenceIntent();
 
-        // userId will be used when svc_eval is prepared.
-//        if(getArguments() != null) {
-//            distCode = getArguments().getString("distCode");
-//            userId = getArguments().getString("userId");
-//        } else distCode = "0101";
-
-
         // Instantiate objects.
         //mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
@@ -150,10 +138,10 @@ public class ServiceManagerFragment extends Fragment implements
 
         // ViewModels
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
-        pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
-        locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
-        stationModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
+        //svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
+        //pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
+        //locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
+        //stationModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
 
         // Attach the listener which implements the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
@@ -191,7 +179,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Set event listeners.
         binding.btnRegisterService.setOnClickListener(v -> registerFavorite());
-        binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
+        //binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
         binding.radioGroup.setOnCheckedChangeListener(this::switchServiceSpanType);
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
@@ -214,8 +202,9 @@ public class ServiceManagerFragment extends Fragment implements
         super.onViewCreated(view, savedInstanceState);
         addViewModelObserver(fragmentModel);
 
-        // Show the service data and animate the progressbar to indicate when to check an service item.
-        showServiceDataWithBar();
+        // Show the service data and animate the progressbar to indicate when to check an item.
+        try { createServiceProgressBar();}
+        catch (JSONException e) { e.printStackTrace(); }
     }
 
     // Implement ExpServiceItemAdapter.OnParentFragmentListener to pop up NumberPadFragmnet and
@@ -260,7 +249,6 @@ public class ServiceManagerFragment extends Fragment implements
 
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
         binding.btnResetDatetime.setVisibility(View.GONE);
-        binding.btnResetDatetime.setVisibility(View.GONE);
     }
 
     private void addViewModelObserver(ViewModel model) {
@@ -304,25 +292,7 @@ public class ServiceManagerFragment extends Fragment implements
                 isSvcFavorite = true;
             });
 
-            // Communicate w/ RegisterDialogFragment, retrieving the eval and comment data and set or
-            // update the data in Firestore.
-            // Retrieving the evaluation and the comment, set or update the data with the passed id.
-            /*
-            fragmentModel.getServiceLocation().observe(getViewLifecycleOwner(), sparseArray -> {
-                log.i("Service Location: %s", sparseArray.size());
-                svcId = (String)sparseArray.get(RegisterDialogFragment.SVC_ID);
-                svcLocation = (Location)sparseArray.get(RegisterDialogFragment.LOCATION);
-                svcAddress = (String)sparseArray.get(RegisterDialogFragment.ADDRESS);
-                svcCompany = (String)sparseArray.get(RegisterDialogFragment.COMPANY);
-                svcRating = (Float)sparseArray.get(RegisterDialogFragment.RATING);
-                svcComment = (String)sparseArray.get(RegisterDialogFragment.COMMENT);
-                log.i("Service Locaiton: %s, %s, %s, %s, %s", svcId, svcLocation, svcAddress, svcRating, svcComment);
-
-                //uploadServiceEvaluation(svcId);
-            });
-
-             */
-
+            // Get the id of a registered
             fragmentModel.getRegisteredServiceId().observe(getViewLifecycleOwner(), svcId -> {
                 log.i("Registered: %s", svcId);
                 this.svcId = svcId;
@@ -350,21 +320,17 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Show the lastest service and and animate the progress bar with it
-    private void showServiceDataWithBar() {
+    private void createServiceProgressBar() throws JSONException {
         for(int i = 0; i < jsonServiceArray.length(); i++) {
-            try {
-                final int pos = i;
-                final String name = jsonServiceArray.optJSONObject(pos).getString("name");
-                // Sync issue!!!!
-                mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
-                    if (data != null) {
-                        mAdapter.setServiceData(pos, data);
-                        //mAdapter.notifyItemChanged(pos, data);
-                    }
-                });
-            } catch(JSONException e) {
-                e.printStackTrace();
-            }
+            final int pos = i;
+            final String name = jsonServiceArray.optJSONObject(pos).getString("name");
+            // Sync issue!!!!
+            mDB.serviceManagerModel().loadServiceData(name).observe(getViewLifecycleOwner(), data -> {
+                if (data != null) {
+                    mAdapter.setServiceData(pos, data);
+                    //mAdapter.notifyItemChanged(pos, data);
+                }
+            });
         }
     }
 
@@ -384,7 +350,6 @@ public class ServiceManagerFragment extends Fragment implements
             try {
                 JSONArray jsonArray = new JSONArray(district);
                 distCode = (String)jsonArray.get(2);
-
             } catch(JSONException e) {
                 log.e("JSONException: %s", e.getMessage());
                 distCode = "0101";
@@ -395,6 +360,7 @@ public class ServiceManagerFragment extends Fragment implements
         }
 
     }
+
 
 
     // Register the service center with the favorite list and the geofence.
@@ -413,16 +379,15 @@ public class ServiceManagerFragment extends Fragment implements
                     binding.getRoot(), getString(R.string.svc_snackbar_alert_remove_favorite), Snackbar.LENGTH_SHORT);
             snackbar.setAction(R.string.popup_msg_confirm, view -> {
                 geofenceHelper.removeFavoriteGeofence(svcName, svcId, Constants.SVC);
-                //btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
+                binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
             });
-
             snackbar.show();
-
             //firestore.collection("svc_eval").document(svcId).update("favorite_num", FieldValue.increment(-1));
 
         // Add the service center with the favorite list and geofence as far as it has been
         // already registered in RegisterDialogFragment.
         } else {
+            log.i("Add favorite: %s", svcId);
             if (TextUtils.isEmpty(svcId)) {
                 InputMethodManager imm = (InputMethodManager)requireActivity()
                         .getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -431,18 +396,19 @@ public class ServiceManagerFragment extends Fragment implements
                 Snackbar.make(binding.getRoot(), R.string.svc_msg_registration, Snackbar.LENGTH_SHORT).show();
 
             } else {
-                // Check if the totla number of the service favorites are out of the max limit.
+                // Check if the total number of the service favorites are out of the max limit.
                 final int placeholder = mDB.favoriteModel().countFavoriteNumber(Constants.SVC);
                 if (placeholder == Constants.MAX_FAVORITE) {
                     Snackbar.make(binding.getRoot(), getString(R.string.exp_snackbar_favorite_limit), Snackbar.LENGTH_SHORT).show();
+
                 } else {
                     // Query the data of a station from Firestore and pass the data to FavoriteGeofenceHelper
                     // for adding the favoirte list to the local db and Firestore as well.
-                    firestore.collection("svc_center").document(svcId).get().addOnCompleteListener(task -> {
+                    firestore.collection("svc_station").document(svcId).get().addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             DocumentSnapshot snapshot = task.getResult();
                             if (snapshot != null && snapshot.exists()) {
-                                //btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
+                                binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
                                 geofenceHelper.addFavoriteGeofence(snapshot, placeholder, Constants.SVC);
                             }
                         }
@@ -532,44 +498,4 @@ public class ServiceManagerFragment extends Fragment implements
 
         return true;
     }
-
-//    private void uploadServiceEvaluation(String svcId) {
-//        if(svcRating > 0) {
-//            Map<String, Object> ratingData = new HashMap<>();
-//            ratingData.put("eval_num", FieldValue.increment(1));
-//            ratingData.put("eval_sum", FieldValue.increment(svcRating));
-//
-//            DocumentReference docRef = firestore.collection("svc_eval").document(svcId);
-//            docRef.get().addOnSuccessListener(snapshot -> {
-//                if(snapshot.exists() && snapshot.get("eval_num") != null) {
-//                    log.i("update rating");
-//                    docRef.update(ratingData);
-//
-//                } else {
-//                    log.i("set rating if no rating field exists");
-//                    docRef.set(ratingData);
-//                }
-//            });
-//        }
-//
-//        if(!svcComment.isEmpty()) {
-//            Map<String, Object> commentData = new HashMap<>();
-//            commentData.put("timestamp", FieldValue.serverTimestamp());
-//            commentData.put("name", mSettings.getString(Constants.USER_NAME, null));
-//            commentData.put("comments", svcComment);
-//            commentData.put("rating", svcRating);
-//
-//            firestore.collection("svc_eval").document(svcId).collection("comments").add(commentData)
-//                    .addOnCompleteListener(task -> {
-//                        if(task.isSuccessful()) {
-//                            log.e("Commments successfully uploaded");
-//                            //isCommentUploaded = true;
-//                        } else {
-//                            log.e("Comments upload failed: %s", task.getException());
-//                        }
-//                    });
-//        }
-//    }
-
-
 }

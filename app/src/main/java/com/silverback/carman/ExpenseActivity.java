@@ -452,7 +452,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // xml file.
     public void checkBackgroundLocationPermission(View view) {
         WeakReference<Fragment> weakFragment = expContentPagerAdapter.weakFragmentReference(currentPage);
-
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             String permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
             checkRuntimePermission(binding.getRoot(), permission, () -> {

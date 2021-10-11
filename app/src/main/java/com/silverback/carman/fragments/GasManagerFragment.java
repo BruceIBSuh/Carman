@@ -175,7 +175,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                     //mDB.favoriteModel().updatePlaceHolder(favList);
                 }
                 */
-
                 Snackbar.make(binding.getRoot(), R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
 
@@ -196,7 +195,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                              Bundle savedInstanceState) {
 
         binding = FragmentGasManagerBinding.inflate(inflater, container, false);
-
         // Check if it's possible to change the soft input mode on the fragment basis. Seems not work.
         Objects.requireNonNull(requireActivity()).getWindow()
                 .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);

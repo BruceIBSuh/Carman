@@ -57,15 +57,6 @@ public class RegisterDialogFragment extends DialogFragment implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(RegisterDialogFragment.class);
 
-    // Constants
-    static final int SVC_ID = 0;
-    static final int LOCATION = 1;
-    static final int ADDRESS = 2;
-    static final int COMPANY = 3;
-    static final int RATING = 4;
-    static final int COMMENT = 5;
-
-
     // Objects
     private DialogRegisterProviderBinding binding;
     private SharedPreferences mSettings;
@@ -75,7 +66,6 @@ public class RegisterDialogFragment extends DialogFragment implements
     private GeocoderReverseTask geoReverseTask;
     private GeocoderTask geocoderTask;
     private ThreadTask locationTask;
-    //private SpinnerDistrictModel distModel;
     private OpinetViewModel opinetModel;
     private LocationViewModel locationModel;
     private SigunSpinnerAdapter sigunAdapter;
@@ -85,9 +75,6 @@ public class RegisterDialogFragment extends DialogFragment implements
     private String svcName;
     private String distCode;
     private String nickname;
-
-    // Widgets
-    private ProgressBar progressBar;
 
     // Fields
     private int mSidoItemPos, mSigunItemPos, tmpSigunPos;
@@ -99,32 +86,22 @@ public class RegisterDialogFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
-
-    // Instantiate DialogFragment as a SingleTon
+    // Instantiate DialogFragment as a SingleTon which passes args to onCreate() as Bundle
     static RegisterDialogFragment newInstance(String name, String distCode) {
         RegisterDialogFragment dialogFragment = new RegisterDialogFragment();
         Bundle args = new Bundle();
-        args.putString("serviceProvider", name);
+        args.putString("provider", name);
         args.putString("distCode", distCode);
-
-        //args.putInt("category", category);
         dialogFragment.setArguments(args);
-
         return dialogFragment;
     }
-
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        svcName = requireArguments().getString("serviceProvider");
+        svcName = requireArguments().getString("provider");
         distCode = requireArguments().getString("distCode");
-        //category = getArguments().getInt("category");
-        //mSettings = ((BaseActivity)Objects.requireNonNull(requireActivity())).getSharedPreferernces();
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
-
-        // Instantiate FirebaseFirestore
         firestore = FirebaseFirestore.getInstance();
 
         // ViewModel to fetch the sigun list of a given sido name
@@ -143,9 +120,7 @@ public class RegisterDialogFragment extends DialogFragment implements
 
         nickname = mSettings.getString(Constants.USER_NAME, null);
         binding.tvRegisterTitle.setText(svcName);
-
-        // Create Spinners for Sido, Sigun and entity name
-        createDistrictSpinners();
+        createDistrictSpinners();// Create the spinners for Sido, Sigun and entity.
 
         // Event Handlers
         binding.spinnerSido.setOnItemSelectedListener(this);
@@ -166,7 +141,6 @@ public class RegisterDialogFragment extends DialogFragment implements
             }
         });
 
-
         // Create AlertDialog with a custom view
         dialog = new AlertDialog.Builder(requireContext())
                 .setView(binding.getRoot())
@@ -183,14 +157,15 @@ public class RegisterDialogFragment extends DialogFragment implements
         });
 
         return dialog;
-
     }
 
     // Without onCreateView() defined in DialogFragment, onViewCreated will not be invokked!!!
+    /*
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
     }
+     */
 
     @Override
     public void onPause() {
@@ -198,7 +173,6 @@ public class RegisterDialogFragment extends DialogFragment implements
         if(locationTask != null) locationTask = null;
         if(geoReverseTask != null) geoReverseTask = null;
         if(geocoderTask != null) geocoderTask = null;
-
         super.onPause();
     }
 
@@ -213,8 +187,9 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onNothingSelected(AdapterView<?> parent) {}
 
+    // Create ProgressBar when clicking the confirm button on the Dialog.
     private void setRegisterProgressBar() {
-        progressBar = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleSmall);
+        ProgressBar progressBar = new ProgressBar(getContext(), null, android.R.attr.progressBarStyleSmall);
         progressBar.setIndeterminate(true);
         ConstraintLayout.LayoutParams  params = new ConstraintLayout.LayoutParams(100, 100);
         params.topToTop = binding.getRoot().getId();
@@ -284,7 +259,6 @@ public class RegisterDialogFragment extends DialogFragment implements
             binding.tvSigun.setVisibility(View.VISIBLE);
             binding.spinnerSido.setVisibility(View.GONE);
             binding.spinnerSigun.setVisibility(View.GONE);
-            //setRegisterProgressBar(false);
         });
 
 
@@ -332,7 +306,7 @@ public class RegisterDialogFragment extends DialogFragment implements
         return mLocation.distanceTo(geoLocation) < Constants.UPDATE_DISTANCE;
     }
 
-    // Share the data of the dialog with ServiceManagerFragment via FragmentSharedModel;
+
     private void registerService() {
         // Do empty check.
         isRegistered = false;

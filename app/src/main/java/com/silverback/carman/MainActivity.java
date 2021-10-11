@@ -173,10 +173,10 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onStop() {
-        super.onStop();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(gasPriceTask != null) gasPriceTask = null;
+        super.onStop();
     }
 
     @Override
@@ -185,11 +185,9 @@ public class MainActivity extends BaseActivity implements
         return super.onCreateOptionsMenu(menu);
     }
 
-    //@SuppressWarnings("all")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_garage) {
-            //startActivity(new Intent(this, ExpenseActivity.class));
             activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
@@ -231,7 +229,7 @@ public class MainActivity extends BaseActivity implements
 
         // Reset the price info in the viewpager.
         mainPricePagerAdapter.setFuelCode(gasCode);
-        mainPricePagerAdapter.notifyDataSetChanged();
+        mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
 
         // Show the average price and create the price bar as hidden.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
