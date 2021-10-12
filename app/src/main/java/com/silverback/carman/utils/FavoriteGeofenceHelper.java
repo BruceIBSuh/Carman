@@ -29,8 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class performs to add or remove a gas station or service center non only to Geofence but
- * also to FavoriteProviderEntity of the Room.
+ * This class performs to add or remove a gas station or service center not only to Geofence but
+ * also to FavoriteProviderEntity of the local db.
  * GeofencingClient:
  * Geofence.Builder:
  * GeofencingRequest.Builder:
@@ -41,15 +41,15 @@ public class FavoriteGeofenceHelper {
     private static final LoggingHelper log = LoggingHelperFactory.create(FavoriteGeofenceHelper.class);
 
     // Objects
-    private Context context;
+    private final Context context;
 
-    private FirebaseFirestore firestore;
-    private CarmanDatabase mDB;
-    private FavoriteProviderEntity favoriteModel;
+    private final FirebaseFirestore firestore;
+    private final CarmanDatabase mDB;
+    private final FavoriteProviderEntity favoriteModel;
+    private final GeofencingClient mGeofencingClient;
 
     private DocumentReference evalReference;//set or update the "favorite_num" by category.
     private List<Geofence> mGeofenceList;
-    private GeofencingClient mGeofencingClient;
     private OnGeofenceListener mListener;
     private GeoPoint geoPoint;
     private PendingIntent geofencePendingIntent;
@@ -113,7 +113,7 @@ public class FavoriteGeofenceHelper {
      * @param category Service provier b/w Constants.GAS and Constants.SVC.
      */
     @SuppressWarnings("ConstantConditions")
-    public void addFavoriteGeofence(final DocumentSnapshot snapshot, final int placeHolder, final int category) {
+    public void addFavoriteGeofence(DocumentSnapshot snapshot, int placeHolder, int category) {
         final String providerId = snapshot.getId();
         String providerName;
         String providerCode;

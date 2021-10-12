@@ -60,21 +60,24 @@
         android:id="@+id/tv_label_provider"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/tv_label_date"
+        android:layout_alignStart="@id/tv_label_date"
         android:layout_marginTop="16dp"
         android:labelFor="@id/et_service_provider"
         android:text="@string/svc_label_provider"
-        android:textSize="@dimen/label"
-        android:layout_below="@id/tv_label_date"
-        android:layout_alignStart="@id/tv_label_date" />
+        android:textSize="@dimen/label" />
 
     <ImageButton
         android:id="@+id/btn_svc_favorite"
         android:layout_width="20dp"
         android:layout_height="20dp"
+        android:layout_alignBottom="@id/tv_label_provider"
         android:layout_marginStart="3dp"
-        android:contentDescription="@null"
         android:layout_toEndOf="@id/tv_label_provider"
-        android:layout_alignBottom="@id/tv_label_provider" />
+        android:background="@android:color/transparent"
+        android:src="@drawable/btn_favorite"
+        android:onClick="checkBackgroundLocationPermission"
+        android:contentDescription="@null" />
 
     <EditText
         android:id="@+id/et_service_provider"
@@ -108,13 +111,13 @@
         android:id="@+id/tv_label_mileage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/tv_label_provider"
+        android:layout_alignStart="@id/tv_label_provider"
         android:layout_marginTop="16dp"
         android:labelFor="@id/tv_svc_mileage"
         android:minWidth="80dp"
         android:text="@string/svc_label_mileage"
-        android:textSize="@dimen/label"
-        android:layout_below="@id/tv_label_provider"
-        android:layout_alignStart="@id/tv_label_provider" />
+        android:textSize="@dimen/label" />
 
     <TextView
         android:id="@+id/tv_svc_mileage"
@@ -144,13 +147,13 @@
         android:id="@+id/tv_label_payment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/tv_label_mileage"
+        android:layout_alignStart="@id/tv_label_mileage"
         android:layout_marginTop="16dp"
         android:labelFor="@id/tv_svc_payment"
         android:minWidth="80dp"
         android:text="@string/svc_label_payment"
-        android:textSize="@dimen/label"
-        android:layout_below="@id/tv_label_mileage"
-        android:layout_alignStart="@id/tv_label_mileage"/>
+        android:textSize="@dimen/label" />
 
     <TextView
         android:id="@+id/tv_svc_payment"

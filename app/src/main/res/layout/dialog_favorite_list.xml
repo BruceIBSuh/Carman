@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:padding="8dp"
-        android:background="@color/colorAccent"
+        android:background="@android:color/holo_orange_dark"
         android:textSize="@dimen/largeText"
         android:textColor="@android:color/white"
         android:textStyle="bold" />
