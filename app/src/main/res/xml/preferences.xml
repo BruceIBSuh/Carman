@@ -51,7 +51,7 @@
     <PreferenceCategory
         app:title="@string/pref_category_location"
         app:key="pref_location"
-        app:icon="@drawable/ic_setting_location">
+        app:icon="@drawable/ic_location_holo_blue_light">
         <com.silverback.carman.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
             app:key="carman_pref_district"

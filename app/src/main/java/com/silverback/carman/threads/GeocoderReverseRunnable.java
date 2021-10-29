@@ -57,6 +57,9 @@ public class GeocoderReverseRunnable implements Runnable {
                 }
             }
         } catch(IOException  | IllegalArgumentException e) {
+            // If the network is unstable, it causes the grpc error in processing the revserse
+            // geocoding, which may happen in particular when using wi-fi in the emulator.
+            // Required to make a retry code just in case.
             log.e("Reverse Geocoder error: %s", e.getMessage());
         }
 

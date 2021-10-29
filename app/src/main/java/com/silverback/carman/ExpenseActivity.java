@@ -94,7 +94,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
 
-    private ThreadTask tabPagerTask;
+    //private ThreadTask tabPagerTask;
     private LocationTask locationTask;
     private StationListTask stationListTask;
 
@@ -127,7 +127,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
-        // Create initial basic layouts
+        // Create the basic layouts of appbar, tab, and viespager in the top.
         createAppbarLayout();
         createTabLayout();
         createLastExpenseViewPager();
@@ -160,7 +160,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     public void onStop(){
         super.onStop();
         if(locationTask != null) locationTask = null;
-        if(tabPagerTask != null) tabPagerTask = null;
+        //if(tabPagerTask != null) tabPagerTask = null;
         if(stationListTask != null) stationListTask = null;
     }
     
