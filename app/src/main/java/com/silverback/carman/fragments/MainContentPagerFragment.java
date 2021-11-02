@@ -86,7 +86,6 @@ public class MainContentPagerFragment extends Fragment {
         calendar = Calendar.getInstance(Locale.getDefault());
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
         sdf2 = new SimpleDateFormat(getString(R.string.date_format_6), Locale.getDefault());
-
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
 
@@ -211,7 +210,6 @@ public class MainContentPagerFragment extends Fragment {
 
     // Inner class to reset the calendar and retrieve expense data for previous months.
     private class RecentMonthlyExpense {
-
         int[] arrExpense;
         int totalExpense, count;
 

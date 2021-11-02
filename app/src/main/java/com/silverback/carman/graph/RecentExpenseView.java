@@ -5,27 +5,19 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleOwner;
 
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
-import com.silverback.carman.database.CarmanDatabase;
-import com.silverback.carman.database.ExpenseBaseDao;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.DisplayResolutionUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 
 public class RecentExpenseView extends View {
@@ -35,31 +27,23 @@ public class RecentExpenseView extends View {
     private static final float ACCELERATOR = 0.02f;
 
     private final Context context;
-
-    private Calendar calendar;
-    private SimpleDateFormat sdf;
-
-    private Paint fgPaint;
     private Paint textPaint;
     private Paint dividerPaint;
 
     private ArrayList<Float> targetPercentList;
     private ArrayList<Float> percentList;
 
-
-
     private int mViewWidth;
     private int mViewHeight;
     private int barWidth;
     private int topMargin;
-    private int mSize; // number of previsiou months
+    private int mSize; //number of previsiou months
 
     private Paint[] arrPaint = new Paint[3];
     private final int[] arrBarColor = new int[3];
     private final String[] arrMonthName = new String[3];
 
-    private List<Integer> expList;
-
+    //private List<Integer> expList;
     private final Runnable animator = new Runnable() {
         @Override
         public void run() {
@@ -101,20 +85,18 @@ public class RecentExpenseView extends View {
     }
 
     private void getAttributes(Context context, AttributeSet attrs) {
-        TypedArray typedArray =
-                context.getTheme().obtainStyledAttributes(attrs, R.styleable.RecentExpenseView, 0, 0);
+        TypedArray t = context.getTheme().obtainStyledAttributes(attrs, R.styleable.RecentExpenseView, 0, 0);
         try {
-            arrBarColor[0] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor1, 0);
-            arrBarColor[1] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor2, 0);
-            arrBarColor[2] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor3, 0);
+            arrBarColor[0] = t.getColor(R.styleable.RecentExpenseView_graphBarColor1, 0);
+            arrBarColor[1] = t.getColor(R.styleable.RecentExpenseView_graphBarColor2, 0);
+            arrBarColor[2] = t.getColor(R.styleable.RecentExpenseView_graphBarColor3, 0);
         } finally {
-            typedArray.recycle();
+            t.recycle();
         }
 
     }
 
     private void init() {
-
         percentList = new ArrayList<>();
         arrPaint = new Paint[3];
         for(int i = 0; i < 3; i++) {
@@ -133,7 +115,7 @@ public class RecentExpenseView extends View {
         bgPaint.setColor(Color.BLUE);
 
         // Foreground color of the graph
-        fgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint fgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         fgPaint.setColor(ContextCompat.getColor(context, android.R.color.white));
 
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -179,8 +161,8 @@ public class RecentExpenseView extends View {
     }
 
     private void setPrevMonthName(){
-        calendar = Calendar.getInstance(Locale.getDefault());
-        sdf = new SimpleDateFormat("MMM", Locale.ENGLISH);
+        Calendar calendar = Calendar.getInstance(Locale.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM", Locale.ENGLISH);
         for(int i = 0; i < mSize; i++) {
             arrMonthName[i] = sdf.format(calendar.getTime());
             calendar.add(Calendar.MONTH, -1);

@@ -110,4 +110,4 @@
         custom:graphBarColor2="@color/barColor2"
         custom:graphBarColor3="@color/barColor3"/>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
