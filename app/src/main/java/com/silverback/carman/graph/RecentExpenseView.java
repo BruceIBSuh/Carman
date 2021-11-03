@@ -69,7 +69,6 @@ public class RecentExpenseView extends View {
         }
     };
 
-
     // Constructor
     public RecentExpenseView(Context context) {
         super(context);
@@ -85,13 +84,13 @@ public class RecentExpenseView extends View {
     }
 
     private void getAttributes(Context context, AttributeSet attrs) {
-        TypedArray t = context.getTheme().obtainStyledAttributes(attrs, R.styleable.RecentExpenseView, 0, 0);
+        TypedArray typedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.RecentExpenseView, 0, 0);
         try {
-            arrBarColor[0] = t.getColor(R.styleable.RecentExpenseView_graphBarColor1, 0);
-            arrBarColor[1] = t.getColor(R.styleable.RecentExpenseView_graphBarColor2, 0);
-            arrBarColor[2] = t.getColor(R.styleable.RecentExpenseView_graphBarColor3, 0);
+            arrBarColor[0] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor1, 0);
+            arrBarColor[1] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor2, 0);
+            arrBarColor[2] = typedArray.getColor(R.styleable.RecentExpenseView_graphBarColor3, 0);
         } finally {
-            t.recycle();
+            typedArray.recycle();
         }
 
     }
@@ -107,7 +106,7 @@ public class RecentExpenseView extends View {
         // Set the graph bar width
         barWidth = DisplayResolutionUtils.dip2px(context, 15);
         topMargin = DisplayResolutionUtils.dip2px(context, 15);
-        int textSize = DisplayResolutionUtils.dip2px(context, 13);
+        int textSize = DisplayResolutionUtils.dip2px(context, 12);
 
         // Set the background color of the graph
         Paint bgPaint = new Paint();
@@ -146,14 +145,11 @@ public class RecentExpenseView extends View {
         // Make the ArrayList size equal to be sure percetList.size() == targetPerentList.size()
         if(percentList.isEmpty() || percentList.size() < targetPercentList.size()) {
             int temp = targetPercentList.size() - percentList.size();
-            for(int i = 0; i < temp; i++) {
-                percentList.add(1f);
-            }
+            for(int i = 0; i < temp; i++) percentList.add(1f);
+
         } else if(percentList.size() > targetPercentList.size()) {
             int temp = percentList.size() - targetPercentList.size();
-            for(int i = 0; i < temp; i++) {
-                percentList.remove(percentList.size() - 1);
-            }
+            for(int i = 0; i < temp; i++) percentList.remove(percentList.size() - 1);
         }
 
         removeCallbacks(animator);
