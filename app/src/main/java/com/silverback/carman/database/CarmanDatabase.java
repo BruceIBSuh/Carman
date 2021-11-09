@@ -34,7 +34,7 @@ public abstract class CarmanDatabase extends RoomDatabase {
             INSTANCE = Room.databaseBuilder(
                     context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
                     .allowMainThreadQueries()
-                    .enableMultiInstanceInvalidation()
+                    //.enableMultiInstanceInvalidation()
                     //.fallbackToDestructiveMigration()
                     .build();
         }

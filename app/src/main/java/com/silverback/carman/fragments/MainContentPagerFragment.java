@@ -48,7 +48,7 @@ public class MainContentPagerFragment extends Fragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentPagerFragment.class);
 
     private static final int NumOfPrevMonths = 3;
-    private RecentMonthlyExpense monthlyExpense;
+    private MonthlyTotalExpense monthlyExpense;
 
     private Calendar calendar;
     private DecimalFormat df;
@@ -89,7 +89,7 @@ public class MainContentPagerFragment extends Fragment {
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
 
-        monthlyExpense = new RecentMonthlyExpense();
+        monthlyExpense = new MonthlyTotalExpense();
     }
 
     @Override
@@ -102,15 +102,7 @@ public class MainContentPagerFragment extends Fragment {
                 String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
                 totalBinding.tvSubtitleMonth.setText(month);
                 monthlyExpense.queryThisMonthExpense();
-
                 return totalBinding.getRoot();
-            /*
-            case 1:
-                gasBinding = MainContentPagerGasBinding.inflate(inflater, container, false);
-                displayGasExpense();
-                return gasBinding.getRoot();
-
-             */
 
             case 1:
                 expConfigBinding = MainContentPagerConfigBinding.inflate(inflater, container, false);
@@ -184,36 +176,14 @@ public class MainContentPagerFragment extends Fragment {
         });
     }
 
-    private void animateExpenseCount(int targetExpense) {
-        ValueAnimator animator = ValueAnimator.ofInt(0, targetExpense);
-        animator.setDuration(1000);
-        animator.setInterpolator(new DecelerateInterpolator());
 
-        animator.addUpdateListener(animation -> {
-            int currentNum = (int)animation.getAnimatedValue();
-            String total = df.format(currentNum);
-            totalBinding.tvTotalExpense.setText(total);
-        });
-
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                log.i("animation ended");
-                monthlyExpense.queryPreviousMonthExpense();
-                //totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
-            }
-        });
-
-        animator.start();
-    }
 
     // Inner class to reset the calendar and retrieve expense data for previous months.
-    private class RecentMonthlyExpense {
+    private class MonthlyTotalExpense {
         int[] arrExpense;
         int totalExpense, count;
 
-        public RecentMonthlyExpense() {
+        public MonthlyTotalExpense() {
             arrExpense = new int[NumOfPrevMonths];
             totalExpense = 0;
             count = 1;
@@ -286,6 +256,30 @@ public class MainContentPagerFragment extends Fragment {
             if(count == NumOfPrevMonths) totalBinding.recentGraphView.setGraphData(arrExpense);
         }
 
+    }
+
+    private void animateExpenseCount(int targetExpense) {
+        ValueAnimator animator = ValueAnimator.ofInt(0, targetExpense);
+        animator.setDuration(1000);
+        animator.setInterpolator(new DecelerateInterpolator());
+
+        animator.addUpdateListener(animation -> {
+            int currentNum = (int)animation.getAnimatedValue();
+            String total = df.format(currentNum);
+            totalBinding.tvTotalExpense.setText(total);
+        });
+
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                log.i("animation ended");
+                monthlyExpense.queryPreviousMonthExpense();
+                //totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
+            }
+        });
+
+        animator.start();
     }
 
 

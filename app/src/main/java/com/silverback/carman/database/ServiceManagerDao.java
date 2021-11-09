@@ -44,6 +44,7 @@ public abstract class ServiceManagerDao {
     public abstract LiveData<LatestServiceData> loadServiceData(String itemName);
 
 
+
     // Insert
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract long insertBasics(ExpenseBaseEntity basicEntity);
