@@ -47,12 +47,6 @@ public abstract class GasManagerDao {
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
     public abstract GasManagerEntity findGasManagerByNameOrId(String stnName, String stnId);
 
-    @Query("SELECT gas_payment, wash_payment FROM GasManagerEntity " +
-            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
-            "WHERE date_time >= :from AND date_time <= :to")
-
-    public abstract LiveData<Integer> loadTotalGasAndWashExpense(long from, long to);
-
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     public int insertTotalExpense(ExpenseBaseEntity totalExpense) {
