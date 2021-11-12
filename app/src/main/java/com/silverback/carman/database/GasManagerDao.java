@@ -1,17 +1,12 @@
 package com.silverback.carman.database;
 
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Delete;
-import androidx.room.Embedded;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
-import androidx.room.Relation;
 import androidx.room.Transaction;
 
 import com.silverback.carman.logs.LoggingHelper;
@@ -22,26 +17,29 @@ import java.util.List;
 
 @Dao
 public abstract class GasManagerDao {
-
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerDao.class);
 
     @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
-            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.base_id = ExpenseBaseEntity.rowId " +
             "ORDER BY gas_id DESC LIMIT " + Constants.NUM_RECENT_PAGES)
     public abstract LiveData<List<RecentGasData>> loadRecentGasData();
 
     @Query("SELECT date_time, mileage, stn_name, gas_payment, gas_amount FROM GasManagerEntity  " +
-            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.base_id = ExpenseBaseEntity.rowId " +
             "ORDER BY gas_id DESC LIMIT 1")
     public abstract LiveData<RecentGasData> loadLatestGasData();
 
 
     @Query("SELECT date_time, mileage, stn_name, wash_payment FROM GasManagerEntity " +
-            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.base_id = ExpenseBaseEntity.rowId " +
             "WHERE date_time >= :from AND date_time <= :to")
-
     public abstract LiveData<List<CarWashData>> loadCarWashData(long from, long to);
+
+    @Query("SELECT wash_payment FROM GasManagerEntity " +
+            "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.base_id = ExpenseBaseEntity.rowId " +
+            "WHERE date_time >= :from AND date_time <= :to")
+    public abstract LiveData<List<Integer>> queryWashExpense(long from, long to);
 
 
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
@@ -58,7 +56,7 @@ public abstract class GasManagerDao {
 
     @Transaction
     public void insertTotalAndGasExpense(ExpenseBaseEntity baseEntity, GasManagerEntity gasEntity){
-        gasEntity.basicId = insertTotalExpense(baseEntity);
+        gasEntity.baseId = insertTotalExpense(baseEntity);
         insertGasExpense(gasEntity);
     }
 
@@ -69,8 +67,8 @@ public abstract class GasManagerDao {
     abstract long insert(GasManagerEntity gasManagerEntity);
 
     @Transaction
-    public long insertBoth(ExpenseBaseEntity basicEntity, GasManagerEntity gasEntity) {
-        gasEntity.basicId = (int)insertParent(basicEntity);
+    public long insertBoth(ExpenseBaseEntity baseEneity, GasManagerEntity gasEntity) {
+        gasEntity.baseId = (int)insertParent(baseEneity);
         return insert(gasEntity);
     }
 

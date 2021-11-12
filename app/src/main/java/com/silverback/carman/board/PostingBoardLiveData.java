@@ -25,10 +25,10 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
     private final static LoggingHelper log = LoggingHelperFactory.create(PostingBoardLiveData.class);
 
     // Objects
-    private Query query;
+    private final Query query;
     private ListenerRegistration listenerRegit;
-    private OnLastVisibleListener lastVisibleCallback;
-    private OnLastPageListener lastPostCallback;
+    private final OnLastVisibleListener lastVisibleCallback;
+    private final OnLastPageListener lastPostCallback;
 
     // Interface
     public interface OnLastVisibleListener {

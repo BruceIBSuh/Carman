@@ -16,6 +16,8 @@ public class Constants {
     public static final int SVC = 1;
     public static final int STAT = 2;
     public static final int BOARD = 3;
+    public static final int WASH = 10;
+    public static final int MISC = 11;
 
     public static final int GALLERY = 1;
     public static final int CAMERA = 2;

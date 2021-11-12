@@ -139,6 +139,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private RecyclerView recyclerComment;
     private EditText etComment;
     private TextView tvCompathyCnt, tvCommentCnt;
+
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
@@ -151,13 +152,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private boolean hasCompathy;
     private boolean isLoading;
 
-    // Interface to notify BoardActivity of pressing the edit menu in the toolbar which is visible
+    // Interface for notifying BoardActivity of pressing the edit menu in the toolbar which is visible
     // only when a user reads his/her own post
     public interface OnEditModeListener {
         void onEditClicked(Bundle bundle);
     }
 
-    // Set the interface listener to BoardActivity at the lifecycle of onAttachFragment.
+    // Interface for listening to BoardActivity at the lifecycle of onAttachFragment.
     public void setEditModeListener(OnEditModeListener listener) {
         mListener = listener;
     }

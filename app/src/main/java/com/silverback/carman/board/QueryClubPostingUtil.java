@@ -17,8 +17,8 @@ import com.silverback.carman.utils.Constants;
 
 /*
  * This helper class is to paginate posting items downloaded from Firestore by its category passed
- * from the viewpager fragment(BoardPagerFragment) which is bound by FragmentStatePagerAdapter.
- * Query results will be sent back to the fragment by OnPaginationListener which is attached by
+ * from the viewpager fragment(BoardPagerFragment), which is bound by FragmentStatePagerAdapter.
+ * Query results will be sent back to the fragment by OnPaginationListener that is attached by
  * calling setOnPaginationListener() and has the following callbacks.
  *
  * setFirstQuery(): pass the first query result
@@ -41,7 +41,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
 
     // Objects
     private ListenerRegistration listenerRegit;
-    private CollectionReference colRef;
+    private final CollectionReference colRef;
     private QuerySnapshot querySnapshot;
     private OnPaginationListener mCallback;
 

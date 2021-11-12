@@ -13,17 +13,16 @@ import androidx.room.PrimaryKey;
 // parentColumns: column name in the parent entity
 // childColumn: column name in this entity.
 @Entity(foreignKeys = @ForeignKey(
-        entity = ExpenseBaseEntity.class, parentColumns = "_id", childColumns = "basic_id"),
-        indices = @Index("basic_id"))
+        entity = ExpenseBaseEntity.class, parentColumns = "rowId", childColumns = "base_id"),
+        indices = @Index("base_id"))
 
 public class ServiceManagerEntity {
-
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "service_id")
     public int serviceId;
 
-    @ColumnInfo(name = "basic_id")
-    public int basicId;
+    @ColumnInfo(name = "base_id")
+    public int baseId;
 
     @ColumnInfo(name = "service_center")
     public String serviceCenter;

@@ -19,7 +19,6 @@ import androidx.room.RoomDatabase;
 // singleton instance.
 public abstract class CarmanDatabase extends RoomDatabase {
     private static CarmanDatabase INSTANCE;
-
     // Abstract methods that has 0 arguments and returns the class that is annotated w/ @Dao.
     public abstract AutoDataDao autoDataModel();
     public abstract ExpenseBaseDao expenseBaseModel();
@@ -35,7 +34,7 @@ public abstract class CarmanDatabase extends RoomDatabase {
                     context.getApplicationContext(), CarmanDatabase.class, "carman.sqlite")
                     .allowMainThreadQueries()
                     .enableMultiInstanceInvalidation()
-                    //.fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration()
                     .build();
         }
 

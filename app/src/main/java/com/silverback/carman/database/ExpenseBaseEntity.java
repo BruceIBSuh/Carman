@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey;
 @Entity
 public class ExpenseBaseEntity {
     @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "rowId")
     public int _id;
 
     @ColumnInfo(name = "date_time")

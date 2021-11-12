@@ -2,12 +2,42 @@
 
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:custom="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_content_pager_config"
     android:layout_width="match_parent"
-    android:layout_height="120dp">
+    android:layout_height="wrap_content"
+    android:background="@android:color/white" >
 
+    <TextView
+        android:id="@+id/tv_expense_wash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_wash"
+        app:layout_constraintEnd_toStartOf="@+id/guideline4"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_wash" />
+
+    <TextView
+        android:id="@+id/tv_expense_svc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_svc"
+        app:layout_constraintEnd_toStartOf="@+id/guideline4"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_svc" />
+
+    <TextView
+        android:id="@+id/tv_label_gas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="유류비"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_subtitle_exp_config"
+        app:layout_constraintStart_toStartOf="@+id/guideline9"
+        app:layout_constraintTop_toTopOf="@+id/tv_subtitle_exp_config"
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/tv_subtitle_exp_config"
@@ -19,14 +49,55 @@
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        custom:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.6" />
+        app:layout_constraintGuide_percent="0.5" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <TextView
+        android:id="@+id/tv_label_svc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="서비스"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="@+id/guideline9"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_gas" />
+
+    <TextView
+        android:id="@+id/tv_label_wash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="세차비"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline9"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_svc" />
+
+    <TextView
+        android:id="@+id/tv_expense_gas"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_gas"
+        app:layout_constraintEnd_toStartOf="@+id/guideline4"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_gas" />
+
+
     <!--
     <com.silverback.carman.graph.ExpenseConfigView
         android:layout_width="0dp"

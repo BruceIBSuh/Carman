@@ -16,8 +16,8 @@ public class PostingBoardRepository implements
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardRepository.class);
 
-    private FirebaseFirestore firestore;
-    private CollectionReference colRef;
+    private final FirebaseFirestore firestore;
+    private final CollectionReference colRef;
     private Query query;
     private DocumentSnapshot lastVisibleshot;
     private boolean isLastPage;

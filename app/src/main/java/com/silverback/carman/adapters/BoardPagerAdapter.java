@@ -25,7 +25,8 @@ import java.util.ArrayList;
  * Extends FragmentStateAdapter abstract class, implementing the createFragment() to supply instances
  * of fragments therein as new pages and getitemCount()
  */
-//public class BoardPagerAdapter extends FragmentStatePagerAdapter {
+
+
 public class BoardPagerAdapter extends FragmentStateAdapter {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerAdapter.class);

@@ -395,6 +395,8 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     // refactored to sync as long as the user gets logged in.
     public void saveGasData(String userId) {
         if(!doEmptyCheck()) return;
+        // Show the progress bar while saving the data in the Room and uploading the rating data to
+        // Firestore.
         pbFragment = new ProgressBarDialogFragment();
         pbFragment.setProgressMsg("로컬에 저장중임");
         pbFragment.show(getChildFragmentManager(), "progressbar");
@@ -407,7 +409,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         baseEntity.category = Constants.GAS;
         gasEntity.stnName = binding.tvStationName.getText().toString();
         gasEntity.stnId = stnId;
-        gasEntity.extraExpense = binding.tvExtraPayment.getText().toString();
+        //gasEntity.extraExpense = binding.tvExtraPayment.getText().toString();
 
         baseEntity.mileage = Integer.parseInt(binding.tvGasMileage.getText().toString().replaceAll(",", ""));
         gasEntity.gasPayment = Integer.parseInt(binding.tvGasPayment.getText().toString().replaceAll(",", ""));

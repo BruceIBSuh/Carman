@@ -7,17 +7,16 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 @Entity(foreignKeys = @ForeignKey(
-        entity = ExpenseBaseEntity.class, parentColumns = "_id", childColumns = "basic_id"),
-        indices = @Index("basic_id"))
+        entity = ExpenseBaseEntity.class, parentColumns = "rowId", childColumns = "base_id"),
+        indices = @Index("base_id"))
 
 public class GasManagerEntity {
-
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "gas_id")
     public int gasId;
 
-    @ColumnInfo(name = "basic_id")
-    public int basicId;
+    @ColumnInfo(name = "base_id")
+    public int baseId;
 
     @ColumnInfo(name = "stn_name")
     public String stnName;

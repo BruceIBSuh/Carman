@@ -1,11 +1,9 @@
 package com.silverback.carman.fragments;
 
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -41,7 +39,7 @@ public class ExpensePagerFragment extends Fragment {
     private List<GasManagerDao.RecentGasData> gasDataList;
     private List<ServiceManagerDao.RecentServiceData> serviceList;
     // UIs
-    private TextView tvLastInfo, tvPage;
+    //private TextView tvLastInfo, tvPage;
 
     // Fields
     private int numPage;

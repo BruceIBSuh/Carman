@@ -66,7 +66,7 @@ import java.util.Map;
  * referernce.
  *
  * Instead of using SnapshotListener for realtime update, which seems difficult to handle cache data
- * in the viewpager fragments, the util simply reads posts using get() and update is made by requerying
+ * in the viewpager fragments, the util simply reads posts using get() and updates are made by requerying
  * posts notified by the viewmodel(FragmentSharedModel). Comments in BoardReadDlgFragment, however,
  * applies SnapshotListener.
  *
@@ -682,7 +682,6 @@ public class BoardPagerFragment extends Fragment implements
 
                 // FAB visibility control that hides the button while scrolling.
                 //if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
-
                 LinearLayoutManager layout = (LinearLayoutManager)recyclerView.getLayoutManager();
                 if (layout != null) {
                     int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();

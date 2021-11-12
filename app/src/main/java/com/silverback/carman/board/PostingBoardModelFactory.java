@@ -11,7 +11,7 @@ public class PostingBoardModelFactory implements ViewModelProvider.Factory {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(PostingBoardModelFactory.class);
 
-    private PostingBoardRepository repo;
+    private final PostingBoardRepository repo;
 
 
     public PostingBoardModelFactory(PostingBoardRepository repo) {

@@ -22,14 +22,14 @@ public abstract class ServiceManagerDao {
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerDao.class);
 
     @Query("SELECT service_id, date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity " +
-            "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.base_id = ExpenseBaseEntity.rowId " +
             "ORDER BY service_id DESC LIMIT " + Constants.NUM_RECENT_PAGES)
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     public abstract LiveData<List<RecentServiceData>> loadRecentServiceData();
 
     // Query the latest service to display in GeneralFragment with LIMIT condition as 1.
     @Query("SELECT service_id, date_time, mileage, total_expense, service_center, service_addrs FROM ServiceManagerEntity  " +
-            "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.basic_id = ExpenseBaseEntity._id " +
+            "INNER JOIN ExpenseBaseEntity ON ServiceManagerEntity.base_id = ExpenseBaseEntity.rowId " +
             "ORDER BY service_id DESC LIMIT 1")
     @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     public abstract LiveData<RecentServiceData> loadLatestSvcData();
@@ -38,7 +38,7 @@ public abstract class ServiceManagerDao {
     // Query the last service history for each item with item name as keyword in ServicedItemEntity
     @Query("SELECT item_name, service_center, date_time, mileage FROM ServicedItemEntity " +
             "INNER JOIN ServiceManagerEntity ON ServiceManagerEntity.service_id = ServicedItemEntity.svc_id " +
-            "INNER JOIN ExpenseBaseEntity ON  ExpenseBaseEntity._id = ServiceManagerEntity.basic_id " +
+            "INNER JOIN ExpenseBaseEntity ON  ExpenseBaseEntity.rowId = ServiceManagerEntity.base_id " +
             "WHERE item_name = :itemName ORDER BY date_time DESC LIMIT 1")
     //@SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     public abstract LiveData<LatestServiceData> loadServiceData(String itemName);
@@ -60,7 +60,7 @@ public abstract class ServiceManagerDao {
                          List<ServicedItemEntity> itemEntityList) {
 
         long basicId = insertBasics(basicEntity);
-        svcEntity.basicId = (int)basicId;
+        svcEntity.baseId = (int)basicId;
         final int serviceId = (int)insertService(svcEntity);
 
         for(int i = 0; i < itemEntityList.size(); i++) {
