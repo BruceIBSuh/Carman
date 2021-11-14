@@ -359,9 +359,11 @@ public class MainActivity extends BaseActivity implements
 
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+            /*
             if (newState == RecyclerView.SCROLL_STATE_IDLE){
                 //binding.fab.show();
             }
+             */
             super.onScrollStateChanged(recyclerView, newState);
         }
     };
@@ -369,16 +371,17 @@ public class MainActivity extends BaseActivity implements
     // Implement the onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        binding.progbtnGas.setProgressColor(isStnViewOn);
+        //binding.progbtnGas.setProgressColor(isStnViewOn);
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+                binding.progbtnGas.setProgressColor(isStnViewOn);
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
-                //binding.pbNearStns.setVisibility(View.VISIBLE);
             });
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
+            binding.progbtnGas.setProgressColor(isStnViewOn);
         }
     }
 

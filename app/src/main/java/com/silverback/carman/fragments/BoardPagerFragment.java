@@ -88,9 +88,8 @@ public class BoardPagerFragment extends Fragment implements
     //private ListenerRegistration listenerRegistration;
     private QueryPostPaginationUtil queryPagingUtil;
 
-
-    private BoardPagerAdapter pagerAdapter;
     private FragmentSharedModel fragmentModel;
+    private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
     private List<DocumentSnapshot> postshotList;
     private ArrayList<String> autoFilter;
@@ -120,18 +119,17 @@ public class BoardPagerFragment extends Fragment implements
 
     // Singleton for the autoclub page which has the checkbox values and title names to display
     // overlaying the tab menu.
-    public static BoardPagerFragment newInstance(int page, ArrayList<String> values) {
+    public static BoardPagerFragment newInstance(int page, ArrayList<String> values){
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("currentPage", page);
         args.putStringArrayList("autoFilter", values);
         fragment.setArguments(args);
-
         return fragment;
     }
 
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,7 +137,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
             autoFilter = getArguments().getStringArrayList("autoFilter");
-            if(autoFilter.size() > 0) automaker = autoFilter.get(0);
+            if(autoFilter != null && autoFilter.size() > 0) automaker = autoFilter.get(0);
         }
 
         // Make the toolbar menu available in the Fragment.
@@ -149,9 +147,8 @@ public class BoardPagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         imgutil = new ApplyImageResourceUtil(getContext());
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-
-        pbLoading = ((BoardActivity)getActivity()).getLoadingProgressBar();
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        pbLoading = ((BoardActivity)requireActivity()).getLoadingProgressBar();
         postshotList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postshotList, this);
         /*
@@ -168,12 +165,11 @@ public class BoardPagerFragment extends Fragment implements
         // Instantiate the query and pagination util class and create the RecyclerView adapter to
         // show the posting list.
         queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
-        postingAdapter = new BoardPostingAdapter(postshotList, this);
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
-        ((BoardActivity)getActivity()).setAutoFilterListener(this);
-        pagerAdapter = ((BoardActivity)getActivity()).getPagerAdapter();
+        ((BoardActivity)requireActivity()).setAutoFilterListener(this);
+        pagerAdapter = ((BoardActivity)requireActivity()).getPagerAdapter();
 
     }
 
@@ -222,6 +218,47 @@ public class BoardPagerFragment extends Fragment implements
         return localView;
     }
 
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
+        // upon which currentPage the viewpager contains.
+        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
+            if(!TextUtils.isEmpty(docId)) {
+                log.i("Upload Post: %s", docId);
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            }
+        });
+
+        // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
+        // for confirm and the result is sent back, then deletes the posting item from Firestore.
+        // With All done, receive another LiveData containing the position of the deleted posting item
+        // and update the adapter.
+        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), docId -> {
+            //log.i("Posting removed: %s", docId);
+            if(!TextUtils.isEmpty(docId)) {
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            }
+        });
+
+        fragmentModel.getEditedPosting().observe(requireActivity(), docId -> {
+            if(!TextUtils.isEmpty(docId)) {
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            }
+        });
+
+        // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,
+        // the livedata of which is created when a comment has finished uploadingb in BoardReadDlgFragment.
+        fragmentModel.getNewComment().observe(requireActivity(), sparseArray ->
+                postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray)
+        );
+    }
+
+
+
+    /*
     @Override
     public void onActivityCreated(Bundle bundle) {
         log.i("onActivityCreated deprecated:%s", bundle);
@@ -260,6 +297,9 @@ public class BoardPagerFragment extends Fragment implements
         );
 
     }
+
+     */
+
 
     // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
     // should be customized to have an imageview and textview underneath instead of setting icon
@@ -329,9 +369,8 @@ public class BoardPagerFragment extends Fragment implements
         return false;
     }
 
-
     // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
-    // performa a new query with new autofilter values
+    // perform a new query with new autofilter values set.
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         this.autoFilter = autofilter;
@@ -344,7 +383,7 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     // Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    //@SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
         // Initiate the task to query the board collection and the user collection.
@@ -375,7 +414,7 @@ public class BoardPagerFragment extends Fragment implements
         bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
 
         readPostFragment.setArguments(bundle);
-        getActivity().getSupportFragmentManager().beginTransaction()
+        requireActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, readPostFragment)
                 .addToBackStack(null)
                 .commit();

@@ -14,8 +14,8 @@ public class QueryPostPaginationUtil {
     private static final LoggingHelper log = LoggingHelperFactory.create(QueryPostPaginationUtil.class);
 
     // Objects
-    private OnQueryPaginationCallback mCallback;
-    private FirebaseFirestore firestore;
+    private final OnQueryPaginationCallback mCallback;
+    private final FirebaseFirestore firestore;
     private CollectionReference colRef;
     private Query query;
     private QuerySnapshot querySnapshot;
@@ -44,7 +44,6 @@ public class QueryPostPaginationUtil {
     public void setPostQuery(int page, boolean isViewOrder) {
         colRef = firestore.collection("board_general");
         querySnapshot = null;
-
         switch(page){
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
@@ -66,20 +65,20 @@ public class QueryPostPaginationUtil {
                 break;
         }
 
-
+        /*
         query.limit(Constants.PAGINATION).get().addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
-        }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
+        }).addOnFailureListener(mCallback::getQueryErrorResult);
+        */
 
-        /*
+        // Listen for realtime updates using onSnapshot(addSnapshotListener)
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
 
-         */
     }
 
     // Make an initial query of comments in BoardReadDlgFragment.
@@ -94,28 +93,24 @@ public class QueryPostPaginationUtil {
                     // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
                     this.querySnapshot = queryCommentShot;
                     mCallback.getFirstQueryResult(queryCommentShot);
-                }).addOnFailureListener(e -> mCallback.getQueryErrorResult(e));
+                }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 
     // The recyclerview scorll listener notifies that the view scrolls down to the last item and needs
     // to make an next query, which will be repeated until query comes to the last page.
     public void setNextQuery() {
-        DocumentSnapshot lastVisibleShot = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot).limit(Constants.PAGINATION)
+        DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisible).limit(Constants.PAGINATION)
                 .get()
                 .addOnSuccessListener(nextSnapshot -> {
                     if(nextSnapshot.size() >= Constants.PAGINATION) {
                         this.querySnapshot = nextSnapshot;
                         mCallback.getNextQueryResult(nextSnapshot);
                     } else {
-                        log.i("last page");
                         querySnapshot = null;
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
-                }).addOnFailureListener(e -> {
-                    log.e("error in querying");
-                    mCallback.getQueryErrorResult(e);
-                });
+                }).addOnFailureListener(mCallback::getQueryErrorResult);
 
         /*
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot)

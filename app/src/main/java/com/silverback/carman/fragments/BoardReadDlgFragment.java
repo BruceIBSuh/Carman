@@ -15,6 +15,8 @@
  */
 package com.silverback.carman.fragments;
 
+import static android.content.Context.INPUT_METHOD_SERVICE;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -32,22 +34,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -68,6 +70,7 @@ import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingPrefActivity;
 import com.silverback.carman.adapters.BoardCommentAdapter;
+import com.silverback.carman.databinding.FragmentBoardReadBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -87,10 +90,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static android.content.Context.INPUT_METHOD_SERVICE;
 
 /**
  * This dialogfragment reads a post content in the full size when tapping  an item recycled in
@@ -113,7 +115,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
-    private ListenerRegistration listenerRegistration;
+    private ActivityResultLauncher<Intent> activityResultLauncher;
+    private ListenerRegistration regListener;
     //private QueryCommentPagingUtil queryCommentPagingUtil;
     private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
@@ -132,13 +135,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private List<CharSequence> autoclub;
 
     // UIs
-    private View localView;
-    private ConstraintLayout constPostingLayout, constCommentLayout;
-    private Toolbar toolbar;
-    private View underline;
-    private RecyclerView recyclerComment;
-    private EditText etComment;
-    private TextView tvCompathyCnt, tvCommentCnt;
+    private FragmentBoardReadBinding binding;
+    //private View localView;
+    //private ConstraintLayout constPostingLayout, constCommentLayout;
+    //private Toolbar toolbar;
+    //private View underline;
+    //private RecyclerView recyclerComment;
+    //private EditText etComment;
+    //private TextView tvCompathyCnt, tvCommentCnt;
 
     // Fields
     private SpannableStringBuilder autoTitle;
@@ -168,7 +172,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -176,7 +180,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
-        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
+        mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+
+        // ActivityResult
+        activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+
+                });
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
@@ -202,7 +212,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         }
 
         // Get the current document reference which should be shared in the fragment.
-        // Initially attach SnapshotListener to have the comment collection updated, then remove
+        // Initially, attach SnapshotListener to have the comment collection updated, then remove
         // the listener to prevent connecting to the server. Instead, update the collection using
         // Source.Cache.
         postRef = firestore.collection("board_general").document(documentId);
@@ -229,43 +239,24 @@ public class BoardReadDlgFragment extends DialogFragment implements
          */
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        binding = FragmentBoardReadBinding.inflate(inflater);
 
-        localView = inflater.inflate(R.layout.fragment_board_read, container, false);
-
-        AppBarLayout appbarLayout = localView.findViewById(R.id.appbar_board_read);
-        NestedScrollView nestedScrollView = localView.findViewById(R.id.vg_nestedscrollview);
-        toolbar = localView.findViewById(R.id.toolbar_board_read);
-        constPostingLayout = localView.findViewById(R.id.constraint_posting);
-        constCommentLayout = localView.findViewById(R.id.constraint_comment);
-        TextView tvTitle = localView.findViewById(R.id.tv_post_title);
-        TextView tvUserName = localView.findViewById(R.id.tv_username);
-        TextView tvAutoInfo = localView.findViewById(R.id.tv_autoinfo);
-        TextView tvDate = localView.findViewById(R.id.tv_posting_date);
-        ImageView imgUserPic = localView.findViewById(R.id.img_userpic);
-        etComment = localView.findViewById(R.id.et_comment);
-        ImageButton btnSendComment = localView.findViewById(R.id.imgbtn_send_comment);
-        ImageButton btnComment = localView.findViewById(R.id.imgbtn_comment);
-        ImageButton btnCompathy = localView.findViewById(R.id.imgbtn_compathy);
-        tvCommentCnt = localView.findViewById(R.id.tv_cnt_comment);
-        tvCompathyCnt = localView.findViewById(R.id.tv_cnt_compathy);
-        underline = localView.findViewById(R.id.view_underline_header);
-        recyclerComment = localView.findViewById(R.id.recycler_comments);
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as follows. Also, the
         // navigation icon(back arrow) should be handled in setToolbarTitleIcon().
-        toolbar.setNavigationOnClickListener(view -> dismiss());
+        binding.toolbarBoardRead.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
-        autoTitle = ((BoardActivity)getActivity()).getAutoClubTitle();
+        autoTitle = ((BoardActivity)requireActivity()).getAutoClubTitle();
 
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
         // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
         // scroling state.
-        appbarLayout.addOnOffsetChangedListener(new AppBarStateChangeListener() {
+        binding.appbarBoardRead.addOnOffsetChangedListener(new AppBarStateChangeListener() {
             @Override
             public void onStateChanged(AppBarLayout appBarLayout, int state) {
                 setToolbarTitleIcon(state);
@@ -274,10 +265,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
         // it feasible to listen to scrolling, use the parent scollview listener.
-        nestedScrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
+        binding.vgNestedscrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
                 (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
 
-            if((scrollY >= (recyclerComment.getMeasuredHeight() - v.getMeasuredHeight()) && scrollY > oldScrollY)) {
+            if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight()) && scrollY > oldScrollY)) {
                 if(!isLoading) {
                     isLoading = true;
                     queryPaginationUtil.setNextQuery();
@@ -285,29 +276,29 @@ public class BoardReadDlgFragment extends DialogFragment implements
             }
         });
 
-        tvTitle.setText(postTitle);
-        tvUserName.setText(userName);
-        tvDate.setText(getArguments().getString("timestamp"));
-        tvCommentCnt.setText(String.valueOf(cntComment));
-        tvCompathyCnt.setText(String.valueOf(cntCompathy));
+        binding.tvPostTitle.setText(postTitle);
+        binding.tvUsername.setText(userName);
+        binding.tvPostingDate.setText(getArguments().getString("timestamp"));
+        binding.tvCntComment.setText(String.valueOf(cntComment));
+        binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
         // Retreive the auto data from the server and set it to the view
-        showUserAutoClub(tvAutoInfo);
+        showUserAutoClub(binding.tvAutoinfo);
 
         // RecyclerView for showing comments
-        recyclerComment.setLayoutManager(new LinearLayoutManager(context));
-        recyclerComment.setAdapter(commentAdapter);
+        binding.recyclerComments.setLayoutManager(new LinearLayoutManager(context));
+        binding.recyclerComments.setAdapter(commentAdapter);
         //setRecyclerViewScrollListener();
-        //recyclerComment.addOnScrollListener(pagingUtil);
+        //binding.recyclerComments.addOnScrollListener(pagingUtil);
 
         // Event handler for clicking buttons
         //btnDismiss.setOnClickListener(view -> dismiss());
         // On clicking the comment button, show the comment input form.
-        btnComment.setOnClickListener(this);
+        binding.imgbtnComment.setOnClickListener(this);
         // Button to set compathy which increase the compathy number if the user has never picked it up.
-        btnCompathy.setOnClickListener(view -> setCompathyCount());
+        binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
         // Upload the comment to Firestore, which needs to refactor for filtering text.
-        btnSendComment.setOnClickListener(this);
+        binding.imgbtnSendComment.setOnClickListener(this);
 
         // If the user is the owner of a post, display the edit menu in the toolbar.
         inflateEditMenuInToolbar();
@@ -316,19 +307,19 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // is set.
         String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray" : userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
-        imgUtil.applyGlideToImageView(Uri.parse(userImage), imgUserPic, size, size, true);
+        imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
         // Realtime update of the comment count and compathy count using SnapshotListener.
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
         // whether the document has local changes that haven't been written to the backend yet.
         // This property may determine the source of events
-        listenerRegistration = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+        regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
                 long cntComment = snapshot.getLong("cnt_comment");
                 long cntCompathy = snapshot.getLong("cnt_compathy");
-                tvCommentCnt.setText(String.valueOf(cntComment));
-                tvCompathyCnt.setText(String.valueOf(cntCompathy));
+                binding.tvCntComment.setText(String.valueOf(cntComment));
+                binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
             }
         });
 
@@ -342,7 +333,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         isLoading = true;
         queryPaginationUtil.setCommentQuery(postRef);
 
-        return localView;
+        return binding.getRoot();
     }
 
 
@@ -355,16 +346,15 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
     @Override
-    public void onActivityCreated(Bundle bundle) {
-        super.onActivityCreated(bundle);
-
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         // SET THE USER IMAGE ICON
         // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
         // in which Glide creates the custom target that translates an image fitting to a given
         // size and returns a drawable.
         imgViewModel.getGlideDrawableTarget().observe(this, drawable -> {
-            toolbar.setLogo(drawable);
-            toolbar.setContentInsetStartWithNavigation(0);
+            binding.toolbarBoardRead.setLogo(drawable);
+            binding.toolbarBoardRead.setContentInsetStartWithNavigation(0);
         });
 
         // If a post is the user's own one, the delete button appears on the toolbar. When tapping the
@@ -390,57 +380,51 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 postRef.delete().addOnSuccessListener(aVoid -> {
                     sharedModel.getRemovedPosting().setValue(documentId);
                     dismiss();
-                // Method reference in Lambda which uses class name and method name w/o parenthesis
+                    // Method reference in Lambda which uses class name and method name w/o parenthesis
                 }).addOnFailureListener(Throwable::printStackTrace);
             }
         });
-
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        listenerRegistration.remove();
+        regListener.remove();
     }
 
     @Override
     public void onClick(View v) {
-        switch(v.getId()) {
-            case R.id.imgbtn_comment:
-                // Check whether a user name is set. Otherwise, show an messagie in the snackbar to
-                // move to SettingPrefActivity to make a user name.
-                String userName = mSettings.getString(Constants.USER_NAME, null);
-                if(TextUtils.isEmpty(userName)) {
-                    Snackbar snackbar = Snackbar.make(
-                            constCommentLayout, getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
-                    snackbar.setAction(R.string.board_msg_action_setting, view -> {
-                        Intent intent = new Intent(getActivity(), SettingPrefActivity.class);
-                        intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
-                        startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
-                    }).show();
-                    return;
+        if(v.getId() == R.id.imgbtn_comment) {
+            // Check whether a user name is set. Otherwise, show an messagie in the snackbar to
+            // move to SettingPrefActivity to make a user name.
+            String userName = mSettings.getString(Constants.USER_NAME, null);
+            if(TextUtils.isEmpty(userName)) {
+                Snackbar snackbar = Snackbar.make(
+                        binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
+                snackbar.setAction(R.string.board_msg_action_setting, view -> {
+                    Intent intent = new Intent(getActivity(), SettingPrefActivity.class);
+                    intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
+                    //startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
+                    activityResultLauncher.launch(intent);
+                }).show();
 
-                } else {
-                    int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
-                    constCommentLayout.setVisibility(visibility);
-                    //constCommentLayout.setVisibility(View.VISIBLE);
-                    etComment.getText().clear();
-                    etComment.requestFocus();
-                    isCommentVisible = !isCommentVisible;
-                }
 
-                break;
+            } else {
+                int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
+                binding.constraintComment.setVisibility(visibility);
+                //constCommentLayout.setVisibility(View.VISIBLE);
+                binding.etComment.getText().clear();
+                binding.etComment.requestFocus();
+                isCommentVisible = !isCommentVisible;
+            }
+        } else if(v.getId() == R.id.imgbtn_send_comment) {
+            if(TextUtils.isEmpty(binding.etComment.getText())) {
+                Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
+                return;
+            }
 
-            case R.id.imgbtn_send_comment:
-                if(TextUtils.isEmpty(etComment.getText())) {
-                    Snackbar.make(localView, getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-
-                uploadComment();
-                break;
+            uploadComment();
         }
-
     }
 
     // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods
@@ -549,15 +533,18 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
      */
+    private void activityResultCallback(ActivityResult result) {
+
+    }
 
     // Method for uploading the comment to Firestore.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void uploadComment() {
         Map<String, Object> comment = new HashMap<>();
-        comment.put("comment", etComment.getText().toString());
+        comment.put("comment", binding.etComment.getText().toString());
         comment.put("timestamp", FieldValue.serverTimestamp());
         // Fetch the comment user id saved in the storage
-        try(FileInputStream fis = getActivity().openFileInput("userId");
+        try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             String commentId =  br.readLine();
             comment.put("userId", commentId);
@@ -586,10 +573,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
                 // Hide the soft input method.
                 ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                        .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+                        .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
                 // Make the comment view invisible and reset the flag.
-                constCommentLayout.setVisibility(View.GONE);
+                binding.constraintComment.setVisibility(View.GONE);
                 isCommentVisible = !isCommentVisible;
             }
         });
@@ -606,13 +593,14 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // When an image is attached as the post writes, the line separator is supposed to put in at
         // before and after the image. That's why the regex contains the line separator in order to
         // get the right end position.
-        final String REGEX_MARKUP = "\\[image_\\d]\\n";
+        final String REGEX_MARKUP = "\\[image_\\d]";
         final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(content);
 
+        final ConstraintLayout parent = binding.constraintPosting;
         int index = 0;
         int start = 0;
-        int constraintId = constPostingLayout.getId();
-        int topConstraint;
+        //int parent = binding.constraintPosting;
+        int target;
         int prevImageId = 0;
 
         // Create LayoutParams using LinearLayout(RelativeLayout).LayoutParams, not using Constraint
@@ -620,7 +608,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
-        // If the content contains images, which means the markup(s) exists in the content, the content
+        // If the content contains images, which means any markup(s) exists in the content, the content
         // is split into parts of texts and images and respectively connected to ConstraintSet.
         while(m.find()) {
             // Check whether the content starts w/ text or image, which depends on the value of start.
@@ -628,29 +616,29 @@ public class BoardReadDlgFragment extends DialogFragment implements
             TextView tv = new TextView(context);
             tv.setId(View.generateViewId());
             tv.setText(paragraph);
-            constPostingLayout.addView(tv, params);
-            topConstraint = (start == 0) ? underline.getId() : prevImageId;
+            parent.addView(tv, params);
+            target = (start == 0) ? binding.guideline.getId() : prevImageId;
 
             ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(constPostingLayout);
-            tvSet.connect(tv.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
-            tvSet.connect(tv.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
-            tvSet.connect(tv.getId(), ConstraintSet.TOP, topConstraint, ConstraintSet.BOTTOM, 32);
-            tvSet.applyTo(constPostingLayout);
+            tvSet.clone(parent);
+            tvSet.connect(tv.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
+            tvSet.connect(tv.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
+            tvSet.connect(tv.getId(), ConstraintSet.TOP, target, ConstraintSet.BOTTOM, 32);
+            tvSet.applyTo(parent);
 
             // Even if no content exists, ConstrainSet.TOP should be tv.getId() b/c a line is inserted
             // when attaching an image.
             ImageView imgView = new ImageView(context);
             imgView.setId(View.generateViewId());
             prevImageId = imgView.getId();
-            constPostingLayout.addView(imgView, params);
+            parent.addView(imgView, params);
 
             ConstraintSet imgSet = new ConstraintSet();
-            imgSet.clone(constPostingLayout);
-            imgSet.connect(imgView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 0);
-            imgSet.connect(imgView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 0);
-            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 0);
-            imgSet.applyTo(constPostingLayout);
+            imgSet.clone(parent);
+            imgSet.connect(imgView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 0);
+            imgSet.connect(imgView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 0);
+            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 32);
+            imgSet.applyTo(parent);
 
             // Consider to apply Glide thumbnail() method.
             Glide.with(context).asBitmap().load(imgUriList.get(index))
@@ -660,7 +648,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
             index++;
         }
 
-
         // Coordinate the position b/w the last part, no matter what is image or text in the content,
         // and the following recycler view by the patterns.
         // No image attached
@@ -668,41 +655,40 @@ public class BoardReadDlgFragment extends DialogFragment implements
             TextView noImageText = new TextView(context);
             noImageText.setId(View.generateViewId());
             noImageText.setText(content);
-            constPostingLayout.addView(noImageText, params);
+            parent.addView(noImageText, params);
 
             ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(constPostingLayout);
-            tvSet.connect(noImageText.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
-            tvSet.connect(noImageText.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
-            tvSet.connect(noImageText.getId(), ConstraintSet.TOP, underline.getId(), ConstraintSet.BOTTOM, 32);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 64);
+            tvSet.clone(parent);
+            tvSet.connect(noImageText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
+            tvSet.connect(noImageText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
+            tvSet.connect(noImageText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 32);
+            tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 64);
 
-            tvSet.applyTo(constPostingLayout);
+            tvSet.applyTo(parent);
 
         // Text exists after the last image. The last textview is constrained to the previous imageview
         // and the recyclerview constrained to the textview.
         } else if(start < content.length()) {
             String lastParagraph = content.substring(start);
-            log.i("Last Paragraph: %s", lastParagraph);
             TextView lastView = new TextView(context);
             lastView.setId(View.generateViewId());
             lastView.setText(lastParagraph);
-            constPostingLayout.addView(lastView, params);
+            parent.addView(lastView, params);
 
             ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(constPostingLayout);
-            tvSet.connect(lastView.getId(), ConstraintSet.START, constraintId, ConstraintSet.START, 16);
-            tvSet.connect(lastView.getId(), ConstraintSet.END, constraintId, ConstraintSet.END, 16);
+            tvSet.clone(parent);
+            tvSet.connect(lastView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
+            tvSet.connect(lastView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(recyclerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
-            tvSet.applyTo(constPostingLayout);
+            tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
+            tvSet.applyTo(parent);
 
         // No text exists after the last image; the recyclerView is constrained to the last ImageView
         } else if(start == content.length()) {
             ConstraintSet recyclerSet = new ConstraintSet();
-            recyclerSet.clone(constPostingLayout);
-            recyclerSet.connect(recyclerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
-            recyclerSet.applyTo(constPostingLayout);
+            recyclerSet.clone(parent);
+            recyclerSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
+            recyclerSet.applyTo(parent);
         }
 
     }
@@ -741,24 +727,24 @@ public class BoardReadDlgFragment extends DialogFragment implements
         SpannableString spannable = new SpannableString(postTitle);
         int size = Math.abs(appbarOffset) / 6;
         spannable.setSpan(new AbsoluteSizeSpan(size), 0, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        toolbar.setTitle(spannable);
+        binding.toolbarBoardRead.setTitle(spannable);
 
         switch(state) {
             case STATE_COLLAPSED:
                 userPic = (TextUtils.isEmpty(userPic)) ? Constants.imgPath + "ic_user_blank_gray" : userPic;
-                toolbar.setNavigationIcon(null);
-                toolbar.setTitle(spannable);
-                toolbar.setSubtitle(userName);
+                binding.toolbarBoardRead.setNavigationIcon(null);
+                binding.toolbarBoardRead.setTitle(spannable);
+                binding.toolbarBoardRead.setSubtitle(userName);
                 imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
-                toolbar.setOnClickListener(view -> dismiss());
+                binding.toolbarBoardRead.setOnClickListener(view -> dismiss());
                 break;
 
             case STATE_EXPANDED:
-                toolbar.setNavigationIcon(R.drawable.ic_action_navigation);
-                if(tabPage == Constants.BOARD_AUTOCLUB) toolbar.setTitle(autoTitle);
-                else toolbar.setTitle(tabTitle);
-                toolbar.setSubtitle("");
-                toolbar.setLogo(null);
+                binding.toolbarBoardRead.setNavigationIcon(R.drawable.ic_action_navigation);
+                if(tabPage == Constants.BOARD_AUTOCLUB) binding.toolbarBoardRead.setTitle(autoTitle);
+                else binding.toolbarBoardRead.setTitle(tabTitle);
+                binding.toolbarBoardRead.setSubtitle("");
+                binding.toolbarBoardRead.setLogo(null);
                 break;
 
             case STATE_IDLE: break;
@@ -803,7 +789,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // As long as a post belongs to the user,  show the menu in the toolbar which enables the user
     // to edits or delete the post.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void inflateEditMenuInToolbar() {
         // The userId here means the id of user who writes the posting item whereas the viewId means
         // the id of who reads the item. If both ids are equal, the edit buttons are visible, which
@@ -813,46 +799,20 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
             String viewerId = br.readLine();
             if(userId != null && userId.equals(viewerId)) {
-                toolbar.inflateMenu(R.menu.menu_board_read);
-                toolbar.setOnMenuItemClickListener(item -> {
-                    switch(item.getItemId()) {
-                        case R.id.action_board_edit:
-                            //sharedModel.getImageChooser().setValue(-1);
-                            // Create the dialog fragment with arguments which have been passed from
-                            // BoardPagerFragment when an item was picked.
-                            /*
-                            FrameLayout frame = ((BoardActivity)getActivity()).getBoardFrameLayout();
-                            BoardWriteFragment writePostFragment = new BoardWriteFragment();
-                            Bundle bundle = new Bundle();
-                            bundle.putBoolean("isEditMode", true);
-                            //bundle.putAll(getArguments());
-                            writePostFragment.setArguments(bundle);
-                            if(frame.getChildCount() > 0) frame.removeAllViews();
-
-                            getActivity().getSupportFragmentManager().beginTransaction()
-                                    .addToBackStack(null)
-                                    .replace(frame.getId(), writePostFragment)
-                                    .commit();
-
-                             */
-                            // Overrides this method in BoardActivity to call in BoardEditFragment
-                            // in the frame.
-                            mListener.onEditClicked(getArguments());
-                            dismiss();
-
-                            return true;
-
-                        case R.id.action_board_delete:
-                            String title = getString(R.string.board_alert_delete);
-                            String msg = getString(R.string.board_alert_msg);
-                            AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
-                                    .show(getActivity().getSupportFragmentManager(), null);
-                            return true;
-
-                        default: return false;
-
+                binding.toolbarBoardRead.inflateMenu(R.menu.menu_board_read);
+                binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
+                    if(item.getItemId() == R.id.action_board_edit) {
+                        mListener.onEditClicked(getArguments());
+                        dismiss();
+                        return true;
+                    } else if(item.getItemId() == R.id.action_board_delete) {
+                        String title = getString(R.string.board_alert_delete);
+                        String msg = getString(R.string.board_alert_msg);
+                        AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
+                                .show(getActivity().getSupportFragmentManager(), null);
+                        return true;
                     }
-
+                    return false;
                 });
             }
 

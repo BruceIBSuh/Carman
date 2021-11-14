@@ -60,6 +60,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.BoardPagerAdapter;
+import com.silverback.carman.databinding.ActivityBoardBinding;
 import com.silverback.carman.fragments.BoardEditFragment;
 import com.silverback.carman.fragments.BoardReadDlgFragment;
 import com.silverback.carman.fragments.BoardWriteFragment;
@@ -73,6 +74,7 @@ import org.json.JSONException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /*
  * This activity mainly contains a framelayout that alternatively holds either the viewpager or the
@@ -105,6 +107,7 @@ public class  BoardActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     // Objects
+    private ActivityBoardBinding binding;
     private OnAutoFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
     private Menu menu;
@@ -113,13 +116,13 @@ public class  BoardActivity extends BaseActivity implements
 
     // UIs
     private CoordinatorLayout coordinatorLayout;
-    private TabLayout boardTabLayout;
-    private HorizontalScrollView filterLayout;
-    private LinearLayout cbLayout;
-    private FrameLayout frameLayout;
-    private ViewPager2 boardPager;
-    private ProgressBar pbLoading;
-    private FloatingActionButton fabWrite;
+    //private TabLayout boardTabLayout;
+    //private HorizontalScrollView filterLayout;
+    //private LinearLayout cbLayout;
+    //private FrameLayout frameLayout;
+    //private ViewPager2 boardPager;
+    //private ProgressBar pbLoading;
+    //private FloatingActionButton fabWrite;
     private TextView tvAutoFilterLabel;
     private CheckBox cbGeneral;
 
@@ -143,27 +146,29 @@ public class  BoardActivity extends BaseActivity implements
         mListener = listener;
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_board);
+        binding = ActivityBoardBinding.inflate(getLayoutInflater());
+        //setContentView(R.layout.activity_board);
+        setContentView(binding.getRoot());
 
-        AppBarLayout appBar = findViewById(R.id.appBar);
-        coordinatorLayout = findViewById(R.id.coordinatorLayout);
-        Toolbar toolbar = findViewById(R.id.board_toolbar);
-        frameLayout = findViewById(R.id.frame_contents);
-        boardTabLayout = findViewById(R.id.tab_board);
-        filterLayout = findViewById(R.id.post_scroll_horizontal);
-        cbLayout = findViewById(R.id.linearLayout_autofilter);
-        pbLoading = findViewById(R.id.progbar_board_loading);
-        fabWrite = findViewById(R.id.fab_board_write);
+        //AppBarLayout appBar = findViewById(R.id.appBar);
+        //coordinatorLayout = findViewById(R.id.coordinatorLayout);
+        //Toolbar toolbar = findViewById(R.id.board_toolbar);
+        //frameLayout = findViewById(R.id.frame_contents);
+        //boardTabLayout = findViewById(R.id.tab_board);
+        //filterLayout = findViewById(R.id.post_scroll_horizontal);
+        //cbLayout = findViewById(R.id.linearLayout_autofilter);
+        //pbLoading = findViewById(R.id.progbar_board_loading);
+        //fabWrite = findViewById(R.id.fab_board_write);
 
-        boardPager = findViewById(R.id.board_pager);
+        //boardPager = findViewById(R.id.board_pager);
 
         // Set Toolbar and its title as AppBar
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(getString(R.string.board_general_title));
+        setSupportActionBar(binding.boardToolbar);
+        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         tabPage = Constants.BOARD_RECENT;
 
@@ -172,10 +177,10 @@ public class  BoardActivity extends BaseActivity implements
         chkboxList = new ArrayList<>();
         cbAutoFilter = new ArrayList<>();
 
-        // Create the autofilter checkbox if the auto data is set. If null, it catches the exception
-        // that calls setNoAutofilterText().
+        // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
+        // exception that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        try { createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
+        try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
         catch(NullPointerException e) {setNoAutofilterText();}
         catch(JSONException e) {e.printStackTrace();}
 
@@ -196,11 +201,11 @@ public class  BoardActivity extends BaseActivity implements
         // ViewPager2:
         // FragmentStateAdapter:
         // TabLayoutMediator:
-        boardPager.setVisibility(View.GONE);
-        boardPager.setAdapter(pagerAdapter);
+        binding.boardPager.setVisibility(View.GONE);
+        binding.boardPager.setAdapter(pagerAdapter);
         // Associate ViewPager2 with TabLayout
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
-        new TabLayoutMediator(boardTabLayout, boardPager, (tab, position) -> {
+        new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
             tab.setText(titles.get(position));
         }).attach();
 
@@ -208,12 +213,12 @@ public class  BoardActivity extends BaseActivity implements
         //frameLayout.addView(boardPager); // already defined in XML file.
 
         // Add the listeners to the viewpager and AppbarLayout
-        appBar.addOnOffsetChangedListener(this);
+        binding.appBar.addOnOffsetChangedListener(this);
         animTabLayout();
 
         // FAB tapping creates BoardWriteFragment in the framelayout
-        fabWrite.setSize(FloatingActionButton.SIZE_AUTO);
-        fabWrite.setOnClickListener(this);
+        binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
+        binding.fabBoardWrite.setOnClickListener(this);
     }
 
     @Override
@@ -256,8 +261,8 @@ public class  BoardActivity extends BaseActivity implements
             case android.R.id.home:
                 // Check which child view the framelayout contains; if it holds the viewpager, just
                 // finish the activity and otherwise, add the viewpager to the framelayout.
-                if(frameLayout.getChildAt(0) instanceof ViewPager2) {
-                    frameLayout.removeView(boardPager);
+                if(binding.frameContents.getChildAt(0) instanceof ViewPager2) {
+                    binding.frameContents.removeView(binding.boardPager);
                     finish();
 
                 // Fragment container may hold either BoardWriteFragment or BoardEditFragment. When
@@ -265,18 +270,18 @@ public class  BoardActivity extends BaseActivity implements
                 // it shoud be null for garbage collecting it.
                 } else {
                     boolean isWriteMode = (writePostFragment != null) &&
-                            frameLayout.getChildAt(0) == writePostFragment.getView();
+                            binding.frameContents.getChildAt(0) == writePostFragment.getView();
                     String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
                             getString(R.string.board_msg_cancel_edit);
 
                     Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
-                    Snackbar snackBar = Snackbar.make(coordinatorLayout, msg, Snackbar.LENGTH_LONG);
+                    Snackbar snackBar = Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG);
                     snackBar.setAction("OK", view -> {
                         // Remove BoardWriteFragment when the up button presses.
                         getSupportFragmentManager().beginTransaction().remove(target).commit();
                         // Hide the soft input when BoardWriteFragment disappears
                         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(coordinatorLayout.getWindowToken(), 0);
+                        imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
                         // As BoardPagerFragment comes in, the tabLayout animates to display and the
                         // menu for uploading is made invisible.
                         animTabHeight(true);
@@ -306,7 +311,7 @@ public class  BoardActivity extends BaseActivity implements
                 // Make it differencitated that what the current page contains b/w BoardWriteFragment
                 // and BoardEditFragment.
                 boolean isWriteMode = (writePostFragment != null) &&
-                        frameLayout.getChildAt(0) == writePostFragment.getView();
+                        binding.frameContents.getChildAt(0) == writePostFragment.getView();
                 if(isWriteMode) writePostFragment.prepareAttachedImages();
                 else editPostFragment.prepareUpdate();
 
@@ -331,7 +336,7 @@ public class  BoardActivity extends BaseActivity implements
     public void onPageSelected(int position){
         tabPage = position;
         menu.getItem(0).setVisible(false);
-        fabWrite.setVisibility(View.VISIBLE);
+        binding.fabBoardWrite.setVisibility(View.VISIBLE);
         if(isAutoFilter) animAutoFilter(isAutoFilter);
 
         switch(position) {
@@ -351,7 +356,7 @@ public class  BoardActivity extends BaseActivity implements
 
             case Constants.BOARD_NOTIFICATION:
                 getSupportActionBar().setTitle(getString(R.string.board_tab_title_notification));
-                fabWrite.setVisibility(View.INVISIBLE);
+                binding.fabBoardWrite.setVisibility(View.INVISIBLE);
                 break;
         }
     }
@@ -390,11 +395,11 @@ public class  BoardActivity extends BaseActivity implements
 
         // TabHeight must be measured here b/c it will be increased to the full size or decreased
         // down to 0 each time the button clicks.
-        tabHeight = boardTabLayout.getMeasuredHeight();
+        tabHeight = binding.tabBoard.getMeasuredHeight();
 
         // Create BoardWriteFragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
-        if(frameLayout.getChildCount() > 0) frameLayout.removeView(boardPager);
+        if(binding.frameContents.getChildCount() > 0) binding.frameContents.removeView(binding.boardPager);
 
         writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
@@ -422,12 +427,12 @@ public class  BoardActivity extends BaseActivity implements
         writePostFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()
                 //.addToBackStack(null)
-                .replace(frameLayout.getId(), writePostFragment)
+                .replace(binding.frameContents.getId(), writePostFragment)
                 .commit();
 
 
         // Visibility control on menu and fab.
-        fabWrite.setVisibility(View.INVISIBLE);
+        binding.fabBoardWrite.setVisibility(View.INVISIBLE);
         menu.getItem(1).setVisible(true);
     }
 
@@ -436,13 +441,14 @@ public class  BoardActivity extends BaseActivity implements
     @Override
     public void onEditClicked(Bundle bundle) {
         if(writePostFragment != null) writePostFragment = null;
-        if(frameLayout.getChildAt(0) instanceof ViewPager) frameLayout.removeView(boardPager);
+        if(binding.frameContents.getChildAt(0) instanceof ViewPager)
+            binding.frameContents.removeView(binding.boardPager);
 
         editPostFragment = new BoardEditFragment();
         editPostFragment.setArguments(bundle);
 
         getSupportFragmentManager().beginTransaction().addToBackStack(null)
-                .replace(frameLayout.getId(), editPostFragment)
+                .replace(binding.frameContents.getId(), editPostFragment)
                 .commit();
 
         // Hide the emblem and set the club title if the current page is autoclub.
@@ -452,13 +458,13 @@ public class  BoardActivity extends BaseActivity implements
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
         // workable as BoardPagerFragment comes in.(may replace getViewTreeObeserver() in onCreate().
-        tabHeight = boardTabLayout.getMeasuredHeight();
+        tabHeight = binding.tabBoard.getMeasuredHeight();
         animTabHeight(false);
 
         //if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
         menu.getItem(0).setVisible(false);
         menu.getItem(1).setVisible(true);
-        fabWrite.setVisibility(View.GONE);
+        binding.fabBoardWrite.setVisibility(View.GONE);
     }
 
     // Receive an image uri as a data of startActivityForResult() invoked either in BoardWriteFragment
@@ -480,16 +486,16 @@ public class  BoardActivity extends BaseActivity implements
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                 jsonAutoFilter = data.getStringExtra("jsonAutoData");
                 // Create the autofilter checkboxes and set inital values to the checkboxes
-                try{ createAutoFilterCheckBox(this, jsonAutoFilter, cbLayout);}
+                try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
                 catch(JSONException e){e.printStackTrace();}
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
                 pagerAdapter.notifyDataSetChanged();
-                boardPager.setAdapter(pagerAdapter);
-                boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
+                binding.boardPager.setAdapter(pagerAdapter);
+                binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
 
                 log.i("Reset tabLayout and action menu");
-                addTabIconAndTitle(this, boardTabLayout);
+                addTabIconAndTitle(this, binding.tabBoard);
                 menu.getItem(0).setVisible(true);
                 menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
                 break;
@@ -521,7 +527,7 @@ public class  BoardActivity extends BaseActivity implements
         // To enable the autoclub enabled when clicking the autofilter, the viewpager is set to
         // POST_NONE in getItemPosition() of BoardPagerAdapter, which destroys not only the autoclub
         // fragment but also the tab titles. Thus, recreate the title here.
-        addTabIconAndTitle(this, boardTabLayout);
+        addTabIconAndTitle(this, binding.tabBoard);
         log.i("cbAutofilter checked: %s, %s", chkbox, isChecked);
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
     }
@@ -529,7 +535,7 @@ public class  BoardActivity extends BaseActivity implements
     // Slide down the tab as the activity is created.
     private void animTabLayout() {
         //float y = (state)? getActionbarHeight() : 0;
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(boardTabLayout, "y", getActionbarHeight());
+        ObjectAnimator slideTab = ObjectAnimator.ofFloat(binding.tabBoard, "y", getActionbarHeight());
         slideTab.setDuration(500);
         slideTab.start();
 
@@ -539,7 +545,7 @@ public class  BoardActivity extends BaseActivity implements
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                boardPager.setVisibility(View.VISIBLE);
+                binding.boardPager.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -551,9 +557,9 @@ public class  BoardActivity extends BaseActivity implements
         ValueAnimator anim = (isShown)? ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
         anim.addUpdateListener(valueAnimator -> {
             int val = (Integer) valueAnimator.getAnimatedValue();
-            ViewGroup.LayoutParams params = boardTabLayout.getLayoutParams();
+            ViewGroup.LayoutParams params = binding.tabBoard.getLayoutParams();
             params.height = val;
-            boardTabLayout.setLayoutParams(params);
+            binding.tabBoard.setLayoutParams(params);
         });
         anim.setDuration(500);
         anim.start();
@@ -567,7 +573,7 @@ public class  BoardActivity extends BaseActivity implements
      */
     private void animAutoFilter(boolean state) {
         float y = (!state)? getActionbarHeight() : 0;
-        ObjectAnimator slideAutoFilter = ObjectAnimator.ofFloat(filterLayout, "y", y);
+        ObjectAnimator slideAutoFilter = ObjectAnimator.ofFloat(binding.postScrollHorizontal, "y", y);
         slideAutoFilter.setDuration(500);
         slideAutoFilter.start();
         isAutoFilter = !isAutoFilter;
@@ -617,7 +623,7 @@ public class  BoardActivity extends BaseActivity implements
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginStart(10);
         tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
-        cbLayout.addView(tvMessage, params);
+        binding.linearLayoutAutofilter.addView(tvMessage, params);
     }
 
 
@@ -789,12 +795,13 @@ public class  BoardActivity extends BaseActivity implements
     public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
-        if(frameLayout.getChildCount() > 0) frameLayout.removeView(frameLayout.getChildAt(0));
+        if(binding.frameContents.getChildCount() > 0)
+            binding.frameContents.removeView(binding.frameContents.getChildAt(0));
         // If the tabLayout height is 0,  put the height back to the default size.
         if(!isTabHeight) animTabHeight(true);
 
-        frameLayout.addView(boardPager);
-        fabWrite.setVisibility(View.VISIBLE);
+        binding.frameContents.addView(binding.boardPager);
+        binding.fabBoardWrite.setVisibility(View.VISIBLE);
         getSupportActionBar().setTitle(getString(R.string.board_general_title));
 
         // Animations differs according to whether the current page is on the auto club or not.
@@ -809,7 +816,7 @@ public class  BoardActivity extends BaseActivity implements
         }
 
         pagerAdapter.notifyDataSetChanged();
-        addTabIconAndTitle(this, boardTabLayout);
+        addTabIconAndTitle(this, binding.tabBoard);
     }
 
     // Referenced either in BoardWriteFragmnet or in BoardEditFragment and notified of which media
@@ -876,7 +883,7 @@ public class  BoardActivity extends BaseActivity implements
     public boolean checkGeneralPost() { return isGeneral; }
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
-        return fabWrite;
+        return binding.fabBoardWrite;
     }
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
@@ -884,6 +891,6 @@ public class  BoardActivity extends BaseActivity implements
     // Invoked in BoardPagerAdapter to hold visibility control of the progressbar when post logindg
     // complete and set it to gone in setFirstQuery().
     public ProgressBar getLoadingProgressBar() {
-        return pbLoading;
+        return binding.progbarBoardLoading;
     }
 }

@@ -43,9 +43,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Objects
     private Context context;
-    private List<DocumentSnapshot> snapshotList;
-    private OnRecyclerItemClickListener mListener;
-    private SimpleDateFormat sdf;
+    private final List<DocumentSnapshot> snapshotList;
+    private final OnRecyclerItemClickListener mListener;
+    private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
 
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
@@ -228,8 +228,5 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             super(view);
         }
     }
-
-
-
 
 }

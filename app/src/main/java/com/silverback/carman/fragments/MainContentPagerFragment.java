@@ -13,14 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 
-import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseDao;
-import com.silverback.carman.databinding.MainContentPagerCarwashBinding;
 import com.silverback.carman.databinding.MainContentPagerConfigBinding;
-import com.silverback.carman.databinding.MainContentPagerExtraBinding;
-import com.silverback.carman.databinding.MainContentPagerGasBinding;
-import com.silverback.carman.databinding.MainContentPagerSvcBinding;
 import com.silverback.carman.databinding.MainContentPagerTotalBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -28,7 +23,6 @@ import com.silverback.carman.utils.Constants;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -46,18 +40,10 @@ public class MainContentPagerFragment extends Fragment {
 
     private Calendar calendar;
     private DecimalFormat df;
-    private SimpleDateFormat sdf, sdf2;
     private CarmanDatabase mDB;
-    //private MonthlyExpenseRecyclerAdapter monthlyAdapter;
     private MainContentPagerTotalBinding totalBinding;
     private MainContentPagerConfigBinding expConfigBinding;
-    private MainContentPagerGasBinding gasBinding;
-    private MainContentPagerSvcBinding svcBinding;
-    private MainContentPagerCarwashBinding washBinding;
-    private MainContentPagerExtraBinding extraBinding;
-
-    private int position;;
-    //private int totalExpense, gasExpense, svcExpense;
+    private int position;
 
     private MainContentPagerFragment() {
         // Required empty public constructor
@@ -78,8 +64,8 @@ public class MainContentPagerFragment extends Fragment {
 
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         calendar = Calendar.getInstance(Locale.getDefault());
-        sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
-        sdf2 = new SimpleDateFormat(getString(R.string.date_format_6), Locale.getDefault());
+        //SimpleDateFormat sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
+        //SimpleDateFormat sdf2 = new SimpleDateFormat(getString(R.string.date_format_6), Locale.getDefault());
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
 
@@ -92,12 +78,7 @@ public class MainContentPagerFragment extends Fragment {
                              Bundle savedInstanceState) {
         switch(position){
             case 0:
-                log.i("onCreateView");
                 totalBinding = MainContentPagerTotalBinding.inflate(inflater, container, false);
-//                String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
-//                totalBinding.tvSubtitleMonth.setText(month);
-//                monthlyExpense.queryThisMonthExpense();
-
                 return totalBinding.getRoot();
 
             case 1:
@@ -153,12 +134,12 @@ public class MainContentPagerFragment extends Fragment {
     }
 
 
-    // Inner class to reset the calendar and retrieve expense data for previous months.
+    // Class for setting a month and query the expenses
     private class RecentMonthlyExpense {
         int[] arrExpense;
         int[] arrConfig;
         int totalExpense, count;
-        int gasTotal, svcTotal, washTotal;
+        int gasTotal, svcTotal;
 
         RecentMonthlyExpense() {
             arrExpense = new int[NumOfPrevMonths];
@@ -194,8 +175,6 @@ public class MainContentPagerFragment extends Fragment {
         LiveData<List<ExpenseBaseDao.ExpenseByMonth>> queryMonthlyExpense(long start, long end) {
             return mDB.expenseBaseModel().loadTotalExpenseByMonth(start, end);
         }
-
-
 
         // Retrieve the total expense of this month, putting it in the array for the graph and
         // animate the number.
@@ -241,6 +220,8 @@ public class MainContentPagerFragment extends Fragment {
             long start = setThisMonth();
             long end = System.currentTimeMillis();
 
+            // First, query the gas and serviee expense in the current month from ExpenseBaseEntity, then
+            // retrieve the wash expense from GasManagerEntity.
             mDB.expenseBaseModel().queryExpenseConfig(start, end).observe(getViewLifecycleOwner(), configs -> {
                 gasTotal = 0;
                 svcTotal = 0;
@@ -252,63 +233,14 @@ public class MainContentPagerFragment extends Fragment {
                 mDB.gasManagerModel().queryWashExpense(start, end).observe(getViewLifecycleOwner(), expenses -> {
                     int washTotal = 0;
                     for(Integer exp : expenses) washTotal += exp;
-                    log.i("wash total:%s", washTotal);
-
                     // Display this month's expense by Category only after querying gas, svc, and
                     // wash done.
-                    int netGasExpense = gasTotal - washTotal;
-                    expConfigBinding.tvExpenseGas.setText(df.format(netGasExpense));
+                    int gasOnly = gasTotal - washTotal;
+                    expConfigBinding.tvExpenseGas.setText(df.format(gasOnly));
                     expConfigBinding.tvExpenseSvc.setText(df.format(svcTotal));
                     expConfigBinding.tvExpenseWash.setText(df.format(washTotal));
                 });
-
             });
         }
     }
-
-
-
-    // Show the expense statements of a category in the expense viewpager
-    /*
-    private class MonthlyExpenseRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-
-        private MainContentExpenseRecyclerBinding recyclerBinding;
-        private final List<GasManagerDao.CarWashData> carwash;
-
-        public MonthlyExpenseRecyclerAdapter(List<GasManagerDao.CarWashData> obj) {
-            super();
-            this.carwash = obj;
-        }
-
-        public class MonthlyViewHolder extends RecyclerView.ViewHolder {
-            public MonthlyViewHolder(View itemView) {
-                super(itemView);
-            }
-        }
-
-        @NonNull
-        @Override
-        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            recyclerBinding = MainContentExpenseRecyclerBinding.inflate(inflater, parent, false);
-            return new MonthlyViewHolder(recyclerBinding.getRoot());
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-            log.i("recyclerview: %s", carwash.get(position).stnName);
-            recyclerBinding.tvMonthlyName.setText(carwash.get(position).stnName);
-            recyclerBinding.tvMonthlyDate.setText(sdf2.format(carwash.get(position).dateTime));
-            recyclerBinding.textView11.setText(df.format(carwash.get(position).washPayment));
-        }
-
-        @Override
-        public int getItemCount() {
-            return carwash.size();
-        }
-    }
-
-     */
-
-
 }

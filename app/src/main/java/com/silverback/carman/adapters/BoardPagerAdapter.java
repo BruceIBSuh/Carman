@@ -14,14 +14,8 @@ import com.silverback.carman.utils.Constants;
 
 import java.util.ArrayList;
 
-/**
- * This viewpager adapter subclasses FragmentStatePagerAdapter instead of FragmentPagerAdapter.
- * In general, FragmentPagerAdapter is preferred when displaying the tab-synced fragments that do not
- * contain lots of heavy data. However, displaying not a few items with bitmaps may burden the adapter.
- * For this reason, in spite of the tab-working adapter, FragmentStatePagerAdpater is preferred here.
- * FragmentStatePagerAdapter deprecated!!
- *
- * REFACTOR
+/*
+ * REFACTOR: FragmentStatePagerAdapter(FragmentPagerAdapter) to FragmentStateAdapter
  * Extends FragmentStateAdapter abstract class, implementing the createFragment() to supply instances
  * of fragments therein as new pages and getitemCount()
  */
@@ -36,7 +30,6 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     private ArrayList<String> cbValues;
     private boolean isAutoClub;
 
-
     public BoardPagerAdapter(@NonNull FragmentManager fm, @NonNull Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
@@ -46,60 +39,12 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
-        /*
-        return (position == Constants.BOARD_AUTOCLUB)?
-                BoardPagerFragment.newInstance(position, cbValues) :
-                BoardPagerFragment.newInstance(position, automaker);
-        */
     }
 
     @Override
     public int getItemCount() {
         return NUM_PAGES;
     }
-
-    // Constructor
-//    public BoardPagerAdapter(FragmentManager fm) {
-//        super(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
-//    }
-
-    /*
-    @NonNull
-    @Override
-    public Object instantiateItem (@NonNull ViewGroup container, int position){
-        log.i("instantiate Item: %s", container, position);
-        return null;
-    }
-
-     */
-    //@NonNull
-//    @Override
-//    public Fragment getItem(int position) {
-//        if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
-//        return BoardPagerFragment.newInstance(position, cbValues);
-//        /*
-//        return (position == Constants.BOARD_AUTOCLUB)?
-//                BoardPagerFragment.newInstance(position, cbValues) :
-//                BoardPagerFragment.newInstance(position, automaker);
-//        */
-//    }
-
-//    @Override
-//    public int getCount() {
-//        return NUM_PAGES;
-//    }
-
-    // As long as the current page is AUTO_CLUB, update the viewpager adapter by setting the return
-    // type as POSITION_NONE. It invokes destroyItem() and regards the current fragment destroyed
-    // which leads to call onCreateView() of the fragment.
-    // Another issue is that it will destroy the tab titles as well, which should be recreated in
-    // OnCheckedChanged() in BoardActivity.
-//    @Override
-//    public int getItemPosition(@NonNull Object object) {
-//        log.i("getItemPosition: %s", object);
-//        if(isAutoClub) return POSITION_NONE;
-//        else return POSITION_UNCHANGED;
-//    }
 
     public void setAutoFilterValues(ArrayList<String> values) {
         cbValues = values;
