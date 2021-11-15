@@ -15,6 +15,7 @@ import androidx.lifecycle.LiveData;
 
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseDao;
+import com.silverback.carman.database.GasManagerDao;
 import com.silverback.carman.databinding.MainContentPagerConfigBinding;
 import com.silverback.carman.databinding.MainContentPagerTotalBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -230,15 +231,21 @@ public class MainContentPagerFragment extends Fragment {
                     else if(config.category == Constants.SVC) svcTotal += config.totalExpense;
                 }
 
-                mDB.gasManagerModel().queryWashExpense(start, end).observe(getViewLifecycleOwner(), expenses -> {
+                mDB.gasManagerModel().queryMiscExpense(start, end).observe(getViewLifecycleOwner(), expenses -> {
                     int washTotal = 0;
-                    for(Integer exp : expenses) washTotal += exp;
+                    int miscTotal = 0;
+                    for(GasManagerDao.MiscExpense miscExpense : expenses) {
+                        washTotal += miscExpense.washPayment;
+                        miscTotal += miscExpense.extraPayment;
+                    }
+
                     // Display this month's expense by Category only after querying gas, svc, and
                     // wash done.
-                    int gasOnly = gasTotal - washTotal;
+                    int gasOnly = gasTotal - washTotal - miscTotal;
                     expConfigBinding.tvExpenseGas.setText(df.format(gasOnly));
                     expConfigBinding.tvExpenseSvc.setText(df.format(svcTotal));
                     expConfigBinding.tvExpenseWash.setText(df.format(washTotal));
+                    expConfigBinding.tvExpenseMisc.setText(df.format(miscTotal));
                 });
             });
         }

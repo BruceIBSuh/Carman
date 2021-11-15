@@ -184,7 +184,6 @@ public class RecentExpenseView extends View {
                 canvas.drawText(arrMonthName[reverse], offset - 35, mViewHeight - 15, textPaint);
             }
         }
-
     }
 
 

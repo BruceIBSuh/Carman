@@ -39,8 +39,8 @@ public class GasManagerEntity {
     @ColumnInfo(name = "wash_payment")
     public int washPayment;
 
-    @ColumnInfo(name = "extra_expense")
-    public String extraExpense;
+//    @ColumnInfo(name = "extra_expense")
+//    public String extraExpense;
 
     @ColumnInfo(name = "extra_payment")
     public int extraPayment;

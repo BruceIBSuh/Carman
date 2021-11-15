@@ -36,10 +36,10 @@ public abstract class GasManagerDao {
             "WHERE date_time >= :from AND date_time <= :to")
     public abstract LiveData<List<CarWashData>> loadCarWashData(long from, long to);
 
-    @Query("SELECT wash_payment FROM GasManagerEntity " +
+    @Query("SELECT wash_payment, extra_payment FROM GasManagerEntity " +
             "INNER JOIN ExpenseBaseEntity ON GasManagerEntity.base_id = ExpenseBaseEntity.rowId " +
             "WHERE date_time >= :from AND date_time <= :to")
-    public abstract LiveData<List<Integer>> queryWashExpense(long from, long to);
+    public abstract LiveData<List<MiscExpense>> queryMiscExpense(long from, long to);
 
 
     @Query("SELECT * FROM GasManagerEntity WHERE stn_name = :stnName or stn_id = :stnId")
@@ -102,7 +102,13 @@ public abstract class GasManagerDao {
         public String stnName;
         @ColumnInfo(name = "wash_payment")
         public int washPayment;
+    }
 
+    public static class MiscExpense {
+        @ColumnInfo(name = "wash_payment")
+        public int washPayment;
+        @ColumnInfo(name = "extra_payment")
+        public int extraPayment;
     }
 
 
