@@ -44,6 +44,13 @@
         <attr name="graphBarColor3" format="color|reference" />
     </declare-styleable>
 
+    <declare-styleable name="ExpenseConfigView">
+        <attr name="gasColor" format="color|reference" />
+        <attr name="svcColor" format="color|reference" />
+        <attr name="washColor" format="color|reference" />
+        <attr name="miscColor" format="color|reference" />
+    </declare-styleable>
+
     <declare-styleable name="StatGraphView" >
         <attr name="graphAxisColor" format="color|reference" />
         <attr name="graphLabelColor" format="color|reference" />

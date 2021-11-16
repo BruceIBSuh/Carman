@@ -48,7 +48,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
-    public static class ContentViewHolder extends RecyclerView.ViewHolder {
+    private static class ContentViewHolder extends RecyclerView.ViewHolder {
         public ContentViewHolder(View itemView) {
             super(itemView);
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
@@ -102,7 +102,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 break;
 
             case Constants.VIEWPAGER_EXPENSE:
-                log.i("viewpager expense");
                 expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
                 break;
 
@@ -157,6 +156,4 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             default: return -1;
         }
     }
-
-
 }

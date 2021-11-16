@@ -42,8 +42,13 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-            if(position == 0) {
-
+            switch(position) {
+                case 0:
+                    log.i("Total expense");
+                    break;
+                case 1:
+                    log.i("Expense Config");
+                    break;
             }
         }
     }

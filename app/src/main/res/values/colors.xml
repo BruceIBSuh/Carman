@@ -35,6 +35,12 @@
 
     <color name="mainThemeColor">#1EA4FF</color>
 
+    <!-- MainContentPagerFragment.ExpenseConfigView -->
+    <color name="expconfig_gas">@android:color/holo_green_light</color>
+    <color name="expconfig_svc">@android:color/holo_blue_bright</color>
+    <color name="expconfig_wash">@android:color/holo_orange_light</color>
+    <color name="expconfig_misc">@android:color/holo_red_light</color>
+
 
     <color name="statThemeColor">#7D1540</color>
     <color name="settingThemeColor">#009900</color>

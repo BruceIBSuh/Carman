@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase;
         ServiceManagerEntity.class,
         ServicedItemEntity.class,
         FavoriteProviderEntity.class},
-        version = 2, exportSchema = false)
+        version = 1, exportSchema = false)
 
 // The DB class musb be an abstract class and due to its high cost, it should be created in a
 // singleton instance.

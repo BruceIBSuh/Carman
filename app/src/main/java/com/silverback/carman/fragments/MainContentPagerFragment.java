@@ -246,6 +246,10 @@ public class MainContentPagerFragment extends Fragment {
                     expConfigBinding.tvExpenseSvc.setText(df.format(svcTotal));
                     expConfigBinding.tvExpenseWash.setText(df.format(washTotal));
                     expConfigBinding.tvExpenseMisc.setText(df.format(miscTotal));
+
+                    // Pass the data to the custom graph view.
+                    int[] data = {gasOnly, svcTotal, washTotal, miscTotal};
+                    expConfigBinding.expenseConfigView.setExpenseConfigData(data);
                 });
             });
         }
