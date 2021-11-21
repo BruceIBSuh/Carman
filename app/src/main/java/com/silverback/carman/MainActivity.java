@@ -30,6 +30,8 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
@@ -84,15 +86,17 @@ public class MainActivity extends BaseActivity implements
 
     private ApplyImageResourceUtil imgResUtil;
     private MainContentAdapter mainContentAdapter;
+    private ArrayAdapter<CharSequence> spinnerAdapter;
     private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
-    private String[] arrGasCode;
+    private String[] arrGasCode, arrGasName;
     private String[] stnParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
+    private int pricePosition;
 
 
     @Override
@@ -107,7 +111,9 @@ public class MainActivity extends BaseActivity implements
         // Set initial values
         stnParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
+        arrGasName = getResources().getStringArray(R.array.spinner_fuel_name);
         mPrevLocation = null;
+        log.i("stnParams:%s", stnParams[0]);
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
         // methods.
@@ -118,12 +124,6 @@ public class MainActivity extends BaseActivity implements
         Objects.requireNonNull(getSupportActionBar()).setTitle(title);
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
 
-        // AdapterView(Spinner) to select a gas type.
-        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
-                this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
-        spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
-        binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
-
         // MainContent RecyclerView to display main contents in the activity
         mainContentAdapter = new MainContentAdapter(this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(
@@ -131,15 +131,34 @@ public class MainActivity extends BaseActivity implements
         binding.recyclerContents.setAdapter(mainContentAdapter);
         binding.recyclerContents.addItemDecoration(divider);
 
-        // ViewModels
-        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
-        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        // AdapterView(Spinner) to select a gas type.
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
+                this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
+        spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
+        binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
+        //binding.mainTopFrame.spinnerGas.setSelection(spinnerAdapter.getPosition(stnParams[0]), true);
+
 
         // Create MainPricePagerAdapter and set it to the viewpager.
         mainPricePagerAdapter = new MainPricePagerAdapter(this);
         mainPricePagerAdapter.setFuelCode(stnParams[0]);
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
+        binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(
+                new ViewPager2.OnPageChangeCallback() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        log.i("onPageSelected:%s", position);
+                        super.onPageSelected(position);
+                        pricePosition = position;
+                    }
+                }
+        );
+
+        // ViewModels
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+
 
         // Event Handlers
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
@@ -156,8 +175,6 @@ public class MainActivity extends BaseActivity implements
                 new ActivityResultContracts.StartActivityForResult(), this::callActivityResult);
     }
 
-
-
     @Override
     public void onResume() {
         super.onResume();
@@ -169,6 +186,10 @@ public class MainActivity extends BaseActivity implements
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
+
+        // Set the current page to the default in
+        binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
+
     }
 
     @Override
@@ -221,28 +242,35 @@ public class MainActivity extends BaseActivity implements
         activityResultLauncher.launch(intent);
     }
 
-    // Implement AdapterView.OnItemSelectedListener
+
+    // Implement AdapterView(Spinner).OnItemSelectedListener
     @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-        if(gasCode == null) setGasSpinnerSelection(stnParams[0]);
-        else gasCode = arrGasCode[pos];
+    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
+        if(stnParams[0].matches(arrGasCode[position])) {
+            log.i("onItemSelected:%s", gasCode);
+            gasCode = stnParams[0];
+        } else {
+            gasCode = arrGasCode[position];
+        }
+
 
         // Reset the price info in the viewpager.
         mainPricePagerAdapter.setFuelCode(gasCode);
-        mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
+        //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
+        mainPricePagerAdapter.notifyItemChanged(pricePosition);
 
         // Show the average price and create the price bar as hidden.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
 
-        // In case the station recyclerview is in the foreground.
+        // In case the station recyclerview is in the foreground, update the price info with a new
+        // gas selected.
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             stnParams[0] = gasCode;
             stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
         }
     }
-
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {}
 

@@ -66,8 +66,14 @@
     <color name="pbSafe">#66CC00</color>
     <color name="pbWarning">#FF3333</color>
 
+    <!--Update Color -->
     <!-- MainActivity$MainContentFragment$RecentExpenseView -->
     <color name="barColor1">#66FFB2</color>
     <color name="barColor2">#FFFF66</color>
     <color name="barColor3">#FF3333</color>
+    <!-- MainActivity: Price Dashboard -->
+    <color name="bgAvgPrice">#A5D6A7</color>
+    <color name="bgStnPrice">#C5E1A5</color>
+    <color name="bgHeader">#C0CA33</color>
+
 </resources>

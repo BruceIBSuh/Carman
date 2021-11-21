@@ -3,6 +3,8 @@ package com.silverback.carman.adapters;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.adapter.FragmentViewHolder;
 
@@ -35,24 +37,23 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     private MainPricePagerFragment stnFragment;
     private String fuelCode;
 
-
-    // Constructor
-    public MainPricePagerAdapter(FragmentActivity fa){
+    public MainPricePagerAdapter(FragmentActivity fa) {
         super(fa);
-    }
-
-    // Invoked when the spinner changes the value or users reset the top priority gas station.
-    public void setFuelCode(String fuelCode) {
-        this.fuelCode = fuelCode;
     }
 
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        if(position == 0) return distFragment = MainPricePagerFragment.getInstance(fuelCode, 0);
-        else if(position == 1) return stnFragment = MainPricePagerFragment.getInstance(fuelCode, 1);
-        else return MainPricePagerFragment.getInstance(fuelCode, position);
-
+        switch(position) {
+            case 0:
+                log.i("first district fragment:%s", getItemId(position));
+                return distFragment = MainPricePagerFragment.getInstance(fuelCode, 0);
+            case 1:
+                log.i("second station fragment:%s", getItemId(position));
+                return stnFragment = MainPricePagerFragment.getInstance(fuelCode, 1);
+            default:
+                return MainPricePagerFragment.getInstance(fuelCode, position);
+        }
     }
 
     @Override
@@ -60,8 +61,6 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads){
 
         super.onBindViewHolder(holder, position, payloads);
-        log.i("pricepageradapter onbindviewholder:%s, %s", holder, payloads.size());
-
         if(position == 0) distFragment.reload(0, fuelCode);
         else if(position == 1) stnFragment.reload(1, fuelCode);
     }
@@ -70,5 +69,11 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     public int getItemCount() {
         return NUM_PAGES;
     }
+
+    // Invoked when the spinner changes the value or users reset the top priority gas station.
+    public void setFuelCode(String fuelCode) {
+        this.fuelCode = fuelCode;
+    }
+
 
 }

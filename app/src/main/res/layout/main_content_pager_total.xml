@@ -6,7 +6,7 @@
     android:id="@+id/content_expense"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#F3F3F3">
+    android:background="@android:color/white">
 
     <TextView
         android:id="@+id/tv_subtitle_month"
@@ -100,13 +100,15 @@
         android:id="@+id/recentGraphView"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        app:graphBarColor1="@color/barColor1"
+        app:graphBarColor2="@color/barColor2"
+        app:graphBarColor3="@color/barColor3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline2"
-        app:layout_constraintTop_toTopOf="parent"
-        app:graphBarColor1="@color/barColor1"
-        app:graphBarColor2="@color/barColor2"
-        app:graphBarColor3="@color/barColor3"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

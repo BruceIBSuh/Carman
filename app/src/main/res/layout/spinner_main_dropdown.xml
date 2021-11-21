@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <CheckedTextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/bgToolbar"
+    android:background="#E0E0E0"
     android:gravity="start|center_vertical"
     android:padding="3dp"
-    android:textColor="@android:color/white"
     android:textSize="@dimen/smallText"/>

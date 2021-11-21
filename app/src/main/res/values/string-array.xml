@@ -34,6 +34,7 @@
         <item>@string/general_spinner_diesel</item>
         <item>@string/general_spinner_lpg</item>
         <item>@string/general_spinner_premium</item>
+        <item>@string/main_spinner_elec</item>
     </string-array>
 
     <string-array name="spinner_fuel_code">
@@ -41,6 +42,7 @@
         <item>D047</item>
         <item>K015</item>
         <item>B034</item>
+        <item>ELEC</item>
     </string-array>
 
     <string-array name="svc_company">

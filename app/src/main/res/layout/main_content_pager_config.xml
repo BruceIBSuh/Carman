@@ -104,7 +104,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="3dp"
+        android:layout_marginBottom="8dp"
         android:text="기   타 "
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline9"
@@ -125,15 +125,17 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        app:gasColor="@color/expconfig_gas"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline4"
         app:layout_constraintTop_toTopOf="parent"
-        app:gasColor="@color/expconfig_gas"
+        app:miscColor="@color/expconfig_misc"
         app:svcColor="@color/expconfig_svc"
-        app:washColor="@color/expconfig_wash"
-        app:miscColor="@color/expconfig_misc" />
+        app:washColor="@color/expconfig_wash" />
 
     <View
         android:id="@+id/index_gas"
@@ -143,7 +145,6 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_expense_gas"
         app:layout_constraintStart_toStartOf="@+id/guideline4"
         app:layout_constraintTop_toTopOf="@+id/tv_expense_gas" />
-
     <View
         android:id="@+id/index_svc"
         android:layout_width="15dp"
@@ -152,8 +153,6 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_expense_svc"
         app:layout_constraintStart_toStartOf="@+id/guideline4"
         app:layout_constraintTop_toTopOf="@+id/tv_expense_svc" />
-
-
     <View
         android:id="@+id/index_wash"
         android:layout_width="15dp"
@@ -162,8 +161,6 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_expense_wash"
         app:layout_constraintStart_toStartOf="@+id/guideline4"
         app:layout_constraintTop_toTopOf="@+id/tv_expense_wash" />
-
-
     <View
         android:id="@+id/index_misc"
         android:layout_width="15dp"

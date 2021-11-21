@@ -20,7 +20,7 @@ import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.ThreadManager;
 
 /**
- * This fragment is to display the gas prices of the favorite district and the favorite station.
+ * This fragment is to display the gas prices of the district and the favorite station.
  */
 public class MainPricePagerFragment extends Fragment {
 
@@ -54,14 +54,13 @@ public class MainPricePagerFragment extends Fragment {
         return pagerFragment;
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Objects
         //CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        opinetModel = new ViewModelProvider(getActivity()).get(OpinetViewModel.class);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        opinetModel = new ViewModelProvider(requireActivity()).get(OpinetViewModel.class);
     }
 
     @Override
@@ -113,7 +112,6 @@ public class MainPricePagerFragment extends Fragment {
 
                 return stnBinding.getRoot();
         }
-
 
         return null;
     }

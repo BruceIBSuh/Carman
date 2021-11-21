@@ -20,6 +20,7 @@
     <string name="general_spinner_diesel">경유</string>
     <string name="general_spinner_lpg">LPG</string>
     <string name="general_spinner_premium">고급휘발유</string>
+    <string name="main_spinner_elec">충전</string>
     <string name="general_expense_gas">[ 주유지출 ]</string>
     <string name="general_expense_service">[ 서비스지출 ]</string>
     <string name="general_stations_distance">[ 거리순 ]</string>
