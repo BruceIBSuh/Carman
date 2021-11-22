@@ -241,7 +241,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 if(state == 0 && position == Constants.SVC) return;
-
                 currentPage = position;
                 if(binding.topframeViewpager.getChildCount() > 0) binding.topframeViewpager.removeAllViews();
 
@@ -431,20 +430,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // uploaded to Firestore at the same time only if the user is logged in. The method to save data
     // is defined in each fragment.
     public void saveExpenseData() {
-        WeakReference<Fragment> weakFragment = expContentPagerAdapter.weakFragmentReference(currentPage);
+        //WeakReference<Fragment> weakFragment = expContentPagerAdapter.weakFragmentReference(currentPage);
+        Fragment fragment = expContentPagerAdapter.getCurrentFragment(currentPage);
         String userId = getUserIdFromStorage(this);
-
-        if(weakFragment.get() instanceof GasManagerFragment) {
-            ((GasManagerFragment)weakFragment.get()).saveGasData(userId);
-
-        } else if(weakFragment.get() instanceof ServiceManagerFragment) {
-            ((ServiceManagerFragment)weakFragment.get()).saveServiceData(userId).observe(this, svcTotal -> {
-                if(svcTotal == 0) return;
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("totalsum", svcTotal);
-                setResult(RESULT_CANCELED, resultIntent);
-                finish();
-            });
+        if(fragment instanceof GasManagerFragment) {
+            ((GasManagerFragment)fragment).saveGasData(userId);
+        } else if(fragment instanceof ServiceManagerFragment) {
+            ((ServiceManagerFragment)fragment).saveServiceData(userId);
         }
     }
 

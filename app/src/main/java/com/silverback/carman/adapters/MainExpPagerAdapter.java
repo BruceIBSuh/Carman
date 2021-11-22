@@ -1,8 +1,5 @@
 package com.silverback.carman.adapters;
 
-import android.view.View;
-import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -11,7 +8,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.adapter.FragmentViewHolder;
 
-import com.silverback.carman.fragments.MainContentPagerFragment;
+import com.silverback.carman.fragments.MainExpPagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -21,10 +18,14 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerAdapter.class);
     private static final int NUM_PAGES = 2;
 
-    private MainContentPagerFragment targetFragment;
+    private MainExpPagerFragment targetFragment;
 
     public MainExpPagerAdapter(FragmentActivity fa) {
         super(fa);
+    }
+
+    public MainExpPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
+        super(fm, lifecycle);
     }
 
     @Override
@@ -35,8 +36,9 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        return targetFragment = MainContentPagerFragment.newInstance(position);
+        return targetFragment = MainExpPagerFragment.newInstance(position);
     }
+
 
     @Override
     public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
@@ -45,6 +47,7 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
             switch(position) {
                 case 0:
                     log.i("Total expense");
+
                     break;
                 case 1:
                     log.i("Expense Config");

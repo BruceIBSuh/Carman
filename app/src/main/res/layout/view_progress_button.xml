@@ -7,14 +7,11 @@
     android:layout_marginTop="3dp"
     android:gravity="center"
     android:orientation="vertical" >
-
     <Button
         android:id="@+id/button"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:layout_marginTop="8dp" />
-
-
     <ProgressBar
         style="?android:attr/progressBarStyleHorizontal"
         android:id="@+id/progressBar"

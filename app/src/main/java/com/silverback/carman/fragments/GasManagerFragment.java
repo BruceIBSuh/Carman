@@ -397,10 +397,11 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         if(!doEmptyCheck()) return;
         // Show the progress bar while saving the data in the Room and uploading the rating data to
         // Firestore.
+        /*
         pbFragment = new ProgressBarDialogFragment();
         pbFragment.setProgressMsg("로컬에 저장중임");
         pbFragment.show(getChildFragmentManager(), "progressbar");
-
+        */
         // CreateEntity instances both of which are correlated with ForeignKe
         ExpenseBaseEntity baseEntity = new ExpenseBaseEntity();
         GasManagerEntity gasEntity = new GasManagerEntity();
@@ -427,15 +428,16 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
             MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
             totalExpenseLive.setValue(baseEntity.totalExpense);
             totalExpenseLive.observe(getViewLifecycleOwner(), total -> {
-                uploadDataToFirestore(userId, total);
+                uploadGasDataToFirestore(userId, total);
             });
         }
 
     }
 
     // Batch to upload the data of rating and comment to Firestore.
-    private void uploadDataToFirestore(String userId, int gasTotal) {
-        pbFragment.setProgressMsg("Uploading.....");
+    public void uploadGasDataToFirestore(String userId, int gasTotal) {
+        //pbFragment.setProgressMsg("Uploading.....");
+
         WriteBatch gasBatch = firestore.batch();
         if(binding.rbGasStation.getRating() > 0) {
             Map<String, Object> ratingData = new HashMap<>();
@@ -460,7 +462,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         }
 
         gasBatch.commit().addOnCompleteListener(task -> {
-            pbFragment.dismiss();
+            //pbFragment.dismiss();
             Intent resultIntent = new Intent();
             resultIntent.putExtra("totalsum", gasTotal);
             Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);

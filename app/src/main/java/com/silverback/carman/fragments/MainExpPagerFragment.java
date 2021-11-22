@@ -11,6 +11,7 @@ import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 
 import com.silverback.carman.database.CarmanDatabase;
@@ -30,14 +31,15 @@ import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link MainContentPagerFragment#newInstance} factory method to
+ * Use the {@link MainExpPagerFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MainContentPagerFragment extends Fragment {
-    private static final LoggingHelper log = LoggingHelperFactory.create(MainContentPagerFragment.class);
+public class MainExpPagerFragment extends Fragment {
+    private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerFragment.class);
 
     private static final int NumOfPrevMonths = 3;
     private RecentMonthlyExpense monthlyExpense;
+
 
     private Calendar calendar;
     private DecimalFormat df;
@@ -46,12 +48,12 @@ public class MainContentPagerFragment extends Fragment {
     private MainContentPagerConfigBinding expConfigBinding;
     private int position;
 
-    private MainContentPagerFragment() {
+    private MainExpPagerFragment() {
         // Required empty public constructor
     }
 
-    public static MainContentPagerFragment newInstance(int position) {
-        MainContentPagerFragment fragment = new MainContentPagerFragment();
+    public static MainExpPagerFragment newInstance(int position) {
+        MainExpPagerFragment fragment = new MainExpPagerFragment();
         Bundle args = new Bundle();
         args.putInt("position", position);
         fragment.setArguments(args);
@@ -125,7 +127,6 @@ public class MainContentPagerFragment extends Fragment {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                log.i("animation ended");
                 monthlyExpense.queryPrevMonthExpense();
                 //totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
             }
@@ -198,7 +199,7 @@ public class MainContentPagerFragment extends Fragment {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
-                queryMonthlyExpense(start, end).observe(requireActivity(), data -> calcPrevExpense(index, data));
+                queryMonthlyExpense(start, end).observe(getViewLifecycleOwner(), data -> calcPrevExpense(index, data));
             }
         }
 

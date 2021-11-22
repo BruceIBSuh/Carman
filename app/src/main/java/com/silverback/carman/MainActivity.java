@@ -30,7 +30,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.silverback.carman.adapters.MainContentAdapter;
@@ -39,6 +38,7 @@ import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
+import com.silverback.carman.fragments.GasManagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.GasPriceTask;
@@ -78,6 +78,8 @@ public class MainActivity extends BaseActivity implements
     private LocationTask locationTask;
     private StationListTask stationListTask;
     private GasPriceTask gasPriceTask;
+
+    private MainContentAdapter mainContentAdapter;
     private StationListAdapter stnListAdapter;
     private MainPricePagerAdapter mainPricePagerAdapter;
 
@@ -85,19 +87,15 @@ public class MainActivity extends BaseActivity implements
     private List<Opinet.GasStnParcelable> mStationList;
 
     private ApplyImageResourceUtil imgResUtil;
-    private MainContentAdapter mainContentAdapter;
-    private ArrayAdapter<CharSequence> spinnerAdapter;
     private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
     private String[] arrGasCode, arrGasName;
-    private String[] stnParams;
+    private String[] defaultParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
-    private int pricePosition;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -109,11 +107,10 @@ public class MainActivity extends BaseActivity implements
         imgResUtil = new ApplyImageResourceUtil(this);
 
         // Set initial values
-        stnParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
+        defaultParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         arrGasName = getResources().getStringArray(R.array.spinner_fuel_name);
         mPrevLocation = null;
-        log.i("stnParams:%s", stnParams[0]);
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
         // methods.
@@ -136,23 +133,15 @@ public class MainActivity extends BaseActivity implements
                 this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
         spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
-        //binding.mainTopFrame.spinnerGas.setSelection(spinnerAdapter.getPosition(stnParams[0]), true);
+        setGasSpinnerSelection(defaultParams[0]);
 
 
         // Create MainPricePagerAdapter and set it to the viewpager.
         mainPricePagerAdapter = new MainPricePagerAdapter(this);
-        mainPricePagerAdapter.setFuelCode(stnParams[0]);
+        mainPricePagerAdapter.setFuelCode(defaultParams[0]);
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
-        binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(
-                new ViewPager2.OnPageChangeCallback() {
-                    @Override
-                    public void onPageSelected(int position) {
-                        log.i("onPageSelected:%s", position);
-                        super.onPageSelected(position);
-                        pricePosition = position;
-                    }
-                }
-        );
+
+
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -161,6 +150,7 @@ public class MainActivity extends BaseActivity implements
 
 
         // Event Handlers
+        binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(pageCallback);
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
@@ -187,13 +177,16 @@ public class MainActivity extends BaseActivity implements
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
 
-        // Set the current page to the default in
+        // Return the viewpagers to the initial page.
         binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
+        mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, 0);
+
 
     }
 
     @Override
     public void onStop() {
+        //activityResultLauncher.unregister();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
         if(gasPriceTask != null) gasPriceTask = null;
@@ -245,30 +238,24 @@ public class MainActivity extends BaseActivity implements
 
     // Implement AdapterView(Spinner).OnItemSelectedListener
     @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
-        if(stnParams[0].matches(arrGasCode[position])) {
-            log.i("onItemSelected:%s", gasCode);
-            gasCode = stnParams[0];
-        } else {
-            gasCode = arrGasCode[position];
-        }
-
-
+    public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
+        gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
         // Reset the price info in the viewpager.
         mainPricePagerAdapter.setFuelCode(gasCode);
-        //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
-        mainPricePagerAdapter.notifyItemChanged(pricePosition);
+        mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
+
 
         // Show the average price and create the price bar as hidden.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
 
-        // In case the station recyclerview is in the foreground, update the price info with a new
-        // gas selected.
+        // In case the new station recyclerview is in the foreground, update the price info with
+        // a new gas selected. refactor required: any station with a selected gas type does not
+        // exist, indicate it in the view.
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
-            stnParams[0] = gasCode;
-            stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, stnParams);
+            defaultParams[0] = gasCode;
+            stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, defaultParams);
         }
     }
     @Override
@@ -322,11 +309,21 @@ public class MainActivity extends BaseActivity implements
                 Intent resultIntent = result.getData();
                 if(resultIntent != null) {
                     int totalSum = resultIntent.getIntExtra("totalsum", 0);
+                    log.i("total sum: %s", totalSum);
                     mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
                 }
                 break;
         }
     }
+
+    // Implement the abstract class of ViewPager2.OnPageChangeCallback to listen to the viewpager
+    // changing a page.
+    private final ViewPager2.OnPageChangeCallback pageCallback = new ViewPager2.OnPageChangeCallback() {
+        @Override
+        public void onPageSelected(int position) {
+            super.onPageSelected(position);
+        }
+    };
 
     // Get the price info saved in the cache and show them in the price bar.
     private void setCollapsedPriceBar() {
@@ -334,7 +331,7 @@ public class MainActivity extends BaseActivity implements
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
         binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
 
-        // Set the sido and sigun price which have been intervally stored in the Cache
+        // Set the sido and sigun price which is stored in the cache at an interval.
         for(String fName : arrFile) {
             File file = new File(getCacheDir(), fName);
             Uri uri = Uri.fromFile(file);
@@ -361,6 +358,7 @@ public class MainActivity extends BaseActivity implements
                             break;
                     }
                 }
+
             } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
         }
     }
@@ -396,12 +394,12 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    // Implement the onClickListener of the toggle button which is defined in the xml file.
+    // Implement onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         //binding.progbtnGas.setProgressColor(isStnViewOn);
         if(!isStnViewOn) {
-            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, ()->{
                 binding.progbtnGas.setProgressColor(isStnViewOn);
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             });
@@ -410,6 +408,11 @@ public class MainActivity extends BaseActivity implements
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.progbtnGas.setProgressColor(isStnViewOn);
+
+            // Return the viewpagers to the initial page.
+            binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
+            mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, 0);
+
         }
     }
 
@@ -459,13 +462,13 @@ public class MainActivity extends BaseActivity implements
                 if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
                     //binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
-                    stnParams[0] = gasCode;
-                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+                    defaultParams[0] = gasCode;
+                    stationListTask = sThreadManager.startStationListTask(stnModel, location, defaultParams);
 
                 // Station default params changed from SettingPrefActivity.
                 } else if(isRadiusChanged || isGasTypeChanged) {
-                    log.i("params changed: %s, %s", stnParams[0], stnParams[1]);
-                    stationListTask = sThreadManager.startStationListTask(stnModel, location, stnParams);
+                    log.i("params changed: %s, %s", defaultParams[0], defaultParams[1]);
+                    stationListTask = sThreadManager.startStationListTask(stnModel, location, defaultParams);
 
                 } else {
                     //binding.pbNearStns.setVisibility(View.GONE);
@@ -530,11 +533,11 @@ public class MainActivity extends BaseActivity implements
         SpannableString spannableString;
         if(isNetworkConnected) {
             String msg = getString(R.string.main_no_station_fetched);
-            String radius = stnParams[1];
+            String radius = defaultParams[1];
             // In case the radius is already set to the maximum value(5000m), no need to change the value.
             if(radius != null && radius.matches("5000")) {
                 msg = msg.substring(0, msg.indexOf("\n"));
-                return new SpannableString(stnParams[1] + msg);
+                return new SpannableString(defaultParams[1] + msg);
             }
 
             String format = String.format("%s%s", radius, msg);
@@ -617,11 +620,11 @@ public class MainActivity extends BaseActivity implements
         } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
             isGasTypeChanged = true;
             setGasSpinnerSelection(gasType);
-            stnParams[0] = gasType;
+            defaultParams[0] = gasType;
 
         } else if(!TextUtils.isEmpty(searchRadius)) {
             isRadiusChanged = true;
-            stnParams[1] = searchRadius;
+            defaultParams[1] = searchRadius;
         }
     }
 

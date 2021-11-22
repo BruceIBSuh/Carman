@@ -37,13 +37,17 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private MainContentCarlifeBinding carlifeBinding;
     private final MainExpPagerAdapter expensePagerAdapter;
 
-    private FragmentSharedModel fragmentModel;
+    private final FragmentSharedModel fragmentModel;
 
     // Constructor
     public MainContentAdapter(Context context) {
         super();
         firestore= FirebaseFirestore.getInstance();
         expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
+//        expensePagerAdapter = new MainExpPagerAdapter(
+//                ((FragmentActivity)context).getSupportFragmentManager(),
+//                ((FragmentActivity) context).getLifecycle());
+
         fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
     }
 
@@ -54,7 +58,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
             params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_MAIN);
             itemView.setLayoutParams(params);
-            // Define click listener for the ViewHolder's View.
         }
     }
 
@@ -127,14 +130,21 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
+            log.i("payloads:%s", payloads.get(0));
             if(position == Constants.VIEWPAGER_EXPENSE) {
-                log.i("expense viewpager: %s", payloads.get(0));
-                expensePagerAdapter.notifyDataSetChanged();
-                expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
+                if(payloads.get(0).equals(0)) {
+                    log.i("return to the default");
+                    expBinding.mainPagerExpense.setCurrentItem(0, true);
+                } else {
+                    log.i("new data come in");
+                    expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
+                    //expensePagerAdapter.notifyDataSetChanged();
+                }
+                //
+
             }
         }
     }

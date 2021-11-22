@@ -1,7 +1,9 @@
 package com.silverback.carman.fragments;
 
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
@@ -426,13 +428,9 @@ public class ServiceManagerFragment extends Fragment implements
     }
 
     // Invoked by OnOptions
-    public MutableLiveData<Integer> saveServiceData(String userId) {
-        MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
-        if(!doEmptyCheck()) {
-            totalExpenseLive.setValue(0);
-            return totalExpenseLive;
-        }
+    public void saveServiceData(String userId) {
 
+        if(!doEmptyCheck()) return;
         //String dateFormat = getString(R.string.date_format_1);
         //long milliseconds = BaseActivity.parseDateTime(dateFormat, binding.tvServiceDate.getText().toString());
         //log.i("service data saved: %s", milliseconds);
@@ -471,10 +469,21 @@ public class ServiceManagerFragment extends Fragment implements
         int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
+            MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
             totalExpenseLive.setValue(totalExpense);
-        } else totalExpenseLive.setValue(0);
+            totalExpenseLive.observe(getViewLifecycleOwner(), total -> {
+                uploadSvcDataToFirestore(userId, total);
+            });
 
-        return totalExpenseLive;
+        } //else totalExpenseLive.setValue(0);
+    }
+
+    // Service rating should be uploaded to Firestore, which is to programmed soon.
+    private void uploadSvcDataToFirestore(String userId, int total) {
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("totalsum", total);
+        Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
+        Objects.requireNonNull(requireActivity()).finish();
     }
 
     private boolean doEmptyCheck() {

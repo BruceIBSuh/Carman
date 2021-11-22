@@ -35,7 +35,7 @@
 
     <color name="mainThemeColor">#1EA4FF</color>
 
-    <!-- MainContentPagerFragment.ExpenseConfigView -->
+    <!-- MainExpPagerFragment.ExpenseConfigView -->
     <color name="expconfig_gas">@android:color/holo_green_light</color>
     <color name="expconfig_svc">@android:color/holo_blue_bright</color>
     <color name="expconfig_wash">@android:color/holo_orange_light</color>
