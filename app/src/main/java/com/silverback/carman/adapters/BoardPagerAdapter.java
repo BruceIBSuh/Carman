@@ -35,9 +35,14 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
         super(fm, lifecycle);
     }
 
+    public void setAutoFilterValues(ArrayList<String> values) {
+        cbValues = values;
+    }
+
     @NonNull
     @Override
     public Fragment createFragment(int position) {
+        log.i("createFragment: %s", position);
         if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
     }
@@ -48,9 +53,7 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
         return NUM_PAGES;
     }
 
-    public void setAutoFilterValues(ArrayList<String> values) {
-        cbValues = values;
-    }
+
 
 
 }

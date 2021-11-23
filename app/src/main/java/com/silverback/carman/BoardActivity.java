@@ -102,7 +102,7 @@ public class  BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
         //ViewPager.OnPageChangeListener,
-        AppBarLayout.OnOffsetChangedListener,
+        //AppBarLayout.OnOffsetChangedListener,
         BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
@@ -117,14 +117,6 @@ public class  BoardActivity extends BaseActivity implements
     private BoardEditFragment editPostFragment;
 
     // UIs
-    private CoordinatorLayout coordinatorLayout;
-    //private TabLayout boardTabLayout;
-    //private HorizontalScrollView filterLayout;
-    //private LinearLayout cbLayout;
-    //private FrameLayout frameLayout;
-    //private ViewPager2 boardPager;
-    //private ProgressBar pbLoading;
-    //private FloatingActionButton fabWrite;
     private TextView tvAutoFilterLabel;
     private CheckBox cbGeneral;
 
@@ -175,24 +167,12 @@ public class  BoardActivity extends BaseActivity implements
 
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
-        // Create ViewPager with visibility as invisible which turns visible immediately after the
-        // animation completes to lesson an amount of workload to query posting items and set
-        // the viewpager adapter.
-        //boardPager = new ViewPager(this);
-        //boardPager.setId(View.generateViewId());
-        //boardPager.setVisibility(View.GONE);
-        //boardPager.setAdapter(pagerAdapter);
-        //boardTabLayout.setupWithViewPager(boardPager);
-        //boardPager.addOnPageChangeListener(this);
-
-        // Migration to androidx.ViewPager2
-        // ViewPager2:
-        // FragmentStateAdapter:
-        // TabLayoutMediator:
-        binding.boardPager.setVisibility(View.GONE);
+        //binding.boardPager.setVisibility(View.GONE);
+        //binding.boardPager.setVisibility(View.INVISIBLE);
         binding.boardPager.setAdapter(pagerAdapter);
+        //binding.boardPager.setCurrentItem(tabPage);
         binding.boardPager.registerOnPageChangeCallback(pageChangeCallback);
-        // Associate ViewPager2 with TabLayout
+
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
         new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
             tab.setText(titles.get(position));
@@ -210,13 +190,13 @@ public class  BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setOnClickListener(this);
 
         // The activity gets started by click event in MainActivity
+
         if(getIntent() != null) {
             int category = getIntent().getIntExtra("category", 0);
-            if(tabPage != category) {
-                binding.boardPager.setCurrentItem(category, true);
-                tabPage = category;
-            }
+            log.i("Intent: %s", category);
             //binding.boardPager.setCurrentItem(category);
+            pagerAdapter.notifyItemChanged(category, true);
+            tabPage = category;
         }
 
         getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
@@ -331,8 +311,8 @@ public class  BoardActivity extends BaseActivity implements
     }
 
     // Implement AppBarLayout.OnOffsetChangedListener
-    @Override
-    public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
+//    @Override
+//    public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
 
 
     // When clicking the fab to write a post, make BoardEditFragment null if it remains in the frame.
@@ -340,11 +320,11 @@ public class  BoardActivity extends BaseActivity implements
     // user to move SettingPreferenceActivity to create it.
     // The tab layout should be animated to decrease its height to 0 for purpose of adjusing the post
     // content area to the base line.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
-    public void onClick(View v) {
+    public void onClick(View view) {
         // Only apply to the floating action button
-        if(v.getId() != R.id.fab_board_write) return;
+        if(view.getId() != R.id.fab_board_write) return;
         if(editPostFragment != null) editPostFragment = null;
         // Check if the user has made a nickname. Otherwise, show tne message for setting the name
         // first and start SettingPreferenceActivity, the result of which is received in onActivity
@@ -352,8 +332,8 @@ public class  BoardActivity extends BaseActivity implements
         String userName = mSettings.getString(Constants.USER_NAME, null);
         if(TextUtils.isEmpty(userName)) {
             Snackbar snackbar = Snackbar.make(
-                    coordinatorLayout, getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
-            snackbar.setAction(R.string.board_msg_action_setting, view -> {
+                    binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
+            snackbar.setAction(R.string.board_msg_action_setting, v -> {
                 Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
@@ -378,7 +358,7 @@ public class  BoardActivity extends BaseActivity implements
 
         // Handle the toolbar menu as the write board comes in.
         if(tabPage != Constants.BOARD_AUTOCLUB) {
-            getSupportActionBar().setTitle(getString(R.string.board_title_write));
+            Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_write));
             animTabHeight(false); // tab height = 0;
 
         // Tapping the fab right when the viewpager holds the auto club page, animate to slide
@@ -407,7 +387,7 @@ public class  BoardActivity extends BaseActivity implements
     }
 
     // Implement BoardReadDlgFragment.OnEditModeListener when the edit button presses.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onEditClicked(Bundle bundle) {
         if(writePostFragment != null) writePostFragment = null;
@@ -422,8 +402,8 @@ public class  BoardActivity extends BaseActivity implements
                 .commit();
 
         // Hide the emblem and set the club title if the current page is autoclub.
-        if(tabPage == Constants.BOARD_AUTOCLUB) getSupportActionBar().setTitle(clubTitle);
-        else getSupportActionBar().setTitle(getString(R.string.board_title_edit));
+        if(tabPage == Constants.BOARD_AUTOCLUB) Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
+        else Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_edit));
 
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
@@ -514,7 +494,7 @@ public class  BoardActivity extends BaseActivity implements
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
             if(isAutoFilter) animAutoFilter(isAutoFilter);
 
-            switch(tabPage) {
+            switch(position) {
                 case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
                     Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
                     break;

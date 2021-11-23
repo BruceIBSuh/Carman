@@ -64,7 +64,8 @@ import java.util.Objects;
 
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
-        FinishAppDialogFragment.NoticeDialogListener, MainContentAdapter.MainContentAdapterListener,
+        FinishAppDialogFragment.NoticeDialogListener,
+        MainContentAdapter.MainContentAdapterListener,
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -629,7 +630,6 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onClickBoard(int category) {
-        log.i("category: %s", category);
         Intent boardIntent = new Intent(this, BoardActivity.class);
         boardIntent.putExtra("category", category);
         startActivity(boardIntent);

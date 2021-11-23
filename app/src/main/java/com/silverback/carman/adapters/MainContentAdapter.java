@@ -30,7 +30,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
     // Objects
-    private final MainContentAdapterListener callback;
+    private final MainContentAdapterListener mListener;
     private final FirebaseFirestore firestore;
     private MainContentNotificationBinding notiBinding;
     private MainContentExpenseBinding expBinding;
@@ -46,15 +46,11 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     // Constructor
-    public MainContentAdapter(Context context, MainContentAdapterListener callback) {
+    public MainContentAdapter(Context context, MainContentAdapterListener listener) {
         super();
-        this.callback = callback;
+        this.mListener = listener;
         firestore= FirebaseFirestore.getInstance();
         expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
-//        expensePagerAdapter = new MainExpPagerAdapter(
-//                ((FragmentActivity)context).getSupportFragmentManager(),
-//                ((FragmentActivity) context).getLifecycle());
-
         //fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
     }
 
@@ -76,7 +72,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             case Constants.NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
                 notiBinding.imgbtnNotification.setOnClickListener(view -> {
-                    callback.onClickBoard(Constants.BOARD_NOTIFICATION);
+                    mListener.onClickBoard(Constants.BOARD_NOTIFICATION);
                 });
                 return new ContentViewHolder(notiBinding.getRoot());
 
@@ -87,7 +83,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
                 carlifeBinding.imgbtnCarlife.setOnClickListener(view -> {
-                    callback.onClickBoard(Constants.BOARD_POPULAR);
+                    mListener.onClickBoard(Constants.BOARD_RECENT);
                 });
                 return new ContentViewHolder(carlifeBinding.getRoot());
 
@@ -110,11 +106,19 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         switch(position) {
             case Constants.NOTIFICATION:
                 firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
+                        .addSnapshotListener((querySanpshots, e) -> {
+                            if(e != null || querySanpshots == null) return;
+                            RecentPostAdapter adapter = new RecentPostAdapter(querySanpshots);
+                            notiBinding.recyclerview.setAdapter(adapter);
+                        });
+                /*
+                firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
                         .get()
                         .addOnSuccessListener(querySnapshots -> {
                             RecentPostAdapter recentPostAdapter = new RecentPostAdapter(querySnapshots);
                             notiBinding.recyclerview.setAdapter(recentPostAdapter);
                         });
+                 */
                 break;
 
             case Constants.VIEWPAGER_EXPENSE:
@@ -123,11 +127,20 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             case Constants.CARLIFE:
                 firestore.collection("board_general").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
+                        .addSnapshotListener((querySnapshots, e) -> {
+                            if(e != null || querySnapshots == null) return;
+                            RecentPostAdapter adapter = new RecentPostAdapter(querySnapshots);
+                            carlifeBinding.recyclerCarlife.setAdapter(adapter);
+
+                        });
+                /*
+                firestore.collection("board_general").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
                         .get()
                         .addOnSuccessListener(querySnapshots -> {
                             RecentPostAdapter carlifeAdapter = new RecentPostAdapter(querySnapshots);
                             carlifeBinding.recyclerCarlife.setAdapter(carlifeAdapter);
                         });
+                 */
                 break;
 
             case Constants.BANNER_AD_1:

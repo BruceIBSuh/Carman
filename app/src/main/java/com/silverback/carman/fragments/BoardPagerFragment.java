@@ -732,9 +732,7 @@ public class BoardPagerFragment extends Fragment implements
                     if (!isLoading && /*isScrolling &&*/ (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         //isScrolling = false;
                         isLoading = true;
-
                         //if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
-
                         // If the totalPostCount is less than Constants.Pagination, setNextQuery will
                         // return null value, which results in an error as in Notification board. Accrodingly,
                         // a condition has to be added to prevent setNextQuery().
