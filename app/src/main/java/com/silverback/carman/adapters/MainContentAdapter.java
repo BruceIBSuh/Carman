@@ -1,17 +1,18 @@
 package com.silverback.carman.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainContentAdsBinding;
 import com.silverback.carman.databinding.MainContentCarlifeBinding;
@@ -21,7 +22,6 @@ import com.silverback.carman.databinding.MainContentNotificationBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.util.List;
 
@@ -30,6 +30,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
     // Objects
+    private final MainContentAdapterListener callback;
     private final FirebaseFirestore firestore;
     private MainContentNotificationBinding notiBinding;
     private MainContentExpenseBinding expBinding;
@@ -37,18 +38,24 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private MainContentCarlifeBinding carlifeBinding;
     private final MainExpPagerAdapter expensePagerAdapter;
 
-    private final FragmentSharedModel fragmentModel;
+    //private final FragmentSharedModel fragmentModel;
+
+    // Interface to notify the parent activity of any event
+    public interface MainContentAdapterListener {
+        void onClickBoard(int category);
+    }
 
     // Constructor
-    public MainContentAdapter(Context context) {
+    public MainContentAdapter(Context context, MainContentAdapterListener callback) {
         super();
+        this.callback = callback;
         firestore= FirebaseFirestore.getInstance();
         expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
 //        expensePagerAdapter = new MainExpPagerAdapter(
 //                ((FragmentActivity)context).getSupportFragmentManager(),
 //                ((FragmentActivity) context).getLifecycle());
 
-        fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
+        //fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
@@ -68,6 +75,9 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         switch(viewType) {
             case Constants.NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
+                notiBinding.imgbtnNotification.setOnClickListener(view -> {
+                    callback.onClickBoard(Constants.BOARD_NOTIFICATION);
+                });
                 return new ContentViewHolder(notiBinding.getRoot());
 
             case Constants.VIEWPAGER_EXPENSE:
@@ -76,6 +86,9 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
+                carlifeBinding.imgbtnCarlife.setOnClickListener(view -> {
+                    callback.onClickBoard(Constants.BOARD_POPULAR);
+                });
                 return new ContentViewHolder(carlifeBinding.getRoot());
 
             case Constants.BANNER_AD_1: case Constants.BANNER_AD_2:

@@ -49,7 +49,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     private final OnParentFragmentListener callback;
     private final JSONArray jsonArray;
     private final DecimalFormat df;
-    private SimpleDateFormat sdf;
+    private final SimpleDateFormat sdf;
 
     private final SparseArray<ServiceManagerDao.LatestServiceData> sparseArray;
     public boolean[] arrCheckedState;

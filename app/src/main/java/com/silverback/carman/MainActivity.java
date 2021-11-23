@@ -64,7 +64,7 @@ import java.util.Objects;
 
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
-        FinishAppDialogFragment.NoticeDialogListener,
+        FinishAppDialogFragment.NoticeDialogListener, MainContentAdapter.MainContentAdapterListener,
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -122,7 +122,7 @@ public class MainActivity extends BaseActivity implements
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
 
         // MainContent RecyclerView to display main contents in the activity
-        mainContentAdapter = new MainContentAdapter(this);
+        mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(
                 Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
         binding.recyclerContents.setAdapter(mainContentAdapter);
@@ -142,7 +142,6 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
 
 
-
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
@@ -153,7 +152,6 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(pageCallback);
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
-
 
         // Method for implementing ViewModel callbacks to fetch a location and station list around
         // the location.
@@ -629,5 +627,12 @@ public class MainActivity extends BaseActivity implements
     }
 
 
+    @Override
+    public void onClickBoard(int category) {
+        log.i("category: %s", category);
+        Intent boardIntent = new Intent(this, BoardActivity.class);
+        boardIntent.putExtra("category", category);
+        startActivity(boardIntent);
+    }
 }
 

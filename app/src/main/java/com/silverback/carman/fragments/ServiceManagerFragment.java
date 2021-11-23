@@ -37,15 +37,10 @@ import com.silverback.carman.database.ServicedItemEntity;
 import com.silverback.carman.databinding.FragmentServiceManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.ServiceCenterTask;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.viewmodels.LocationViewModel;
-import com.silverback.carman.viewmodels.PagerAdapterViewModel;
-import com.silverback.carman.viewmodels.ServiceCenterViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,7 +59,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
-    private static final int SVC_CENTER = 2;
+    //private static final int SVC_CENTER = 2;
 
     // Objects
     //private SparseArray<ServiceManagerDao.LatestServiceData> sparseServiceArray;
@@ -79,22 +74,22 @@ public class ServiceManagerFragment extends Fragment implements
     //private LocationViewModel locationModel;
     //private ServiceCenterViewModel svcCenterModel;
     //private StationListViewModel stationModel;
-
-    private ServiceCenterTask serviceCenterTask;
-    private Location location;
+    //private ServiceCenterTask serviceCenterTask;
+    //private Location location;
 
 
     private FavoriteGeofenceHelper geofenceHelper;
+    private FavoriteGeofenceHelper.OnGeofenceListener geofenceListener;
     private ExpServiceItemAdapter mAdapter;
     private DecimalFormat df;
     private SimpleDateFormat sdf;
     private JSONArray jsonServiceArray;
     private Location svcLocation;
-    private String svcAddress;
-    private String svcCompany;
+    //private String svcAddress;
+    //private String svcCompany;
 
     // Fields
-    private String distCode;
+    //private String distCode;
     private int itemPos;
     private int totalExpense;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
@@ -102,13 +97,13 @@ public class ServiceManagerFragment extends Fragment implements
     private String userId;
     private String svcId;
     private String svcName;
-    private String svcComment;
+    //private String svcComment;
     private int svcPeriod;
     private String geoSvcName;
-    private float svcRating;
+    //private float svcRating;
     private long geoTime;
     private int category;
-    private Location mPrevLocation;
+    //private Location mPrevLocation;
 
     public ServiceManagerFragment() {
         // Required empty public constructor
@@ -147,22 +142,7 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Attach the listener which implements the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.
-        geofenceHelper.setGeofenceListener(new FavoriteGeofenceHelper.OnGeofenceListener() {
-            @Override
-            public void notifyAddGeofenceCompleted(int placeholder) {
-                isSvcFavorite = true;
-                Snackbar.make(binding.getRoot(), getString(R.string.svc_msg_add_favorite), Snackbar.LENGTH_SHORT).show();
-            }
-            @Override
-            public void notifyRemoveGeofenceCompleted(int placeholder) {
-                isSvcFavorite = false;
-                Snackbar.make(binding.getRoot(), R.string.svc_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
-            }
-            @Override
-            public void notifyAddGeofenceFailed() {
-                log.e("Failed to add the service center to Geofence");
-            }
-        });
+        geofenceHelper.setGeofenceListener(getGeofenceListener());
 
     }
 
@@ -181,8 +161,8 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Set event listeners.
         binding.btnRegisterService.setOnClickListener(v -> registerFavorite());
-        //binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
         binding.radioGroup.setOnCheckedChangeListener(this::switchServiceSpanType);
+        //binding.btnSvcFavorite.setOnClickListener(v -> addServiceFavorite());
 
         // Fill in the form automatically with the data transferred from the PendingIntent of Geofence
         // only if the parent activity gets started by the notification and its category should be
@@ -211,11 +191,13 @@ public class ServiceManagerFragment extends Fragment implements
 
     // Implement ExpServiceItemAdapter.OnParentFragmentListener to pop up NumberPadFragmnet and
     // intput the amount of expense in each service item.
+    // setItemPosition():
+    // getCurrentMileage():
+    // subtractCost():
     @Override
     public void setItemPosition(int position) {
         itemPos = position;
     }
-
     @Override
     public int getCurrentMileage() {
         try {
@@ -230,6 +212,28 @@ public class ServiceManagerFragment extends Fragment implements
         totalExpense -= value;
         binding.tvSvcPayment.setText(df.format(totalExpense));
     }
+
+    // Attach the listener which implements the following callback methods when a location is added
+    // to or removed from the favorite provider as well as geofence list.
+    private FavoriteGeofenceHelper.OnGeofenceListener getGeofenceListener() {
+        return new FavoriteGeofenceHelper.OnGeofenceListener() {
+            @Override
+            public void notifyAddGeofenceCompleted(int placeholder) {
+                isSvcFavorite = true;
+                Snackbar.make(binding.getRoot(), getString(R.string.svc_msg_add_favorite), Snackbar.LENGTH_SHORT).show();
+            }
+            @Override
+            public void notifyRemoveGeofenceCompleted(int placeholder) {
+                isSvcFavorite = false;
+                Snackbar.make(binding.getRoot(), R.string.svc_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+            }
+            @Override
+            public void notifyAddGeofenceFailed() {
+                log.e("Failed to add the service center to Geofence");
+            }
+        };
+    }
+
 
     // Check if the parent activity gets started by the geofence intent and get extras.
     private void getGeofenceIntent(){
@@ -255,18 +259,16 @@ public class ServiceManagerFragment extends Fragment implements
 
     private void addViewModelObserver(ViewModel model) {
         if(model instanceof FragmentSharedModel) {
-            // To notify ExpensePagerFragment of the current fragment to show the corresponding
-            // viewpager in the top frame
+            // To notify ExpensePagerFragment of the current fragment to show its recent expenses
             fragmentModel.setCurrentFragment(this);
 
-            // LiveData custom time from Date and Time picker DialogFragment
+            // Share a value b/w fragments  w/ DatePickerDialogFragment
             fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
                 this.calendar = calendar;
                 binding.tvServiceDate.setText(sdf.format(calendar.getTimeInMillis()));
             });
 
-            // Communcate w/ NumberPadFragment to put a number selected in the num pad into the
-            // textview in this fragment.
+            // Share a value b/w  fragments w/ NumberPadFragment
             fragmentModel.getNumpadValue().observe(getViewLifecycleOwner(), data -> {
                 final int viewId = data.keyAt(0);
                 final int value = data.valueAt(0);
@@ -279,7 +281,7 @@ public class ServiceManagerFragment extends Fragment implements
                 }
             });
 
-            // Communicate b/w  RecyclerView.ViewHolder and MemoPadFragment
+            // Share a value b/w fragments w/ MemoPadFragment
             fragmentModel.getMemoPadValue().observe(getViewLifecycleOwner(), data -> {
                 mAdapter.notifyItemChanged(itemPos, data);
             });
@@ -298,7 +300,6 @@ public class ServiceManagerFragment extends Fragment implements
             fragmentModel.getRegisteredServiceId().observe(getViewLifecycleOwner(), svcId -> {
                 log.i("Registered: %s", svcId);
                 this.svcId = svcId;
-
             });
         }
     }
@@ -427,9 +428,7 @@ public class ServiceManagerFragment extends Fragment implements
         else if(checkedId == R.id.radio2) mAdapter.setServiceOption(1);
     }
 
-    // Invoked by OnOptions
     public void saveServiceData(String userId) {
-
         if(!doEmptyCheck()) return;
         //String dateFormat = getString(R.string.date_format_1);
         //long milliseconds = BaseActivity.parseDateTime(dateFormat, binding.tvServiceDate.getText().toString());
@@ -441,15 +440,15 @@ public class ServiceManagerFragment extends Fragment implements
             log.e("ParseException: %s", e.getMessage());
         }
 
-        ExpenseBaseEntity basicEntity = new ExpenseBaseEntity();
+        ExpenseBaseEntity baseEntity = new ExpenseBaseEntity();
         ServiceManagerEntity serviceEntity = new ServiceManagerEntity();
         ServicedItemEntity checkedItem;
         List<ServicedItemEntity> itemEntityList = new ArrayList<>();
 
-        basicEntity.dateTime = calendar.getTimeInMillis();
-        basicEntity.mileage = mileage;
-        basicEntity.category = Constants.SVC;
-        basicEntity.totalExpense = totalExpense;
+        baseEntity.dateTime = calendar.getTimeInMillis();
+        baseEntity.mileage = mileage;
+        baseEntity.category = Constants.SVC;
+        baseEntity.totalExpense = totalExpense;
 
         serviceEntity.serviceCenter = binding.etServiceProvider.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea"; //temp coding
@@ -466,24 +465,34 @@ public class ServiceManagerFragment extends Fragment implements
 
         // Insert data into both ExpenseBaseEntity and ServiceManagerEntity at the same time
         // using @Transaction in ServiceManagerDao.
-        int rowId = mDB.serviceManagerModel().insertAll(basicEntity, serviceEntity, itemEntityList);
+        int rowId = mDB.serviceManagerModel().insertAll(baseEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
+            // Send the activity result to the caller activity(MainActivity)
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("totalsum", totalExpense);
+            Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
+            Objects.requireNonNull(requireActivity()).finish();
+
+            /*
             MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
             totalExpenseLive.setValue(totalExpense);
             totalExpenseLive.observe(getViewLifecycleOwner(), total -> {
-                uploadSvcDataToFirestore(userId, total);
+                log.i("Save the service data in the room: %s", total);
+                //uploadSvcDataToFirestore(userId, total);
             });
+
+             */
 
         } //else totalExpenseLive.setValue(0);
     }
 
     // Service rating should be uploaded to Firestore, which is to programmed soon.
+    // At the moment, the service station should be filled in  in the dialog fragment and the data
+    // should be uploaded to Firestore in the dialog, which has to be refactored.
     private void uploadSvcDataToFirestore(String userId, int total) {
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("totalsum", total);
-        Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
-        Objects.requireNonNull(requireActivity()).finish();
+        log.i("upload service data to Firestore: %s", total);
+
     }
 
     private boolean doEmptyCheck() {

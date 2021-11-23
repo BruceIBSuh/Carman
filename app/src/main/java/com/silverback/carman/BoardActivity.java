@@ -51,6 +51,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentOnAttachListener;
 import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -99,7 +101,7 @@ import java.util.Objects;
 public class  BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
-        ViewPager.OnPageChangeListener,
+        //ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener,
         BoardReadDlgFragment.OnEditModeListener {
 
@@ -151,20 +153,7 @@ public class  BoardActivity extends BaseActivity implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityBoardBinding.inflate(getLayoutInflater());
-        //setContentView(R.layout.activity_board);
         setContentView(binding.getRoot());
-
-        //AppBarLayout appBar = findViewById(R.id.appBar);
-        //coordinatorLayout = findViewById(R.id.coordinatorLayout);
-        //Toolbar toolbar = findViewById(R.id.board_toolbar);
-        //frameLayout = findViewById(R.id.frame_contents);
-        //boardTabLayout = findViewById(R.id.tab_board);
-        //filterLayout = findViewById(R.id.post_scroll_horizontal);
-        //cbLayout = findViewById(R.id.linearLayout_autofilter);
-        //pbLoading = findViewById(R.id.progbar_board_loading);
-        //fabWrite = findViewById(R.id.fab_board_write);
-
-        //boardPager = findViewById(R.id.board_pager);
 
         // Set Toolbar and its title as AppBar
         setSupportActionBar(binding.boardToolbar);
@@ -186,7 +175,6 @@ public class  BoardActivity extends BaseActivity implements
 
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
-
         // Create ViewPager with visibility as invisible which turns visible immediately after the
         // animation completes to lesson an amount of workload to query posting items and set
         // the viewpager adapter.
@@ -203,6 +191,7 @@ public class  BoardActivity extends BaseActivity implements
         // TabLayoutMediator:
         binding.boardPager.setVisibility(View.GONE);
         binding.boardPager.setAdapter(pagerAdapter);
+        binding.boardPager.registerOnPageChangeCallback(pageChangeCallback);
         // Associate ViewPager2 with TabLayout
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
         new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
@@ -213,12 +202,30 @@ public class  BoardActivity extends BaseActivity implements
         //frameLayout.addView(boardPager); // already defined in XML file.
 
         // Add the listeners to the viewpager and AppbarLayout
-        binding.appBar.addOnOffsetChangedListener(this);
+        binding.appBar.addOnOffsetChangedListener((appbar, offset) -> {});
         animTabLayout();
 
         // FAB tapping creates BoardWriteFragment in the framelayout
         binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
         binding.fabBoardWrite.setOnClickListener(this);
+
+        // The activity gets started by click event in MainActivity
+        if(getIntent() != null) {
+            int category = getIntent().getIntExtra("category", 0);
+            if(tabPage != category) {
+                binding.boardPager.setCurrentItem(category, true);
+                tabPage = category;
+            }
+            //binding.boardPager.setCurrentItem(category);
+        }
+
+        getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
+            if(fragment instanceof BoardReadDlgFragment) {
+                BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
+                readFragment.setEditModeListener(this);
+            }
+        });
+
     }
 
     @Override
@@ -226,6 +233,7 @@ public class  BoardActivity extends BaseActivity implements
         super.onResume();
     }
 
+    /* replace this with getSupportFragentManager().addFragmentOnAttachListener()
     @Override
     public void onAttachFragment(@NonNull Fragment fragment) {
         if(fragment instanceof BoardReadDlgFragment) {
@@ -233,6 +241,8 @@ public class  BoardActivity extends BaseActivity implements
             readFragment.setEditModeListener(this);
         }
     }
+
+     */
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -314,10 +324,7 @@ public class  BoardActivity extends BaseActivity implements
                         binding.frameContents.getChildAt(0) == writePostFragment.getView();
                 if(isWriteMode) writePostFragment.prepareAttachedImages();
                 else editPostFragment.prepareUpdate();
-
                 return true;
-
-
             default: return super.onOptionsItemSelected(item);
         }
 
@@ -326,43 +333,6 @@ public class  BoardActivity extends BaseActivity implements
     // Implement AppBarLayout.OnOffsetChangedListener
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
-
-    // Implement ViewPager.OnPageChangeListener which overrides the following 3 overriding methods.
-    @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
-
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onPageSelected(int position){
-        tabPage = position;
-        menu.getItem(0).setVisible(false);
-        binding.fabBoardWrite.setVisibility(View.VISIBLE);
-        if(isAutoFilter) animAutoFilter(isAutoFilter);
-
-        switch(position) {
-            case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
-                getSupportActionBar().setTitle(getString(R.string.board_general_title));
-                break;
-
-            case Constants.BOARD_AUTOCLUB:
-                if(cbAutoFilter.size() > 0) {
-                    clubTitle = createAutoClubTitle();
-                    getSupportActionBar().setTitle(clubTitle);
-                    //menu.getItem(0).setVisible(true);
-                } else getSupportActionBar().setTitle(getString(R.string.board_tab_title_autoclub));
-
-                animAutoFilter(isAutoFilter);
-                break;
-
-            case Constants.BOARD_NOTIFICATION:
-                getSupportActionBar().setTitle(getString(R.string.board_tab_title_notification));
-                binding.fabBoardWrite.setVisibility(View.INVISIBLE);
-                break;
-        }
-    }
-
-    @Override
-    public void onPageScrollStateChanged(int state) {}
 
 
     // When clicking the fab to write a post, make BoardEditFragment null if it remains in the frame.
@@ -531,6 +501,39 @@ public class  BoardActivity extends BaseActivity implements
         log.i("cbAutofilter checked: %s, %s", chkbox, isChecked);
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
     }
+
+    // Implement the abstract class of ViewPager2.OnPageChangeCallback, which replaced the interface
+    // type
+    private final ViewPager2.OnPageChangeCallback pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
+        @Override
+        public void onPageSelected(int position) {
+            super.onPageSelected(position);
+            log.i("onPageSelected: %s", position);
+            tabPage = position;
+            //menu.getItem(0).setVisible(false);
+            binding.fabBoardWrite.setVisibility(View.VISIBLE);
+            if(isAutoFilter) animAutoFilter(isAutoFilter);
+
+            switch(tabPage) {
+                case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
+                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
+                    break;
+                case Constants.BOARD_AUTOCLUB:
+                    if(cbAutoFilter.size() > 0) {
+                        clubTitle = createAutoClubTitle();
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
+                        //menu.getItem(0).setVisible(true);
+                    } else Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_tab_title_autoclub));
+
+                    animAutoFilter(isAutoFilter);
+                    break;
+                case Constants.BOARD_NOTIFICATION:
+                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_tab_title_notification));
+                    binding.fabBoardWrite.setVisibility(View.INVISIBLE);
+                    break;
+            }
+        }
+    };
 
     // Slide down the tab as the activity is created.
     private void animTabLayout() {

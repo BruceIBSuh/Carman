@@ -6,6 +6,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.adapter.FragmentViewHolder;
 
 import com.silverback.carman.fragments.BoardPagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
@@ -40,6 +41,7 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
         if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
     }
+
 
     @Override
     public int getItemCount() {

@@ -270,7 +270,6 @@ public class BaseActivity extends AppCompatActivity {
         List<Drawable> tabIconList = null;
         if(context instanceof ExpenseActivity) {
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
-
             Drawable[] icons = {
                     AppCompatResources.getDrawable(this, R.drawable.ic_gas),
                     AppCompatResources.getDrawable(this, R.drawable.ic_service),

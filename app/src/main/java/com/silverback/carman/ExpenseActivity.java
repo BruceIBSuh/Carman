@@ -398,7 +398,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     // Implement change time button onClickListener
     public void setCustomTime(View view) {
-        log.i("set custom time");
         DialogFragment datePickerFragment = new DatePickerFragment();
         datePickerFragment.show(getSupportFragmentManager(), "datePicker");
     }

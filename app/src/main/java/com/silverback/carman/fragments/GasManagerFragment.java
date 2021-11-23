@@ -425,11 +425,15 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         long rowId = mDB.gasManagerModel().insertBoth(baseEntity, gasEntity);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
+            uploadGasDataToFirestore(userId, baseEntity.totalExpense);
+            /*
             MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
             totalExpenseLive.setValue(baseEntity.totalExpense);
             totalExpenseLive.observe(getViewLifecycleOwner(), total -> {
-                uploadGasDataToFirestore(userId, total);
+
             });
+
+             */
         }
 
     }
@@ -437,7 +441,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     // Batch to upload the data of rating and comment to Firestore.
     public void uploadGasDataToFirestore(String userId, int gasTotal) {
         //pbFragment.setProgressMsg("Uploading.....");
-
         WriteBatch gasBatch = firestore.batch();
         if(binding.rbGasStation.getRating() > 0) {
             Map<String, Object> ratingData = new HashMap<>();
