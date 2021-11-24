@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.SpannableString;
@@ -40,26 +41,25 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.FrameLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentOnAttachListener;
 import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.databinding.ActivityBoardBinding;
@@ -115,6 +115,7 @@ public class  BoardActivity extends BaseActivity implements
     private Menu menu;
     private BoardWriteFragment writePostFragment;
     private BoardEditFragment editPostFragment;
+    private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // UIs
     private TextView tvAutoFilterLabel;
@@ -129,6 +130,7 @@ public class  BoardActivity extends BaseActivity implements
     private int tabHeight;
     private int tabPage;
     private boolean isAutoFilter, isTabHeight, isLocked;
+    private int category;
 
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
     // queries posts with new conditions to make the recyclerview updated.
@@ -151,7 +153,8 @@ public class  BoardActivity extends BaseActivity implements
         setSupportActionBar(binding.boardToolbar);
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        tabPage = Constants.BOARD_RECENT;
+        //tabPage = Constants.BOARD_RECENT;
+        category = getIntent().getIntExtra("category", 0);
 
         // The chkboxList is created by whether the autodata is set and the cbAutoFilter is created
         // by wheteher each checkbox item is checked.
@@ -165,14 +168,13 @@ public class  BoardActivity extends BaseActivity implements
         catch(NullPointerException e) {setNoAutofilterText();}
         catch(JSONException e) {e.printStackTrace();}
 
+        // ViewPager2
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
-        //binding.boardPager.setVisibility(View.GONE);
-        //binding.boardPager.setVisibility(View.INVISIBLE);
+        binding.boardPager.setVisibility(View.GONE);
         binding.boardPager.setAdapter(pagerAdapter);
-        //binding.boardPager.setCurrentItem(tabPage);
-        binding.boardPager.registerOnPageChangeCallback(pageChangeCallback);
-
+        binding.boardPager.registerOnPageChangeCallback(pagerCallback);
+        // Interconnect TabLayout and ViewPager2
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
         new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
             tab.setText(titles.get(position));
@@ -189,16 +191,6 @@ public class  BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
         binding.fabBoardWrite.setOnClickListener(this);
 
-        // The activity gets started by click event in MainActivity
-
-        if(getIntent() != null) {
-            int category = getIntent().getIntExtra("category", 0);
-            log.i("Intent: %s", category);
-            //binding.boardPager.setCurrentItem(category);
-            pagerAdapter.notifyItemChanged(category, true);
-            tabPage = category;
-        }
-
         getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
             if(fragment instanceof BoardReadDlgFragment) {
                 BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
@@ -206,12 +198,23 @@ public class  BoardActivity extends BaseActivity implements
             }
         });
 
+        // ActivityResult API(registerForActivityResult(), ActivityResultContract, ActivityResultCallback
+        // replaces startActivityForResult() and OnActivityResult()
+        activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
     }
 
     @Override
     public void onResume() {
         super.onResume();
     }
+
+    @Override
+    public void onStop() {
+        binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
+        super.onStop();
+    }
+
 
     /* replace this with getSupportFragentManager().addFragmentOnAttachListener()
     @Override
@@ -334,9 +337,12 @@ public class  BoardActivity extends BaseActivity implements
             Snackbar snackbar = Snackbar.make(
                     binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
             snackbar.setAction(R.string.board_msg_action_setting, v -> {
+                /*
                 Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
+                 */
+                activityResultLauncher.launch(new Intent(this, SettingPrefActivity.class));
             }).show();
 
             return;
@@ -354,7 +360,7 @@ public class  BoardActivity extends BaseActivity implements
         writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
         args.putString("userId", userId);
-        args.putInt("tabPage", tabPage);
+        args.putInt("tabPage", category);
 
         // Handle the toolbar menu as the write board comes in.
         if(tabPage != Constants.BOARD_AUTOCLUB) {
@@ -402,7 +408,7 @@ public class  BoardActivity extends BaseActivity implements
                 .commit();
 
         // Hide the emblem and set the club title if the current page is autoclub.
-        if(tabPage == Constants.BOARD_AUTOCLUB) Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
+        if(category == Constants.BOARD_AUTOCLUB) Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
         else Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_edit));
 
 
@@ -422,6 +428,37 @@ public class  BoardActivity extends BaseActivity implements
     // in turn, sent to either of the fragments as an livedata of the imageviewmodel for purposes of
     // showing the image span in the post and adding it to the image list so as to update the recyclerview
     // adapter.
+    private void getActivityResult(ActivityResult result) {
+        if(result.getData() == null) return;
+
+        switch(result.getResultCode()) {
+            case Constants.REQUEST_BOARD_GALLERY:
+//                Uri uri = result.getData().getStringExtra("image");
+//                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
+//                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
+                break;
+
+            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                jsonAutoFilter = result.getData().getStringExtra("jsonAutoData");
+                // Create the autofilter checkboxes and set inital values to the checkboxes
+                try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
+                catch(JSONException e){e.printStackTrace();}
+                // Update the pagerAdapter
+                pagerAdapter.setAutoFilterValues(cbAutoFilter);
+                pagerAdapter.notifyDataSetChanged();
+                binding.boardPager.setAdapter(pagerAdapter);
+                binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
+
+                log.i("Reset tabLayout and action menu");
+                addTabIconAndTitle(this, binding.tabBoard);
+                menu.getItem(0).setVisible(true);
+                menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
+                break;
+
+            default: break;
+        }
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -484,12 +521,11 @@ public class  BoardActivity extends BaseActivity implements
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback, which replaced the interface
     // type
-    private final ViewPager2.OnPageChangeCallback pageChangeCallback = new ViewPager2.OnPageChangeCallback() {
+    private final ViewPager2.OnPageChangeCallback pagerCallback = new ViewPager2.OnPageChangeCallback() {
         @Override
         public void onPageSelected(int position) {
             super.onPageSelected(position);
-            log.i("onPageSelected: %s", position);
-            tabPage = position;
+            //tabPage = position;
             //menu.getItem(0).setVisible(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
             if(isAutoFilter) animAutoFilter(isAutoFilter);
@@ -512,23 +548,26 @@ public class  BoardActivity extends BaseActivity implements
                     binding.fabBoardWrite.setVisibility(View.INVISIBLE);
                     break;
             }
+
+            category = position;
         }
     };
 
     // Slide down the tab as the activity is created.
     private void animTabLayout() {
         //float y = (state)? getActionbarHeight() : 0;
-        ObjectAnimator slideTab = ObjectAnimator.ofFloat(binding.tabBoard, "y", getActionbarHeight());
-        slideTab.setDuration(500);
-        slideTab.start();
-
+        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabBoard, "y", getActionbarHeight());
+        animTab.setDuration(500);
+        animTab.start();
         // Upon completion of sliding down the tab, set the visibility of the viewpager and the
-        // progressbar.
-        slideTab.addListener(new AnimatorListenerAdapter() {
+        // progressbar. If the activity gets started by clicking the buttons in the content title,
+        // move to the page indicated by the cateogry, which is sent by Intent extra.
+        animTab.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
                 binding.boardPager.setVisibility(View.VISIBLE);
+                if(category != 0) binding.boardPager.setCurrentItem(category, false);
             }
         });
     }
@@ -768,13 +807,11 @@ public class  BoardActivity extends BaseActivity implements
 
     }
 
-
     // Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
     // the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
     // remove the fragment out of the container, then regain the viewpager with the toolbar menu and
     // title reset. If the current page stays in the auto club, additional measures should be taken.
     // Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
-    @SuppressWarnings("ConstantConditions")
     public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
@@ -785,10 +822,10 @@ public class  BoardActivity extends BaseActivity implements
 
         binding.frameContents.addView(binding.boardPager);
         binding.fabBoardWrite.setVisibility(View.VISIBLE);
-        getSupportActionBar().setTitle(getString(R.string.board_general_title));
+        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
 
         // Animations differs according to whether the current page is on the auto club or not.
-        if(tabPage == Constants.BOARD_AUTOCLUB) {
+        if(category == Constants.BOARD_AUTOCLUB) {
             // UI visibillity control when boardPagerFragment comes in.
             tvAutoFilterLabel.setVisibility(View.VISIBLE);
             cbGeneral.setVisibility(View.GONE);
@@ -864,6 +901,7 @@ public class  BoardActivity extends BaseActivity implements
     }
 
     public boolean checkGeneralPost() { return isGeneral; }
+
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
         return binding.fabBoardWrite;

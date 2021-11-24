@@ -29,6 +29,7 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
 
     // Objects
     private ArrayList<String> cbValues;
+    private int position;
     private boolean isAutoClub;
 
     public BoardPagerAdapter(@NonNull FragmentManager fm, @NonNull Lifecycle lifecycle) {
@@ -52,8 +53,5 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     public int getItemCount() {
         return NUM_PAGES;
     }
-
-
-
 
 }

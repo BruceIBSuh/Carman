@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -37,6 +36,7 @@ import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.adapters.BoardPostingAdapter;
+import com.silverback.carman.databinding.FragmentBoardPagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The viewpager statically creates this fragment using BoardPagerAdapter, which has the custom
@@ -91,17 +92,19 @@ public class BoardPagerFragment extends Fragment implements
     private FragmentSharedModel fragmentModel;
     private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
-    private List<DocumentSnapshot> postshotList;
+    private List<DocumentSnapshot> postList;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
 
     // UIs
-    private ProgressBar pbLoading, pbPaging;
+    private FragmentBoardPagerBinding binding;
+    private ProgressBar pbLoading;
     private PostingRecyclerView recyclerPostView;
-    private TextView tvEmptyView;
-    private TextView tvSorting;
     private FloatingActionButton fabWrite;
+    //private TextView tvEmptyView;
+    //private TextView tvSorting;
+
 
     // Fields
     private String automaker;
@@ -134,6 +137,8 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // When it comes to the autoclub page, it will pass the arguments of page and filter values.
+        // BUG!!: currentPage works only when it comes in first. Require to get an indicator to
+        // tell the current page.
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
             autoFilter = getArguments().getStringArrayList("autoFilter");
@@ -145,12 +150,13 @@ public class BoardPagerFragment extends Fragment implements
 
         // Instantiate objects.
         firestore = FirebaseFirestore.getInstance();
-        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        imgutil = new ApplyImageResourceUtil(getContext());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        imgutil = new ApplyImageResourceUtil(getContext());
+
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         pbLoading = ((BoardActivity)requireActivity()).getLoadingProgressBar();
-        postshotList = new ArrayList<>();
-        postingAdapter = new BoardPostingAdapter(postshotList, this);
+
+
         /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             //clubRepo = new QueryClubPostingUtil(firestore);
@@ -178,22 +184,26 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
-        pbPaging = localView.findViewById(R.id.progbar_board_paging);
-        tvEmptyView = localView.findViewById(R.id.tv_empty_view);
-        recyclerPostView = localView.findViewById(R.id.recycler_board_postings);
+        binding = FragmentBoardPagerBinding.inflate(inflater);
+
+        //View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
+        //pbPaging = localView.findViewById(R.id.progbar_board_paging);
+        //tvEmptyView = localView.findViewById(R.id.tv_empty_view);
+        //recyclerPostView = localView.findViewById(R.id.recycler_board_postings);
 
         // In case of inserting the banner, the item size will change.
-        recyclerPostView.setHasFixedSize(true);
+        binding.recyclerBoardPostings.setHasFixedSize(false);
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
 
-        recyclerPostView.setLayoutManager(layout);
-        //recyclerPostView.setItemAnimator(new DefaultItemAnimator());
-        //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)recyclerPostView.getItemAnimator();
+        binding.recyclerBoardPostings.setLayoutManager(layout);
+        //binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
+        //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
         //itemAnimator.setSupportsChangeAnimations(false);
-        recyclerPostView.setAdapter(postingAdapter);
-        recyclerPostView.addOnScrollListener(setRecyclerViewScrollListener());
 
+        postList = new ArrayList<>();
+        postingAdapter = new BoardPostingAdapter(postList, this);
+        binding.recyclerBoardPostings.setAdapter(postingAdapter);
+        binding.recyclerBoardPostings.addOnScrollListener(setRecyclerViewScrollListener());
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
         fabWrite = ((BoardActivity)getActivity()).getFAB();
@@ -212,10 +222,11 @@ public class BoardPagerFragment extends Fragment implements
 
         } else queryPostSnapshot(currentPage);
         */
-
+        log.i("current page: %s", currentPage);
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         pbLoading.setVisibility(View.VISIBLE);
-        return localView;
+
+        return binding.getRoot();
     }
 
 
@@ -225,13 +236,14 @@ public class BoardPagerFragment extends Fragment implements
 
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
+        /*
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
-                log.i("Upload Post: %s", docId);
+                //log.i("Upload Post: %s", docId);
                 queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             }
         });
-
+        */
         // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the position of the deleted posting item
@@ -258,47 +270,6 @@ public class BoardPagerFragment extends Fragment implements
 
 
 
-    /*
-    @Override
-    public void onActivityCreated(Bundle bundle) {
-        log.i("onActivityCreated deprecated:%s", bundle);
-        super.onActivityCreated(bundle);
-
-        // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
-        // upon which currentPage the viewpager contains.
-        fragmentModel.getNewPosting().observe(requireActivity(), docId -> {
-            if(!TextUtils.isEmpty(docId)) {
-                log.i("Upload Post: %s", docId);
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
-        });
-
-        // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
-        // for confirm and the result is sent back, then deletes the posting item from Firestore.
-        // With All done, receive another LiveData containing the position of the deleted posting item
-        // and update the adapter.
-        fragmentModel.getRemovedPosting().observe(requireActivity(), docId -> {
-            //log.i("Posting removed: %s", docId);
-            if(!TextUtils.isEmpty(docId)) {
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
-        });
-
-        fragmentModel.getEditedPosting().observe(requireActivity(), docId -> {
-            if(!TextUtils.isEmpty(docId)) {
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
-        });
-
-        // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,
-        // the livedata of which is created when a comment has finished uploadingb in BoardReadDlgFragment.
-        fragmentModel.getNewComment().observe(requireActivity(), sparseArray ->
-            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray)
-        );
-
-    }
-
-     */
 
 
     // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
@@ -315,7 +286,7 @@ public class BoardPagerFragment extends Fragment implements
             View rootView = menu.getItem(0).getActionView();
             ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
             ProgressBar pbEmblem = rootView.findViewById(R.id.pb_emblem);
-            tvSorting = rootView.findViewById(R.id.tv_sorting_order);
+            //tvSorting = rootView.findViewById(R.id.tv_sorting_order);
 
             if(TextUtils.isEmpty(automaker)) {
                 menu.getItem(0).setVisible(false);
@@ -338,7 +309,7 @@ public class BoardPagerFragment extends Fragment implements
             // Set the spannable string indicating what's the basis of sorting. The reason why the
             // span is set.
             String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
-            tvSorting.setText(sortLabel);
+            //binding..setText(sortLabel);
 
             // Initialize fields when clicking the menu for switching timestamp and cnt_view
             //isLastPage = false;
@@ -347,7 +318,8 @@ public class BoardPagerFragment extends Fragment implements
 
             // Requery the autoclub post with the field switched.
             isLoading = true;
-            pbPaging.setVisibility(View.GONE);
+            //pbPaging.setVisibility(View.GONE);
+            binding.progbarBoardPaging.setVisibility(View.GONE);
             queryPagingUtil.setPostQuery(currentPage, isViewOrder);
 
             // Rotate the imageview holding emblem
@@ -391,6 +363,7 @@ public class BoardPagerFragment extends Fragment implements
         BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
+        log.i("tabPage: %s", currentPage);
         // TEST CODING FOR UPDATING THE COMMENT NUMBER
         bundle.putInt("position", position);
 
@@ -407,11 +380,12 @@ public class BoardPagerFragment extends Fragment implements
             bundle.putString("userPic", snapshot.getString("user_pic"));
         }
 
-        bundle.putInt("cntComment", snapshot.getLong("cnt_comment").intValue());
-        bundle.putInt("cntCompathy", snapshot.getLong("cnt_compathy").intValue());
+
+        bundle.putInt("cntComment", Objects.requireNonNull(snapshot.getLong("cnt_comment")).intValue());
+        bundle.putInt("cntCompathy", Objects.requireNonNull(snapshot.getLong("cnt_compathy")).intValue());
         bundle.putString("postContent", snapshot.getString("post_content"));
+        bundle.putString("timestamp", sdf.format(Objects.requireNonNull(snapshot.getDate("timestamp"))));
         bundle.putStringArrayList("uriImgList", (ArrayList<String>)snapshot.get("post_images"));
-        bundle.putString("timestamp", sdf.format(snapshot.getDate("timestamp")));
 
         readPostFragment.setArguments(bundle);
         requireActivity().getSupportFragmentManager().beginTransaction()
@@ -426,7 +400,7 @@ public class BoardPagerFragment extends Fragment implements
 
     /**
      * Implement QueryPaginationUtil.OnQueryPaginationCallback overriding the following 4 methods that
-     * performs to query posts witH orderBy() and limit() conditioned up to the pagination number
+     * performs to query posts with orderBy() and limit() conditioned up to the pagination number
      * which is defined in Constants.PAGINATION.
      *
      * getFirestQueryResult(): setPostQuery() has completed with queried posts up to the pagination number.
@@ -436,83 +410,94 @@ public class BoardPagerFragment extends Fragment implements
      */
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        postshotList.clear();
+        postList.clear();
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
         // display the empty view in the custom RecyclerView.
         if(querySnapshot == null || querySnapshot.size() == 0) {
-            recyclerPostView.setEmptyView(tvEmptyView);
+            binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
             return;
-        } else if(currentPage == Constants.BOARD_AUTOCLUB && TextUtils.isEmpty(automaker)) {
-            recyclerPostView.setEmptyView(tvEmptyView);
+        }
+
+        if(currentPage == Constants.BOARD_AUTOCLUB && TextUtils.isEmpty(automaker)) {
+            binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
             return;
         }
 
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
+        int pos = 0;
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
                 // Consider if it is appropraite to call nofityDataSetChanged every time.
-                postshotList.add(document);
-                postingAdapter.notifyDataSetChanged();
+                postList.add(document);
+                postingAdapter.notifyItemChanged(pos);
+                //postingAdapter.notifyItemRangeChanged(0, querySnapshot.size(), querySnapshot);
+                pos++;
             }
-        }
-
-        // If the sorted posts are less than the pagination number, keep querying until it's up to
-        // the number. Manually update the adapter each time posts amount to the pagination number.
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(postshotList.size() < Constants.PAGINATION) {
-                isLoading = true;
-                queryPagingUtil.setNextQuery();
-                return;
-            } else postingAdapter.notifyDataSetChanged();
         }
 
         pbLoading.setVisibility(View.GONE);
         isLoading = false;
+
+        // If the sorted posts are less than the pagination number, keep querying until it's up to
+        // the number. Manually update the adapter each time posts amount to the pagination number.
+        if(currentPage == Constants.BOARD_AUTOCLUB) {
+            if(postList.size() < Constants.PAGINATION) {
+                isLoading = true;
+                queryPagingUtil.setNextQuery();
+                return;
+            }
+        }
+
+
+
+        //postingAdapter.notifyItemRangeChanged(0, querySnapshot.size() - 1, "query result");
     }
 
     // Called by QueryPaginationUtil.setNextQuery()
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
+        int pos = postList.size();
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
-                postshotList.add(document);
-                postingAdapter.notifyDataSetChanged();
+                postList.add(document);
+                postingAdapter.notifyItemChanged(pos);
+                //postingAdapter.notifyDataSetChanged();
+                pos++;
             }
         }
+
+        binding.progbarBoardPaging.setVisibility(View.INVISIBLE);
+        isLoading = false;
 
         // Keep querying if sorted posts are less than the pagination number. When it reaches the
         // number, update the apdater.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(postshotList.size() < Constants.PAGINATION) {
+            if(postList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextQuery();
-                return;
-            } else postingAdapter.notifyDataSetChanged();
+            } //else postingAdapter.notifyDataSetChanged();
         }
-
-        pbPaging.setVisibility(View.INVISIBLE);
-        isLoading = false;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
         for(DocumentSnapshot document : lastShots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
-            else postshotList.add(document);
+            else postList.add(document);
             postingAdapter.notifyDataSetChanged();
         }
 
         // On clicking the filter item on the autoclub page, if nothing has been posted, display
         // the empty view.
-        if(currentPage == Constants.BOARD_AUTOCLUB && postshotList.size() == 0) {
-            recyclerPostView.setEmptyView(tvEmptyView);
+        if(currentPage == Constants.BOARD_AUTOCLUB && postList.size() == 0) {
+            recyclerPostView.setEmptyView(binding.tvEmptyView);
         }
 
-        pbPaging.setVisibility(View.GONE);
+        binding.progbarBoardPaging.setVisibility(View.GONE);
         isLoading = true; // Block the scroll listener from keeping querying.
     }
 
@@ -528,12 +513,12 @@ public class BoardPagerFragment extends Fragment implements
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
     // notation
     private void sortClubPost(DocumentSnapshot snapshot) {
-        postshotList.add(snapshot);
-        if(snapshot.get("auto_filter") == null) postshotList.remove(snapshot);
+        postList.add(snapshot);
+        if(snapshot.get("auto_filter") == null) postList.remove(snapshot);
         else {
             for(String filter : autoFilter) {
                 if ((snapshot.get("auto_filter." + filter) == null)) {
-                    postshotList.remove(snapshot);
+                    postList.remove(snapshot);
                     break;
                 }
             }
@@ -551,7 +536,7 @@ public class BoardPagerFragment extends Fragment implements
     public void setClubQuerySnapshot(QuerySnapshot snapshots) {
         clubshotList.clear();
         if(snapshots.size() == 0) {
-            recyclerPostView.setEmptyView(tvEmptyView);
+            recyclerPostView.setEmptyView(binding.tvEmptyView);
             return;
         }
 
@@ -692,6 +677,8 @@ public class BoardPagerFragment extends Fragment implements
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    log.i("scrolling idle state");
+                    fabWrite.setAlpha(0.5f);
                     //isScrolling = false;
                     // Exclude the fab from showing on the notificaiton page.
                     if(currentPage != Constants.BOARD_NOTIFICATION) fabWrite.show();
@@ -717,6 +704,7 @@ public class BoardPagerFragment extends Fragment implements
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                fabWrite.setAlpha(0.5f);
                 //if ((dy > 0 || dy < 0) && fabWrite.isShown()) fabWrite.hide();
 
                 // FAB visibility control that hides the button while scrolling.
@@ -726,7 +714,7 @@ public class BoardPagerFragment extends Fragment implements
                     int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
                     int visiblePostCount = layout.getChildCount();
                     int totalPostCount = layout.getItemCount();
-                    log.i("pos info: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
+                    //log.i("pos info: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
 
                     if (!isLoading && /*isScrolling &&*/ (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
@@ -737,7 +725,7 @@ public class BoardPagerFragment extends Fragment implements
                         // return null value, which results in an error as in Notification board. Accrodingly,
                         // a condition has to be added to prevent setNextQuery().
                         if(currentPage != Constants.BOARD_AUTOCLUB && totalPostCount >= Constants.PAGINATION) {
-                            pbPaging.setVisibility(View.VISIBLE);
+                            binding.progbarBoardPaging.setVisibility(View.VISIBLE);
                             queryPagingUtil.setNextQuery();
                         }
 
@@ -825,7 +813,6 @@ public class BoardPagerFragment extends Fragment implements
                     e.printStackTrace();
                 });
     }
-
 
 }
 

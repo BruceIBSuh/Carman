@@ -52,6 +52,7 @@ import org.json.JSONException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * This activity contains PreferenceFragmentCompat which is a special fragment to persist values
@@ -299,7 +300,7 @@ public class SettingPrefActivity extends BaseActivity implements
      * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
      * transitions b/w Fragment objects and update the title in the toolbar, if applicable.
      */
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
         final Bundle args = pref.getExtras();
@@ -318,7 +319,7 @@ public class SettingPrefActivity extends BaseActivity implements
         else if(fragment instanceof SettingFavorSvcFragment) title = getString(R.string.pref_favorite_svc);
         else if(fragment instanceof SettingSvcItemFragment) title = getString(R.string.pref_service_chklist);
 
-        getSupportActionBar().setTitle(title);
+        Objects.requireNonNull(getSupportActionBar()).setTitle(title);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, fragment)

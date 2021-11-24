@@ -155,13 +155,16 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // with payloads. No payload performs the full binding.
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-
+        log.i("payloads:%s", payloads.size());
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else  {
             for(Object payload : payloads) {
-                // The view count is passed as the type of Long.
-                if(payload instanceof Long) {
+                if(payload instanceof DocumentSnapshot) {
+                    log.i("documentsnapshot");
+
+                    // The view count is passed as the type of Long.
+                } else if(payload instanceof Long) {
                     ((PostViewHolder) holder).tvViewCount.setText(String.valueOf(payload));
                 // The comment count is passed as SparseLongArray.
                 } else if(payload instanceof SparseLongArray) {
@@ -192,7 +195,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // ViewHolders
     class PostViewHolder extends RecyclerView.ViewHolder {
-
         TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
         ImageView imgUser;
         ImageView imgAttached;
@@ -213,7 +215,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             int size = Constants.ICON_SIZE_POSTING_LIST;
             imgUtil.applyGlideToImageView(uri, imgUser, size, size, true);
         }
-
 
         void bindAttachedImage(Uri uri) {
             int x = imgAttached.getWidth();

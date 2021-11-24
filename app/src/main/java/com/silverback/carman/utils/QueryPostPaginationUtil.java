@@ -41,10 +41,10 @@ public class QueryPostPaginationUtil {
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    public void setPostQuery(int page, boolean isViewOrder) {
+    public void setPostQuery(int catetory, boolean isViewOrder) {
         colRef = firestore.collection("board_general");
         querySnapshot = null;
-        switch(page){
+        switch(catetory){
             case Constants.BOARD_RECENT:
                 this.field = "timestamp";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
@@ -74,6 +74,7 @@ public class QueryPostPaginationUtil {
 
         // Listen for realtime updates using onSnapshot(addSnapshotListener)
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+            log.i("realtime update");
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);

@@ -84,20 +84,15 @@
         android:scrollbars="vertical"
         android:elevation="4dp"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
-
         <FrameLayout
             android:id="@+id/frame_contents"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/board_pager"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
-
         </FrameLayout>
-
-
     </androidx.core.widget.NestedScrollView>
 
     <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
@@ -112,12 +107,16 @@
         android:id="@+id/fab_board_write"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_gravity="end|bottom"
-        android:src="@android:drawable/ic_menu_mylocation"
-        android:contentDescription="@string/btn_dialog_confirm"
+        android:layout_margin="8dp"
+
+        android:src="@drawable/fab_write"
+        android:contentDescription="@null"
+        android:alpha="0.5"
+        app:elevation="8dp"
         app:borderWidth="0dp"
-        app:backgroundTint="@color/colorAccent"
-        app:rippleColor="@color/colorPrimary" />
+        app:backgroundTint="@android:color/holo_green_dark"
+        app:rippleColor="@color/colorPrimary"
+        app:layout_anchor="@id/nestedScrollView"
+        app:layout_anchorGravity="end|bottom"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

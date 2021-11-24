@@ -428,7 +428,6 @@ public class MainActivity extends BaseActivity implements
         // Switch the FAB background.
         if(bStnOrder) binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_location));
         else binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_currency_won));
-
         mStationList = stnListAdapter.sortStationList(bStnOrder);
     }
 
