@@ -38,7 +38,6 @@ import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
-import com.silverback.carman.fragments.GasManagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.GasPriceTask;
@@ -207,7 +206,7 @@ public class MainActivity extends BaseActivity implements
         } else if(item.getItemId() == R.id.action_login) {
             log.i("login process required");
         } else if(item.getItemId() == R.id.action_setting) {
-            Intent settingIntent = new Intent(this, SettingPrefActivity.class);
+            Intent settingIntent = new Intent(this, SettingActivity.class);
             activityResultLauncher.launch(settingIntent);
         }
 
@@ -554,7 +553,7 @@ public class MainActivity extends BaseActivity implements
             spannableString.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    Intent settingIntent = new Intent(MainActivity.this, SettingPrefActivity.class);
+                    Intent settingIntent = new Intent(MainActivity.this, SettingActivity.class);
                     activityResultLauncher.launch(settingIntent);
                 }
             }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

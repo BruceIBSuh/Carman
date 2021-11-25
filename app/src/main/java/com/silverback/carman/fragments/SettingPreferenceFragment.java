@@ -40,10 +40,10 @@ import org.json.JSONException;
  * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing params
  * to the singleton constructor.
  */
-public class SettingPrefFragment extends SettingBaseFragment  {
+public class SettingPreferenceFragment extends SettingBaseFragment  {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
 
     // Objects
     private SharedPreferences mSettings;
@@ -221,7 +221,6 @@ public class SettingPrefFragment extends SettingBaseFragment  {
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
             }
-
         });
 
         // Observe whether the district has changed in the custom spinner list view. If any change
@@ -276,18 +275,18 @@ public class SettingPrefFragment extends SettingBaseFragment  {
     // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
     // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onDisplayPreferenceDialog(Preference pref) {
         if (pref instanceof SpinnerDialogPreference) {
             DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             spinnerFragment.setTargetFragment(this, 0);
-            spinnerFragment.show(getActivity().getSupportFragmentManager(), null);
+            spinnerFragment.show(requireActivity().getSupportFragmentManager(), null);
 
         } else if(pref instanceof NameDialogPreference) {
             DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), nickname);
             nameFragment.setTargetFragment(this, 1);
-            nameFragment.show(getActivity().getSupportFragmentManager(), null);
+            nameFragment.show(requireActivity().getSupportFragmentManager(), null);
 
         } else {
             super.onDisplayPreferenceDialog(pref);

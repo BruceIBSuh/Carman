@@ -7,5 +7,5 @@
     android:gravity="start|center"
     android:singleLine="true"
     android:ellipsize="marquee"
-    android:textSize="@dimen/extraSmallText"
+    android:textSize="@dimen/mediumText"
     android:textStyle="bold"/>

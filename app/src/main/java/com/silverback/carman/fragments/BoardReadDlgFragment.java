@@ -40,7 +40,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -68,7 +67,7 @@ import com.google.firebase.storage.StorageReference;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
-import com.silverback.carman.SettingPrefActivity;
+import com.silverback.carman.SettingActivity;
 import com.silverback.carman.adapters.BoardCommentAdapter;
 import com.silverback.carman.databinding.FragmentBoardReadBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -90,7 +89,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -402,7 +400,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 Snackbar snackbar = Snackbar.make(
                         binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
                 snackbar.setAction(R.string.board_msg_action_setting, view -> {
-                    Intent intent = new Intent(getActivity(), SettingPrefActivity.class);
+                    Intent intent = new Intent(getActivity(), SettingActivity.class);
                     intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                     //startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
                     activityResultLauncher.launch(intent);

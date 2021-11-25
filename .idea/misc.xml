@@ -9,12 +9,10 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/layout/activity_board.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/cardview_board_post.xml" value="0.3148148148148148" />
+        <entry key="app/src/main/res/layout/activity_settings.xml" value="0.10572916666666667" />
         <entry key="app/src/main/res/layout/dialog_progbar_general.xml" value="0.29074074074074074" />
         <entry key="app/src/main/res/layout/dialog_register_provider.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/dialog_setting_edit_name.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/dialog_setting_service.xml" value="0.25885416666666666" />
-        <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.25885416666666666" />
+        <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
         <entry key="app/src/main/res/layout/fragment_board_pager.xml" value="0.24635416666666668" />
         <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.2265625" />
         <entry key="app/src/main/res/layout/fragment_gas_manager.xml" value="0.29907407407407405" />
@@ -24,6 +22,8 @@
         <entry key="app/src/main/res/layout/main_content_notification.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_content_pager_config.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_content_pager_total.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/settings_pref_category.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/spinner_district_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/spinner_district_entry.xml" value="0.2989583333333333" />
         <entry key="app/src/main/res/layout/spinner_main_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.2859375" />
@@ -76,7 +76,7 @@
       </value>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

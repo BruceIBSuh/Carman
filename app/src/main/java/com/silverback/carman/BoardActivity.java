@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.SpannableString;
@@ -47,13 +46,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityOptionsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
@@ -174,7 +169,7 @@ public class  BoardActivity extends BaseActivity implements
         binding.boardPager.setVisibility(View.GONE);
         binding.boardPager.setAdapter(pagerAdapter);
         binding.boardPager.registerOnPageChangeCallback(pagerCallback);
-        // Interconnect TabLayout and ViewPager2
+        // TabLayoutMediator which interconnects TabLayout and ViewPager2
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
         new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
             tab.setText(titles.get(position));
@@ -338,12 +333,10 @@ public class  BoardActivity extends BaseActivity implements
             Snackbar snackbar = Snackbar.make(
                     binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
             snackbar.setAction(R.string.board_msg_action_setting, v -> {
-                /*
-                Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
+                Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
-                startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
-                 */
-                activityResultLauncher.launch(new Intent(this, SettingPrefActivity.class));
+                //startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
+                activityResultLauncher.launch(intent);
             }).show();
 
             return;
@@ -433,6 +426,9 @@ public class  BoardActivity extends BaseActivity implements
         if(result.getData() == null) return;
 
         switch(result.getResultCode()) {
+            case RESULT_OK:
+                log.i("user name:%s", result.getData().getStringExtra("userName"));
+                break;
             case Constants.REQUEST_BOARD_GALLERY:
 //                Uri uri = result.getData().getStringExtra("image");
 //                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
@@ -440,6 +436,7 @@ public class  BoardActivity extends BaseActivity implements
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                log.i("Setting AutoClub");
                 jsonAutoFilter = result.getData().getStringExtra("jsonAutoData");
                 // Create the autofilter checkboxes and set inital values to the checkboxes
                 try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
@@ -633,7 +630,7 @@ public class  BoardActivity extends BaseActivity implements
             @Override
             public void onClick(@NonNull View textView) {
                 int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
-                Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
+                Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
                 intent.putExtra("requestCode", requestCode);
                 //startActivityForResult(intent, requestCode);
                 activityResultLauncher.launch(intent);

@@ -4,7 +4,7 @@
     package="com.silverback.carman">
 
     <uses-feature android:name="android.hardware,camera" android:required="false" />
-
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- ACCESS_BACKGROUND_LOCATION is required for Android 10(API 29) or above -->
     <!-- tools:remove="android:maxSdkVersion" might be required to show a permission dialog -->
@@ -80,10 +80,9 @@
                 android:value="com.silverback.carman.MainActivity" />
         </activity>
         <activity
-            android:name=".SettingPrefActivity"
+            android:name=".SettingActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity">
-
             <!-- Parent activity meta-data to support 4.0 and lower -->
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

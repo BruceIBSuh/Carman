@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
-
     <PreferenceCategory
         app:title="@string/pref_category_auto_info"
         app:key="carman_pref_basic_info"
-        app:icon="@drawable/ic_setting_basic" >
+        app:icon="@drawable/settings_category_info" >
 
         <com.silverback.carman.views.NameDialogPreference
             app:key="carman_pref_nickname"
@@ -49,13 +49,14 @@
     <PreferenceCategory
         app:title="@string/pref_category_location"
         app:key="pref_location"
-        app:icon="@drawable/ic_location_holo_blue_light">
+        app:icon="@drawable/settings_category_location">
         <com.silverback.carman.views.SpinnerDialogPreference
             app:title="@string/pref_dialog_district"
             app:key="carman_pref_district"
             app:dialogTitle="@string/pref_dialog_district_title"
             app:positiveButtonText="Confirm"
             app:negativeButtonText="Cancel" />
+
         <ListPreference
             app:title="@string/pref_location_radius"
             app:key="carman_pref_searching_radius"
@@ -71,7 +72,7 @@
     <PreferenceCategory
         app:title="@string/pref_category_favorites"
         app:key="pref_favorites"
-        app:icon="@drawable/ic_setting_favorite" >
+        app:icon="@drawable/settings_category_favorite" >
         <Preference
             app:title="@string/pref_designated_provider"
             app:key="carman_pref_favorite_provider" />
@@ -88,7 +89,7 @@
     <PreferenceCategory
         app:title="@string/pref_category_service"
         app:key="pref_service"
-        app:icon="@drawable/ic_setting_service">
+        app:icon="@drawable/settings_category_service">
         <ListPreference
             app:title="@string/pref_service_period"
             app:key="carman_pref_svc_period"
@@ -105,7 +106,7 @@
     <PreferenceCategory
         app:title="@string/pref_category_app_setting"
         app:key="pref_app_setting"
-        app:icon="@drawable/ic_setting_app" >
+        app:icon="@drawable/settings_category_app" >
 
         <SwitchPreferenceCompat
             app:title="@string/pref_app_geofence_title"

@@ -31,7 +31,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingBaseFragment.class);
-
     // Objects
     //private QueryDocumentSnapshot makershot, modelshot;
     //private OnCompleteAutoQueryListener mListener;

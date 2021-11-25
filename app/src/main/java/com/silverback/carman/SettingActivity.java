@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
@@ -18,7 +17,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -31,22 +29,22 @@ import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.silverback.carman.databinding.ActivityGeneralSettingBinding;
+import com.silverback.carman.databinding.ActivitySettingsBinding;
 import com.silverback.carman.fragments.CropImageDialogFragment;
 import com.silverback.carman.fragments.PermRationaleFragment;
 import com.silverback.carman.fragments.ProgressBarDialogFragment;
 import com.silverback.carman.fragments.SettingAutoFragment;
 import com.silverback.carman.fragments.SettingFavorGasFragment;
 import com.silverback.carman.fragments.SettingFavorSvcFragment;
-import com.silverback.carman.fragments.SettingPrefFragment;
+import com.silverback.carman.fragments.SettingPreferenceFragment;
 import com.silverback.carman.fragments.SettingSvcItemFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
+import com.silverback.carman.viewmodels.ImageViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -63,13 +61,14 @@ import java.util.Objects;
  * CropImageDialogFragment is to select which media to use out of Gallery or Camera, the result of
  * which returns by the attached listener.
  */
-public class SettingPrefActivity extends BaseActivity implements
+
+public class SettingActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         CropImageDialogFragment.OnSelectImageMediumListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingPrefActivity.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
 
 
     // Constants
@@ -87,12 +86,13 @@ public class SettingPrefActivity extends BaseActivity implements
     private ImageViewModel imgModel;
     //private OpinetViewModel opinetModel;
     private FragmentSharedModel fragmentModel;
-    private SettingPrefFragment settingFragment;
+    private SettingPreferenceFragment settingFragment;
     private GasPriceTask gasPriceTask;
     private Map<String, Object> uploadData;
 
 
     // UIs
+    private ActivitySettingsBinding binding;
     public Toolbar settingToolbar;
     private FrameLayout frameLayout;
 
@@ -113,9 +113,8 @@ public class SettingPrefActivity extends BaseActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActivityGeneralSettingBinding binding = ActivityGeneralSettingBinding.inflate(getLayoutInflater());
-        View rootView = binding.getRoot();
-        setContentView(rootView);
+        binding = ActivitySettingsBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
         // Permission check for CAMERA to get the user image.
@@ -149,7 +148,7 @@ public class SettingPrefActivity extends BaseActivity implements
         //else distCode = jsonDistArray.optString(2);
 
         // Attach SettingPreferencFragment in the FrameLayout
-        settingFragment = new SettingPrefFragment();
+        settingFragment = new SettingPreferenceFragment();
         Bundle bundle = new Bundle();
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
@@ -171,7 +170,7 @@ public class SettingPrefActivity extends BaseActivity implements
         // if positive or show the message to tell the camera is disabled.
         fragmentModel.getPermission().observe(this, isPermitted -> {
             if(isPermitted) ActivityCompat.requestPermissions(this, new String[]{permCamera}, REQUEST_PERM_CAMERA);
-            else Snackbar.make(frameLayout, getString(R.string.perm_msg_camera), Snackbar.LENGTH_SHORT).show();
+            else Snackbar.make(binding.getRoot(), getString(R.string.perm_msg_camera), Snackbar.LENGTH_SHORT).show();
         });
     }
 
@@ -237,14 +236,12 @@ public class SettingPrefActivity extends BaseActivity implements
             return true;
         } else return false;
         */
-
-        Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
         if(item.getItemId() == android.R.id.home) {
             // The activity contains SettingPrefFragment
-            if (targetFragment instanceof SettingPrefFragment) {
+            if (fragment instanceof SettingPreferenceFragment) {
                 // Upload user data to Firebase
                 uploadUserDataToFirebase(uploadData);
-
                 // Create Intent back to MainActivity which contains extras to notify the activity of
                 // which have been changed.
                 switch (requestCode) {
@@ -263,13 +260,13 @@ public class SettingPrefActivity extends BaseActivity implements
                         Intent autoIntent = new Intent();
                         autoIntent.putExtra("jsonAutoData", jsonAutoData);
                         log.i("JSON Auto Data in Setting: %s", jsonAutoData);
-                        setResult(RESULT_OK, autoIntent);
+                        setResult(requestCode, autoIntent);
                         break;
 
                     case Constants.REQUEST_BOARD_SETTING_USERNAME:
                         Intent userIntent = new Intent();
                         userIntent.putExtra("userName", userName);
-                        setResult(RESULT_OK, userIntent);
+                        setResult(requestCode, userIntent);
                         break;
 
                     default: break;
@@ -300,7 +297,7 @@ public class SettingPrefActivity extends BaseActivity implements
      * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
      * transitions b/w Fragment objects and update the title in the toolbar, if applicable.
      */
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
         final Bundle args = pref.getExtras();
@@ -308,12 +305,9 @@ public class SettingPrefActivity extends BaseActivity implements
                 .instantiate(getClassLoader(), pref.getFragment());
 
         fragment.setArguments(args);
-
         getSupportFragmentManager().setFragmentResultListener("autodata", this, (requestKey, result) -> {
-
+            log.i("FragmentResultListener: %s, %s", requestKey, result);
         });
-        //fragment.setTargetFragment(caller, 0);
-
 
 
         // Chagne the toolbar title according to the fragment the parent activity contains. When

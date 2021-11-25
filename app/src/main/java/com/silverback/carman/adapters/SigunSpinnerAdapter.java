@@ -54,7 +54,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup viewGroup) {
         if(convertView == null) {
             viewHolder = new SpinnerViewHolder();
-            convertView = inflater.inflate(R.layout.spinner_district_entry, viewGroup, false);
+            convertView = inflater.inflate(R.layout.spinner_settings_entry, viewGroup, false);
             viewHolder.distName = convertView.findViewById(R.id.tv_spinner_entry);
             convertView.setTag(viewHolder);
         } else viewHolder = (SpinnerViewHolder)convertView.getTag();
@@ -67,7 +67,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
     public View getDropDownView(int position, View dropdownView, ViewGroup parent) {
         if(dropdownView == null) {
             viewHolder = new SpinnerViewHolder();
-            dropdownView = inflater.inflate(R.layout.spinner_district_dropdown, parent, false);
+            dropdownView = inflater.inflate(R.layout.spinner_settings_dropdown, parent, false);
             viewHolder.distName = dropdownView.findViewById(R.id.tv_spinner_dropdown);
             dropdownView.setTag(viewHolder);
         } else viewHolder = (SpinnerViewHolder)dropdownView.getTag();

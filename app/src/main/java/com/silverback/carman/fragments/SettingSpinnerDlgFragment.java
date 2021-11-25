@@ -2,7 +2,6 @@ package com.silverback.carman.fragments;
 
 
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -85,8 +84,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
 
-        sidoAdapter = ArrayAdapter.createFromResource(getContext(), R.array.sido_name, R.layout.spinner_district_entry);
-        sidoAdapter.setDropDownViewResource(R.layout.spinner_district_dropdown);
+        sidoAdapter = ArrayAdapter.createFromResource(getContext(), R.array.sido_name, R.layout.spinner_settings_entry);
+        sidoAdapter.setDropDownViewResource(R.layout.spinner_settings_dropdown);
         sidoSpinner.setAdapter(sidoAdapter);
         sidoSpinner.setSelection(mSidoItemPos, true);
         sigunAdapter = new SigunSpinnerAdapter(getContext());

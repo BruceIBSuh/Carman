@@ -20,7 +20,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman.R;
-import com.silverback.carman.SettingPrefActivity;
+import com.silverback.carman.SettingActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -73,7 +73,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firestore = FirebaseFirestore.getInstance();
-        mSettings = ((SettingPrefActivity)getActivity()).getSettings();
+        mSettings = ((SettingActivity)getActivity()).getSettings();
         currentName = getArguments().getString("username");
     }
 
