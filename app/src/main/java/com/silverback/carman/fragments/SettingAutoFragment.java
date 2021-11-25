@@ -11,6 +11,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceManager;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -55,6 +56,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // Constructor
     public SettingAutoFragment() {
         super();
+
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -64,8 +66,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);// necessary for the options menu feasible in fragment
 
-        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireActivity());
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         engineTypeDialogFragment = new EngineTypeDialogFragment(this);
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
@@ -375,7 +377,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
 
             JSONArray json = new JSONArray(dataList);
-            fragmentModel.getAutoData().setValue(json.toString());
+            //fragmentModel.getAutoData().setValue(json.toString());
 
             return true;
         }

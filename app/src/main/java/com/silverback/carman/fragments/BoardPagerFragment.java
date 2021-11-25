@@ -447,7 +447,7 @@ public class BoardPagerFragment extends Fragment implements
             if(postList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextQuery();
-                return;
+                //return;
             }
         }
 
@@ -485,20 +485,24 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
+        int pos = postList.size();
         for(DocumentSnapshot document : lastShots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
-            else postList.add(document);
-            postingAdapter.notifyDataSetChanged();
+            else {
+                postList.add(document);
+                postingAdapter.notifyItemChanged(pos);
+                pos++;
+            }
         }
+
+        binding.progbarBoardPaging.setVisibility(View.GONE);
+        isLoading = true; // Block the scroll listener from keeping querying.
 
         // On clicking the filter item on the autoclub page, if nothing has been posted, display
         // the empty view.
         if(currentPage == Constants.BOARD_AUTOCLUB && postList.size() == 0) {
             recyclerPostView.setEmptyView(binding.tvEmptyView);
         }
-
-        binding.progbarBoardPaging.setVisibility(View.GONE);
-        isLoading = true; // Block the scroll listener from keeping querying.
     }
 
     @Override
@@ -673,25 +677,23 @@ public class BoardPagerFragment extends Fragment implements
              * @param recyclerView being scrolled.
              * @param newState: SCROLL_STATE_IDLE, SCROLL_STATE_DRAGGING, SCROLL_STATE_SETTLING
              */
+            /*
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     log.i("scrolling idle state");
+                    fabWrite.show();
                     fabWrite.setAlpha(0.5f);
                     //isScrolling = false;
                     // Exclude the fab from showing on the notificaiton page.
-                    if(currentPage != Constants.BOARD_NOTIFICATION) fabWrite.show();
-                } else {
-                    //isScrolling = true;
-                    if(fabWrite.isShown()) fabWrite.hide();
+                    //if(currentPage != Constants.BOARD_NOTIFICATION) fabWrite.show();
+                } else if(fabWrite.isShown()) {
+                    fabWrite.hide();
                 }
-
-                /*
-                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) isScrolling = true;
-                else fabWrite.show();
-                */
             }
+
+             */
 
             /*
              * Callback to be invoked when the RecyclerView has been scrolled, which will be called
@@ -704,8 +706,8 @@ public class BoardPagerFragment extends Fragment implements
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                fabWrite.setAlpha(0.5f);
-                //if ((dy > 0 || dy < 0) && fabWrite.isShown()) fabWrite.hide();
+                log.i("oScrolled: %s, %s", dx, dy);
+                fabWrite.setAlpha(0.3f);
 
                 // FAB visibility control that hides the button while scrolling.
                 //if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
@@ -714,10 +716,8 @@ public class BoardPagerFragment extends Fragment implements
                     int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
                     int visiblePostCount = layout.getChildCount();
                     int totalPostCount = layout.getItemCount();
-                    //log.i("pos info: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
-
-                    if (!isLoading && /*isScrolling &&*/ (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                    if (!isLoading && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                         //isScrolling = false;
                         isLoading = true;
                         //if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);

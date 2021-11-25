@@ -108,13 +108,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-
         android:src="@drawable/fab_write"
         android:contentDescription="@null"
-        android:alpha="0.5"
-        app:elevation="8dp"
+        app:alpha="0.3"
         app:borderWidth="0dp"
-        app:backgroundTint="@android:color/holo_green_dark"
+        app:backgroundTint="@android:color/holo_red_light"
         app:rippleColor="@color/colorPrimary"
         app:layout_anchor="@id/nestedScrollView"
         app:layout_anchorGravity="end|bottom"/>

@@ -18,6 +18,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -221,23 +222,22 @@ public class SettingPrefActivity extends BaseActivity implements
         // send back to MainActivity an intent holding preference changes when clicking the Up button.
         // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
         // just pop the fragment off the back stack, which works like the Back command.
+        /*
         if(item.getItemId() == android.R.id.home) {
             uploadUserDataToFirebase(uploadData);
-            //Intent resultIntent = new Intent();
-            /*
+            Intent resultIntent = new Intent();
             resultIntent.putExtra("district", distCode);
             resultIntent.putExtra("userName", userName);
             resultIntent.putExtra("fuelCode", gasCode);
             resultIntent.putExtra("radius", radius);
             resultIntent.putExtra("userImage", userImage);
-             */
+
             setResult(RESULT_OK, resultIntent);
             finish();
             return true;
         } else return false;
+        */
 
-
-        /*
         Fragment targetFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
         if(item.getItemId() == android.R.id.home) {
             // The activity contains SettingPrefFragment
@@ -253,7 +253,7 @@ public class SettingPrefActivity extends BaseActivity implements
                         Intent resultIntent = new Intent();
                         resultIntent.putExtra("district", distCode);
                         resultIntent.putExtra("userName", userName);
-                        resultIntent.putExtra("fuelCode", fuelCode);
+                        resultIntent.putExtra("fuelCode", gasCode);
                         resultIntent.putExtra("radius", radius);
                         resultIntent.putExtra("userImage", userImage);
                         setResult(RESULT_OK, resultIntent);
@@ -282,7 +282,7 @@ public class SettingPrefActivity extends BaseActivity implements
                 // The return value must be false to make optionsItemSelected() in SettingAutoFragment
                 // feasible.
                 getSupportFragmentManager().popBackStack();
-                getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
+                Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
                 return false;
             }
 
@@ -290,7 +290,7 @@ public class SettingPrefActivity extends BaseActivity implements
         // which means this method will be handled in the SettingSvcItemFragment.
         } else return item.getItemId() != R.id.menu_add_service_item;
 
-         */
+
 
     }
 
@@ -300,15 +300,20 @@ public class SettingPrefActivity extends BaseActivity implements
      * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
      * transitions b/w Fragment objects and update the title in the toolbar, if applicable.
      */
-    //@SuppressWarnings("ConstantConditions")
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
         final Bundle args = pref.getExtras();
-        Fragment fragment = getSupportFragmentManager().getFragmentFactory()
+        final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
 
         fragment.setArguments(args);
-        fragment.setTargetFragment(caller, 0);
+
+        getSupportFragmentManager().setFragmentResultListener("autodata", this, (requestKey, result) -> {
+
+        });
+        //fragment.setTargetFragment(caller, 0);
+
 
 
         // Chagne the toolbar title according to the fragment the parent activity contains. When

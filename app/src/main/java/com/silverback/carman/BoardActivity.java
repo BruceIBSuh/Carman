@@ -198,6 +198,7 @@ public class  BoardActivity extends BaseActivity implements
             }
         });
 
+
         // ActivityResult API(registerForActivityResult(), ActivityResultContract, ActivityResultCallback
         // replaces startActivityForResult() and OnActivityResult()
         activityResultLauncher = registerForActivityResult(
@@ -634,7 +635,8 @@ public class  BoardActivity extends BaseActivity implements
                 int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
                 Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
                 intent.putExtra("requestCode", requestCode);
-                startActivityForResult(intent, requestCode);
+                //startActivityForResult(intent, requestCode);
+                activityResultLauncher.launch(intent);
             }
         };
 
@@ -872,7 +874,8 @@ public class  BoardActivity extends BaseActivity implements
                 //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
                 // The result should go to the parent activity
-                startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
+                //startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
+                activityResultLauncher.launch(galleryIntent);
                 break;
 
             case Constants.CAMERA: // Camera
@@ -881,7 +884,8 @@ public class  BoardActivity extends BaseActivity implements
 
                 if(cameraIntent.resolveActivity(getPackageManager()) != null) {
                     //log.i("Camera Intent");
-                    startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
+                    //startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
+                    activityResultLauncher.launch(cameraChooser);
                 }
                 break;
 

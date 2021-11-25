@@ -7,8 +7,6 @@ import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -17,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.R;
+import com.silverback.carman.databinding.BoardRecyclerviewPostBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -39,7 +38,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Constants
     private final int CONTENT_VIEW_TYPE = 1;
     private final int AD_VIEW_TYPE = 2;
-    private final int AD_POSITION = 20;
 
     // Objects
     private Context context;
@@ -48,9 +46,27 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
 
+    private BoardRecyclerviewPostBinding postBinding;
+
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
+    }
+
+    //public MainContentNotificationBinding binding; //DataBiding in JetPack
+    private static class PostViewHolder extends RecyclerView.ViewHolder {
+        PostViewHolder(View itemView) {
+            super(itemView);
+            ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
+            params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_MAIN);
+            itemView.setLayoutParams(params);
+        }
+    }
+
+    private static class AdViewHolder extends RecyclerView.ViewHolder {
+        AdViewHolder(View view) {
+            super(view);
+        }
     }
 
     // Constructor
@@ -69,12 +85,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         this.context = viewGroup.getContext();
         imgUtil = new ApplyImageResourceUtil(context);
+        LayoutInflater inflater = LayoutInflater.from(context);
 
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
-                CardView postView = (CardView) LayoutInflater.from(context)
-                        .inflate(R.layout.cardview_board_post, viewGroup, false);
-                return new PostViewHolder(postView);
+                postBinding = BoardRecyclerviewPostBinding.inflate(inflater, viewGroup, false);
+                return new PostViewHolder(postBinding.getRoot());
 
             case AD_VIEW_TYPE:
             default:
@@ -90,6 +106,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         int viewType = getItemViewType(position);
+        int AD_POSITION = 20; // Temp code
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
                 final DocumentSnapshot snapshot = snapshotList.get(position);
@@ -106,26 +123,27 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
                 //long postingTime = timeStamp.getSeconds() * 1000;
                 //log.i("timestamp: %s", postingTime);
-                PostViewHolder postHolder = (PostViewHolder)holder;
-                postHolder.tvPostTitle.setText(snapshot.getString("post_title"));
-                postHolder.tvNumber.setText(String.valueOf(index));
+                postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
+                postBinding.tvNumber.setText(String.valueOf(index));
+
+
 
                 // Some posts may have weird data type. This condition should be removed once the
                 // board is cleared out.
                 if(snapshot.getDate("timestamp") != null) {
                     Date date = snapshot.getDate("timestamp");
-                    postHolder.tvPostingDate.setText(sdf.format(date));
+                    postBinding.tvPostingDate.setText(sdf.format(date));
                 }
 
-                postHolder.tvUserName.setText(snapshot.getString("user_name"));
-                postHolder.tvViewCount.setText(String.valueOf(snapshot.getLong("cnt_view")));
-                postHolder.tvCommentCount.setText(String.valueOf(snapshot.getLong("cnt_comment")));
+                postBinding.tvPostOwner.setText(snapshot.getString("user_name"));
+                postBinding.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
+                postBinding.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
                 // Set the user image
                 if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
-                    postHolder.bindUserImage(Uri.parse(snapshot.getString("user_pic")));
+                    bindUserImage(Uri.parse(snapshot.getString("user_pic")));
                 } else {
-                    postHolder.bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
+                    bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
                 }
 
                 // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
@@ -133,10 +151,10 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 if(snapshot.get("post_images") != null) {
                     List<String> postImages = (List<String>)snapshot.get("post_images");
                     String thumbnail = postImages.get(0);
-                    if(!TextUtils.isEmpty(thumbnail)) postHolder.bindAttachedImage(Uri.parse(thumbnail));
+                    if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
                 } else {
-                    Glide.with(context).clear(postHolder.imgAttached);
-                    postHolder.imgAttached.setImageDrawable(null);
+                    Glide.with(context).clear(postBinding.imgAttached);
+                    postBinding.imgAttached.setImageDrawable(null);
                 }
 
                 // Set the listener for clicking the item with position
@@ -165,11 +183,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
                     // The view count is passed as the type of Long.
                 } else if(payload instanceof Long) {
-                    ((PostViewHolder) holder).tvViewCount.setText(String.valueOf(payload));
+                    postBinding.tvCountViews.setText(String.valueOf(payload));
                 // The comment count is passed as SparseLongArray.
                 } else if(payload instanceof SparseLongArray) {
                     SparseLongArray sparseArray = (SparseLongArray)payload;
-                    ((PostViewHolder)holder).tvCommentCount.setText(String.valueOf(sparseArray.valueAt(0)));
+                    postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
                 }
             }
         }
@@ -193,41 +211,19 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         return 1;
     }
 
-    // ViewHolders
-    class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView tvPostTitle, tvUserName, tvNumber, tvViewCount, tvCommentCount, tvPostingDate;
-        ImageView imgUser;
-        ImageView imgAttached;
-
-        PostViewHolder(CardView cardview){
-            super(cardview);
-            tvNumber = cardview.findViewById(R.id.tv_number);
-            tvPostTitle = cardview.findViewById(R.id.tv_post_title);
-            tvPostingDate = cardview.findViewById(R.id.tv_posting_date);
-            tvUserName = cardview.findViewById(R.id.tv_post_owner);
-            tvViewCount = cardview.findViewById(R.id.tv_count_views);
-            tvCommentCount = cardview.findViewById(R.id.tv_count_comment);
-            imgUser = cardview.findViewById(R.id.img_user);
-            imgAttached = cardview.findViewById(R.id.img_attached);
-        }
-
-        void bindUserImage(Uri uri) {
-            int size = Constants.ICON_SIZE_POSTING_LIST;
-            imgUtil.applyGlideToImageView(uri, imgUser, size, size, true);
-        }
-
-        void bindAttachedImage(Uri uri) {
-            int x = imgAttached.getWidth();
-            int y = imgAttached.getHeight();
-            imgUtil.applyGlideToImageView(uri, imgAttached, x, y, false);
-        }
-
+    void bindUserImage(Uri uri) {
+        int size = Constants.ICON_SIZE_POSTING_LIST;
+        imgUtil.applyGlideToImageView(uri, postBinding.imgUser, size, size, true);
     }
 
-    static class AdViewHolder extends RecyclerView.ViewHolder {
-        AdViewHolder(View view) {
-            super(view);
-        }
+    void bindAttachedImage(Uri uri) {
+        int x = postBinding.imgAttached.getWidth();
+        int y = postBinding.imgAttached.getHeight();
+        imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);
     }
+
+
+
+
 
 }
