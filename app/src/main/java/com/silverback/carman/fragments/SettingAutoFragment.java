@@ -18,7 +18,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -30,6 +29,7 @@ import org.json.JSONArray;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This fragment is a split screen PreferenceFragmentCompat which displays multiple preferences
@@ -44,25 +44,20 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     // Constants for setting year entries.
     private static final int LONGEVITY = 20;
 
-    // Objects
     private FragmentSharedModel fragmentModel;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
     private EngineTypeDialogFragment engineTypeDialogFragment;
-
-    // fields
     private String makerId, modelId;
     private boolean isMakerChanged, isModelChanged, isAutoTypeChanged, isEngineTypeChanged;
 
     // Constructor
     public SettingAutoFragment() {
         super();
-
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-
         setPreferencesFromResource(R.xml.pref_autodata, rootKey);
         setHasOptionsMenu(true);// necessary for the options menu feasible in fragment
 
@@ -76,7 +71,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         autoModel = findPreference(Constants.AUTO_MODEL);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
-        autoYear.setSummaryProvider(preference -> {
+        Objects.requireNonNull(autoYear).setSummaryProvider(preference -> {
             String value = ((ListPreference)preference).getValue();
             if(TextUtils.isEmpty(value)) return getString(R.string.pref_entry_void);
             else return value;
@@ -102,8 +97,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // useSimpleSummaryProvider does not work b/c every time the fragment is instantiated, the
         // entries is set which may disable to call the summary.
         autoRef.get().addOnSuccessListener(queries -> {
+            if(queries.size() == 0) return;
             List<String> autoMakerList = new ArrayList<>();
-            for(QueryDocumentSnapshot snapshot : queries) autoMakerList.add(snapshot.getString("auto_maker"));
+            for(QueryDocumentSnapshot snapshot : queries) autoMakerList.add(snapshot.getId());
+
             autoMaker.setEntries(autoMakerList.toArray(new CharSequence[queries.size()]));
             autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[queries.size()]));
         });
@@ -139,7 +136,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // queried with the maker and type id.
         final String valueName = (String)value;
         log.i("onPreferenceChange value: %s", valueName);
-
         switch(preference.getKey()) {
             // If the auto maker preference changes, query the registration number, setting
             // the entries to autoModel and the void summary to autoType and autoModel as well.
@@ -160,7 +156,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // unless its value is null, which occurs at the initial setting.
                 if(!TextUtils.isEmpty(autoMaker.getValue())){
                     log.i("autoMaker preferernce: %s", autoMaker.getValue());
-                    autoRef.document(makerId).update("reg_number", FieldValue.increment(-1));
+                    autoRef.document(makerId).update("registered", FieldValue.increment(-1));
                 }
 
                 // It's weirdo TextUtils.isEmpty() is not guaranteed to return false when the value
@@ -239,7 +235,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     }
 
     // Implement the abstract method defined in SettingBaseFragment to
-    @SuppressWarnings({"ConstantConditions", "unchecked"})
+    //@SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // With the automaker id queried and the autotype id, query auto models and set them to
@@ -254,8 +250,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         //emblem = makershot.getString("auto_emblem");
 
         // Reset the auto type and the engine type to the initial state.
-        if(makershot.get("auto_type") != null) {
-            List<String> autoTypeList = (List<String>)makershot.get("auto_type");
+        if(makershot.get("auto_types") != null) {
+            List<String> autoTypeList = (List<String>)makershot.get("auto_types");
             autoTypeList.add(0, getString(R.string.pref_entry_void));// add the void value into the first place.
             String[] arrAutoType = autoTypeList.toArray(new String[0]);
             autoType.setEntries(arrAutoType);
@@ -287,17 +283,21 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // the current registration number to be increased. The boolean value indicates whether
         // the query is initially made or by selecting another automaker; only the latter has to
         // increase the regit number.
-        int makerRegitNum = makershot.getLong("reg_number").intValue();
+        int makerRegitNum = Objects.requireNonNull(makershot.getLong("registered")).intValue();
+
         if(isMakerChanged) {
             makerRegitNum++;
-            makershot.getReference().update("reg_number", FieldValue.increment(1));
+            makershot.getReference().update("registered", FieldValue.increment(1));
             isMakerChanged = false;
         }
 
 
         // Set the summary with a spnned string.
         String makerSummary = String.format("%s%10s%s(%s)",
-                makershot.getString("auto_maker"), "", getString(R.string.pref_auto_reg), makerRegitNum);
+                //makershot.getString("auto_maker"),
+                makershot.getId(),
+                "",
+                getString(R.string.pref_auto_reg), makerRegitNum);
         setSpannedAutoSummary(autoMaker, makerSummary);
 
 

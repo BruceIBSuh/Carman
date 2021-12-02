@@ -33,10 +33,12 @@ import com.silverback.carman.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.util.Objects;
+
 /*
  * This fragment subclasses PreferernceFragmentCompat, which is a special fragment to display a
- * hierarchy of Preference objects, automatically persisting values in SharedPreferences.
- * Some preferences have custom dialog frragments which should implement the callbacks defined in
+ * hierarchy of preference objects, automatically persisting values in SharedPreferences.
+ * Some preferences have a custom dialog fragment which should implement the callback defined in
  * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing params
  * to the singleton constructor.
  */
@@ -53,7 +55,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
 
     //private DecimalFormat df;
 
-    // UIs
+    // Custom preferences defined in views package
     private ProgressBarPreference autoPref; // custom preference to show the progressbar.
     private SpinnerDialogPreference spinnerPref;
     private Preference favorite;
@@ -63,30 +65,30 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     private String sigunCode;
     private String regMakerNum;
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
-        String jsonString = getArguments().getString("district");
+        String jsonString = requireArguments().getString("district");
         try {jsonDistrict = new JSONArray(jsonString);}
         catch(JSONException e) {e.printStackTrace();}
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
-        fragmentModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
+        mSettings = ((BaseActivity) Objects.requireNonNull(requireActivity())).getSharedPreferernces();
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
-        // Custom preference which calls DialogFragment, not PreferenceDialogFragmentCompat,
-        // in order to receive a user name which is verified to a new one by querying.
+        // Custom preference which calls for DialogFragment, not PreferenceDialogFragmentCompat,
+        // in order to receive a user name which shouold be verified to a new one by querying.
         NameDialogPreference namePref = findPreference(Constants.USER_NAME);
         String userName = mSettings.getString(Constants.USER_NAME, null);
-        namePref.setSummary(userName);
+        Objects.requireNonNull(namePref).setSummary(userName);
+
         if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.pref_entry_void));
         if(userName != null) nickname = namePref.getSummary().toString();
 
-        // Call SettingAutoFragment which contains the preferences to have the auto data which will
-        // be used as filter for querying the posting board. On clicking the Up button, the preference
+        // Call SettingAutoFragment which contains preferences to have car related data which are
+        // used as filters for querying the posting board. On clicking the UP button, the preference
         // values are notified here as the JSONString and reset the preference summary.
         autoPref = findPreference(Constants.AUTO_DATA);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
@@ -95,9 +97,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the automaker and the automodel, if the model name is given.
         // At the same time, show the progressbar until the number is queried.
-        if(TextUtils.isEmpty(makerName))
+        if(TextUtils.isEmpty(makerName)) {
             autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
-        else {
+        } else {
             autoPref.showProgressBar(true);
             queryAutoMaker(makerName);
         }

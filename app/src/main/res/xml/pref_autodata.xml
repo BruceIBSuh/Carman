@@ -1,30 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto" >
-
     <ListPreference
         app:key="carman_pref_auto_maker"
         app:title="@string/pref_auto_maker"
         app:summary="@string/pref_entry_void"
         app:useSimpleSummaryProvider="false"/>
-
     <ListPreference
         app:key="carman_pref_auto_type"
         app:title="@string/pref_auto_type"
         app:summary="%s" />
-
     <ListPreference
         app:key="carman_pref_engine_type"
         app:title="@string/pref_engine_type"
         app:summary="%s" />
-
     <ListPreference
         app:key="carman_pref_auto_model"
         app:title="@string/pref_auto_model"
         app:summary="%s"/>
-
     <ListPreference
         app:key="carman_pref_auto_year"
         app:title="@string/pref_auto_year"
         app:summary="%s" />
-
 </PreferenceScreen>

@@ -11,6 +11,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.logs.LoggingHelper;
@@ -68,6 +69,14 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
     // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String name) {
+
+        autoRef.document(name).get().addOnCompleteListener((task) -> {
+            if(task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                queryAutoMakerSnapshot(snapshot);
+            }
+        });
+        /*
         autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
             for(DocumentSnapshot makershot : makers) {
                 if(makershot.exists()) {
@@ -78,6 +87,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         }).addOnFailureListener(e -> {
             log.i("queryAutoMaker failed: %s", e.getMessage());
         });
+
+         */
     }
 
     // Once the automaker queyr completes, continue to query the automodel if an model name is given.
