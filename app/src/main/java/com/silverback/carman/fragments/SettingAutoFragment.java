@@ -26,9 +26,11 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import org.json.JSONArray;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -42,7 +44,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingAutoFragment.class);
 
     // Constants for setting year entries.
-    private static final int LONGEVITY = 20;
+    private static final int StartYear = 20;
 
     private FragmentSharedModel fragmentModel;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
@@ -100,21 +102,20 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             if(queries.size() == 0) return;
             List<String> autoMakerList = new ArrayList<>();
             for(QueryDocumentSnapshot snapshot : queries) autoMakerList.add(snapshot.getId());
-
-            autoMaker.setEntries(autoMakerList.toArray(new CharSequence[queries.size()]));
-            autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[queries.size()]));
+            autoMaker.setEntries(autoMakerList.toArray(new CharSequence[0]));
+            autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[0]));
         });
 
         // Set the entries(values) to the auto year preference.
         List<String> yearList = new ArrayList<>();
         int year = Calendar.getInstance().get(Calendar.YEAR);
-        for (int i = year + 1; i >= ((year + 1) - LONGEVITY); i--) yearList.add(String.valueOf(i));
-        String[] mYearEntries = yearList.toArray(new String[LONGEVITY]);
-        autoYear.setEntries(mYearEntries);
-        autoYear.setEntryValues(mYearEntries);
+        for (int i = year + 1; i >= ((year + 1) - StartYear); i--) yearList.add(String.valueOf(i));
+        String[] years = yearList.toArray(new String[0]); // zero-size array.
+        autoYear.setEntries(years);
+        autoYear.setEntryValues(years);
 
-        // Given the automaker name, query the registration number of the automaker and the dependent
-        // preferences are set disabled until queryAutoMaker() completes.
+        // Given the automaker name, query the registration number of the automaker with the other
+        // preferences set disabled until queryAutoMaker() completes.
         if(!TextUtils.isEmpty(makerName)) {
             queryAutoMaker(makerName);
         } else {
@@ -250,18 +251,22 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         //emblem = makershot.getString("auto_emblem");
 
         // Reset the auto type and the engine type to the initial state.
+        AutoDataList dataList = makershot.toObject(AutoDataList.class);
         if(makershot.get("auto_types") != null) {
-            List<String> autoTypeList = (List<String>)makershot.get("auto_types");
+            //List<String> autoTypeList = (List<String>)makershot.get("auto_types");
+            List<String> autoTypeList = Objects.requireNonNull(dataList).getAutoTypeList();
             autoTypeList.add(0, getString(R.string.pref_entry_void));// add the void value into the first place.
             String[] arrAutoType = autoTypeList.toArray(new String[0]);
+
             autoType.setEntries(arrAutoType);
             autoType.setEntryValues(arrAutoType);
             autoType.setValue(typeName);
-            autoType.setSummaryProvider(aytotypePref -> typeName);
+            autoType.setSummaryProvider(autotypePref -> typeName);
         }
 
         if(makershot.get("engine_type") != null) {
-            List<String> engineTypeList = (List<String>) makershot.get("engine_type");
+            //List<String> engineTypeList = (List<String>) makershot.get("engine_type");
+            List<String> engineTypeList = Objects.requireNonNull(dataList).getEnginetypeList();
             engineTypeList.add(0, getString(R.string.pref_entry_void));
             String[] arrEngineType = engineTypeList.toArray(new String[0]);
 
@@ -448,5 +453,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             this.types = types;
         }
     }
+
 
 }

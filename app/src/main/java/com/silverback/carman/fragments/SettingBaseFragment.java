@@ -14,6 +14,7 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -69,26 +70,9 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
     // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String name) {
-
-        autoRef.document(name).get().addOnCompleteListener((task) -> {
-            if(task.isSuccessful()) {
-                DocumentSnapshot snapshot = task.getResult();
-                queryAutoMakerSnapshot(snapshot);
-            }
-        });
-        /*
-        autoRef.whereEqualTo("auto_maker", name).get().addOnSuccessListener(makers -> {
-            for(DocumentSnapshot makershot : makers) {
-                if(makershot.exists()) {
-                    queryAutoMakerSnapshot(makershot);
-                    break;
-                }
-            }
-        }).addOnFailureListener(e -> {
-            log.i("queryAutoMaker failed: %s", e.getMessage());
-        });
-
-         */
+        autoRef.document(name).get().addOnSuccessListener(automaker -> {
+            if(automaker.exists()) queryAutoMakerSnapshot(automaker);
+        }).addOnFailureListener(e -> log.e("No automaker queried:%s", e.getMessage()));
     }
 
     // Once the automaker queyr completes, continue to query the automodel if an model name is given.
@@ -150,4 +134,42 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // SettingBaseFragment.
     protected abstract void queryAutoMakerSnapshot(DocumentSnapshot makershot);
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
+
+    // POJO to typecase any Firestore array field to List
+    public static class AutoDataList {
+        @PropertyName("auto_types")
+        private List<String> autoTypeList;
+        @PropertyName("engine_type")
+        private List<String> engineTypeList;
+
+        public AutoDataList() {
+            // Must have a public no-argument constructor
+        }
+
+        // Initialize all fields
+        public AutoDataList(List<String> autoTypeList, List<String> engineTypeList) {
+            this.autoTypeList = autoTypeList;
+            this.engineTypeList = engineTypeList;
+        }
+
+        @PropertyName("auto_types")
+        public List<String> getAutoTypeList() {
+            return autoTypeList;
+        }
+
+        @PropertyName("engine_type")
+        public List<String> getEnginetypeList() {
+            return engineTypeList;
+        }
+
+        @PropertyName("auto_types")
+        public void setAutoTypeList(List<String> autoTypeList) {
+            this.autoTypeList = autoTypeList;
+        }
+
+        @PropertyName("engine_type")
+        public void setEngineTypeList(List<String> engineTypeList) {
+            this.engineTypeList = engineTypeList;
+        }
+    }
 }
