@@ -155,8 +155,6 @@ public class BoardPagerFragment extends Fragment implements
 
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         pbLoading = ((BoardActivity)requireActivity()).getLoadingProgressBar();
-
-
         /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             //clubRepo = new QueryClubPostingUtil(firestore);
@@ -185,7 +183,6 @@ public class BoardPagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         binding = FragmentBoardPagerBinding.inflate(inflater);
-
         //View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
         //pbPaging = localView.findViewById(R.id.progbar_board_paging);
         //tvEmptyView = localView.findViewById(R.id.tv_empty_view);

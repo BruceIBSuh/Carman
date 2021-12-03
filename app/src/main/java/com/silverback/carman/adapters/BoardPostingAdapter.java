@@ -58,7 +58,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         PostViewHolder(View itemView) {
             super(itemView);
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
-            params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_MAIN);
+            params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_POSTINGBOARD);
             itemView.setLayoutParams(params);
         }
     }

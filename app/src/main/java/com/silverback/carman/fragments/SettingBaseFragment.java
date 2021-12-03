@@ -96,7 +96,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // abstract method which should be implemented either in SettingAutoFragment or in SettingPreference
     // Fragment.
     void queryAutoModel(String makerId, String modelName) {
-        autoRef.document(makerId).collection("auto_model").whereEqualTo("model_name", modelName).get()
+        autoRef.document(makerId).collection("autoModels").whereEqualTo("model_name", modelName).get()
                 .addOnSuccessListener(queries -> {
                     for(DocumentSnapshot modelshot : queries) {
                         if(modelshot.exists()) {

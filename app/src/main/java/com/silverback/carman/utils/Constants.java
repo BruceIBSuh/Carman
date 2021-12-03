@@ -39,6 +39,7 @@ public class Constants {
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 30; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL
     public static final int GEOFENCE_RESPONSE_TIME = 1000 * 30;
+
     // Location Settings
     static final int INTERVAL = 1000 * 60; //Location update interval set by the app
     static final int FASTEST_INTERVAL = 1000 * 30; //Fastest location update interval set by any app.
@@ -62,6 +63,7 @@ public class Constants {
     // RecyclerView.ItemDecorator: divider
     public static final int DIVIDER_HEIGHT_MAIN = 80;
     public static final int DIVIDER_HEIGHT_EXPENSE = 16;
+    public static final int DIVIDER_HEIGHT_POSTINGBOARD = 8;
 
     // Board
     public static final int PAGINATION = 20;
