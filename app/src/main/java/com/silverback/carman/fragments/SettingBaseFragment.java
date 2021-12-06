@@ -69,9 +69,9 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // Query an auto maker with a name selected by the automaker preference. The query result is
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
     // either in SettingAutoFragment or SettingPreferenceFragment.
-    void queryAutoMaker(String name) {
-        autoRef.document(name).get().addOnSuccessListener(automaker -> {
-            if(automaker.exists()) queryAutoMakerSnapshot(automaker);
+    void queryAutoMaker(String automaker) {
+        autoRef.document(automaker).get().addOnSuccessListener(snapshot -> {
+            if(snapshot.exists()) queryAutoMakerSnapshot(snapshot);
         }).addOnFailureListener(e -> log.e("No automaker queried:%s", e.getMessage()));
     }
 
@@ -79,7 +79,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // As like the automaker, the query result is passed as param to queryAutoModelSnapshot() an
     // abstract method which should be implemented either in SettingAutoFragment or in SettingPreference
     // Fragment.
-    void queryAutoModel(String makerId, String modelName) {
+    void queryAutoModel(String automaker, String modelName) {
+        /*
         autoRef.document(makerId).collection("autoModels").whereEqualTo("model_name", modelName).get()
                 .addOnSuccessListener(queries -> {
                     for(DocumentSnapshot modelshot : queries) {
@@ -90,6 +91,13 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
                     }
                 }).addOnFailureListener(e -> {
                     log.i("queryAutoModel failed: %s", e.getMessage());
+                });
+
+         */
+        autoRef.document(automaker).collection("autoModels").document(modelName).get()
+                .addOnSuccessListener(snapshot -> {
+                    log.i("model: %s", snapshot.getId());
+                    if(snapshot.exists()) queryAutoModelSnapshot(snapshot);
                 });
     }
 
@@ -135,9 +143,9 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     protected abstract void queryAutoMakerSnapshot(DocumentSnapshot makershot);
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
 
-    // POJO to typecase any Firestore array field to List
+    // POJO in order to typecast any Firestore array field to List
     public static class AutoDataList {
-        @PropertyName("auto_types")
+        @PropertyName("auto_type")
         private List<String> autoTypeList;
         @PropertyName("engine_type")
         private List<String> engineTypeList;
@@ -152,7 +160,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
             this.engineTypeList = engineTypeList;
         }
 
-        @PropertyName("auto_types")
+        @PropertyName("auto_type")
         public List<String> getAutoTypeList() {
             return autoTypeList;
         }
@@ -162,7 +170,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
             return engineTypeList;
         }
 
-        @PropertyName("auto_types")
+        @PropertyName("auto_type")
         public void setAutoTypeList(List<String> autoTypeList) {
             this.autoTypeList = autoTypeList;
         }
