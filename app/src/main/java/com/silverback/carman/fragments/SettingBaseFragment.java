@@ -144,40 +144,52 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
 
     // POJO in order to typecast any Firestore array field to List
-    public static class AutoDataList {
+    static class AutoMakerList {
         @PropertyName("auto_type")
         private List<String> autoTypeList;
         @PropertyName("engine_type")
         private List<String> engineTypeList;
-
-        public AutoDataList() {
+        public AutoMakerList() {
             // Must have a public no-argument constructor
         }
-
         // Initialize all fields
-        public AutoDataList(List<String> autoTypeList, List<String> engineTypeList) {
+        public AutoMakerList(List<String> autoTypeList, List<String> engineTypeList) {
             this.autoTypeList = autoTypeList;
             this.engineTypeList = engineTypeList;
         }
-
         @PropertyName("auto_type")
         public List<String> getAutoTypeList() {
             return autoTypeList;
         }
-
         @PropertyName("engine_type")
         public List<String> getEnginetypeList() {
             return engineTypeList;
         }
-
         @PropertyName("auto_type")
         public void setAutoTypeList(List<String> autoTypeList) {
             this.autoTypeList = autoTypeList;
         }
-
         @PropertyName("engine_type")
         public void setEngineTypeList(List<String> engineTypeList) {
             this.engineTypeList = engineTypeList;
         }
+    }
+
+    static class AutoModelList {
+        @PropertyName("entine_type")
+        private List<String> engineTypeList;
+        public AutoModelList() {}
+        public AutoModelList(List<String> engineTypeList) {
+            this.engineTypeList = engineTypeList;
+        }
+        @PropertyName("engine_type")
+        public List<String> getEngineTypelList(){
+            return this.engineTypeList;
+        }
+        @PropertyName("engine_type")
+        public void setEngineTypeList(List<String> engineTypeList) {
+            this.engineTypeList = engineTypeList;
+        }
+
     }
 }

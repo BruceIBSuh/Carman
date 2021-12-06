@@ -214,6 +214,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
+            log.i("new auto data: %s, %s", makerName, modelName);
 
             // The null value that JSONObject returns seems different than that of other regular
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
@@ -243,7 +244,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
-        regMakerNum = String.valueOf(makershot.getLong("reg_number"));
+        regMakerNum = String.valueOf(makershot.getLong("reg_automaker"));
         String summary = String.format("%s (%s)", makerName, regMakerNum);
         setSpannedAutoSummary(autoPref, summary);
         // Hide the progressbar in the preference
@@ -263,7 +264,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // The auto preference summary depends on whether the model name is set because
         // queryAutoModel() would notify null to the listener w/o the model name.
         if(modelshot != null && modelshot.exists()) {
-            String num = String.valueOf(modelshot.getLong("reg_number"));
+            String num = String.valueOf(modelshot.getLong("reg_model"));
             String summary = String.format("%s(%s)  %s(%s)", makerName, regMakerNum, modelName, num);
             setSpannedAutoSummary(autoPref, summary);
 
