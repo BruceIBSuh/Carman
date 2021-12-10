@@ -23,6 +23,7 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,52 +145,38 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
 
     // POJO in order to typecast any Firestore array field to List
-    static class AutoMakerList {
+    public static class AutoData {
         @PropertyName("auto_type")
-        private List<String> autoTypeList;
+        private Map<String, Integer> autoTypeMap;
         @PropertyName("engine_type")
-        private List<String> engineTypeList;
-        public AutoMakerList() {
+        private Map<String, Integer> engineTypeMap;
+
+        public AutoData() {
             // Must have a public no-argument constructor
         }
         // Initialize all fields
-        public AutoMakerList(List<String> autoTypeList, List<String> engineTypeList) {
-            this.autoTypeList = autoTypeList;
-            this.engineTypeList = engineTypeList;
+        //public AutoData(List<String> autoTypeList, List<String> engineTypeList) {
+        public AutoData(Map<String, Integer> autoTypeMap, Map<String, Integer> engineTypeMap) {
+            //this.autoTypeList = autoTypeList;
+            //this.engineTypeList = engineTypeList;
+            this.autoTypeMap = autoTypeMap;
+            this.engineTypeMap = engineTypeMap;
         }
         @PropertyName("auto_type")
-        public List<String> getAutoTypeList() {
-            return autoTypeList;
+        public Map<String, Integer> getAutoTypeMap() {
+            return autoTypeMap;
         }
         @PropertyName("engine_type")
-        public List<String> getEnginetypeList() {
-            return engineTypeList;
+        public Map<String, Integer> getEngineTypeMap() {
+            return engineTypeMap;
         }
         @PropertyName("auto_type")
-        public void setAutoTypeList(List<String> autoTypeList) {
-            this.autoTypeList = autoTypeList;
+        public void setAutoTypeMap(Map<String, Integer> autoTypeMap) {
+            this.autoTypeMap = autoTypeMap;
         }
         @PropertyName("engine_type")
-        public void setEngineTypeList(List<String> engineTypeList) {
-            this.engineTypeList = engineTypeList;
+        public void setEngineTypeMap(Map<String, Integer> engineTypeMap) {
+            this.engineTypeMap = engineTypeMap;
         }
-    }
-
-    static class AutoModelList {
-        @PropertyName("entine_type")
-        private List<String> engineTypeList;
-        public AutoModelList() {}
-        public AutoModelList(List<String> engineTypeList) {
-            this.engineTypeList = engineTypeList;
-        }
-        @PropertyName("engine_type")
-        public List<String> getEngineTypelList(){
-            return this.engineTypeList;
-        }
-        @PropertyName("engine_type")
-        public void setEngineTypeList(List<String> engineTypeList) {
-            this.engineTypeList = engineTypeList;
-        }
-
     }
 }
