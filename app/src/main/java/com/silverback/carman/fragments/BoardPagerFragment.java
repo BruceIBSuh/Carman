@@ -498,7 +498,8 @@ public class BoardPagerFragment extends Fragment implements
         // On clicking the filter item on the autoclub page, if nothing has been posted, display
         // the empty view.
         if(currentPage == Constants.BOARD_AUTOCLUB && postList.size() == 0) {
-            recyclerPostView.setEmptyView(binding.tvEmptyView);
+            //recyclerPostView.setEmptyView(binding.tvEmptyView);
+            binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
         }
     }
 
