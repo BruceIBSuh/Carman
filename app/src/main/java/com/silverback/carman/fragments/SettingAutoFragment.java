@@ -49,7 +49,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
     private EngineTypeDialogFragment engineTypeDialogFragment;
     private String makerId, modelId;
-    private DocumentSnapshot makershot;
+    //private DocumentSnapshot makershot;
     private boolean isMakerChanged, isModelChanged, isAutoTypeChanged, isEngineTypeChanged;
 
     // Constructor
@@ -73,60 +73,41 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         autoModel = findPreference(Constants.AUTO_MODEL);
         autoYear = findPreference(Constants.AUTO_YEAR);
 
-        Objects.requireNonNull(autoYear).setSummaryProvider(preference -> {
-            //String value = ((ListPreference)preference).getValue();
-            String value = autoYear.getValue();
-            if(TextUtils.isEmpty(value)) return getString(R.string.pref_entry_void);
-            else return value;
-        });
-
         autoMaker.setOnPreferenceChangeListener(this);
         autoType.setOnPreferenceChangeListener(this);
         autoModel.setOnPreferenceChangeListener(this);
         engineType.setOnPreferenceChangeListener(this);
 
-        // Query the auto maker to retrieve the registration number, the result of which is notified
-        // to OnCompleteAutoQueryListener. Sequentially, upon completion of the auto maker query,
-        // make an auto model query to have the registration number notified to the same listener,
-        // then set the initial values and summaries. In particular, the summaries of the autoMaker
-        // and autoModel preferences include the queried registration numbers.
-        makerName = mSettings.getString(Constants.AUTO_MAKER, null);
-        modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-        typeName = mSettings.getString(Constants.AUTO_TYPE, null);
-        engineName = mSettings.getString(Constants.ENGINE_TYPE, null);
-        yearName = mSettings.getString(Constants.AUTO_YEAR, null);
-
-        // Initially, query all auto makers to set entries(values) to the auto maker preference.
-        // useSimpleSummaryProvider does not work b/c every time the fragment is instantiated, the
-        // entries are initially set, which may disable the summary to be called, thus zero-size
-        // array should be used to initialize.
+        // Query the automakers and put them in the automaker preference.
         autoRef.get().addOnSuccessListener(queries -> {
-            //if(queries.size() == 0) return;
+            if(queries.size() == 0) return;
             List<String> autoMakerList = new ArrayList<>();
-            //autoMakerList.add(0, getString(R.string.pref_entry_void));
+            autoMakerList.add(0, getString(R.string.pref_entry_void));
             for(QueryDocumentSnapshot snapshot : queries) autoMakerList.add(snapshot.getId());
             autoMaker.setEntries(autoMakerList.toArray(new CharSequence[0]));
             autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[0]));
         });
 
-        // Set the entries(values) to the auto year preference.
+        // Create and set the entries(values) to the autoyear preference.
         List<String> yearList = new ArrayList<>();
         int year = Calendar.getInstance().get(Calendar.YEAR);
         for (int i = year + 1; i >= ((year + 1) - SINCE); i--) yearList.add(String.valueOf(i));
         String[] years = yearList.toArray(new String[0]); // zero-size array.
         autoYear.setEntries(years);
         autoYear.setEntryValues(years);
+        setDefaultSummary(autoYear);
 
-        // Given the automaker name, query the registration number of the automaker with the other
-        // preferences set disabled until queryAutoMaker() completes.
-        if(!TextUtils.isEmpty(makerName)) {
-            queryAutoMaker(makerName);
-        } else {
+        // If an automaker has been set, query the automaker document with its name.
+        String makerName = autoMaker.getValue();
+        if(!TextUtils.isEmpty(makerName)) queryAutoMaker(makerName);
+        /*
+        else {
             autoType.setEnabled(false);
             engineType.setEnabled(false);
             autoModel.setEnabled(false);
             autoYear.setEnabled(false);
         }
+        */
     }
 
 
@@ -146,20 +127,30 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             // At the same time, increase the registration number of the current automaker and
             // decrease the number of the previous auto maker, which can be retrieved by getValue();
             case Constants.AUTO_MAKER:
+                if(valueName.equals(autoMaker.getValue())) return true;
+
                 isMakerChanged = true;
+                autoModel.setValue(null);
+                autoYear.setValue(null);
+                autoType.setValue(null);
+                engineType.setValue(null);
+                /*
                 autoType.setEnabled(false);
                 engineType.setEnabled(false);
                 autoModel.setEnabled(false);
-
+                */
                 // Initialize the autotype and the enginetype value. These 2 preferences has the
                 // void item in the list.
-                typeName = getString(R.string.pref_entry_void);
-                engineName = getString(R.string.pref_entry_void);
+                //typeName = getString(R.string.pref_entry_void);
+                //engineName = getString(R.string.pref_entry_void);
+
                 // The previous auto maker decrease its registration number before a new maker comes
                 // in unless its value is null, which usually occurs at the initial setting.
+                log.i("current and prev automaker value: %s, %s", valueName, autoMaker.getValue());
                 if(!TextUtils.isEmpty(autoMaker.getValue())){
                     autoRef.document(makerId).update("reg_automaker", FieldValue.increment(-1));
                 }
+
 
                 // It's weirdo TextUtils.isEmpty() is not guaranteed to return false when the value
                 // is null. Looks like Android team is already aware of this "We are aware that the
@@ -170,15 +161,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // of the auto maker makes the auto model set to null.
                 if(!TextUtils.isEmpty(autoModel.getValue())) {
                     autoRef.document(makerId).collection("autoModels").document(modelId)
-                            .update("reg_model", FieldValue.increment(-1))
-                            .addOnSuccessListener(aVoid -> log.i("decrease the reg number successfully"));
+                            .update("reg_model", FieldValue.increment(-1));
+                            //.addOnSuccessListener(aVoid -> log.i("decrease the reg number successfully"));
                 }
-
-
-                // Initialize the automodel only after the regit number decreases with the previous
-                // automodel.
-                autoModel.setValue(null);
-                autoYear.setValue(null);
 
                 if(!TextUtils.isEmpty(valueName)) queryAutoMaker(valueName);
                 // Retrieve the auto maker by a name selected from the list preference.
@@ -190,6 +175,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 return true;
 
             case Constants.AUTO_TYPE:
+                if(valueName.equals(autoType.getValue())) return true;
                 // Decrease the reg number if the autotype changes which makes the automodel void.
                 if(!TextUtils.isEmpty(autoModel.getValue())) {
                     autoRef.document(makerId).collection("autoModels").document(modelId)
@@ -206,6 +192,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 return true;
 
             case Constants.ENGINE_TYPE:
+                if(valueName.equals(engineType.getValue())) return true;
                 log.i("engine type changed: %s", valueName);
                 // Decrease the reg number if the autotype changes which makes the automodel void.
                 if(!TextUtils.isEmpty(autoModel.getValue())) {
@@ -224,6 +211,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 return true;
 
             case Constants.AUTO_MODEL:
+                if(valueName.equals(autoModel.getValue())) return true;
                 log.i("automodel preference changed:%s, %s", modelId, autoModel.getValue());
                 isModelChanged = true;
                 if(!TextUtils.isEmpty(autoModel.getValue()) && !TextUtils.isEmpty(modelId)) {
@@ -249,14 +237,14 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // With the automaker id queried and the autotype id, query auto models and set them to
         // the model entry
-        this.makershot = makershot;
-
+        //this.makershot = makershot;
         makerId = makershot.getId();
+
         autoType.setEnabled(true);
         engineType.setEnabled(true);
         autoModel.setEnabled(true);
         autoYear.setEnabled(true);
-        log.i("maker id: %s", makerId);
+
         // Retrieve the emblem url
         //emblem = makershot.getString("auto_emblem");
 
@@ -266,15 +254,11 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             List<String> autotypeList = new ArrayList<>(autotypeMap.keySet());
             autotypeList.add(0, getString(R.string.pref_entry_void));
             String[] arrAutotype = autotypeList.toArray(new String[0]);
-            log.i("arrAutotype:%s", arrAutotype.length);
 
-            // The engine name should be saved as null when it's not set b/c it is referenced in
-            // the autofilter checkbox. To show the summary, however, the null value should be
-            // the String value to select the list item and show the summary.
             autoType.setEntries(arrAutotype);
             autoType.setEntryValues(arrAutotype);
-            autoType.setValue(typeName);
-            autoType.setSummaryProvider(pref -> typeName);
+            autoType.setValue(autoType.getValue());
+            setDefaultSummary(autoType);
         }
 
         if(makershot.get("engine_type") != null) {
@@ -283,17 +267,16 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             enginetypeList.add(0, getString(R.string.pref_entry_void));
             String[] arrEngineType = enginetypeList.toArray(new String[0]);
 
-            // The engine name should be saved as null when it's not set b/c it is referenced in
-            // the autofilter checkbox. To show the summary, however, the null value should be
-            // the String value to select the list item and show the summary.
             engineType.setEntries(arrEngineType);
             engineType.setEntryValues(arrEngineType);
-            engineType.setValue(engineName);
-            engineType.setSummaryProvider(enginetypePref -> engineName);
+            engineType.setValue(engineType.getValue());
+            setDefaultSummary(engineType);
         }
 
         // Retrieve the automodels by querying the automodel collection
         log.i("initial autotype and engine: %s, %s", typeName, engineName);
+        typeName = autoType.getValue();
+        engineName = engineType.getValue();
         setAutoModelEntries(typeName, engineName);
 
         // When the auto maker changes, which means the previous automaker is not null, update
@@ -317,7 +300,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         // If the automodel preference has a value which may get preference.getValue(), query the
         // automodel to fetch the regit number. Otherwise, set the summary
-        if(!TextUtils.isEmpty(autoModel.getValue())) queryAutoModel(makerId, modelName);
+        if(!TextUtils.isEmpty(autoModel.getValue())) queryAutoModel(makerId, autoModel.getValue());
         else autoModel.setSummaryProvider(preference -> getString(R.string.pref_entry_void));
 
         //if(isMakerChanged) isMakerChanged = false;
@@ -435,6 +418,15 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         }
 
         return false;
+    }
+
+    // Method for setting the initial default summary to each preferences.
+    // List/Edit)preference.setSummaryProvider(SummaryProvider(I))
+    private void setDefaultSummary(@NonNull ListPreference preference) {
+        preference.setSummaryProvider(pref -> {
+            String value = preference.getValue();
+            return (TextUtils.isEmpty(value))? getString(R.string.pref_entry_void): value;
+        });
     }
 
 

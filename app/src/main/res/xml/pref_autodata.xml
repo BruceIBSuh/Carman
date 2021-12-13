@@ -7,18 +7,22 @@
         app:useSimpleSummaryProvider="false"/>
     <ListPreference
         app:key="carman_pref_auto_type"
+        app:enabled="false"
         app:title="@string/pref_auto_type"
         app:summary="%s" />
     <ListPreference
         app:key="carman_pref_engine_type"
+        app:enabled="false"
         app:title="@string/pref_engine_type"
         app:summary="%s" />
     <ListPreference
         app:key="carman_pref_auto_model"
+        app:enabled="false"
         app:title="@string/pref_auto_model"
         app:summary="%s"/>
     <ListPreference
         app:key="carman_pref_auto_year"
+        app:enabled="false"
         app:title="@string/pref_auto_year"
         app:summary="%s" />
 </PreferenceScreen>
