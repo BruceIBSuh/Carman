@@ -66,7 +66,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {}
 
-
     // Query an auto maker with a name selected by the automaker preference. The query result is
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
     // either in SettingAutoFragment or SettingPreferenceFragment.
@@ -119,7 +118,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         pref.setSummaryProvider(preference -> sb);
     }
 
-    // AutoData is saved in SharedPreferences as JSON String which should be parsed into List<String>
+    // ObjectAutoData is saved in SharedPreferences as JSON String which should be parsed into List<String>
     // Each names are inherited to the child views of SettingPreferenceFragment and SettiingAutoFragment.
     List<String> parseAutoData(String jsonString) {
         List<String> autoDataList = new ArrayList<>();
@@ -145,18 +144,18 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
 
     // POJO in order to typecast any Firestore array field to List
-    public static class AutoData {
+    static class ObjectAutoData {
         @PropertyName("auto_type")
         private Map<String, Integer> autoTypeMap;
         @PropertyName("engine_type")
         private Map<String, Integer> engineTypeMap;
 
-        public AutoData() {
+        public ObjectAutoData() {
             // Must have a public no-argument constructor
         }
         // Initialize all fields
-        //public AutoData(List<String> autoTypeList, List<String> engineTypeList) {
-        public AutoData(Map<String, Integer> autoTypeMap, Map<String, Integer> engineTypeMap) {
+        //public ObjectAutoData(List<String> autoTypeList, List<String> engineTypeList) {
+        public ObjectAutoData(Map<String, Integer> autoTypeMap, Map<String, Integer> engineTypeMap) {
             //this.autoTypeList = autoTypeList;
             //this.engineTypeList = engineTypeList;
             this.autoTypeMap = autoTypeMap;
@@ -178,5 +177,23 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         public void setEngineTypeMap(Map<String, Integer> engineTypeMap) {
             this.engineTypeMap = engineTypeMap;
         }
+    }
+
+    static class ArrayAutoData {
+        @PropertyName("engine_type")
+        private List<String> enginetypeList;
+        public ArrayAutoData(){
+            //must have a public no-argument contructor;
+        }
+        public ArrayAutoData(List<String> enginetypeList) {
+            this.enginetypeList = enginetypeList;
+        }
+        @PropertyName("engine_type")
+        public List<String> getEngineTypeList() {return enginetypeList;}
+        @PropertyName("engine_type")
+        public void setEngineTypeList(List<String> enginetypeList) {
+            this.enginetypeList = enginetypeList;
+        }
+
     }
 }

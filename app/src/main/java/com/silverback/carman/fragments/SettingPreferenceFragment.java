@@ -97,6 +97,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the automaker and the automodel, if the model name is given.
         // At the same time, show the progressbar until the number is queried.
+        log.i("maker name: %s", makerName);
         if(TextUtils.isEmpty(makerName)) {
             autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
         } else {

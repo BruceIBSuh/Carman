@@ -15,7 +15,6 @@ import androidx.preference.PreferenceManager;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -44,7 +43,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingAutoFragment.class);
 
     // Constants for setting year entries.
-    private static final int StartYear = 20;
+    private static final int SINCE = 20;
 
     private FragmentSharedModel fragmentModel;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
@@ -102,8 +101,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // entries are initially set, which may disable the summary to be called, thus zero-size
         // array should be used to initialize.
         autoRef.get().addOnSuccessListener(queries -> {
-            if(queries.size() == 0) return;
+            //if(queries.size() == 0) return;
             List<String> autoMakerList = new ArrayList<>();
+            //autoMakerList.add(0, getString(R.string.pref_entry_void));
             for(QueryDocumentSnapshot snapshot : queries) autoMakerList.add(snapshot.getId());
             autoMaker.setEntries(autoMakerList.toArray(new CharSequence[0]));
             autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[0]));
@@ -112,7 +112,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // Set the entries(values) to the auto year preference.
         List<String> yearList = new ArrayList<>();
         int year = Calendar.getInstance().get(Calendar.YEAR);
-        for (int i = year + 1; i >= ((year + 1) - StartYear); i--) yearList.add(String.valueOf(i));
+        for (int i = year + 1; i >= ((year + 1) - SINCE); i--) yearList.add(String.valueOf(i));
         String[] years = yearList.toArray(new String[0]); // zero-size array.
         autoYear.setEntries(years);
         autoYear.setEntryValues(years);
@@ -155,7 +155,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 // void item in the list.
                 typeName = getString(R.string.pref_entry_void);
                 engineName = getString(R.string.pref_entry_void);
-
                 // The previous auto maker decrease its registration number before a new maker comes
                 // in unless its value is null, which usually occurs at the initial setting.
                 if(!TextUtils.isEmpty(autoMaker.getValue())){
@@ -181,8 +180,13 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 autoModel.setValue(null);
                 autoYear.setValue(null);
 
+                if(!TextUtils.isEmpty(valueName)) queryAutoMaker(valueName);
                 // Retrieve the auto maker by a name selected from the list preference.
-                queryAutoMaker(valueName);
+//                if(autoMaker.findIndexOfValue(valueName) == 0) {
+//                    autoMaker.setValue(null);
+//                    autoMaker.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
+//                } else queryAutoMaker(valueName);
+
                 return true;
 
             case Constants.AUTO_TYPE:
@@ -202,6 +206,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 return true;
 
             case Constants.ENGINE_TYPE:
+                log.i("engine type changed: %s", valueName);
                 // Decrease the reg number if the autotype changes which makes the automodel void.
                 if(!TextUtils.isEmpty(autoModel.getValue())) {
                     autoRef.document(makerId).collection("auto_model").document(modelId)
@@ -255,27 +260,28 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // Retrieve the emblem url
         //emblem = makershot.getString("auto_emblem");
 
-        // Use a custom object with @PropertyName annotaion to retrieve a Map data, which would be
-        // uploaded as a custom object.
-        AutoData dataList = makershot.toObject(AutoData.class);
+        ObjectAutoData dataList = makershot.toObject(ObjectAutoData.class);
         if(makershot.get("auto_type") != null) {
-            Map<String, Integer> autoTypeMap = Objects.requireNonNull(dataList).getAutoTypeMap();
-            List<String> autoTypeList = new ArrayList<>(autoTypeMap.keySet());
-            autoTypeList.add(0, getString(R.string.pref_entry_void));// add the void value into the first place.
-            String[] arrAutoType = autoTypeList.toArray(new String[0]);
+            Map<String, Integer> autotypeMap = Objects.requireNonNull(dataList).getAutoTypeMap();
+            List<String> autotypeList = new ArrayList<>(autotypeMap.keySet());
+            autotypeList.add(0, getString(R.string.pref_entry_void));
+            String[] arrAutotype = autotypeList.toArray(new String[0]);
+            log.i("arrAutotype:%s", arrAutotype.length);
 
-            //if(TextUtils.isEmpty(typeName)) typeName = getString(R.string.pref_entry_void);
-            autoType.setEntries(arrAutoType);
-            autoType.setEntryValues(arrAutoType);
+            // The engine name should be saved as null when it's not set b/c it is referenced in
+            // the autofilter checkbox. To show the summary, however, the null value should be
+            // the String value to select the list item and show the summary.
+            autoType.setEntries(arrAutotype);
+            autoType.setEntryValues(arrAutotype);
             autoType.setValue(typeName);
-            autoType.setSummaryProvider(autotypePref -> typeName);
+            autoType.setSummaryProvider(pref -> typeName);
         }
 
         if(makershot.get("engine_type") != null) {
-            Map<String, Integer> engineTypeMap = Objects.requireNonNull(dataList).getEngineTypeMap();
-            List<String> engineTypeList = new ArrayList<>(engineTypeMap.keySet());
-            engineTypeList.add(0, getString(R.string.pref_entry_void));
-            String[] arrEngineType = engineTypeList.toArray(new String[0]);
+            Map<String, Integer> enginetypeMap = Objects.requireNonNull(dataList).getEngineTypeMap();
+            List<String> enginetypeList = new ArrayList<>(enginetypeMap.keySet());
+            enginetypeList.add(0, getString(R.string.pref_entry_void));
+            String[] arrEngineType = enginetypeList.toArray(new String[0]);
 
             // The engine name should be saved as null when it's not set b/c it is referenced in
             // the autofilter checkbox. To show the summary, however, the null value should be
@@ -303,7 +309,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         // Set the summary with a spnned string.
         String makerSummary = String.format("%s%10s%s(%s)",
-                //makershot.getString("auto_maker"),
                 makershot.getId(),
                 "",
                 getString(R.string.pref_auto_reg), regAutoMaker);
@@ -326,6 +331,29 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         modelId = modelshot.getId();
         int regModel = Objects.requireNonNull(modelshot.getLong("reg_model")).intValue();
 
+        final String value = modelshot.getString("auto_type");
+        if(!TextUtils.isEmpty(value)) {
+            autoType.setValue(value);
+            autoType.setSummaryProvider(pref -> value);
+        }
+
+        if(modelshot.get("engine_type") != null) {
+            ArrayAutoData autodata = modelshot.toObject(ArrayAutoData.class);
+            List<String> enginetypeList = Objects.requireNonNull(autodata).getEngineTypeList();
+            if (enginetypeList.size() == 1) {
+                engineType.setValue(enginetypeList.get(0));
+                engineType.setSummaryProvider(enginetypePref -> enginetypeList.get(0));
+                //} else if (isModelChanged && dataList.size() > 1 && engineValue == 0) {
+            } else if(isModelChanged && enginetypeList.size() > 1) {
+                CharSequence[] arrType = enginetypeList.toArray(new CharSequence[0]);
+                engineTypeDialogFragment.setEngineType(arrType);
+                engineTypeDialogFragment.show(getChildFragmentManager(), "engineTypeFragment");
+            }
+
+            log.i("engine type: %s", engineType.getValue());
+        }
+
+
         // Reset the auto type value according to the auto model selected.
         /*
         String value = modelshot.getString("auto_type");
@@ -333,10 +361,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoType.setValue(value);
             autoType.setSummaryProvider(autotypePref -> value);
         }
-        */
         // Reset the engine type value according to the auto model selected. Typecasting issue.
         // Typecast Firestore array field to List
-        AutoData data = modelshot.toObject(AutoData.class);
+        ObjectAutoData data = modelshot.toObject(ObjectAutoData.class);
         Map<String, Integer> autotypeMap = Objects.requireNonNull(data).getAutoTypeMap();
         Map<String, Integer> engineMap = Objects.requireNonNull(data).getEngineTypeMap();
 
@@ -361,6 +388,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             engineTypeDialogFragment.show(getChildFragmentManager(), "engineTypeFragment");
         }
 
+         */
+
         if(isModelChanged) {
             regModel++;
             autoRef.document(makerId).collection("autoModels").document(modelId)
@@ -378,39 +407,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         //if(isModelChanged) isModelChanged = false;
     }
 
-    private void setAutoData(DocumentSnapshot snapshot) {
-        // Use a custom object with @PropertyName annotaion to get a Map data, which would be uploaded
-        // as a custom object.
-        AutoData dataList = snapshot.toObject(AutoData.class);
-        if(snapshot.get("auto_type") != null) {
-            Map<String, Integer> autoTypeMap = Objects.requireNonNull(dataList).getAutoTypeMap();
-            List<String> autoTypeList = new ArrayList<>(autoTypeMap.keySet());
-            autoTypeList.add(0, getString(R.string.pref_entry_void));// add the void value into the first place.
-            String[] arrAutoType = autoTypeList.toArray(new String[0]);
-
-            //if(TextUtils.isEmpty(typeName)) typeName = getString(R.string.pref_entry_void);
-            autoType.setEntries(arrAutoType);
-            autoType.setEntryValues(arrAutoType);
-            autoType.setValue(typeName);
-            autoType.setSummaryProvider(autotypePref -> typeName);
-        }
-
-        if(snapshot.get("engine_type") != null) {
-            Map<String, Integer> engineTypeMap = Objects.requireNonNull(dataList).getEngineTypeMap();
-            List<String> engineTypeList = new ArrayList<>(engineTypeMap.keySet());
-            engineTypeList.add(0, getString(R.string.pref_entry_void));
-            String[] arrEngineType = engineTypeList.toArray(new String[0]);
-
-            // The engine name should be saved as null when it's not set b/c it is referenced in
-            // the autofilter checkbox. To show the summary, however, the null value should be
-            // the String value to select the list item and show the summary.
-            engineType.setEntries(arrEngineType);
-            engineType.setEntryValues(arrEngineType);
-            engineType.setValue(engineName);
-            engineType.setSummaryProvider(enginetypePref -> engineName);
-        }
-    }
-
     // To make the Up button working in Fragment, it is required to invoke sethasOptionsMenu(true)
     // and the return value should be true in onOptionsItemSelected(). The values of each preference
     // is translated to List<String>, then converted to JSONString for transferring the json string
@@ -424,6 +420,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             // The JSONString will be used to create the autofilter in the board which works as
             // the query conditions.
             List<String> dataList = new ArrayList<>();
+            //if(autoMaker.findIndexOfValue(autoMaker.getValue()) == 0) autoMaker.setValue(null);
             if(engineType.findIndexOfValue(engineType.getValue()) == 0) engineType.setValue(null);
 
             dataList.add(autoMaker.getValue());
@@ -451,9 +448,11 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         Query query = modelColRef;
 
         if(!TextUtils.isEmpty(type) && autoType.findIndexOfValue(type) != 0) {
-            query = modelColRef.whereGreaterThanOrEqualTo(FieldPath.of("auto_type", type), 0);
-        } else if(!TextUtils.isEmpty(engine) && engineType.findIndexOfValue(engine) != 0) {
-            query = modelColRef.whereGreaterThanOrEqualTo(FieldPath.of("engine_type", engine), 0);
+            query = modelColRef.whereEqualTo("auto_type", type);
+        }
+
+        if(!TextUtils.isEmpty(engine) && engineType.findIndexOfValue(engine) != 0) {
+            query = query.whereArrayContains("engine_type", engine);
         }
 
         query.get().addOnSuccessListener(queries -> {
@@ -476,12 +475,13 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     // Static nested class to create AlertDialog to select an engine type if an model has multiple
     // engine types.
-    static class EngineTypeDialogFragment extends DialogFragment {
-        private final SettingAutoFragment outerFragment;
+    public static class EngineTypeDialogFragment extends DialogFragment {
+        private final SettingAutoFragment autoFragment;
         private CharSequence[] types;
+        private int which;
 
-        EngineTypeDialogFragment(SettingAutoFragment outerFragment) {
-            this.outerFragment = outerFragment;
+        EngineTypeDialogFragment(SettingAutoFragment autoFragment) {
+            this.autoFragment = autoFragment;
         }
 
         @NonNull
@@ -490,8 +490,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
             builder.setTitle("Engine Type")
                     .setItems(types, (dialog, which) -> {
-                        outerFragment.engineType.setValue(types[which].toString());
-                        outerFragment.engineType.setSummaryProvider(enginetypePref -> types[which]);
+                        this.which = which;
+                        autoFragment.engineType.setValue(types[which].toString());
+                        autoFragment.engineType.setSummaryProvider(pref -> types[which]);
                     });
 
             return builder.create();
@@ -500,6 +501,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         void setEngineType(CharSequence[] types) {
             this.types = types;
         }
+        int getSelectedEngineType() {
+            return which;
+        }
+
     }
 
 
