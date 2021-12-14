@@ -103,7 +103,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
 
 
-    // WARNING: Setting a summary with a String formatting marker is no longer supported.
+    // WARNING!!!: Setting a summary with a String formatting marker is no longer supported.
     // You should use a SummaryProvider instead.
     void setSpannedAutoSummary(Preference pref, String summary) {
         SpannableString sb = new SpannableString(summary);
