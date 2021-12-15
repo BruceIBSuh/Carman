@@ -98,7 +98,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // query the registration number of the automaker and the automodel, if the model name is given.
         // At the same time, show the progressbar until the number is queried.
         log.i("maker name: %s", makerName);
-        if(TextUtils.isEmpty(makerName)) {
+        if(TextUtils.isEmpty(makerName) || makerName.matches(getString(R.string.pref_entry_void))) {
             autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
         } else {
             autoPref.showProgressBar(true);
@@ -221,9 +221,13 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
             // if it is true. This is firmly at bug issue.
             if(!TextUtils.isEmpty(makerName)) {
+                log.i("view created");
+                autoPref.setSummaryProvider(pref -> makerName);
+                /*
                 autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
+                */
             }
         });
 

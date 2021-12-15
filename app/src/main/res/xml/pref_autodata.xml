@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+The simplest way to do this is just to have Android do it for you. Assuming you want the summary
+to match the selected value, you can simply set the summary of the ListPreference to "%s" using
+either XML or the setSummary method in Java.
+-->
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto" >
     <ListPreference
         app:key="carman_pref_auto_maker"
@@ -26,3 +31,7 @@
         app:title="@string/pref_auto_year"
         app:summary="%s" />
 </PreferenceScreen>
+<!--
+Setting a summary with a String formatting marker is no longer supported.
+You should use a SummaryProvider instead.
+-->
