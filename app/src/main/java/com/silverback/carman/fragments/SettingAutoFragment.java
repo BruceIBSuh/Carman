@@ -88,22 +88,25 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             for(QueryDocumentSnapshot snapshot : queries) autoMakerList.add(snapshot.getId());
             autoMaker.setEntries(autoMakerList.toArray(new CharSequence[0]));
             autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[0]));
+
+            final String maker = autoMaker.getValue();
+            if(autoMaker.findIndexOfValue(maker) > 0) {
+                autoMaker.setValue(maker);
+                queryAutoMaker(maker);
+            } else {
+                setAutoPreferenceSummary(autoMaker, 0);
+                autoMaker.setValue(null);
+            }
         });
 
         // Create the year list and set the entries to the autoYear preference.
         List<String> yearList = new ArrayList<>();
+        yearList.add(0, getString(R.string.pref_entry_void));
         int year = Calendar.getInstance().get(Calendar.YEAR);
         for (int i = year + 1; i >= ((year + 1) - SINCE); i--) yearList.add(String.valueOf(i));
         String[] years = yearList.toArray(new String[0]); // zero-size array.
         autoYear.setEntries(years);
         autoYear.setEntryValues(years);
-        //autoYear.setEnabled(true);
-        setAutoPreferenceSummary(autoYear);
-
-        // If an automaker has been already set, continue to query the automaker document with 
-        // its name to retrieve the autotype and engintype field.
-        String entryValue = autoMaker.getValue();
-        if(!TextUtils.isEmpty(entryValue)) queryAutoMaker(entryValue);
     }
 
 
@@ -129,7 +132,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 resetAutoPreferences(arrPref);
 
                 if(autoMaker.findIndexOfValue(entryValue) > 0) queryAutoMaker(entryValue);
-                else setAutoPreferenceSummary(autoMaker);
+                else setAutoPreferenceSummary(autoMaker, 0);
 
                 /*
                 // Decrease the previous automaier reg number
@@ -141,7 +144,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 if(autoMaker.findIndexOfValue(entryValue) > 0) {
                     autoRef.document(entryValue).update("reg_automaker", FieldValue.increment(1));
                 }
-
                  */
                 updateRegFields(autoMaker, entryValue);
 
@@ -149,7 +151,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
             case Constants.AUTO_TYPE:
                 if(entryValue.equals(autoType.getValue())) return true;
-                //isAutoTypeChanged = true;
+                isAutoTypeChanged = true;
                 autoType.setValue(entryValue);
                 autoType.setSummaryProvider(autotypePref -> entryValue);
                 autoModel.setEnabled(false); //until query completes.
@@ -161,7 +163,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             case Constants.ENGINE_TYPE:
                 if(entryValue.equals(engineType.getValue())) return true;
 
-                //isEngineTypeChanged = true;
+                isEngineTypeChanged = true;
                 engineType.setValue(entryValue);
                 engineType.setSummaryProvider(enginetypePref -> entryValue);
                 autoModel.setEnabled(false);
@@ -180,7 +182,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 */
                 log.i("automodel: %s, %s", entryValue, autoModel.getValue());
                 if(autoModel.findIndexOfValue(entryValue) > 0) queryAutoModel(makerId, entryValue);
-                else setAutoPreferenceSummary(autoModel);
+                else setAutoPreferenceSummary(autoModel, 0);
 
                 updateRegFields(autoModel, entryValue);
 
@@ -211,17 +213,14 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     @Override
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         makerId = makershot.getId();
-        autoMaker.setValue(makerId);
         int num = Objects.requireNonNull(makershot.getLong("reg_automaker")).intValue();
-        setAutoPreferenceSummary(autoMaker);
+        setAutoPreferenceSummary(autoMaker, num);
 
-        final String autotypeEntryValue = autoType.getValue();
-        final String enginetypeEntryValue = engineType.getValue();
-
+        String typeValue = autoType.getValue();
+        String engineValue = engineType.getValue();
         // Retrieve the auto_type and engine_type fields as Map object, typecasting them to
         // ArrayList and String arrays.
         ObjectAutoData dataList = makershot.toObject(ObjectAutoData.class);
-        // Set the entries to the autoType preference.
         if(makershot.get("auto_type") != null) {
             Map<String, Integer> autotypeMap = Objects.requireNonNull(dataList).getAutoTypeMap();
             List<String> autotypeList = new ArrayList<>(autotypeMap.keySet());
@@ -232,8 +231,12 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoType.setEntryValues(arrAutotype);
             autoType.setEnabled(true);
 
-            autoType.setValue(autotypeEntryValue);
-            setAutoPreferenceSummary(autoType);
+            autoType.setValue(typeValue);
+            if(TextUtils.isEmpty(typeValue)) {
+                autoType.setValueIndex(0);
+                setAutoPreferenceSummary(autoType, 0);
+            }
+
         }
         // Set the enes to the engineType preference
         if(makershot.get("engine_type") != null) {
@@ -246,13 +249,31 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             engineType.setEntryValues(arrEngineType);
             engineType.setEnabled(true);
 
-            engineType.setValue(enginetypeEntryValue);
-            setAutoPreferenceSummary(engineType);
+            engineType.setValue(engineValue);
+            if(TextUtils.isEmpty(engineValue)) {
+                engineType.setValueIndex(0);
+                setAutoPreferenceSummary(engineType, 0);
+            }
+
         }
 
         // Retrieve the automodels by querying the automodel collection
-        setAutoModelEntries(autotypeEntryValue, enginetypeEntryValue);
         autoYear.setEnabled(true);
+        if(TextUtils.isEmpty(autoYear.getValue())) {
+            autoYear.setValue(null);
+            setAutoPreferenceSummary(autoYear, 0);
+        }
+
+        setAutoModelEntries(typeValue, engineValue);
+
+        // If the automodel preference has a value which may get preference.getValue(), query the
+        // automodel to fetch the regit number. Otherwise, set the summary
+        //if(!TextUtils.isEmpty(autoModel.getValue())) queryAutoModel(makerId, autoModel.getValue());
+        /*
+        if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
+            queryAutoModel(makerId, autoModel.getValue());
+        } else setAutoPreferenceSummary(autoModel, 0);
+        */
 
         // When the auto maker changes, which means the previous automaker is not null, update
         // the current registration number to be increased. The boolean value indicates whether
@@ -276,25 +297,24 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         setSpannedAutoSummary(autoMaker, makerSummary);
         */
 
-        // If the automodel preference has a value which may get preference.getValue(), query the
-        // automodel to fetch the regit number. Otherwise, set the summary
-        if(!TextUtils.isEmpty(autoModel.getValue())) queryAutoModel(makerId, autoModel.getValue());
-        else autoModel.setSummaryProvider(preference -> getString(R.string.pref_entry_void));
-        //if(isMakerChanged) isMakerChanged = false;
+
 
     }
-
 
     //@SuppressWarnings({"ConstantConditions", "unchecked"})
     @Override
     public void queryAutoModelSnapshot(DocumentSnapshot modelshot) {
         modelId = modelshot.getId();
         int regModel = Objects.requireNonNull(modelshot.getLong("reg_model")).intValue();
+        setAutoPreferenceSummary(autoModel, regModel);
         log.i("automodel id: %s", modelId);
-        final String value = modelshot.getString("auto_type");
-        if(!TextUtils.isEmpty(value)) {
-            autoType.setValue(value);
-            autoType.setSummaryProvider(pref -> value);
+
+        final String autotype = modelshot.getString("auto_type");
+        //if(!TextUtils.isEmpty(autotype)) {
+        if(autoType.findIndexOfValue(autotype) > 0) {
+            autoType.setValue(autotype);
+            //autoType.setSummaryProvider(pref -> autotype);
+            setAutoPreferenceSummary(autoType, 0);
         }
 
         if(modelshot.get("engine_type") != null) {
@@ -303,11 +323,12 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             log.i("engine type: %s", enginetypeList.size());
             if (enginetypeList.size() == 1) {
                 engineType.setValue(enginetypeList.get(0));
-                engineType.setSummaryProvider(enginetypePref -> enginetypeList.get(0));
+                //engineType.setSummaryProvider(enginetypePref -> enginetypeList.get(0));
+                setAutoPreferenceSummary(engineType, 0);
             } else if(isModelChanged && enginetypeList.size() > 1) {
                 CharSequence[] arrType = enginetypeList.toArray(new CharSequence[0]);
                 engineTypeDialogFragment.setEngineType(arrType);
-                engineTypeDialogFragment.show(getChildFragmentManager(), "engineTypeFragment");
+                engineTypeDialogFragment.show(getChildFragmentManager(), "engineFragment");
             }
         }
 
@@ -329,7 +350,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 modelshot.getId(), "", getString(R.string.pref_auto_reg), regModel);
         setSpannedAutoSummary(autoModel, modelSummary);
         */
-        setAutoPreferenceSummary(autoModel);
+
+        //setAutoPreferenceSummary(autoModel, 0);
         //if(isModelChanged) isModelChanged = false;
     }
 
@@ -347,7 +369,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             // the query conditions.
             List<String> dataList = new ArrayList<>();
             //if(autoMaker.findIndexOfValue(autoMaker.getValue()) == 0) autoMaker.setValue(null);
-            if(engineType.findIndexOfValue(engineType.getValue()) == 0) engineType.setValue(null);
+            //if(engineType.findIndexOfValue(engineType.getValue()) == 0) engineType.setValue(null);
 
             dataList.add(autoMaker.getValue());
             dataList.add(autoModel.getValue());
@@ -368,16 +390,16 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             preference.setValue(null);
             preference.setEntries(new CharSequence[0]);
             preference.setEntryValues(null);
-            preference.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
+            setAutoPreferenceSummary(preference, 0);
         }
     }
     // Method for setting the initial default summary to each preferences.
     // List/Edit)preference.setSummaryProvider(SummaryProvider(I))
-    private void setAutoPreferenceSummary(@NonNull ListPreference preference) {
+    private void setAutoPreferenceSummary(ListPreference preference, int num) {
         preference.setSummaryProvider(pref -> {
             String value = preference.getValue();
-            //String output = (num == 0)? value : value + "[" + num + "]";
-            return (TextUtils.isEmpty(value))? getString(R.string.pref_entry_void): value;
+            String output = (num == 0)? value : value + " [" + num + "]";
+            return (TextUtils.isEmpty(value))? getString(R.string.pref_entry_void): output;
         });
 
     }
@@ -410,32 +432,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
              */
 
         }
-        /*
-        switch(pref.getKey()){
-            case Constants.AUTO_MAKER:
-                log.i("update automaker");
-                if(prev > 0) autoRef.document(prevEntry).update("reg_automaker", FieldValue.increment(-1));
-                if(cur > 0) autoRef.document(postEntry).update("reg_automaker", FieldValue.increment(1));
-
-                if(!TextUtils.isEmpty(modelId)) {
-                    final DocumentReference docRef = autoRef.document(prevEntry).collection("automodels").document(modelId);
-                    FirebaseFirestore.getInstance().runTransaction(transaction -> {
-                        DocumentSnapshot documentSnapshot = transaction.get(docRef);
-                        String engineType = autoType.getValue();
-                        log.i("previous enginetype: %s", engineType);
-                        return null;
-                    });
-
-                }
-
-
-                break;
-            case Constants.AUTO_MODEL:
-                log.i("update automodel");
-                break;
-        }
-
-         */
 
     }
 
@@ -453,7 +449,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         if(!TextUtils.isEmpty(autotype) && autoType.findIndexOfValue(autotype) > 0) {
             query = modelColRef.whereEqualTo("auto_type", autotype);
         }
-
         if(!TextUtils.isEmpty(enginetype) && engineType.findIndexOfValue(enginetype) > 0) {
             query = query.whereArrayContains("engine_type", enginetype);
         }
@@ -466,7 +461,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
             // Initialize the automodel value and summary when the autotype or enginetype has a new
             // value.
-            if(isMakerChanged || isAutoTypeChanged || isEngineTypeChanged) {
+            //if(isMakerChanged || isAutoTypeChanged || isEngineTypeChanged) {
+            if(isAutoTypeChanged || isEngineTypeChanged){
                 autoModel.setValue(null);
                 autoModel.setSummaryProvider(preference -> getString(R.string.pref_entry_void));
             }

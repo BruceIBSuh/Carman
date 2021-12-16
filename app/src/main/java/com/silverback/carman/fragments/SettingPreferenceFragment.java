@@ -223,11 +223,10 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             if(!TextUtils.isEmpty(makerName)) {
                 log.i("view created");
                 autoPref.setSummaryProvider(pref -> makerName);
-                /*
+
                 autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
-                */
             }
         });
 
