@@ -71,9 +71,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String automaker) {
         autoRef.document(automaker).get().addOnSuccessListener(snapshot -> {
-            if(snapshot.exists()) {
-                queryAutoMakerSnapshot(snapshot);
-            }
+            if(snapshot != null && snapshot.exists()) queryAutoMakerSnapshot(snapshot);
         }).addOnFailureListener(e -> log.e("No automaker queried:%s", e.getMessage()));
     }
 
@@ -84,7 +82,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     void queryAutoModel(String automaker, String modelName) {
         autoRef.document(automaker).collection("automodels").document(modelName).get()
                 .addOnSuccessListener(snapshot -> {
-                    log.i("model: %s", snapshot.getId());
                     if(snapshot.exists()) queryAutoModelSnapshot(snapshot);
                 });
     }

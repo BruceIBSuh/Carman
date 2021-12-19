@@ -221,9 +221,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
             // if it is true. This is firmly at bug issue.
             if(!TextUtils.isEmpty(makerName)) {
-                log.i("view created");
-                autoPref.setSummaryProvider(pref -> makerName);
-
+                log.i("view created:%s", makerName);
                 autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
