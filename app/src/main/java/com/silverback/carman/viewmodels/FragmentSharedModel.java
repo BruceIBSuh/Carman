@@ -62,6 +62,8 @@ public class FragmentSharedModel extends ViewModel {
     // PermissionDialogFragment and GeneralFragment to pass the dialog click event.
     private MutableLiveData<Boolean> permission;
 
+    private MutableLiveData<CharSequence> engineType;
+
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
     public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
     public LiveData<Fragment> getCurrentFragment() {
@@ -235,5 +237,11 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<Calendar> getCustomDateAndTime() {
         if(customDateAndTime == null) customDateAndTime = new MutableLiveData<>();
         return customDateAndTime;
+    }
+
+    // SetttingAutoFragment and EngineDialogFragment defined as static inner class
+    public MutableLiveData<CharSequence> getEngineSelected() {
+        if(engineType == null) engineType = new MutableLiveData<>();
+        return engineType;
     }
 }

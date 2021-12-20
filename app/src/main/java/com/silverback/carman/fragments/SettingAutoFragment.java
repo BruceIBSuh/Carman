@@ -4,9 +4,9 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -20,11 +20,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.Source;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -56,11 +53,10 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     private FragmentSharedModel fragmentModel;
     private ListPreference autoMaker, autoType, autoModel, engineType, autoYear;
-    private EngineTypeDialogFragment engineTypeDialogFragment;
-    //private String makerId, modelId;
+    private EngineDialogFragment engineDialogFragment;
     private DocumentSnapshot makershot, modelshot;
-    //private DocumentSnapshot makershot;
     private boolean isMakerChanged, isModelChanged, isAutoTypeChanged, isEngineTypeChanged;
+    private int engineNumber;
 
     // Constructor
     public SettingAutoFragment() {
@@ -75,7 +71,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireActivity());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        engineTypeDialogFragment = new EngineTypeDialogFragment(this);
+        engineDialogFragment = new EngineDialogFragment(this, fragmentModel);
 
         autoMaker = findPreference(Constants.AUTO_MAKER);
         autoType = findPreference(Constants.AUTO_TYPE);
@@ -116,6 +112,15 @@ public class SettingAutoFragment extends SettingBaseFragment implements
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        fragmentModel.getEngineSelected().observe(getViewLifecycleOwner(), item -> {
+            log.i("selected engine Type: %s", item);
+            updateRegistrationNum(engineType, item.toString(), true);
+        });
+    }
+
+    @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
         String entryValue = (String)value;
         String prevValue = ((ListPreference)preference).getValue();
@@ -126,8 +131,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             case Constants.AUTO_MAKER:
                 isMakerChanged = true;
                 // Reset all autodata except autoModel
-                ListPreference[] arrPref = {autoType, engineType, autoModel, autoYear};
-                resetAutoPreferences(arrPref);
+                //ListPreference[] arrPref = {autoType, engineType, autoModel, autoYear};
+                //resetAutoPreferences(arrPref);
 
                 // Decrease the previous automaker number.
                 if(autoMaker.findIndexOfValue(autoMaker.getValue()) > 0){
@@ -141,40 +146,37 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 return true;
 
             case Constants.AUTO_TYPE:
-                log.i("autotype preference changed: %s", autoModel.getValue());
                 isAutoTypeChanged = true;
-
                 if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
                     updateRegistrationNum(autoModel, autoModel.getValue(), false);
                 }
 
                 autoType.setValue(entryValue);
-                autoType.setSummaryProvider(autotypePref -> entryValue);
+                setAutoPreferenceSummary(autoType, 0);
                 setAutoModelEntries(entryValue, engineType.getValue());
                 return true;
 
             case Constants.ENGINE_TYPE:
-                log.i("engine type preference changed");
                 isEngineTypeChanged = true;
                 if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
                     updateRegistrationNum(autoModel, autoModel.getValue(), false);
                 }
 
                 engineType.setValue(entryValue);
-                engineType.setSummaryProvider(enginetypePref -> entryValue);
+                setAutoPreferenceSummary(engineType, 0);
                 setAutoModelEntries(autoType.getValue(), entryValue);
                 return true;
 
             case Constants.AUTO_MODEL:
                 isModelChanged = true;
-
                 if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
                     updateRegistrationNum(autoModel, autoModel.getValue(), false);
                 }
 
-                if(autoModel.findIndexOfValue(entryValue) > 0)
+                if(autoModel.findIndexOfValue(entryValue) > 0) {
+                    log.i("queryAutoModel init");
                     queryAutoModel(makershot.getId(), entryValue);
-                else setAutoPreferenceSummary(autoModel, 0);
+                } else setAutoPreferenceSummary(autoModel, 0);
 
                 return true;
 
@@ -189,11 +191,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         this.makershot = makershot;
         // Set or update the registration number according to whether the automaker preference
         // has changed.
-        if(isMakerChanged) {
-            updateRegistrationNum(autoMaker, makershot.getId(), true);
-            //isMakerChanged = false;
-        } else {
-            int num = Objects.requireNonNull(makershot.getLong("reg_automaker")).intValue();
+        if(isMakerChanged) updateRegistrationNum(autoMaker, makershot.getId(), true);
+        else {
+            int num = Objects.requireNonNull(makershot.getLong("reg_maker")).intValue();
             setAutoPreferenceSummary(autoMaker, num);
         }
 
@@ -227,7 +227,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             engineType.setEntries(arrEngineType);
             engineType.setEntryValues(arrEngineType);
             engineType.setEnabled(true);
-
             engineType.setValue(engineValue);
             if(TextUtils.isEmpty(engineValue)) {
                 engineType.setValueIndex(0);
@@ -248,6 +247,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoYear.setValueIndex(0);
             setAutoPreferenceSummary(autoYear, 0);
         }
+
+        isMakerChanged = false;
     }
 
     //@SuppressWarnings({"ConstantConditions", "unchecked"})
@@ -258,6 +259,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         if(isModelChanged) updateRegistrationNum(autoModel, modelshot.getId(), true);
         else {
+            log.i("automodel saved");
             int num = Objects.requireNonNull(modelshot.getLong("reg_model")).intValue();
             setAutoPreferenceSummary(autoModel, num);
         }
@@ -268,14 +270,19 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         if(modelshot.get("engine_type") != null) {
             ArrayAutoData autodata = modelshot.toObject(ArrayAutoData.class);
-            List<String> enginetypeList = Objects.requireNonNull(autodata).getEngineTypeList();
-            if (enginetypeList.size() == 1) {
-                engineType.setValue(enginetypeList.get(0));
+            List<String> engineList = Objects.requireNonNull(autodata).getEngineTypeList();
+            this.engineNumber = engineList.size();
+            log.i("engiine number: %s", engineNumber);
+            if(engineList.size() == 1) {
+                log.i("single engine type");
+                engineType.setValue(engineList.get(0));
+                updateRegistrationNum(engineType, engineList.get(0), true);
                 setAutoPreferenceSummary(engineType, 0);
-            } else if(isModelChanged && enginetypeList.size() > 1) {
-                CharSequence[] arrType = enginetypeList.toArray(new CharSequence[0]);
-                engineTypeDialogFragment.setEngineTypes(arrType);
-                engineTypeDialogFragment.show(getChildFragmentManager(), "engineFragment");
+            } else if(isModelChanged && engineList.size() > 1) {
+                log.i("popup dialog: %s", engineNumber);
+                CharSequence[] arrType = engineList.toArray(new CharSequence[0]);
+                engineDialogFragment.setEngineTypes(arrType);
+                engineDialogFragment.show(getChildFragmentManager(), "engineFragment");
             }
         }
 
@@ -341,8 +348,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
         // Initialize the automodel value and summary when the autotype or enginetype has a new
         // value.
-        if(isMakerChanged || isAutoTypeChanged || isEngineTypeChanged) {
-            //if(isAutoTypeChanged || isEngineTypeChanged){
+        if(isAutoTypeChanged || isEngineTypeChanged) {
             autoModel.setValue(null);
             autoModel.setValueIndex(0);
             setAutoPreferenceSummary(autoModel, 0);
@@ -357,6 +363,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 preference.setEntryValues(null);
             }
             preference.setEnabled(true);
+            preference.setValueIndex(0);
             setAutoPreferenceSummary(preference, 0);
         }
     }
@@ -373,33 +380,82 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     private void updateRegistrationNum(ListPreference pref, String value, boolean isIncrement){
         int inc = (isIncrement) ? 1 : -1;
+        final DocumentReference makerRef = autoRef.document(makershot.getId());
         if(pref.equals(autoMaker)) {
-            autoRef.document(value).update("reg_automaker", FieldValue.increment(inc))
-                    .addOnCompleteListener(aVoid -> {
-                        autoRef.document(value).get().addOnSuccessListener(snapshot -> {
-                            log.i("updated field:%s", snapshot.get("reg_automaker"));
-                            int num = Objects.requireNonNull(snapshot.getLong("reg_automaker")).intValue();
-                            setAutoPreferenceSummary(autoMaker, num);
-                        });
-                    });
-        } else if(pref.equals(autoModel)) {
-            DocumentReference makerRef = autoRef.document(makershot.getId());
-            DocumentReference modelRef = makerRef.collection("automodels").document(value);
+            makerRef.update("reg_maker", FieldValue.increment(inc)).addOnCompleteListener(aVoid -> {
+                makerRef.get().addOnSuccessListener(snapshot -> {
+                    if(isIncrement) {
+                        int num = Objects.requireNonNull(snapshot.getLong("reg_maker")).intValue();
+                        setAutoPreferenceSummary(autoMaker, num);
+                    }
+                });
 
+                if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
+                    final String model = autoModel.getValue();
+                    DocumentReference modelRef = makerRef.collection("automodels").document(model);
+
+                    FirebaseFirestore.getInstance().runTransaction(transaction -> {
+                        DocumentSnapshot doc = transaction.get(modelRef);
+                        final String autotype = doc.getString("auto_type");
+
+                        FieldPath regEnginePath = FieldPath.of("reg_engine", engineType.getValue());
+                        FieldPath engineTypePath = FieldPath.of("engine_type", engineType.getValue());
+                        FieldPath autoTypePath = FieldPath.of("auto_type", autotype);
+
+                        transaction.update(modelRef, "reg_model", FieldValue.increment(inc));
+                        transaction.update(modelRef, regEnginePath, FieldValue.increment(inc));
+                        transaction.update(makerRef, engineTypePath, FieldValue.increment(inc));
+                        transaction.update(makerRef, autoTypePath, FieldValue.increment(inc));
+
+                        return null;
+                    }).addOnCompleteListener(task -> {
+                        // Reset all autodata except autoModel
+                        if(task.isSuccessful()) {
+                            ListPreference[] arrPref = {autoType, engineType, autoModel, autoYear};
+                            resetAutoPreferences(arrPref);
+                        }
+                    });
+
+                }
+            });
+
+        } else if(pref.equals(autoModel)) {
+            final DocumentReference modelRef = makerRef.collection("automodels").document(modelshot.getId());
             modelRef.update("reg_model", FieldValue.increment(inc)).addOnCompleteListener(aVoid -> {
                 modelRef.get().addOnSuccessListener(snapshot -> {
-                    log.i("updated model:%s", snapshot.get("reg_model"));
-                    int num = Objects.requireNonNull(snapshot.getLong("reg_model")).intValue();
-                    setAutoPreferenceSummary(autoModel, num);
-
-                    log.i("enginetype value: %s", engineType.getValue());
-                    if(engineType.findIndexOfValue(engineType.getValue()) > 0) {
-                        FieldPath path = FieldPath.of("reg_enginetype", engineType.getValue());
-                        modelRef.update(path, FieldValue.increment(inc));
+                    if(isIncrement) {
+                        log.i("new automodel");
+                        int num = Objects.requireNonNull(snapshot.getLong("reg_model")).intValue();
+                        setAutoPreferenceSummary(autoModel, num);
                     }
+
+                    final String autotype = snapshot.getString("auto_type");
+                    final String enginetype = engineType.getValue();
+                    FirebaseFirestore.getInstance().runTransaction(transaction -> {
+                        FieldPath autoTypePath = FieldPath.of("auto_type", autotype);
+                        FieldPath engineTypePath = FieldPath.of("engine_type", enginetype);
+                        transaction.update(makerRef, autoTypePath, FieldValue.increment(inc));
+                        // Engine Type should be separately handled due to AlertDialogFrragment
+                        // selection for multi engine types.
+                        if(!isIncrement) {
+                            transaction.update(makerRef, engineTypePath, FieldValue.increment(inc));
+                            transaction.update(modelRef, autoTypePath, FieldValue.increment(inc));
+                        }
+                        return null;
+                    });
                 });
             });
 
+        } else if(pref.equals(engineType)) {
+            if(isIncrement) {
+                final String engine = engineType.getValue();
+                DocumentReference modelRef = makerRef.collection("automodels").document(modelshot.getId());
+                FirebaseFirestore.getInstance().runTransaction(transaction -> {
+                    transaction.update(makerRef, FieldPath.of("engine_type", engine), FieldValue.increment(inc));
+                    transaction.update(modelRef, FieldPath.of("reg_engine", engine), FieldValue.increment(inc));
+                    return null;
+                });
+            }
         }
     }
 
@@ -408,13 +464,15 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     // Static nested class to create AlertDialog to select an engine type if an model has multiple
     // engine types.
-    public static class EngineTypeDialogFragment extends DialogFragment {
+    public static class EngineDialogFragment extends DialogFragment {
         private final SettingAutoFragment autoFragment;
+        private final FragmentSharedModel fragmentModel;
         private CharSequence[] types;
         private int which;
 
-        EngineTypeDialogFragment(SettingAutoFragment autoFragment) {
+        EngineDialogFragment(SettingAutoFragment autoFragment, FragmentSharedModel model) {
             this.autoFragment = autoFragment;
+            this.fragmentModel = model;
         }
 
         @NonNull
@@ -426,6 +484,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                         this.which = which;
                         autoFragment.engineType.setValue(types[which].toString());
                         autoFragment.engineType.setSummaryProvider(pref -> types[which]);
+                        fragmentModel.getEngineSelected().setValue(this.types[which]);
                     });
 
             return builder.create();
@@ -434,11 +493,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         void setEngineTypes(CharSequence[] types) {
             this.types = types;
         }
-
-        String getSelectedEngineType() {
-            return types[which].toString();
-        }
-
     }
 
 
