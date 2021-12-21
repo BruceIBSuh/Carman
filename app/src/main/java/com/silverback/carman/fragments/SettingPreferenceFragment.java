@@ -246,7 +246,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
         // Upon completion of querying the auto maker, sequentially re-query the auto model
         // with the auto make id from the snapshot.
-        regMakerNum = String.valueOf(makershot.getLong("reg_automaker"));
+        regMakerNum = String.valueOf(makershot.getLong("reg_maker"));
         String summary = String.format("%s (%s)", makerName, regMakerNum);
         setSpannedAutoSummary(autoPref, summary);
         // Hide the progressbar in the preference

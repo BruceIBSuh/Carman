@@ -165,7 +165,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     }
 
     static class ArrayAutoData {
-        @PropertyName("engine_type")
+        @PropertyName("model_engine")
         private List<String> enginetypeList;
         public ArrayAutoData(){
             //must have a public no-argument contructor;
@@ -173,9 +173,9 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         public ArrayAutoData(List<String> enginetypeList) {
             this.enginetypeList = enginetypeList;
         }
-        @PropertyName("engine_type")
+        @PropertyName("model_engine")
         public List<String> getEngineTypeList() {return enginetypeList;}
-        @PropertyName("engine_type")
+        @PropertyName("model_engine")
         public void setEngineTypeList(List<String> enginetypeList) {
             this.enginetypeList = enginetypeList;
         }
