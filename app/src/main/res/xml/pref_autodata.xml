@@ -14,24 +14,26 @@ either XML or the setSummary method in Java.
         app:key="carman_pref_auto_type"
         app:enabled="false"
         app:title="@string/pref_auto_type"
-        app:summary="%s" />
+        app:defaultValue="@string/pref_entry_void" />
     <ListPreference
         app:key="carman_pref_engine_type"
         app:enabled="false"
         app:title="@string/pref_engine_type"
-        app:summary="%s" />
+        app:defaultValue="@string/pref_entry_void" />
     <ListPreference
         app:key="carman_pref_auto_model"
         app:enabled="false"
         app:title="@string/pref_auto_model"
-        app:summary="%s"/>
+        app:defaultValue="@string/pref_entry_void" />
     <ListPreference
         app:key="carman_pref_auto_year"
         app:enabled="false"
         app:title="@string/pref_auto_year"
-        app:summary="%s" />
+        app:defaultValue="@string/pref_entry_void" />
 </PreferenceScreen>
 <!--
 Setting a summary with a String formatting marker is no longer supported.
 You should use a SummaryProvider instead.
+
+app:summary="%s" means that summary reads the selected value.
 -->

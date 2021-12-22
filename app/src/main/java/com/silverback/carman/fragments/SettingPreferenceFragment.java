@@ -244,7 +244,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     // setting the summary.
     @Override
     public void queryAutoMakerSnapshot(DocumentSnapshot makershot) {
-        // Upon completion of querying the auto maker, sequentially re-query the auto model
+        // Upon completion of querying the auto maker, seqduentially re-query the auto model
         // with the auto make id from the snapshot.
         regMakerNum = String.valueOf(makershot.getLong("reg_maker"));
         String summary = String.format("%s (%s)", makerName, regMakerNum);
