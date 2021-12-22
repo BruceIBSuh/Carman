@@ -93,7 +93,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoMaker.setEntries(autoMakerList.toArray(new CharSequence[0]));
             autoMaker.setEntryValues(autoMakerList.toArray(new CharSequence[0]));
 
-            // Automakre has been set
             if(autoMaker.findIndexOfValue(autoMaker.getValue()) > 0) {
                 queryAutoMaker(autoMaker.getValue());
             } else {
@@ -124,9 +123,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
-        String entryValue = (String)value;
+        String newValue = (String)value;
         // Prevent repeating click on the same pref.
-        if(entryValue.equals(((ListPreference)preference).getValue())) return false;
+        if(newValue.equals(((ListPreference)preference).getValue())) return false;
 
         switch(preference.getKey()) {
             case Constants.AUTO_MAKER:
@@ -135,19 +134,12 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 ListPreference[] arrPrefs = {autoModel, autoType, engineType, autoYear};
                 for(ListPreference pref : arrPrefs) pref.setEnabled(false);
 
-                log.i("automaker changed: %s, %s", entryValue, autoMaker.getValue());
                 if(autoMaker.findIndexOfValue(autoMaker.getValue()) > 0) {
-                    log.i("decrease automaker");
                     updateRegField(autoMaker, false);
                 }
 
-                if(autoMaker.findIndexOfValue(entryValue) > 0) {
-                    log.i("query and increase automaker");
-                    queryAutoMaker(entryValue);
-                } else {
-                    log.i("no set summary");
-                    setAutoPreferenceSummary(autoMaker, 0);
-                }
+                if(autoMaker.findIndexOfValue(newValue) > 0) queryAutoMaker(newValue);
+                else setAutoPreferenceSummary(autoMaker, 0);
 
                 return true;
 
@@ -157,40 +149,42 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                     updateRegField(autoModel, false);
                 }
 
-                autoType.setValue(entryValue);
+                autoType.setValue(newValue);
                 setAutoPreferenceSummary(autoType, 0);
-                setAutoModelEntries(entryValue, engineType.getValue());
+
+                setAutoModelEntries(newValue, engineType.getValue());
+
                 return true;
 
             case Constants.ENGINE_TYPE:
                 isEngineTypeChanged = true;
+
                 if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
                     updateRegField(autoModel, false);
                 }
 
-                engineType.setValue(entryValue);
+                engineType.setValue(newValue);
                 setAutoPreferenceSummary(engineType, 0);
-                setAutoModelEntries(autoType.getValue(), entryValue);
+
+                setAutoModelEntries(autoType.getValue(), newValue);
                 return true;
 
             case Constants.AUTO_MODEL:
-                log.i("automodel values: %s, %s", entryValue, autoModel.getValue());
                 isModelChanged = true;
-
                 if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
-                    log.i("decrease prev auto model");
                     updateRegField(autoModel, false);
                 }
 
-                if(autoModel.findIndexOfValue(entryValue) > 0) {
-                    log.i("query and increase new model");
-                    queryAutoModel(makershot.getId(), entryValue);
-
+                if(autoModel.findIndexOfValue(newValue) > 0) {
+                    queryAutoModel(makershot.getId(), newValue);
                 } else {
-                    log.i("model not set");
-                    setAutoPreferenceSummary(autoModel, 0);
-                    //ListPreference[] arrPref = {autoType, engineType, autoYear};
-                    //for(ListPreference pref : arrPref) setAutoPreferenceSummary(pref, 0);
+                    //setAutoPreferenceSummary(autoModel, 0);
+                    ListPreference[] arrPref = {autoModel, autoType, engineType, autoYear};
+                    for(ListPreference pref : arrPref) {
+                        pref.setValue(null);
+                        pref.setValueIndex(0);
+                        setAutoPreferenceSummary(pref, 0);
+                    }
                 }
 
 
@@ -252,8 +246,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             int num = Objects.requireNonNull(makershot.getLong("reg_maker")).intValue();
             setAutoPreferenceSummary(autoMaker, num);
         }
-
-
     }
 
     //@SuppressWarnings({"ConstantConditions", "unchecked"})
@@ -270,7 +262,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             List<String> engineList = Objects.requireNonNull(autodata).getEngineTypeList();
             if(engineList.size() == 1) {
                 engineType.setValue(engineList.get(0));
-                //updateRegField(engineType, true);
+                //updateRegField(engineType, engineType.getValue(), true);
                 setAutoPreferenceSummary(engineType, 0);
             } else if(isModelChanged && engineList.size() > 1) {
                 CharSequence[] arrType = engineList.toArray(new CharSequence[0]);
@@ -285,9 +277,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         } else {
             int num = Objects.requireNonNull(modelshot.getLong("reg_model")).intValue();
             setAutoPreferenceSummary(autoModel, num);
-            setAutoPreferenceSummary(autoType, 0);
-            setAutoPreferenceSummary(engineType, 0);
-            setAutoPreferenceSummary(autoYear, 0);
+            //setAutoPreferenceSummary(autoType, 0);
+            //setAutoPreferenceSummary(engineType, 0);
+            //setAutoPreferenceSummary(autoYear, 0);
         }
     }
 
@@ -328,12 +320,11 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         List<String> automodelList = new ArrayList<>();
         automodelList.add(0, getString(R.string.pref_entry_void));
 
-        CollectionReference modelColRef = makershot.getReference().collection("automodels");
-        Query query = modelColRef;
-        if(!TextUtils.isEmpty(autotype) && autoType.findIndexOfValue(autotype) > 0) {
-            query = modelColRef.whereEqualTo("model_type", autotype);
+        Query query = makershot.getReference().collection("automodels");
+        if(autoType.findIndexOfValue(autotype) > 0) {
+            query = query.whereEqualTo("model_type", autotype);
         }
-        if(!TextUtils.isEmpty(enginetype) && engineType.findIndexOfValue(enginetype) > 0) {
+        if(engineType.findIndexOfValue(enginetype) > 0) {
             query = query.whereArrayContains("model_engine", enginetype);
         }
 
@@ -342,36 +333,21 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             autoModel.setEntries(automodelList.toArray(new String[0]));
             autoModel.setEntryValues(automodelList.toArray(new String[0]));
 
-            final String automodel = autoModel.getValue();
-            if(autoModel.findIndexOfValue(automodel) > 0) {
-                queryAutoModel(makershot.getId(), autoModel.getValue());
-            } else {
-                log.i("no autodata");
+            if(isAutoTypeChanged || isEngineTypeChanged) {
                 setAutoPreferenceSummary(autoModel, 0);
-                setAutoPreferenceSummary(autoType, 0);
-                setAutoPreferenceSummary(engineType, 0);
-                setAutoPreferenceSummary(autoYear, 0);
+                autoModel.setValue(null);
+                isAutoTypeChanged = false;
+                isEngineTypeChanged = false;
+
+                return;
             }
 
+            if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
+                queryAutoModel(makershot.getId(), autoModel.getValue());
+            }
         });
-
-        // Initialize the automodel value and summary when the autotype or enginetype has a new
-        // value.
-        if(isAutoTypeChanged || isEngineTypeChanged) {
-            autoModel.setValue(null);
-            autoModel.setValueIndex(0);
-            setAutoPreferenceSummary(autoModel, 0);
-        }
     }
 
-    private void resetAutoPreferences(ListPreference[] preferences, boolean b) {
-        for(ListPreference preference : preferences) {
-            //preference.setValue(null);
-            preference.setValueIndex(0);
-            if(!b) preference.setEnabled(false);
-            setAutoPreferenceSummary(preference, 0);
-        }
-    }
     // Method for setting the initial default summary to each preferences.
     // List/Edit)preference.setSummaryProvider(SummaryProvider(I))
     private void setAutoPreferenceSummary(ListPreference preference, int num) {
@@ -408,22 +384,19 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
             }).addOnSuccessListener(aVoid -> {
                 if(isIncrement) {
-                    log.i("increase current data: %s", autoMaker.getValue());
                     makerRef.get().addOnSuccessListener(doc -> {
                         int num = Objects.requireNonNull(doc.getLong("reg_maker")).intValue();
                         setAutoPreferenceSummary(autoMaker, num);
                     });
-                } else {
-                    log.i("decrease previous data:%s, %s", autoMaker.getValue(), autoModel.getValue());
-                    if(autoModel.findIndexOfValue(autoModel.getValue()) > 0) {
-                        ListPreference[] arrPrefs = {autoModel, autoType, engineType, autoYear};
-                        for(ListPreference preference : arrPrefs) {
-                            preference.setValueIndex(0);
-                            preference.setValue(null);
-                            setAutoPreferenceSummary(preference, 0);
-                        }
-                    }
                 }
+
+                ListPreference[] arrPrefs = {autoModel, autoType, engineType, autoYear};
+                for(ListPreference preference : arrPrefs) {
+                    preference.setValueIndex(0);
+                    preference.setValue(null);
+                    setAutoPreferenceSummary(preference, 0);
+                }
+
             }).addOnFailureListener(e -> log.e("update automaker field failed:%s", e));
 
 
@@ -431,32 +404,34 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             DocumentReference modelRef = makerRef.collection("automodels").document(modelshot.getId());
             FirebaseFirestore.getInstance().runTransaction(transaction -> {
                 DocumentSnapshot snapshot = transaction.get(modelRef);
-                log.i("type values: %s, %s, %s", snapshot.getString("model_type"), autoType.getValue(), engineType.getValue());
                 FieldPath autotypePath = FieldPath.of("auto_type", snapshot.getString("model_type"));
                 FieldPath enginePath = FieldPath.of("engine_type", engineType.getValue());
                 FieldPath regEngine = FieldPath.of("reg_engine", engineType.getValue());
 
                 transaction.update(makerRef, autotypePath, FieldValue.increment(inc));
                 transaction.update(modelRef, "reg_model", FieldValue.increment(inc));
-                if(!isIncrement) {
+                if (!isIncrement) {
                     transaction.update(makerRef, enginePath, FieldValue.increment(inc));
                     transaction.update(modelRef, regEngine, FieldValue.increment(inc));
                 }
                 return null;
-
-            }).addOnCompleteListener(task -> {
-                if(task.isSuccessful() && isIncrement) {
+            }).addOnSuccessListener(aVoid -> {
+                if(isIncrement) {
                     modelRef.get().addOnSuccessListener(doc -> {
                         int num = Objects.requireNonNull(doc.getLong("reg_model")).intValue();
                         setAutoPreferenceSummary(autoModel, num);
                     });
+                } else {
+                    log.i("automodel changed: %s", autoModel.getValue());
                 }
-            });
+
+            }).addOnFailureListener(e -> log.e("update transaction failed: %s", e.getMessage()));
+
 
         } else if(pref.equals(engineType)) {
-            final String engine = engineType.getValue();
             DocumentReference modelRef = makerRef.collection("automodels").document(modelshot.getId());
             FirebaseFirestore.getInstance().runTransaction(transaction -> {
+                final String engine = engineType.getValue();
                 transaction.update(makerRef, FieldPath.of("engine_type", engine), FieldValue.increment(inc));
                 transaction.update(modelRef, FieldPath.of("reg_engine", engine), FieldValue.increment(inc));
                 return null;
