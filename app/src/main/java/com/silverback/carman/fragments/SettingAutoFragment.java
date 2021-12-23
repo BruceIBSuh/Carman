@@ -465,7 +465,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         }
     }
 
-    
+
     // Static nested class to create AlertDialog to select an engine type if an model has multiple
     // engine types.
     public static class EngineDialogFragment extends DialogFragment {
