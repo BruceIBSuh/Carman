@@ -1,7 +1,6 @@
 package com.silverback.carman.fragments;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -15,7 +14,6 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
@@ -41,8 +39,6 @@ import java.util.Objects;
  * This fragment is a split screen PreferenceFragmentCompat which displays multiple preferences
  * on a separate screen with its own preference hierarchy that is concerned with the auto data.
  * Firestore holds comprehensive data to download but special care is required for latency.
- *
- *
  */
 public class SettingAutoFragment extends SettingBaseFragment implements
         Preference.OnPreferenceChangeListener {
@@ -88,14 +84,19 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         setAutoYearEntries();
     }
 
+    // If an automodel has multi engine types, pop up the alert dialog to select which engine type
+    // to select, the result of which should be passed via the viewmodel livedata. The empty check
+    // is required to prevent the dialog from initally invoking updateRegField().
+    // To update the engine type field, as far as the multi engine types are concerned, should be
+    // handled separately here.
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         fragmentModel.getEngineSelected().observe(getViewLifecycleOwner(), engine -> {
-            log.i("alertdidalog event strangely invoked");
-            engineType.setValue(engine);
+            if(TextUtils.isEmpty(engine)) return;
+            else engineType.setValue(engine);
             setAutoPreferenceSummary(engineType, 0);
-            if(isModelChanged) updateRegField(engineType, true);
+            updateRegField(engineType, true);
         });
     }
 
@@ -128,7 +129,15 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         return false;
     }
 
-
+    /*
+     * Preference.OnPreferenceChangeListener
+     * Interface definition for a callback to be invoked when the value of this Preference has been
+     * changed by the user and is about to be set and/or persisted. This gives the client a chance
+     * to prevent setting and/or persisting the value.
+     * @param preference: the changed preference
+     * @param value: the new value of the preference
+     * @return true to update the state of the preference w/ the new value.
+     */
     @Override
     public boolean onPreferenceChange(Preference preference, Object value) {
         String newValue = (String)value;
@@ -138,8 +147,9 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         switch(preference.getKey()) {
             case Constants.AUTO_MAKER:
                 isMakerChanged = true;
-
+                //final String automaker = autoMaker.getValue();
                 if(autoMaker.findIndexOfValue(autoMaker.getValue()) > 0) {
+                //if(autoMaker.findIndexOfValue(automaker) > 0){
                     updateRegField(autoMaker, false);
                 }
 
@@ -255,7 +265,6 @@ public class SettingAutoFragment extends SettingBaseFragment implements
         // has changed.
         if(isMakerChanged) {
             updateRegField(autoMaker, true);
-            isMakerChanged = false;
         } else {
             int num = Objects.requireNonNull(makershot.getLong("reg_maker")).intValue();
             setAutoPreferenceSummary(autoMaker, num);
@@ -275,24 +284,23 @@ public class SettingAutoFragment extends SettingBaseFragment implements
             ArrayAutoData autodata = modelshot.toObject(ArrayAutoData.class);
             List<String> engineList = Objects.requireNonNull(autodata).getEngineTypeList();
 
-            if (isModelChanged && engineList.size() == 1) {
-                engineType.setValue(engineList.get(0));
-                updateRegField(autoModel, true);
-                isModelChanged = false;
-
-            } else if (isModelChanged && engineList.size() > 1) {
+            if(engineList.size() > 1) {
                 String[] arrType = engineList.toArray(new String[0]);
                 engineDialogFragment.setEngineTypes(arrType);
                 engineDialogFragment.show(getChildFragmentManager(), "engineFragment");
-
             } else {
+                engineType.setValue(engineList.get(0));
+            }
+
+            if(isModelChanged) updateRegField(autoModel, true);
+            else {
                 int num = Objects.requireNonNull(modelshot.getLong("reg_model")).intValue();
                 setAutoPreferenceSummary(autoModel, num);
+
                 setAutoPreferenceSummary(autoType, 0);
                 setAutoPreferenceSummary(engineType, 0);
                 setAutoPreferenceSummary(autoYear, 0);
             }
-
         }
     }
 
@@ -377,14 +385,23 @@ public class SettingAutoFragment extends SettingBaseFragment implements
 
     }
 
+    /**
+     * Update the related autodata fields when the user changes the current auto maker or model.
+     * @param pref changed preference
+     * @param isIncrement increment or decrement the related field vlaue.
+     */
+    //private void updateRegField(ListPreference pref, String value, boolean isIncrement){
     private void updateRegField(ListPreference pref, boolean isIncrement){
         int inc = (isIncrement) ? 1 : -1;
         final DocumentReference makerRef = autoRef.document(makershot.getId());
+        //final DocumentReference makerRef = autoRef.document(value);
 
         if(pref.equals(autoMaker)) {
             FirebaseFirestore.getInstance().runTransaction(transaction -> {
                 transaction.update(makerRef, "reg_maker", FieldValue.increment(inc));
-                final String model = autoModel.getValue();
+                String model = autoModel.getValue();
+                // As the automodel has been set, it is required to update all other auto data
+                // when the automaker changes.
                 if (autoModel.findIndexOfValue(model) > 0) {
                     DocumentReference modelRef = makerRef.collection("automodels").document(model);
                     FieldPath regEnginePath = FieldPath.of("reg_engine", engineType.getValue());
@@ -396,9 +413,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                     transaction.update(makerRef, engineTypePath, FieldValue.increment(inc));
                     transaction.update(makerRef, autoTypePath, FieldValue.increment(inc));
                 }
-
                 return null;
-
             }).addOnSuccessListener(aVoid -> {
                 if(isIncrement) {
                     makerRef.get().addOnSuccessListener(doc -> {
@@ -406,7 +421,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                         setAutoPreferenceSummary(autoMaker, num);
                     });
 
-                    isMakerChanged = false; // repeated?
+
                 }
 
                 ListPreference[] arrPrefs = {autoModel, autoType, engineType, autoYear};
@@ -416,15 +431,17 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                     setAutoPreferenceSummary(preference, 0);
                 }
 
+                // Revert the flag to indicate the changer of automaker.
+                isMakerChanged = false;
+
             }).addOnFailureListener(e -> log.e("update automaker field failed:%s", e));
 
-
         } else if(pref.equals(autoModel)) {
+
             log.i("update automodel:%s, %s, %s", isIncrement, autoModel.getValue(), engineType.getValue());
             DocumentReference modelRef = makerRef.collection("automodels").document(modelshot.getId());
             FirebaseFirestore.getInstance().runTransaction(transaction -> {
                 DocumentSnapshot snapshot = transaction.get(modelRef);
-                log.i("auto type update: %s", snapshot.getString("model_type"));
                 FieldPath autotypePath = FieldPath.of("auto_type", snapshot.getString("model_type"));
                 transaction.update(makerRef, autotypePath, FieldValue.increment(inc));
                 transaction.update(modelRef, "reg_model", FieldValue.increment(inc));
@@ -438,6 +455,7 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 }
 
                 return null;
+
             }).addOnSuccessListener(aVoid -> {
                 if(isIncrement) {
                     log.i("update complete");
@@ -450,6 +468,8 @@ public class SettingAutoFragment extends SettingBaseFragment implements
                 } else {
                     log.i("automodel changed: %s", autoModel.getValue());
                 }
+
+                isModelChanged = false;
 
             }).addOnFailureListener(e -> log.e("update transaction failed: %s", e.getMessage()));
 
