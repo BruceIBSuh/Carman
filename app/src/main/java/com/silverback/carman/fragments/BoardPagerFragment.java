@@ -120,8 +120,8 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    // Singleton for the autoclub page which has the checkbox values and title names to display
-    // overlaying the tab menu.
+    // Singleton for the autoclub page which has the checkbox values and display title names
+    // in the tab menu.
     public static BoardPagerFragment newInstance(int page, ArrayList<String> values){
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
@@ -177,7 +177,7 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -190,8 +190,8 @@ public class BoardPagerFragment extends Fragment implements
 
         // In case of inserting the banner, the item size will change.
         binding.recyclerBoardPostings.setHasFixedSize(false);
-        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-
+        LinearLayoutManager layout = new LinearLayoutManager(
+                getContext(), LinearLayoutManager.VERTICAL, false);
         binding.recyclerBoardPostings.setLayoutManager(layout);
         //binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
@@ -203,7 +203,7 @@ public class BoardPagerFragment extends Fragment implements
         binding.recyclerBoardPostings.addOnScrollListener(setRecyclerViewScrollListener());
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
-        fabWrite = ((BoardActivity)getActivity()).getFAB();
+        fabWrite = ((BoardActivity)Objects.requireNonNull(requireActivity())).getFAB();
         //setRecyclerViewScrollListener();
 
         // Based on MVVM
@@ -264,10 +264,6 @@ public class BoardPagerFragment extends Fragment implements
                 postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray)
         );
     }
-
-
-
-
 
     // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
     // should be customized to have an imageview and textview underneath instead of setting icon

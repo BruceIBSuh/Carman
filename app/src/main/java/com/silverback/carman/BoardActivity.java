@@ -73,11 +73,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/*
+/**
  * This activity mainly contains a framelayout that alternatively holds either the viewpager or the
  * fragments to edit or write a post
  *
- * The viewpager has fragments that are statically created by each posting board by category and
+ * The viewpager consists of fragments statically created by categorized postings and
  * controlled by the fragmentstatepageradatper(This should be refactored with ViewPager2).
  *
  * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab, replacing the
@@ -93,7 +93,7 @@ import java.util.Objects;
  * The toolbar menu should be basically handled in this parent activity but may be controlled by
  * each fragment. Thus, the return value in OnOptionsItemSelected() should be true or false.
  */
-public class  BoardActivity extends BaseActivity implements
+public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
         //ViewPager.OnPageChangeListener,
@@ -169,6 +169,7 @@ public class  BoardActivity extends BaseActivity implements
         binding.boardPager.setVisibility(View.GONE);
         binding.boardPager.setAdapter(pagerAdapter);
         binding.boardPager.registerOnPageChangeCallback(pagerCallback);
+
         // TabLayoutMediator which interconnects TabLayout and ViewPager2
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
         new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
@@ -192,7 +193,6 @@ public class  BoardActivity extends BaseActivity implements
                 readFragment.setEditModeListener(this);
             }
         });
-
 
         // ActivityResult API(registerForActivityResult(), ActivityResultContract, ActivityResultCallback
         // replaces startActivityForResult() and OnActivityResult()
@@ -256,11 +256,12 @@ public class  BoardActivity extends BaseActivity implements
 
                 // Fragment container may hold either BoardWriteFragment or BoardEditFragment. When
                 // pressing the up button, either of the fragments is removed from the container and
-                // it shoud be null for garbage collecting it.
+                // it shoud be null for garbage collection.
                 } else {
                     boolean isWriteMode = (writePostFragment != null) &&
                             binding.frameContents.getChildAt(0) == writePostFragment.getView();
-                    String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
+                    String msg = (isWriteMode)?
+                            getString(R.string.board_msg_cancel_write) :
                             getString(R.string.board_msg_cancel_edit);
 
                     Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
@@ -424,7 +425,6 @@ public class  BoardActivity extends BaseActivity implements
     // adapter.
     private void getActivityResult(ActivityResult result) {
         if(result.getData() == null) return;
-
         switch(result.getResultCode()) {
             case RESULT_OK:
                 log.i("user name:%s", result.getData().getStringExtra("userName"));
