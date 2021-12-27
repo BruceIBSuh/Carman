@@ -788,7 +788,20 @@ public class BoardPagerFragment extends Fragment implements
         pb.setVisibility(View.VISIBLE);
         firestore.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
             log.i("automaker emblem: %s", doc.get("reg_maker"));
+            String emblem = doc.getString("auto_emblem");
+            if(TextUtils.isEmpty(emblem)) return;
+            else {
+                Uri uri = Uri.parse(emblem);
+                final int x = imgview.getMeasuredWidth();
+                final int y = imgview.getMeasuredHeight();
+                imgutil.applyGlideToEmblem(uri, x, y, imgview);
+            }
+
+            pb.setVisibility(View.GONE);
+
         });
+
+        /*
         //firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
         firestore.collection("autodata").whereEqualTo(FieldPath.documentId(), automaker).get()
                 .addOnSuccessListener(queires -> {
@@ -810,6 +823,8 @@ public class BoardPagerFragment extends Fragment implements
                     pb.setVisibility(View.GONE);
                     e.printStackTrace();
                 });
+
+         */
     }
 
 }
