@@ -74,24 +74,28 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * This activity mainly contains a framelayout that alternatively holds either the viewpager or the
- * fragments to edit or write a post
+ * This activity mainly consists of a framelayout that alternatively contains either a viewpager
+ * or fragments to edit or write a post
  *
- * The viewpager consists of fragments statically created by categorized postings and
- * controlled by the fragmentstatepageradatper(This should be refactored with ViewPager2).
+ * The viewpager has fragments statically created by categorized posting board and
+ * controlled by BoardPagerAdapter which extends FragmentStateAdapter.
  *
  * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab, replacing the
  * viewpager in the activity. The fragment to edit a post(BoardEditFragment) replaces the viewpager
- * in the same way when clicking the edit button, which turns visible in the toolbar as long as the
- * fragment to read a post(BoardReadDlgFragment) pops up and the post is owned by the user.
+ * in the same way when clicking the edit button.  The edit button turns visible in the toolbar
+ * as long as the fragment to read a post(BoardReadDlgFragment) pops up and the post is owned by
+ * the user.
  *
- * Communications b/w the fragments are mostly made by the viewmodel(FramentSharedModel). Some cases
- * use interfaces, though. OnAutoFilterCheckBoxListener passes any change of the checkbox values to
- * BoardPagerFragment for dynamically querying posts based on it.  OnEditModeListener defined in
- * BoardReadDlgFragment notifies that the user chooses the edit button to open BoardEditFragment.
+ * Communications b/w the fragments are mostly made with a livedata defined in FramentSharedModel.
+ * Some cases use interfaces, though.
  *
- * The toolbar menu should be basically handled in this parent activity but may be controlled by
- * each fragment. Thus, the return value in OnOptionsItemSelected() should be true or false.
+ * OnAutoFilterCheckBoxListener passes any change of the checkbox values to BoardPagerFragment for
+ * dynamically querying posts based on it.  OnEditModeListener defined in BoardReadDlgFragment
+ * notifies that the user chooses the edit button to open BoardEditFragment.
+ *
+ * The toolbar menu should be basically handled in the parent activity but may be controlled by
+ * each fragment. Thus, the return boolean value in OnOptionsItemSelected() depends on whether the
+ * menu proceed(false) or consume(true).
  */
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
@@ -144,7 +148,6 @@ public class BoardActivity extends BaseActivity implements
         binding = ActivityBoardBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Set Toolbar and its title as AppBar
         setSupportActionBar(binding.boardToolbar);
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -305,6 +308,7 @@ public class BoardActivity extends BaseActivity implements
                 if(isWriteMode) writePostFragment.prepareAttachedImages();
                 else editPostFragment.prepareUpdate();
                 return true;
+
             default: return super.onOptionsItemSelected(item);
         }
 
@@ -457,6 +461,7 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
+    /*
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -488,6 +493,8 @@ public class BoardActivity extends BaseActivity implements
             default: break;
         }
     }
+
+     */
 
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
     // CheckBox values will be used for conditions for querying posts. At the same time, the automodel
@@ -647,13 +654,25 @@ public class BoardActivity extends BaseActivity implements
         binding.linearLayoutAutofilter.addView(tvMessage, params);
     }
 
+    /**
+     * Dynamically create checkboxes based on the auto data saved in SharedPreferences as JSONString.
+     *
+     * If the auto data is empty or null, show the clickable spanned message to ask the user to set
+     * auto data in SettingPreferenceActivity.
+     *
+     * If the the auto data is given, the checkbox list should differ according to which fragment
+     * the framelayout contains. BoardWriteFragment adds an extra checkbox for whether a post may
+     * read not only in the autoclub but also in the general board.
+     *
+     * Checked values in the checkbox list are passed to cbAutoFilter in order to be used as a query
+     * condition on postings.
+     *
+     * @param context activity
+     * @param json JSONString
+     * @param v parent container
+     * @throws JSONException may occur while converting JSONString to JSONArray
+     */
 
-    // Dynamically create checkboxes based on the auto data saved as a json string in SharedPreferences.
-    // If the auto data is empty or null, show the clickable spanned message to ask users to set the
-    // auto data in SettingPreferenceActivity. If the the auto data is given, checkboxes differs
-    // according to which child fragmet the frame contains. BoardWriteFragment adds a checkbox for
-    // whether a post is open not only to the autoclub  but also to the general board. Checked values
-    // in the checkboxes are added to cbAutoFilter in order to be used as a query condition.
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
@@ -665,6 +684,7 @@ public class BoardActivity extends BaseActivity implements
         // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
         // It is appropriate that JSONArray.isNull(int) be applied.
         JSONArray jsonAuto = new JSONArray(json);
+
         // If no autodata is initially given, show the spanned message to initiate startActivityForResult()
         // to have users set the auto data in SettingPreferenceActivity.
         /*
@@ -697,8 +717,8 @@ public class BoardActivity extends BaseActivity implements
         // on which fragment the frame contains; header turns visible in BoardPagerFragment and the
         // the checkbox indicating general post turns visible in BoardWriteFragment and vice versa.
 
-        // Create either the autofilter label in BoardPagerFragment or the general checkbox in
-        // BoardWritingFragment
+        // Dynamically create either the autofilter label in BoardPagerFragment or the general checkbox
+        // in BoardWritingFragment
         params.topMargin = 0;
         tvAutoFilterLabel = new TextView(context);
         tvAutoFilterLabel.setText(getString(R.string.board_filter_title));
@@ -718,22 +738,17 @@ public class BoardActivity extends BaseActivity implements
         // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-
-
         for(int i = 0; i < jsonAuto.length(); i++) {
             CheckBox cb = new CheckBox(context);
             cb.setTag(i);
             cb.setTextColor(Color.WHITE);
-
             if(jsonAuto.optString(i).equals("null")) {
                 switch(i) {
                     case 1: cb.setText(R.string.pref_auto_model);break;
                     case 2: cb.setText(R.string.pref_engine_type);break;
                     case 3: cb.setText(R.string.board_filter_year);break;
                 }
-
                 cb.setEnabled(false);
-
             } else {
                 // The automaker is a necessary checkbox to be checked as far as jsonAuto has set
                 // any checkbox. Other autofilter values depends on whether it is the locked mode
@@ -751,9 +766,7 @@ public class BoardActivity extends BaseActivity implements
 
                 // Add the checkbox value to the list if it is checked.
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText().toString());
-                //for(String filter : cbAutoFilter) log.i("autofilter in order: %s", filter);
-                // Set the color and value according to a checkbox is checked or not.
-                cb.setOnCheckedChangeListener(this);
+                cb.setOnCheckedChangeListener(this); //for setting the color and value
             }
 
             v.addView(cb, params);
@@ -765,7 +778,7 @@ public class BoardActivity extends BaseActivity implements
     }
 
     /*
-     * Create ImageView and make action controls when cliicking the view.
+     * Create ImageView and make action controls when clicking the view.
      * isLock is saved in SharedPreferences and if isLock is true, the checkboxes in the autofilter
      * turn disabled, retaining their values which have been respectively saved as well. When tapping
      * the imageview, isLock will be set to false, enabling the checkboxes to be ready to check
@@ -773,10 +786,8 @@ public class BoardActivity extends BaseActivity implements
      *
      * @param v parent viewgroup
      * @param jsonAuto CheckBox name in the autofilter
-     *
      */
     private void setAutoFilterLock(ViewGroup v, JSONArray jsonAuto) {
-        // Dynamically create ImageView to put in at the end of the autofilter.
         ImageView imgView = new ImageView(this);
         LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -798,7 +809,9 @@ public class BoardActivity extends BaseActivity implements
                     String key = Constants.AUTOFILTER + i;
                     mSettings.edit().putBoolean(key, chkboxList.get(i).isChecked()).apply();
 
-                }else if(!jsonAuto.optString(i).equals("null")) chkboxList.get(i).setEnabled(true);
+                } else if(!jsonAuto.optString(i).equals("null")) {
+                    chkboxList.get(i).setEnabled(true);
+                }
             }
 
             mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, isLocked).apply();
@@ -806,11 +819,13 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-    // Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
-    // the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
-    // remove the fragment out of the container, then regain the viewpager with the toolbar menu and
-    // title reset. If the current page stays in the auto club, additional measures should be taken.
-    // Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
+    /**
+     * Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
+     * the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
+     * remove the fragment out of the container, then regain the viewpager with the toolbar menu and
+     * title reset. If the current page stays in the auto club, additional measures should be taken.
+     * Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
+     */
     public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
@@ -823,9 +838,8 @@ public class BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setVisibility(View.VISIBLE);
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
 
-        // Animations differs according to whether the current page is on the auto club or not.
+        // Animations should differ according to whether the current page is on the auto club.
         if(category == Constants.BOARD_AUTOCLUB) {
-            // UI visibillity control when boardPagerFragment comes in.
             tvAutoFilterLabel.setVisibility(View.VISIBLE);
             cbGeneral.setVisibility(View.GONE);
 
@@ -897,6 +911,7 @@ public class BoardActivity extends BaseActivity implements
     public ArrayList<String> getAutoFilterValues() {
         return cbAutoFilter;
     }
+
     public BoardPagerAdapter getPagerAdapter() {
         return pagerAdapter;
     }
@@ -907,6 +922,7 @@ public class BoardActivity extends BaseActivity implements
     public FloatingActionButton getFAB() {
         return binding.fabBoardWrite;
     }
+
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
     }

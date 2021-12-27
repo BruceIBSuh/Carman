@@ -3,7 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- custom layout to replace android:actionLayout with android:icon for resizing the icon -->
+    <!--
+    actionLayout replaces android:icon to display a custom layout. When using actionLayout,
+    onOptionsItemSelected() is not invoked. Thus, get its action view using MenuItem.getActionView()
+    and attach the click listener to it
+    -->
     <item
         android:id="@+id/action_automaker_emblem"
         android:visible="false"

@@ -28,6 +28,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -276,23 +277,22 @@ public class BoardPagerFragment extends Fragment implements
         menu.getItem(1).setVisible(false);
 
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            View rootView = menu.getItem(0).getActionView();
-            ImageView imgEmblem = rootView.findViewById(R.id.img_action_emblem);
-            ProgressBar pbEmblem = rootView.findViewById(R.id.pb_emblem);
+            View actionView = menu.getItem(0).getActionView();
+            ImageView imgEmblem = actionView.findViewById(R.id.img_action_emblem);
+            ProgressBar pbEmblem = actionView.findViewById(R.id.pb_emblem);
             //tvSorting = rootView.findViewById(R.id.tv_sorting_order);
-
+            log.i("automaker in menu:%s", automaker);
             if(TextUtils.isEmpty(automaker)) {
                 menu.getItem(0).setVisible(false);
-                rootView.setVisibility(View.INVISIBLE);
+                actionView.setVisibility(View.INVISIBLE);
             } else {
                 menu.getItem(0).setVisible(true);
-                rootView.setVisibility(View.VISIBLE);
+                actionView.setVisibility(View.VISIBLE);
                 setAutoMakerEmblem(pbEmblem, imgEmblem);
-                rootView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
+                actionView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
             }
-        }
 
-        super.onCreateOptionsMenu(menu, inflater);
+        } else super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -786,7 +786,11 @@ public class BoardPagerFragment extends Fragment implements
     private void setAutoMakerEmblem(ProgressBar pb, ImageView imgview) {
         // Make the progressbar visible until getting the emblem from Firetore
         pb.setVisibility(View.VISIBLE);
-        firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
+        firestore.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
+            log.i("automaker emblem: %s", doc.get("reg_maker"));
+        });
+        //firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
+        firestore.collection("autodata").whereEqualTo(FieldPath.documentId(), automaker).get()
                 .addOnSuccessListener(queires -> {
                     for(QueryDocumentSnapshot autoshot : queires) {
                         String emblem = autoshot.getString("auto_emblem");

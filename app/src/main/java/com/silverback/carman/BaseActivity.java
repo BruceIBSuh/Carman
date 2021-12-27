@@ -268,6 +268,7 @@ public class BaseActivity extends AppCompatActivity {
     protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
         List<String> tabTitleList = null;
         List<Drawable> tabIconList = null;
+
         if(context instanceof ExpenseActivity) {
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
             Drawable[] icons = {
