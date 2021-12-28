@@ -73,7 +73,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-/**
+/*
  * This activity mainly consists of a framelayout that alternatively contains either a viewpager
  * or the fragments to edit or write a post
  *
@@ -162,14 +162,14 @@ public class BoardActivity extends BaseActivity implements
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
+        try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
         catch(NullPointerException e) {setNoAutofilterText();}
         catch(JSONException e) {e.printStackTrace();}
 
         // ViewPager2
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle());
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
-        binding.boardPager.setVisibility(View.GONE);
+        binding.boardPager.setVisibility(View.GONE); //show progressbar unitl the query completes.
         binding.boardPager.setAdapter(pagerAdapter);
         binding.boardPager.registerOnPageChangeCallback(pagerCallback);
 
@@ -223,7 +223,6 @@ public class BoardActivity extends BaseActivity implements
             readFragment.setEditModeListener(this);
         }
     }
-
      */
 
     @Override
@@ -443,7 +442,7 @@ public class BoardActivity extends BaseActivity implements
                 log.i("Setting AutoClub");
                 jsonAutoFilter = result.getData().getStringExtra("jsonAutoData");
                 // Create the autofilter checkboxes and set inital values to the checkboxes
-                try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
+                try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
                 catch(JSONException e){e.printStackTrace();}
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
@@ -651,7 +650,7 @@ public class BoardActivity extends BaseActivity implements
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginStart(10);
         tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
-        binding.linearLayoutAutofilter.addView(tvMessage, params);
+        binding.autofilter.addView(tvMessage, params);
     }
 
     /*

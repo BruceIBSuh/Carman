@@ -61,7 +61,7 @@
                 android:scrollbarSize="0dp"
                 app:layout_collapseMode="parallax" >
                 <LinearLayout
-                    android:id="@+id/linearLayout_autofilter"
+                    android:id="@+id/autofilter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
