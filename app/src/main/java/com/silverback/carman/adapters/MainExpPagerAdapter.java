@@ -47,7 +47,6 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
             switch(position) {
                 case 0:
                     log.i("Total expense");
-
                     break;
                 case 1:
                     log.i("Expense Config");

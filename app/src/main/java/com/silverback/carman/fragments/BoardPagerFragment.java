@@ -153,7 +153,6 @@ public class BoardPagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgutil = new ApplyImageResourceUtil(getContext());
-
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         pbLoading = ((BoardActivity)requireActivity()).getLoadingProgressBar();
         /*
@@ -701,7 +700,7 @@ public class BoardPagerFragment extends Fragment implements
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 log.i("oScrolled: %s, %s", dx, dy);
-                fabWrite.setAlpha(0.3f);
+                fabWrite.setAlpha(0.5f);
 
                 // FAB visibility control that hides the button while scrolling.
                 //if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
@@ -741,9 +740,9 @@ public class BoardPagerFragment extends Fragment implements
      * the view count. Otherwise, add the user id to the "viewers" collection and increase the
      * view count;
      */
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void addViewCount(DocumentReference docref, int position) {
-        try(FileInputStream fis = getActivity().openFileInput("userId");
+        try(FileInputStream fis = Objects.requireNonNull(requireActivity()).openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             final String viewerId = br.readLine();
 

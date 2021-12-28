@@ -14,6 +14,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /*
  * REFACTOR: FragmentStatePagerAdapter(FragmentPagerAdapter) to FragmentStateAdapter
@@ -46,6 +47,14 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
         log.i("createFragment: %s", position);
         if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
+        else {
+
+        }
     }
 
 

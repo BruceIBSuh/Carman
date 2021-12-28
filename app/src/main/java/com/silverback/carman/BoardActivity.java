@@ -75,7 +75,7 @@ import java.util.Objects;
 
 /**
  * This activity mainly consists of a framelayout that alternatively contains either a viewpager
- * or fragments to edit or write a post
+ * or the fragments to edit or write a post
  *
  * The viewpager has fragments statically created by categorized posting board and
  * controlled by BoardPagerAdapter which extends FragmentStateAdapter.
@@ -654,7 +654,7 @@ public class BoardActivity extends BaseActivity implements
         binding.linearLayoutAutofilter.addView(tvMessage, params);
     }
 
-    /**
+    /*
      * Dynamically create checkboxes based on the auto data saved in SharedPreferences as JSONString.
      *
      * If the auto data is empty or null, show the clickable spanned message to ask the user to set
@@ -686,7 +686,7 @@ public class BoardActivity extends BaseActivity implements
         JSONArray jsonAuto = new JSONArray(json);
 
         // If no autodata is initially given, show the spanned message to initiate startActivityForResult()
-        // to have users set the auto data in SettingPreferenceActivity.
+        // to let the user set the auto data in SettingPreferenceActivity.
         /*
         if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) {
             TextView tvMessage = new TextView(context);

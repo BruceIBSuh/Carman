@@ -4,7 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/actionLayout_emblem"
     android:layout_width="wrap_content"
-    android:layout_height="?android:actionBarSize" >
+    android:layout_height="?android:actionBarSize"
+    android:padding="3dp">
     
     <ProgressBar
         android:id="@+id/pb_emblem"
@@ -21,20 +22,21 @@
 
     <ImageView
         android:id="@+id/img_action_emblem"
-        android:layout_width="60dp"
-        android:layout_height="30dp"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
         android:contentDescription="@null"
+        android:scaleType="centerInside"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/tv_sorting_order"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/tv_sorting_order"
-        android:layout_width="60dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/board_autoclub_sort_time"
-        android:textSize="@dimen/extraSmallText"
+        android:textSize="11sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@+id/img_action_emblem"
         app:layout_constraintEnd_toEndOf="parent"
