@@ -39,15 +39,13 @@ public class NameDialogPreference extends DialogPreference implements Preference
 
 
     private void getAttributes(Context context, AttributeSet attrs) {
-
         setDialogLayoutResource(R.layout.dialog_setting_edit_name);
         setOnPreferenceChangeListener(this);
-
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.SpinnerDialogPreference);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.NameDialogPreference);
         try {
 
         } finally {
-            typedArray.recycle();
+            ta.recycle();
         }
     }
 
@@ -59,5 +57,9 @@ public class NameDialogPreference extends DialogPreference implements Preference
         persistString(nickname);
         setSummary(nickname);
         return false;
+    }
+
+    public void setTitleColor(int color) {
+
     }
 }

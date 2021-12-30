@@ -2,6 +2,7 @@ package com.silverback.carman.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.util.AttributeSet;
 
 import androidx.preference.Preference;
@@ -14,6 +15,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 public class ProgressBarPreference extends Preference {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ProgressBarPreference.class);
+    private boolean mShowIndicator;
     /*
     public ProgressBarPreference(Context context) {
         super(context);
@@ -22,6 +24,7 @@ public class ProgressBarPreference extends Preference {
     public ProgressBarPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         getAttributes(context, attrs);
+
     }
     /*
     public ProgressBarPreference(Context context, AttributeSet attrs, int defStyle) {
@@ -31,18 +34,23 @@ public class ProgressBarPreference extends Preference {
      */
 
     protected void getAttributes(Context context, AttributeSet attrs) {
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ProgressBarPreference);
-        try {}
-        finally { typedArray.recycle();}
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.ProgressBarPreference, 0, 0);
+        try {
+            mShowIndicator = ta.getBoolean(R.styleable.ProgressBarPreference_showIndicator, false);
+            log.i("show indicator: %s", mShowIndicator);
+            setIndicatorVisibility(mShowIndicator);
+        } finally { ta.recycle();}
     }
 
     public void showProgressBar(boolean isVisible) {
-        if(isVisible) this.setEnabled(false);
-        else this.setEnabled(true);
+        this.setEnabled(!isVisible);
 
         // Set a wdiget at the right side of an preference
         setWidgetLayoutResource(isVisible? R.layout.view_pref_autodata : 0);
         notifyChanged();
     }
 
+    public void setIndicatorVisibility(boolean b) {
+       if(b) this.setIcon(R.drawable.ic_setting_indicator);
+    }
 }

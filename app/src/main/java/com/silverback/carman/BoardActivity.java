@@ -114,7 +114,6 @@ public class BoardActivity extends BaseActivity implements
     private Menu menu;
     private BoardWriteFragment writePostFragment;
     private BoardEditFragment editPostFragment;
-    private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // UIs
     private TextView tvAutoFilterLabel;
@@ -141,6 +140,11 @@ public class BoardActivity extends BaseActivity implements
         mListener = listener;
     }
 
+    // ActivityResult API(registerForActivityResult(), ActivityResultContract, ActivityResultCallback
+    // replaces startActivityForResult() and OnActivityResult()
+    private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
+
     //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -152,7 +156,8 @@ public class BoardActivity extends BaseActivity implements
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         //tabPage = Constants.BOARD_RECENT;
-        category = getIntent().getIntExtra("category", 0);
+        //category = getIntent().getIntExtra("category", 0);
+        category = Constants.BOARD_RECENT;
 
         // The chkboxList is created by whether the autodata is set and the cbAutoFilter is created
         // by wheteher each checkbox item is checked.
@@ -197,10 +202,7 @@ public class BoardActivity extends BaseActivity implements
             }
         });
 
-        // ActivityResult API(registerForActivityResult(), ActivityResultContract, ActivityResultCallback
-        // replaces startActivityForResult() and OnActivityResult()
-        activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
+
     }
 
     @Override
@@ -313,14 +315,55 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
+    // Implement the abstract class of ViewPager2.OnPageChangeCallback, which replaced the interface
+    // type
+    private final ViewPager2.OnPageChangeCallback pagerCallback = new ViewPager2.OnPageChangeCallback() {
+        @Override
+        public void onPageSelected(int position) {
+            log.i("ViewPager2 PageChangeCallback:%s", position);
+            super.onPageSelected(position);
+            //tabPage = position;
+            //menu.getItem(0).setVisible(false);
+            binding.fabBoardWrite.setVisibility(View.VISIBLE);
+            animAutoFilter(false);
+
+            switch(position) {
+                case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
+                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
+                    break;
+                case Constants.BOARD_AUTOCLUB:
+                    log.i("autoclub board:%s", cbAutoFilter.size());
+                    isAutoFilter = true;
+                    if(cbAutoFilter.size() > 0) {
+                        clubTitle = createAutoClubTitle();
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
+                        //menu.getItem(0).setVisible(true);
+                    } else {
+                        final String autoclub = getString(R.string.board_tab_title_autoclub);
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(autoclub);
+                    }
+                    animAutoFilter(true);
+                    break;
+                case Constants.BOARD_NOTIFICATION:
+                    final String noti = getString(R.string.board_tab_title_notification);
+                    Objects.requireNonNull(getSupportActionBar()).setTitle(noti);
+                    binding.fabBoardWrite.setVisibility(View.INVISIBLE);
+                    break;
+            }
+
+            category = position;
+        }
+    };
+
     // Implement AppBarLayout.OnOffsetChangedListener
 //    @Override
 //    public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
 
 
-    // When clicking the fab to write a post, make BoardEditFragment null if it remains in the frame.
-    // Then, check if the user has set a nickname. Otherwise, show the spanned message to guide the
-    // user to move SettingPreferenceActivity to create it.
+    // Floating Action Button click event handler
+    // When clicking the fab to write a post, make BoardEditFragment null if it remains in the
+    // framelayout. Then, check if the user has set a name. show the spanned message to guide the
+    // the user to move SettingPreferenceActivity to create it.
     // The tab layout should be animated to decrease its height to 0 for purpose of adjusing the post
     // content area to the base line.
     //@SuppressWarnings("ConstantConditions")
@@ -329,9 +372,6 @@ public class BoardActivity extends BaseActivity implements
         // Only apply to the floating action button
         if(view.getId() != R.id.fab_board_write) return;
         if(editPostFragment != null) editPostFragment = null;
-        // Check if the user has made a nickname. Otherwise, show tne message for setting the name
-        // first and start SettingPreferenceActivity, the result of which is received in onActivity
-        // result().
         String userName = mSettings.getString(Constants.USER_NAME, null);
         if(TextUtils.isEmpty(userName)) {
             Snackbar snackbar = Snackbar.make(
@@ -339,18 +379,14 @@ public class BoardActivity extends BaseActivity implements
             snackbar.setAction(R.string.board_msg_action_setting, v -> {
                 Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
                 intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
-                //startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
                 activityResultLauncher.launch(intent);
             }).show();
 
             return;
         }
-
-
         // TabHeight must be measured here b/c it will be increased to the full size or decreased
         // down to 0 each time the button clicks.
         tabHeight = binding.tabBoard.getMeasuredHeight();
-
         // Create BoardWriteFragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
         if(binding.frameContents.getChildCount() > 0) binding.frameContents.removeView(binding.boardPager);
@@ -363,7 +399,7 @@ public class BoardActivity extends BaseActivity implements
         // Handle the toolbar menu as the write board comes in.
         if(tabPage != Constants.BOARD_AUTOCLUB) {
             Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_write));
-            animTabHeight(false); // tab height = 0;
+            animTabHeight(false); // false: tab height = 0;
 
         // Tapping the fab right when the viewpager holds the auto club page, animate to slide
         // the tablayout up to hide and slide the auto filter down to show sequentially. On the
@@ -374,7 +410,8 @@ public class BoardActivity extends BaseActivity implements
             tvAutoFilterLabel.setVisibility(View.GONE);
             cbGeneral.setVisibility(View.VISIBLE);
 
-            if(!isAutoFilter) animAutoFilter(isAutoFilter);
+            //if(!isAutoFilter) animAutoFilter(isAutoFilter);
+            animAutoFilter(false);
             menu.getItem(0).setVisible(false);
         }
 
@@ -426,7 +463,7 @@ public class BoardActivity extends BaseActivity implements
     // in turn, sent to either of the fragments as an livedata of the imageviewmodel for purposes of
     // showing the image span in the post and adding it to the image list so as to update the recyclerview
     // adapter.
-    private void getActivityResult(ActivityResult result) {
+    private void getActivityResultCallback(ActivityResult result) {
         if(result.getData() == null) return;
         switch(result.getResultCode()) {
             case RESULT_OK:
@@ -460,41 +497,6 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
-    /*
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode != RESULT_OK || data == null) return;
-
-        switch(requestCode) {
-            case Constants.REQUEST_BOARD_GALLERY:
-                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(data.getData());
-                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(data.getData());
-                break;
-
-            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                jsonAutoFilter = data.getStringExtra("jsonAutoData");
-                // Create the autofilter checkboxes and set inital values to the checkboxes
-                try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.linearLayoutAutofilter);}
-                catch(JSONException e){e.printStackTrace();}
-                // Update the pagerAdapter
-                pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                pagerAdapter.notifyDataSetChanged();
-                binding.boardPager.setAdapter(pagerAdapter);
-                binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
-
-                log.i("Reset tabLayout and action menu");
-                addTabIconAndTitle(this, binding.tabBoard);
-                menu.getItem(0).setVisible(true);
-                menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
-                break;
-
-            default: break;
-        }
-    }
-
-     */
-
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
     // CheckBox values will be used for conditions for querying posts. At the same time, the automodel
     // checkbox state will manage to set the toolbar title.
@@ -523,39 +525,7 @@ public class BoardActivity extends BaseActivity implements
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
     }
 
-    // Implement the abstract class of ViewPager2.OnPageChangeCallback, which replaced the interface
-    // type
-    private final ViewPager2.OnPageChangeCallback pagerCallback = new ViewPager2.OnPageChangeCallback() {
-        @Override
-        public void onPageSelected(int position) {
-            super.onPageSelected(position);
-            //tabPage = position;
-            //menu.getItem(0).setVisible(false);
-            binding.fabBoardWrite.setVisibility(View.VISIBLE);
-            if(isAutoFilter) animAutoFilter(isAutoFilter);
 
-            switch(position) {
-                case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
-                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
-                    break;
-                case Constants.BOARD_AUTOCLUB:
-                    if(cbAutoFilter.size() > 0) {
-                        clubTitle = createAutoClubTitle();
-                        Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
-                        //menu.getItem(0).setVisible(true);
-                    } else Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_tab_title_autoclub));
-
-                    animAutoFilter(isAutoFilter);
-                    break;
-                case Constants.BOARD_NOTIFICATION:
-                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_tab_title_notification));
-                    binding.fabBoardWrite.setVisibility(View.INVISIBLE);
-                    break;
-            }
-
-            category = position;
-        }
-    };
 
     // Slide down the tab as the activity is created.
     private void animTabLayout() {
@@ -580,7 +550,8 @@ public class BoardActivity extends BaseActivity implements
     // state: true - full height false - 0 height.
     private void animTabHeight(boolean isShown) {
         isTabHeight = isShown;
-        ValueAnimator anim = (isShown)? ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
+        ValueAnimator anim = (isShown) ?
+                ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
         anim.addUpdateListener(valueAnimator -> {
             int val = (Integer) valueAnimator.getAnimatedValue();
             ViewGroup.LayoutParams params = binding.tabBoard.getLayoutParams();
@@ -597,12 +568,12 @@ public class BoardActivity extends BaseActivity implements
      * be switched.
      * @param state: if false, the filter should be visible and vice versa.
      */
-    private void animAutoFilter(boolean state) {
-        float y = (!state)? getActionbarHeight() : 0;
+    private void animAutoFilter(boolean isAutoClub) {
+        float y = (isAutoClub)? getActionbarHeight() : 0;
         ObjectAnimator slideAutoFilter = ObjectAnimator.ofFloat(binding.postScrollHorizontal, "y", y);
         slideAutoFilter.setDuration(500);
         slideAutoFilter.start();
-        isAutoFilter = !isAutoFilter;
+        //isAutoFilter = !isAutoFilter;
     }
 
     // Create the toolbar title which depends on which checkbox is checked and is applied only when
@@ -630,7 +601,7 @@ public class BoardActivity extends BaseActivity implements
     // text which contains a clickable span to initiate SettingPrefActivity to set the auto filter.
     private void setNoAutofilterText() {
         TextView tvMessage = new TextView(this);
-        String msg = getString(R.string.board_filter_join);
+        String msg = getString(R.string.board_autoclub_set);
         SpannableString ss = new SpannableString(msg);
         ClickableSpan clickableSpan = new ClickableSpan(){
             @Override
@@ -638,7 +609,6 @@ public class BoardActivity extends BaseActivity implements
                 int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
                 Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
                 intent.putExtra("requestCode", requestCode);
-                //startActivityForResult(intent, requestCode);
                 activityResultLauncher.launch(intent);
             }
         };
@@ -671,7 +641,6 @@ public class BoardActivity extends BaseActivity implements
      * @param v parent container
      * @throws JSONException may occur while converting JSONString to JSONArray
      */
-
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
@@ -831,7 +800,8 @@ public class BoardActivity extends BaseActivity implements
         if(binding.frameContents.getChildCount() > 0)
             binding.frameContents.removeView(binding.frameContents.getChildAt(0));
         // If the tabLayout height is 0,  put the height back to the default size.
-        if(!isTabHeight) animTabHeight(true);
+        //if(!isTabHeight) animTabHeight(true);
+        animTabHeight(true);
 
         binding.frameContents.addView(binding.boardPager);
         binding.fabBoardWrite.setVisibility(View.VISIBLE);

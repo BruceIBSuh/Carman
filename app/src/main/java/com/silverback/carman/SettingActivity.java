@@ -10,15 +10,23 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.FrameLayout;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceFragment;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -30,6 +38,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman.databinding.ActivitySettingsBinding;
+import com.silverback.carman.fragments.BoardReadDlgFragment;
 import com.silverback.carman.fragments.CropImageDialogFragment;
 import com.silverback.carman.fragments.PermRationaleFragment;
 import com.silverback.carman.fragments.ProgressBarDialogFragment;
@@ -97,45 +106,51 @@ public class SettingActivity extends BaseActivity implements
     private FrameLayout frameLayout;
 
     // Fields
-    private String userId;
-    private String distCode;
-    private String userName;
-    private String gasCode;
-    private String radius;
-    private String userImage;
-    private String jsonAutoData;
-    private String permCamera;
+    private String userId, distCode, userName, gasCode, radius, userImage, jsonAutoData, permCamera;
+    //private String distCode;
+    //private String userName;
+    //private String gasCode;
+    //private String radius;
+    //private String userImage;
+    //private String jsonAutoData;
+    //private String permCamera;
     private Uri downloadUserImageUri;
     private int requestCode;
 
+    private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
 
-    @SuppressWarnings("ConstantConditions")
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // UI's
+        frameLayout = binding.frameSetting;
+        setSupportActionBar(binding.settingToolbar);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
+
+        // get Intent data, if any.
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
+
         // Permission check for CAMERA to get the user image.
         //checkPermissions(this, Manifest.permission.CAMERA);
         //settingToolbar = findViewById(R.id.setting_toolbar);
-        setSupportActionBar(binding.settingToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
 
-        frameLayout = binding.frameSetting;
-
+        // Instantiate objects
         resultIntent = new Intent();
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
         uploadData = new HashMap<>();
 
+        // ViewModels
+        FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         //opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
-
 
         // Get the user id which is saved in the internal storage
         if(TextUtils.isEmpty(userId)) userId = getUserIdFromStorage(this);
@@ -146,16 +161,30 @@ public class SettingActivity extends BaseActivity implements
         JSONArray jsonDistArray = getDistrictJSONArray();
         //if(jsonDistArray == null) distCode = (getResources().getStringArray(R.array.default_district))[2];
         //else distCode = jsonDistArray.optString(2);
-
         // Attach SettingPreferencFragment in the FrameLayout
         settingFragment = new SettingPreferenceFragment();
         Bundle bundle = new Bundle();
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
+
+        // Callback will be automatically unregistered when this FragmentManager is destroyed.
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
+                new FragmentManager.FragmentLifecycleCallbacks() {
+                    @Override
+                    public void onFragmentViewCreated(
+                            @NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v,
+                            @Nullable Bundle savedInstanceState) {
+                        super.onFragmentViewCreated(fm, f, v, savedInstanceState);
+                        showRequestedPreference((PreferenceFragmentCompat) f, requestCode);
+                    }
+                }, false);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
                 .addToBackStack(null)
                 .commit();
+
+
+
 
         // Sync issue may occur.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
@@ -164,6 +193,7 @@ public class SettingActivity extends BaseActivity implements
             imgModel.getGlideDrawableTarget().observe(this, drawable ->
                 settingFragment.getUserImagePreference().setIcon(drawable));
         }
+
 
         // On receiving the result of the educational dialogfragment showing the permission rationale,
         // which was invoked by shouldShowRequestPermissionRationale(), request permission again
@@ -201,6 +231,7 @@ public class SettingActivity extends BaseActivity implements
         mSettings.unregisterOnSharedPreferenceChangeListener(this);
         if(gasPriceTask != null) gasPriceTask = null;
     }
+
 
 
     @Override
@@ -401,6 +432,7 @@ public class SettingActivity extends BaseActivity implements
                 Intent galleryIntent = new Intent();
                 galleryIntent.setType("image/*");
                 galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+                galleryIntent.putExtra("requestCode", REQUEST_CODE_GALLERY);
                 /*
                 Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
                 if (galleryIntent.resolveActivity(getPackageManager()) != null) {
@@ -408,24 +440,25 @@ public class SettingActivity extends BaseActivity implements
                     //galleryIntent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
                 }
                 */
-                startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                //startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
                 //startActivityForResult(Intent.createChooser(galleryIntent, "Select Image"), REQUEST_CODE_GALLERY);
+                activityResultLauncher.launch(galleryIntent);
                 break;
 
             case 1: // Camera
                 // Check if the carmear is available for the device.
                 if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) return;
-
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                //if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     permCamera = Manifest.permission.CAMERA;
                     checkCameraPermission();
-                } else {
+                //} else {
                     Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                     //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
                     if (cameraIntent.resolveActivity(getPackageManager()) != null) {
-                        startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                        //startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                        activityResultLauncher.launch(cameraIntent);
                     }
-                }
+                //}
                 break;
 
             case 2: // Remove image
@@ -454,10 +487,57 @@ public class SettingActivity extends BaseActivity implements
         }
     }
 
+    // Callback method for ActivityResultLauncher
+    private void getActivityResultCallback(ActivityResult result) {
+        if(result.getData() == null) return;
+
+        ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(this);
+        //Uri imageUri = result.getData().getData();
+        Intent intent = result.getData();
+        int orientation;
+
+        switch(result.getResultCode()) {
+            case REQUEST_CODE_GALLERY:
+                Uri galleryUri = Objects.requireNonNull(intent.getData());
+                // Get the image orinetation and check if it is 0 degree. Otherwise, the image
+                // requires to be rotated.
+                orientation = cropHelper.getImageOrientation(galleryUri);
+                if(orientation != 0) galleryUri = cropHelper.rotateBitmapUri(galleryUri, orientation);
+
+                Intent galleryIntent = new Intent(this, CropImageActivity.class);
+                galleryIntent.setData(galleryUri);
+                galleryIntent.putExtra("requestCrop", REQUEST_CODE_CROP);
+                //startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
+                activityResultLauncher.launch(galleryIntent);
+                break;
+            case REQUEST_CODE_CAMERA:
+                Uri cameraUri = Objects.requireNonNull(intent.getData());
+                // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
+                orientation = cropHelper.getImageOrientation(cameraUri);
+                if(orientation != 0) cameraUri = cropHelper.rotateBitmapUri(cameraUri, orientation);
+
+                Intent cameraIntent = new Intent(this, CropImageActivity.class);
+                cameraIntent.setData(cameraUri);
+                cameraIntent.putExtra("requestCrop", REQUEST_CODE_CROP);
+                //startActivityForResult(cameraIntent, REQUEST_CODE_CROP);
+                activityResultLauncher.launch(cameraIntent);
+
+                break;
+            case REQUEST_CODE_CROP:
+                final Uri croppedImageUri = Objects.requireNonNull(intent.getData());
+                // Upload the cropped user image to Firestore with the user id fetched
+                mSettings.edit().putString(Constants.USER_IMAGE, null).apply();
+                uploadUserImageToFirebase(croppedImageUri);
+
+                break;
+        }
+    }
+
     // Callback by startActivityForResult() defined in onSelectImageMedia(), receiving the uri of
     // a selected image back from Gallery or Camera w/ each request code, then creating an intent
     // w/ the Uri to instantiate CropImageActivity to edit the image. The result is, in turn, sent
     // back here once again.
+    /*
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -483,11 +563,11 @@ public class SettingActivity extends BaseActivity implements
                 galleryIntent.setData(imageUri);
                 startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
 
-                /*
+
                 File tmpRotated = new File(imageUri.getPath());
                 log.i("tmpRoated file Path: %s", tmpRotated);
                 if(tmpRotated.exists() && tmpRotated.delete()) log.i("Deleted");
-                */
+
                 break;
 
             case REQUEST_CODE_CAMERA:
@@ -514,6 +594,26 @@ public class SettingActivity extends BaseActivity implements
                 }
 
                 break;
+        }
+    }
+    */
+
+    // Display the indicator for which preferrence should be set as long as the activity is invoked
+    // by ActivityResultLauncher.
+    private void showRequestedPreference(PreferenceFragmentCompat f, int code) {
+        log.i("request code : %s", code);
+        switch(code) {
+            case Constants.REQUEST_BOARD_SETTING_USERNAME:
+                Preference namePref = f.findPreference(Constants.USER_NAME);
+                Objects.requireNonNull(namePref).setIcon(R.drawable.ic_setting_indicator);
+                break;
+
+            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                Preference autoPref = f.findPreference(Constants.AUTO_DATA);
+                Objects.requireNonNull(autoPref).setIcon(R.drawable.ic_setting_indicator);
+
+                break;
+
         }
     }
 

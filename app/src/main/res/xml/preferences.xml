@@ -24,7 +24,8 @@
         <com.silverback.carman.views.ProgressBarPreference
             app:fragment="com.silverback.carman.fragments.SettingAutoFragment"
             app:key="carman_pref_auto"
-            app:title="@string/pref_title_autodata" />
+            app:title="@string/pref_title_autodata"
+            app:showIndicator="false"/>
 
         <ListPreference
             app:title="연료"
