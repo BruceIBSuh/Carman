@@ -28,10 +28,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -100,7 +98,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // UIs
     private FragmentBoardPagerBinding binding;
-    private ProgressBar pbLoading;
+    private ProgressBar progbar;
     private PostingRecyclerView recyclerPostView;
     private FloatingActionButton fabWrite;
     //private TextView tvEmptyView;
@@ -154,7 +152,8 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgutil = new ApplyImageResourceUtil(getContext());
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        pbLoading = ((BoardActivity)requireActivity()).getLoadingProgressBar();
+        progbar = ((BoardActivity)requireActivity()).getLoadingProgressBar();
+
         /*
         if(currentPage == Constants.BOARD_AUTOCLUB) {
             //clubRepo = new QueryClubPostingUtil(firestore);
@@ -221,7 +220,7 @@ public class BoardPagerFragment extends Fragment implements
         */
         log.i("current page: %s", currentPage);
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-        pbLoading.setVisibility(View.VISIBLE);
+        progbar.setVisibility(View.VISIBLE);
 
         return binding.getRoot();
     }
@@ -430,7 +429,7 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
 
-        pbLoading.setVisibility(View.GONE);
+        progbar.setVisibility(View.GONE);
         isLoading = false;
 
         // If the sorted posts are less than the pagination number, keep querying until it's up to
@@ -500,7 +499,7 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getQueryErrorResult(Exception e) {
-        pbLoading.setVisibility(View.GONE);
+        progbar.setVisibility(View.GONE);
         Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
         isLoading = true;
     }

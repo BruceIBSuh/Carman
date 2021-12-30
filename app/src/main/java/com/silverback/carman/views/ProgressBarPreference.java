@@ -38,7 +38,6 @@ public class ProgressBarPreference extends Preference {
         try {
             mShowIndicator = ta.getBoolean(R.styleable.ProgressBarPreference_showIndicator, false);
             log.i("show indicator: %s", mShowIndicator);
-            setIndicatorVisibility(mShowIndicator);
         } finally { ta.recycle();}
     }
 
@@ -50,7 +49,5 @@ public class ProgressBarPreference extends Preference {
         notifyChanged();
     }
 
-    public void setIndicatorVisibility(boolean b) {
-       if(b) this.setIcon(R.drawable.ic_setting_indicator);
-    }
+
 }

@@ -97,7 +97,6 @@
         android:layout_gravity="center"
         android:layout_centerInParent="true" />
 
-
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_board_write"
         android:layout_width="wrap_content"

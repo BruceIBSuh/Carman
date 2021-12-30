@@ -167,8 +167,10 @@ public class BoardActivity extends BaseActivity implements
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
-        catch(NullPointerException e) {setNoAutofilterText();}
+        log.i("jsonAutoFilter: %s", jsonAutoFilter);
+        try { createAutoCheckBox(this, jsonAutoFilter, binding.autofilter);}
+        catch(NullPointerException e) {
+            setNoAutoFilterText();}
         catch(JSONException e) {e.printStackTrace();}
 
         // ViewPager2
@@ -329,7 +331,8 @@ public class BoardActivity extends BaseActivity implements
 
             switch(position) {
                 case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
-                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
+                    Objects.requireNonNull(getSupportActionBar())
+                            .setTitle(getString(R.string.board_general_title));
                     break;
                 case Constants.BOARD_AUTOCLUB:
                     log.i("autoclub board:%s", cbAutoFilter.size());
@@ -478,9 +481,13 @@ public class BoardActivity extends BaseActivity implements
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                 log.i("Setting AutoClub");
                 jsonAutoFilter = result.getData().getStringExtra("jsonAutoData");
+                log.i("json auto result: %s", jsonAutoFilter);
                 // Create the autofilter checkboxes and set inital values to the checkboxes
-                try{ createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
-                catch(JSONException e){e.printStackTrace();}
+                try { createAutoCheckBox(this, jsonAutoFilter, binding.autofilter);}
+                catch(NullPointerException e) {
+                    setNoAutoFilterText();}
+                catch(JSONException e) {e.printStackTrace();}
+
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
                 pagerAdapter.notifyDataSetChanged();
@@ -599,7 +606,7 @@ public class BoardActivity extends BaseActivity implements
 
     // In case that any auto filter that is initially saved as a json string is not set, show the
     // text which contains a clickable span to initiate SettingPrefActivity to set the auto filter.
-    private void setNoAutofilterText() {
+    private void setNoAutoFilterText() {
         TextView tvMessage = new TextView(this);
         String msg = getString(R.string.board_autoclub_set);
         SpannableString ss = new SpannableString(msg);
@@ -641,7 +648,7 @@ public class BoardActivity extends BaseActivity implements
      * @param v parent container
      * @throws JSONException may occur while converting JSONString to JSONArray
      */
-    private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
+    private void createAutoCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
 
@@ -652,7 +659,8 @@ public class BoardActivity extends BaseActivity implements
         // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
         // It is appropriate that JSONArray.isNull(int) be applied.
         JSONArray jsonAuto = new JSONArray(json);
-
+        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0))
+            throw new NullPointerException("no auto data");
         // If no autodata is initially given, show the spanned message to initiate startActivityForResult()
         // to let the user set the auto data in SettingPreferenceActivity.
         /*
@@ -895,7 +903,7 @@ public class BoardActivity extends BaseActivity implements
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
     }
-    // Invoked in BoardPagerAdapter to hold visibility control of the progressbar when post logindg
+    // Invoked in BoardPagerAdapter to hold visibility control to the progressbar when post logindg
     // complete and set it to gone in setFirstQuery().
     public ProgressBar getLoadingProgressBar() {
         return binding.progbarBoardLoading;

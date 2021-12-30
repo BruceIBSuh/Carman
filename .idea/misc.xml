@@ -28,6 +28,7 @@
         <entry key="app/src/main/res/layout/spinner_main_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/view_automaker_emblem.xml" value="0.25885416666666666" />
         <entry key="app/src/main/res/menu/menu_options_board.xml" value="0.25885416666666666" />
+        <entry key="app/src/main/res/xml/autopreference.xml" value="0.1" />
         <entry key="app/src/main/res/xml/pref_autodata.xml" value="0.1" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.2859375" />
       </map>

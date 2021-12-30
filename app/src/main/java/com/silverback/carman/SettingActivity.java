@@ -1,11 +1,11 @@
 package com.silverback.carman;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -14,7 +14,6 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -26,7 +25,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceFragment;
 import androidx.preference.PreferenceFragmentCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -38,7 +36,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.silverback.carman.databinding.ActivitySettingsBinding;
-import com.silverback.carman.fragments.BoardReadDlgFragment;
 import com.silverback.carman.fragments.CropImageDialogFragment;
 import com.silverback.carman.fragments.PermRationaleFragment;
 import com.silverback.carman.fragments.ProgressBarDialogFragment;
@@ -166,6 +163,12 @@ public class SettingActivity extends BaseActivity implements
         Bundle bundle = new Bundle();
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
+        addPreferenceFragment(settingFragment, getSupportFragmentManager());
+        /*
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
+                .addToBackStack(null)
+                .commit();
 
         // Callback will be automatically unregistered when this FragmentManager is destroyed.
         getSupportFragmentManager().registerFragmentLifecycleCallbacks(
@@ -175,14 +178,11 @@ public class SettingActivity extends BaseActivity implements
                             @NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v,
                             @Nullable Bundle savedInstanceState) {
                         super.onFragmentViewCreated(fm, f, v, savedInstanceState);
-                        showRequestedPreference((PreferenceFragmentCompat) f, requestCode);
+                        markupRequestedPreference((PreferenceFragmentCompat) f, requestCode);
                     }
                 }, false);
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
-                .addToBackStack(null)
-                .commit();
 
+        */
 
 
 
@@ -331,6 +331,7 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        log.i("onPreferenceStartFragment");
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
@@ -533,85 +534,45 @@ public class SettingActivity extends BaseActivity implements
         }
     }
 
-    // Callback by startActivityForResult() defined in onSelectImageMedia(), receiving the uri of
-    // a selected image back from Gallery or Camera w/ each request code, then creating an intent
-    // w/ the Uri to instantiate CropImageActivity to edit the image. The result is, in turn, sent
-    // back here once again.
-    /*
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode != RESULT_OK) return;
+    private void addPreferenceFragment(PreferenceFragmentCompat fragment, FragmentManager fm) {
+        fm.beginTransaction().replace(R.id.frame_setting, fragment, "preference")
+                .addToBackStack(null)
+                .commit();
 
-        ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(this);
-        Uri imageUri;
-        int orientation;
+        fm.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
+            @Override
+            public void onFragmentAttached(
+                    @NonNull FragmentManager fm, @NonNull Fragment f, @NonNull Context context) {
+                super.onFragmentAttached(fm, f, context);
+                log.i("onFragmentAttched");
+            }
 
-        switch(requestCode) {
-
-            case REQUEST_CODE_GALLERY:
-                imageUri = data.getData();
-                if(imageUri == null) return;
-
-                // Get the image orinetation and check if it is 0 degree. Otherwise, the image
-                // requires to be rotated.
-                orientation = cropHelper.getImageOrientation(imageUri);
-                if(orientation != 0) imageUri = cropHelper.rotateBitmapUri(imageUri, orientation);
-                log.i("galleryUri: %s, %s", orientation, imageUri);
-
-                Intent galleryIntent = new Intent(this, CropImageActivity.class);
-                galleryIntent.setData(imageUri);
-                startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
-
-
-                File tmpRotated = new File(imageUri.getPath());
-                log.i("tmpRoated file Path: %s", tmpRotated);
-                if(tmpRotated.exists() && tmpRotated.delete()) log.i("Deleted");
-
-                break;
-
-            case REQUEST_CODE_CAMERA:
-                imageUri = data.getData();
-                if(imageUri == null) return;
-
-                // Retrieve the image orientation and rotate it unless it is 0 by applying matrix
-                orientation = cropHelper.getImageOrientation(imageUri);
-                if(orientation != 0) imageUri = cropHelper.rotateBitmapUri(imageUri, orientation);
-
-                Intent cameraIntent = new Intent(this, CropImageActivity.class);
-                cameraIntent.setData(imageUri);
-                startActivityForResult(cameraIntent, REQUEST_CODE_CROP);
-
-                break;
-
-            // Result from CropImageActivity with a cropped image uri and set the image to
-            case REQUEST_CODE_CROP:
-                final Uri croppedImageUri = data.getData();
-                if(croppedImageUri != null) {
-                    // Upload the cropped user image to Firestore with the user id fetched
-                    mSettings.edit().putString(Constants.USER_IMAGE, null).apply();
-                    uploadUserImageToFirebase(croppedImageUri);
-                }
-
-                break;
-        }
+            @Override
+            public void onFragmentViewCreated(
+                    @NonNull FragmentManager fm, @NonNull Fragment fragment, @NonNull View v,
+                    @Nullable Bundle savedInstanceState) {
+                super.onFragmentViewCreated(fm, fragment, v, savedInstanceState);
+                log.i("onViewCreated");
+                markupPreference((PreferenceFragmentCompat)fragment, requestCode);
+            }}, false);
     }
-    */
 
     // Display the indicator for which preferrence should be set as long as the activity is invoked
     // by ActivityResultLauncher.
-    private void showRequestedPreference(PreferenceFragmentCompat f, int code) {
+    private void markupPreference(PreferenceFragmentCompat fragment, int code) {
         log.i("request code : %s", code);
         switch(code) {
             case Constants.REQUEST_BOARD_SETTING_USERNAME:
-                Preference namePref = f.findPreference(Constants.USER_NAME);
-                Objects.requireNonNull(namePref).setIcon(R.drawable.ic_setting_indicator);
+                Preference namePref = fragment.findPreference(Constants.USER_NAME);
+                log.i("namePref: %s", namePref);
+                Objects.requireNonNull(namePref).setIcon(R.drawable.setting_arrow_indicator);
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                Preference autoPref = f.findPreference(Constants.AUTO_DATA);
-                Objects.requireNonNull(autoPref).setIcon(R.drawable.ic_setting_indicator);
+                Preference autoPref = fragment.findPreference(Constants.AUTO_DATA);
 
+                log.i("auto pref: %s", autoPref);
+                Objects.requireNonNull(autoPref).setIcon(R.drawable.setting_arrow_indicator);
                 break;
 
         }
@@ -734,7 +695,8 @@ public class SettingActivity extends BaseActivity implements
             Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             //Intent chooser = Intent.createChooser(cameraIntent, "Choose camera");
             if (cameraIntent.resolveActivity(getPackageManager()) != null)
-                startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                //startActivityForResult(cameraIntent, REQUEST_CODE_CAMERA);
+                activityResultLauncher.launch(cameraIntent);
 
         } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, permCamera)) {
             PermRationaleFragment permDialog = new PermRationaleFragment();

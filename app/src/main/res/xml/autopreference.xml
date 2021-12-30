@@ -6,27 +6,27 @@ either XML or the setSummary method in Java.
 -->
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto" >
     <ListPreference
-        app:key="carman_pref_auto_maker"
+        app:key="carman_pref_automaker"
         app:title="@string/pref_auto_maker"
         app:summary="@string/pref_entry_void"
         app:useSimpleSummaryProvider="false"/>
     <ListPreference
-        app:key="carman_pref_auto_type"
+        app:key="carman_pref_autotype"
         app:enabled="false"
         app:title="@string/pref_auto_type"
         app:defaultValue="@string/pref_entry_void" />
     <ListPreference
-        app:key="carman_pref_engine_type"
+        app:key="carman_pref_enginetype"
         app:enabled="false"
         app:title="@string/pref_engine_type"
         app:defaultValue="@string/pref_entry_void" />
     <ListPreference
-        app:key="carman_pref_auto_model"
+        app:key="carman_pref_automodel"
         app:enabled="false"
         app:title="@string/pref_auto_model"
         app:defaultValue="@string/pref_entry_void" />
     <ListPreference
-        app:key="carman_pref_auto_year"
+        app:key="carman_pref_autoyear"
         app:enabled="false"
         app:title="@string/pref_auto_year"
         app:defaultValue="@string/pref_entry_void" />
